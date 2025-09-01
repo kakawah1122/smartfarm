@@ -1,0 +1,9 @@
+{
+  "name": "smart-goose-farming-miniprogram",
+  "version": "1.0.0",
+  "description": "智慧养鹅小程序",
+  "main": "app.js",
+  "dependencies": {
+    "tdesign-miniprogram": "^1.10.1"
+  }
+}

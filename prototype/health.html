@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧养鹅 - 健康管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://tdesign.tencent.com/vue/dist/tdesign.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        't-blue': {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .mobile-container {
+            max-width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+        .tab-active {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="mobile-container">
+        <!-- 状态栏 -->
+        <div class="gradient-bg text-white text-center py-1 text-xs">
+            9:41 AM • 中国移动 • 100%
+        </div>
+
+        <!-- 顶部导航栏 -->
+        <header class="gradient-bg text-white p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm">←</span>
+                    </a>
+                    <h1 class="text-lg font-bold">健康管理</h1>
+                </div>
+                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm">⋯</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab 切换 -->
+        <div class="bg-white px-4 py-3 shadow-sm">
+            <div class="flex space-x-2">
+                <button class="tab-button tab-active px-4 py-2 rounded-full text-sm font-medium" data-tab="record">
+                    健康记录
+                </button>
+                <button class="tab-button px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100" data-tab="vaccine">
+                    疫苗管理
+                </button>
+                <button class="tab-button px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100" data-tab="ai">
+                    AI诊疗
+                </button>
+            </div>
+        </div>
+
+        <!-- 健康记录页面 -->
+        <div id="record-tab" class="tab-content">
+            <!-- 健康状态概览 -->
+            <div class="p-4">
+                <div class="bg-white rounded-2xl p-4 shadow-lg">
+                    <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <span class="mr-2">🏥</span>鹅群健康概览
+                    </h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <span class="text-green-600 text-lg">✅</span>
+                            </div>
+                            <p class="text-xl font-bold text-green-600">95%</p>
+                            <p class="text-xs text-gray-500">健康率</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <span class="text-yellow-600 text-lg">⚠️</span>
+                            </div>
+                            <p class="text-xl font-bold text-yellow-600">5</p>
+                            <p class="text-xs text-gray-500">异常个体</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <span class="text-blue-600 text-lg">📋</span>
+                            </div>
+                            <p class="text-xl font-bold text-blue-600">12</p>
+                            <p class="text-xs text-gray-500">本月记录</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 添加按钮 -->
+            <div class="px-4 pb-4">
+                <button class="w-full gradient-bg text-white py-3 rounded-xl font-medium flex items-center justify-center space-x-2">
+                    <span>+</span>
+                    <span>新增健康记录</span>
+                </button>
+            </div>
+
+            <!-- 健康记录列表 -->
+            <div class="px-4 pb-4">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">最近健康记录</h3>
+                    </div>
+                    
+                    <div class="divide-y divide-gray-100">
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mt-1">
+                                        <span class="text-red-600 text-sm">🚨</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">1号鹅舍异常情况</h4>
+                                        <p class="text-sm text-gray-600 mt-1">症状：3只鹅出现精神萎靡、食欲不振、轻微腹泻等症状</p>
+                                        <p class="text-sm text-blue-600 mt-1">处理：已隔离观察，投喂止泻药物</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">紧急</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span>2024-03-15 09:30 • 张三</span>
+                                <span>待跟进</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mt-1">
+                                        <span class="text-green-600 text-sm">✅</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">2号鹅舍日常检查</h4>
+                                        <p class="text-sm text-gray-600 mt-1">鹅群状态良好，食欲正常，无异常症状发现</p>
+                                        <p class="text-sm text-blue-600 mt-1">预防性消毒已完成</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">正常</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span>2024-03-14 16:00 • 李四</span>
+                                <span>已处理</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mt-1">
+                                        <span class="text-yellow-600 text-sm">⚠️</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">3号鹅舍轻微感冒症状</h4>
+                                        <p class="text-sm text-gray-600 mt-1">部分鹅只出现流鼻涕、轻微咳嗽症状</p>
+                                        <p class="text-sm text-blue-600 mt-1">已使用感冒药物，加强保温措施</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">观察</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span>2024-03-13 14:20 • 王五</span>
+                                <span>治疗中</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 疫苗管理页面 -->
+        <div id="vaccine-tab" class="tab-content hidden">
+            <!-- 疫苗提醒 -->
+            <div class="p-4">
+                <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-4 border border-orange-200">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <span class="text-orange-600 text-lg">⏰</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-orange-800">疫苗接种提醒</h3>
+                            <p class="text-sm text-orange-600">有2项疫苗计划即将到期</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-lg">
+                            <p class="font-medium text-gray-800">禽流感疫苗 - 1号鹅舍</p>
+                            <p class="text-sm text-gray-600">预计接种时间：明天 (3月16日)</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg">
+                            <p class="font-medium text-gray-800">新城疫疫苗 - 2号鹅舍</p>
+                            <p class="text-sm text-gray-600">预计接种时间：后天 (3月17日)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 添加按钮 -->
+            <div class="px-4 pb-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="gradient-bg text-white py-3 rounded-xl font-medium flex items-center justify-center space-x-2">
+                        <span>+</span>
+                        <span>添加疫苗计划</span>
+                    </button>
+                    <button class="bg-green-500 text-white py-3 rounded-xl font-medium flex items-center justify-center space-x-2">
+                        <span>✅</span>
+                        <span>记录接种</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 疫苗记录 -->
+            <div class="px-4 pb-4">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">疫苗接种记录</h3>
+                    </div>
+                    
+                    <div class="divide-y divide-gray-100">
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                        <span class="text-green-600 text-sm">💉</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-800">禽流感疫苗 H5N1</h4>
+                                        <p class="text-sm text-gray-500">3号鹅舍 • 180只鹅</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">已完成</span>
+                                    <p class="text-xs text-gray-500 mt-1">下次：4月15日</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span>2024-03-15 • 张三</span>
+                                <span>批次号：VN20240315</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span class="text-blue-600 text-sm">💉</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-800">新城疫疫苗</h4>
+                                        <p class="text-sm text-gray-500">1号鹅舍 • 200只鹅</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">计划中</span>
+                                    <p class="text-xs text-gray-500 mt-1">计划：3月20日</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span>计划负责人：李四</span>
+                                <span>预计用量：40支</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <span class="text-purple-600 text-sm">💉</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-800">鹅副黏病毒疫苗</h4>
+                                        <p class="text-sm text-gray-500">2号鹅舍 • 150只鹅</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">已完成</span>
+                                    <p class="text-xs text-gray-500 mt-1">下次：4月10日</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span>2024-03-10 • 王五</span>
+                                <span>批次号：VN20240310</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI诊疗页面 -->
+        <div id="ai-tab" class="tab-content hidden">
+            <!-- AI诊疗助手介绍 -->
+            <div class="p-4">
+                <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 border border-purple-200">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span class="text-purple-600 text-lg">🤖</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-purple-800">AI智能诊疗助手</h3>
+                            <p class="text-sm text-purple-600">专业的鹅病诊断与治疗建议</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg">
+                        <p class="text-sm text-gray-600">
+                            <span class="text-orange-600 font-medium">⚠️ 重要提醒：</span>
+                            AI建议仅供参考，请结合专业兽医诊断进行治疗决策
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速咨询 -->
+            <div class="px-4 pb-4">
+                <div class="bg-white rounded-2xl p-4 shadow-lg">
+                    <h3 class="font-semibold text-gray-800 mb-3">症状描述</h3>
+                    <textarea 
+                        class="w-full p-3 border border-gray-200 rounded-xl resize-none" 
+                        rows="4" 
+                        placeholder="请详细描述鹅群症状，如：精神状态、食欲情况、排便状况、体温变化等..."
+                    ></textarea>
+                    <div class="flex items-center justify-between mt-3">
+                        <div class="flex space-x-2">
+                            <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">🔥发热</span>
+                            <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">🍽️食欲不振</span>
+                            <span class="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">💧腹泻</span>
+                        </div>
+                        <button class="gradient-bg text-white px-6 py-2 rounded-full text-sm font-medium">
+                            获取AI建议
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史咨询记录 -->
+            <div class="px-4 pb-4">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">历史咨询记录</h3>
+                    </div>
+                    
+                    <div class="divide-y divide-gray-100">
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="mb-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span class="text-blue-600 text-xs">Q</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-800">鹅群出现精神萎靡、拉稀、食欲不振的症状，部分鹅只体温偏高...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-11">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <span class="text-purple-600 text-xs">🤖</span>
+                                    </div>
+                                    <div class="flex-1 bg-purple-50 p-3 rounded-xl">
+                                        <p class="text-sm text-gray-800 mb-2">
+                                            <strong>初步诊断：</strong>疑似禽流感或肠道感染
+                                        </p>
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            <strong>建议措施：</strong>
+                                            1. 立即隔离患病鹅只
+                                            2. 使用抗生素类药物治疗
+                                            3. 加强环境消毒
+                                            4. 观察其他鹅只状况
+                                        </p>
+                                        <p class="text-xs text-orange-600">
+                                            ⚠️ 请及时联系兽医确诊并制定治疗方案
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500 mt-3">
+                                <span>2024-03-15 10:30</span>
+                                <span class="bg-green-100 text-green-600 px-2 py-1 rounded-full">已采纳</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="mb-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span class="text-blue-600 text-xs">Q</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-800">部分鹅只出现呼吸困难、喘气、流鼻涕症状...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-11">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <span class="text-purple-600 text-xs">🤖</span>
+                                    </div>
+                                    <div class="flex-1 bg-purple-50 p-3 rounded-xl">
+                                        <p class="text-sm text-gray-800 mb-2">
+                                            <strong>初步诊断：</strong>疑似呼吸道感染或感冒
+                                        </p>
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            <strong>建议措施：</strong>
+                                            1. 保持鹅舍温暖干燥
+                                            2. 改善通风条件
+                                            3. 使用止咳化痰药物
+                                            4. 加强营养补充
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-500 mt-3">
+                                <span>2024-03-13 15:45</span>
+                                <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-full">处理中</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航栏 -->
+        <nav class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 rounded-t-3xl">
+            <div class="flex justify-around py-3">
+                <a href="index.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-500 text-xs">🏠</span>
+                    </div>
+                    <span class="text-xs text-gray-500">首页</span>
+                </a>
+                <a href="production.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-500 text-xs">📦</span>
+                    </div>
+                    <span class="text-xs text-gray-500">生产</span>
+                </a>
+                <a href="health.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                        <span class="text-white text-xs">🏥</span>
+                    </div>
+                    <span class="text-xs text-green-600 font-medium">健康</span>
+                </a>
+                <a href="profile.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-500 text-xs">👤</span>
+                    </div>
+                    <span class="text-xs text-gray-500">我的</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- 底部安全区域 -->
+        <div class="h-20"></div>
+    </div>
+
+    <script>
+        // Tab 切换功能
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                
+                // 移除所有活跃状态
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('text-gray-600', 'bg-gray-100');
+                });
+                
+                // 隐藏所有内容
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // 激活当前tab
+                this.classList.add('tab-active');
+                this.classList.remove('text-gray-600', 'bg-gray-100');
+                
+                // 显示对应内容
+                document.getElementById(tabName + '-tab').classList.remove('hidden');
+            });
+        });
+
+        // 交互效果
+        document.querySelectorAll('.card-hover').forEach(card => {
+            card.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 100);
+            });
+        });
+
+        // AI诊疗交互
+        const aiButton = document.querySelector('.gradient-bg');
+        if (aiButton) {
+            aiButton.addEventListener('click', function() {
+                // 这里可以添加AI诊疗的实际逻辑
+                alert('AI正在分析症状，请稍候...');
+            });
+        }
+    </script>
+</body>
+</html>

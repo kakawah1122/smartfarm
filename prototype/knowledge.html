@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧养鹅 - 知识库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://tdesign.tencent.com/vue/dist/tdesign.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        't-blue': {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .mobile-container {
+            max-width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+        .category-active {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="mobile-container">
+        <!-- 状态栏 -->
+        <div class="gradient-bg text-white text-center py-1 text-xs">
+            9:41 AM • 中国移动 • 100%
+        </div>
+
+        <!-- 顶部导航栏 -->
+        <header class="gradient-bg text-white p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm">←</span>
+                    </a>
+                    <h1 class="text-lg font-bold">养鹅知识库</h1>
+                </div>
+                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm">🔍</span>
+                </div>
+            </div>
+
+            <!-- 搜索栏 -->
+            <div class="mt-4">
+                <div class="bg-white bg-opacity-20 rounded-xl p-3 flex items-center space-x-3">
+                    <span class="text-white text-sm">🔍</span>
+                    <input 
+                        type="text" 
+                        placeholder="搜索养鹅知识..." 
+                        class="bg-transparent text-white placeholder-blue-200 flex-1 outline-none text-sm"
+                    >
+                </div>
+            </div>
+        </header>
+
+        <!-- 分类导航 -->
+        <div class="bg-white px-4 py-3 shadow-sm">
+            <div class="flex space-x-2 overflow-x-auto">
+                <button class="category-btn category-active px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" data-category="all">
+                    全部
+                </button>
+                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 whitespace-nowrap" data-category="breeding">
+                    饲养技术
+                </button>
+                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 whitespace-nowrap" data-category="disease">
+                    疾病防治
+                </button>
+                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 whitespace-nowrap" data-category="breed">
+                    品种介绍
+                </button>
+                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 whitespace-nowrap" data-category="market">
+                    市场分析
+                </button>
+            </div>
+        </div>
+
+        <!-- 热门推荐 -->
+        <div class="p-4">
+            <div class="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-4 border border-orange-200">
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-orange-600 text-sm">🔥</span>
+                    </div>
+                    <h3 class="font-semibold text-orange-800">本周热门</h3>
+                </div>
+                <div class="bg-white p-3 rounded-lg card-hover cursor-pointer">
+                    <h4 class="font-medium text-gray-800 mb-1">春季鹅群管理要点及注意事项</h4>
+                    <p class="text-sm text-gray-600 mb-2">春季是鹅群繁殖的关键时期，掌握正确的管理方法对提高产蛋率和孵化率至关重要...</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-orange-600">阅读量: 1,248</span>
+                        <span class="text-xs text-gray-500">3月15日</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文章列表 -->
+        <div class="px-4 pb-4">
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="divide-y divide-gray-100">
+                    <!-- 饲养技术类文章 -->
+                    <div class="article-item p-4 hover:bg-gray-50 card-hover cursor-pointer" data-category="breeding">
+                        <div class="flex space-x-3">
+                            <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                                <span class="text-white text-lg">🌱</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2">鹅苗育雏期的温度控制与环境管理</h4>
+                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full whitespace-nowrap ml-2">饲养技术</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2 line-clamp-2">育雏期是鹅苗成长的关键阶段，合理的温度控制和环境管理能有效提高成活率。本文详细介绍温度设置标准...</p>
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <div class="flex items-center space-x-3">
+                                        <span>👁️ 892</span>
+                                        <span>💾 收藏</span>
+                                        <span>⏱️ 5分钟阅读</span>
+                                    </div>
+                                    <span>3月14日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 疾病防治类文章 -->
+                    <div class="article-item p-4 hover:bg-gray-50 card-hover cursor-pointer" data-category="disease">
+                        <div class="flex space-x-3">
+                            <div class="w-16 h-16 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center">
+                                <span class="text-white text-lg">🏥</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2">禽流感防控措施与早期识别方法</h4>
+                                    <span class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full whitespace-nowrap ml-2">疾病防治</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2 line-clamp-2">禽流感是威胁鹅群健康的重要疾病，早期识别和及时预防是关键。本文介绍症状识别和防控措施...</p>
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <div class="flex items-center space-x-3">
+                                        <span>👁️ 1,156</span>
+                                        <span>💾 收藏</span>
+                                        <span>⏱️ 8分钟阅读</span>
+                                    </div>
+                                    <span>3月13日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 品种介绍类文章 -->
+                    <div class="article-item p-4 hover:bg-gray-50 card-hover cursor-pointer" data-category="breed">
+                        <div class="flex space-x-3">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                                <span class="text-white text-lg">🦢</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2">优质肉鹅品种对比及选择建议</h4>
+                                    <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full whitespace-nowrap ml-2">品种介绍</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2 line-clamp-2">不同鹅品种在生长性能、肉质品质、适应性等方面存在差异。本文对比分析主要肉鹅品种特点...</p>
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <div class="flex items-center space-x-3">
+                                        <span>👁️ 743</span>
+                                        <span>💾 收藏</span>
+                                        <span>⏱️ 6分钟阅读</span>
+                                    </div>
+                                    <span>3月12日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 市场分析类文章 -->
+                    <div class="article-item p-4 hover:bg-gray-50 card-hover cursor-pointer" data-category="market">
+                        <div class="flex space-x-3">
+                            <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-xl flex items-center justify-center">
+                                <span class="text-white text-lg">📈</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2">2024年鹅肉市场行情分析与前景预测</h4>
+                                    <span class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full whitespace-nowrap ml-2">市场分析</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2 line-clamp-2">分析当前鹅肉市场供需状况、价格走势，预测未来市场发展趋势，为养殖户提供参考依据...</p>
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <div class="flex items-center space-x-3">
+                                        <span>👁️ 654</span>
+                                        <span>💾 收藏</span>
+                                        <span>⏱️ 10分钟阅读</span>
+                                    </div>
+                                    <span>3月11日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 饲养技术类文章2 -->
+                    <div class="article-item p-4 hover:bg-gray-50 card-hover cursor-pointer" data-category="breeding">
+                        <div class="flex space-x-3">
+                            <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                                <span class="text-white text-lg">🥬</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2">鹅群饲料配方优化与营养需求分析</h4>
+                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full whitespace-nowrap ml-2">饲养技术</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2 line-clamp-2">科学的饲料配方是保证鹅群健康成长的基础，本文详细介绍不同生长阶段的营养需求和配方设计...</p>
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <div class="flex items-center space-x-3">
+                                        <span>👁️ 987</span>
+                                        <span>💾 收藏</span>
+                                        <span>⏱️ 7分钟阅读</span>
+                                    </div>
+                                    <span>3月10日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 疾病防治类文章2 -->
+                    <div class="article-item p-4 hover:bg-gray-50 card-hover cursor-pointer" data-category="disease">
+                        <div class="flex space-x-3">
+                            <div class="w-16 h-16 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center">
+                                <span class="text-white text-lg">💊</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2">常见鹅病的预防与治疗方案</h4>
+                                    <span class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full whitespace-nowrap ml-2">疾病防治</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2 line-clamp-2">总结常见鹅病的症状特征、预防措施和治疗方案，帮助养殖户及时应对各种疾病挑战...</p>
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <div class="flex items-center space-x-3">
+                                        <span>👁️ 1,234</span>
+                                        <span>💾 收藏</span>
+                                        <span>⏱️ 12分钟阅读</span>
+                                    </div>
+                                    <span>3月9日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的收藏 -->
+        <div class="px-4 pb-4">
+            <div class="bg-white rounded-2xl p-4 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-gray-800 flex items-center">
+                        <span class="mr-2">💾</span>我的收藏
+                    </h3>
+                    <span class="text-sm text-blue-600">查看全部</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-50 p-3 rounded-xl card-hover cursor-pointer">
+                        <h4 class="text-sm font-medium text-gray-800 mb-1 line-clamp-2">春季鹅群管理要点</h4>
+                        <p class="text-xs text-gray-500">3月15日收藏</p>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl card-hover cursor-pointer">
+                        <h4 class="text-sm font-medium text-gray-800 mb-1 line-clamp-2">禽流感防控措施</h4>
+                        <p class="text-xs text-gray-500">3月13日收藏</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航栏 -->
+        <nav class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 rounded-t-3xl">
+            <div class="flex justify-around py-3">
+                <a href="index.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-500 text-xs">🏠</span>
+                    </div>
+                    <span class="text-xs text-gray-500">首页</span>
+                </a>
+                <a href="production.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-500 text-xs">📦</span>
+                    </div>
+                    <span class="text-xs text-gray-500">生产</span>
+                </a>
+                <a href="health.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-500 text-xs">🏥</span>
+                    </div>
+                    <span class="text-xs text-gray-500">健康</span>
+                </a>
+                <a href="profile.html" class="flex flex-col items-center space-y-1">
+                    <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-500 text-xs">👤</span>
+                    </div>
+                    <span class="text-xs text-gray-500">我的</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- 底部安全区域 -->
+        <div class="h-20"></div>
+    </div>
+
+    <script>
+        // 分类筛选功能
+        document.querySelectorAll('.category-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const category = this.dataset.category;
+                
+                // 更新按钮状态
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.remove('category-active');
+                    btn.classList.add('text-gray-600', 'bg-gray-100');
+                });
+                
+                this.classList.add('category-active');
+                this.classList.remove('text-gray-600', 'bg-gray-100');
+                
+                // 筛选文章
+                document.querySelectorAll('.article-item').forEach(item => {
+                    if (category === 'all' || item.dataset.category === category) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // 文章点击效果
+        document.querySelectorAll('.article-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // 模拟跳转到文章详情页
+                alert('跳转到文章详情页');
+            });
+        });
+
+        // 收藏功能
+        document.querySelectorAll('.article-item').forEach(item => {
+            const collectBtn = item.querySelector('span:contains("💾")');
+            if (collectBtn) {
+                collectBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.style.color = '#3b82f6';
+                    alert('文章已收藏');
+                });
+            }
+        });
+
+        // 搜索功能
+        const searchInput = document.querySelector('input[placeholder="搜索养鹅知识..."]');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                document.querySelectorAll('.article-item').forEach(item => {
+                    const title = item.querySelector('h4').textContent.toLowerCase();
+                    const content = item.querySelector('p').textContent.toLowerCase();
+                    
+                    if (title.includes(query) || content.includes(query)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // 交互效果
+        document.querySelectorAll('.card-hover').forEach(card => {
+            card.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
