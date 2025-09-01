@@ -1,8 +1,44 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/logs/logs"
+    "pages/production/production",
+    "pages/health/health", 
+    "pages/knowledge/knowledge",
+    "pages/profile/profile",
+    "pages/finance/finance"
   ],
+  "tabBar": {
+    "color": "#999",
+    "selectedColor": "#14b8a6",
+    "backgroundColor": "#fff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/production/production", 
+        "text": "生产",
+        "iconPath": "assets/icons/production.png",
+        "selectedIconPath": "assets/icons/production-active.png"
+      },
+      {
+        "pagePath": "pages/health/health",
+        "text": "健康",
+        "iconPath": "assets/icons/health.png", 
+        "selectedIconPath": "assets/icons/health-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/icons/profile.png",
+        "selectedIconPath": "assets/icons/profile-active.png"
+      }
+    ]
+  },
   "window": {
     "navigationBarTextStyle": "black",
     "navigationStyle": "custom"
@@ -11,7 +47,6 @@
     "skyline": {
       "defaultDisplayBlock": true,
       "defaultContentBox": true,
-      "tagNameStyleIsolation": "legacy",
       "disableABTest": true,
       "sdkVersionBegin": "3.0.0",
       "sdkVersionEnd": "15.255.255"

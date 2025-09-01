@@ -1,0 +1,249 @@
+<!--health.wxml-->
+<view class="page-container">
+  <!-- 新式导航栏 -->
+  <navigation-bar 
+    title="健康管理"
+    show-back="{{true}}"
+    show-menu="{{true}}"
+    show-record="{{false}}"
+    bind:back="goBack"
+    bind:menu="onMenuTap"
+  />
+
+  <!-- Tab 切换 -->
+  <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" class="health-tabs">
+    <t-tab-panel value="record" label="健康记录"></t-tab-panel>
+    <t-tab-panel value="vaccine" label="疫苗管理"></t-tab-panel>
+    <t-tab-panel value="ai" label="AI诊疗"></t-tab-panel>
+  </t-tabs>
+
+  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight + 120}}rpx;">
+    <!-- 健康记录 -->
+    <view wx:if="{{activeTab === 'record'}}" class="tab-content">
+      <!-- 健康概览 -->
+      <view class="stats-section">
+        <view class="card-header">
+          <text class="card-title">🏥 鹅群健康概览</text>
+        </view>
+        <t-grid column="3" theme="card" class="health-stats">
+          <t-grid-item>
+            <view class="stat-item stat-success">
+              <view class="stat-icon">✅</view>
+              <view class="stat-value">{{healthStats.healthRate}}%</view>
+              <view class="stat-label">健康率</view>
+            </view>
+          </t-grid-item>
+          <t-grid-item>
+            <view class="stat-item stat-warning">
+              <view class="stat-icon">⚠️</view>
+              <view class="stat-value">{{healthStats.abnormal}}</view>
+              <view class="stat-label">异常个体</view>
+            </view>
+          </t-grid-item>
+          <t-grid-item>
+            <view class="stat-item stat-primary">
+              <view class="stat-icon">📋</view>
+              <view class="stat-value">{{healthStats.records}}</view>
+              <view class="stat-label">本月记录</view>
+            </view>
+          </t-grid-item>
+        </t-grid>
+      </view>
+
+      <!-- 添加按钮 -->
+      <view class="action-section">
+        <t-button theme="primary" size="large" block icon="add" bind:tap="addHealthRecord">
+          新增健康记录
+        </t-button>
+      </view>
+
+      <!-- 健康记录列表 -->
+      <view class="list-section">
+        <view class="card list-card">
+          <view class="card-header">
+            <text class="card-title">最近健康记录</text>
+          </view>
+          <t-cell-group>
+            <t-cell wx:for="{{healthRecords}}" wx:key="id" 
+                    bind:click="viewHealthRecord" 
+                    data-item="{{item}}"
+                    title="{{item.location}}"
+                    description="{{item.symptoms}}"
+                    note="{{item.date}} {{item.time}} • {{item.operator}}"
+                    left-icon="{{item.statusIcon}}"
+                    arrow>
+              <view slot="right" class="record-meta">
+                <t-tag theme="{{item.severity}}" size="small">{{item.priorityText}}</t-tag>
+                <text class="record-status">{{item.status}}</text>
+              </view>
+              <view slot="note" class="record-info">
+                <text class="record-date">{{item.date}} {{item.time}} • {{item.operator}}</text>
+                <text class="treatment-text">{{item.treatment}}</text>
+              </view>
+            </t-cell>
+          </t-cell-group>
+        </view>
+      </view>
+    </view>
+
+    <!-- 疫苗管理 -->
+    <view wx:if="{{activeTab === 'vaccine'}}" class="tab-content">
+      <!-- 疫苗提醒 -->
+      <view class="reminder-section">
+        <view class="card">
+          <view class="card-header">
+            <text class="card-title">⏰ 疫苗接种提醒</text>
+          </view>
+          <t-notice-bar theme="warning" content="有{{vaccineReminders.length}}项疫苗计划即将到期" />
+          <view class="reminder-list">
+            <t-cell-group style="margin-top: 24rpx;">
+              <t-cell wx:for="{{vaccineReminders}}" wx:key="id"
+                      left-icon="💉"
+                      title="{{item.name}} - {{item.location}}"
+                      description="预计接种时间：{{item.scheduledDate}}"
+                      arrow />
+            </t-cell-group>
+          </view>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="action-section">
+        <t-row gutter="24">
+          <t-col span="12">
+            <t-button theme="primary" block size="large" icon="add" bind:tap="addVaccinePlan">
+              添加疫苗计划
+            </t-button>
+          </t-col>
+          <t-col span="12">
+            <t-button theme="success" block size="large" icon="check" bind:tap="recordVaccination">
+              记录接种
+            </t-button>
+          </t-col>
+        </t-row>
+      </view>
+
+      <!-- 疫苗记录 -->
+      <view class="list-section">
+        <view class="card list-card">
+          <view class="card-header">
+            <text class="card-title">疫苗接种记录</text>
+          </view>
+          <t-cell-group>
+            <t-cell wx:for="{{vaccineRecords}}" wx:key="id"
+                    bind:click="viewVaccineRecord"
+                    data-item="{{item}}"
+                    left-icon="💉"
+                    title="{{item.name}}"
+                    description="{{item.location}} • {{item.quantity}}只鹅"
+                    note="{{item.date}} • {{item.operator}}"
+                    arrow>
+              <view slot="right" class="vaccine-status">
+                <t-tag theme="{{item.status === '已完成' ? 'success' : 'primary'}}" size="small">{{item.status}}</t-tag>
+                <text class="next-date">{{item.nextDate ? '下次：' + item.nextDate : '计划：' + item.plannedDate}}</text>
+              </view>
+            </t-cell>
+          </t-cell-group>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI诊疗 -->
+    <view wx:if="{{activeTab === 'ai'}}" class="tab-content">
+      <!-- AI助手介绍 -->
+      <view class="intro-section">
+        <view class="card">
+          <view class="card-header">
+            <text class="card-title">🤖 AI智能诊疗助手</text>
+            <text class="card-subtitle">专业的鹅病诊断与治疗建议</text>
+          </view>
+          <t-notice-bar theme="warning" content="⚠️ 重要提醒：AI建议仅供参考，请结合专业兽医诊断进行治疗决策" />
+        </view>
+      </view>
+
+      <!-- 症状输入 -->
+      <view class="input-section">
+        <view class="card">
+          <view class="card-header">
+            <text class="card-title">症状描述</text>
+          </view>
+          <t-textarea placeholder="请详细描述鹅群症状，如：精神状态、食欲情况、排便状况、体温变化等..." 
+                      value="{{symptomInput}}" 
+                      bind:change="onSymptomInput"
+                      maxlength="500"
+                      autosize />
+          <view class="symptom-tags">
+            <t-tag wx:for="{{commonSymptoms}}" wx:key="id" 
+                   theme="{{item.selected ? 'primary' : 'light'}}" 
+                   size="small" 
+                   bind:tap="toggleSymptom" 
+                   data-id="{{item.id}}">
+              {{item.name}}
+            </t-tag>
+          </view>
+          <t-button theme="primary" size="large" block bind:tap="getAIAdvice" disabled="{{!symptomInput}}" style="margin-top: 24rpx;">
+            获取AI建议
+          </t-button>
+        </view>
+      </view>
+
+      <!-- AI建议结果 -->
+      <view wx:if="{{aiAdvice}}" class="advice-section">
+        <view class="card">
+          <view class="card-header">
+            <text class="card-title">AI诊疗建议</text>
+          </view>
+          <t-cell-group>
+            <t-cell title="初步诊断" description="{{aiAdvice.diagnosis}}" left-icon="🔍" />
+            <t-cell title="建议措施" left-icon="💊">
+              <view slot="description" class="treatment-list">
+                <text wx:for="{{aiAdvice.treatments}}" wx:key="index" class="treatment-item">
+                  {{index + 1}}. {{item}}
+                </text>
+              </view>
+            </t-cell>
+          </t-cell-group>
+          <view class="advice-actions">
+            <t-button theme="success" size="small" bind:tap="adoptAdvice">采纳建议</t-button>
+            <t-button theme="light" size="small" bind:tap="saveAdvice">保存记录</t-button>
+          </view>
+        </view>
+      </view>
+
+      <!-- 历史咨询记录 -->
+      <view class="history-section">
+        <view class="card list-card">
+          <view class="card-header">
+            <text class="card-title">历史咨询记录</text>
+          </view>
+          <t-cell-group>
+            <t-cell wx:for="{{consultationHistory}}" wx:key="id"
+                    bind:click="viewConsultation"
+                    data-item="{{item}}"
+                    left-icon="💬"
+                    title="症状咨询"
+                    description="{{item.symptoms}}"
+                    note="{{item.date}}"
+                    arrow>
+              <view slot="right" class="consultation-status">
+                <t-tag theme="{{item.adopted ? 'success' : 'primary'}}" size="small">
+                  {{item.adopted ? '已采纳' : '处理中'}}
+                </t-tag>
+              </view>
+              <view slot="note" class="consultation-detail">
+                <text class="question">{{item.symptoms}}</text>
+                <view class="ai-response">
+                  <text class="diagnosis">🤖 诊断：{{item.diagnosis}}</text>
+                  <text class="treatment">建议：{{item.mainTreatment}}</text>
+                </view>
+              </view>
+            </t-cell>
+          </t-cell-group>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view style="height: 120rpx;"></view>
+  </scroll-view>
+</view>

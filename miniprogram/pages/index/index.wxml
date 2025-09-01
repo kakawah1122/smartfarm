@@ -1,29 +1,98 @@
-<!--index.wxml-->
-<navigation-bar title="Weixin" back="{{false}}" color="black" background="#FFF"></navigation-bar>
-<scroll-view class="scrollarea" scroll-y type="list">
-  <view class="container">
-    <view class="userinfo">
-      <block wx:if="{{canIUseNicknameComp && !hasUserInfo}}">
-        <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
-          <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
-        </button>
-        <view class="nickname-wrapper">
-          <text class="nickname-label">昵称</text>
-          <input type="nickname" class="nickname-input" placeholder="请输入昵称" bind:change="onInputChange" />
+<view class="mobile-container">
+  <!-- 新式导航栏 -->
+  <navigation-bar 
+    title="智慧养鹅"
+    show-back="{{false}}"
+    show-menu="{{true}}"
+    show-record="{{true}}"
+    bind:menu="onMenuTap"
+    bind:record="onRecordTap"
+  />
+
+
+
+  <scroll-view class="scroll-container" scroll-y>
+    <!-- 天气模块 -->
+    <view class="card weather-card">
+      <view class="card-content">
+        <view class="weather-header">
+          <view class="weather-left">
+            <view class="weather-icon-wrapper">
+              <text class="weather-emoji">☀️</text>
+            </view>
+            <view class="weather-info">
+              <text class="weather-title">今日天气</text>
+              <text class="weather-location">苏州市吴中区</text>
+            </view>
+          </view>
+          <view class="weather-right">
+            <text class="temperature">{{weather.temperature}}°C</text>
+            <text class="humidity">湿度 {{weather.humidity}}%</text>
+          </view>
         </view>
-      </block>
-      <block wx:elif="{{!hasUserInfo}}">
-        <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile"> 获取头像昵称 </button>
-        <view wx:else> 请使用2.10.4及以上版本基础库 </view>
-      </block>
-      <block wx:else>
-        <image bindtap="bindViewTap" class="userinfo-avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
-        <text class="userinfo-nickname">{{userInfo.nickName}}</text>
-      </block>
+
+      </view>
     </view>
-    <view class="usermotto">
-      <text class="user-motto">{{motto}}</text>
+
+    <!-- 今日鹅价 -->
+    <view class="card price-card">
+      <view class="card-header">
+        <text class="card-title">📈 今日鹅价</text>
+        <text class="update-time">更新于 {{priceUpdateTime}}</text>
+      </view>
+      <view class="price-grid">
+        <view class="price-item success-bg">
+          <text class="price-label">成鹅价格</text>
+          <text class="price-value success-text">¥{{goosePrice.adult}}<text class="price-unit">/斤</text></text>
+          <text class="price-trend {{goosePrice.adultTrend > 0 ? 'trend-up' : 'trend-down'}}">
+            {{goosePrice.adultTrend > 0 ? '↑' : '↓'}} {{goosePrice.adultChange}}
+          </text>
+        </view>
+        <view class="price-item primary-bg">
+          <text class="price-label">鹅苗价格</text>
+          <text class="price-value primary-text">¥{{goosePrice.gosling}}<text class="price-unit">/羽</text></text>
+          <text class="price-trend {{goosePrice.goslingTrend > 0 ? 'trend-up' : 'trend-down'}}">
+            {{goosePrice.goslingTrend > 0 ? '↑' : '↓'}} {{goosePrice.goslingChange}}
+          </text>
+        </view>
+      </view>
     </view>
-    <t-button theme="primary">按钮</t-button>
-  </view>
-</scroll-view>
+
+    <!-- 待办事项 -->
+    <view class="card todo-card">
+      <view class="card-header">
+        <text class="card-title">✅ 今日待办</text>
+      </view>
+      <view class="todo-list">
+        <view class="todo-item" wx:for="{{todoList}}" wx:key="id">
+          <view class="todo-left">
+            <view class="todo-dot {{item.priority}}"></view>
+            <text class="todo-text">{{item.content}}</text>
+          </view>
+          <t-tag theme="{{item.tagTheme}}" size="small" class="todo-tag">{{item.priorityText}}</t-tag>
+        </view>
+      </view>
+      <t-button theme="light" size="medium" block bind:tap="viewAllTodos" class="view-all-btn">
+        查看全部
+      </t-button>
+    </view>
+
+    <!-- 快捷功能 -->
+    <view class="card shortcut-card">
+      <view class="card-header">
+        <text class="card-title">快捷功能</text>
+      </view>
+      <view class="shortcut-grid">
+        <view class="shortcut-item" wx:for="{{shortcuts}}" wx:key="id" bind:tap="navigateTo" data-page="{{item.page}}">
+          <view class="shortcut-icon {{item.color}}">
+            <text class="icon-emoji">{{item.icon}}</text>
+          </view>
+          <text class="shortcut-label">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view style="height: 140rpx;"></view>
+  </scroll-view>
+</view>

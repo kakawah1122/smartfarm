@@ -1,0 +1,511 @@
+/* health.scss - 现代化健康管理设计 */
+page {
+  background-color: var(--color-bg-page);
+  --td-brand-color: var(--primary-blue);
+  --td-brand-color-hover: var(--color-info);
+  --td-brand-color-focus: #6366f1;
+  --td-brand-color-active: var(--primary-blue-dark);
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: var(--color-bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 自定义导航栏 - 刘海屏适配 */
+.custom-navbar {
+  background: var(--primary-gradient) !important;
+  color: white !important;
+  box-shadow: var(--shadow-base) !important;
+  padding-top: var(--safe-area-inset-top, 0) !important;
+  padding-left: var(--safe-area-inset-left, 0) !important;
+  padding-right: var(--safe-area-inset-right, 0) !important;
+}
+
+/* 健康管理Tab样式 - 刘海屏适配 */
+.health-tabs {
+  background: var(--color-bg-primary) !important;
+  --td-tab-track-color: var(--primary-blue) !important;
+  --td-tab-item-active-color: var(--primary-blue) !important;
+  --td-tab-item-color: var(--color-text-secondary) !important;
+  position: sticky;
+  top: var(--navbar-height);
+  z-index: var(--z-index-sticky);
+  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+/* 滚动容器 - 刘海屏适配 */
+.scroll-container {
+  flex: 1;
+  padding-top: var(--total-header-height);
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.tab-content {
+  min-height: 100%;
+  padding-bottom: calc(120rpx + var(--safe-area-inset-bottom, 0));
+  padding-left: var(--safe-area-inset-left, 0);
+  padding-right: var(--safe-area-inset-right, 0);
+}
+
+/* 各个模块的间距 */
+.stats-section,
+.action-section,
+.list-section,
+.reminder-section,
+.intro-section,
+.input-section,
+.advice-section,
+.history-section {
+  margin: var(--spacing-lg);
+}
+
+/* 健康统计卡片 - 现代化设计 */
+.health-stats {
+  margin: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-base);
+  background: var(--color-bg-primary);
+  position: relative;
+}
+
+.health-stats::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  background: linear-gradient(90deg, var(--color-success), var(--color-warning), var(--primary-blue));
+}
+
+.stat-item {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-xl) var(--spacing-base);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.stat-item.stat-success {
+  background: linear-gradient(135deg, var(--color-success-light), var(--color-success-lighter));
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.stat-item.stat-warning {
+  background: linear-gradient(135deg, var(--color-warning-light), var(--color-warning-lighter));
+  border: 1px solid rgba(245, 158, 11, 0.1);
+}
+
+.stat-item.stat-primary {
+  background: linear-gradient(135deg, var(--color-info-light), var(--color-info-lighter));
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.stat-icon {
+  width: 72rpx;
+  height: 72rpx;
+  font-size: var(--font-size-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10rpx);
+}
+
+.stat-value {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-xs);
+}
+
+.stat-item.stat-success .stat-value {
+  color: var(--color-success);
+  text-shadow: 0 2rpx 4rpx rgba(16, 185, 129, 0.2);
+}
+
+.stat-item.stat-warning .stat-value {
+  color: var(--color-warning);
+  text-shadow: 0 2rpx 4rpx rgba(245, 158, 11, 0.2);
+}
+
+.stat-item.stat-primary .stat-value {
+  color: var(--primary-blue);
+  text-shadow: 0 2rpx 4rpx rgba(14, 165, 233, 0.2);
+}
+
+.stat-label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 卡片样式 */
+.card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin: var(--spacing-lg);
+  box-shadow: var(--shadow-base);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2rpx;
+  background: var(--primary-gradient);
+  opacity: 0.6;
+}
+
+.card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--spacing-lg);
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  line-height: var(--line-height-tight);
+}
+
+.card-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 列表卡片 */
+.list-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin: var(--spacing-lg);
+  box-shadow: var(--shadow-base);
+  position: relative;
+}
+
+.list-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2rpx;
+  background: linear-gradient(90deg, var(--color-success), var(--color-info));
+  opacity: 0.7;
+}
+
+/* 记录元信息样式 */
+.record-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: var(--spacing-xs);
+}
+
+.record-status {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.record-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-base);
+  margin-top: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.record-date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.treatment-text {
+  font-size: var(--font-size-sm);
+  color: var(--primary-blue);
+  line-height: var(--line-height-base);
+  background: var(--color-info-lighter);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 疫苗状态 */
+.vaccine-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-xs);
+}
+
+.next-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 症状标签 */
+.symptom-tags {
+  display: flex;
+  gap: var(--spacing-base);
+  margin: var(--spacing-lg) 0;
+  flex-wrap: wrap;
+}
+
+/* 治疗建议列表 */
+.treatment-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-base);
+  padding: var(--spacing-base);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  border-left: 4rpx solid var(--color-success);
+}
+
+.treatment-item {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-base);
+  display: block;
+  font-weight: var(--font-weight-medium);
+  position: relative;
+  padding-left: var(--spacing-lg);
+}
+
+.treatment-item::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--color-success);
+  font-weight: var(--font-weight-bold);
+}
+
+/* AI建议操作按钮 */
+.advice-actions {
+  display: flex;
+  gap: var(--spacing-base);
+  margin-top: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+/* 咨询状态 */
+.consultation-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.consultation-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.question {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-medium);
+}
+
+.ai-response {
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-base);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  border-left: 4rpx solid var(--primary-blue);
+  position: relative;
+}
+
+.ai-response::before {
+  content: '🤖';
+  position: absolute;
+  top: var(--spacing-base);
+  right: var(--spacing-base);
+  font-size: var(--font-size-sm);
+  opacity: 0.6;
+}
+
+.diagnosis {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.treatment {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 480px) {
+  .health-stats,
+  .card,
+  .list-card {
+    margin: var(--spacing-base) var(--spacing-lg);
+  }
+  
+  .stat-item {
+    padding: var(--spacing-lg) var(--spacing-sm);
+  }
+  
+  .stat-value {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .stat-icon {
+    width: 60rpx;
+    height: 60rpx;
+    font-size: var(--font-size-md);
+  }
+  
+  .advice-actions {
+    flex-direction: column;
+  }
+  
+  .advice-actions .t-button {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 350px) {
+  .symptom-tags {
+    justify-content: center;
+  }
+  
+  .treatment-list {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .health-stats,
+  .card,
+  .list-card {
+    background: #1a202c;
+    box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.3);
+  }
+  
+  .stat-item.stat-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.1));
+  }
+  
+  .stat-item.stat-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.1));
+  }
+  
+  .stat-item.stat-primary {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.1));
+  }
+  
+  .treatment-list {
+    background: #2d3748;
+  }
+  
+  .ai-response {
+    background: #2d3748;
+  }
+}
+
+/* 加载状态 */
+.health-stats.loading,
+.card.loading,
+.list-card.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* 无障碍增强 */
+.stat-item:focus {
+  outline: 2rpx solid var(--primary-blue);
+  outline-offset: 4rpx;
+}
+
+/* 动画增强 */
+.health-stats,
+.card,
+.list-card {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.stat-item {
+  animation: fadeIn 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.stat-item:nth-child(1) { animation-delay: 0.1s; }
+.stat-item:nth-child(2) { animation-delay: 0.2s; }
+.stat-item:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

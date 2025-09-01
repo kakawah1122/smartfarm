@@ -1,0 +1,474 @@
+/* profile.scss - 现代化个人中心设计 */
+page {
+  background-color: var(--color-bg-page);
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: var(--color-bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 自定义导航栏 - 刘海屏适配 */
+.custom-navbar {
+  background: var(--primary-gradient) !important;
+  color: white !important;
+  box-shadow: var(--shadow-base) !important;
+  padding-top: var(--safe-area-inset-top, 0) !important;
+  padding-left: var(--safe-area-inset-left, 0) !important;
+  padding-right: var(--safe-area-inset-right, 0) !important;
+}
+
+/* 用户信息部分 - 刘海屏适配 */
+.user-section {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  right: 0;
+  z-index: var(--z-index-sticky);
+  padding: var(--spacing-lg);
+  padding-left: max(var(--spacing-lg), var(--safe-area-inset-left, 0));
+  padding-right: max(var(--spacing-lg), var(--safe-area-inset-right, 0));
+}
+
+.user-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.user-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+  z-index: 1;
+}
+
+.user-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: var(--radius-full);
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-3xl);
+  color: white;
+  margin-right: var(--spacing-lg);
+  box-shadow: var(--shadow-colored);
+  position: relative;
+}
+
+.user-avatar::before {
+  content: '';
+  position: absolute;
+  inset: -4rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-full);
+  z-index: -1;
+  opacity: 0.3;
+  filter: blur(12rpx);
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  line-height: var(--line-height-tight);
+}
+
+.user-role {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  display: block;
+  font-weight: var(--font-weight-medium);
+}
+
+/* 用户统计 - 现代化设计 */
+.user-stats {
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+  position: relative;
+  z-index: 1;
+}
+
+.stat-item {
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-item:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.stat-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-blue);
+  margin-bottom: var(--spacing-xs);
+  line-height: var(--line-height-tight);
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 滚动容器 - 刘海屏适配 */
+.scroll-container {
+  flex: 1;
+  padding-top: calc(240rpx + var(--safe-area-inset-top, 0));
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 卡片样式 */
+.card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin: var(--spacing-lg);
+  box-shadow: var(--shadow-base);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2rpx;
+  background: var(--primary-gradient);
+  opacity: 0.6;
+}
+
+.card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.view-detail {
+  font-size: var(--font-size-base);
+  color: var(--primary-blue);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-info-lighter);
+  transition: all 0.3s ease;
+}
+
+.view-detail:active {
+  background: var(--color-info-light);
+}
+
+/* 财务统计 - 现代化设计 */
+.finance-stats {
+  border-radius: var(--radius-base);
+  overflow: hidden;
+}
+
+.finance-item {
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.finance-item:active {
+  transform: scale(0.97);
+}
+
+.finance-item.success {
+  background: linear-gradient(135deg, var(--color-success-light), var(--color-success-lighter));
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.finance-item.danger {
+  background: linear-gradient(135deg, var(--color-danger-light), var(--color-danger-lighter));
+  border: 1px solid rgba(239, 68, 68, 0.1);
+}
+
+.finance-item.primary {
+  background: linear-gradient(135deg, var(--color-info-light), var(--color-info-lighter));
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.finance-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.finance-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.finance-trend {
+  font-size: var(--font-size-xs);
+  color: var(--color-success);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: var(--radius-sm);
+}
+
+/* 菜单徽章 */
+.menu-badge {
+  display: flex;
+  align-items: center;
+}
+
+/* 数据统计网格 */
+.stats-grid {
+  border-radius: var(--radius-base);
+  overflow: hidden;
+}
+
+.stat-card {
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-base);
+  margin: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.stat-card:active {
+  transform: scale(0.97);
+}
+
+.stat-card.blue {
+  background: linear-gradient(135deg, var(--color-info-light), var(--color-info-lighter));
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.stat-card.green {
+  background: linear-gradient(135deg, var(--color-success-light), var(--color-success-lighter));
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.stat-card.orange {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  border: 1px solid rgba(245, 158, 11, 0.1);
+}
+
+.stat-card.purple {
+  background: linear-gradient(135deg, #e9d5ff, #c4b5fd);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.stat-icon {
+  font-size: var(--font-size-base);
+  opacity: 0.8;
+}
+
+.stat-number {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.stat-change {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 退出登录区域 - 刘海屏适配 */
+.logout-section {
+  margin: var(--spacing-lg);
+  margin-left: max(var(--spacing-lg), var(--safe-area-inset-left, 0));
+  margin-right: max(var(--spacing-lg), var(--safe-area-inset-right, 0));
+  padding-bottom: calc(var(--spacing-xl) + var(--safe-area-inset-bottom, 0));
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 480px) {
+  .user-card,
+  .card {
+    margin: var(--spacing-base) var(--spacing-lg);
+  }
+  
+  .user-avatar {
+    width: 100rpx;
+    height: 100rpx;
+    font-size: var(--font-size-2xl);
+  }
+  
+  .user-name {
+    font-size: var(--font-size-lg);
+  }
+  
+  .stat-card {
+    padding: var(--spacing-base);
+  }
+  
+  .stat-number {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media screen and (max-width: 350px) {
+  .finance-stats,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .user-info {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .user-avatar {
+    margin: 0 0 var(--spacing-lg) 0;
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .user-card,
+  .card {
+    background: #1a202c;
+    box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.3);
+  }
+  
+  .finance-item.success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.1));
+  }
+  
+  .finance-item.danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.1));
+  }
+  
+  .finance-item.primary {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.1));
+  }
+  
+  .stat-card.blue {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.1));
+  }
+  
+  .stat-card.green {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.1));
+  }
+}
+
+/* 加载状态 */
+.card.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* 无障碍增强 */
+.stat-item:focus,
+.finance-item:focus,
+.stat-card:focus {
+  outline: 2rpx solid var(--primary-blue);
+  outline-offset: 4rpx;
+}
+
+/* 动画增强 */
+.user-card,
+.card {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.stat-item,
+.finance-item,
+.stat-card {
+  animation: fadeIn 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.stat-item:nth-child(1) { animation-delay: 0.1s; }
+.stat-item:nth-child(2) { animation-delay: 0.2s; }
+.stat-item:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

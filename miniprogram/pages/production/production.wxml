@@ -1,0 +1,214 @@
+<!--production.wxml-->
+<view class="page-container">
+  <!-- 新式导航栏 -->
+  <navigation-bar 
+    title="生产管理"
+    show-back="{{true}}"
+    show-menu="{{true}}"
+    show-record="{{false}}"
+    bind:back="goBack"
+    bind:menu="onMenuTap"
+  />
+
+  <!-- Tab 切换 -->
+  <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" class="production-tabs">
+    <t-tab-panel label="入栏管理" value="entry" />
+    <t-tab-panel label="出栏管理" value="exit" />
+    <t-tab-panel label="物料管理" value="material" />
+  </t-tabs>
+
+  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight + 120}}rpx;">
+    <!-- 入栏管理 -->
+    <view wx:if="{{activeTab === 'entry'}}" class="tab-content">
+      <!-- 统计卡片 -->
+      <t-grid class="stats-card" column="3" theme="card">
+        <t-grid-item>
+          <view class="stat-item">
+            <text class="stat-value primary">{{entryStats.total}}</text>
+            <text class="stat-label">总数量(羽)</text>
+          </view>
+        </t-grid-item>
+        <t-grid-item>
+          <view class="stat-item">
+            <text class="stat-value success">¥{{entryStats.amount}}万</text>
+            <text class="stat-label">总金额</text>
+          </view>
+        </t-grid-item>
+        <t-grid-item>
+          <view class="stat-item">
+            <text class="stat-value warning">{{entryStats.batches}}</text>
+            <text class="stat-label">入栏批次</text>
+          </view>
+        </t-grid-item>
+      </t-grid>
+
+      <!-- 添加按钮 -->
+      <view class="action-section">
+        <t-button theme="primary" size="large" block icon="add" bind:tap="addEntry">
+          新增入栏记录
+        </t-button>
+      </view>
+
+      <!-- 记录列表 -->
+      <view class="card list-card">
+        <view class="card-header">
+          <text class="card-title">最近入栏记录</text>
+        </view>
+        <t-cell-group class="record-list">
+          <t-cell 
+            wx:for="{{entryRecords}}" 
+            wx:key="id"
+            title="{{item.breed}}{{item.quality ? ' - ' + item.quality : ''}}"
+            description="供应商：{{item.supplier}}"
+            note="{{item.date}} • {{item.operator}}"
+            left-icon="🦢"
+            arrow
+            bind:click="viewRecord"
+            data-item="{{item}}"
+          >
+            <view slot="right" class="record-meta">
+              <text class="record-quantity">{{item.quantity}}羽</text>
+              <text class="record-amount">¥{{item.amount}}</text>
+            </view>
+            <view slot="note" class="record-info">
+              <text class="record-date">{{item.date}} • {{item.operator}}</text>
+              <t-tag theme="{{item.status === '已完成' ? 'success' : 'warning'}}" size="small">{{item.status}}</t-tag>
+            </view>
+          </t-cell>
+        </t-cell-group>
+      </view>
+    </view>
+
+    <!-- 出栏管理 -->
+    <view wx:if="{{activeTab === 'exit'}}" class="tab-content">
+      <!-- 统计卡片 -->
+      <t-grid class="stats-card" column="3" theme="card">
+        <t-grid-item>
+          <view class="stat-item">
+            <text class="stat-value success">{{exitStats.total}}</text>
+            <text class="stat-label">总数量(羽)</text>
+          </view>
+        </t-grid-item>
+        <t-grid-item>
+          <view class="stat-item">
+            <text class="stat-value success">¥{{exitStats.revenue}}万</text>
+            <text class="stat-label">总收入</text>
+          </view>
+        </t-grid-item>
+        <t-grid-item>
+          <view class="stat-item">
+            <text class="stat-value primary">{{exitStats.avgWeight}}斤</text>
+            <text class="stat-label">平均重量</text>
+          </view>
+        </t-grid-item>
+      </t-grid>
+
+      <!-- 添加按钮 -->
+      <view class="action-section">
+        <t-button theme="primary" size="large" block icon="add" bind:tap="addExit">
+          新增出栏记录
+        </t-button>
+      </view>
+
+      <!-- 记录列表 -->
+      <view class="card list-card">
+        <view class="card-header">
+          <text class="card-title">最近出栏记录</text>
+        </view>
+        <t-cell-group class="record-list">
+          <t-cell 
+            wx:for="{{exitRecords}}" 
+            wx:key="id"
+            title="{{item.type}}"
+            description="客户：{{item.customer}}"
+            note="{{item.date}} • {{item.operator}} • 平均{{item.avgWeight}}斤"
+            left-icon="📦"
+            arrow
+            bind:click="viewRecord"
+            data-item="{{item}}"
+          >
+            <view slot="right" class="record-meta">
+              <text class="record-quantity">{{item.quantity}}羽</text>
+              <text class="record-amount success">¥{{item.revenue}}</text>
+            </view>
+            <view slot="note" class="record-info">
+              <text class="record-date">{{item.date}} • {{item.operator}} • 平均{{item.avgWeight}}斤</text>
+              <t-tag theme="{{item.status === '已交付' ? 'success' : 'primary'}}" size="small">{{item.status}}</t-tag>
+            </view>
+          </t-cell>
+        </t-cell-group>
+      </view>
+    </view>
+
+    <!-- 物料管理 -->
+    <view wx:if="{{activeTab === 'material'}}" class="tab-content">
+      <!-- 库存概览 -->
+      <t-grid class="stats-card" column="2" theme="card">
+        <t-grid-item>
+          <view class="inventory-item warning">
+            <text class="inventory-label">饲料库存</text>
+            <text class="inventory-value">{{materialStats.feed}}吨</text>
+            <text class="inventory-status">⚠️ 库存不足</text>
+          </view>
+        </t-grid-item>
+        <t-grid-item>
+          <view class="inventory-item success">
+            <text class="inventory-label">药品库存</text>
+            <text class="inventory-value">充足</text>
+            <text class="inventory-status">✅ 状态良好</text>
+          </view>
+        </t-grid-item>
+      </t-grid>
+
+      <!-- 操作按钮 -->
+      <view class="action-section">
+        <t-row gutter="24" class="action-buttons">
+          <t-col span="12">
+            <t-button theme="primary" block size="large" icon="add" bind:tap="purchaseMaterial">
+              采购入库
+            </t-button>
+          </t-col>
+          <t-col span="12">
+            <t-button theme="warning" block size="large" icon="remove" bind:tap="useMaterial">
+              物料领用
+            </t-button>
+          </t-col>
+        </t-row>
+      </view>
+
+      <!-- 物料记录 -->
+      <view class="card list-card">
+        <view class="card-header">
+          <text class="card-title">最近物料记录</text>
+        </view>
+        <t-cell-group class="record-list">
+          <t-cell 
+            wx:for="{{materialRecords}}" 
+            wx:key="id"
+            title="{{item.name}}"
+            description="{{item.type}}{{item.type === '采购' ? '入库' : '领用'}} • {{item.description}}"
+            note="{{item.date}} • {{item.operator}}"
+            left-icon="{{item.type === '采购' ? '📥' : '📤'}}"
+            arrow
+            bind:click="viewRecord"
+            data-item="{{item}}"
+          >
+            <view slot="right" class="record-meta">
+              <text class="record-quantity">{{item.quantity}}</text>
+              <text class="record-amount {{item.type === '采购' ? 'primary' : 'gray'}}">
+                {{item.type === '采购' ? '¥' + item.amount : '日常使用'}}
+              </text>
+            </view>
+            <view slot="note" class="record-info">
+              <text class="record-date">{{item.date}} • {{item.operator}}</text>
+              <text class="record-stock">库存: {{item.stock}}</text>
+            </view>
+          </t-cell>
+        </t-cell-group>
+      </view>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view style="height: 120rpx;"></view>
+  </scroll-view>
+</view>

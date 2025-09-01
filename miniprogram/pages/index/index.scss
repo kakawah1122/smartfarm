@@ -1,62 +1,677 @@
-/**index.scss**/
+/* index.scss - 现代化响应式设计 */
 page {
+  background-color: var(--color-bg-page);
   height: 100vh;
+  overflow: hidden;
+}
+
+/* 移动端容器 - 优化布局 */
+.mobile-container {
+  width: 100%;
+  height: 100vh;
+  margin: 0 auto;
+  background: var(--color-bg-secondary);
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-.scrollarea {
+
+
+
+
+
+/* 滚动容器 - 刘海屏适配 */
+.scroll-container {
   flex: 1;
-  overflow-y: hidden;
+  background-color: var(--color-bg-secondary);
+  margin-top: -var(--spacing-lg);
+  padding-top: var(--spacing-2xl);
+  padding-bottom: calc(var(--spacing-3xl) + var(--safe-area-inset-bottom, 0));
+  border-radius: var(--spacing-xl) var(--spacing-xl) 0 0;
+  position: relative;
+  z-index: 2;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.userinfo {
+/* 卡片通用样式 - 现代化设计 */
+.card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  margin: var(--spacing-lg) var(--spacing-xl) var(--spacing-2xl) var(--spacing-xl);
+  box-shadow: var(--shadow-base);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  background: var(--primary-gradient);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
+}
+
+.card:active::before {
+  opacity: 1;
+}
+
+.card-content {
+  padding: var(--spacing-2xl);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  letter-spacing: 0.5rpx;
+  line-height: var(--line-height-tight);
+}
+
+.update-time {
+  font-size: var(--font-size-base);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 天气卡片 - 现代化设计 */
+.weather-card {
+  margin-top: var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.02) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.weather-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+}
+
+.weather-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.weather-icon-wrapper {
+  width: 96rpx;
+  height: 96rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-lg);
+  box-shadow: var(--shadow-colored);
+  position: relative;
+}
+
+.weather-icon-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -2rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-full);
+  z-index: -1;
+  opacity: 0.3;
+  filter: blur(8rpx);
+}
+
+.weather-emoji {
+  font-size: var(--font-size-2xl);
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.15));
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.weather-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-xs);
+}
+
+.weather-location {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-medium);
+}
+
+.weather-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.temperature {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  display: block;
+  background: var(--primary-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2rpx 4rpx rgba(14, 165, 233, 0.2));
+}
+
+.humidity {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  margin-top: var(--spacing-xs);
+  display: block;
+  font-weight: var(--font-weight-medium);
+}
+
+
+
+/* 价格卡片 - 现代化设计 */
+.price-card .card-content,
+.price-card {
+  padding: var(--spacing-xl);
+}
+
+.price-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+.price-item {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #aaa;
-  width: 80%;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.userinfo-avatar {
-  overflow: hidden;
-  width: 128rpx;
-  height: 128rpx;
-  margin: 20rpx;
-  border-radius: 50%;
+.price-item:active {
+  transform: scale(0.97);
 }
 
-.usermotto {
-  margin-top: 200px;
+.success-bg {
+  background: linear-gradient(135deg, var(--color-success-light), var(--color-success-lighter));
+  border: 1px solid rgba(16, 185, 129, 0.1);
 }
 
-.avatar-wrapper {
-  padding: 0;
-  width: 56px !important;
-  border-radius: 8px;
-  margin-top: 40px;
-  margin-bottom: 40px;
+.primary-bg {
+  background: linear-gradient(135deg, var(--color-info-light), var(--color-info-lighter));
+  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
-.avatar {
-  display: block;
-  width: 56px;
-  height: 56px;
+.price-label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-medium);
 }
 
-.nickname-wrapper {
+.price-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+  line-height: var(--line-height-tight);
   display: flex;
-  width: 100%;
-  padding: 16px;
-  box-sizing: border-box;
-  border-top: .5px solid rgba(0, 0, 0, 0.1);
-  border-bottom: .5px solid rgba(0, 0, 0, 0.1);
-  color: black;
+  align-items: baseline;
+  gap: var(--spacing-xs);
 }
 
-.nickname-label {
-  width: 105px;
+.price-unit {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  opacity: 0.8;
 }
 
-.nickname-input {
+.success-text {
+  color: var(--color-success);
+}
+
+.primary-text {
+  color: var(--primary-blue);
+}
+
+.price-trend {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-base);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.trend-up {
+  color: var(--color-success);
+  background: var(--color-success-lighter);
+}
+
+.trend-down {
+  color: var(--color-danger);
+  background: var(--color-danger-lighter);
+}
+
+/* 待办事项 - 现代化设计 */
+.todo-card .card-content,
+.todo-card {
+  padding: var(--spacing-xl);
+}
+
+.todo-list {
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-base);
+  min-height: 68rpx;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10rpx);
+}
+
+.todo-item:active {
+  transform: scale(0.98);
+}
+
+.todo-item:nth-child(1) {
+  background: linear-gradient(135deg, var(--color-danger-lighter), rgba(254, 202, 202, 0.8));
+  border: 1px solid rgba(239, 68, 68, 0.1);
+}
+
+.todo-item:nth-child(2) {
+  background: linear-gradient(135deg, var(--color-warning-lighter), rgba(254, 243, 199, 0.8));
+  border: 1px solid rgba(245, 158, 11, 0.1);
+}
+
+.todo-item:nth-child(3) {
+  background: linear-gradient(135deg, var(--color-info-lighter), rgba(191, 219, 254, 0.8));
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.todo-left {
+  display: flex;
+  align-items: center;
   flex: 1;
+  gap: var(--spacing-lg);
+}
+
+.todo-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.todo-dot::before {
+  content: '';
+  position: absolute;
+  inset: -4rpx;
+  border-radius: var(--radius-full);
+  opacity: 0.3;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.todo-dot.danger {
+  background-color: var(--color-danger);
+}
+
+.todo-dot.danger::before {
+  background-color: var(--color-danger);
+}
+
+.todo-dot.warning {
+  background-color: var(--color-warning);
+}
+
+.todo-dot.warning::before {
+  background-color: var(--color-warning);
+}
+
+.todo-dot.primary {
+  background-color: var(--primary-blue);
+}
+
+.todo-dot.primary::before {
+  background-color: var(--primary-blue);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.todo-text {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-base);
+  flex: 1;
+  font-weight: var(--font-weight-medium);
+}
+
+.todo-tag {
+  flex-shrink: 0;
+}
+
+.view-all-btn {
+  margin-top: var(--spacing-lg);
+  color: var(--primary-blue) !important;
+  background: transparent !important;
+  border: 1px solid var(--color-border-light) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* 快捷功能 - 现代化设计 */
+.shortcut-card .card-content,
+.shortcut-card {
+  padding: var(--spacing-xl);
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+}
+
+.shortcut-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-md) var(--spacing-sm);
+  border-radius: var(--radius-base);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+}
+
+.shortcut-item:active {
+  transform: scale(0.95);
+  background: var(--color-bg-tertiary);
+  box-shadow: var(--shadow-sm);
+}
+
+.shortcut-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  box-shadow: var(--shadow-base);
+}
+
+.shortcut-icon::before {
+  content: '';
+  position: absolute;
+  inset: -2rpx;
+  border-radius: var(--radius-md);
+  opacity: 0.3;
+  filter: blur(6rpx);
+  z-index: -1;
+}
+
+.shortcut-icon.blue {
+  background: linear-gradient(135deg, var(--color-info), #6366f1);
+}
+
+.shortcut-icon.blue::before {
+  background: linear-gradient(135deg, var(--color-info), #6366f1);
+}
+
+.shortcut-icon.green {
+  background: linear-gradient(135deg, var(--color-success), #059669);
+}
+
+.shortcut-icon.green::before {
+  background: linear-gradient(135deg, var(--color-success), #059669);
+}
+
+.shortcut-icon.orange {
+  background: linear-gradient(135deg, var(--color-warning), #d97706);
+}
+
+.shortcut-icon.orange::before {
+  background: linear-gradient(135deg, var(--color-warning), #d97706);
+}
+
+.shortcut-icon.purple {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.shortcut-icon.purple::before {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.icon-emoji {
+  font-size: var(--font-size-xl);
+  color: white;
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.2));
+}
+
+.shortcut-label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 添加特色阴影层次 */
+.weather-card {
+  box-shadow: 0 4rpx 24rpx rgba(14, 165, 233, 0.12);
+}
+
+.price-card {
+  box-shadow: 0 4rpx 24rpx rgba(16, 185, 129, 0.1);
+}
+
+.todo-card {
+  box-shadow: 0 4rpx 24rpx rgba(245, 158, 11, 0.1);
+}
+
+.shortcut-card {
+  box-shadow: 0 4rpx 24rpx rgba(139, 92, 246, 0.1);
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 480px) {
+  .mobile-container {
+    max-width: 100%;
+  }
+  
+
+  
+  .card {
+    margin: var(--spacing-base) var(--spacing-lg) var(--spacing-xl) var(--spacing-lg);
+  }
+  
+  .card-content {
+    padding: var(--spacing-lg);
+  }
+  
+  .shortcut-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+  }
+  
+  .shortcut-icon {
+    width: 72rpx;
+    height: 72rpx;
+  }
+  
+  .icon-emoji {
+    font-size: var(--font-size-lg);
+  }
+  
+  .shortcut-label {
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media screen and (max-width: 350px) {
+  .price-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-base);
+  }
+  
+  .shortcut-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-base);
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .mobile-container {
+    background: #0f1419;
+  }
+  
+  .scroll-container {
+    background: #0f1419;
+  }
+  
+  .card {
+    background: #1a202c;
+    box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.3);
+  }
+  
+  .weather-card {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(59, 130, 246, 0.08) 100%);
+  }
+}
+
+/* 动效增强 */
+.card {
+  transform-origin: center;
+  will-change: transform, box-shadow;
+}
+
+.shortcut-item,
+.todo-item,
+.price-item {
+  will-change: transform;
+}
+
+/* 滚动性能优化 */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 安全区域适配 - 增强版 */
+.mobile-container {
+  padding-bottom: var(--safe-area-inset-bottom, 0);
+}
+
+/* 针对刘海屏设备的特殊优化 */
+@supports (padding: max(0px)) {
+  .status-bar {
+    padding-top: max(var(--safe-area-inset-top, 0), 8rpx);
+  }
+  
+
+  
+  .card {
+    margin-left: max(var(--spacing-xl), calc(var(--spacing-xl) + var(--safe-area-inset-left, 0)));
+    margin-right: max(var(--spacing-xl), calc(var(--spacing-xl) + var(--safe-area-inset-right, 0)));
+  }
+}
+
+/* 针对不同设备的微调 */
+@supports (backdrop-filter: blur(10rpx)) {
+  .todo-item {
+    backdrop-filter: blur(5rpx);
+  }
+}
+
+/* 加载状态样式 */
+.card.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.card.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32rpx;
+  height: 32rpx;
+  margin: -16rpx 0 0 -16rpx;
+  border: 2rpx solid var(--color-border-light);
+  border-top-color: var(--primary-blue);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 无障碍增强 */
+.shortcut-item:focus,
+.todo-item:focus,
+.price-item:focus {
+  outline: 2rpx solid var(--primary-blue);
+  outline-offset: 4rpx;
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .card {
+    border: 2rpx solid var(--color-border-dark);
+  }
+  
+  .price-item,
+  .todo-item {
+    border: 2rpx solid var(--color-border-base);
+  }
 }
