@@ -8,14 +8,6 @@ Component({
       type: Boolean,
       value: false
     },
-    showMenu: {
-      type: Boolean,
-      value: true
-    },
-    showRecord: {
-      type: Boolean,
-      value: true
-    },
     statusBarHeight: {
       type: Number,
       value: 44
@@ -45,14 +37,6 @@ Component({
         }
       })
       this.triggerEvent('back')
-    },
-
-    onMenuTap() {
-      this.triggerEvent('menu')
-    },
-
-    onRecordTap() {
-      this.triggerEvent('record')
     }
   }
 })

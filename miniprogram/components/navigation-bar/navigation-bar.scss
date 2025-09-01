@@ -4,9 +4,11 @@
   background: var(--header-gradient);
   color: white;
   box-shadow: 0 2rpx 20rpx rgba(20, 184, 166, 0.15);
-  border-radius: 0 0 32rpx 32rpx;
+  border-radius: 0;
   overflow: hidden;
   z-index: var(--z-index-fixed);
+  display: flex;
+  align-items: flex-end;
 }
 
 .custom-navbar::before {
@@ -22,8 +24,10 @@
 
 .navbar-content {
   height: 88rpx;
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   padding: 0 var(--spacing-xl);
   position: relative;
   z-index: 1;
@@ -33,46 +37,20 @@
   width: 56rpx;
   display: flex;
   justify-content: flex-start;
+  flex-shrink: 0;
 }
 
 .navbar-title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: white;
-  flex: 1;
-  text-align: center;
+  text-align: left;
   letter-spacing: 1rpx;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
-}
-
-.navbar-actions {
+  height: 88rpx;
   display: flex;
   align-items: center;
-  gap: var(--spacing-base);
-  width: 120rpx;
-  justify-content: flex-end;
+  line-height: 1;
+  margin-top: -6rpx;
 }
 
-.navbar-action-btn {
-  width: 56rpx;
-  height: 56rpx;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10rpx);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.navbar-action-btn:active {
-  transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.navbar-action-icon {
-  font-size: var(--font-size-base);
-  color: white;
-  filter: drop-shadow(0 1rpx 2rpx rgba(0, 0, 0, 0.1));
-}

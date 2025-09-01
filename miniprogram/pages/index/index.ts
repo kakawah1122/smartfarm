@@ -45,38 +45,6 @@ Page({
         priorityText: '普通',
         tagTheme: 'primary'
       }
-    ],
-    
-    // 快捷功能 - 与原型图一致
-    shortcuts: [
-      {
-        id: 1,
-        name: '生产管理',
-        icon: '📦',
-        color: 'blue',
-        page: '/pages/production/production'
-      },
-      {
-        id: 2,
-        name: '健康管理',
-        icon: '🏥',
-        color: 'green',
-        page: '/pages/health/health'
-      },
-      {
-        id: 3,
-        name: '财务管理',
-        icon: '💰',
-        color: 'orange',
-        page: '/pages/finance/finance'
-      },
-      {
-        id: 4,
-        name: '知识库',
-        icon: '📚',
-        color: 'purple',
-        page: '/pages/knowledge/knowledge'
-      }
     ]
   },
 
@@ -216,35 +184,6 @@ Page({
     console.log('点击查看全部待办')
   },
 
-  // 导航到其他页面
-  navigateTo(e: any) {
-    const { page } = e.currentTarget.dataset
-    console.log('导航到页面:', page)
-    
-    if (!page) {
-      wx.showToast({
-        title: '页面地址为空',
-        icon: 'error'
-      })
-      return
-    }
-    
-    wx.navigateTo({
-      url: page,
-      success: () => {
-        console.log('导航成功:', page)
-      },
-      fail: (err) => {
-        console.error('导航失败:', err)
-        wx.showToast({
-          title: '页面开发中',
-          icon: 'none',
-          duration: 1500
-        })
-      }
-    })
-  },
-
   // 下拉刷新
   onPullDownRefresh() {
     console.log('下拉刷新')
@@ -280,23 +219,5 @@ Page({
   // 页面卸载
   onUnload() {
     console.log('页面卸载')
-  },
-
-  // 导航栏菜单点击
-  onMenuTap() {
-    wx.showActionSheet({
-      itemList: ['设置', '帮助', '关于'],
-      success: (res) => {
-        console.log('选择了', res.tapIndex)
-      }
-    })
-  },
-
-  // 导航栏录制按钮点击
-  onRecordTap() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
-    })
   }
 })

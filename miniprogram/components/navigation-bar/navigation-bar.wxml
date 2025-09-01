@@ -7,13 +7,5 @@
       </view>
     </view>
     <text class="navbar-title">{{title}}</text>
-    <view class="navbar-actions">
-      <view class="navbar-action-btn" wx:if="{{showMenu}}" bind:tap="onMenuTap">
-        <text class="navbar-action-icon">•••</text>
-      </view>
-      <view class="navbar-action-btn" wx:if="{{showRecord}}" bind:tap="onRecordTap">
-        <text class="navbar-action-icon">⚫</text>
-      </view>
-    </view>
   </view>
 </view>

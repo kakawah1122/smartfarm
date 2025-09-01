@@ -3,10 +3,6 @@
   <navigation-bar 
     title="智慧养鹅"
     show-back="{{false}}"
-    show-menu="{{true}}"
-    show-record="{{true}}"
-    bind:menu="onMenuTap"
-    bind:record="onRecordTap"
   />
 
 
@@ -77,22 +73,8 @@
       </t-button>
     </view>
 
-    <!-- 快捷功能 -->
-    <view class="card shortcut-card">
-      <view class="card-header">
-        <text class="card-title">快捷功能</text>
-      </view>
-      <view class="shortcut-grid">
-        <view class="shortcut-item" wx:for="{{shortcuts}}" wx:key="id" bind:tap="navigateTo" data-page="{{item.page}}">
-          <view class="shortcut-icon {{item.color}}">
-            <text class="icon-emoji">{{item.icon}}</text>
-          </view>
-          <text class="shortcut-label">{{item.name}}</text>
-        </view>
-      </view>
-    </view>
 
-    <!-- 底部安全区域 -->
-    <view style="height: 140rpx;"></view>
+
+
   </scroll-view>
 </view>
