@@ -1,7 +1,7 @@
 // health.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 
-const pageConfig = {
+const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     activeTab: 'record',
     
@@ -11,6 +11,9 @@ const pageConfig = {
       abnormal: 5,
       records: 12
     },
+
+    // 上传的图片
+    uploadedImages: [],
     
     // 健康记录
     healthRecords: [
@@ -154,6 +157,16 @@ const pageConfig = {
     })
   },
 
+  // 查看疫苗提醒
+  viewVaccineReminder(e: any) {
+    const { item } = e.currentTarget.dataset || e.detail || {}
+    wx.showModal({
+      title: '疫苗接种提醒',
+      content: `疫苗：${item.name}\n位置：${item.location}\n预计接种：${item.scheduledDate}`,
+      showCancel: false
+    })
+  },
+
   // 查看疫苗记录
   viewVaccineRecord(e: any) {
     const { item } = e.currentTarget.dataset || e.detail || {}
@@ -200,7 +213,7 @@ const pageConfig = {
   // 切换症状标签
   toggleSymptom(e: any) {
     const { id } = e.currentTarget.dataset
-    const symptoms = this.data.commonSymptoms.map(item => {
+    const symptoms = this.data.commonSymptoms.map((item: any) => {
       if (item.id === id) {
         return { ...item, selected: !item.selected }
       }
@@ -247,6 +260,41 @@ const pageConfig = {
     wx.showToast({
       title: '记录已保存',
       icon: 'success'
+    })
+  },
+
+  // 选择图片
+  chooseImage() {
+    const that = this
+    const remainingCount = 3 - this.data.uploadedImages.length
+    
+    wx.chooseMedia({
+      count: remainingCount,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const newImages = res.tempFiles.map(file => file.tempFilePath)
+        const allImages = [...that.data.uploadedImages, ...newImages]
+        that.setData({
+          uploadedImages: allImages.slice(0, 3) // 最多3张图片
+        })
+      },
+      fail: () => {
+        wx.showToast({
+          title: '图片选择失败',
+          icon: 'none'
+        })
+      }
+    })
+  },
+
+  // 删除图片
+  deleteImage(e: any) {
+    const { index } = e.currentTarget.dataset
+    const images = this.data.uploadedImages
+    images.splice(index, 1)
+    this.setData({
+      uploadedImages: images
     })
   }
 }

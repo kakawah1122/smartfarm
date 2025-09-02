@@ -25,15 +25,9 @@ App<AppOption>({
     const logs = wx.getStorageSync('logs') || []
     logs.unshift(Date.now())
     wx.setStorageSync('logs', logs)
-
-    // 登录
-    wx.login({
-      success: res => {
-        console.log(res.code)
-        // 发送 res.code 到后台换取 openId, sessionKey, unionId
-      },
-    })
   },
+  
+
 
   // 设置状态栏高度
   setStatusBarHeight() {
@@ -64,15 +58,10 @@ App<AppOption>({
         }
       })
       
-      console.log('状态栏高度设置:', {
-        statusBarHeight: statusBarHeight,
-        statusBarHeightRpx: statusBarHeightRpx,
-        navBarHeight: navBarHeight,
-        systemInfo: systemInfo
-      })
+
       
     } catch (error) {
-      console.error('获取系统信息失败:', error)
+      // 获取系统信息失败时使用默认值
     }
   },
 })

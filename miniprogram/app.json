@@ -3,7 +3,6 @@
     "pages/index/index",
     "pages/production/production",
     "pages/health/health", 
-    "pages/knowledge/knowledge",
     "pages/profile/profile",
     "pages/finance/finance"
   ],
@@ -43,6 +42,7 @@
     "navigationBarTextStyle": "black",
     "navigationStyle": "custom"
   },
+  "darkmode": true,
   "rendererOptions": {
     "skyline": {
       "defaultDisplayBlock": true,

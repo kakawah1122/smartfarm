@@ -22,7 +22,7 @@ Component({
         statusBarHeight: systemInfo.statusBarHeight || 44
       })
     } catch (error) {
-      console.error('获取系统信息失败:', error)
+      // 获取系统信息失败，使用默认值
     }
   },
 

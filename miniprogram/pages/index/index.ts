@@ -49,13 +49,11 @@ Page({
   },
 
   onLoad() {
-    console.log('首页加载')
     this.initStatusBar()
     this.loadData()
   },
 
   onShow() {
-    console.log('首页显示')
     this.refreshWeatherData()
     this.refreshPriceData()
   },
@@ -72,10 +70,9 @@ Page({
         statusBarHeight,
         statusBarText: `${timeStr} • 中国移动 • 100%`
       })
-      
-      console.log('状态栏初始化成功:', { statusBarHeight, timeStr })
+
     } catch (error) {
-      console.error('状态栏初始化失败:', error)
+      // 状态栏初始化失败，使用默认值
     }
   },
 
@@ -92,10 +89,8 @@ Page({
       this.getTodoListData()
     ]).then(() => {
       wx.hideLoading()
-      console.log('首页数据加载完成')
-    }).catch((error) => {
+    }).catch(() => {
       wx.hideLoading()
-      console.error('数据加载失败:', error)
       wx.showToast({
         title: '加载失败',
         icon: 'error'
@@ -162,16 +157,12 @@ Page({
 
   // 刷新天气数据
   refreshWeatherData() {
-    this.getWeatherData().then(() => {
-      console.log('天气数据刷新成功')
-    })
+    this.getWeatherData()
   },
 
   // 刷新价格数据
   refreshPriceData() {
-    this.getGoosePriceData().then(() => {
-      console.log('价格数据刷新成功')
-    })
+    this.getGoosePriceData()
   },
 
   // 查看全部待办
@@ -181,12 +172,11 @@ Page({
       icon: 'none',
       duration: 1500
     })
-    console.log('点击查看全部待办')
+
   },
 
   // 下拉刷新
   onPullDownRefresh() {
-    console.log('下拉刷新')
     
     Promise.all([
       this.refreshWeatherData(),
@@ -198,8 +188,7 @@ Page({
         icon: 'success',
         duration: 1000
       })
-    }).catch((error) => {
-      console.error('刷新失败:', error)
+    }).catch(() => {
       wx.showToast({
         title: '刷新失败',
         icon: 'error'
@@ -211,13 +200,7 @@ Page({
     })
   },
 
-  // 页面隐藏
-  onHide() {
-    console.log('页面隐藏')
-  },
 
-  // 页面卸载
-  onUnload() {
-    console.log('页面卸载')
-  }
+
+
 })

@@ -1,5 +1,5 @@
-<!--profile.wxml-->
-<view class="page-container">
+<!--profile.wxml - 重新设计的个人中心页面-->
+<view class="profile-page">
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="个人中心"
@@ -10,184 +10,89 @@
     bind:menu="onSettingsTap"
   />
   
-  <!-- 用户信息卡片 -->
-  <view class="user-section">
-    <view class="user-card">
-      <view class="user-info">
-        <view class="user-avatar">👤</view>
-        <view class="user-details">
-          <text class="user-name">{{userInfo.name}}</text>
-          <text class="user-role">{{userInfo.role}} • {{userInfo.farm}}</text>
+  <scroll-view class="profile-content" scroll-y>
+    <!-- 用户信息卡片 - 保留原设计 -->
+    <view class="user-info-section">
+      <view class="user-card">
+        <view class="user-info">
+          <view class="user-avatar" bind:tap="changeAvatar">👤</view>
+          <view class="user-details">
+            <view class="user-name-row">
+              <text class="user-name" bind:tap="editProfile">{{userInfo.name}}</text>
+              <text class="user-role-badge">{{userInfo.role}}</text>
+            </view>
+            <text class="user-farm">{{userInfo.farm}}</text>
+          </view>
+          <view wx:if="{{notifications.length > 0}}" class="notification-area" bind:tap="showNotifications">
+            <view class="notification-badge">{{notifications.length}}</view>
+            <view class="notification-icon">🔔</view>
+          </view>
         </view>
       </view>
-      <t-grid column="3" class="user-stats">
-        <t-grid-item>
-          <view class="stat-item">
-            <text class="stat-value">{{userInfo.experience}}</text>
-            <text class="stat-label">管理年限</text>
-          </view>
-        </t-grid-item>
-        <t-grid-item>
-          <view class="stat-item">
-            <text class="stat-value">{{userInfo.currentStock}}</text>
-            <text class="stat-label">当前存栏</text>
-          </view>
-        </t-grid-item>
-        <t-grid-item>
-          <view class="stat-item">
-            <text class="stat-value">{{userInfo.healthRate}}%</text>
-            <text class="stat-label">健康率</text>
-          </view>
-        </t-grid-item>
-      </t-grid>
-    </view>
-  </view>
-
-  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight + 240}}rpx;">
-    <!-- 财务概览 -->
-    <view class="card finance-overview">
-      <view class="card-header">
-        <text class="card-title">💰 本月财务概览</text>
-        <text class="view-detail" bind:tap="viewFinanceDetail">详细报表</text>
-      </view>
-      <t-grid column="3" class="finance-stats">
-        <t-grid-item>
-          <view class="finance-item success">
-            <text class="finance-label">总收入</text>
-            <text class="finance-value">¥{{financeOverview.income}}万</text>
-            <text class="finance-trend up">↑ +{{financeOverview.incomeGrowth}}%</text>
-          </view>
-        </t-grid-item>
-        <t-grid-item>
-          <view class="finance-item danger">
-            <text class="finance-label">总支出</text>
-            <text class="finance-value">¥{{financeOverview.expense}}万</text>
-            <text class="finance-trend up">↑ +{{financeOverview.expenseGrowth}}%</text>
-          </view>
-        </t-grid-item>
-        <t-grid-item>
-          <view class="finance-item primary">
-            <text class="finance-label">净利润</text>
-            <text class="finance-value">¥{{financeOverview.profit}}万</text>
-            <text class="finance-trend up">↑ +{{financeOverview.profitGrowth}}%</text>
-          </view>
-        </t-grid-item>
-      </t-grid>
     </view>
 
     <!-- 功能菜单 -->
-    <view class="card menu-card">
-      <view class="card-header">
-        <text class="card-title">功能菜单</text>
-      </view>
-      <t-cell-group>
-        <t-cell 
+    <view class="menu-section">
+      <view class="section-title">功能菜单</view>
+      <view class="tdesign-card-grid">
+        <t-card 
           wx:for="{{menuItems}}" 
           wx:key="id"
-          title="{{item.title}}" 
-          description="{{item.description}}" 
-          left-icon="{{item.icon}}"
-          arrow
-          bind:click="navigateToMenu"
+          class="tdesign-menu-card"
+          bind:tap="navigateToMenu"
           data-item="{{item}}">
-          <view wx:if="{{item.badge}}" slot="right" class="menu-badge">
-            <t-tag theme="danger" size="small">{{item.badge}}</t-tag>
+          <view class="tdesign-card-content">
+            <view class="tdesign-card-icon-wrapper">
+              <view class="tdesign-card-icon">
+                <text wx:if="{{item.icon === 'money-circle'}}">💰</text>
+                <text wx:elif="{{item.icon === 'user-group'}}">👥</text>
+                <text wx:elif="{{item.icon === 'file-text'}}">📋</text>
+                <text wx:else>⚙️</text>
+              </view>
+              <view wx:if="{{item.badge}}" class="tdesign-card-badge">{{item.badge}}</view>
+            </view>
+            <view class="tdesign-card-info">
+              <view class="tdesign-card-title">{{item.title}}</view>
+              <view class="tdesign-card-description">{{item.description}}</view>
+            </view>
+            <view class="tdesign-card-arrow">›</view>
           </view>
-        </t-cell>
-      </t-cell-group>
-    </view>
-
-    <!-- 待处理事项 -->
-    <view class="card pending-card">
-      <view class="card-header">
-        <text class="card-title">待处理事项</text>
+        </t-card>
       </view>
-      <t-cell-group>
-        <t-cell 
-          wx:for="{{pendingItems}}" 
-          wx:key="id"
-          title="{{item.title}}"
-          description="{{item.description}}"
-          left-icon="{{item.priority === 'danger' ? '🚨' : (item.priority === 'warning' ? '⚠️' : 'ℹ️')}}"
-          arrow
-          bind:click="handlePendingItem"
-          data-item="{{item}}">
-          <view slot="right">
-            <t-tag theme="{{item.priority}}" size="small">{{item.status}}</t-tag>
-          </view>
-        </t-cell>
-      </t-cell-group>
     </view>
 
-    <!-- 数据统计 -->
-    <view class="card stats-card">
-      <view class="card-header">
-        <text class="card-title">📊 养殖场数据统计</text>
+    <!-- 系统设置 - 自定义美观布局 -->
+    <view class="settings-section">
+      <view class="section-title">系统设置</view>
+      <view class="settings-list">
+        <view class="settings-item" bind:tap="privacySettings">
+          <view class="settings-icon">🔒</view>
+          <view class="settings-title">隐私设置</view>
+          <view class="settings-arrow">›</view>
+        </view>
+        <view class="settings-item" bind:tap="helpAndFeedback">
+          <view class="settings-icon">❓</view>
+          <view class="settings-title">帮助与反馈</view>
+          <view class="settings-arrow">›</view>
+        </view>
+        <view class="settings-item" bind:tap="aboutUs">
+          <view class="settings-icon">ℹ️</view>
+          <view class="settings-title">关于我们</view>
+          <view class="settings-arrow">›</view>
+        </view>
       </view>
-      <t-grid column="2" class="stats-grid">
-        <t-grid-item>
-          <view class="stat-card blue">
-            <view class="stat-header">
-              <text class="stat-label">总存栏量</text>
-              <text class="stat-icon">📈</text>
-            </view>
-            <text class="stat-number">{{farmStats.totalStock}}</text>
-            <text class="stat-change">较上月 +{{farmStats.stockChange}}</text>
-          </view>
-        </t-grid-item>
-        
-        <t-grid-item>
-          <view class="stat-card green">
-            <view class="stat-header">
-              <text class="stat-label">成活率</text>
-              <text class="stat-icon">✅</text>
-            </view>
-            <text class="stat-number">{{farmStats.survivalRate}}%</text>
-            <text class="stat-change">保持稳定</text>
-          </view>
-        </t-grid-item>
-        
-        <t-grid-item>
-          <view class="stat-card orange">
-            <view class="stat-header">
-              <text class="stat-label">员工数量</text>
-              <text class="stat-icon">👥</text>
-            </view>
-            <text class="stat-number">{{farmStats.staffCount}}</text>
-            <text class="stat-change">管理员{{farmStats.adminCount}} 员工{{farmStats.employeeCount}}</text>
-          </view>
-        </t-grid-item>
-        
-        <t-grid-item>
-          <view class="stat-card purple">
-            <view class="stat-header">
-              <text class="stat-label">本月利润</text>
-              <text class="stat-icon">💰</text>
-            </view>
-            <text class="stat-number">¥{{farmStats.monthlyProfit}}万</text>
-            <text class="stat-change">较上月 +{{farmStats.profitGrowth}}%</text>
-          </view>
-        </t-grid-item>
-      </t-grid>
     </view>
 
-    <!-- 其他设置 -->
-    <view class="card settings-card">
-      <t-cell-group>
-        <t-cell title="个人信息" left-icon="user" arrow bind:click="editProfile" />
-        <t-cell title="消息通知" left-icon="notification" arrow bind:click="notificationSettings" />
-        <t-cell title="隐私设置" left-icon="lock" arrow bind:click="privacySettings" />
-        <t-cell title="帮助与反馈" left-icon="help-circle" arrow bind:click="helpAndFeedback" />
-        <t-cell title="关于我们" left-icon="info-circle" arrow bind:click="aboutUs" />
-      </t-cell-group>
-    </view>
+
 
     <!-- 退出登录 -->
     <view class="logout-section">
-      <t-button theme="danger" size="large" block bind:tap="logout">退出登录</t-button>
+      <t-button theme="danger" size="large" block bind:tap="logout">
+        退出登录
+      </t-button>
     </view>
 
     <!-- 底部安全区域 -->
-    <view style="height: 120rpx;"></view>
+    <view class="safe-area-bottom"></view>
   </scroll-view>
 </view>

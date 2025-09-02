@@ -25,7 +25,6 @@ export function getSystemNavBarSizes(): NavbarSizes {
       totalNavHeight: statusBarHeightRpx + navBarHeight
     };
   } catch (error) {
-    console.error('获取系统信息失败:', error);
     // 返回默认值
     return {
       statusBarHeight: 88,
@@ -77,8 +76,7 @@ export function createPageWithNavbar(pageConfig: any) {
         app.globalData.statusBarHeight = sizes.statusBarHeight / 2; // 转回px
         app.globalData.navBarHeight = sizes.navBarHeight;
       }
-      
-      console.log('状态栏高度设置完成:', sizes);
+
     },
     
     /**
@@ -120,6 +118,6 @@ export function setNavigationBarStyle(options: {
       });
     }
   } catch (error) {
-    console.error('设置导航栏样式失败:', error);
+    // 设置导航栏样式失败
   }
 }

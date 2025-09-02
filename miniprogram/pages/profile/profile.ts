@@ -1,17 +1,23 @@
 // profile.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 
+// 获取全局应用实例
+const app = getApp<IAppOption>()
+
 const pageConfig = {
   data: {
     // 用户信息
     userInfo: {
-      name: '张养鹅',
-      role: '管理员',
-      farm: '吴中区智慧养鹅场',
-      experience: '5',
-      currentStock: '1,280',
-      healthRate: '95'
+      name: '未设置',
+      role: '用户',
+      farm: '未设置',
+      experience: '0',
+      currentStock: '0',
+      healthRate: '0',
+      avatarUrl: '/assets/icons/profile.png' // 默认头像
     },
+    
+
     
     // 财务概览
     financeOverview: {
@@ -88,39 +94,72 @@ const pageConfig = {
       employeeCount: '7',
       monthlyProfit: '4.4',
       profitGrowth: '32'
-    }
+    },
+
+    // 消息通知
+    notifications: [
+      {
+        id: 1,
+        title: '系统消息',
+        content: '您有3条待审核的报销申请',
+        time: '10分钟前',
+        type: 'system',
+        read: false
+      },
+      {
+        id: 2,
+        title: '健康提醒',
+        content: '今日疫苗接种提醒：200只鹅需要接种',
+        time: '1小时前',
+        type: 'health',
+        read: false
+      }
+    ]
   },
 
   onLoad() {
-    this.loadUserData()
+    this.initUserInfo()
   },
 
   onShow() {
-    this.refreshData()
+    // 页面显示时刷新数据
   },
 
-  // 加载用户数据
-  loadUserData() {
-    // 模拟API调用获取用户信息
-    // 实际开发中这里会调用云函数或API
+
+
+
+
+
+
+  // 初始化用户信息
+  async initUserInfo() {
+    // 加载默认用户信息
+    this.setData({
+      userInfo: {
+        name: '游客',
+        role: '用户',
+        farm: '示范养殖场',
+        experience: '1',
+        currentStock: '1280',
+        healthRate: '95.2',
+        avatarUrl: '/assets/icons/profile.png'
+      }
+    })
   },
 
-  // 刷新数据
-  refreshData() {
-    this.loadUserData()
-    this.loadFinanceOverview()
-    this.loadPendingItems()
-  },
 
-  // 加载财务概览
-  loadFinanceOverview() {
-    // 模拟API调用
-  },
 
-  // 加载待处理事项
-  loadPendingItems() {
-    // 模拟API调用
-  },
+
+
+
+
+
+
+
+
+
+
+
 
   // 返回上一页
   goBack() {
@@ -214,19 +253,117 @@ const pageConfig = {
     })
   },
 
+  // 更换头像
+  async changeAvatar() {
+    try {
+      // 使用微信头像昵称授权
+      const { userInfo } = await wx.getUserProfile({
+        desc: '用于完善会员资料',
+      })
+      
+      // 更新本地显示
+      this.setData({
+        'userInfo.name': userInfo.nickName,
+        'userInfo.avatarUrl': userInfo.avatarUrl
+      })
+
+      wx.showToast({
+        title: '头像更新成功',
+        icon: 'success'
+      })
+    } catch (error) {
+      if (error.errMsg && error.errMsg.includes('cancel')) {
+        wx.showToast({
+          title: '取消授权',
+          icon: 'none'
+        })
+      } else {
+        wx.showToast({
+          title: '授权失败',
+          icon: 'none'
+        })
+      }
+    }
+  },
+
   // 编辑个人信息
   editProfile() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
+    wx.showActionSheet({
+      itemList: ['编辑养殖场名称', '编辑职位', '更新存栏数量', '更新健康率'],
+      success: async (res) => {
+        const options = ['养殖场名称', '职位', '存栏数量', '健康率']
+        const currentValues = [
+          this.data.userInfo.farm, 
+          this.data.userInfo.role, 
+          this.data.userInfo.currentStock,
+          this.data.userInfo.healthRate
+        ]
+        
+        wx.showModal({
+          title: `编辑${options[res.tapIndex]}`,
+          content: `当前${options[res.tapIndex]}：${currentValues[res.tapIndex]}`,
+          placeholderText: `请输入新的${options[res.tapIndex]}`,
+          editable: true,
+          confirmText: '保存',
+          success: (modalRes) => {
+            if (modalRes.confirm && modalRes.content.trim()) {
+              this.handleSaveProfile(modalRes.content.trim(), res.tapIndex, options[res.tapIndex])
+            }
+          }
+        })
+      }
     })
   },
 
-  // 通知设置
-  notificationSettings() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
+  // 处理保存个人信息
+  async handleSaveProfile(newValue: string, fieldIndex: number, fieldName: string) {
+    try {
+      wx.showLoading({
+        title: '保存中...'
+      })
+
+      // 更新本地显示
+      const keys = ['farm', 'role', 'currentStock', 'healthRate']
+      const dataKey = `userInfo.${keys[fieldIndex]}`
+      this.setData({
+        [dataKey]: newValue
+      })
+
+      wx.hideLoading()
+      wx.showToast({
+        title: '保存成功',
+        icon: 'success'
+      })
+    } catch (error) {
+      wx.hideLoading()
+      wx.showToast({
+        title: '保存失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 显示消息通知
+  showNotifications() {
+    const unreadCount = this.data.notifications.filter(n => !n.read).length
+    const notificationList = this.data.notifications.map(n => `${n.title}: ${n.content}`).join('\n\n')
+    
+    wx.showModal({
+      title: `消息通知 (${unreadCount}条未读)`,
+      content: notificationList || '暂无消息',
+      confirmText: '全部已读',
+      cancelText: '关闭',
+      success: (res) => {
+        if (res.confirm) {
+          // 标记所有消息为已读
+          const notifications = this.data.notifications.map(n => ({ ...n, read: true }))
+          this.setData({ notifications })
+          wx.showToast({
+            title: '已标记为已读',
+            icon: 'success'
+          })
+        }
+      }
     })
   },
 
@@ -262,20 +399,23 @@ const pageConfig = {
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          // 清除用户数据
-          wx.clearStorageSync()
+          // 重置页面数据
+          this.setData({
+            userInfo: {
+              name: '游客',
+              role: '用户',
+              farm: '示范养殖场',
+              experience: '0',
+              currentStock: '0',
+              healthRate: '0',
+              avatarUrl: '/assets/icons/profile.png'
+            }
+          })
           
           wx.showToast({
             title: '已退出登录',
             icon: 'success'
           })
-          
-          // 跳转到登录页或首页
-          setTimeout(() => {
-            wx.switchTab({
-              url: '/pages/index/index'
-            })
-          }, 1500)
         }
       }
     })
