@@ -1,0 +1,263 @@
+<!--pages/login/login.wxml-->
+<view class="login-page">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="用户登录"
+    show-back="{{true}}"
+    bind:back="goBack"
+  />
+  
+  <!-- 未登录状态 -->
+  <block wx:if="{{!isLoggedIn}}">
+    <view class="login-container">
+      <!-- Logo区域 -->
+      <view class="login-header">
+        <view class="login-logo">
+          <text class="logo-emoji">🏢</text>
+        </view>
+        <view class="login-title">智慧养鹅</view>
+        <view class="login-subtitle">现代化养殖场管理平台</view>
+      </view>
+
+      <!-- 登录按钮区域 -->
+      <view class="login-actions">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block
+          loading="{{isLoading}}"
+          bind:tap="onWeChatLogin"
+          disabled="{{isLoading}}"
+          class="wechat-login-btn"
+        >
+          <t-icon name="wechat" slot="prefix" wx:if="{{!isLoading}}" />
+          {{isLoading ? '登录中...' : '微信快捷登录'}}
+        </t-button>
+
+        <t-button 
+          theme="light" 
+          size="large" 
+          block
+          bind:tap="onGuestLogin"
+          class="guest-login-btn"
+        >
+          <t-icon name="user" slot="prefix" />
+          游客模式体验
+        </t-button>
+      </view>
+
+      <!-- 协议提示 -->
+      <view class="agreement-tips">
+        登录即表示同意
+        <text class="agreement-link">《用户协议》</text>和
+        <text class="agreement-link">《隐私政策》</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 已登录状态 -->
+  <block wx:if="{{isLoggedIn}}">
+    <!-- 用户信息展示 -->
+    <view class="user-info-section" wx:if="{{userInfo && userInfo.nickname}}">
+      <view class="user-info-card">
+        <view class="user-info-content">
+          <view class="user-avatar">
+            <image 
+              class="avatar-image" 
+              src="{{userInfo.avatarUrl || '/assets/icons/profile.png'}}"
+              mode="aspectFill"
+            />
+          </view>
+          <view class="user-details">
+            <view class="user-nickname">{{userInfo.nickname}}</view>
+            <view class="user-farm" wx:if="{{userInfo.farmName}}">{{userInfo.farmName}}</view>
+            <view class="user-phone">{{userInfo.phone}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 完善信息表单 -->
+    <view class="profile-form-section" wx:if="{{!userInfo.nickname || !userInfo.phone || !userInfo.farmName}}">
+      <view class="form-container">
+        <view class="form-title">完善个人信息</view>
+        <view class="form-subtitle">请填写基本信息以获得更好的服务体验</view>
+        
+        <view class="form-content">
+          <!-- 头像选择区域 -->
+          <view class="avatar-section">
+            <view class="avatar-label">个人头像</view>
+            <view class="avatar-container">
+              <button 
+                class="avatar-button" 
+                open-type="chooseAvatar" 
+                bind:chooseavatar="onChooseAvatar"
+              >
+                <image 
+                  class="avatar-image" 
+                  src="{{selectedAvatarUrl || '/assets/icons/profile.png'}}" 
+                  mode="aspectFill"
+                />
+                <view class="avatar-overlay">
+                  <text class="avatar-text">点击选择头像</text>
+                </view>
+              </button>
+            </view>
+          </view>
+
+          <t-cell-group>
+            <t-cell title="昵称" required>
+              <t-input 
+                slot="note"
+                type="text"
+                placeholder="请输入您的昵称"
+                value="{{nickname}}"
+                bind:change="onNicknameInput"
+                maxlength="{{20}}"
+                class="form-input"
+              />
+            </t-cell>
+
+            <t-cell title="手机号" required>
+              <t-input 
+                slot="note"
+                type="number"
+                placeholder="请输入手机号"
+                value="{{phone}}"
+                bind:change="onPhoneInput"
+                maxlength="{{11}}"
+                class="form-input"
+              />
+            </t-cell>
+
+            <t-cell title="养殖场名称" required>
+              <t-input 
+                slot="note"
+                type="text"
+                placeholder="请输入养殖场名称"
+                value="{{farmName}}"
+                bind:change="onFarmNameInput"
+                maxlength="{{30}}"
+                class="form-input"
+              />
+            </t-cell>
+          </t-cell-group>
+
+          <view class="form-actions">
+            <t-button 
+              theme="primary" 
+              size="large" 
+              block
+              bind:tap="onSaveProfile"
+              class="save-profile-btn"
+            >
+              保存信息
+            </t-button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已完善信息的用户 -->
+    <view class="profile-edit-section" wx:if="{{userInfo && userInfo.nickname && userInfo.phone && userInfo.farmName}}">
+      <view class="form-container">
+        <view class="form-title">个人信息</view>
+        <view class="form-subtitle">您可以随时修改这些信息</view>
+        
+        <view class="form-content">
+          <!-- 头像选择区域 -->
+          <view class="avatar-section">
+            <view class="avatar-label">个人头像</view>
+            <view class="avatar-container">
+              <button 
+                class="avatar-button" 
+                open-type="chooseAvatar" 
+                bind:chooseavatar="onChooseAvatar"
+              >
+                <image 
+                  class="avatar-image" 
+                  src="{{selectedAvatarUrl || userInfo.avatarUrl || '/assets/icons/profile.png'}}" 
+                  mode="aspectFill"
+                />
+                <view class="avatar-overlay">
+                  <text class="avatar-text">点击更换头像</text>
+                </view>
+              </button>
+            </view>
+          </view>
+
+          <t-cell-group>
+            <t-cell title="昵称" required>
+              <t-input 
+                slot="note"
+                type="text"
+                value="{{userInfo.nickname}}"
+                bind:change="onNicknameInput"
+                maxlength="{{20}}"
+                class="form-input"
+              />
+            </t-cell>
+
+            <t-cell title="手机号" required>
+              <t-input 
+                slot="note"
+                type="number"
+                value="{{userInfo.phone}}"
+                bind:change="onPhoneInput"
+                maxlength="{{11}}"
+                class="form-input"
+              />
+            </t-cell>
+
+            <t-cell title="养殖场名称" required>
+              <t-input 
+                slot="note"
+                type="text"
+                value="{{userInfo.farmName}}"
+                bind:change="onFarmNameInput"
+                maxlength="{{30}}"
+                class="form-input"
+              />
+            </t-cell>
+          </t-cell-group>
+
+          <view class="form-actions">
+            <view class="action-buttons">
+              <t-button 
+                theme="primary" 
+                size="large" 
+                bind:tap="onSaveProfile"
+                class="update-btn"
+              >
+                更新信息
+              </t-button>
+              <t-button 
+                theme="danger" 
+                size="large" 
+                bind:tap="onLogout"
+                class="logout-btn"
+              >
+                退出登录
+              </t-button>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 返回首页按钮 -->
+    <view class="back-home-section">
+      <t-button 
+        theme="light" 
+        size="large" 
+        block
+        bind:tap="onBackHome"
+        class="back-home-btn"
+      >
+        <t-icon name="home" slot="prefix" />
+        返回首页
+      </t-button>
+    </view>
+  </block>
+
+</view>

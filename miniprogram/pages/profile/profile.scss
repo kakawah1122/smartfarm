@@ -70,6 +70,19 @@ page {
   position: relative;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.user-avatar .avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.user-avatar .default-avatar {
+  font-size: 56rpx;
+  color: white;
 }
 
 .user-avatar::before {
@@ -309,10 +322,21 @@ page {
   flex-shrink: 0;
 }
 
+.settings-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .settings-title {
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
-  flex: 1;
+}
+
+.settings-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-placeholder);
+  margin-top: 4rpx;
 }
 
 .settings-arrow {
@@ -322,11 +346,47 @@ page {
   flex-shrink: 0;
 }
 
-/* 退出登录区域 */
-.logout-section {
+/* 登录/退出登录区域 */
+.auth-section {
   margin: var(--spacing-lg);
   margin-left: max(var(--spacing-lg), var(--safe-area-inset-left, 0));
   margin-right: max(var(--spacing-lg), var(--safe-area-inset-right, 0));
+}
+
+.login-btn {
+  box-shadow: var(--shadow-colored) !important;
+}
+
+.logout-btn {
+  background-color: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+}
+
+.auth-info {
+  margin-top: var(--spacing-md);
+  text-align: center;
+}
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-base);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2rpx solid var(--color-success);
+  box-shadow: 0 2rpx 8rpx rgba(22, 163, 74, 0.1);
+}
+
+.status-icon {
+  font-size: var(--font-size-lg);
+  margin-right: var(--spacing-sm);
+}
+
+.status-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+  font-weight: var(--font-weight-medium);
 }
 
 /* 底部安全区域 */

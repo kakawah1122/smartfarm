@@ -4,7 +4,8 @@
     "pages/production/production",
     "pages/health/health", 
     "pages/profile/profile",
-    "pages/finance/finance"
+    "pages/finance/finance",
+    "pages/login/login"
   ],
   "tabBar": {
     "color": "#999",
@@ -43,16 +44,8 @@
     "navigationStyle": "custom"
   },
   "darkmode": true,
-  "rendererOptions": {
-    "skyline": {
-      "defaultDisplayBlock": true,
-      "defaultContentBox": true,
-      "disableABTest": true,
-      "sdkVersionBegin": "3.0.0",
-      "sdkVersionEnd": "15.255.255"
-    }
-  },
-  "componentFramework": "glass-easel",
+
   "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "cloud": true
 }

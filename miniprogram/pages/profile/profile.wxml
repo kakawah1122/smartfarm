@@ -15,7 +15,15 @@
     <view class="user-info-section">
       <view class="user-card">
         <view class="user-info">
-          <view class="user-avatar" bind:tap="changeAvatar">👤</view>
+          <view class="user-avatar" bind:tap="changeAvatar">
+            <image 
+              wx:if="{{userInfo.avatarUrl}}"
+              class="avatar-image" 
+              src="{{userInfo.avatarUrl}}"
+              mode="aspectFill"
+            />
+            <text wx:else class="default-avatar">👤</text>
+          </view>
           <view class="user-details">
             <view class="user-name-row">
               <text class="user-name" bind:tap="editProfile">{{userInfo.name}}</text>
@@ -61,33 +69,29 @@
       </view>
     </view>
 
-    <!-- 系统设置 - 自定义美观布局 -->
-    <view class="settings-section">
-      <view class="section-title">系统设置</view>
-      <view class="settings-list">
-        <view class="settings-item" bind:tap="privacySettings">
-          <view class="settings-icon">🔒</view>
-          <view class="settings-title">隐私设置</view>
-          <view class="settings-arrow">›</view>
-        </view>
-        <view class="settings-item" bind:tap="helpAndFeedback">
-          <view class="settings-icon">❓</view>
-          <view class="settings-title">帮助与反馈</view>
-          <view class="settings-arrow">›</view>
-        </view>
-        <view class="settings-item" bind:tap="aboutUs">
-          <view class="settings-icon">ℹ️</view>
-          <view class="settings-title">关于我们</view>
-          <view class="settings-arrow">›</view>
-        </view>
-      </view>
-    </view>
 
 
-
-    <!-- 退出登录 -->
-    <view class="logout-section">
-      <t-button theme="danger" size="large" block bind:tap="logout">
+    <!-- 登录/退出登录 -->
+    <view class="auth-section">
+      <t-button 
+        wx:if="{{!isLoggedIn}}"
+        theme="primary" 
+        size="large" 
+        block 
+        bind:tap="goToLogin"
+        class="login-btn"
+      >
+        登录
+      </t-button>
+      
+      <t-button 
+        wx:else
+        theme="danger" 
+        size="large" 
+        block 
+        bind:tap="logout"
+        class="logout-btn"
+      >
         退出登录
       </t-button>
     </view>

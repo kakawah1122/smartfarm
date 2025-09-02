@@ -18,5 +18,7 @@
     "bigPackageSizeSupport": false,
     "checkInvalidKey": true,
     "ignoreDevUnusedFiles": true
-  }
+  },
+  "cloudfunctionRoot": "cloudfunctions/",
+  "cloudbaseRoot": "cloudfunctions/"
 }

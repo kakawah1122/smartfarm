@@ -6,16 +6,20 @@ const app = getApp<IAppOption>()
 
 const pageConfig = {
   data: {
+    // 登录状态
+    isLoggedIn: false,
     // 用户信息
     userInfo: {
       name: '未设置',
-      role: '用户',
+      role: '用户', 
       farm: '未设置',
       experience: '0',
       currentStock: '0',
       healthRate: '0',
       avatarUrl: '/assets/icons/profile.png' // 默认头像
     },
+    // 云开发用户信息
+    cloudUserInfo: null,
     
 
     
@@ -54,7 +58,7 @@ const pageConfig = {
       {
         id: 4,
         title: '系统设置',
-        description: '养殖场信息、AI配置、数据备份',
+        description: '隐私设置、帮助反馈、关于我们',
         icon: 'setting'
       }
     ],
@@ -118,11 +122,102 @@ const pageConfig = {
   },
 
   onLoad() {
+    this.checkLoginStatus()
     this.initUserInfo()
   },
 
-  onShow() {
+  async onShow() {
     // 页面显示时刷新数据
+    console.log('个人中心页面显示，开始检查登录状态')
+    await this.checkLoginStatus()
+    if (this.data.isLoggedIn) {
+      console.log('用户已登录，加载云端用户信息')
+      await this.loadCloudUserInfo()
+    } else {
+      console.log('用户未登录')
+    }
+  },
+
+  // 检查登录状态
+  async checkLoginStatus() {
+    const app = getApp<App.AppOption>()
+    let isLoggedIn = app.globalData.isLoggedIn || false
+    let openid = app.globalData.openid
+
+    // 如果应用全局状态中没有登录信息，尝试从本地存储恢复
+    if (!isLoggedIn || !openid) {
+      const storedOpenid = wx.getStorageSync('openid')
+      const storedUserInfo = wx.getStorageSync('userInfo')
+      
+      if (storedOpenid && storedUserInfo) {
+        console.log('个人中心: 从本地存储恢复登录状态')
+        app.globalData.openid = storedOpenid
+        app.globalData.isLoggedIn = true
+        app.globalData.userInfo = storedUserInfo
+        
+        isLoggedIn = true
+        openid = storedOpenid
+        
+        // 立即更新用户信息显示
+        this.setData({
+          userInfo: {
+            name: storedUserInfo.nickname || '未设置',
+            role: '用户',
+            farm: storedUserInfo.farmName || '智慧养殖场',
+            experience: '1',
+            currentStock: '1280',
+            healthRate: '95.2',
+            avatarUrl: storedUserInfo.avatarUrl || '/assets/icons/profile.png'
+          }
+        })
+      }
+    }
+    
+    this.setData({
+      isLoggedIn: isLoggedIn
+    })
+
+    console.log('个人中心登录状态检查:', { isLoggedIn, hasOpenid: !!openid })
+  },
+
+  // 从云开发加载用户信息
+  async loadCloudUserInfo() {
+    try {
+      const db = wx.cloud.database()
+      const result = await db.collection('users').where({
+        _openid: wx.cloud.database().command.exists(true)
+      }).get()
+
+      if (result.data.length > 0) {
+        const cloudUserInfo = result.data[0]
+        
+        // 更新本地和全局用户信息
+        const app = getApp<App.AppOption>()
+        app.globalData.userInfo = cloudUserInfo
+        wx.setStorageSync('userInfo', cloudUserInfo)
+        
+        this.setData({
+          cloudUserInfo: cloudUserInfo,
+          userInfo: {
+            name: cloudUserInfo.nickname || '未设置',
+            role: '用户',
+            farm: cloudUserInfo.farmName || '智慧养殖场', // 使用数据库中的养殖场名称
+            experience: '1',
+            currentStock: '1280',
+            healthRate: '95.2',
+            avatarUrl: cloudUserInfo.avatarUrl || '/assets/icons/profile.png'
+          }
+        })
+        
+        console.log('个人中心用户信息已更新:', {
+          name: cloudUserInfo.nickname,
+          farm: cloudUserInfo.farmName,
+          phone: cloudUserInfo.phone
+        })
+      }
+    } catch (error) {
+      console.error('加载用户信息失败:', error)
+    }
   },
 
 
@@ -133,18 +228,81 @@ const pageConfig = {
 
   // 初始化用户信息
   async initUserInfo() {
-    // 加载默认用户信息
-    this.setData({
-      userInfo: {
-        name: '游客',
-        role: '用户',
-        farm: '示范养殖场',
-        experience: '1',
-        currentStock: '1280',
-        healthRate: '95.2',
-        avatarUrl: '/assets/icons/profile.png'
+    if (this.data.isLoggedIn) {
+      // 已登录，先尝试从本地存储获取，再从云开发加载最新信息
+      const storedUserInfo = wx.getStorageSync('userInfo')
+      if (storedUserInfo) {
+        this.setData({
+          userInfo: {
+            name: storedUserInfo.nickname || '未设置',
+            role: '用户',
+            farm: storedUserInfo.farmName || '智慧养殖场',
+            experience: '1',
+            currentStock: '1280',
+            healthRate: '95.2',
+            avatarUrl: storedUserInfo.avatarUrl || '/assets/icons/profile.png'
+          }
+        })
       }
+      
+      // 从云开发加载最新用户信息
+      await this.loadCloudUserInfo()
+    } else {
+      // 未登录，显示默认信息
+      this.setData({
+        userInfo: {
+          name: '游客',
+          role: '用户',
+          farm: '示范养殖场',
+          experience: '0',
+          currentStock: '0',
+          healthRate: '0',
+          avatarUrl: '/assets/icons/profile.png'
+        }
+      })
+    }
+  },
+
+  // 登录
+  goToLogin() {
+    wx.navigateTo({
+      url: '/pages/login/login'
     })
+  },
+
+  // 云开发登录
+  async cloudLogin() {
+    try {
+      wx.showLoading({
+        title: '登录中...',
+        mask: true
+      })
+
+      const app = getApp<App.AppOption>()
+      await app.login()
+
+      wx.hideLoading()
+      
+      // 更新页面状态
+      this.setData({
+        isLoggedIn: true
+      })
+      
+      // 加载用户信息
+      await this.loadCloudUserInfo()
+
+      wx.showToast({
+        title: '登录成功',
+        icon: 'success'
+      })
+    } catch (error) {
+      console.error('登录失败:', error)
+      wx.hideLoading()
+      wx.showToast({
+        title: '登录失败，请重试',
+        icon: 'error'
+      })
+    }
   },
 
 
@@ -189,6 +347,12 @@ const pageConfig = {
   navigateToMenu(e: any) {
     const { item } = e.currentTarget.dataset
     
+    // 如果是系统设置，显示设置选项
+    if (item.id === 4) {
+      this.showSystemSettings()
+      return
+    }
+    
     if (item.page) {
       wx.navigateTo({
         url: item.page,
@@ -212,6 +376,26 @@ const pageConfig = {
         }
       })
     }
+  },
+
+  // 显示系统设置选项
+  showSystemSettings() {
+    wx.showActionSheet({
+      itemList: ['隐私设置', '帮助与反馈', '关于我们'],
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            this.privacySettings()
+            break
+          case 1:
+            this.helpAndFeedback()
+            break
+          case 2:
+            this.aboutUs()
+            break
+        }
+      }
+    })
   },
 
   // 处理待办事项
@@ -253,50 +437,41 @@ const pageConfig = {
     })
   },
 
-  // 更换头像
-  async changeAvatar() {
-    try {
-      // 使用微信头像昵称授权
-      const { userInfo } = await wx.getUserProfile({
-        desc: '用于完善会员资料',
-      })
-      
-      // 更新本地显示
-      this.setData({
-        'userInfo.name': userInfo.nickName,
-        'userInfo.avatarUrl': userInfo.avatarUrl
-      })
-
+  // 更换头像 - 跳转到个人信息编辑页面
+  changeAvatar() {
+    if (!this.data.isLoggedIn) {
       wx.showToast({
-        title: '头像更新成功',
-        icon: 'success'
+        title: '请先登录',
+        icon: 'none'
       })
-    } catch (error) {
-      if (error.errMsg && error.errMsg.includes('cancel')) {
-        wx.showToast({
-          title: '取消授权',
-          icon: 'none'
-        })
-      } else {
-        wx.showToast({
-          title: '授权失败',
-          icon: 'none'
-        })
-      }
+      return
     }
+
+    wx.showModal({
+      title: '更换头像',
+      content: '头像更换功能请在个人信息编辑页面进行操作',
+      showCancel: true,
+      confirmText: '去编辑',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          wx.navigateTo({
+            url: '/pages/login/login'
+          })
+        }
+      }
+    })
   },
 
   // 编辑个人信息
   editProfile() {
     wx.showActionSheet({
-      itemList: ['编辑养殖场名称', '编辑职位', '更新存栏数量', '更新健康率'],
+      itemList: ['编辑养殖场名称', '编辑职位'],
       success: async (res) => {
-        const options = ['养殖场名称', '职位', '存栏数量', '健康率']
+        const options = ['养殖场名称', '职位']
         const currentValues = [
           this.data.userInfo.farm, 
-          this.data.userInfo.role, 
-          this.data.userInfo.currentStock,
-          this.data.userInfo.healthRate
+          this.data.userInfo.role
         ]
         
         wx.showModal({
@@ -323,7 +498,7 @@ const pageConfig = {
       })
 
       // 更新本地显示
-      const keys = ['farm', 'role', 'currentStock', 'healthRate']
+      const keys = ['farm', 'role']
       const dataKey = `userInfo.${keys[fieldIndex]}`
       this.setData({
         [dataKey]: newValue
@@ -394,13 +569,33 @@ const pageConfig = {
 
   // 退出登录
   logout() {
+    if (!this.data.isLoggedIn) {
+      wx.showToast({
+        title: '您还未登录',
+        icon: 'none'
+      })
+      return
+    }
+
     wx.showModal({
       title: '退出登录',
-      content: '确定要退出登录吗？',
+      content: '确定要退出登录吗？退出后需要重新登录才能使用完整功能。',
       success: (res) => {
         if (res.confirm) {
+          // 清除全局登录状态
+          const app = getApp<App.AppOption>()
+          app.globalData.openid = undefined
+          app.globalData.isLoggedIn = false
+          app.globalData.userInfo = undefined
+
+          // 清除本地存储
+          wx.removeStorageSync('openid')
+          wx.removeStorageSync('userInfo')
+
           // 重置页面数据
           this.setData({
+            isLoggedIn: false,
+            cloudUserInfo: null,
             userInfo: {
               name: '游客',
               role: '用户',
@@ -416,6 +611,8 @@ const pageConfig = {
             title: '已退出登录',
             icon: 'success'
           })
+
+          console.log('已退出登录，状态已重置')
         }
       }
     })

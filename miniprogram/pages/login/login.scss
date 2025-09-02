@@ -1,0 +1,488 @@
+/* pages/login/login.scss - TDesign风格登录页面 */
+
+page {
+  background-color: var(--color-bg-page);
+  height: 100vh;
+}
+
+/* 页面容器 */
+.login-page {
+  min-height: 100vh;
+  background-color: var(--color-bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 未登录状态样式 */
+.login-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+  min-height: calc(100vh - var(--navbar-height));
+}
+
+/* Logo区域 */
+.login-header {
+  text-align: center;
+  margin-bottom: var(--spacing-3xl);
+}
+
+.login-logo {
+  width: 200rpx;
+  height: 200rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-xl);
+  box-shadow: var(--shadow-colored);
+  position: relative;
+}
+
+.login-logo::before {
+  content: '';
+  position: absolute;
+  inset: -8rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-xl);
+  z-index: -1;
+  opacity: 0.3;
+  filter: blur(20rpx);
+}
+
+.logo-emoji {
+  font-size: 80rpx;
+  color: white;
+  text-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 2rpx;
+}
+
+.login-subtitle {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+/* 登录按钮区域 */
+.login-actions {
+  width: 100%;
+  max-width: 600rpx;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.wechat-login-btn {
+  margin-bottom: var(--spacing-lg) !important;
+  box-shadow: var(--shadow-colored) !important;
+}
+
+.guest-login-btn {
+  border-color: var(--color-border-base) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.guest-login-btn:hover {
+  background-color: var(--color-bg-secondary) !important;
+  border-color: var(--primary-teal) !important;
+  color: var(--primary-teal) !important;
+}
+
+/* 协议提示 */
+.agreement-tips {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  text-align: center;
+  line-height: var(--line-height-relaxed);
+}
+
+.agreement-link {
+  color: var(--primary-teal);
+  text-decoration: underline;
+}
+
+/* 已登录状态样式 */
+.user-info-section {
+  padding: var(--spacing-lg);
+}
+
+.user-info-card {
+  background: var(--color-bg-primary) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-base) !important;
+  margin-bottom: var(--spacing-lg) !important;
+}
+
+.user-info-content {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-xl);
+}
+
+.user-avatar {
+  margin-right: var(--spacing-xl);
+  flex-shrink: 0;
+}
+
+.avatar-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: var(--radius-full);
+  border: 4rpx solid var(--primary-teal);
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-nickname {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.user-farm {
+  font-size: var(--font-size-md);
+  color: var(--primary-teal);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-xs);
+}
+
+.user-phone {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* 表单区域样式 */
+.profile-form-section,
+.profile-edit-section {
+  padding: var(--spacing-lg);
+  min-height: calc(100vh - var(--navbar-height));
+  background-color: var(--color-bg-page);
+}
+
+.form-container {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-base);
+  overflow: hidden;
+}
+
+.form-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-xl) var(--spacing-sm);
+}
+
+.form-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 0 var(--spacing-xl) var(--spacing-xl);
+  line-height: var(--line-height-relaxed);
+}
+
+.form-content {
+  padding: var(--spacing-base);
+}
+
+/* 头像选择区域样式 */
+.avatar-section {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg) 0;
+}
+
+.avatar-label {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-lg);
+}
+
+.avatar-container {
+  display: flex;
+  justify-content: center;
+}
+
+.avatar-button {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.avatar-button::after {
+  border: none;
+}
+
+.avatar-button .avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+  font-size: var(--font-size-xs);
+  text-align: center;
+  padding: var(--spacing-sm);
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.avatar-button:hover .avatar-overlay {
+  transform: translateY(0);
+}
+
+.avatar-text {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+}
+
+/* TDesign Cell组件样式覆盖 */
+.t-cell-group {
+  border-radius: var(--radius-base) !important;
+  overflow: hidden;
+  margin-bottom: var(--spacing-xl);
+  background: var(--color-bg-primary) !important;
+}
+
+.t-cell {
+  padding: var(--spacing-lg) var(--spacing-xl) !important;
+  border-bottom: 1rpx solid var(--color-border-light) !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: 120rpx !important;
+  position: relative !important;
+}
+
+.t-cell:last-child {
+  border-bottom: none !important;
+}
+
+.t-cell__title {
+  font-size: var(--font-size-md) !important;
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-medium) !important;
+  min-width: 180rpx !important;
+  text-align: left !important;
+  display: flex !important;
+  align-items: center !important;
+  position: absolute !important;
+  left: var(--spacing-xl) !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+.t-cell__note {
+  flex: 1 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  margin-left: 200rpx !important;
+}
+
+/* TDesign Input组件样式 */
+.form-input {
+  width: 100% !important;
+  text-align: right !important;
+}
+
+.t-input {
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  text-align: right !important;
+}
+
+.t-input__inner {
+  text-align: right !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  font-size: var(--font-size-md) !important;
+  color: var(--color-text-primary) !important;
+  height: 80rpx !important;
+  line-height: 80rpx !important;
+  box-sizing: border-box !important;
+}
+
+.t-input__placeholder {
+  text-align: right !important;
+  color: var(--color-text-placeholder) !important;
+}
+
+/* 表单操作按钮 */
+.form-actions {
+  padding: 0 var(--spacing-lg) var(--spacing-xl);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.update-btn {
+  flex: 2;
+}
+
+.logout-btn {
+  flex: 1;
+}
+
+.save-profile-btn {
+  box-shadow: var(--shadow-colored) !important;
+}
+
+/* 返回首页区域 */
+.back-home-section {
+  padding: 0 var(--spacing-lg) var(--spacing-xl);
+}
+
+.back-home-btn {
+  border-color: var(--color-border-base) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.back-home-btn:hover {
+  background-color: var(--color-bg-secondary) !important;
+  border-color: var(--primary-teal) !important;
+  color: var(--primary-teal) !important;
+}
+
+/* TDesign图标样式 */
+.t-icon {
+  margin-right: var(--spacing-sm) !important;
+}
+
+/* 响应式适配 */
+@media screen and (max-width: 480px) {
+  .login-container {
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+  
+  .login-logo {
+    width: 160rpx;
+    height: 160rpx;
+  }
+  
+  .logo-emoji {
+    font-size: 64rpx;
+  }
+  
+  .login-title {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .login-subtitle {
+    font-size: var(--font-size-base);
+  }
+  
+  .user-info-content {
+    padding: var(--spacing-lg);
+  }
+  
+  .avatar-image {
+    width: 100rpx;
+    height: 100rpx;
+  }
+  
+  .user-nickname {
+    font-size: var(--font-size-lg);
+  }
+  
+  .user-farm {
+    font-size: var(--font-size-base);
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .update-btn,
+  .logout-btn {
+    flex: 1;
+  }
+}
+
+@media screen and (max-width: 350px) {
+  .user-info-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .user-avatar {
+    margin: 0 0 var(--spacing-lg) 0;
+  }
+  
+  .form-title {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.login-header {
+  animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-actions {
+  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+}
+
+.agreement-tips {
+  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
+}
+
+.form-container {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
