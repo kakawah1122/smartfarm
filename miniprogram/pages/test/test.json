@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "权限管理测试",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
+  }
+}

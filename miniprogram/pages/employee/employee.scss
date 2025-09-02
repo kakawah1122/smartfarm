@@ -1,0 +1,505 @@
+/* pages/employee/employee.scss */
+@import '../../styles/tdesign-local.wxss';
+
+.container {
+  padding: 0;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* 无权限状态 */
+.no-permission {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+  text-align: center;
+}
+
+.no-permission-icon {
+  font-size: 120rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.6;
+}
+
+.no-permission-text {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.no-permission-desc {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 60rpx;
+  line-height: 1.6;
+}
+
+/* 主要内容 */
+.main-content {
+  padding: 20rpx;
+}
+
+/* 标签页导航 */
+.tab-nav {
+  display: flex;
+  background: white;
+  border-radius: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 16rpx;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+}
+
+.tab-item.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.invite-btn,
+.join-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.invite-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.join-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.invite-btn:active,
+.join-btn:active {
+  transform: scale(0.95);
+}
+
+.icon {
+  font-size: 32rpx;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80rpx;
+  color: #666;
+  font-size: 28rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.empty-desc {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 员工列表 */
+.employee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.employee-item {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.employee-item:active {
+  transform: scale(0.98);
+}
+
+.employee-avatar {
+  position: relative;
+  margin-right: 24rpx;
+}
+
+.employee-avatar image {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+}
+
+.status-badge {
+  position: absolute;
+  bottom: -4rpx;
+  right: -4rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  border: 4rpx solid white;
+}
+
+.status-badge.active {
+  background-color: #52c41a;
+}
+
+.status-badge.inactive {
+  background-color: #ff4d4f;
+}
+
+.employee-info {
+  flex: 1;
+}
+
+.employee-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.employee-role {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.employee-meta {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.role-tag {
+  padding: 6rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.role-tag.admin {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.role-tag.employee {
+  background-color: #1890ff;
+  color: white;
+}
+
+.role-tag.user {
+  background-color: #d9d9d9;
+  color: #666;
+}
+
+.join-time {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.employee-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.action-btn {
+  padding: 16rpx 24rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  border: none;
+  min-width: 120rpx;
+}
+
+.action-btn.edit {
+  background-color: #1890ff;
+  color: white;
+}
+
+.action-btn.remove {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+/* 邀请列表 */
+.invite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.invite-item {
+  background: white;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.invite-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.invite-code {
+  font-size: 36rpx;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  color: #1890ff;
+  padding: 12rpx 20rpx;
+  background-color: #f0f8ff;
+  border-radius: 8rpx;
+  position: relative;
+}
+
+.copy-hint {
+  font-size: 20rpx;
+  color: #999;
+  margin-left: 12rpx;
+}
+
+.invite-status {
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.invite-status.used {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.invite-status.pending {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+
+.invite-info {
+  margin-bottom: 16rpx;
+}
+
+.invite-detail {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.label {
+  color: #333;
+  font-weight: 600;
+  margin-right: 8rpx;
+}
+
+.invite-usage {
+  padding-top: 16rpx;
+  border-top: 2rpx solid #f0f0f0;
+}
+
+/* 对话框 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 40rpx;
+}
+
+.dialog-content {
+  background: white;
+  border-radius: 20rpx;
+  width: 100%;
+  max-width: 600rpx;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx 40rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.dialog-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.dialog-close {
+  font-size: 40rpx;
+  color: #999;
+  padding: 10rpx;
+}
+
+.dialog-body {
+  flex: 1;
+  padding: 40rpx;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 40rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.form-input {
+  width: 100%;
+  padding: 24rpx;
+  border: 2rpx solid #d9d9d9;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  background-color: #fafafa;
+}
+
+.form-input:focus {
+  border-color: #1890ff;
+  background-color: white;
+}
+
+.permission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  max-height: 300rpx;
+  overflow-y: auto;
+  padding: 16rpx;
+  background-color: #fafafa;
+  border-radius: 12rpx;
+}
+
+.permission-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 12rpx;
+  background: white;
+  border-radius: 8rpx;
+}
+
+.permission-name {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.switch-label {
+  margin-left: 16rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.join-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx;
+  background-color: #f0f8ff;
+  border-radius: 12rpx;
+  margin-top: 20rpx;
+}
+
+.tip-icon {
+  font-size: 28rpx;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 30rpx 40rpx;
+  border-top: 2rpx solid #f0f0f0;
+}
+
+.btn-cancel,
+.btn-confirm {
+  flex: 1;
+  padding: 28rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  border: none;
+}
+
+.btn-cancel {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}

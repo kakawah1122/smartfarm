@@ -8,6 +8,14 @@ interface UserInfo {
   phone: string;
   farmName: string;
   gender?: number;
+  // 角色和权限字段
+  role: string;
+  permissions: string[];
+  department: string;
+  position: string;
+  managedBy?: string;
+  organizationId?: string;
+  // 时间字段
   createTime: Date;
   updateTime?: Date;
   lastLoginTime: Date;

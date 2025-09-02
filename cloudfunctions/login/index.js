@@ -31,6 +31,17 @@ exports.main = async (event, context) => {
     
     // 创建用户信息对象
     const createTime = new Date()
+    
+    // 检查是否已有用户存在，如果没有则第一个用户自动成为超级管理员
+    let isFirstUser = false
+    try {
+      const allUsersQuery = await db.collection('users').count()
+      isFirstUser = allUsersQuery.total === 0
+    } catch (countError) {
+      // 如果集合不存在，说明是第一个用户
+      isFirstUser = true
+    }
+    
     const userInfo = {
       _openid: OPENID,
       appid: APPID,
@@ -40,6 +51,14 @@ exports.main = async (event, context) => {
       phone: '',
       farmName: '', // 添加养殖场名称字段
       gender: 0,
+      // 角色和权限字段
+      role: isFirstUser ? 'admin' : 'user', // admin: 管理员, employee: 员工, user: 普通用户
+      permissions: isFirstUser ? ['all'] : ['basic'], // all: 所有权限, basic: 基础权限
+      department: '', // 部门
+      position: '', // 职位
+      managedBy: null, // 管理者ID
+      organizationId: null, // 组织ID（用于多组织管理）
+      // 时间字段
       createTime: createTime,
       lastLoginTime: createTime,
       loginCount: 1,
@@ -123,19 +142,27 @@ exports.main = async (event, context) => {
     return {
       success: true,
       openid: OPENID,
-      user: {
-        _id: user._id,
-        openid: OPENID,
-        nickname: user.nickname || '',
-        avatarUrl: user.avatarUrl || '',
-        phone: user.phone || '',
-        farmName: user.farmName || '', // 添加养殖场名称到返回数据
-        gender: user.gender || 0,
-        createTime: user.createTime,
-        lastLoginTime: user.lastLoginTime || new Date(),
-        loginCount: user.loginCount || 1,
-        isActive: user.isActive !== undefined ? user.isActive : true
-      },
+              user: {
+          _id: user._id,
+          openid: OPENID,
+          nickname: user.nickname || '',
+          avatarUrl: user.avatarUrl || '',
+          phone: user.phone || '',
+          farmName: user.farmName || '', // 添加养殖场名称到返回数据
+          gender: user.gender || 0,
+          // 角色和权限信息
+          role: user.role || 'user',
+          permissions: user.permissions || ['basic'],
+          department: user.department || '',
+          position: user.position || '',
+          managedBy: user.managedBy || null,
+          organizationId: user.organizationId || null,
+          // 时间信息
+          createTime: user.createTime,
+          lastLoginTime: user.lastLoginTime || new Date(),
+          loginCount: user.loginCount || 1,
+          isActive: user.isActive !== undefined ? user.isActive : true
+        },
       message: isNewUser ? '新用户注册成功' : '登录成功'
     }
     

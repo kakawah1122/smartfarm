@@ -46,7 +46,9 @@ const pageConfig = {
         id: 2,
         title: '员工管理',
         description: '员工账号、权限设置、考勤统计',
-        icon: 'user-group'
+        icon: 'user-group',
+        page: '/pages/employee/employee',
+        requiredPermission: 'employee.view'
       },
       {
         id: 3,
@@ -60,6 +62,14 @@ const pageConfig = {
         title: '系统设置',
         description: '隐私设置、帮助反馈、关于我们',
         icon: 'setting'
+      },
+      {
+        id: 5,
+        title: '权限测试',
+        description: '测试权限管理功能（开发调试）',
+        icon: 'setting',
+        page: '/pages/test/test',
+        isDeveloper: true
       }
     ],
     
@@ -162,7 +172,7 @@ const pageConfig = {
         this.setData({
           userInfo: {
             name: storedUserInfo.nickname || '未设置',
-            role: '用户',
+            role: this.getRoleDisplayName(storedUserInfo.role || 'user'),
             farm: storedUserInfo.farmName || '智慧养殖场',
             experience: '1',
             currentStock: '1280',
@@ -200,7 +210,7 @@ const pageConfig = {
           cloudUserInfo: cloudUserInfo,
           userInfo: {
             name: cloudUserInfo.nickname || '未设置',
-            role: '用户',
+            role: this.getRoleDisplayName(cloudUserInfo.role || 'user'),
             farm: cloudUserInfo.farmName || '智慧养殖场', // 使用数据库中的养殖场名称
             experience: '1',
             currentStock: '1280',
@@ -346,6 +356,16 @@ const pageConfig = {
   // 导航到功能菜单
   navigateToMenu(e: any) {
     const { item } = e.currentTarget.dataset
+    
+    // 检查权限
+    if (item.requiredPermission && !this.hasPermission(item.requiredPermission)) {
+      wx.showModal({
+        title: '权限不足',
+        content: '您没有访问此功能的权限，请联系管理员',
+        showCancel: false
+      })
+      return
+    }
     
     // 如果是系统设置，显示设置选项
     if (item.id === 4) {
@@ -565,6 +585,38 @@ const pageConfig = {
       content: '智慧养鹅小程序 v1.0.0\n\n集生产管理、健康监控、知识学习和财务分析于一体的专业养鹅管理系统。',
       showCancel: false
     })
+  },
+
+  // 获取角色显示名称
+  getRoleDisplayName(role: string): string {
+    switch (role) {
+      case 'admin':
+        return '管理员'
+      case 'employee':
+        return '员工'
+      case 'user':
+      default:
+        return '用户'
+    }
+  },
+
+  // 检查用户权限
+  hasPermission(requiredPermission: string): boolean {
+    const app = getApp<App.AppOption>()
+    const userInfo = app.globalData.userInfo
+    
+    if (!userInfo) return false
+    
+    // 管理员拥有所有权限
+    if (userInfo.role === 'admin') return true
+    
+    // 检查是否有所有权限
+    if (userInfo.permissions && userInfo.permissions.includes('all')) return true
+    
+    // 检查特定权限
+    if (userInfo.permissions && userInfo.permissions.includes(requiredPermission)) return true
+    
+    return false
   },
 
   // 退出登录

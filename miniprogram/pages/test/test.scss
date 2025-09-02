@@ -1,0 +1,424 @@
+/* pages/test/test.scss */
+@import '../../styles/tdesign-local.wxss';
+
+.container {
+  padding: 20rpx;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* 状态卡片 */
+.status-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.status-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.status-indicator {
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.status-indicator.logged-in {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.status-indicator.not-logged {
+  background-color: #fff2e8;
+  color: #fa8c16;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  font-size: 26rpx;
+  color: #666;
+  width: 100rpx;
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: 26rpx;
+  color: #333;
+  flex: 1;
+}
+
+.value.role-admin {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+.value.role-employee {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.no-user {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.tip-text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 章节标题 */
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+/* 快速操作 */
+.quick-actions {
+  margin-bottom: 30rpx;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx 20rpx;
+  border-radius: 16rpx;
+  border: none;
+  font-size: 26rpx;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-height: 140rpx;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.action-btn.secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.action-btn.info {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.action-btn.danger {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+}
+
+.action-btn.warning {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  color: #8b4513;
+}
+
+.action-btn.success {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #2d8659;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  transform: none !important;
+}
+
+.action-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.btn-icon {
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+
+.btn-text {
+  font-size: 24rpx;
+}
+
+/* 测试步骤 */
+.test-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.test-steps {
+  margin-bottom: 30rpx;
+}
+
+.test-step {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.test-step:last-child {
+  border-bottom: none;
+}
+
+.step-number {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 600;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.step-number.pending {
+  background-color: #f5f5f5;
+  color: #999;
+}
+
+.step-number.running {
+  background-color: #1890ff;
+  color: white;
+}
+
+.step-number.success {
+  background-color: #52c41a;
+  color: white;
+}
+
+.step-number.failed {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.step-result {
+  font-size: 24rpx;
+}
+
+.step-result.pending {
+  color: #999;
+}
+
+.step-result.running {
+  color: #1890ff;
+}
+
+.step-result.success {
+  color: #52c41a;
+}
+
+.step-result.failed {
+  color: #ff4d4f;
+}
+
+.step-status {
+  margin-left: 20rpx;
+}
+
+.status-icon {
+  font-size: 32rpx;
+}
+
+.full-test-btn {
+  width: 100%;
+  padding: 32rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.full-test-btn:disabled {
+  opacity: 0.6;
+}
+
+/* 单项测试 */
+.individual-tests {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.test-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.test-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background-color: #fafafa;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 12rpx;
+  text-align: left;
+}
+
+.test-item:active:not(:disabled) {
+  background-color: #f0f0f0;
+}
+
+.test-item:disabled {
+  opacity: 0.5;
+}
+
+.test-icon {
+  font-size: 48rpx;
+  margin-right: 20rpx;
+}
+
+.test-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.test-desc {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 测试结果 */
+.test-result {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.invite-code-display {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx;
+  background-color: #f0f8ff;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.invite-code {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  color: #1890ff;
+}
+
+.copy-btn {
+  padding: 16rpx 24rpx;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.result-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx;
+  background-color: #fff7e6;
+  border-radius: 8rpx;
+}
+
+.tip-icon {
+  font-size: 28rpx;
+}
+
+/* 测试指南 */
+.test-guide {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.guide-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.guide-number {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background-color: #1890ff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.guide-text {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.6;
+  flex: 1;
+  padding-top: 6rpx;
+}
