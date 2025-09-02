@@ -6,8 +6,7 @@
     "pages/profile/profile",
     "pages/finance/finance",
     "pages/login/login",
-    "pages/employee/employee",
-    "pages/test/test"
+    "pages/employee/employee"
   ],
   "tabBar": {
     "color": "#999",

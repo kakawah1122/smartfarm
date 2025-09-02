@@ -62,14 +62,6 @@ const pageConfig = {
         title: '系统设置',
         description: '隐私设置、帮助反馈、关于我们',
         icon: 'setting'
-      },
-      {
-        id: 5,
-        title: '权限测试',
-        description: '测试权限管理功能（开发调试）',
-        icon: 'setting',
-        page: '/pages/test/test',
-        isDeveloper: true
       }
     ],
     
