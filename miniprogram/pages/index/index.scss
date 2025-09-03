@@ -1,6 +1,13 @@
 /* index.scss - 现代化响应式设计 */
+/* 强制浅色背景，解决真机深色问题 */
+
+/* 全局强制浅色背景覆盖 */
+page {
+  background-color: #f5f5f5 !important;
+}
+
 .page-container {
-  background-color: var(--color-bg-page);
+  background-color: #f5f5f5 !important;
   height: 100vh;
   overflow: hidden;
 }
@@ -10,7 +17,7 @@
   width: 100%;
   height: 100vh;
   margin: 0 auto;
-  background: var(--color-bg-secondary);
+  background: #f9fafb !important;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -24,11 +31,11 @@
 /* 滚动容器 - 刘海屏适配 */
 .scroll-container {
   flex: 1;
-  background-color: var(--color-bg-secondary);
-  margin-top: -var(--spacing-lg);
-  padding-top: var(--spacing-base);
+  background-color: #f9fafb !important;
+  margin-top: -var(--spacing-lg, 24rpx);
+  padding-top: var(--spacing-base, 16rpx);
   padding-bottom: 0;
-  border-radius: var(--spacing-xl) var(--spacing-xl) 0 0;
+  border-radius: var(--spacing-xl, 32rpx) var(--spacing-xl, 32rpx) 0 0;
   position: relative;
   z-index: 2;
   overflow-y: auto;
@@ -37,10 +44,10 @@
 
 /* 卡片通用样式 - 现代化设计 */
 .card {
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  margin: var(--spacing-lg) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
-  box-shadow: var(--shadow-base);
+  background: var(--color-bg-primary, #ffffff);
+  border-radius: var(--radius-lg, 16rpx);
+  margin: var(--spacing-lg, 24rpx) var(--spacing-xl, 32rpx) var(--spacing-lg, 24rpx) var(--spacing-xl, 32rpx);
+  box-shadow: var(--shadow-base, 0 2rpx 12rpx rgba(0, 0, 0, 0.1));
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -196,6 +203,19 @@
   line-height: var(--line-height-base);
   font-weight: var(--font-weight-medium);
   opacity: 0.85;
+  margin-bottom: var(--spacing-xs);
+}
+
+.weather-condition {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(14, 165, 233, 0.08);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(14, 165, 233, 0.15);
+  display: inline-block;
 }
 
 .weather-right {
@@ -222,17 +242,63 @@
   margin-bottom: var(--spacing-xs);
 }
 
-.humidity {
-  font-size: var(--font-size-md);
+.feels-like {
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: var(--line-height-base);
-  margin-top: var(--spacing-sm);
   display: block;
   font-weight: var(--font-weight-medium);
-  padding: var(--spacing-xs) var(--spacing-base);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  margin-bottom: var(--spacing-xs);
+}
+
+.humidity {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  display: block;
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
   background: rgba(14, 165, 233, 0.08);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(14, 165, 233, 0.15);
+}
+
+/* 天气详细信息样式 */
+.weather-details {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid rgba(14, 165, 233, 0.1);
+  gap: var(--spacing-base);
+}
+
+.weather-detail-item {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.detail-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-base);
+  opacity: 0.8;
+}
+
+.detail-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
 }
 
 
@@ -519,23 +585,27 @@
 
 }
 
-/* 暗色主题支持 */
+/* 强制浅色主题 - 禁用暗色模式，确保真机显示正常 */
 @media (prefers-color-scheme: dark) {
+  .page-container {
+    background-color: #f5f5f5 !important;
+  }
+  
   .mobile-container {
-    background: #0f1419;
+    background: #f9fafb !important;
   }
   
   .scroll-container {
-    background: #0f1419;
+    background: #f9fafb !important;
   }
   
   .card {
-    background: #1a202c;
-    box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.3);
+    background: #ffffff !important;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1) !important;
   }
   
   .weather-card {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(59, 130, 246, 0.08) 100%);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(59, 130, 246, 0.12) 100%) !important;
   }
 }
 

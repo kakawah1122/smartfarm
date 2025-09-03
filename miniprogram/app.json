@@ -45,7 +45,14 @@
     "navigationStyle": "custom"
   },
   "darkmode": true,
-
+  "permission": {
+    "scope.userLocation": {
+      "desc": "您的位置信息将用于获取当地天气信息"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
   "cloud": true

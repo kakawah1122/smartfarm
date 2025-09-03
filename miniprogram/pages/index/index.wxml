@@ -9,24 +9,41 @@
 
   <scroll-view class="scroll-container" scroll-y>
     <!-- 天气模块 -->
-    <view class="card weather-card">
+    <view class="card weather-card {{weather.loading ? 'loading' : ''}}" bindtap="onWeatherRefresh">
       <view class="card-content">
         <view class="weather-header">
           <view class="weather-left">
             <view class="weather-icon-wrapper">
-              <text class="weather-emoji">☀️</text>
+              <text class="weather-emoji">{{weather.emoji || '☀️'}}</text>
             </view>
             <view class="weather-info">
               <text class="weather-title">今日天气</text>
-              <text class="weather-location">苏州市吴中区</text>
+              <text class="weather-location">{{location.city}}{{location.district}}</text>
+              <text class="weather-condition">{{weather.condition || '晴'}}</text>
             </view>
           </view>
           <view class="weather-right">
             <text class="temperature">{{weather.temperature}}°C</text>
+            <text class="feels-like">体感 {{weather.feelsLike}}°C</text>
             <text class="humidity">湿度 {{weather.humidity}}%</text>
           </view>
         </view>
-
+        
+        <!-- 天气详细信息 -->
+        <view class="weather-details">
+          <view class="weather-detail-item">
+            <text class="detail-label">风向</text>
+            <text class="detail-value">{{weather.windDirection}}</text>
+          </view>
+          <view class="weather-detail-item">
+            <text class="detail-label">风力</text>
+            <text class="detail-value">{{weather.windScale}}</text>
+          </view>
+          <view class="weather-detail-item">
+            <text class="detail-label">更新时间</text>
+            <text class="detail-value">{{weather.updateTime}}</text>
+          </view>
+        </view>
       </view>
     </view>
 
