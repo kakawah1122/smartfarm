@@ -1,0 +1,29 @@
+{
+  "description": "和风天气API云函数配置",
+  "envVariables": {
+    "HEFENG_API_KEY": {
+      "description": "和风天气API密钥",
+      "required": true,
+      "example": "your_qweather_api_key_here",
+      "documentation": "从 https://dev.qweather.com 获取API密钥"
+    }
+  },
+  "permissions": [
+    "database:write",
+    "database:read"
+  ],
+  "collections": [
+    {
+      "name": "weather_cache",
+      "description": "天气数据缓存集合",
+      "indexes": [
+        {
+          "key": "string",
+          "expireAt": "date"
+        }
+      ]
+    }
+  ],
+  "timeout": 60,
+  "memory": 256
+}

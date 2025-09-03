@@ -9,7 +9,7 @@
 
   <scroll-view class="scroll-container" scroll-y>
     <!-- 天气模块 -->
-    <view class="card weather-card {{weather.loading ? 'loading' : ''}}" bindtap="onWeatherRefresh">
+    <view class="card weather-card {{weather.loading ? 'loading' : ''}}" bindtap="navigateToWeatherDetail">
       <view class="card-content">
         <view class="weather-header">
           <view class="weather-left">
@@ -39,10 +39,15 @@
             <text class="detail-label">风力</text>
             <text class="detail-value">{{weather.windScale}}</text>
           </view>
-          <view class="weather-detail-item">
+          <view class="weather-detail-item weather-update-item" bindtap="onWeatherRefresh" catchtap="onWeatherRefresh">
             <text class="detail-label">更新时间</text>
             <text class="detail-value">{{weather.updateTime}}</text>
           </view>
+        </view>
+        
+        <!-- 天气功能提示 -->
+        <view class="weather-features-hint">
+          <text class="hint-text">点击查看24小时预报、7天预报、空气质量和天气预警</text>
         </view>
       </view>
     </view>

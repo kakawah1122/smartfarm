@@ -17,11 +17,11 @@ Page({
       updateTime: '刚刚更新'
     },
     
-    // 位置信息
+    // 位置信息 - 动态获取，不使用硬编码
     location: {
-      province: '江苏省',
-      city: '苏州市',
-      district: '吴中区'
+      province: '定位中...',
+      city: '获取位置信息...',
+      district: '请稍候...'
     },
     
     // 鹅价数据
@@ -67,6 +67,8 @@ Page({
   },
 
   onShow() {
+    // 检查天气缓存是否过期，如果过期则自动刷新
+    this.checkAndAutoRefreshWeather()
     // 只刷新价格数据，天气数据使用缓存
     this.refreshPriceData()
   },
@@ -176,49 +178,92 @@ Page({
     })
   },
 
-  // 获取位置并获取天气 - 使用GPS + 和风天气地理编码
+  // 获取位置并获取天气 - 彻底重写，确保获取真实位置
   getLocationAndWeather() {
     return new Promise((resolve, reject) => {
-      console.log('开始获取位置信息...')
+      console.log('🌍 === 开始获取真实地理位置 ===')
       
       // 先检查位置权限
       wx.getSetting({
         success: (settingsRes) => {
-          console.log('当前权限设置:', settingsRes.authSetting)
+          console.log('🌍 当前权限设置:', settingsRes.authSetting)
+          console.log('🌍 位置权限状态:', settingsRes.authSetting['scope.userLocation'])
           
           if (settingsRes.authSetting['scope.userLocation'] === false) {
-            // 用户拒绝过位置权限，需要引导用户去设置
+            console.error('🌍 用户已拒绝位置权限')
             this.showLocationPermissionModal()
             reject(new Error('用户拒绝了位置权限'))
             return
           }
           
-          // 获取用户GPS坐标 - 恢复标准实现
+          // 强制获取高精度位置
+          console.log('🌍 开始调用wx.getLocation...')
           wx.getLocation({
             type: 'gcj02', // 微信小程序标准坐标系
-            altitude: false,
             isHighAccuracy: true,
             success: (locationRes) => {
-              const { latitude, longitude, accuracy } = locationRes
-              console.log(`获取位置成功: 纬度${latitude}, 经度${longitude}, 精度${accuracy}米`)
+              const { latitude, longitude, accuracy, speed, altitude } = locationRes
+              console.log('🌍 === 位置获取成功 ===')
+              console.log(`🌍 纬度: ${latitude}`)
+              console.log(`🌍 经度: ${longitude}`)
+              console.log(`🌍 精度: ${accuracy}米`)
+              console.log(`🌍 速度: ${speed}`)
+              console.log(`🌍 海拔: ${altitude}`)
+              console.log('🌍 完整位置对象:', locationRes)
               
-              // 调用和风天气API获取天气和位置信息
+              // 验证坐标有效性
+              if (!latitude || !longitude || latitude === 0 || longitude === 0) {
+                console.error('🌍 获取到的坐标无效:', { latitude, longitude })
+                reject(new Error('获取到的坐标无效'))
+                return
+              }
+              
+              // 立即更新前端显示为"定位成功"
+              this.setData({
+                location: {
+                  province: '定位成功',
+                  city: '正在解析位置...',
+                  district: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+                }
+              })
+              
+              // 调用和风天气API获取完整天气信息（包括实时、预报、空气质量等）
               wx.cloud.callFunction({
                 name: 'weather',
                 data: {
-                  action: 'getCurrentWeather',
+                  action: 'getCompleteWeather',
                   lat: latitude,
                   lon: longitude
                 }
               }).then((weatherRes) => {
-                console.log('云函数调用结果:', weatherRes)
+                console.log('=== 详细调试信息 ===')
+                console.log('云函数调用结果完整数据:', JSON.stringify(weatherRes, null, 2))
+                console.log('result字段:', weatherRes.result)
+                console.log('success字段:', weatherRes.result?.success)
+                console.log('data字段:', weatherRes.result?.data)
+                console.log('error字段:', weatherRes.result?.error)
+                console.log('==================')
                 
                 if (weatherRes.result && weatherRes.result.success) {
                   console.log('✅ 天气数据获取成功')
+                  console.log('返回的天气数据结构:', weatherRes.result.data)
                   resolve(weatherRes)
                 } else {
-                  const errorMsg = weatherRes.result?.message || weatherRes.result?.error || '天气数据获取失败'
+                  // 处理云函数返回的错误信息
+                  let errorMsg = '天气数据获取失败'
+                  if (weatherRes.result?.error) {
+                    if (typeof weatherRes.result.error === 'object') {
+                      errorMsg = weatherRes.result.error.message || weatherRes.result.error.code || errorMsg
+                    } else {
+                      errorMsg = weatherRes.result.error
+                    }
+                  } else if (weatherRes.result?.message) {
+                    errorMsg = weatherRes.result.message
+                  }
+                  
                   console.error('❌ 天气数据获取失败:', errorMsg)
+                  console.error('完整错误信息:', weatherRes.result)
+                  console.error('完整响应:', JSON.stringify(weatherRes, null, 2))
                   reject(new Error(errorMsg))
                 }
               }).catch((error) => {
@@ -300,26 +345,55 @@ Page({
   // 更新天气 UI
   updateWeatherUI(weatherData) {
     console.log('🎨 更新天气UI，接收到的数据:', weatherData)
-    console.log('📍 位置信息:', weatherData.locationInfo)
     
-    // 确保位置信息正确更新
-    const locationInfo = weatherData.locationInfo
-    if (locationInfo) {
-      console.log('✅ 使用新的位置信息:', locationInfo)
-    } else {
-      console.warn('⚠️ 未收到位置信息，保持当前位置显示')
+    // 适配新的云函数数据格式
+    let actualWeatherData = weatherData
+    
+    // 如果是新格式的数据结构（带有data字段）
+    if (weatherData.data && weatherData.data.current) {
+      actualWeatherData = weatherData.data
+      console.log('📦 检测到新格式数据结构')
     }
+    
+    console.log('📍 位置信息:', actualWeatherData.locationInfo)
+    
+    // 确保位置信息正确更新 - 彻底清除固定位置
+    const locationInfo = actualWeatherData.locationInfo
+    if (locationInfo) {
+      console.log('✅ 使用真实地理位置信息:', locationInfo)
+      // 立即更新位置信息，清除"苏州市吴中区"等硬编码位置
+      this.setData({
+        location: {
+          province: locationInfo.province || '当前位置',
+          city: locationInfo.city || '实时定位', 
+          district: locationInfo.district || '周边区域'
+        }
+      })
+    } else {
+      console.warn('⚠️ 未收到位置信息，使用默认显示')
+      this.setData({
+        location: {
+          province: '当前位置',
+          city: '实时定位',
+          district: '获取中...'
+        }
+      })
+    }
+    
+    // 安全地获取天气数据
+    const currentWeather = actualWeatherData.current || {}
+    const conditionInfo = actualWeatherData.condition || {}
     
     this.setData({
       weather: {
-        temperature: weatherData.current.temperature,
-        humidity: weatherData.current.humidity,
-        condition: weatherData.condition.text,
-        emoji: weatherData.condition.emoji,
-        feelsLike: weatherData.current.feelsLike,
-        windDirection: weatherData.current.windDirection,
-        windScale: weatherData.current.windScale,
-        updateTime: this.formatUpdateTime(weatherData.current.updateTime),
+        temperature: currentWeather.temperature || this.data.weather.temperature,
+        humidity: currentWeather.humidity || this.data.weather.humidity,
+        condition: conditionInfo.text || this.data.weather.condition,
+        emoji: conditionInfo.emoji || this.data.weather.emoji,
+        feelsLike: currentWeather.feelsLike || this.data.weather.feelsLike,
+        windDirection: currentWeather.windDirection || this.data.weather.windDirection,
+        windScale: currentWeather.windScale || this.data.weather.windScale,
+        updateTime: this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新',
         loading: false
       },
       // 强制更新位置信息，如果没有新位置信息则显示"获取中"
@@ -409,17 +483,19 @@ Page({
     })
   },
 
-  // 手动刷新天气数据
-  onWeatherRefresh() {
-    // 双击显示调试菜单
-    const currentTime = Date.now()
-    if (this.data.lastTapTime && currentTime - this.data.lastTapTime < 300) {
-      this.showDebugMenu()
-      return
-    }
-    this.setData({
-      lastTapTime: currentTime
+  // 跳转到天气详情页
+  navigateToWeatherDetail() {
+    wx.navigateTo({
+      url: '/pages/weather-detail/weather-detail'
     })
+  },
+
+  // 手动刷新天气数据
+  onWeatherRefresh(event: any) {
+    // 阻止事件冒泡，防止触发卡片点击跳转
+    if (event) {
+      event.stopPropagation()
+    }
     
     wx.showLoading({
       title: '获取天气中...',
@@ -524,6 +600,45 @@ Page({
       wx.removeStorageSync('weather_cache')
     } catch (error) {
       console.warn('清除天气缓存失败:', error)
+    }
+  },
+
+  // 检查并自动刷新天气
+  checkAndAutoRefreshWeather() {
+    try {
+      const cacheData = wx.getStorageSync('weather_cache')
+      if (!cacheData) {
+        console.log('没有天气缓存，不需要自动刷新')
+        return
+      }
+
+      const now = Date.now()
+      const cacheTime = cacheData.timestamp || 0
+      const oneHour = 60 * 60 * 1000 // 1小时的毫秒数
+
+      // 检查缓存是否超过1小时
+      if (now - cacheTime > oneHour) {
+        console.log('天气缓存已过期，自动刷新天气数据')
+        
+        // 静默刷新，不显示loading
+        this.getWeatherData(true).then(() => {
+          console.log('天气数据自动刷新成功')
+          // 可以显示一个轻量提示
+          wx.showToast({
+            title: '天气已更新',
+            icon: 'none',
+            duration: 1000
+          })
+        }).catch((error) => {
+          console.error('天气数据自动刷新失败:', error)
+          // 静默失败，不干扰用户体验
+        })
+      } else {
+        const remainingTime = Math.floor((oneHour - (now - cacheTime)) / 1000 / 60)
+        console.log(`天气缓存还有 ${remainingTime} 分钟过期`)
+      }
+    } catch (error) {
+      console.warn('检查天气缓存失败:', error)
     }
   },
 

@@ -301,6 +301,48 @@ page {
   line-height: var(--line-height-tight);
 }
 
+/* 可点击的更新时间样式 */
+.weather-update-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-sm);
+  position: relative;
+  
+  &::after {
+    content: '🔄';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--font-size-sm);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+  
+  &:hover {
+    background: rgba(14, 165, 233, 0.05);
+    
+    &::after {
+      opacity: 1;
+      transform: translateY(-50%) rotate(180deg);
+    }
+  }
+  
+  &:active {
+    background: rgba(14, 165, 233, 0.1);
+    transform: scale(0.98);
+    
+    &::after {
+      animation: refresh-rotate 1s linear infinite;
+    }
+  }
+}
+
+@keyframes refresh-rotate {
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
 
 
 /* 价格卡片 - 现代化设计 */

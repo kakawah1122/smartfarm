@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/weather-detail/weather-detail",
     "pages/production/production",
     "pages/health/health", 
     "pages/profile/profile",
