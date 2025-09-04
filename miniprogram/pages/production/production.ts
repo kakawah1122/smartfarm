@@ -8,14 +8,14 @@ const pageConfig = {
     // 入栏统计
     entryStats: {
       total: '1,280',
-      amount: '10.5',
+      survivalRate: '95.2',
       batches: '12'
     },
     
     // 出栏统计
     exitStats: {
       total: '850',
-      revenue: '21.2',
+      batches: '8',
       avgWeight: '4.8'
     },
     
@@ -182,65 +182,36 @@ const pageConfig = {
 
   // 新增入栏记录
   addEntry() {
-    wx.showModal({
-      title: '新增入栏记录',
-      content: '跳转到入栏记录添加页面',
-      showCancel: false,
-      success: () => {
-        // 实际开发中这里会跳转到添加页面
-        wx.showToast({
-          title: '功能开发中',
-          icon: 'none'
-        })
-      }
+    wx.navigateTo({
+      url: '/pages/entry-form/entry-form'
     })
   },
 
   // 新增出栏记录
   addExit() {
-    wx.showModal({
-      title: '新增出栏记录',
-      content: '跳转到出栏记录添加页面',
-      showCancel: false,
-      success: () => {
-        // 实际开发中这里会跳转到添加页面
-        wx.showToast({
-          title: '功能开发中',
-          icon: 'none'
-        })
-      }
+    wx.navigateTo({
+      url: '/pages/exit-form/exit-form'
+    })
+  },
+
+  // 查看库存详情
+  viewInventoryDetail() {
+    wx.navigateTo({
+      url: '/pages/inventory-detail/inventory-detail'
     })
   },
 
   // 采购物料
   purchaseMaterial() {
-    wx.showModal({
-      title: '采购入库',
-      content: '跳转到物料采购页面',
-      showCancel: false,
-      success: () => {
-        // 实际开发中这里会跳转到采购页面
-        wx.showToast({
-          title: '功能开发中',
-          icon: 'none'
-        })
-      }
+    wx.navigateTo({
+      url: '/pages/purchase-form/purchase-form'
     })
   },
 
   // 领用物料
   useMaterial() {
-    wx.showModal({
-      title: '物料领用',
-      content: '跳转到物料领用页面',
-      showCancel: false,
-      success: () => {
-        // 实际开发中这里会跳转到领用页面
-        wx.showToast({
-          title: '功能开发中',
-          icon: 'none'
-        })
-      }
+    wx.navigateTo({
+      url: '/pages/material-use-form/material-use-form'
     })
   },
 

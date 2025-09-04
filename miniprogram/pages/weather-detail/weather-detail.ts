@@ -46,7 +46,10 @@ Page({
     dailyForecast: [] as any[],
     
     // 刷新状态
-    refreshing: false
+    refreshing: false,
+    
+    // 加载状态
+    isLoading: false
   },
 
   onLoad(options: any) {
@@ -73,20 +76,27 @@ Page({
   },
 
   // 加载天气数据
-  loadWeatherData() {
+  async loadWeatherData() {
     const cachedData = this.getCachedWeatherData()
     if (cachedData) {
       console.log('使用缓存的天气数据')
       this.updateCompleteWeatherData(cachedData)
     } else {
       console.log('没有缓存数据，获取新的天气数据')
-      this.getWeatherData()
+      await this.getWeatherData()
     }
   },
 
   // 获取完整天气数据
   async getWeatherData() {
+    // 防止重复调用
+    if (this.data.isLoading) {
+      console.log('正在获取天气数据中，跳过重复请求')
+      return
+    }
+
     try {
+      this.setData({ isLoading: true })
       wx.showLoading({ title: '获取天气中...' })
       
       const locationRes = await this.getLocation()
@@ -115,6 +125,7 @@ Page({
         showCancel: false
       })
     } finally {
+      this.setData({ isLoading: false })
       wx.hideLoading()
     }
   },
@@ -628,12 +639,12 @@ Page({
   },
 
   // 检查是否需要自动刷新
-  checkAutoRefresh() {
+  async checkAutoRefresh() {
     const cachedData = this.getCachedWeatherData()
     if (!cachedData) {
       // 没有缓存数据，自动获取
       console.log('没有缓存数据，自动获取天气')
-      this.getWeatherData()
+      await this.getWeatherData()
     } else {
       // 有缓存数据，检查是否过期（1小时）
       const now = Date.now()
@@ -642,7 +653,7 @@ Page({
       
       if (now - cacheTime > oneHour) {
         console.log('缓存已过期，自动刷新天气')
-        this.getWeatherData()
+        await this.getWeatherData()
       }
     }
   },

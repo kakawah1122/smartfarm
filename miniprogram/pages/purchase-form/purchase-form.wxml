@@ -1,0 +1,232 @@
+<!--purchase-form.wxml - 采购入库表单页面-->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="物料采购入库"
+    show-back="{{true}}"
+    show-menu="{{false}}"
+    show-record="{{false}}"
+    bind:back="goBack"
+  />
+
+  <!-- 表单内容区域 -->
+  <view class="form-content">
+    <!-- 表单顶部信息卡片 -->
+    <view class="form-header">
+      <view class="form-card">
+        <view class="header-info">
+          <view class="batch-id-section">
+            <view class="batch-label">批次ID</view>
+            <view class="batch-id">{{formData.batchId}}</view>
+            <t-tag theme="warning" size="small">自动生成</t-tag>
+          </view>
+          <view class="date-info">
+            <text class="date-text">{{formData.purchaseDate || '请选择采购日期'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主要表单 -->
+    <view class="entry-form">
+      <!-- 基础信息卡片 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">基础信息</text>
+        </view>
+        <view class="form-card">
+          <!-- 采购日期 -->
+          <view class="form-item" bind:tap="showDatePicker">
+            <view class="item-label required">采购日期</view>
+            <view class="item-input date-input">
+              <text class="date-text">{{formData.purchaseDate || '请选择采购日期'}}</text>
+              <t-icon name="calendar" size="32" color="#c8c9cc" />
+            </view>
+          </view>
+
+          <!-- 物料名称 -->
+          <view class="form-item">
+            <view class="item-label required">物料名称</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入物料名称，如：优质鹅用饲料"
+                value="{{formData.materialName}}"
+                bind:change="onFieldChange"
+                data-field="materialName"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 物料规格 -->
+          <view class="form-item">
+            <view class="item-label">物料规格</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入物料规格，如：25kg/袋"
+                value="{{formData.specification}}"
+                bind:change="onFieldChange"
+                data-field="specification"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 供应商 -->
+          <view class="form-item">
+            <view class="item-label required">供应商</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入供应商名称"
+                value="{{formData.supplier}}"
+                bind:change="onFieldChange"
+                data-field="supplier"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 采购信息卡片 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">采购信息</text>
+        </view>
+        <view class="form-card">
+          <!-- 采购数量 -->
+          <view class="form-item">
+            <view class="item-label required">采购数量</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入数量"
+                value="{{formData.quantity}}"
+                type="digit"
+                bind:change="onFieldChange"
+                data-field="quantity"
+                suffix="{{formData.unit || ''}}"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 单位 -->
+          <view class="form-item">
+            <view class="item-label required">计量单位</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入单位，如：吨、袋、支"
+                value="{{formData.unit}}"
+                bind:change="onFieldChange"
+                data-field="unit"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 单价 -->
+          <view class="form-item">
+            <view class="item-label required">单价</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入单价"
+                value="{{formData.unitPrice}}"
+                type="digit"
+                bind:change="onFieldChange"
+                data-field="unitPrice"
+                suffix="元/{{formData.unit || '单位'}}"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 总金额 -->
+          <view class="form-item amount-item">
+            <view class="item-label">总金额</view>
+            <view class="item-value">
+              <text class="amount-value">￥{{totalAmount}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 其他信息卡片 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">其他信息</text>
+        </view>
+        <view class="form-card">
+          <!-- 操作员 -->
+          <view class="form-item">
+            <view class="item-label required">操作员</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入操作员姓名"
+                value="{{formData.operator}}"
+                bind:change="onFieldChange"
+                data-field="operator"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 备注信息 -->
+          <view class="form-item textarea-item">
+            <view class="item-label">备注</view>
+            <view class="item-textarea">
+              <t-textarea
+                placeholder="请输入备注信息（可选）"
+                value="{{formData.remarks}}"
+                bind:change="onFieldChange"
+                data-field="remarks"
+                maxlength="200"
+                indicator
+                borderless
+                autosize
+              />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="form-actions">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block 
+          bind:tap="onSubmit"
+          loading="{{submitting}}"
+        >
+          {{submitting ? '提交中...' : '提交采购入库'}}
+        </t-button>
+        <t-button 
+          theme="default" 
+          size="large" 
+          block 
+          bind:tap="onReset"
+        >
+          重置表单
+        </t-button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 日期选择器 -->
+  <t-date-time-picker 
+    visible="{{showDate}}"
+    mode="date"
+    value="{{dateValue}}"
+    format="YYYY-MM-DD"
+    bind:change="onDateChange"
+    bind:cancel="hideDatePicker"
+    bind:confirm="onDateConfirm"
+  />
+</view>

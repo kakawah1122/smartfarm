@@ -44,8 +44,8 @@
             <t-col span="8">
               <t-card>
                 <view class="stat-content stat-success">
-                  <view class="stat-value">¥{{entryStats.amount}}万</view>
-                  <view class="stat-label">总金额</view>
+                  <view class="stat-value">{{entryStats.survivalRate}}%</view>
+                  <view class="stat-label">存活率</view>
                 </view>
               </t-card>
             </t-col>
@@ -84,7 +84,7 @@
                     <t-tag theme="{{item.status === '已完成' ? 'success' : 'warning'}}" size="small">{{item.status}}</t-tag>
                   </view>
                   <view class="record-content">
-                    <text class="record-symptoms">{{item.supplier}} • {{item.quantity}}羽 • ¥{{item.amount}}</text>
+                    <text class="record-symptoms">{{item.supplier}} • {{item.quantity}}羽</text>
                   </view>
                   <view class="record-footer">
                     <text class="record-operator">{{item.operator}}</text>
@@ -116,8 +116,8 @@
             <t-col span="8">
               <t-card>
                 <view class="stat-content stat-success">
-                  <view class="stat-value">¥{{exitStats.revenue}}万</view>
-                  <view class="stat-label">总收入</view>
+                  <view class="stat-value">{{exitStats.batches}}</view>
+                  <view class="stat-label">出栏批次</view>
                 </view>
               </t-card>
             </t-col>
@@ -156,7 +156,7 @@
                     <t-tag theme="{{item.status === '已交付' ? 'success' : 'primary'}}" size="small">{{item.status}}</t-tag>
                   </view>
                   <view class="record-content">
-                    <text class="record-symptoms">{{item.customer}} • {{item.quantity}}羽 • 平均{{item.avgWeight}}斤 • ¥{{item.revenue}}</text>
+                    <text class="record-symptoms">{{item.customer}} • {{item.quantity}}羽 • 平均{{item.avgWeight}}斤</text>
                   </view>
                   <view class="record-footer">
                     <text class="record-operator">{{item.operator}}</text>
@@ -178,7 +178,7 @@
         <view class="stats-section">
           <t-row gutter="16" class="overview-stats">
             <t-col span="12">
-              <t-card>
+              <t-card bind:tap="viewInventoryDetail">
                 <view class="stat-content stat-warning">
                   <view class="stat-value">{{materialStats.feed}}吨</view>
                   <view class="stat-label">饲料库存</view>
@@ -187,7 +187,7 @@
               </t-card>
             </t-col>
             <t-col span="12">
-              <t-card>
+              <t-card bind:tap="viewInventoryDetail">
                 <view class="stat-content stat-success">
                   <view class="stat-value">充足</view>
                   <view class="stat-label">药品库存</view>
@@ -231,7 +231,7 @@
                     <t-tag theme="{{item.type === '采购' ? 'success' : 'warning'}}" size="small">{{item.type}}</t-tag>
                   </view>
                   <view class="record-content">
-                    <text class="record-symptoms">{{item.description}} • {{item.quantity}}{{item.type === '采购' ? ' • ¥' + item.amount : ''}}</text>
+                    <text class="record-symptoms">{{item.description}} • {{item.quantity}}</text>
                   </view>
                   <view class="record-footer">
                     <text class="record-operator">{{item.operator}}</text>

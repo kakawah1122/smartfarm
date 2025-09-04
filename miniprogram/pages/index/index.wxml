@@ -48,10 +48,6 @@
           </view>
         </view>
         
-        <!-- 天气功能提示 -->
-        <view class="weather-features-hint">
-          <text class="hint-text">点击查看24小时预报、7天预报、空气质量和天气预警</text>
-        </view>
       </view>
     </view>
 
