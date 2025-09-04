@@ -88,52 +88,6 @@
       </view>
     </view>
 
-    <!-- 空气质量卡片 - 使用TDesign组件 -->
-    <view class="card air-quality-card" wx:if="{{airData}}">
-      <view class="card-header">
-        <text class="card-title">空气质量</text>
-        <t-tag theme="{{airData.aqi <= 50 ? 'success' : (airData.aqi <= 100 ? 'warning' : 'danger')}}" variant="light" size="medium">
-          {{airData.category || '获取中'}}
-        </t-tag>
-      </view>
-      <view class="card-content">
-        <!-- 主要AQI显示区域 -->
-        <view class="aqi-display">
-          <view class="aqi-main-section">
-            <view class="aqi-main-value">
-              <text class="aqi-number" style="color: {{airData.color}}">{{airData.aqi || '--'}}</text>
-              <text class="aqi-unit">AQI</text>
-            </view>
-            <view class="aqi-progress-container">
-              <t-progress 
-                percentage="{{airData.progress || 0}}" 
-                color="{{airData.color}}"
-                stroke-width="8"
-                track-color="rgba(0, 0, 0, 0.1)"
-              />
-              <text class="aqi-desc">当前空气质量指数</text>
-            </view>
-          </view>
-        </view>
-        
-        <!-- 污染物详情 - 使用TDesign Grid组件 -->
-        <t-grid class="pollutants-grid" column="3" border="{{false}}">
-          <t-grid-item wx:if="{{airData.pm2p5}}" text="PM2.5" description="{{airData.pm2p5}} μg/m³" />
-          <t-grid-item wx:if="{{airData.pm10}}" text="PM10" description="{{airData.pm10}} μg/m³" />
-          <t-grid-item wx:if="{{airData.no2}}" text="NO₂" description="{{airData.no2}} μg/m³" />
-          <t-grid-item wx:if="{{airData.so2}}" text="SO₂" description="{{airData.so2}} μg/m³" />
-          <t-grid-item wx:if="{{airData.co}}" text="CO" description="{{airData.co}} mg/m³" />
-          <t-grid-item wx:if="{{airData.o3}}" text="O₃" description="{{airData.o3}} μg/m³" />
-        </t-grid>
-        
-        <!-- 更新时间 -->
-        <view class="aqi-update-time" wx:if="{{airData.updateTime}}">
-          <t-icon name="time" size="small" />
-          <text>更新于: {{airData.updateTime}}</text>
-        </view>
-      </view>
-    </view>
-
     <!-- 24小时预报卡片 -->
     <view class="card hourly-forecast-card">
       <view class="card-header">
@@ -164,42 +118,33 @@
       </view>
     </view>
 
-    <!-- 7天预报卡片 -->
-    <view class="card weekly-forecast-card">
+    <!-- 空气质量卡片 - 使用TDesign组件 -->
+    <view class="card air-quality-card" wx:if="{{airData}}">
       <view class="card-header">
-        <text class="card-title">7天预报</text>
-        <text class="forecast-trend">温度趋势</text>
+        <text class="card-title">空气质量</text>
+        <t-tag theme="{{airData.aqi <= 50 ? 'success' : (airData.aqi <= 100 ? 'warning' : 'danger')}}" variant="light" size="medium">
+          {{airData.category || '获取中'}}
+        </t-tag>
       </view>
       <view class="card-content">
-        <view class="daily-forecast-list">
-          <view class="daily-forecast-item" wx:for="{{dailyForecast}}" wx:key="date">
-            <view class="day-info">
-              <text class="day-name">{{item.dayName}}</text>
-              <view class="day-weather">
-                <text class="day-icon">{{item.iconDay}}</text>
-                <text class="day-condition">{{item.textDay}}</text>
-              </view>
-              <view class="day-wind" wx:if="{{item.windDir}}">
-                <text class="wind-dir">{{item.windDir}}</text>
-                <text class="wind-scale">{{item.windScale}}</text>
-              </view>
+        <!-- 主要AQI显示区域 -->
+        <view class="aqi-display">
+          <view class="aqi-main-section">
+            <view class="aqi-main-value">
+              <text class="aqi-number" style="color: {{airData.color}}">{{airData.aqi || '--'}}</text>
+              <text class="aqi-unit">AQI</text>
             </view>
-            
-            <view class="temp-info">
-              <view class="temp-range">
-                <text class="temp-low">{{item.tempMin}}°</text>
-                <view class="temp-bar-wrapper">
-                  <view class="temp-bar" style="width: {{item.tempProgress}}%;"></view>
-                </view>
-                <text class="temp-high">{{item.tempMax}}°</text>
-              </view>
-              <view class="day-details" wx:if="{{item.humidity}}">
-                <text class="humidity-info">湿度{{item.humidity}}%</text>
-                <text class="uv-info" wx:if="{{item.uvIndex}}">UV{{item.uvIndex}}</text>
-              </view>
+            <view class="aqi-progress-container">
+              <t-progress 
+                percentage="{{airData.progress || 0}}" 
+                color="{{airData.color}}"
+                stroke-width="8"
+                track-color="rgba(0, 0, 0, 0.1)"
+              />
             </view>
           </view>
         </view>
+        
       </view>
     </view>
 
@@ -241,6 +186,47 @@
         </t-grid>
       </view>
     </view>
+
+
+    <!-- 7天预报卡片 -->
+    <view class="card weekly-forecast-card">
+      <view class="card-header">
+        <text class="card-title">7天预报</text>
+        <text class="forecast-trend">温度趋势</text>
+      </view>
+      <view class="card-content">
+        <view class="daily-forecast-list">
+          <view class="daily-forecast-item" wx:for="{{dailyForecast}}" wx:key="date">
+            <view class="day-info">
+              <text class="day-name">{{item.dayName}}</text>
+              <view class="day-weather">
+                <text class="day-icon">{{item.iconDay}}</text>
+                <text class="day-condition">{{item.textDay}}</text>
+              </view>
+              <view class="day-wind" wx:if="{{item.windDir}}">
+                <text class="wind-dir">{{item.windDir}}</text>
+                <text class="wind-scale">{{item.windScale}}</text>
+              </view>
+            </view>
+            
+            <view class="temp-info">
+              <view class="temp-range">
+                <text class="temp-low">{{item.tempMin}}°</text>
+                <view class="temp-bar-wrapper">
+                  <view class="temp-bar" style="width: {{item.tempProgress}}%;"></view>
+                </view>
+                <text class="temp-high">{{item.tempMax}}°</text>
+              </view>
+              <view class="day-details" wx:if="{{item.humidity}}">
+                <text class="humidity-info">湿度{{item.humidity}}%</text>
+                <text class="uv-info" wx:if="{{item.uvIndex}}">UV{{item.uvIndex}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
 
 
 
