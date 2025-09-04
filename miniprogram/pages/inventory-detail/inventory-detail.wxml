@@ -2,7 +2,7 @@
 <view class="page-container">
   <!-- 自定义导航栏 -->
   <navigation-bar 
-    title="库存详情"
+    title="物料库存"
     show-back="{{true}}"
     show-menu="{{false}}"
     show-record="{{false}}"
@@ -11,41 +11,9 @@
 
   <!-- 页面内容 -->
   <view class="content">
-    <!-- 库存概览卡片 -->
-    <view class="overview-section">
-      <view class="section-title">库存概览</view>
-      <view class="overview-cards">
-        <!-- 饲料库存卡片 -->
-        <view class="overview-card feed-card">
-          <view class="card-header">
-            <t-icon name="food" size="32" color="#ff9800" />
-            <view class="card-title">饲料库存</view>
-          </view>
-          <view class="card-content">
-            <view class="main-number">{{totalFeedWeight}}</view>
-            <view class="unit">吨</view>
-            <view class="status {{feedStatus}}">{{feedStatusText}}</view>
-          </view>
-        </view>
-
-        <!-- 药品库存卡片 -->
-        <view class="overview-card medicine-card">
-          <view class="card-header">
-            <t-icon name="health" size="32" color="#4caf50" />
-            <view class="card-title">药品库存</view>
-          </view>
-          <view class="card-content">
-            <view class="main-number">{{totalMedicineCount}}</view>
-            <view class="unit">种</view>
-            <view class="status {{medicineStatus}}">{{medicineStatusText}}</view>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 详细库存列表 -->
-    <view class="inventory-section">
-      <view class="section-title">详细库存</view>
+    <!-- 库存列表 -->
+    <view class="materials-section">
+      <view class="section-title">物料库存</view>
       
       <!-- 搜索和筛选 -->
       <view class="search-bar">
@@ -61,11 +29,11 @@
         <t-button theme="primary" size="small" bind:tap="showFilter">筛选</t-button>
       </view>
 
-      <!-- 库存物料列表 -->
-      <view class="inventory-list">
+      <!-- 物料列表 -->
+      <view class="materials-list" wx:if="{{filteredMaterialsList.length > 0}}">
         <view 
-          class="inventory-item" 
-          wx:for="{{inventoryList}}" 
+          class="material-item" 
+          wx:for="{{filteredMaterialsList}}" 
           wx:key="materialId"
           bind:tap="showMaterialDetail"
           data-material="{{item}}"
@@ -76,23 +44,35 @@
           </view>
           
           <view class="item-content">
-            <view class="quantity-info">
+            <view class="stock-info">
               <view class="current-stock">
-                <text class="number">{{item.totalQuantity}}</text>
+                <text class="number">{{item.currentStock}}</text>
                 <text class="unit">{{item.unit}}</text>
               </view>
-              <view class="stock-status">
-                <text class="label">安全库存：{{item.safetyStock}}{{item.unit}}</text>
+              <view class="safety-stock">
+                <text class="label">安全库存：{{item.safetyStock}} {{item.unit}}</text>
               </view>
             </view>
             
-            <view class="batch-info">
-              <view class="batch-count">{{item.batchCount}}个批次</view>
-              <view class="latest-date">最新入库：{{item.latestPurchaseDate}}</view>
+            <view class="material-info">
+              <view class="supplier">供应商：{{item.supplier}}</view>
+              <view class="purchase-date">最新入库：{{item.latestPurchaseDate}}</view>
             </view>
           </view>
 
         </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:else>
+        <t-empty 
+          wx:if="{{loading}}"
+          description="正在加载中..."
+        />
+        <t-empty 
+          wx:else
+          description="暂无物料数据"
+        />
       </view>
     </view>
 

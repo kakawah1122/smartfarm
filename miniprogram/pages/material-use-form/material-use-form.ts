@@ -77,9 +77,8 @@ const pageConfig = {
   // 加载可选择的库存物料
   async loadAvailableMaterials() {
     try {
-      // 这里应该调用云函数或API获取库存物料数据
-      // 模拟获取库存物料数据
-      const materials = await this.getInventoryMaterials()
+      // 调用云函数获取真实库存物料数据
+      const materials = await this.getRealInventoryMaterials()
       
       const materialOptions = materials.map((material: any) => 
         `${material.materialName} (库存: ${material.totalQuantity}${material.unit})`
@@ -107,58 +106,47 @@ const pageConfig = {
     }
   },
 
-  // 模拟获取库存物料数据
-  async getInventoryMaterials(): Promise<any[]> {
-    return new Promise((resolve) => {
-      // 模拟API调用 - 减少延迟以便测试
-      setTimeout(() => {
-        // 模拟汇总库存数据（从多个采购批次汇总而来）
-        const mockInventory = [
-          {
-            materialId: 'INV001',
-            materialName: '鹅用配合饲料',
-            unit: '袋',
-            totalQuantity: 60,  // 汇总了多个批次
-            safetyStock: 20,
-            isLowStock: false,
-            batchCount: 2,      // 来自2个批次
-            latestPurchaseDate: '2024-12-01'
-          },
-          {
-            materialId: 'INV002',
-            materialName: '玉米颗粒',
-            unit: '袋',
-            totalQuantity: 22,
-            safetyStock: 10, 
-            isLowStock: false,
-            batchCount: 1,
-            latestPurchaseDate: '2024-11-28'
-          },
-          {
-            materialId: 'INV003',
-            materialName: '鹅用维生素',
-            unit: '瓶',
-            totalQuantity: 17,
-            safetyStock: 5,
-            isLowStock: false,
-            batchCount: 1,
-            latestPurchaseDate: '2024-11-25'
-          },
-          {
-            materialId: 'INV004',
-            materialName: '消毒液',
-            unit: '桶',
-            totalQuantity: 9,
-            safetyStock: 3,
-            isLowStock: false,
-            batchCount: 1,
-            latestPurchaseDate: '2024-12-03'
-          }
-        ]
-        console.log('模拟库存数据加载完成:', mockInventory)
-        resolve(mockInventory)
-      }, 100)
-    })
+  // 获取真实库存物料数据
+  async getRealInventoryMaterials(): Promise<any[]> {
+    try {
+      console.log('🔍 调用云函数获取物料列表...')
+      
+      const result = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'list_materials'
+        }
+      })
+      
+      if (!result.result.success) {
+        throw new Error('获取物料数据失败')
+      }
+      
+      const materials = result.result.data.materials || []
+      console.log('📦 获取到真实物料数据:', materials.length, '个')
+      
+      // 转换为表单需要的格式
+      const inventoryMaterials = materials.map(material => ({
+        materialId: material._id,
+        materialName: material.name,
+        unit: material.unit,
+        totalQuantity: Number(material.currentStock) || 0,
+        safetyStock: 5, // 默认安全库存
+        isLowStock: Number(material.currentStock) <= 5,
+        batchCount: 1, // 简化处理
+        latestPurchaseDate: material.createTime ? material.createTime.split('T')[0] : new Date().toISOString().split('T')[0]
+      }))
+      
+      return inventoryMaterials
+      
+    } catch (error) {
+      console.error('❌ 获取物料数据失败:', error)
+      wx.showToast({
+        title: '获取物料数据失败',
+        icon: 'none'
+      })
+      return []
+    }
   },
 
   // 格式化日期
@@ -345,9 +333,8 @@ const pageConfig = {
 
       console.log('提交物料领用数据:', submitData)
 
-      // 这里应该调用云函数或API提交数据
-      // 模拟API调用
-      await this.submitToDatabase(submitData)
+      // 调用云函数提交物料使用记录
+      await this.submitToCloudFunction(submitData)
 
       // 提交成功
       wx.showToast({
@@ -377,19 +364,44 @@ const pageConfig = {
     }
   },
 
-  // 模拟数据库提交
-  async submitToDatabase(data: any): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // 模拟网络请求延迟
-      setTimeout(() => {
-        // 模拟90%成功率
-        if (Math.random() > 0.1) {
-          resolve()
-        } else {
-          reject(new Error('网络错误'))
+  // 提交到云函数 - 使用正确的领用出库流程
+  async submitToCloudFunction(data: any): Promise<void> {
+    try {
+      console.log('🚀 调用云函数进行物料领用:', data)
+      
+      // 直接创建物料使用记录（会自动检查库存并更新）
+      const recordResult = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'create_record',
+          recordData: {
+            materialId: data.materialId,
+            type: 'use',
+            quantity: data.usedQuantity,
+            targetLocation: data.purpose, // 使用用途作为目标位置
+            operator: data.operator,
+            status: '已完成',
+            notes: `用途：${data.purpose}`,
+            recordDate: data.useDate
+          }
         }
-      }, 1500)
-    })
+      })
+      
+      if (!recordResult.result.success) {
+        throw new Error('创建使用记录失败: ' + recordResult.result.error)
+      }
+      
+      console.log('✅ 物料领用成功:', {
+        recordNumber: recordResult.result.data.recordNumber,
+        newStock: recordResult.result.data.newStock,
+        usedQuantity: data.usedQuantity,
+        material: data.materialName
+      })
+      
+    } catch (error) {
+      console.error('❌ 物料领用失败:', error)
+      throw error
+    }
   },
 
   // 重置表单

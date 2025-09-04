@@ -6,11 +6,9 @@ interface EntryFormData {
   batchId: string;          // 批次ID
   entryDate: string;        // 入栏日期
   breed: string;            // 鹅苗品种
-  quality: string;          // 品质等级
   supplier: string;         // 供应商
   quantity: string;         // 采购数量
   unitPrice: string;        // 单价
-  operator: string;         // 操作员
   remarks: string;          // 备注
 }
 
@@ -21,11 +19,9 @@ const pageConfig = {
       batchId: '',
       entryDate: '',
       breed: '',
-      quality: '',
       supplier: '',
       quantity: '',
       unitPrice: '',
-      operator: '',
       remarks: ''
     } as EntryFormData,
     
@@ -164,9 +160,6 @@ const pageConfig = {
     if (!formData.unitPrice.trim()) {
       errors.push('请输入单价')
     }
-    if (!formData.operator.trim()) {
-      errors.push('请输入操作员姓名')
-    }
 
     // 验证数值字段
     if (formData.quantity && (isNaN(Number(formData.quantity)) || Number(formData.quantity) <= 0)) {
@@ -211,9 +204,26 @@ const pageConfig = {
 
       console.log('提交入栏记录数据:', submitData)
 
-      // 这里应该调用云函数或API提交数据
-      // 模拟API调用
-      await this.submitToDatabase(submitData)
+      // 调用云函数保存数据
+      const result = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: {
+          action: 'create',
+          recordData: {
+            breed: submitData.breed,
+            supplier: submitData.supplier,
+            quantity: submitData.quantity,
+            unitPrice: submitData.unitPrice,
+            entryDate: submitData.entryDate,
+            notes: submitData.remarks,
+            status: submitData.status
+          }
+        }
+      })
+
+      if (!result.result.success) {
+        throw new Error(result.result.message || '提交失败')
+      }
 
       // 提交成功
       wx.showToast({
@@ -243,20 +253,6 @@ const pageConfig = {
     }
   },
 
-  // 模拟数据库提交
-  async submitToDatabase(data: any): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // 模拟网络请求延迟
-      setTimeout(() => {
-        // 模拟90%成功率
-        if (Math.random() > 0.1) {
-          resolve()
-        } else {
-          reject(new Error('网络错误'))
-        }
-      }, 1500)
-    })
-  },
 
   // 重置表单
   onReset() {
@@ -274,11 +270,9 @@ const pageConfig = {
               batchId: currentBatchId,
               entryDate: currentDate,
               breed: '',
-              quality: '',
               supplier: '',
               quantity: '',
               unitPrice: '',
-              operator: '',
               remarks: ''
             },
             totalAmount: '0.00'

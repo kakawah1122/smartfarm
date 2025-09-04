@@ -59,20 +59,6 @@
             </view>
           </view>
 
-          <!-- 品质等级 -->
-          <view class="form-item">
-            <view class="item-label">品质等级</view>
-            <view class="item-input">
-              <t-input
-                placeholder="请输入品质等级，如：优质品种"
-                value="{{formData.quality}}"
-                bind:change="onFieldChange"
-                data-field="quality"
-                borderless
-                align="right"
-              />
-            </view>
-          </view>
 
           <!-- 供应商 -->
           <view class="form-item">
@@ -147,20 +133,6 @@
           <text class="section-title">其他信息</text>
         </view>
         <view class="form-card">
-          <!-- 操作员 -->
-          <view class="form-item">
-            <view class="item-label required">操作员</view>
-            <view class="item-input">
-              <t-input
-                placeholder="请输入操作员姓名"
-                value="{{formData.operator}}"
-                bind:change="onFieldChange"
-                data-field="operator"
-                borderless
-                align="right"
-              />
-            </view>
-          </view>
 
           <!-- 备注信息 -->
           <view class="form-item textarea-item">

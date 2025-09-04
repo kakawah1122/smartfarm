@@ -161,6 +161,26 @@
   color: var(--td-text-color-primary, #000000);
 }
 
+/* 选择器输入样式 */
+.picker-input {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16rpx;
+}
+
+.picker-text {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  flex: 1;
+  text-align: right;
+}
+
+.picker-text:empty::after {
+  content: attr(placeholder);
+  color: var(--td-text-color-placeholder, #bbbbbb);
+}
+
 /* 金额显示 */
 .amount-item {
   background: var(--td-warning-color-1, #fff1e9);

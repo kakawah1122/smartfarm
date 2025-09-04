@@ -74,20 +74,29 @@
               <text class="card-title">最近入栏记录</text>
             </view>
             <view class="records-container">
+              <!-- 空状态显示 -->
+              <view wx:if="{{entryRecords.length === 0 && !loading}}" class="empty-state">
+                <t-empty icon="file" description="暂无入栏记录">
+                  <t-button theme="primary" size="small" bind:tap="addEntry">
+                    立即添加
+                  </t-button>
+                </t-empty>
+              </view>
+              
+              <!-- 记录列表 -->
               <view wx:for="{{entryRecords}}" wx:key="id" 
                     class="record-item" 
                     bind:tap="viewRecord" 
                     data-item="{{item}}">
                 <view class="record-main">
                   <view class="record-header">
-                    <text class="record-location">{{item.breed}}{{item.quality ? ' - ' + item.quality : ''}}</text>
+                    <text class="record-location">{{item.breed}}</text>
                     <t-tag theme="{{item.status === '已完成' ? 'success' : 'warning'}}" size="small">{{item.status}}</t-tag>
                   </view>
                   <view class="record-content">
                     <text class="record-symptoms">{{item.supplier}} • {{item.quantity}}羽</text>
                   </view>
                   <view class="record-footer">
-                    <text class="record-operator">{{item.operator}}</text>
                     <text class="record-date">{{item.date}}</text>
                   </view>
                 </view>
@@ -146,6 +155,16 @@
               <text class="card-title">最近出栏记录</text>
             </view>
             <view class="records-container">
+              <!-- 空状态显示 -->
+              <view wx:if="{{exitRecords.length === 0 && !loading}}" class="empty-state">
+                <t-empty icon="file" description="暂无出栏记录">
+                  <t-button theme="primary" size="small" bind:tap="addExit">
+                    立即添加
+                  </t-button>
+                </t-empty>
+              </view>
+              
+              <!-- 记录列表 -->
               <view wx:for="{{exitRecords}}" wx:key="id" 
                     class="record-item" 
                     bind:tap="viewRecord" 
@@ -159,7 +178,6 @@
                     <text class="record-symptoms">{{item.customer}} • {{item.quantity}}羽 • 平均{{item.avgWeight}}斤</text>
                   </view>
                   <view class="record-footer">
-                    <text class="record-operator">{{item.operator}}</text>
                     <text class="record-date">{{item.date}}</text>
                   </view>
                 </view>
@@ -179,19 +197,19 @@
           <t-row gutter="16" class="overview-stats">
             <t-col span="12">
               <t-card bind:tap="viewInventoryDetail">
-                <view class="stat-content stat-warning">
+                <view class="stat-content {{materialStats.feed > 0 ? 'stat-success' : 'stat-warning'}}">
                   <view class="stat-value">{{materialStats.feed}}吨</view>
                   <view class="stat-label">饲料库存</view>
-                  <view class="stat-status warning">库存不足</view>
+                  <view class="stat-status {{materialStats.feed > 0 ? 'success' : 'warning'}}">{{materialStats.feed > 0 ? '状态良好' : '库存不足'}}</view>
                 </view>
               </t-card>
             </t-col>
             <t-col span="12">
               <t-card bind:tap="viewInventoryDetail">
-                <view class="stat-content stat-success">
-                  <view class="stat-value">充足</view>
+                <view class="stat-content {{materialStats.medicineStatus === '充足' ? 'stat-success' : 'stat-warning'}}">
+                  <view class="stat-value">{{materialStats.medicineStatus}}</view>
                   <view class="stat-label">药品库存</view>
-                  <view class="stat-status success">状态良好</view>
+                  <view class="stat-status {{materialStats.medicineStatus === '充足' ? 'success' : 'warning'}}">{{materialStats.medicineStatus === '充足' ? '状态良好' : '需要补货'}}</view>
                 </view>
               </t-card>
             </t-col>
@@ -221,27 +239,44 @@
               <text class="card-title">最近物料记录</text>
             </view>
             <view class="records-container">
-              <view wx:for="{{materialRecords}}" wx:key="id" 
-                    class="record-item" 
-                    bind:tap="viewRecord" 
-                    data-item="{{item}}">
-                <view class="record-main">
-                  <view class="record-header">
-                    <text class="record-location">{{item.name}}</text>
-                    <t-tag theme="{{item.type === '采购' ? 'success' : 'warning'}}" size="small">{{item.type}}</t-tag>
+              <!-- 加载状态 -->
+              <view wx:if="{{loading}}" class="loading-state">
+                <t-loading theme="spinner" size="40rpx" text="加载中..." />
+              </view>
+              
+              <!-- 记录列表 - 直接显示，不用复杂条件 -->
+              <view wx:if="{{!loading && materialRecords && materialRecords.length > 0}}">
+                <view wx:for="{{materialRecords}}" wx:key="id" 
+                      class="record-item" 
+                      bind:tap="viewRecord" 
+                      data-item="{{item}}">
+                  <view class="record-main">
+                    <view class="record-header">
+                      <text class="record-location">{{item.name}}</text>
+                      <t-tag theme="{{item.type === '采购' ? 'success' : 'warning'}}" size="small">{{item.type}}</t-tag>
+                    </view>
+                    <view class="record-content">
+                      <text class="record-symptoms">{{item.description}} • {{item.quantity}}</text>
+                    </view>
+                    <view class="record-footer">
+                      <text class="record-date">{{item.date}}</text>
+                    </view>
                   </view>
-                  <view class="record-content">
-                    <text class="record-symptoms">{{item.description}} • {{item.quantity}}</text>
+                  <view class="record-arrow">
+                    <t-icon name="chevron-right" size="16" color="#c8c9cc" />
                   </view>
-                  <view class="record-footer">
-                    <text class="record-operator">{{item.operator}}</text>
-                    <text class="record-date">{{item.date}}</text>
-                  </view>
-                </view>
-                <view class="record-arrow">
-                  <t-icon name="chevron-right" size="16" color="#c8c9cc" />
                 </view>
               </view>
+              
+              <!-- 空状态显示 -->
+              <view wx:if="{{!loading && (!materialRecords || materialRecords.length === 0)}}" class="empty-state">
+                <t-empty icon="file" description="暂无物料记录">
+                  <t-button theme="primary" size="small" bind:tap="purchaseMaterial">
+                    采购物料
+                  </t-button>
+                </t-empty>
+              </view>
+              
             </view>
           </view>
         </view>

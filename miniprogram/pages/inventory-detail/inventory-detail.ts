@@ -1,27 +1,18 @@
-// inventory-detail.ts - 库存详情页面逻辑
+// inventory-detail.ts - 物料库存详情页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
-// 物料库存接口
-interface MaterialInventory {
+// 物料详情接口
+interface MaterialDetail {
   materialId: string;
   materialName: string;
-  totalQuantity: number;
+  currentStock: number;
   unit: string;
   safetyStock: number;
   isLowStock: boolean;
-  batchCount: number;
-  latestPurchaseDate: string;
-  batches: PurchaseBatch[];
-}
-
-// 采购批次接口  
-interface PurchaseBatch {
-  batchId: string;
-  totalQuantity: number;
-  remainingQuantity: number;
-  unitPrice: number;
   supplier: string;
-  purchaseDate: string;
+  latestPurchaseDate: string;
+  specification?: string;
+  unitPrice: number;
 }
 
 const pageConfig = {
@@ -29,50 +20,36 @@ const pageConfig = {
     // 搜索和筛选
     searchKeyword: '',
     
-    // 概览数据
-    totalFeedWeight: '0.0',
-    feedStatus: 'good',
-    feedStatusText: '状态良好',
-    totalMedicineCount: 0,
-    medicineStatus: 'good', 
-    medicineStatusText: '充足',
-    
-    // 库存列表
-    inventoryList: [] as MaterialInventory[],
-    filteredInventoryList: [] as MaterialInventory[],
-    
+    // 物料列表
+    materialsList: [] as MaterialDetail[],
+    filteredMaterialsList: [] as MaterialDetail[],
     
     // 加载状态
     loading: false
   },
 
   onLoad() {
-    this.loadInventoryData()
+    this.loadMaterialsData()
   },
 
-  // 加载库存数据
-  async loadInventoryData() {
+  // 加载物料数据
+  async loadMaterialsData() {
     this.setData({ loading: true })
     
     try {
-      // 获取所有采购批次数据
-      const purchaseData = await this.getPurchaseData()
+      console.log('🔍 开始加载物料库存数据...')
       
-      // 汇总生成库存数据
-      const inventoryData = this.generateInventoryData(purchaseData)
-      
-      // 计算概览数据
-      const overviewData = this.calculateOverview(inventoryData)
+      // 获取物料数据
+      const materialsData = await this.getMaterialsData()
       
       this.setData({
-        inventoryList: inventoryData,
-        filteredInventoryList: inventoryData,
-        ...overviewData
+        materialsList: materialsData,
+        filteredMaterialsList: materialsData
       })
       
-      console.log('库存数据加载完成:', inventoryData)
+      console.log('📦 物料数据加载完成:', materialsData.length, '个物料')
     } catch (error) {
-      console.error('加载库存数据失败:', error)
+      console.error('❌ 加载物料数据失败:', error)
       wx.showToast({
         title: '加载数据失败',
         icon: 'none'
@@ -82,133 +59,47 @@ const pageConfig = {
     }
   },
 
-  // 模拟获取采购数据
-  async getPurchaseData(): Promise<any[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockPurchases = [
-          {
-            batchId: 'CG-20241201',
-            materialName: '鹅用配合饲料',
-            specification: '25kg/袋',
-            unit: '袋',
-            totalQuantity: 50,
-            usedQuantity: 15,
-            remainingQuantity: 35,
-            unitPrice: 45.0,
-            supplier: '正大饲料公司',
-            purchaseDate: '2024-12-01'
-          },
-          {
-            batchId: 'CG-20241128',
-            materialName: '鹅用配合饲料', 
-            specification: '25kg/袋',
-            unit: '袋',
-            totalQuantity: 30,
-            usedQuantity: 5,
-            remainingQuantity: 25,
-            unitPrice: 46.0,
-            supplier: '希望饲料集团',
-            purchaseDate: '2024-11-28'
-          },
-          {
-            batchId: 'CG-20241125',
-            materialName: '玉米颗粒',
-            specification: '50kg/袋', 
-            unit: '袋',
-            totalQuantity: 25,
-            usedQuantity: 3,
-            remainingQuantity: 22,
-            unitPrice: 85.0,
-            supplier: '安徽粮油集团',
-            purchaseDate: '2024-11-25'
-          },
-          {
-            batchId: 'CG-20241203',
-            materialName: '鹅用维生素',
-            specification: '1kg/瓶',
-            unit: '瓶', 
-            totalQuantity: 20,
-            usedQuantity: 3,
-            remainingQuantity: 17,
-            unitPrice: 28.0,
-            supplier: '华大生物科技',
-            purchaseDate: '2024-12-03'
-          },
-          {
-            batchId: 'CG-20241205',
-            materialName: '消毒液',
-            specification: '5L/桶',
-            unit: '桶',
-            totalQuantity: 10,
-            usedQuantity: 1, 
-            remainingQuantity: 9,
-            unitPrice: 35.0,
-            supplier: '武汉健康兽药',
-            purchaseDate: '2024-12-05'
-          }
-        ]
-        resolve(mockPurchases)
-      }, 200)
-    })
-  },
-
-  // 汇总生成库存数据
-  generateInventoryData(purchaseData: any[]): MaterialInventory[] {
-    const materialMap = new Map<string, any>()
-    
-    // 按物料名称分组汇总
-    purchaseData.forEach(batch => {
-      const key = batch.materialName
-      
-      if (!materialMap.has(key)) {
-        materialMap.set(key, {
-          materialId: this.generateMaterialId(batch.materialName),
-          materialName: batch.materialName,
-          unit: batch.unit,
-          totalQuantity: 0,
-          safetyStock: this.getSafetyStock(batch.materialName, batch.unit),
-          batches: [],
-          latestPurchaseDate: batch.purchaseDate
-        })
-      }
-      
-      const material = materialMap.get(key)
-      material.totalQuantity += batch.remainingQuantity
-      material.batches.push({
-        batchId: batch.batchId,
-        totalQuantity: batch.totalQuantity,
-        remainingQuantity: batch.remainingQuantity,
-        unitPrice: batch.unitPrice,
-        supplier: batch.supplier,
-        purchaseDate: batch.purchaseDate
+  // 获取物料数据
+  async getMaterialsData(): Promise<MaterialDetail[]> {
+    try {
+      // 调用云函数获取物料列表
+      const materialsResult = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'list_materials'
+        }
       })
       
-      // 更新最新采购日期
-      if (batch.purchaseDate > material.latestPurchaseDate) {
-        material.latestPurchaseDate = batch.purchaseDate
+      if (!materialsResult.result.success) {
+        throw new Error('获取物料数据失败')
       }
-    })
-    
-    // 转换为数组并计算附加信息
-    const inventoryList: MaterialInventory[] = Array.from(materialMap.values()).map(material => ({
-      ...material,
-      batchCount: material.batches.length,
-      isLowStock: material.totalQuantity <= material.safetyStock,
-      batches: material.batches.sort((a: any, b: any) => a.purchaseDate.localeCompare(b.purchaseDate)) // 按日期排序，先进先出
-    }))
-    
-    return inventoryList.sort((a, b) => a.materialName.localeCompare(b.materialName))
+      
+      const materials = materialsResult.result.data.materials
+      console.log('📦 获取到物料数据:', materials.length, '个')
+      
+      // 转换为页面所需的格式
+      const materialsDetails: MaterialDetail[] = materials.map(material => ({
+        materialId: material._id,
+        materialName: material.name,
+        currentStock: Number(material.currentStock) || 0,
+        unit: material.unit,
+        safetyStock: this.getSafetyStock(material.name, material.unit),
+        isLowStock: Number(material.currentStock) <= this.getSafetyStock(material.name, material.unit),
+        supplier: material.supplier || '未知供应商',
+        latestPurchaseDate: material.createTime ? material.createTime.split('T')[0] : new Date().toISOString().split('T')[0],
+        specification: material.specification || '',
+        unitPrice: Number(material.unitPrice) || 0
+      }))
+      
+      // 按物料名称排序
+      return materialsDetails.sort((a, b) => a.materialName.localeCompare(b.materialName))
+      
+    } catch (error) {
+      console.error('❌ 获取物料数据失败:', error)
+      throw error
+    }
   },
 
-  // 生成物料ID
-  generateMaterialId(materialName: string): string {
-    const hash = materialName.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0)
-      return a & a
-    }, 0)
-    return `MAT${Math.abs(hash).toString().slice(0, 6)}`
-  },
 
   // 获取安全库存
   getSafetyStock(materialName: string, unit: string): number {
@@ -221,54 +112,25 @@ const pageConfig = {
     return safetyStockMap[materialName] || 5
   },
 
-  // 计算概览数据
-  calculateOverview(inventoryList: MaterialInventory[]) {
-    let totalFeedWeight = 0
-    let feedLowCount = 0 
-    let medicineCount = 0
-    let medicineLowCount = 0
-    
-    inventoryList.forEach(material => {
-      if (material.materialName.includes('饲料') || material.materialName.includes('玉米')) {
-        // 假设每袋25-50kg，计算总重量
-        const weightPerBag = material.materialName.includes('玉米') ? 50 : 25
-        totalFeedWeight += (material.totalQuantity * weightPerBag) / 1000 // 转换为吨
-        
-        if (material.isLowStock) feedLowCount++
-      } else {
-        medicineCount++
-        if (material.isLowStock) medicineLowCount++
-      }
-    })
-    
-    return {
-      totalFeedWeight: totalFeedWeight.toFixed(1),
-      feedStatus: feedLowCount > 0 ? 'warning' : 'good',
-      feedStatusText: feedLowCount > 0 ? '库存不足' : '状态良好',
-      totalMedicineCount: medicineCount,
-      medicineStatus: medicineLowCount > 0 ? 'warning' : 'good', 
-      medicineStatusText: medicineLowCount > 0 ? '库存不足' : '充足'
-    }
-  },
 
   // 搜索变化
   onSearchChange(e: any) {
     const { value } = e.detail
     this.setData({ searchKeyword: value })
-    this.filterInventoryList(value)
+    this.filterMaterialsList(value)
   },
 
-  // 筛选库存列表
-  filterInventoryList(keyword: string) {
-    let filtered = this.data.inventoryList
+  // 筛选物料列表
+  filterMaterialsList(keyword: string) {
+    let filtered = this.data.materialsList
     
     if (keyword) {
-      filtered = this.data.inventoryList.filter(item => 
+      filtered = this.data.materialsList.filter(item => 
         item.materialName.toLowerCase().includes(keyword.toLowerCase())
       )
     }
     
-    this.setData({ filteredInventoryList: filtered })
+    this.setData({ filteredMaterialsList: filtered })
   },
 
   // 显示筛选
@@ -283,30 +145,30 @@ const pageConfig = {
 
   // 应用筛选
   applyFilter(filterIndex: number) {
-    let filtered = this.data.inventoryList
+    let filtered = this.data.materialsList
     
     switch (filterIndex) {
       case 0: // 全部物料
         break
       case 1: // 饲料类
-        filtered = this.data.inventoryList.filter(item => 
-          item.materialName.includes('饲料') || item.materialName.includes('玉米')
+        filtered = this.data.materialsList.filter(item => 
+          item.materialName.includes('饲料') || item.materialName.includes('玉米') || item.materialName.includes('feed')
         )
         break
       case 2: // 药品类
-        filtered = this.data.inventoryList.filter(item => 
-          !item.materialName.includes('饲料') && !item.materialName.includes('玉米')
+        filtered = this.data.materialsList.filter(item => 
+          !item.materialName.includes('饲料') && !item.materialName.includes('玉米') && !item.materialName.includes('feed')
         )
         break
       case 3: // 库存不足
-        filtered = this.data.inventoryList.filter(item => item.isLowStock)
+        filtered = this.data.materialsList.filter(item => item.isLowStock)
         break
       case 4: // 状态良好
-        filtered = this.data.inventoryList.filter(item => !item.isLowStock)
+        filtered = this.data.materialsList.filter(item => !item.isLowStock)
         break
     }
     
-    this.setData({ filteredInventoryList: filtered })
+    this.setData({ filteredMaterialsList: filtered })
   },
 
   // 显示物料详情
@@ -320,7 +182,7 @@ const pageConfig = {
   // 页面分享
   onShareAppMessage() {
     return {
-      title: '库存详情',
+      title: '物料库存',
       path: '/pages/inventory-detail/inventory-detail'
     }
   }

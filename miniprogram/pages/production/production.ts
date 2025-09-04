@@ -5,161 +5,251 @@ const pageConfig = {
   data: {
     activeTab: 'entry',
     
-    // 入栏统计
+    // 入栏统计（默认值，将被真实数据覆盖）
     entryStats: {
-      total: '1,280',
-      survivalRate: '95.2',
-      batches: '12'
+      total: '0',
+      survivalRate: '0.0',
+      batches: '0'
     },
     
-    // 出栏统计
+    // 出栏统计（默认值，将被真实数据覆盖）
     exitStats: {
-      total: '850',
-      batches: '8',
-      avgWeight: '4.8'
+      total: '0',
+      batches: '0',
+      avgWeight: '0.0'
     },
     
-    // 物料统计
+    // 物料统计（默认值，将被真实数据覆盖）
     materialStats: {
-      feed: '2.8'
+      feed: '0'
     },
     
-    // 入栏记录
-    entryRecords: [
-      {
-        id: 1,
-        breed: '白鹅苗',
-        quality: '优质品种',
-        supplier: '江苏鹅业有限公司',
-        quantity: 200,
-        amount: '1,640',
-        date: '2024-03-15',
-        operator: '张三',
-        status: '已完成'
-      },
-      {
-        id: 2,
-        breed: '灰鹅苗',
-        quality: '',
-        supplier: '苏州养殖基地',
-        quantity: 150,
-        amount: '1,200',
-        date: '2024-03-12',
-        operator: '李四',
-        status: '已完成'
-      },
-      {
-        id: 3,
-        breed: '黑鹅苗',
-        quality: '特色品种',
-        supplier: '无锡鹅苗批发市场',
-        quantity: 100,
-        amount: '900',
-        date: '2024-03-10',
-        operator: '王五',
-        status: '待验收'
-      }
-    ],
+    // 入栏记录（空数组，将从云函数加载真实数据）
+    entryRecords: [],
     
-    // 出栏记录
-    exitRecords: [
-      {
-        id: 1,
-        type: '成年白鹅',
-        customer: '苏州农贸市场',
-        quantity: 120,
-        revenue: '18,000',
-        avgWeight: '5.2',
-        date: '2024-03-14',
-        operator: '张三',
-        status: '已交付'
-      },
-      {
-        id: 2,
-        type: '成年灰鹅',
-        customer: '无锡餐饮集团',
-        quantity: 80,
-        revenue: '12,800',
-        avgWeight: '4.9',
-        date: '2024-03-11',
-        operator: '李四',
-        status: '运输中'
-      }
-    ],
+    // 出栏记录（空数组，将从云函数加载真实数据）
+    exitRecords: [],
     
-    // 物料记录
-    materialRecords: [
-      {
-        id: 1,
-        name: '优质鹅用饲料',
-        type: '采购',
-        description: '供应商：正大集团',
-        quantity: '1.5吨',
-        amount: '4,500',
-        date: '2024-03-15',
-        operator: '张三',
-        stock: '4.3吨'
-      },
-      {
-        id: 2,
-        name: '鹅用饲料',
-        type: '领用',
-        description: '1号鹅舍日常投喂',
-        quantity: '200kg',
-        date: '2024-03-14',
-        operator: '李四',
-        stock: '2.8吨'
-      },
-      {
-        id: 3,
-        name: '禽流感疫苗',
-        type: '采购',
-        description: '疫苗防疫物资',
-        quantity: '50支',
-        amount: '750',
-        date: '2024-03-13',
-        operator: '王五',
-        stock: '68支'
-      }
-    ]
+    // 物料记录（从云函数加载真实数据）
+    materialRecords: [],
+    
+    // 加载状态
+    loading: false,
+    isEmpty: false  // 用于显示空状态
   },
 
   onLoad() {
+    console.log('🚀 页面加载 - onLoad')
     this.loadData()
   },
 
+  onReady() {
+    console.log('📱 页面准备完毕 - onReady')
+    // 页面初次渲染完成时加载数据
+    this.refreshData()
+  },
+
   onShow() {
-    // 页面显示时刷新数据
+    console.log('👀 页面显示 - onShow')
+    // 每次页面显示时刷新数据，确保数据最新
     this.refreshData()
   },
 
   // 加载数据
   loadData() {
+    console.log('📊 开始加载所有数据')
+    this.loadDashboardData()
     this.loadEntryData()
     this.loadExitData()
     this.loadMaterialData()
   },
 
+  // 加载仪表盘数据
+  async loadDashboardData() {
+    try {
+      this.setData({ loading: true })
+      
+      const result = await wx.cloud.callFunction({
+        name: 'production-dashboard',
+        data: {
+          action: 'overview'
+          // 暂时移除日期过滤，获取所有数据的统计
+        }
+      })
+      
+      console.log('🔍 Dashboard调用结果:', JSON.stringify(result, null, 2))
+      
+      if (result.result && result.result.success) {
+        const data = result.result.data
+        console.log('📊 接收到的data:', JSON.stringify(data, null, 2))
+        console.log('🥬 material数据:', JSON.stringify(data.material, null, 2))
+        
+        const newMaterialStats = {
+          feed: data.material?.feedStock || '0',
+          medicineStatus: data.material?.medicineStatus || '未知'
+        }
+        
+        console.log('🎯 设置的materialStats:', JSON.stringify(newMaterialStats, null, 2))
+        
+        this.setData({
+          entryStats: {
+            total: data.entry?.total || '0',
+            survivalRate: data.entry?.survivalRate || '0.0',
+            batches: data.entry?.batches || '0'
+          },
+          exitStats: {
+            total: data.exit?.total || '0',
+            batches: data.exit?.batches || '0',
+            avgWeight: data.exit?.avgWeight || '0.0'
+          },
+          materialStats: newMaterialStats
+        })
+        
+        console.log('✅ 页面数据已更新')
+      } else {
+        console.error('❌ Dashboard调用失败或返回success=false')
+      }
+    } catch (error) {
+      console.error('加载仪表盘数据失败:', error)
+      // 如果是云函数不存在的错误，给出友好提示
+      if (error.errMsg && error.errMsg.includes('function not found')) {
+        wx.showModal({
+          title: '系统提示',
+          content: '生产管理云函数尚未部署，请先部署云函数后再使用。当前显示为空数据。',
+          showCancel: false
+        })
+      } else {
+        wx.showToast({
+          title: '数据加载失败，显示默认值',
+          icon: 'none'
+        })
+      }
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
   // 加载入栏数据
-  loadEntryData() {
-    // 模拟API调用
-    // 实际开发中这里会调用云函数或API
+  async loadEntryData() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: {
+          action: 'list',
+          page: 1,
+          pageSize: 10
+        }
+      })
+      
+      if (result.result && result.result.success) {
+        const records = result.result.data.records || []
+        this.setData({
+          entryRecords: records,
+          isEmpty: records.length === 0
+        })
+      }
+    } catch (error) {
+      console.error('加载入栏数据失败:', error)
+      this.setData({ entryRecords: [], isEmpty: true })
+    }
   },
 
   // 加载出栏数据
-  loadExitData() {
-    // 模拟API调用
+  async loadExitData() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'production-exit',
+        data: {
+          action: 'list',
+          page: 1,
+          pageSize: 10
+        }
+      })
+      
+      if (result.result && result.result.success) {
+        const records = result.result.data.records || []
+        this.setData({
+          exitRecords: records
+        })
+      }
+    } catch (error) {
+      console.error('加载出栏数据失败:', error)
+      this.setData({ exitRecords: [] })
+    }
   },
 
   // 加载物料数据
-  loadMaterialData() {
-    // 模拟API调用
+  async loadMaterialData() {
+    try {
+      console.log('📦 开始加载物料记录数据')
+      const result = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'list_records',
+          page: 1,
+          pageSize: 10
+        }
+      })
+      
+      console.log('🔍 物料记录云函数结果:', result)
+      
+      if (result.result && result.result.success) {
+        const records = result.result.data.records || []
+        
+        // 转换数据格式以匹配界面显示
+        const formattedRecords = records.map(record => ({
+          id: record._id || record.recordNumber,
+          name: record.material?.name || '未知物料',
+          type: record.type === 'purchase' ? '采购' : '领用',
+          description: `${record.material?.category || '未分类'} • ${record.supplier || record.targetLocation || ''}`,
+          quantity: `${record.quantity}${record.material?.unit || '件'}`,
+          date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
+          status: record.status || '已完成'
+        }))
+        
+        this.setData({
+          materialRecords: formattedRecords,
+          isEmpty: formattedRecords.length === 0
+        })
+      } else {
+        this.setData({ materialRecords: [] })
+      }
+    } catch (error) {
+      console.error('❌ 加载物料数据失败:', error)
+      this.setData({ materialRecords: [] })
+    }
+  },
+
+
+  // 获取日期范围（最近30天）
+  getDateRange() {
+    const endDate = new Date()
+    const startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000)
+    
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0]
+    }
   },
 
   // 刷新数据
-  refreshData() {
-    // 下拉刷新时调用
-    this.loadData()
+  async refreshData() {
+    try {
+      this.setData({ loading: true })
+      
+      // 并行加载所有数据
+      await Promise.all([
+        this.loadDashboardData(),
+        this.loadEntryData(),
+        this.loadExitData(),
+        this.loadMaterialData()
+      ])
+      
+    } catch (error) {
+      console.error('❌ 数据刷新失败:', error)
+    } finally {
+      this.setData({ loading: false })
+    }
   },
 
   // Tab切换 - TDesign 格式
@@ -168,6 +258,11 @@ const pageConfig = {
     this.setData({
       activeTab: value
     })
+    
+    // 如果切换到物料管理tab，刷新物料数据
+    if (value === 'material') {
+      this.loadMaterialData()
+    }
   },
 
   // 兼容原有Tab切换
@@ -234,11 +329,36 @@ const pageConfig = {
 
   // 下拉刷新
   onPullDownRefresh() {
+    console.log('🔄 下拉刷新触发')
     this.refreshData()
     setTimeout(() => {
       wx.stopPullDownRefresh()
     }, 1500)
-  }
+  },
+
+  // 强制刷新数据（调试用）
+  async forceRefreshData() {
+    console.log('🔥 强制刷新数据')
+    try {
+      this.setData({ loading: true })
+      await this.loadDashboardData()
+      await this.loadMaterialData()
+      console.log('💾 当前页面materialStats:', JSON.stringify(this.data.materialStats, null, 2))
+      wx.showToast({
+        title: '数据已刷新',
+        icon: 'success'
+      })
+    } catch (error) {
+      console.error('强制刷新失败:', error)
+      wx.showToast({
+        title: '刷新失败',
+        icon: 'error'
+      })
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
 }
 
 // 使用导航栏适配工具创建页面

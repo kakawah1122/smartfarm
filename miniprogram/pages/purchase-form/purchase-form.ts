@@ -6,12 +6,11 @@ interface PurchaseFormData {
   batchId: string;          // 批次ID
   purchaseDate: string;     // 采购日期
   materialName: string;     // 物料名称
+  category: string;         // 物料分类
   specification: string;    // 物料规格
   supplier: string;         // 供应商
   quantity: string;         // 采购数量
-  unit: string;             // 计量单位
   unitPrice: string;        // 单价
-  operator: string;         // 操作员
   remarks: string;          // 备注
 }
 
@@ -22,18 +21,21 @@ const pageConfig = {
       batchId: '',
       purchaseDate: '',
       materialName: '',
+      category: '',
       specification: '',
       supplier: '',
       quantity: '',
-      unit: '',
       unitPrice: '',
-      operator: '',
       remarks: ''
     } as PurchaseFormData,
     
     // 日期选择器相关
     showDate: false,
     dateValue: '',
+    
+    // 分类选择器相关
+    categoryLabels: ['饲料', '药品', '设备', '耗材', '其他'],
+    categoryIndex: -1, // -1表示未选择
     
     // 计算总金额
     totalAmount: '0.00',
@@ -116,6 +118,17 @@ const pageConfig = {
     console.log('选择日期:', dateString, '生成批次ID:', batchId)
   },
 
+  // 分类选择变化
+  onCategoryChange(e: any) {
+    const index = e.detail.value
+    const category = this.data.categoryLabels[index]
+    this.setData({
+      'formData.category': category,
+      categoryIndex: index
+    })
+    console.log('选择分类:', category)
+  },
+
   // 表单字段变化
   onFieldChange(e: any) {
     const { value } = e.detail
@@ -124,6 +137,7 @@ const pageConfig = {
     this.setData({
       [`formData.${field}`]: value
     })
+
 
     // 如果是数量、单价或单位变化，重新计算总金额
     if (field === 'quantity' || field === 'unitPrice') {
@@ -145,6 +159,34 @@ const pageConfig = {
     })
   },
 
+  // 根据物料名称智能推断分类
+  getMaterialCategory(materialName: string): string {
+    const name = materialName.toLowerCase()
+    
+    // 饲料类
+    if (name.includes('饲料') || name.includes('精料') || name.includes('玉米') || name.includes('豆粕') || name.includes('麸皮')) {
+      return '饲料'
+    }
+    
+    // 药品类
+    if (name.includes('药') || name.includes('疫苗') || name.includes('消毒') || name.includes('抗生素') || name.includes('维生素')) {
+      return '药品'
+    }
+    
+    // 设备类
+    if (name.includes('设备') || name.includes('器械') || name.includes('工具') || name.includes('机械')) {
+      return '设备'
+    }
+    
+    // 耗材类
+    if (name.includes('耗材') || name.includes('用具') || name.includes('容器') || name.includes('包装')) {
+      return '耗材'
+    }
+    
+    // 其他类（默认）
+    return '其他'
+  },
+
   // 表单验证
   validateForm(): { isValid: boolean; errors: string[] } {
     const { formData } = this.data
@@ -157,20 +199,17 @@ const pageConfig = {
     if (!formData.materialName.trim()) {
       errors.push('请输入物料名称')
     }
+    if (!formData.category.trim()) {
+      errors.push('请选择物料分类')
+    }
     if (!formData.supplier.trim()) {
       errors.push('请输入供应商')
     }
     if (!formData.quantity.trim()) {
       errors.push('请输入采购数量')
     }
-    if (!formData.unit.trim()) {
-      errors.push('请输入计量单位')
-    }
     if (!formData.unitPrice.trim()) {
       errors.push('请输入单价')
-    }
-    if (!formData.operator.trim()) {
-      errors.push('请输入操作员姓名')
     }
 
     // 验证数值字段
@@ -212,14 +251,14 @@ const pageConfig = {
         totalAmount: this.data.totalAmount,
         type: '采购',
         createTime: new Date().toISOString(),
-        status: '已完成'
+        status: '已完成',
+        category: this.data.formData.category || this.getMaterialCategory(this.data.formData.materialName) // 使用用户选择的分类或智能推断
       }
 
       console.log('提交采购入库数据:', submitData)
 
-      // 这里应该调用云函数或API提交数据
-      // 模拟API调用
-      await this.submitToDatabase(submitData)
+      // 调用云函数提交物料数据
+      await this.submitToCloudFunction(submitData)
 
       // 提交成功
       wx.showToast({
@@ -249,19 +288,50 @@ const pageConfig = {
     }
   },
 
-  // 模拟数据库提交
-  async submitToDatabase(data: any): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // 模拟网络请求延迟
-      setTimeout(() => {
-        // 模拟90%成功率
-        if (Math.random() > 0.1) {
-          resolve()
-        } else {
-          reject(new Error('网络错误'))
+  // 提交到云函数 - 使用新的采购入库接口
+  async submitToCloudFunction(data: any): Promise<void> {
+    console.log('🚀 调用云函数进行采购入库:', data)
+    
+    try {
+      // 使用新的采购入库接口，自动处理物料匹配和创建
+      const result = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'purchase_inbound',
+          materialData: {
+            name: data.materialName,
+            category: data.category,
+            specification: data.specification || '',
+            unit: '件',
+            supplier: data.supplier || '',
+            quantity: parseFloat(data.quantity),
+            unitPrice: parseFloat(data.unitPrice),
+            operator: '系统用户',
+            recordDate: data.purchaseDate,
+            notes: data.remarks || '',
+            batchId: data.batchId
+          }
         }
-      }, 1500)
-    })
+      })
+      
+      console.log('云函数返回结果:', result)
+      
+      if (!result.result?.success) {
+        const errorMsg = result.result?.error || result.result?.message || '未知错误'
+        throw new Error(errorMsg)
+      }
+      
+      console.log('✅ 采购入库成功:', {
+        materialId: result.result.data?.materialId,
+        recordNumber: result.result.data?.recordNumber,
+        newStock: result.result.data?.newStock,
+        beforeStock: result.result.data?.beforeStock
+      })
+      
+    } catch (error) {
+      console.error('❌ 采购入库失败:', error)
+      throw error
+    }
   },
 
   // 重置表单
@@ -280,14 +350,14 @@ const pageConfig = {
               batchId: currentBatchId,
               purchaseDate: currentDate,
               materialName: '',
+              category: '',
               specification: '',
               supplier: '',
               quantity: '',
-              unit: '',
               unitPrice: '',
-              operator: '',
               remarks: ''
             },
+            categoryIndex: -1,
             totalAmount: '0.00'
           })
 
