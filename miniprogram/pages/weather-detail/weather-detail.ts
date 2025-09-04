@@ -219,14 +219,14 @@ Page({
 
   // 更新完整天气数据
   updateCompleteWeatherData(weatherData: any) {
-    console.log('更新完整天气数据:', weatherData)
+    console.log('🎨 详情页更新完整天气数据:', weatherData)
     
     // 处理云函数返回的嵌套数据结构
     // 云函数返回格式: { success: true, data: { current: {...}, hourly: [...] } }
     const actualData = weatherData.data || weatherData
     
-    console.log('处理后的数据结构:', actualData)
-    console.log('数据结构检查:', {
+    console.log('📦 详情页处理后的数据结构:', actualData)
+    console.log('🔍 详情页数据结构检查:', {
       hasCurrentWeather: !!actualData.current,
       hasHourlyForecast: !!actualData.hourly,
       hasDailyForecast: !!actualData.daily,
@@ -236,10 +236,12 @@ Page({
       dailyLength: Array.isArray(actualData.daily) ? actualData.daily.length : 'not array'
     })
     
-    // 立即更新位置信息 - 彻底清除硬编码位置
+    // 优先更新位置信息 - 彻底清除"实时定位获取中"状态
     const locationInfo = actualData.locationInfo
     if (locationInfo) {
       console.log('✅ 详情页使用真实地理位置:', locationInfo)
+      
+      // 立即清除"实时定位获取中"的显示
       this.setData({
         location: {
           province: locationInfo.province || '当前位置',
@@ -247,13 +249,21 @@ Page({
           district: locationInfo.district || '周边区域'
         }
       })
+      
+      console.log('📍 详情页位置信息更新完成:', {
+        province: locationInfo.province,
+        city: locationInfo.city,
+        district: locationInfo.district
+      })
     } else {
-      console.warn('⚠️ 详情页未收到位置信息')
+      console.warn('⚠️ 详情页未收到位置信息，显示备用信息')
+      
+      // 即使没有位置信息，也要清除"获取中"状态
       this.setData({
         location: {
           province: '当前位置',
           city: '实时定位',
-          district: '获取中...'
+          district: '位置服务异常'
         }
       })
     }

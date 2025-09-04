@@ -13,17 +13,20 @@
       <view class="card-content">
         <view class="weather-header">
           <view class="weather-left">
-            <view class="weather-icon-wrapper">
-              <text class="weather-emoji">{{weather.emoji || '☀️'}}</text>
+            <view class="weather-icon-wrapper {{weather.loading ? 'loading-animation' : ''}}">
+              <text class="weather-emoji">{{weather.emoji || '🌤️'}}</text>
             </view>
             <view class="weather-info">
-              <text class="weather-title">今日天气</text>
+              <text class="weather-title">{{weather.loading ? '获取天气中...' : '今日天气'}}</text>
               <text class="weather-location">{{location.city}}{{location.district}}</text>
-              <text class="weather-condition">{{weather.condition || '晴'}}</text>
+              <view class="weather-condition-wrapper">
+                <text class="weather-condition {{weather.hasError ? 'error-text' : ''}}">{{weather.condition || '晴'}}</text>
+                <text wx:if="{{weather.hasError}}" class="weather-error-hint" bindtap="onWeatherRefresh">点击重试</text>
+              </view>
             </view>
           </view>
           <view class="weather-right">
-            <text class="temperature">{{weather.temperature}}°C</text>
+            <text class="temperature {{weather.hasError ? 'error-text' : ''}}">{{weather.temperature}}°C</text>
             <text class="feels-like">体感 {{weather.feelsLike}}°C</text>
             <text class="humidity">湿度 {{weather.humidity}}%</text>
           </view>

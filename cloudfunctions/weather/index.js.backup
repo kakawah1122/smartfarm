@@ -31,11 +31,6 @@ function generateJWT() {
   try {
     const now = Math.floor(Date.now() / 1000)
     
-    console.log(`🔐 开始生成JWT token:`)
-    console.log(`  - 当前时间戳: ${now}`)
-    console.log(`  - 项目ID: ${QWEATHER_CONFIG.JWT.PROJECT_ID}`)
-    console.log(`  - 凭据ID: ${QWEATHER_CONFIG.JWT.CREDENTIAL_ID}`)
-    
     const header = {
       alg: 'EdDSA',
       kid: QWEATHER_CONFIG.JWT.CREDENTIAL_ID
@@ -47,9 +42,6 @@ function generateJWT() {
       exp: now + 3600
     }
     
-    console.log(`  - JWT Header:`, header)
-    console.log(`  - JWT Payload:`, payload)
-    
     const base64UrlEncode = (obj) => {
       return Buffer.from(JSON.stringify(obj))
         .toString('base64')
@@ -60,7 +52,7 @@ function generateJWT() {
     
     const headerEncoded = base64UrlEncode(header)
     const payloadEncoded = base64UrlEncode(payload)
-    const data = `${headerEncoded}.${payloadEncoded}`
+    const data = \`\${headerEncoded}.\${payloadEncoded}\`
     
     const privateKey = crypto.createPrivateKey(QWEATHER_CONFIG.JWT.PRIVATE_KEY)
     const signature = crypto.sign(null, Buffer.from(data), {
@@ -74,154 +66,49 @@ function generateJWT() {
       .replace(/\//g, '_')
       .replace(/=/g, '')
     
-    return `${data}.${signatureEncoded}`
+    return \`\${data}.\${signatureEncoded}\`
   } catch (error) {
     console.error('JWT生成失败:', error)
     throw new Error('JWT生成失败: ' + error.message)
   }
 }
 
-/**
- * 解压缩响应数据
- */
-function decompressData(rawData, encoding, callback) {
-  const zlib = require('zlib')
-  
-  try {
-    if (!encoding || encoding === 'identity') {
-      // 无压缩，直接返回字符串
-      callback(rawData.toString('utf8'))
-      return
-    }
-    
-    if (encoding === 'gzip') {
-      zlib.gunzip(rawData, (err, decompressed) => {
-        if (err) {
-          console.error('Gzip解压缩失败:', err)
-          callback(rawData.toString('utf8')) // 尝试直接解析
-        } else {
-          callback(decompressed.toString('utf8'))
-        }
-      })
-    } else if (encoding === 'deflate') {
-      zlib.inflate(rawData, (err, decompressed) => {
-        if (err) {
-          console.error('Deflate解压缩失败:', err)
-          callback(rawData.toString('utf8')) // 尝试直接解析
-        } else {
-          callback(decompressed.toString('utf8'))
-        }
-      })
-    } else {
-      // 其他编码，尝试直接解析
-      console.log(`未知编码: ${encoding}，尝试直接解析`)
-      callback(rawData.toString('utf8'))
-    }
-  } catch (error) {
-    console.error('解压缩过程出错:', error)
-    callback(rawData.toString('utf8')) // 尝试直接解析
-  }
-}
 
 /**
  * 发起和风天气API请求
  */
 async function qweatherRequest(apiPath, params = {}) {
-  const https = require('https')
-  const zlib = require('zlib')
   const jwt = generateJWT()
   const queryString = new URLSearchParams(params).toString()
-  const url = `https://${QWEATHER_CONFIG.API_HOST}${apiPath}${queryString ? '?' + queryString : ''}`
+  const url = \`https://\${QWEATHER_CONFIG.API_HOST}\${apiPath}\${queryString ? '?' + queryString : ''}\`
   
-  console.log(`🚀 准备请求和风天气API:`)
-  console.log(`  - API路径: ${apiPath}`)
-  console.log(`  - 请求参数:`, params)
-  console.log(`  - 完整URL: ${url}`)
-  console.log(`  - JWT长度: ${jwt ? jwt.length : 0} 字符`)
-  console.log(`  - JWT前50字符: ${jwt ? jwt.substring(0, 50) + '...' : 'null'}`)
+  console.log(\`请求和风天气API: \${url}\`)
   
-  return new Promise((resolve, reject) => {
-    const options = {
+  try {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${jwt}`,
-        'User-Agent': 'WeChat-MiniProgram-Weather/1.0',
-        'Accept': 'application/json',
-        'Accept-Encoding': 'gzip, deflate'  // 支持gzip压缩
+        'Authorization': \`Bearer \${jwt}\`,
+        'User-Agent': 'WeChat-MiniProgram-Weather/1.0'
       }
+    })
+    
+    if (!response.ok) {
+      throw new Error(\`HTTP Error: \${response.status} \${response.statusText}\`)
     }
     
-    const req = https.request(url, options, (res) => {
-      let rawData = Buffer.alloc(0)
-      
-      // 收集原始二进制数据
-      res.on('data', (chunk) => {
-        rawData = Buffer.concat([rawData, chunk])
-      })
-      
-      res.on('end', () => {
-        try {
-          console.log(`🔍 API调试信息 [${apiPath}]:`)
-          console.log(`  - 状态码: ${res.statusCode}`)
-          console.log(`  - 状态消息: ${res.statusMessage}`)
-          console.log(`  - 响应头:`, res.headers)
-          console.log(`  - 原始数据长度: ${rawData.length}`)
-          console.log(`  - Content-Encoding: ${res.headers['content-encoding'] || 'none'}`)
-          
-          if (res.statusCode !== 200) {
-            console.error(`❌ HTTP错误 [${apiPath}]: ${res.statusCode} ${res.statusMessage}`)
-            console.error(`错误响应二进制长度: ${rawData.length}`)
-            
-            // 尝试解压缩错误响应
-            decompressData(rawData, res.headers['content-encoding'], (decompressedData) => {
-              console.error(`解压后的错误响应: ${decompressedData}`)
-              reject(new Error(`HTTP Error: ${res.statusCode} ${res.statusMessage} - ${decompressedData}`))
-            })
-            return
-          }
-          
-          // 解压缩响应数据
-          decompressData(rawData, res.headers['content-encoding'], (decompressedData) => {
-            try {
-              console.log(`  - 解压后数据长度: ${decompressedData.length}`)
-              console.log(`  - 解压后数据预览: ${decompressedData.substring(0, 500)}...`)
-              
-              const jsonData = JSON.parse(decompressedData)
-              console.log(`✅ API响应解析成功 [${apiPath}]:`, jsonData)
-              
-              if (jsonData.code !== '200') {
-                console.error(`❌ API业务错误 [${apiPath}]: ${jsonData.code} - ${jsonData.message}`)
-                reject(new Error(`API Error: ${jsonData.code} - ${jsonData.message || '未知错误'}`))
-                return
-              }
-              
-              resolve(jsonData)
-            } catch (parseError) {
-              console.error(`❌ 解析JSON失败 [${apiPath}]:`, parseError)
-              console.error(`解压后的原始数据: ${decompressedData}`)
-              reject(parseError)
-            }
-          })
-        } catch (error) {
-          console.error(`❌ 处理响应失败 [${apiPath}]:`, error)
-          reject(error)
-        }
-      })
-    })
+    const data = await response.json()
+    console.log(\`API响应 [\${apiPath}]:\`, data)
     
-    req.on('error', (error) => {
-      console.error(`和风天气API请求失败 [${apiPath}]:`, error)
-      reject(error)
-    })
+    if (data.code !== '200') {
+      throw new Error(\`API Error: \${data.code} - \${data.message || '未知错误'}\`)
+    }
     
-    req.on('timeout', () => {
-      req.destroy()
-      reject(new Error('请求超时'))
-    })
-    
-    req.setTimeout(10000) // 10秒超时
-    req.end()
-  })
+    return data
+  } catch (error) {
+    console.error(\`和风天气API请求失败 [\${apiPath}]:\`, error)
+    throw error
+  }
 }
 
 /**
@@ -229,8 +116,8 @@ async function qweatherRequest(apiPath, params = {}) {
  */
 async function getCityByCoordinates(lat, lon) {
   const result = await qweatherRequest('/geo/v2/city/lookup', {
-    location: `${lon},${lat}`,
-    lang: 'zh'
+    location: \`\${lon},\${lat}\`,
+    lang: 'zh-Hans'
   })
   
   if (result.location && result.location.length > 0) {
@@ -246,7 +133,7 @@ async function getCityByCoordinates(lat, lon) {
 async function getCurrentWeather(locationId) {
   return await qweatherRequest('/v7/weather/now', {
     location: locationId,
-    lang: 'zh'
+    lang: 'zh-Hans'
   })
 }
 
@@ -256,7 +143,7 @@ async function getCurrentWeather(locationId) {
 async function getHourlyForecast(locationId) {
   return await qweatherRequest('/v7/weather/24h', {
     location: locationId,
-    lang: 'zh'
+    lang: 'zh-Hans'
   })
 }
 
@@ -266,7 +153,7 @@ async function getHourlyForecast(locationId) {
 async function getDailyForecast(locationId) {
   return await qweatherRequest('/v7/weather/7d', {
     location: locationId,
-    lang: 'zh'
+    lang: 'zh-Hans'
   })
 }
 
@@ -277,7 +164,7 @@ async function getWeatherWarning(locationId) {
   try {
     return await qweatherRequest('/v7/warning/now', {
       location: locationId,
-      lang: 'zh'
+      lang: 'zh-Hans'
     })
   } catch (error) {
     console.log('获取天气预警失败（可能是没有预警信息）:', error.message)
@@ -291,8 +178,8 @@ async function getWeatherWarning(locationId) {
 async function getAirQuality(lat, lon) {
   try {
     return await qweatherRequest('/v7/air/now', {
-      location: `${lon},${lat}`,
-      lang: 'zh'
+      location: \`\${lon},\${lat}\`,
+      lang: 'zh-Hans'
     })
   } catch (error) {
     console.log('获取空气质量失败:', error.message)
@@ -316,10 +203,10 @@ function getWeatherEmoji(weather) {
     '小雪': '❄️',
     '中雪': '❄️',
     '大雪': '❄️',
-    '雾': '🌫️',
+    '雾': '��️',
     '霾': '😷',
     '沙尘暴': '🌪️',
-    '浮尘': '🌪️',
+    '浮尘': '��️',
     '扬沙': '🌪️'
   }
   
@@ -430,7 +317,7 @@ exports.main = async (event, context) => {
         return await getCompleteWeatherData(parseFloat(lat), parseFloat(lon))
       
       default:
-        throw new Error(`不支持的操作: ${action}`)
+        throw new Error(\`不支持的操作: \${action}\`)
     }
   } catch (error) {
     console.error('云函数执行失败:', error)

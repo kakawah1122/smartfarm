@@ -14,7 +14,9 @@ Page({
       feelsLike: 22,
       windDirection: '无风',
       windScale: '0级',
-      updateTime: '刚刚更新'
+      updateTime: '刚刚更新',
+      loading: false,
+      hasError: false
     },
     
     // 位置信息 - 动态获取，不使用硬编码
@@ -178,47 +180,47 @@ Page({
     })
   },
 
-  // 获取位置并获取天气 - 彻底重写，确保获取真实位置
+  // 获取位置和天气 - 修复Promise返回问题
   getLocationAndWeather() {
     return new Promise((resolve, reject) => {
-      console.log('🌍 === 开始获取真实地理位置 ===')
+      console.log('🌍 === 首页开始获取真实地理位置 ===')
       
       // 先检查位置权限
       wx.getSetting({
         success: (settingsRes) => {
-          console.log('🌍 当前权限设置:', settingsRes.authSetting)
-          console.log('🌍 位置权限状态:', settingsRes.authSetting['scope.userLocation'])
+          console.log('🌍 首页权限设置:', settingsRes.authSetting)
+          console.log('🌍 首页位置权限状态:', settingsRes.authSetting['scope.userLocation'])
           
           if (settingsRes.authSetting['scope.userLocation'] === false) {
-            console.error('🌍 用户已拒绝位置权限')
+            console.error('🌍 首页：用户已拒绝位置权限')
             this.showLocationPermissionModal()
             reject(new Error('用户拒绝了位置权限'))
             return
           }
           
           // 强制获取高精度位置
-          console.log('🌍 开始调用wx.getLocation...')
+          console.log('🌍 首页开始调用wx.getLocation...')
           wx.getLocation({
-            type: 'gcj02', // 微信小程序标准坐标系
+            type: 'gcj02',
             isHighAccuracy: true,
             success: (locationRes) => {
               const { latitude, longitude, accuracy, speed, altitude } = locationRes
-              console.log('🌍 === 位置获取成功 ===')
-              console.log(`🌍 纬度: ${latitude}`)
-              console.log(`🌍 经度: ${longitude}`)
-              console.log(`🌍 精度: ${accuracy}米`)
-              console.log(`🌍 速度: ${speed}`)
-              console.log(`🌍 海拔: ${altitude}`)
-              console.log('🌍 完整位置对象:', locationRes)
+              console.log('🌍 === 首页位置获取成功 ===')
+              console.log(`🌍 首页纬度: ${latitude}`)
+              console.log(`🌍 首页经度: ${longitude}`)
+              console.log(`🌍 首页精度: ${accuracy}米`)
+              console.log(`🌍 首页速度: ${speed}`)
+              console.log(`🌍 首页海拔: ${altitude}`)
+              console.log('🌍 首页完整位置对象:', locationRes)
               
               // 验证坐标有效性
               if (!latitude || !longitude || latitude === 0 || longitude === 0) {
-                console.error('🌍 获取到的坐标无效:', { latitude, longitude })
+                console.error('🌍 首页获取到的坐标无效:', { latitude, longitude })
                 reject(new Error('获取到的坐标无效'))
                 return
               }
               
-              // 立即更新前端显示为"定位成功"
+              // 立即更新首页显示为"定位成功"
               this.setData({
                 location: {
                   province: '定位成功',
@@ -226,8 +228,8 @@ Page({
                   district: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
                 }
               })
-              
-              // 调用和风天气API获取完整天气信息（包括实时、预报、空气质量等）
+
+              console.log('🌍 首页开始调用天气云函数...')
               wx.cloud.callFunction({
                 name: 'weather',
                 data: {
@@ -235,51 +237,40 @@ Page({
                   lat: latitude,
                   lon: longitude
                 }
-              }).then((weatherRes) => {
-                console.log('=== 详细调试信息 ===')
-                console.log('云函数调用结果完整数据:', JSON.stringify(weatherRes, null, 2))
-                console.log('result字段:', weatherRes.result)
-                console.log('success字段:', weatherRes.result?.success)
-                console.log('data字段:', weatherRes.result?.data)
-                console.log('error字段:', weatherRes.result?.error)
-                console.log('==================')
-                
-                if (weatherRes.result && weatherRes.result.success) {
-                  console.log('✅ 天气数据获取成功')
-                  console.log('返回的天气数据结构:', weatherRes.result.data)
-                  resolve(weatherRes)
+              }).then((result) => {
+                console.log('🌍 首页云函数调用成功:', result)
+                if (result.result && result.result.success) {
+                  console.log('✅ 首页天气数据获取成功')
+                  resolve(result)
                 } else {
-                  // 处理云函数返回的错误信息
-                  let errorMsg = '天气数据获取失败'
-                  if (weatherRes.result?.error) {
-                    if (typeof weatherRes.result.error === 'object') {
-                      errorMsg = weatherRes.result.error.message || weatherRes.result.error.code || errorMsg
-                    } else {
-                      errorMsg = weatherRes.result.error
-                    }
-                  } else if (weatherRes.result?.message) {
-                    errorMsg = weatherRes.result.message
-                  }
-                  
-                  console.error('❌ 天气数据获取失败:', errorMsg)
-                  console.error('完整错误信息:', weatherRes.result)
-                  console.error('完整响应:', JSON.stringify(weatherRes, null, 2))
+                  const errorMsg = result.result?.message || result.result?.error?.message || '天气数据获取失败'
+                  console.error('❌ 首页天气数据获取失败:', errorMsg)
+                  wx.showModal({
+                    title: '天气数据获取失败',
+                    content: errorMsg,
+                    showCancel: false
+                  })
                   reject(new Error(errorMsg))
                 }
               }).catch((error) => {
-                console.error('❌ 云函数调用失败:', error)
+                console.error('❌ 首页云函数调用失败:', error)
+                wx.showModal({
+                  title: '网络错误',
+                  content: '无法连接天气服务，请检查网络后重试',
+                  showCancel: false
+                })
                 reject(error)
               })
             },
             fail: (error) => {
-              console.error('❌ 位置获取失败:', error)
+              console.error('🌍 首页位置获取失败:', error)
               this.handleLocationError(error)
               reject(error)
             }
           })
         },
         fail: (error) => {
-          console.error('❌ 获取设置失败:', error)
+          console.error('🌍 首页获取权限设置失败:', error)
           reject(error)
         }
       })
@@ -344,24 +335,37 @@ Page({
 
   // 更新天气 UI
   updateWeatherUI(weatherData) {
-    console.log('🎨 更新天气UI，接收到的数据:', weatherData)
+    console.log('🎨 === 首页更新天气UI开始 ===')
+    console.log('🎨 接收到的原始数据:', JSON.stringify(weatherData, null, 2))
     
     // 适配新的云函数数据格式
     let actualWeatherData = weatherData
     
     // 如果是新格式的数据结构（带有data字段）
-    if (weatherData.data && weatherData.data.current) {
+    if (weatherData.data) {
       actualWeatherData = weatherData.data
       console.log('📦 检测到新格式数据结构')
+      console.log('📦 weatherData.data结构:', Object.keys(weatherData.data))
     }
     
-    console.log('📍 位置信息:', actualWeatherData.locationInfo)
+    console.log('📦 处理后的数据结构:', JSON.stringify(actualWeatherData, null, 2))
     
-    // 确保位置信息正确更新 - 彻底清除固定位置
+    // 详细检查位置信息
     const locationInfo = actualWeatherData.locationInfo
+    console.log('📍 === 位置信息详细分析 ===')
+    console.log('📍 locationInfo存在:', !!locationInfo)
+    console.log('📍 locationInfo内容:', JSON.stringify(locationInfo, null, 2))
+    console.log('📍 locationInfo类型:', typeof locationInfo)
+    
     if (locationInfo) {
-      console.log('✅ 使用真实地理位置信息:', locationInfo)
-      // 立即更新位置信息，清除"苏州市吴中区"等硬编码位置
+      console.log('✅ 找到位置信息，开始处理:')
+      console.log('  - province:', locationInfo.province)
+      console.log('  - city:', locationInfo.city) 
+      console.log('  - district:', locationInfo.district)
+      console.log('  - country:', locationInfo.country)
+      console.log('  - locationId:', locationInfo.locationId)
+      
+      // 立即更新位置信息
       this.setData({
         location: {
           province: locationInfo.province || '当前位置',
@@ -369,14 +373,31 @@ Page({
           district: locationInfo.district || '周边区域'
         }
       })
+      
+      console.log('✅ 首页位置信息已更新')
     } else {
-      console.warn('⚠️ 未收到位置信息，使用默认显示')
+      console.error('❌ === 位置信息为空，开始详细分析 ===')
+      console.error('❌ weatherData结构:', Object.keys(weatherData || {}))
+      console.error('❌ actualWeatherData结构:', Object.keys(actualWeatherData || {}))
+      console.error('❌ 完整数据dump:', JSON.stringify({
+        originalWeatherData: weatherData,
+        actualWeatherData: actualWeatherData
+      }, null, 2))
+      
+      // 显示详细错误信息
       this.setData({
         location: {
-          province: '当前位置',
-          city: '实时定位',
-          district: '获取中...'
+          province: '位置解析失败',
+          city: '请查看控制台',
+          district: new Date().toLocaleTimeString()
         }
+      })
+      
+      // 在真机上显示错误信息
+      wx.showModal({
+        title: '调试信息',
+        content: `位置信息为空\n数据结构: ${Object.keys(actualWeatherData || {}).join(', ')}\n时间: ${new Date().toLocaleTimeString()}`,
+        showCancel: false
       })
     }
     
@@ -384,23 +405,29 @@ Page({
     const currentWeather = actualWeatherData.current || {}
     const conditionInfo = actualWeatherData.condition || {}
     
+    // 检查是否有API失败的标识
+    const hasError = (conditionInfo.text && conditionInfo.text.includes('获取失败')) || 
+                     (conditionInfo.text && conditionInfo.text.includes('API调用失败')) ||
+                     (locationInfo && locationInfo.city && locationInfo.city.includes('API调用失败'))
+    
     this.setData({
       weather: {
         temperature: currentWeather.temperature || this.data.weather.temperature,
         humidity: currentWeather.humidity || this.data.weather.humidity,
-        condition: conditionInfo.text || this.data.weather.condition,
-        emoji: conditionInfo.emoji || this.data.weather.emoji,
+        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || this.data.weather.condition),
+        emoji: hasError ? '❌' : (conditionInfo.emoji || this.data.weather.emoji),
         feelsLike: currentWeather.feelsLike || this.data.weather.feelsLike,
         windDirection: currentWeather.windDirection || this.data.weather.windDirection,
         windScale: currentWeather.windScale || this.data.weather.windScale,
-        updateTime: this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新',
-        loading: false
+        updateTime: hasError ? '获取失败' : (this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新'),
+        loading: false,
+        hasError: hasError
       },
-      // 强制更新位置信息，如果没有新位置信息则显示"获取中"
-      location: locationInfo || {
-        province: '位置获取中',
-        city: '...',
-        district: '...'
+      // 强制更新位置信息
+      location: locationInfo && !hasError ? locationInfo : {
+        province: hasError ? '网络错误' : '位置获取中',
+        city: hasError ? '请检查网络连接' : '...',
+        district: hasError ? '或重试获取' : '...'
       }
     })
   },
@@ -524,7 +551,7 @@ Page({
   showDebugMenu() {
     const that = this
     wx.showActionSheet({
-      itemList: ['🗑️ 清除天气缓存', '📍 强制获取天气'],
+      itemList: ['🗑️ 清除天气缓存', '📍 强制获取天气', '🧪 测试API连接', '🔍 API问题诊断'],
       success: (res) => {
         switch (res.tapIndex) {
           case 0: // 清除天气缓存
@@ -536,6 +563,12 @@ Page({
             break
           case 1: // 强制获取天气
             that.forceGetWeather()
+            break
+          case 2: // 测试API连接
+            that.testAPIConnections()
+            break
+          case 3: // API问题诊断
+            that.diagnoseAPIIssues()
             break
         }
       }
@@ -564,6 +597,163 @@ Page({
         content: error.errMsg || error.message || '获取天气失败',
         showCancel: false
       })
+    })
+  },
+
+  // 测试API连接
+  testAPIConnections() {
+    wx.showLoading({ title: '测试API连接...' })
+    
+    // 先获取位置
+    wx.getLocation({
+      type: 'gcj02',
+      isHighAccuracy: true,
+      success: (locationRes) => {
+        console.log('🧪 测试用坐标:', locationRes)
+        
+        wx.cloud.callFunction({
+          name: 'weather',
+          data: {
+            action: 'testAPI',
+            lat: locationRes.latitude,
+            lon: locationRes.longitude
+          }
+        }).then((result) => {
+          wx.hideLoading()
+          console.log('🧪 API测试结果:', result)
+          
+          if (result.result && result.result.success) {
+            const tests = result.result.data.tests
+            let message = '测试结果:\n'
+            
+            // API Key测试
+            if (tests.apiKey) {
+              message += `API Key: ${tests.apiKey.success ? '✅' : '❌'} ${tests.apiKey.message}\n`
+            }
+            
+            // 天气API测试
+            if (tests.weatherAPI) {
+              message += `天气API: ${tests.weatherAPI.success ? '✅' : '❌'} ${tests.weatherAPI.message}\n`
+            }
+            
+            // GeoAPI测试
+            if (tests.geoAPI) {
+              message += `位置API: ${tests.geoAPI.success ? '✅' : '❌'} ${tests.geoAPI.message}\n`
+              if (tests.geoAPI.success && tests.geoAPI.firstLocation !== '无') {
+                message += `解析位置: ${tests.geoAPI.firstLocation}`
+              }
+            }
+            
+            wx.showModal({
+              title: 'API测试结果',
+              content: message,
+              showCancel: false
+            })
+          } else {
+            wx.showModal({
+              title: 'API测试失败',
+              content: result.result?.error || '测试过程出错',
+              showCancel: false
+            })
+          }
+        }).catch((error) => {
+          wx.hideLoading()
+          console.error('🧪 API测试错误:', error)
+          wx.showModal({
+            title: 'API测试错误',
+            content: error.errMsg || error.message || '测试失败',
+            showCancel: false
+          })
+        })
+      },
+      fail: (error) => {
+        wx.hideLoading()
+        wx.showModal({
+          title: '位置获取失败',
+          content: '无法获取位置进行API测试',
+          showCancel: false
+        })
+      }
+    })
+  },
+
+  // API问题诊断 - 基于官方文档的深度诊断
+  diagnoseAPIIssues() {
+    wx.showLoading({ title: '正在诊断API问题...' })
+    
+    // 先获取位置
+    wx.getLocation({
+      type: 'gcj02',
+      isHighAccuracy: true,
+      success: (locationRes) => {
+        console.log('🔍 诊断用坐标:', locationRes)
+        
+        wx.cloud.callFunction({
+          name: 'weather',
+          data: {
+            action: 'diagnoseAPI',
+            lat: locationRes.latitude,
+            lon: locationRes.longitude
+          }
+        }).then((result) => {
+          wx.hideLoading()
+          console.log('🔍 诊断结果:', result)
+          
+          if (result.result && result.result.success) {
+            const diagnosis = result.result.data
+            
+            // 构建诊断报告
+            let reportContent = `📊 诊断报告\n\n`
+            reportContent += `总体状态: ${diagnosis.summary?.overallStatus || '未知'}\n`
+            reportContent += `成功率: ${diagnosis.summary?.successRate || 0}%\n`
+            reportContent += `成功测试: ${diagnosis.summary?.successfulTests || 0}/${diagnosis.summary?.totalTests || 0}\n\n`
+            
+            if (diagnosis.issues && diagnosis.issues.length > 0) {
+              reportContent += `❌ 发现问题:\n`
+              diagnosis.issues.forEach(issue => {
+                reportContent += `${issue}\n`
+              })
+              reportContent += `\n`
+            }
+            
+            if (diagnosis.recommendations && diagnosis.recommendations.length > 0) {
+              reportContent += `💡 建议措施:\n`
+              diagnosis.recommendations.slice(0, 3).forEach(rec => {
+                reportContent += `${rec}\n`
+              })
+            }
+            
+            wx.showModal({
+              title: 'API诊断报告',
+              content: reportContent,
+              showCancel: false,
+              confirmText: '了解'
+            })
+          } else {
+            wx.showModal({
+              title: '诊断失败',
+              content: result.result?.error || '诊断过程出错，请查看控制台日志',
+              showCancel: false
+            })
+          }
+        }).catch((error) => {
+          wx.hideLoading()
+          console.error('🔍 诊断错误:', error)
+          wx.showModal({
+            title: '诊断错误',
+            content: '诊断过程出错: ' + (error.errMsg || error.message || '未知错误'),
+            showCancel: false
+          })
+        })
+      },
+      fail: (error) => {
+        wx.hideLoading()
+        wx.showModal({
+          title: '位置获取失败',
+          content: '无法获取位置进行诊断',
+          showCancel: false
+        })
+      }
     })
   },
 
