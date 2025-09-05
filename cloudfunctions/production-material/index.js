@@ -14,10 +14,13 @@ function generateMaterialCode(category) {
   const now = new Date()
   const year = now.getFullYear().toString().slice(-2)
   const prefix = {
-    'feed': 'F',      // 饲料
-    'medicine': 'M',  // 药品
-    'equipment': 'E'  // 设备
-  }[category] || 'O'  // 其他
+    '饲料': 'F',        // 饲料
+    '营养品': 'N',      // 营养品
+    '药品': 'M',        // 药品
+    '设备': 'E',        // 设备
+    '耗材': 'S',        // 耗材
+    '其他': 'O'         // 其他
+  }[category] || 'O'    // 默认其他
   
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
   return `${prefix}${year}${random}`

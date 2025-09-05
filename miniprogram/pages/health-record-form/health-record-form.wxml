@@ -1,0 +1,356 @@
+<!--health-record-form.wxml - 健康记录表单页面-->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="新增健康记录"
+    show-back="{{true}}"
+    show-menu="{{false}}"
+    show-record="{{false}}"
+    bind:back="goBack"
+  />
+
+  <!-- 表单内容区域 -->
+  <view class="form-content">
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <t-loading theme="spinner" size="40rpx" text="加载中..." />
+    </view>
+
+    <!-- 表单主体 -->
+    <view wx:else class="health-record-form">
+      <!-- 基础信息 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">基础信息</text>
+        </view>
+        
+        <view class="form-card">
+          <!-- 批次选择 -->
+          <view class="form-item">
+            <view class="form-label required">选择批次</view>
+            <view class="form-content">
+              <picker 
+                wx:if="{{availableBatches.length > 0}}"
+                bindchange="onBatchChange" 
+                range="{{availableBatches}}" 
+                range-key="displayName"
+                value="{{batchIndex >= 0 ? batchIndex : 0}}"
+              >
+                <view class="picker-display">
+                  {{batchIndex >= 0 && availableBatches[batchIndex] ? availableBatches[batchIndex].displayName : '请选择存栏批次'}}
+                </view>
+              </picker>
+              <view wx:else class="picker-display disabled">
+                暂无可选批次
+              </view>
+            </view>
+          </view>
+
+          <!-- 记录日期 -->
+          <view class="form-item">
+            <view class="form-label required">记录日期</view>
+            <view class="form-content">
+              <view class="picker-content" bind:tap="showDatePicker" data-type="record">
+                <text class="picker-text">{{formData.recordDate || '请选择记录日期'}}</text>
+                <t-icon name="calendar" size="24rpx" color="#bbb" />
+              </view>
+            </view>
+          </view>
+
+          <!-- 受影响数量 -->
+          <view class="form-item">
+            <view class="form-label required">受影响数量</view>
+            <view class="form-content">
+              <t-input
+                placeholder="请输入数量"
+                value="{{formData.affectedCount}}"
+                type="number"
+                bind:change="onFieldChange"
+                data-field="affectedCount"
+                suffix="羽"
+                align="right"
+                class="form-input"
+              />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 症状信息 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">症状信息</text>
+        </view>
+        
+        <view class="form-card">
+          <!-- 常见症状选择 -->
+          <view class="form-item">
+            <view class="form-label">常见症状</view>
+            <view class="form-content">
+              <picker 
+                wx:if="{{commonSymptoms.length > 0}}"
+                bindchange="onSymptomChange" 
+                range="{{commonSymptoms}}" 
+                range-key="name"
+                value="{{symptomIndex >= 0 ? symptomIndex : 0}}"
+              >
+                <view class="picker-display">
+                  {{symptomIndex >= 0 && commonSymptoms[symptomIndex] ? commonSymptoms[symptomIndex].name : '请选择症状类型'}}
+                </view>
+              </picker>
+              <view wx:else class="picker-display disabled">
+                症状选项加载中...
+              </view>
+            </view>
+          </view>
+
+          <!-- 症状描述 -->
+          <view class="form-item form-item-vertical">
+            <view class="form-label required">症状描述</view>
+            <view class="form-content">
+              <t-textarea
+                placeholder="请详细描述症状，如：鹅群出现精神萎靡、食欲不振等症状..."
+                value="{{formData.symptoms}}"
+                bind:change="onFieldChange"
+                data-field="symptoms"
+                maxlength="500"
+                indicator
+                autosize
+                class="form-textarea"
+              />
+            </view>
+          </view>
+
+          <!-- 严重程度 -->
+          <view class="form-item">
+            <view class="form-label required">严重程度</view>
+            <view class="form-content">
+              <picker 
+                bindchange="onSeverityChange" 
+                range="{{severityOptions}}" 
+                range-key="label"
+                value="{{severityIndex}}"
+                class="form-picker"
+              >
+                <view class="picker-content">
+                  <text class="picker-text">{{severityOptions[severityIndex].label}}</text>
+                  <view class="severity-indicator severity-{{severityOptions[severityIndex].value}}"></view>
+                </view>
+              </picker>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治疗信息 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">治疗信息</text>
+        </view>
+        
+        <view class="form-card">
+          <!-- 治疗方案 -->
+          <view class="form-item">
+            <view class="form-label">治疗方案</view>
+            <view class="form-content">
+              <picker 
+                wx:if="{{treatmentOptions.length > 0}}"
+                bindchange="onTreatmentChange" 
+                range="{{treatmentOptions}}" 
+                range-key="label"
+                value="{{treatmentIndex >= 0 ? treatmentIndex : 0}}"
+              >
+                <view class="picker-display">
+                  {{treatmentIndex >= 0 && treatmentOptions[treatmentIndex] ? treatmentOptions[treatmentIndex].label : '请选择治疗方案'}}
+                </view>
+              </picker>
+              <view wx:else class="picker-display disabled">
+                治疗方案加载中...
+              </view>
+            </view>
+          </view>
+
+          <!-- 治疗日期 -->
+          <view class="form-item">
+            <view class="form-label required">治疗日期</view>
+            <view class="form-content">
+              <view class="picker-content" bind:tap="showDatePicker" data-type="treatment">
+                <text class="picker-text">{{formData.treatmentDate || '请选择治疗日期'}}</text>
+                <t-icon name="calendar" size="24rpx" color="#bbb" />
+              </view>
+            </view>
+          </view>
+
+          <!-- 用药记录（仅在选择药品治疗或营养支持时显示） -->
+          <view wx:if="{{showMedicineSelector}}">
+            <!-- 药品/营养品选择 -->
+            <view class="form-item">
+              <view class="form-label">{{selectedTreatmentType === 'nutrition' ? '营养品选择' : '药品选择'}}</view>
+              <view class="form-content">
+                <picker 
+                  wx:if="{{medicineRecords.length > 0}}"
+                  bindchange="onMedicineRecordChange" 
+                  range="{{medicineRecords}}" 
+                  range-key="displayName"
+                  value="{{medicineRecordIndex >= 0 ? medicineRecordIndex : 0}}"
+                >
+                  <view class="picker-display">
+                    {{medicineRecordIndex >= 0 && medicineRecords[medicineRecordIndex] ? medicineRecords[medicineRecordIndex].displayName : (selectedTreatmentType === 'nutrition' ? '请选择营养品' : '请选择药品')}}
+                  </view>
+                </picker>
+                <view wx:else class="picker-display disabled">
+                  {{selectedTreatmentType === 'nutrition' ? '暂无营养品库存' : '暂无药品库存'}}
+                </view>
+              </view>
+            </view>
+
+            <!-- 用量输入（选择药品后显示） -->
+            <view wx:if="{{selectedMedicine}}" class="form-item">
+              <view class="form-label required">使用数量</view>
+              <view class="form-content">
+                <t-input
+                  placeholder="请输入使用数量"
+                  value="{{formData.medicineQuantity}}"
+                  type="digit"
+                  bind:change="onFieldChange"
+                  data-field="medicineQuantity"
+                  suffix="{{selectedMedicine.unit || '单位'}}"
+                  align="right"
+                  class="form-input"
+                />
+              </view>
+            </view>
+
+            <!-- 库存提示（选择药品后显示） -->
+            <view wx:if="{{selectedMedicine}}" class="form-item stock-info">
+              <view class="stock-info-content">
+                <text class="stock-label">当前库存：</text>
+                <text class="stock-value">{{selectedMedicine.currentStock}}{{selectedMedicine.unit}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治疗结果 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">治疗结果</text>
+        </view>
+        
+        <view class="form-card">
+          <!-- 治疗结果 -->
+          <view class="form-item">
+            <view class="form-label required">治疗结果</view>
+            <view class="form-content">
+              <picker 
+                bindchange="onResultChange" 
+                range="{{resultOptions}}" 
+                range-key="label"
+                value="{{resultIndex}}"
+                class="form-picker"
+              >
+                <view class="picker-content">
+                  <text class="picker-text">{{resultOptions[resultIndex].label}}</text>
+                  <view class="result-indicator result-{{resultOptions[resultIndex].value}}"></view>
+                </view>
+              </picker>
+            </view>
+          </view>
+
+          <!-- 死亡数量（仅死亡时显示） -->
+          <view wx:if="{{formData.result === 'death'}}" class="form-item death-item">
+            <view class="form-label required">死亡数量</view>
+            <view class="form-content">
+              <t-input
+                placeholder="请输入死亡数量"
+                value="{{formData.deathCount}}"
+                type="number"
+                bind:change="onFieldChange"
+                data-field="deathCount"
+                suffix="羽"
+                align="right"
+                class="form-input death-input"
+              />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 备注信息 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">备注信息</text>
+        </view>
+        
+        <view class="form-card">
+          <view class="form-item form-item-vertical">
+            <view class="form-label">备注</view>
+            <view class="form-content">
+              <t-textarea
+                placeholder="请输入其他备注信息（可选）"
+                value="{{formData.notes}}"
+                bind:change="onFieldChange"
+                data-field="notes"
+                maxlength="200"
+                indicator
+                autosize
+                class="form-textarea"
+              />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="form-actions">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block 
+          bind:tap="onSubmit"
+          loading="{{submitting}}"
+          disabled="{{submitting}}"
+        >
+          {{submitting ? '提交中...' : '提交健康记录'}}
+        </t-button>
+        <t-button 
+          theme="default" 
+          size="large" 
+          block 
+          bind:tap="onReset"
+          disabled="{{submitting}}"
+        >
+          重置表单
+        </t-button>
+      </view>
+
+      <!-- 温馨提示 -->
+      <view class="form-tips">
+        <t-notice-bar theme="info" content="💡 提示：如果治疗结果选择【死亡】，系统将自动创建死亡记录并更新存栏数量。" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 日期选择器 - 记录日期 -->
+  <t-date-time-picker 
+    visible="{{showRecordDate}}"
+    mode="date"
+    value="{{recordDateValue}}"
+    format="YYYY-MM-DD"
+    bind:cancel="hideDatePicker"
+    bind:confirm="onDateConfirm"
+    data-type="record"
+  />
+
+  <!-- 日期选择器 - 治疗日期 -->
+  <t-date-time-picker 
+    visible="{{showTreatmentDate}}"
+    mode="date"
+    value="{{treatmentDateValue}}"
+    format="YYYY-MM-DD"
+    bind:cancel="hideDatePicker"
+    bind:confirm="onDateConfirm"
+    data-type="treatment"
+  />
+</view>

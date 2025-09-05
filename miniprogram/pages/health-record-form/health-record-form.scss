@@ -1,0 +1,961 @@
+/* health-record-form.scss - 健康记录表单样式 */
+@import '../../styles/tdesign-local.wxss';
+
+/* TDesign设计规范变量 */
+$primary-color: #0052d9;
+$text-primary: #0d1117;
+$text-secondary: #656d76;
+$text-placeholder: #8b949e;
+$bg-color-page: #f7f8fa;
+$bg-color-container: #ffffff;
+$border-color: #ddd;
+$border-color-light: #f1f3f5;
+$success-color: #00a870;
+$warning-color: #ed7b2f;
+$error-color: #d54941;
+
+/* 基础间距系统（8px基准） */
+$spacing-xs: 8rpx;
+$spacing-s: 16rpx;
+$spacing-m: 24rpx;
+$spacing-l: 32rpx;
+$spacing-xl: 40rpx;
+
+.page-container {
+  background: $bg-color-page;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.form-content {
+  padding-top: $spacing-s;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400rpx;
+}
+
+.health-record-form {
+  padding-bottom: 120rpx;
+  overflow: visible;
+}
+
+/* 表单区域样式 */
+.form-section {
+  margin-bottom: $spacing-s;
+}
+
+.section-header {
+  padding: 0 $spacing-m $spacing-s;
+  display: flex;
+  align-items: center;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 44rpx;
+  position: relative;
+  
+  &::before {
+    content: '';
+    width: 6rpx;
+    height: 28rpx;
+    background: $primary-color;
+    border-radius: 3rpx;
+    margin-right: $spacing-xs;
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+
+.form-card {
+  background: $bg-color-container;
+  border-radius: 12rpx;
+  margin: $spacing-m;
+  padding: $spacing-l;
+  box-shadow: 0 1rpx 2rpx 0 rgba(0, 0, 0, 0.05);
+  border: 1rpx solid $border-color-light;
+}
+
+/* 全新的表单设计系统 */
+
+/* 表单卡片 */
+.form-card {
+  background: $bg-color-container;
+  border-radius: 16rpx;
+  margin: $spacing-m;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid $border-color-light;
+  overflow: hidden;
+}
+
+/* 表单项 */
+.form-item {
+  display: table;
+  width: 100%;
+  padding: $spacing-m $spacing-l;
+  border-bottom: 1rpx solid $border-color-light;
+  height: 48rpx;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &.form-item-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    padding: $spacing-m $spacing-l;
+    
+    .form-label {
+      margin-bottom: $spacing-xs;
+      line-height: 32rpx;
+      height: auto;
+      display: block;
+    }
+    
+    .form-content {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  }
+}
+
+/* 表单标签 */
+.form-label {
+  display: table-cell;
+  width: 120rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: $text-primary;
+  line-height: 48rpx;
+  height: 48rpx;
+  margin: 0;
+  padding: 0 $spacing-m 0 0;
+  vertical-align: middle;
+  white-space: nowrap;
+  
+  &.required::after {
+    content: '*';
+    color: $error-color;
+    margin-left: 4rpx;
+    font-size: 22rpx;
+    vertical-align: baseline;
+  }
+}
+
+/* 表单内容 */
+.form-content {
+  display: table-cell;
+  width: auto;
+  line-height: 48rpx;
+  height: 48rpx;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+}
+
+/* 选择器样式 */
+.form-picker {
+  width: 100%;
+}
+
+.picker-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 48rpx;
+  line-height: 48rpx;
+  padding: 0 12rpx;
+  margin: 0;
+  background: rgba($primary-color, 0.02);
+  border: 1rpx solid $border-color-light;
+  border-radius: 8rpx;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  vertical-align: middle;
+  position: relative;
+  
+  &:active {
+    background: rgba($primary-color, 0.06);
+    border-color: $primary-color;
+  }
+  
+  &.disabled {
+    background: rgba($text-placeholder, 0.03);
+    opacity: 0.7;
+  }
+}
+
+.picker-display {
+  display: inline-block;
+  width: 100%;
+  height: 48rpx;
+  line-height: 48rpx;
+  padding: 0 32rpx 0 12rpx;
+  margin: 0;
+  background: rgba($primary-color, 0.02);
+  border: 1rpx solid $border-color-light;
+  border-radius: 8rpx;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  vertical-align: middle;
+  position: relative;
+  font-size: 28rpx;
+  color: $text-primary;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  
+  &:active {
+    background: rgba($primary-color, 0.06);
+    border-color: $primary-color;
+  }
+  
+  &.disabled {
+    background: rgba($text-placeholder, 0.03);
+    opacity: 0.7;
+    color: $text-placeholder;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    right: 12rpx;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8rpx solid transparent;
+    border-right: 8rpx solid transparent;
+    border-top: 8rpx solid $text-placeholder;
+    transition: all 0.2s ease;
+  }
+  
+  &:active::after {
+    border-top-color: $primary-color;
+  }
+}
+
+.picker-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 46rpx;
+  height: 46rpx;
+  color: $text-primary;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  
+  &.placeholder {
+    color: $text-placeholder;
+    font-style: italic;
+  }
+}
+
+/* 表单输入框 */
+.form-input {
+  --td-input-bg-color: #ffffff !important;
+  --td-input-border-color: #{$border-color-light} !important;
+  --td-input-border-radius: 8rpx !important;
+  --td-input-font-size: 28rpx !important;
+  --td-input-text-color: #{$text-primary} !important;
+  --td-input-placeholder-color: #{$text-placeholder} !important;
+  --td-input-padding: 0 12rpx !important;
+  height: 48rpx !important;
+  line-height: 48rpx !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin: 0 !important;
+  
+  .t-input__wrap {
+    height: 48rpx !important;
+    line-height: 48rpx !important;
+    padding: 0 32rpx 0 12rpx !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border: 1rpx solid $border-color-light !important;
+    background: #ffffff !important;
+    border-radius: 8rpx !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .t-input__control {
+    height: 46rpx !important;
+    line-height: 46rpx !important;
+    font-size: 28rpx !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    vertical-align: middle !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  
+  .t-input__suffix {
+    color: $text-secondary !important;
+    font-size: 24rpx !important;
+    height: 48rpx !important;
+    line-height: 48rpx !important;
+    position: absolute !important;
+    right: 12rpx !important;
+    top: 0 !important;
+    z-index: 1 !important;
+  }
+  
+  &.death-input {
+    --td-input-text-color: #{$error-color} !important;
+    --td-input-bg-color: #ffffff !important;
+    --td-input-border-color: rgba(#{red($error-color)}, #{green($error-color)}, #{blue($error-color)}, 0.2) !important;
+    font-weight: 600 !important;
+    
+    .t-input__wrap {
+      background: #ffffff !important;
+      border-color: rgba($error-color, 0.2) !important;
+    }
+  }
+}
+
+/* 表单文本域 */
+.form-textarea {
+  --td-textarea-bg-color: rgba(#{red($primary-color)}, #{green($primary-color)}, #{blue($primary-color)}, 0.02) !important;
+  --td-textarea-border-color: #{$border-color-light} !important;
+  --td-textarea-border-radius: 8rpx !important;
+  --td-textarea-font-size: 28rpx !important;
+  --td-textarea-text-color: #{$text-primary} !important;
+  --td-textarea-placeholder-color: #{$text-placeholder} !important;
+  --td-textarea-padding: 12rpx !important;
+  width: 100% !important;
+  min-height: 100rpx !important;
+}
+
+/* 状态指示器 */
+.severity-indicator {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  
+  &.severity-mild {
+    background: $success-color;
+  }
+  
+  &.severity-moderate {
+    background: $warning-color;
+  }
+  
+  &.severity-severe {
+    background: $error-color;
+  }
+}
+
+.result-indicator {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  
+  &.result-ongoing {
+    background: $primary-color;
+  }
+  
+  &.result-cured {
+    background: $success-color;
+  }
+  
+  &.result-death {
+    background: $error-color;
+  }
+}
+
+/* 特殊状态项 */
+.death-item {
+  background: rgba($error-color, 0.03);
+  border-radius: 8rpx;
+  margin: 8rpx (-$spacing-l) 0;
+  padding: $spacing-m $spacing-l;
+  border: 1rpx solid rgba($error-color, 0.15);
+  min-height: 60rpx;
+  
+  .form-label {
+    color: $error-color;
+    font-weight: 600;
+    
+    &::before {
+      content: '⚠️ ';
+      margin-right: 4rpx;
+      font-size: 20rpx;
+    }
+  }
+}
+
+/* 库存信息项 */
+.stock-info {
+  border-bottom: none !important;
+  padding: $spacing-s $spacing-l !important;
+  background: rgba($success-color, 0.03);
+  border-radius: 8rpx;
+  margin: 8rpx (-$spacing-l) 0;
+  border: 1rpx solid rgba($success-color, 0.15);
+  
+  .stock-info-content {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    font-size: 26rpx;
+    line-height: 36rpx;
+    
+    .stock-label {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+    
+    .stock-value {
+      color: $success-color;
+      font-weight: 600;
+      background: rgba($success-color, 0.1);
+      padding: 4rpx 8rpx;
+      border-radius: 6rpx;
+      border: 1rpx solid rgba($success-color, 0.2);
+    }
+  }
+}
+
+/* 症状和治疗标签样式 */
+.symptom-tags-container,
+.treatment-tags-container {
+  width: 100%;
+  margin-top: $spacing-s;
+}
+
+.symptom-tags,
+.treatment-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-s;
+  margin-top: $spacing-s;
+}
+
+.symptom-tag {
+  margin-right: 0 !important;
+  border-radius: 20rpx !important;
+  font-size: 24rpx !important;
+  padding: 8rpx $spacing-s !important;
+  transition: all 0.2s ease;
+  
+  &.t-tag--theme-primary {
+    background: $primary-color !important;
+    color: white !important;
+    transform: scale(1.02);
+  }
+  
+  &.t-tag--theme-light {
+    background: rgba($primary-color, 0.08) !important;
+    color: $primary-color !important;
+    border: 1rpx solid rgba($primary-color, 0.2) !important;
+  }
+}
+
+.treatment-tag {
+  margin-right: 0 !important;
+  min-width: auto !important;
+  border-radius: 20rpx !important;
+  font-size: 24rpx !important;
+  padding: 8rpx $spacing-s !important;
+  background: rgba($primary-color, 0.08) !important;
+  color: $primary-color !important;
+  border: 1rpx solid rgba($primary-color, 0.2) !important;
+  transition: all 0.2s ease;
+  
+  &:active {
+    background: rgba($primary-color, 0.15) !important;
+    transform: scale(0.98);
+  }
+}
+
+/* 全宽度文本框样式 */
+.fullwidth-textarea-container {
+  background: $bg-color-container;
+  border-radius: 12rpx;
+  margin: $spacing-m;
+  padding: $spacing-l;
+  box-shadow: 0 1rpx 2rpx 0 rgba(0, 0, 0, 0.05);
+  border: 1rpx solid $border-color-light;
+}
+
+.fullwidth-textarea {
+  background: transparent !important;
+  font-size: 28rpx !important;
+  color: $text-primary !important;
+  line-height: 44rpx !important;
+  
+  &.t-textarea {
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+
+/* 内联文本框包装器 */
+.fullwidth-textarea-wrapper {
+  width: 100%;
+  min-height: 120rpx;
+  position: relative;
+}
+
+.inline-textarea {
+  background: rgba($primary-color, 0.02) !important;
+  border-radius: 8rpx !important;
+  padding: $spacing-s !important;
+  width: 100% !important;
+  font-size: 28rpx !important;
+  color: $text-primary !important;
+  line-height: 44rpx !important;
+  border: 1rpx solid $border-color-light !important;
+  transition: all 0.2s ease !important;
+  
+  &:focus-within {
+    border-color: $primary-color !important;
+    background: rgba($primary-color, 0.05) !important;
+    box-shadow: 0 0 0 4rpx rgba($primary-color, 0.1) !important;
+  }
+  
+  .t-textarea__inner {
+    font-size: 28rpx !important;
+    color: $text-primary !important;
+    line-height: 44rpx !important;
+    padding: 0 !important;
+    
+    &::placeholder {
+      color: $text-placeholder !important;
+    }
+  }
+  
+  .t-textarea__indicator {
+    position: absolute !important;
+    bottom: $spacing-xs !important;
+    right: $spacing-xs !important;
+    color: $text-secondary !important;
+    font-size: 22rpx !important;
+    background: rgba($bg-color-container, 0.8) !important;
+    padding: 2rpx 6rpx !important;
+    border-radius: 4rpx !important;
+  }
+}
+
+/* 表单响应式设计 */
+@media screen and (max-width: 750rpx) {
+  .form-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: $spacing-m;
+    height: auto;
+    
+    &:not(.form-item-vertical) {
+      .form-label {
+        display: block;
+        width: auto;
+        margin-bottom: 8rpx;
+        padding-right: 0;
+        height: auto;
+        line-height: 32rpx;
+      }
+      
+      .form-content {
+        display: block;
+        width: 100%;
+        height: 48rpx;
+      }
+    }
+  }
+  
+  .form-card {
+    margin: $spacing-m;
+  }
+  
+  .picker-content {
+    height: 48rpx;
+    line-height: 48rpx;
+  }
+  
+  .picker-text {
+    line-height: 46rpx;
+    height: 46rpx;
+  }
+}
+
+/* 操作按钮样式 */
+.form-actions {
+  padding: $spacing-l $spacing-m;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-s;
+  
+  .t-button {
+    height: 88rpx !important;
+    border-radius: 12rpx !important;
+    font-size: 32rpx !important;
+    font-weight: 500 !important;
+    
+    &--theme-primary {
+      background: $primary-color !important;
+      box-shadow: 0 2rpx 4rpx rgba($primary-color, 0.3) !important;
+    }
+    
+    &--theme-default {
+      background: $bg-color-container !important;
+      color: $text-secondary !important;
+      border: 1rpx solid $border-color !important;
+    }
+    
+    &:active {
+      transform: translateY(1rpx);
+    }
+  }
+}
+
+/* 提示信息样式 */
+.form-tips {
+  padding: 0 $spacing-m $spacing-l;
+  
+  .t-notice-bar {
+    border-radius: 12rpx !important;
+    background: rgba($primary-color, 0.05) !important;
+    border: 1rpx solid rgba($primary-color, 0.1) !important;
+    
+    .t-notice-bar__content {
+      color: $primary-color !important;
+      font-size: 26rpx !important;
+    }
+  }
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 750rpx) {
+  .form-item {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: auto;
+    padding: $spacing-m 0;
+    
+    &:first-child {
+      padding-top: $spacing-s;
+    }
+  }
+
+  .item-label {
+    width: 100%;
+    margin-bottom: $spacing-s;
+    padding-top: 0;
+  }
+
+  .item-input {
+    margin-left: 0;
+  }
+  
+  .section-title {
+    font-size: 28rpx;
+    
+    &::before {
+      width: 4rpx;
+      height: 24rpx;
+    }
+  }
+  
+  .form-card {
+    margin: $spacing-m;
+    padding: $spacing-m;
+  }
+  
+  .fullwidth-textarea-container {
+    padding: $spacing-m;
+  }
+}
+
+/* TDesign 样式覆盖 */
+.t-input__wrap {
+  border: 1rpx solid $border-color-light !important;
+  background: #ffffff !important;
+  border-radius: 8rpx !important;
+  font-size: 28rpx !important;
+  color: $text-primary !important;
+  text-align: left !important;
+  height: 48rpx !important;
+  line-height: 48rpx !important;
+  box-sizing: border-box !important;
+  padding: 0 32rpx 0 12rpx !important;
+  margin: 0 !important;
+  vertical-align: middle !important;
+  transition: all 0.2s ease !important;
+  
+  .t-input__control {
+    color: $text-primary !important;
+    height: 46rpx !important;
+    line-height: 46rpx !important;
+    font-size: 28rpx !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    vertical-align: middle !important;
+    border: none !important;
+    background: transparent !important;
+    
+    &::placeholder {
+      color: $text-placeholder !important;
+    }
+  }
+  
+  .t-input__suffix {
+    color: $text-secondary !important;
+    font-size: 24rpx !important;
+    height: 48rpx !important;
+    line-height: 48rpx !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    position: absolute !important;
+    right: 12rpx !important;
+    top: 0 !important;
+    z-index: 1 !important;
+  }
+}
+
+/* 图标样式调整 */
+.t-icon {
+  color: $text-placeholder !important;
+  transition: color 0.2s ease;
+  line-height: 48rpx !important;
+  height: 48rpx !important;
+  vertical-align: middle !important;
+  display: inline-block !important;
+  position: absolute !important;
+  right: 12rpx !important;
+  top: 0 !important;
+}
+
+.picker-content:active .t-icon {
+  color: $primary-color !important;
+}
+
+.t-textarea {
+  border: none !important;
+  
+  .t-textarea__inner {
+    font-size: 28rpx !important;
+    color: $text-primary !important;
+    line-height: 44rpx !important;
+    
+    &::placeholder {
+      color: $text-placeholder !important;
+    }
+  }
+  
+  .t-textarea__indicator {
+    color: $text-secondary !important;
+    font-size: 24rpx !important;
+  }
+}
+
+.t-icon {
+  color: $text-placeholder !important;
+  transition: color 0.2s ease;
+}
+
+.picker-display:active .t-icon,
+.date-input:active .t-icon {
+  color: $primary-color !important;
+}
+
+/* 加载动画 */
+.t-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-s;
+  
+  .t-loading__text {
+    color: $text-secondary !important;
+    font-size: 26rpx !important;
+  }
+}
+
+/* 空状态样式 */
+.empty-batches {
+  text-align: center;
+  padding: 120rpx $spacing-l;
+  color: $text-placeholder;
+  font-size: 28rpx;
+  background: $bg-color-container;
+  border-radius: 12rpx;
+  margin: $spacing-m;
+  border: 1rpx solid $border-color-light;
+
+  .empty-icon {
+    font-size: 80rpx;
+    margin-bottom: $spacing-s;
+    opacity: 0.5;
+  }
+  
+  .empty-text {
+    line-height: 44rpx;
+  }
+}
+
+/* 空选择器样式 */
+.empty-picker {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-xs 0;
+  width: 100%;
+  min-height: 48rpx;
+  
+  .empty-text {
+    font-size: 28rpx;
+    color: $text-placeholder;
+    line-height: 40rpx;
+  }
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .page-container {
+    background: #0d1117;
+  }
+
+  .form-card {
+    background: #161b22;
+    border-color: #30363d;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.3);
+  }
+
+  .section-title {
+    color: #f0f6fc;
+    
+    &::before {
+      background: #58a6ff;
+    }
+  }
+
+  .form-label {
+    color: #f0f6fc;
+  }
+
+  .picker-content {
+    background: rgba(88, 166, 255, 0.05);
+    border-color: #30363d;
+    
+    &:active {
+      background: rgba(88, 166, 255, 0.15);
+      border-color: #58a6ff;
+    }
+  }
+
+  .picker-text {
+    color: #f0f6fc;
+
+    &.placeholder {
+      color: #8b949e;
+    }
+  }
+
+  .death-item {
+    background: rgba(248, 81, 73, 0.1);
+    border-color: rgba(248, 81, 73, 0.3);
+    
+    .form-label {
+      color: #f85149;
+    }
+  }
+  
+  .form-input {
+    --td-input-text-color: #f0f6fc !important;
+    --td-input-bg-color: rgba(88, 166, 255, 0.05) !important;
+    --td-input-border-color: #30363d !important;
+    --td-input-placeholder-color: #8b949e !important;
+    
+    &.death-input {
+      --td-input-text-color: #f85149 !important;
+      --td-input-bg-color: rgba(248, 81, 73, 0.1) !important;
+    }
+  }
+  
+  .form-textarea {
+    --td-textarea-text-color: #f0f6fc !important;
+    --td-textarea-bg-color: rgba(88, 166, 255, 0.05) !important;
+    --td-textarea-border-color: #30363d !important;
+    --td-textarea-placeholder-color: #8b949e !important;
+  }
+  
+  .form-actions .t-button--theme-default {
+    background: #21262d !important;
+    color: #f0f6fc !important;
+    border-color: #30363d !important;
+  }
+}
+
+/* 表单项特殊状态 */
+.form-item.has-error {
+  .item-label {
+    color: $error-color;
+  }
+  
+  .item-input {
+    .t-input__wrap {
+      border: 1rpx solid $error-color !important;
+      background: rgba($error-color, 0.05) !important;
+    }
+  }
+}
+
+.form-item.is-focused {
+  .item-label {
+    color: $primary-color;
+    font-weight: 600;
+  }
+}
+
+/* 动画效果 */
+.form-card,
+.fullwidth-textarea-container {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+    border-color: rgba($primary-color, 0.2);
+  }
+}
+
+.form-item {
+  transition: all 0.2s ease;
+}
+
+/* 特殊组件优化 */
+.t-date-time-picker {
+  .t-popup__content {
+    border-radius: 24rpx 24rpx 0 0 !important;
+  }
+}
+
+.t-picker {
+  .t-picker__header {
+    border-bottom: 1rpx solid $border-color-light !important;
+  }
+  
+  .t-picker__confirm {
+    color: $primary-color !important;
+    font-weight: 600 !important;
+  }
+  
+  .t-picker__cancel {
+    color: $text-secondary !important;
+  }
+}

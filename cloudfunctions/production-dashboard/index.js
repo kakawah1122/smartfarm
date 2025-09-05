@@ -95,8 +95,21 @@ async function getEntryOverview(dateRange) {
   const exitData = exitRecords.data
   const totalExitQuantity = exitData.reduce((sum, record) => sum + (record.quantity || 0), 0)
   
-  // 计算存栏数量 = 入栏总数 - 出栏总数
-  const stockQuantity = Math.max(0, totalEntryQuantity - totalExitQuantity)
+  // 获取死亡记录来计算存栏数量
+  let deathQuery = db.collection('death_records')
+  if (dateRange && dateRange.start && dateRange.end) {
+    // 如果有日期范围，死亡记录也要在相同范围内过滤
+    deathQuery = deathQuery.where({
+      deathDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+    })
+  }
+  
+  const deathRecords = await deathQuery.get()
+  const deathData = deathRecords.data
+  const totalDeathQuantity = deathData.reduce((sum, record) => sum + (record.deathCount || 0), 0)
+  
+  // 计算存栏数量 = 入栏总数 - 出栏总数 - 死亡总数
+  const stockQuantity = Math.max(0, totalEntryQuantity - totalExitQuantity - totalDeathQuantity)
   
   // 按品种统计
   const breedStats = {}
@@ -213,15 +226,19 @@ async function getMaterialOverview() {
   const categoryDetails = {}
   
   // 处理每个分类 - 使用中文分类名
-  const categoryMapping = {
-    'feed': '饲料',
-    'medicine': '药品', 
-    'equipment': '设备'
+  const categoryNames = ['饲料', '营养品', '药品', '设备', '耗材', '其他']
+  const categoryKeyMapping = {
+    '饲料': 'feed',
+    '营养品': 'nutrition', 
+    '药品': 'medicine',
+    '设备': 'equipment',
+    '耗材': 'supplies',
+    '其他': 'other'
   }
   
-  Object.keys(categoryMapping).forEach(categoryKey => {
-    const categoryName = categoryMapping[categoryKey]
-    const categoryMaterials = materials.data.filter(m => m.category === categoryName)
+  categoryNames.forEach(categoryName => {
+    const categoryKey = categoryKeyMapping[categoryName]
+    const categoryMaterials = materials.data.filter(m => m.category === categoryName)  // 使用中文分类过滤
     
     if (categoryMaterials.length === 0) {
       categoryDetails[categoryKey] = {
@@ -510,8 +527,18 @@ async function getProductionFlow(event, wxContext) {
       .where({ batchNumber: entry.batchNumber })
       .get()
     
-    const totalExited = exitRecords.data.reduce((sum, r) => sum + r.quantity, 0)
-    const currentStock = entry.quantity - totalExited
+    // 获取对应的死亡记录
+    const deathRecords = await db.collection('death_records')
+      .where({ batchNumber: entry.batchNumber })
+      .get()
+    
+    const totalExited = exitRecords.data.reduce((sum, r) => sum + (r.quantity || 0), 0)
+    const totalDeaths = deathRecords.data.reduce((sum, r) => sum + (r.deathCount || 0), 0)
+    const currentStock = entry.quantity - totalExited - totalDeaths
+    
+    // 修正存活率计算：存活率 = (入栏数量 - 死亡数量) / 入栏数量 * 100%
+    const survivalRate = entry.quantity > 0 ? 
+      (((entry.quantity - totalDeaths) / entry.quantity) * 100).toFixed(1) : '100.0'
     
     flowData.push({
       batchNumber: entry.batchNumber,
@@ -519,8 +546,9 @@ async function getProductionFlow(event, wxContext) {
       entryDate: entry.entryDate,
       entryQuantity: entry.quantity,
       exitedQuantity: totalExited,
-      currentStock,
-      survivalRate: entry.quantity > 0 ? ((currentStock + totalExited) / entry.quantity * 100).toFixed(1) : '0.0',
+      deathCount: totalDeaths,
+      currentStock: Math.max(0, currentStock),
+      survivalRate: survivalRate,
       status: currentStock > 0 ? '养殖中' : '已出栏',
       daysInFarm: Math.floor((new Date() - new Date(entry.entryDate)) / (1000 * 60 * 60 * 24))
     })

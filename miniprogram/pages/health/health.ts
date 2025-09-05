@@ -7,43 +7,16 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 健康统计
     healthStats: {
-      healthRate: 95,
-      abnormal: 5,
-      records: 12
+      survivalRate: 0,
+      abnormal: 0,
+      records: 0
     },
 
     // 上传的图片
     uploadedImages: [],
     
     // 健康记录
-    healthRecords: [
-      {
-        id: 1,
-        location: '1号鹅舍异常情况',
-        symptoms: '3只鹅出现精神萎靡、食欲不振、轻微腹泻等症状',
-        treatment: '已隔离观察，投喂止泻药物',
-        severity: 'danger',
-        statusIcon: '🚨',
-        priorityText: '紧急',
-        date: '2024-03-15',
-        time: '09:30',
-        operator: '张三',
-        status: '待跟进'
-      },
-      {
-        id: 2,
-        location: '2号鹅舍日常检查',
-        symptoms: '鹅群状态良好，食欲正常，无异常症状发现',
-        treatment: '预防性消毒已完成',
-        severity: 'success',
-        statusIcon: '✅',
-        priorityText: '正常',
-        date: '2024-03-14',
-        time: '16:00',
-        operator: '李四',
-        status: '已处理'
-      }
-    ],
+    healthRecords: [],
     
     // 疫苗提醒
     vaccineReminders: [
@@ -124,9 +97,151 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.loadHealthData()
   },
 
+  onShow() {
+    // 页面显示时刷新数据
+    this.loadHealthData()
+  },
+
   // 加载健康数据
-  loadHealthData() {
-    // 模拟API调用
+  async loadHealthData() {
+    try {
+      // 获取健康统计数据
+      const statsResult = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'get_health_stats'
+        }
+      })
+      
+      if (statsResult.result && statsResult.result.success) {
+        const stats = statsResult.result.data
+        this.setData({
+          healthStats: {
+            survivalRate: parseFloat(stats.survivalRate),
+            abnormal: stats.totalAffected,
+            records: stats.totalRecords
+          }
+        })
+      }
+      
+      // 获取健康记录列表
+      const recordsResult = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'list_health_records',
+          page: 1,
+          pageSize: 10
+        }
+      })
+      
+      if (recordsResult.result && recordsResult.result.success) {
+        const records = recordsResult.result.data.records || []
+        const formattedRecords = records.map((record: any) => ({
+          id: record._id,
+          location: record.batchNumber || '未知批次',
+          symptoms: record.symptoms,
+          treatment: record.treatment,
+          severity: this.getSeverityTheme(record.severity),
+          statusIcon: this.getStatusIcon(record.result, record.recordType),
+          priorityText: this.getPriorityText(record.severity, record.recordType),
+          date: record.displayDate || record.recordDate,
+          time: record.createTime ? new Date(record.createTime).toLocaleTimeString() : '',
+          operator: '系统用户',
+          status: this.getResultText(record.result, record.recordType),
+          result: record.result,
+          recordType: record.recordType, // 记录类型
+          affectedCount: record.affectedCount || record.cureCount || record.deathCount,
+          deathCount: record.deathCount || 0,
+          rawRecord: record  // 保存原始记录用于跟进
+        }))
+        
+        this.setData({
+          healthRecords: formattedRecords
+        })
+      }
+    } catch (error) {
+      console.error('加载健康数据失败:', error)
+      wx.showToast({
+        title: '数据加载失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 获取严重程度主题
+  getSeverityTheme(severity: string): string {
+    const themes = {
+      'mild': 'success',
+      'moderate': 'warning',
+      'severe': 'danger',
+      'success': 'success',  // 治愈记录 -> 绿色
+      'danger': 'danger'     // 死亡记录 -> 红色
+    }
+    return themes[severity] || 'primary'
+  },
+
+  // 获取状态图标
+  getStatusIcon(result: string, recordType?: string): string {
+    // 根据记录类型显示特定图标
+    if (recordType === 'cure') {
+      return '🎉'  // 治愈记录
+    }
+    if (recordType === 'death') {
+      return '⚰️'   // 死亡记录
+    }
+    
+    // 原始健康记录图标
+    const icons = {
+      'ongoing': '⏳',
+      'cured': '✅',
+      'death': '💀'
+    }
+    return icons[result] || '📝'
+  },
+
+  // 获取严重程度文本
+  getSeverityText(severity: string): string {
+    const texts = {
+      'mild': '轻微',
+      'moderate': '中等', 
+      'severe': '严重',
+      'success': '正常',  // 治愈记录
+      'danger': '危险'    // 死亡记录
+    }
+    return texts[severity] || '未知'
+  },
+
+  // 获取优先级文本（区分记录类型）
+  getPriorityText(severity: string, recordType?: string): string {
+    // 根据记录类型显示特定标签
+    if (recordType === 'cure') {
+      return '治愈'
+    }
+    if (recordType === 'death') {
+      return '死亡'
+    }
+    
+    // 原始健康记录的严重程度
+    return this.getSeverityText(severity)
+  },
+
+  // 获取结果文本
+  getResultText(result: string, recordType?: string): string {
+    // 根据记录类型显示特定状态
+    if (recordType === 'cure') {
+      return '治愈记录'
+    }
+    if (recordType === 'death') {
+      return '死亡记录'
+    }
+    
+    // 原始健康记录状态
+    const texts = {
+      'ongoing': '治疗中',
+      'cured': '已治愈',
+      'death': '死亡'
+    }
+    return texts[result] || '未知'
   },
 
   // Tab切换
@@ -141,19 +256,87 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 新增健康记录
   addHealthRecord() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '/pages/health-record-form/health-record-form'
     })
   },
 
   // 查看健康记录
   viewHealthRecord(e: any) {
     const { item } = e.currentTarget.dataset || e.detail || {}
+    
+    // 治愈记录和死亡记录直接显示详情，不支持跟进
+    if (item.recordType === 'cure' || item.recordType === 'death') {
+      this.showDetailedRecord(item)
+      return
+    }
+    
+    // 计算剩余需要治疗的数量（仅对原始健康记录）
+    const remainingCount = (item.rawRecord?.currentAffectedCount !== undefined) 
+      ? item.rawRecord.currentAffectedCount 
+      : (item.affectedCount - (item.rawRecord?.curedCount || 0) - (item.rawRecord?.deathCount || 0))
+    
+    // 如果是治疗中状态或者还有剩余需要治疗的数量，显示跟进选项
+    if (item.result === 'ongoing' || remainingCount > 0) {
+      const statusInfo = remainingCount > 0 
+        ? `\n剩余治疗：${remainingCount}只\n已治愈：${item.rawRecord?.curedCount || 0}只\n已死亡：${item.rawRecord?.deathCount || 0}只`
+        : `\n状态：${item.status}`
+        
+      wx.showModal({
+        title: '健康记录详情',
+        content: `批次：${item.location}\n症状：${item.symptoms}\n治疗：${item.treatment}${statusInfo}\n\n是否需要跟进治疗？`,
+        confirmText: '跟进治疗',
+        cancelText: '查看详情',
+        success: (res) => {
+          if (res.confirm) {
+            // 跳转到治疗跟进页面
+            this.followUpTreatment(item)
+          } else {
+            // 显示详细信息
+            this.showDetailedRecord(item)
+          }
+        }
+      })
+    } else {
+      // 已完成的记录直接显示详情
+      this.showDetailedRecord(item)
+    }
+  },
+
+  // 显示详细记录信息
+  showDetailedRecord(item: any) {
+    const curedCount = item.rawRecord?.curedCount || 0
+    const deathCount = item.rawRecord?.deathCount || 0
+    const remainingCount = (item.rawRecord?.currentAffectedCount !== undefined) 
+      ? item.rawRecord.currentAffectedCount 
+      : Math.max(0, item.affectedCount - curedCount - deathCount)
+    
+    let statusInfo = `治疗状态：${item.status}`
+    
+    // 如果有跟进记录，显示详细处理情况
+    if (curedCount > 0 || deathCount > 0) {
+      const processDetails = []
+      if (curedCount > 0) processDetails.push(`已治愈 ${curedCount}只`)
+      if (deathCount > 0) processDetails.push(`已死亡 ${deathCount}只`)
+      if (remainingCount > 0) processDetails.push(`治疗中 ${remainingCount}只`)
+      
+      statusInfo = `处理情况：${processDetails.join('，')}`
+    }
+      
     wx.showModal({
       title: '健康记录详情',
-      content: `位置：${item.location}\n症状：${item.symptoms}\n治疗：${item.treatment}`,
+      content: `批次：${item.location}\n症状：${item.symptoms}\n治疗方案：${item.treatment}\n严重程度：${item.priorityText}\n原始受影响：${item.affectedCount}只\n${statusInfo}\n记录日期：${item.date}`,
       showCancel: false
+    })
+  },
+
+  // 跟进治疗
+  followUpTreatment(item: any) {
+    const recordId = item.id
+    const batchNumber = item.rawRecord?.batchNumber
+    
+    wx.navigateTo({
+      url: `/pages/treatment-followup/treatment-followup?recordId=${recordId}&batchNumber=${encodeURIComponent(batchNumber || '')}`
     })
   },
 

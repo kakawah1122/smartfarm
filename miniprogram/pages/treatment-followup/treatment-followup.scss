@@ -1,0 +1,711 @@
+/* treatment-followup.scss - 治疗跟进页面样式 */
+@import '../../styles/tdesign-local.wxss';
+
+/* TDesign标准设计规范变量 */
+$primary-color: #0052d9;
+$text-primary: #0d1117;
+$text-secondary: #656d76;
+$text-placeholder: #8b949e;
+$bg-color-page: #f7f8fa;
+$bg-color-container: #ffffff;
+$border-color: #ddd;
+$border-color-light: #f1f3f5;
+$success-color: #00a870;
+$warning-color: #ed7b2f;
+$error-color: #d54941;
+
+/* TDesign标准间距系统（遵循32rpx基准） */
+$tdesign-spacing-xs: 8rpx;
+$tdesign-spacing-s: 16rpx;
+$tdesign-spacing-m: 24rpx;
+$tdesign-spacing-l: 32rpx;  /* TDesign标准内边距 */
+$tdesign-spacing-xl: 48rpx;
+
+/* === TDesign标准页面容器设计 === */
+.page-container {
+  /* 基础样式 */
+  background: $bg-color-page;
+  min-height: 100vh;
+  
+  /* 标准布局 - 确保完全对称 */
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  
+  /* 清除所有可能的不对称因素 */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  
+  /* 覆盖可能的全局样式 */
+  --safe-area-inset-left: 0;
+  --safe-area-inset-right: 0;
+}
+
+/* === TDesign标准内容区域 === */
+.form-content {
+  /* 标准内容容器 - 强制垂直布局 */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  
+  /* TDesign标准间距 - 上下各16rpx */
+  padding: $tdesign-spacing-s 0;
+  
+  /* 确保对称和垂直排列 */
+  margin: 0;
+  box-sizing: border-box;
+  
+  /* 防止任何横向布局 */
+  align-items: stretch;
+}
+
+/* === TDesign标准区域布局 === */
+.original-record-section,
+.followup-form-section {
+  /* 标准区域间距 */
+  margin-bottom: $tdesign-spacing-s;
+  
+  /* 确保区域完全对称 */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* === TDesign标准区域标题 === */
+.section-header {
+  /* TDesign标准标题区域 */
+  padding: 0 $tdesign-spacing-l $tdesign-spacing-s;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 44rpx;
+  position: relative;
+  
+  &::before {
+    content: '';
+    width: 6rpx;
+    height: 28rpx;
+    background: $primary-color;
+    border-radius: 3rpx;
+    margin-right: $tdesign-spacing-xs;
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+
+/* === TDesign标准卡片组件 === */
+.form-card {
+  /* TDesign标准卡片样式 */
+  background: $bg-color-container;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid $border-color-light;
+  
+  /* TDesign标准间距布局 - 完全对称 */
+  margin: $tdesign-spacing-s $tdesign-spacing-l;
+  padding: $tdesign-spacing-l;
+  
+  /* 标准盒模型 */
+  box-sizing: border-box;
+  width: calc(100% - 64rpx);
+}
+
+/* 原始记录样式 - 紧凑版 */
+.original-record {
+  border: 2rpx solid $primary-color;
+  background: linear-gradient(135deg, rgba($primary-color, 0.08) 0%, rgba($primary-color, 0.03) 100%);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4rpx;
+    background: linear-gradient(90deg, $primary-color 0%, rgba($primary-color, 0.6) 100%);
+  }
+  
+  .record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $tdesign-spacing-s;
+    padding-bottom: $tdesign-spacing-s;
+    border-bottom: 1rpx solid rgba($primary-color, 0.15);
+    flex-wrap: wrap;
+    gap: $tdesign-spacing-xs;
+    
+    .batch-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2rpx;
+      flex: 1;
+      min-width: 0; /* 允许收缩 */
+      
+      .record-batch {
+        font-size: 32rpx;
+        font-weight: 700;
+        color: $primary-color;
+        letter-spacing: 0.5rpx;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      
+      .record-date {
+        font-size: 22rpx;
+        color: $text-secondary;
+        font-weight: 500;
+      }
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: $tdesign-spacing-xs;
+      flex-shrink: 0; /* 防止收缩 */
+      
+      .stat-badge {
+        display: flex;
+        align-items: baseline;
+        gap: 2rpx;
+        background: rgba($warning-color, 0.1);
+        padding: 4rpx 8rpx;
+        border-radius: 16rpx;
+        border: 1rpx solid rgba($warning-color, 0.2);
+        white-space: nowrap;
+        
+        .stat-number {
+          font-size: 24rpx;
+          font-weight: 700;
+          color: $warning-color;
+        }
+        
+        .stat-unit {
+          font-size: 18rpx;
+          color: $text-secondary;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+  
+  .record-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $tdesign-spacing-s;
+    
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+      min-width: 0; /* 允许收缩 */
+      
+      .summary-label {
+        font-size: 22rpx;
+        color: $text-secondary;
+        font-weight: 600;
+      }
+      
+      .summary-value {
+        font-size: 26rpx;
+        color: $text-primary;
+        font-weight: 500;
+        background: rgba($bg-color-container, 0.6);
+        padding: 8rpx 12rpx;
+        border-radius: 6rpx;
+        border: 1rpx solid rgba($border-color-light, 0.5);
+        line-height: 36rpx;
+        word-break: break-all;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+    }
+  }
+}
+
+/* === TDesign标准表单项设计 === */
+.form-item {
+  /* TDesign标准表单项布局 */
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48rpx;
+  
+  /* TDesign标准内边距 - 无左右边距，保持卡片内部对称 */
+  padding: $tdesign-spacing-s 0;
+  
+  /* TDesign标准边框 */
+  border-bottom: 1rpx solid $border-color-light;
+  
+  /* 标准盒模型 */
+  box-sizing: border-box;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  /* 垂直布局表单项 */
+  &.form-item-vertical {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: auto;
+    padding: $tdesign-spacing-s 0;
+    
+    .form-label {
+      margin-bottom: $tdesign-spacing-xs;
+      width: 100%;
+    }
+    
+    .form-field-content {
+      width: 100%;
+    }
+  }
+}
+
+/* === TDesign标准表单标签 === */
+.form-label {
+  /* 标签基础样式 */
+  font-size: 28rpx;
+  font-weight: 500;
+  color: $text-primary;
+  line-height: 48rpx;
+  
+  /* 标签宽度 - TDesign标准 */
+  width: 120rpx;
+  flex-shrink: 0;
+  
+  /* 右边距 */
+  padding-right: $tdesign-spacing-s;
+  
+  /* 文本不换行 */
+  white-space: nowrap;
+  
+  /* 必填标记 */
+  &.required::after {
+    content: '*';
+    color: $error-color;
+    margin-left: 4rpx;
+    font-size: 22rpx;
+  }
+}
+
+/* === TDesign标准表单内容 === */
+.form-field-content {
+  /* 内容区域 */
+  flex: 1;
+  min-height: 48rpx;
+  display: flex;
+  align-items: center;
+}
+
+/* 选择器样式 */
+.picker-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 48rpx;
+  line-height: 48rpx;
+  padding: 0 12rpx;
+  margin: 0;
+  background: rgba($primary-color, 0.02);
+  border: 1rpx solid $border-color-light;
+  border-radius: 8rpx;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  vertical-align: middle;
+  position: relative;
+  
+  &:active {
+    background: rgba($primary-color, 0.06);
+    border-color: $primary-color;
+  }
+}
+
+.picker-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 46rpx;
+  height: 46rpx;
+  color: $text-primary;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 状态指示器 */
+.result-indicator {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  
+  &.result-cured {
+    background: $success-color;
+  }
+  
+  &.result-death {
+    background: $error-color;
+  }
+}
+
+/* 数量输入区域样式 */
+.quantity-section {
+  margin: $tdesign-spacing-s (-$tdesign-spacing-l);
+  padding: $tdesign-spacing-m $tdesign-spacing-l;
+  border-radius: 12rpx;
+  border: 2rpx solid transparent;
+  position: relative;
+  
+  &.cured-section {
+    background: linear-gradient(135deg, rgba($success-color, 0.08) 0%, rgba($success-color, 0.03) 100%);
+    border-color: rgba($success-color, 0.2);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6rpx;
+      background: linear-gradient(180deg, $success-color 0%, rgba($success-color, 0.6) 100%);
+      border-radius: 0 6rpx 6rpx 0;
+    }
+  }
+  
+  &.death-section {
+    background: linear-gradient(135deg, rgba($error-color, 0.08) 0%, rgba($error-color, 0.03) 100%);
+    border-color: rgba($error-color, 0.2);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6rpx;
+      background: linear-gradient(180deg, $error-color 0%, rgba($error-color, 0.6) 100%);
+      border-radius: 0 6rpx 6rpx 0;
+    }
+  }
+  
+  .quantity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $tdesign-spacing-s;
+    
+    .quantity-title {
+      display: flex;
+      align-items: center;
+      gap: $tdesign-spacing-xs;
+      
+      .title-text {
+        font-size: 28rpx;
+        font-weight: 600;
+        color: $text-primary;
+      }
+      
+      .required-mark {
+        color: $error-color;
+        font-size: 24rpx;
+        font-weight: 700;
+      }
+    }
+    
+    .reference-info {
+      .reference-text {
+        font-size: 24rpx;
+        color: $text-secondary;
+        font-weight: 500;
+        background: rgba($text-secondary, 0.08);
+        padding: 4rpx 12rpx;
+        border-radius: 12rpx;
+        border: 1rpx solid rgba($text-secondary, 0.15);
+      }
+    }
+  }
+  
+  .quantity-input {
+    .quantity-field {
+      height: 88rpx;
+      font-size: 36rpx;
+      font-weight: 700;
+      text-align: center;
+      
+      &.cured-field {
+        --td-input-bg-color: rgba(0, 168, 112, 0.12);
+        --td-input-border-color: rgba(0, 168, 112, 0.4);
+        --td-input-text-color: #00a870;
+        border-radius: 16rpx;
+        box-shadow: 0 4rpx 12rpx rgba(0, 168, 112, 0.2);
+      }
+      
+      &.death-field {
+        --td-input-bg-color: rgba(213, 73, 65, 0.12);
+        --td-input-border-color: rgba(213, 73, 65, 0.4);
+        --td-input-text-color: #d54941;
+        border-radius: 16rpx;
+        box-shadow: 0 4rpx 12rpx rgba(213, 73, 65, 0.2);
+      }
+    }
+  }
+}
+
+/* === TDesign输入框样式优化 === */
+.form-input {
+  height: 48rpx;
+  line-height: 48rpx;
+  
+  &.cured-input {
+    --td-input-text-color: #00a870;
+    --td-input-bg-color: rgba(0, 168, 112, 0.05);
+    --td-input-border-color: rgba(0, 168, 112, 0.2);
+  }
+  
+  &.death-input {
+    --td-input-text-color: #d54941;
+    --td-input-bg-color: rgba(213, 73, 65, 0.05);
+    --td-input-border-color: rgba(213, 73, 65, 0.2);
+  }
+}
+
+/* === TDesign文本域样式优化 === */
+.form-textarea {
+  --td-textarea-bg-color: rgba(0, 82, 217, 0.02);
+  --td-textarea-border-color: #f1f3f5;
+  --td-textarea-border-radius: 8rpx;
+  --td-textarea-font-size: 28rpx;
+  --td-textarea-text-color: #0d1117;
+  --td-textarea-placeholder-color: #8b949e;
+  --td-textarea-padding: 12rpx;
+  width: 100%;
+  min-height: 100rpx;
+}
+
+/* === TDesign标准操作按钮区域 === */
+.form-actions {
+  /* TDesign标准按钮容器 */
+  display: flex;
+  flex-direction: column;
+  gap: $tdesign-spacing-s;
+  
+  /* TDesign标准对称间距 */
+  padding: $tdesign-spacing-l;
+  margin: 0;
+  
+  /* 标准盒模型 */
+  box-sizing: border-box;
+  width: 100%;
+  
+  /* TDesign标准按钮样式 */
+  .t-button {
+    height: 88rpx !important;
+    border-radius: 12rpx !important;
+    font-size: 32rpx !important;
+    font-weight: 500 !important;
+    
+    &--theme-primary {
+      background: $primary-color !important;
+      box-shadow: 0 2rpx 4rpx rgba($primary-color, 0.3) !important;
+    }
+    
+    &--theme-default {
+      background: $bg-color-container !important;
+      color: $text-secondary !important;
+      border: 1rpx solid $border-color !important;
+    }
+    
+    &:active {
+      transform: translateY(1rpx);
+    }
+  }
+}
+
+/* === TDesign标准提示信息区域 === */
+.form-tips {
+  /* TDesign标准提示容器 */
+  padding: 0 $tdesign-spacing-l $tdesign-spacing-s;
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+  
+  .t-notice-bar {
+    border-radius: 12rpx !important;
+    background: rgba($primary-color, 0.05) !important;
+    border: 1rpx solid rgba($primary-color, 0.1) !important;
+    
+    .t-notice-bar__content {
+      color: $primary-color !important;
+      font-size: 26rpx !important;
+    }
+  }
+}
+
+/* === TDesign标准响应式设计 === */
+@media screen and (max-width: 750rpx) {
+  /* 小屏幕下表单项调整 */
+  .form-item {
+    flex-direction: column;
+    align-items: stretch;
+    padding: $tdesign-spacing-s 0;
+    
+    .form-label {
+      width: 100%;
+      margin-bottom: $tdesign-spacing-xs;
+      padding-right: 0;
+    }
+    
+    .form-field-content {
+      width: 100%;
+    }
+  }
+  
+  /* 小屏幕下卡片调整 */
+  .form-card {
+    /* TDesign标准小屏间距 */
+    margin: $tdesign-spacing-s $tdesign-spacing-s;
+    padding: $tdesign-spacing-s;
+    width: calc(100% - 32rpx);
+  }
+  
+  /* 小屏幕下按钮区域调整 */
+  .form-actions {
+    padding: $tdesign-spacing-s;
+  }
+  
+  /* 小屏幕下提示区域调整 */
+  .form-tips {
+    padding: 0 $tdesign-spacing-s $tdesign-spacing-xs;
+  }
+  
+  /* 小屏幕下原始记录样式调整 */
+  .original-record {
+    .record-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: $tdesign-spacing-s;
+      
+      .batch-info {
+        .record-batch {
+          font-size: 28rpx;
+        }
+      }
+      
+      .header-right {
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: row;
+        
+        .stat-badge {
+          padding: 4rpx 8rpx;
+          
+          .stat-number {
+            font-size: 22rpx;
+          }
+          
+          .stat-unit {
+            font-size: 16rpx;
+          }
+        }
+      }
+    }
+    
+    .record-summary {
+      grid-template-columns: 1fr;
+      gap: $tdesign-spacing-xs;
+      
+      .summary-item {
+        .summary-label {
+          font-size: 20rpx;
+        }
+        
+        .summary-value {
+          font-size: 24rpx;
+          padding: 6rpx 8rpx;
+          line-height: 32rpx;
+        }
+      }
+    }
+  }
+  
+  .quantity-section {
+    /* TDesign标准数量区域 */
+    margin: $tdesign-spacing-s (-$tdesign-spacing-l);
+    padding: $tdesign-spacing-s $tdesign-spacing-l;
+    
+    .quantity-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: $tdesign-spacing-xs;
+      margin-bottom: $tdesign-spacing-xs;
+      
+      .quantity-title {
+        justify-content: flex-start;
+        
+        .title-text {
+          font-size: 26rpx;
+        }
+      }
+      
+      .reference-info {
+        align-self: flex-end;
+        
+        .reference-text {
+          font-size: 20rpx;
+          padding: 2rpx 6rpx;
+          color: var(--td-text-color-primary);
+          font-weight: 600;
+        }
+        
+        .detail-text {
+          font-size: 18rpx;
+          color: var(--td-text-color-secondary);
+          margin-top: 4rpx;
+          display: block;
+        }
+      }
+    }
+    
+    .quantity-input .quantity-field {
+      height: 72rpx;
+      font-size: 32rpx;
+      
+      &.cured-field,
+      &.death-field {
+        box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}
+
+/* === TDesign标准响应式设计结束 === */
+
+/* === 小屏幕优化 === */
+@media screen and (max-width: 600rpx) {
+  .stat-badge {
+    .stat-number { font-size: 20rpx; }
+    .stat-unit { font-size: 14rpx; }
+  }
+}
+
+/* === TDesign组件样式优化 === */
+.picker-content:active .t-icon {
+  color: $primary-color;
+}

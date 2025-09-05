@@ -37,14 +37,23 @@ const pageConfig = {
     // 根据分类设置页面标题
     let pageTitle = '物料库存'
     switch (category) {
-      case 'feed':
+      case '饲料':
         pageTitle = '饲料库存'
         break
-      case 'medicine':
+      case '营养品':
+        pageTitle = '营养品库存'
+        break
+      case '药品':
         pageTitle = '药品库存'
         break
-      case 'equipment':
+      case '设备':
         pageTitle = '设备物料'
+        break
+      case '耗材':
+        pageTitle = '耗材库存'
+        break
+      case '其他':
+        pageTitle = '其他物料'
         break
       default:
         pageTitle = '物料库存'
@@ -89,27 +98,9 @@ const pageConfig = {
         action: 'list_materials'
       }
       
-      // 如果有分类过滤，添加到请求参数中，将英文参数映射为中文分类
+      // 如果有分类过滤，直接使用英文分类值
       if (this.data.filterCategory) {
-        let categoryName = this.data.filterCategory
-        
-        // 将英文参数映射为中文分类名
-        switch (this.data.filterCategory) {
-          case 'feed':
-            categoryName = '饲料'
-            break
-          case 'medicine':
-            categoryName = '药品'
-            break
-          case 'equipment':
-            categoryName = '设备'
-            break
-          default:
-            categoryName = this.data.filterCategory
-            break
-        }
-        
-        requestData.category = categoryName
+        requestData.category = this.data.filterCategory
       }
       
       const materialsResult = await wx.cloud.callFunction({

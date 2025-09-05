@@ -381,21 +381,21 @@ const pageConfig = {
   // 查看饲料库存详情
   viewFeedInventory() {
     wx.navigateTo({
-      url: '/pages/inventory-detail/inventory-detail?category=feed'
+      url: '/pages/inventory-detail/inventory-detail?category=饲料'
     })
   },
 
   // 查看药品库存详情
   viewMedicineInventory() {
     wx.navigateTo({
-      url: '/pages/inventory-detail/inventory-detail?category=medicine'
+      url: '/pages/inventory-detail/inventory-detail?category=药品'
     })
   },
 
   // 查看设备物料详情
   viewEquipmentInventory() {
     wx.navigateTo({
-      url: '/pages/inventory-detail/inventory-detail?category=equipment'
+      url: '/pages/inventory-detail/inventory-detail?category=设备'
     })
   },
 

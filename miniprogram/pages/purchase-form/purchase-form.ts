@@ -34,7 +34,7 @@ const pageConfig = {
     dateValue: '',
     
     // 分类选择器相关
-    categoryLabels: ['饲料', '药品', '设备', '耗材', '其他'],
+    categoryLabels: ['饲料', '营养品', '药品', '设备', '耗材', '其他'],
     categoryIndex: -1, // -1表示未选择
     
     // 计算总金额
@@ -121,9 +121,10 @@ const pageConfig = {
     const index = e.detail.value
     const category = this.data.categoryLabels[index]
     this.setData({
-      'formData.category': category,
+      'formData.category': category,  // 存储中文值到数据库
       categoryIndex: index
     })
+    console.log('分类选择:', { index, category })
   },
 
   // 表单字段变化
@@ -158,13 +159,18 @@ const pageConfig = {
   getMaterialCategory(materialName: string): string {
     const name = materialName.toLowerCase()
     
-    // 饲料类
-    if (name.includes('饲料') || name.includes('精料') || name.includes('玉米') || name.includes('豆粕') || name.includes('麸皮')) {
+    // 饲料类 - 普通饲料
+    if (name.includes('饲料') || name.includes('精料') || name.includes('玉米') || name.includes('豆粕') || name.includes('麸皮') || name.includes('鹅料')) {
       return '饲料'
     }
     
+    // 营养品类 - 营养补充剂
+    if (name.includes('营养') || name.includes('维生素') || name.includes('补充') || name.includes('补剂') || name.includes('钙') || name.includes('蛋白质') || name.includes('营养液') || name.includes('营养粉')) {
+      return '营养品'
+    }
+    
     // 药品类
-    if (name.includes('药') || name.includes('疫苗') || name.includes('消毒') || name.includes('抗生素') || name.includes('维生素')) {
+    if (name.includes('药') || name.includes('疫苗') || name.includes('消毒') || name.includes('抗生素') || name.includes('治疗') || name.includes('医用')) {
       return '药品'
     }
     
