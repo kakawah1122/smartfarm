@@ -435,9 +435,14 @@ Page({
       }
       
       // 计算温度进度条（基于7天内的温度范围）
-      const allTemps = dailyData.slice(0, 7).map(d => [parseInt(d.tempMax), parseInt(d.tempMin)]).flat()
-      const maxTemp = Math.max(...allTemps)
-      const minTemp = Math.min(...allTemps)
+      const allTemps = dailyData.slice(0, 7)
+        .filter(d => d && d.tempMax != null && d.tempMin != null)
+        .map(d => [parseInt(d.tempMax), parseInt(d.tempMin)])
+        .flat()
+        .filter(temp => !isNaN(temp))
+      
+      const maxTemp = allTemps.length > 0 ? Math.max(...allTemps) : 30
+      const minTemp = allTemps.length > 0 ? Math.min(...allTemps) : 0
       const tempRange = maxTemp - minTemp
       const itemTempMax = parseInt(item.tempMax) || 0
       const itemTempMin = parseInt(item.tempMin) || 0

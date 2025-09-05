@@ -29,7 +29,6 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('生产仪表盘操作失败:', error)
     return {
       success: false,
       error: error.message,
@@ -50,11 +49,6 @@ async function getOverviewStats(event, wxContext) {
     getRecentTrends()
   ])
   
-  // 添加调试日志
-  console.log('📊 Dashboard统计结果:')
-  console.log('  - Entry:', entryStats)
-  console.log('  - Exit:', exitStats)
-  console.log('  - Material:', materialStats)
   
   return {
     success: true,
@@ -70,30 +64,43 @@ async function getOverviewStats(event, wxContext) {
 
 // 获取入栏概览
 async function getEntryOverview(dateRange) {
-  let query = db.collection('entry_records')
+  let entryQuery = db.collection('entry_records')
   
   // 只有在明确提供日期范围时才过滤
   if (dateRange && dateRange.start && dateRange.end) {
-    query = query.where({
+    entryQuery = entryQuery.where({
       entryDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
     })
   }
-  // 不提供日期范围时，获取所有数据
   
-  const records = await query.get()
-  const data = records.data
+  // 获取入栏记录
+  const entryRecords = await entryQuery.get()
+  const entryData = entryRecords.data
   
-  const totalQuantity = data.reduce((sum, record) => sum + (record.quantity || 0), 0)
-  const completedRecords = data.filter(record => record.status === '已完成')
+  const totalEntryQuantity = entryData.reduce((sum, record) => sum + (record.quantity || 0), 0)
+  const completedRecords = entryData.filter(record => record.status === '已完成')
   const completedQuantity = completedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0)
-  const totalBatches = data.length
+  const totalBatches = entryData.length
   
-  // 计算存活率
-  const survivalRate = totalQuantity > 0 ? ((completedQuantity / totalQuantity) * 100).toFixed(1) : '0.0'
+  // 获取出栏记录来计算存栏数量
+  let exitQuery = db.collection('exit_records')
+  if (dateRange && dateRange.start && dateRange.end) {
+    // 如果有日期范围，出栏也要在相同范围内过滤
+    exitQuery = exitQuery.where({
+      exitDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+    })
+  }
+  
+  const exitRecords = await exitQuery.get()
+  const exitData = exitRecords.data
+  const totalExitQuantity = exitData.reduce((sum, record) => sum + (record.quantity || 0), 0)
+  
+  // 计算存栏数量 = 入栏总数 - 出栏总数
+  const stockQuantity = Math.max(0, totalEntryQuantity - totalExitQuantity)
   
   // 按品种统计
   const breedStats = {}
-  data.forEach(record => {
+  entryData.forEach(record => {
     const breed = record.breed || '未知'
     if (!breedStats[breed]) {
       breedStats[breed] = { quantity: 0, batches: 0 }
@@ -103,8 +110,8 @@ async function getEntryOverview(dateRange) {
   })
   
   return {
-    total: totalQuantity.toLocaleString(),
-    survivalRate,
+    total: totalEntryQuantity.toLocaleString(),
+    stockQuantity: stockQuantity.toString(), // 直接返回数字字符串，不使用千分位格式
     batches: totalBatches.toString(),
     completedQuantity: completedQuantity.toLocaleString(),
     breedStats
@@ -202,67 +209,104 @@ async function getMaterialOverview() {
     .filter(r => r.type === 'use')
     .reduce((sum, r) => sum + r.quantity, 0)
   
-  // 添加详细调试日志
-  console.log('🔍 物料数据调试:')
-  console.log('总物料数量:', materials.data.length)
-  materials.data.forEach((material, index) => {
-    console.log(`物料${index + 1}:`, {
-      name: material.name,
-      category: material.category,
-      currentStock: material.currentStock,
-      stockType: typeof material.currentStock,
-      safetyStock: material.safetyStock,
-      isActive: material.isActive
+  // 计算各分类的详细状态信息
+  const categoryDetails = {}
+  
+  // 处理每个分类 - 使用中文分类名
+  const categoryMapping = {
+    'feed': '饲料',
+    'medicine': '药品', 
+    'equipment': '设备'
+  }
+  
+  Object.keys(categoryMapping).forEach(categoryKey => {
+    const categoryName = categoryMapping[categoryKey]
+    const categoryMaterials = materials.data.filter(m => m.category === categoryName)
+    
+    if (categoryMaterials.length === 0) {
+      categoryDetails[categoryKey] = {
+        status: 'empty',
+        level: 'info',
+        totalCount: 0,
+        criticalCount: 0,
+        warningCount: 0,
+        normalCount: 0,
+        totalStock: 0,
+        description: '暂无物料',
+        statusText: '无数据'
+      }
+      return
+    }
+    
+    let criticalCount = 0  // 库存为0的数量
+    let warningCount = 0   // 低于安全库存但不为0的数量
+    let normalCount = 0    // 正常库存的数量
+    let totalStock = 0     // 总库存数量
+    
+    categoryMaterials.forEach(material => {
+      const currentStock = Number(material.currentStock) || 0
+      const safetyStock = Number(material.safetyStock) || 0
+      totalStock += currentStock
+      
+      if (currentStock === 0) {
+        criticalCount++
+      } else if (currentStock <= safetyStock) {
+        warningCount++
+      } else {
+        normalCount++
+      }
     })
+    
+    // 确定整体状态
+    let status, level, statusText, description
+    
+    if (criticalCount > 0) {
+      status = 'critical'
+      level = 'error'
+      statusText = '严重不足'
+      description = `${criticalCount}种物料零库存`
+    } else if (warningCount > 0) {
+      status = 'warning' 
+      level = 'warning'
+      statusText = '库存不足'
+      description = `${warningCount}种物料偏低`
+    } else {
+      status = 'normal'
+      level = 'success'
+      statusText = '状态良好'
+      description = '库存充足'
+    }
+    
+    categoryDetails[categoryKey] = {
+      status,
+      level,
+      totalCount: categoryMaterials.length,
+      criticalCount,
+      warningCount,
+      normalCount,
+      totalStock,
+      statusText,
+      description
+    }
   })
-  
-  // 计算饲料库存总量
-  const feedMaterials = materials.data.filter(m => m.category === 'feed')
-  console.log('🥬 饲料类物料:', feedMaterials.length, '个')
-  
-  const feedStock = feedMaterials.reduce((sum, m) => {
-    const stock = Number(m.currentStock) || 0
-    console.log(`  - ${m.name}: ${stock} ${m.unit}`)
-    return sum + stock
-  }, 0)
-  
-  console.log('🥬 饲料总库存:', feedStock)
-  
-  // 计算药品库存状态
-  const medicineMaterials = materials.data.filter(m => m.category === 'medicine')
-  console.log('💊 药品类物料:', medicineMaterials.length, '个')
-  
-  const medicineStock = medicineMaterials.reduce((sum, m) => {
-    const stock = Number(m.currentStock) || 0
-    console.log(`  - ${m.name}: ${stock} ${m.unit}`)
-    return sum + stock
-  }, 0)
-  
-  const medicineLowStock = medicineMaterials.some(m => {
-    const current = Number(m.currentStock) || 0
-    const safety = Number(m.safetyStock) || 0
-    return current <= safety
-  })
-  
-  console.log('💊 药品总库存:', medicineStock)
-  console.log('💊 药品是否低库存:', medicineLowStock)
 
-  const result = {
+  return {
     totalMaterials: totalMaterials.toString(),
     lowStockCount: lowStockCount.toString(),
     totalValue: totalValue.toLocaleString(),
-    feedStock: feedStock.toString(),           // 饲料库存数量
-    medicineStatus: medicineLowStock ? '库存不足' : '充足',  // 药品状态
+    
+    // 保持旧格式兼容性
+    feedStock: categoryDetails.feed?.totalStock?.toString() || '0',
+    medicineStatus: categoryDetails.medicine?.statusText || '无数据',
+    
+    // 新的详细信息
+    categoryDetails,
     categoryStats,
     todayActivity: {
       purchase: todayPurchase,
       use: todayUse
     }
   }
-  
-  console.log('📊 最终返回的material数据:', JSON.stringify(result, null, 2))
-  
-  return result
 }
 
 // 获取最近趋势

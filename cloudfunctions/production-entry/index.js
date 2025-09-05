@@ -41,7 +41,6 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('入栏管理操作失败:', error)
     return {
       success: false,
       error: error.message,
@@ -121,8 +120,8 @@ async function createEntryRecord(event, wxContext) {
     throw new Error('数量必须大于0')
   }
   
-  // 生成批次号
-  const batchNumber = generateBatchNumber()
+  // 使用用户提供的批次ID，如果没有则自动生成批次号
+  const batchNumber = recordData.batchId || recordData.batchNumber || generateBatchNumber()
   
   const now = new Date()
   const newRecord = {

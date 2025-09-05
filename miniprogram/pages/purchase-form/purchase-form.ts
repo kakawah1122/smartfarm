@@ -114,8 +114,6 @@ const pageConfig = {
       dateValue: value,
       showDate: false
     })
-
-    console.log('选择日期:', dateString, '生成批次ID:', batchId)
   },
 
   // 分类选择变化
@@ -126,7 +124,6 @@ const pageConfig = {
       'formData.category': category,
       categoryIndex: index
     })
-    console.log('选择分类:', category)
   },
 
   // 表单字段变化
@@ -143,8 +140,6 @@ const pageConfig = {
     if (field === 'quantity' || field === 'unitPrice') {
       this.calculateTotalAmount()
     }
-
-    console.log(`字段 ${field} 更新为:`, value)
   },
 
   // 计算总金额
@@ -255,8 +250,6 @@ const pageConfig = {
         category: this.data.formData.category || this.getMaterialCategory(this.data.formData.materialName) // 使用用户选择的分类或智能推断
       }
 
-      console.log('提交采购入库数据:', submitData)
-
       // 调用云函数提交物料数据
       await this.submitToCloudFunction(submitData)
 
@@ -275,7 +268,6 @@ const pageConfig = {
       }, 2000)
 
     } catch (error) {
-      console.error('提交采购入库记录失败:', error)
       wx.showToast({
         title: '提交失败，请重试',
         icon: 'none',
@@ -290,7 +282,6 @@ const pageConfig = {
 
   // 提交到云函数 - 使用新的采购入库接口
   async submitToCloudFunction(data: any): Promise<void> {
-    console.log('🚀 调用云函数进行采购入库:', data)
     
     try {
       // 使用新的采购入库接口，自动处理物料匹配和创建
@@ -314,22 +305,12 @@ const pageConfig = {
         }
       })
       
-      console.log('云函数返回结果:', result)
-      
       if (!result.result?.success) {
         const errorMsg = result.result?.error || result.result?.message || '未知错误'
         throw new Error(errorMsg)
       }
       
-      console.log('✅ 采购入库成功:', {
-        materialId: result.result.data?.materialId,
-        recordNumber: result.result.data?.recordNumber,
-        newStock: result.result.data?.newStock,
-        beforeStock: result.result.data?.beforeStock
-      })
-      
     } catch (error) {
-      console.error('❌ 采购入库失败:', error)
       throw error
     }
   },

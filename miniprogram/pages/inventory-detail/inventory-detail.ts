@@ -19,6 +19,8 @@ const pageConfig = {
   data: {
     // 搜索和筛选
     searchKeyword: '',
+    filterCategory: '', // 添加分类过滤
+    pageTitle: '物料库存', // 页面标题
     
     // 物料列表
     materialsList: [] as MaterialDetail[],
@@ -28,7 +30,32 @@ const pageConfig = {
     loading: false
   },
 
-  onLoad() {
+  onLoad(options: any) {
+    // 获取分类参数
+    const category = options?.category || ''
+    
+    // 根据分类设置页面标题
+    let pageTitle = '物料库存'
+    switch (category) {
+      case 'feed':
+        pageTitle = '饲料库存'
+        break
+      case 'medicine':
+        pageTitle = '药品库存'
+        break
+      case 'equipment':
+        pageTitle = '设备物料'
+        break
+      default:
+        pageTitle = '物料库存'
+        break
+    }
+    
+    this.setData({
+      filterCategory: category,
+      pageTitle: pageTitle
+    })
+    
     this.loadMaterialsData()
   },
 
@@ -37,8 +64,6 @@ const pageConfig = {
     this.setData({ loading: true })
     
     try {
-      console.log('🔍 开始加载物料库存数据...')
-      
       // 获取物料数据
       const materialsData = await this.getMaterialsData()
       
@@ -46,10 +71,7 @@ const pageConfig = {
         materialsList: materialsData,
         filteredMaterialsList: materialsData
       })
-      
-      console.log('📦 物料数据加载完成:', materialsData.length, '个物料')
     } catch (error) {
-      console.error('❌ 加载物料数据失败:', error)
       wx.showToast({
         title: '加载数据失败',
         icon: 'none'
@@ -62,12 +84,37 @@ const pageConfig = {
   // 获取物料数据
   async getMaterialsData(): Promise<MaterialDetail[]> {
     try {
-      // 调用云函数获取物料列表
+      // 调用云函数获取物料列表，支持分类过滤
+      const requestData: any = {
+        action: 'list_materials'
+      }
+      
+      // 如果有分类过滤，添加到请求参数中，将英文参数映射为中文分类
+      if (this.data.filterCategory) {
+        let categoryName = this.data.filterCategory
+        
+        // 将英文参数映射为中文分类名
+        switch (this.data.filterCategory) {
+          case 'feed':
+            categoryName = '饲料'
+            break
+          case 'medicine':
+            categoryName = '药品'
+            break
+          case 'equipment':
+            categoryName = '设备'
+            break
+          default:
+            categoryName = this.data.filterCategory
+            break
+        }
+        
+        requestData.category = categoryName
+      }
+      
       const materialsResult = await wx.cloud.callFunction({
         name: 'production-material',
-        data: {
-          action: 'list_materials'
-        }
+        data: requestData
       })
       
       if (!materialsResult.result.success) {
@@ -75,7 +122,6 @@ const pageConfig = {
       }
       
       const materials = materialsResult.result.data.materials
-      console.log('📦 获取到物料数据:', materials.length, '个')
       
       // 转换为页面所需的格式
       const materialsDetails: MaterialDetail[] = materials.map(material => ({
@@ -95,7 +141,6 @@ const pageConfig = {
       return materialsDetails.sort((a, b) => a.materialName.localeCompare(b.materialName))
       
     } catch (error) {
-      console.error('❌ 获取物料数据失败:', error)
       throw error
     }
   },

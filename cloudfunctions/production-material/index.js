@@ -82,7 +82,6 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('物料管理操作失败:', error)
     return {
       success: false,
       error: error.message,
@@ -379,14 +378,32 @@ async function createMaterialRecord(event, wxContext) {
     throw new Error('数量必须大于0')
   }
   
-  // 检查物料是否存在
-  const material = await db.collection('materials').doc(recordData.materialId).get()
+  let material = null
+  let materialInfo = null
   
-  if (!material.data.length) {
-    throw new Error('物料不存在')
+  try {
+    // 首先尝试通过ID直接查找
+    material = await db.collection('materials').doc(recordData.materialId).get()
+    
+    if (material.data && material.data.length > 0) {
+      materialInfo = material.data[0]
+    }
+  } catch (error) {
+    // ID查找失败时忽略错误
   }
   
-  const materialInfo = material.data[0]
+  // 如果通过ID查找失败，尝试通过遍历查找
+  if (!materialInfo) {
+    const allMaterials = await db.collection('materials').where({ isActive: true }).get()
+    
+    // 尝试通过ID匹配找到正确的物料
+    const foundMaterial = allMaterials.data.find(m => m._id === recordData.materialId)
+    if (foundMaterial) {
+      materialInfo = foundMaterial
+    } else {
+      throw new Error(`物料不存在，ID: ${recordData.materialId}`)
+    }
+  }
   
   // 如果是领用，检查库存是否充足
   if (recordData.type === 'use' && materialInfo.currentStock < recordData.quantity) {
@@ -829,7 +846,6 @@ async function purchaseInbound(event, wxContext) {
       let material = null
       
       // 1. 查找现有物料
-      console.log('查找现有物料:', materialData.name, materialData.category)
       const existingMaterials = await transaction.collection('materials')
         .where({ 
           name: materialData.name,
@@ -842,10 +858,8 @@ async function purchaseInbound(event, wxContext) {
         // 物料已存在
         material = existingMaterials.data[0]
         materialId = material._id
-        console.log('使用现有物料:', material.name, materialId)
       } else {
         // 2. 创建新物料
-        console.log('创建新物料:', materialData.name)
         const materialCode = generateMaterialCode(materialData.category)
         const now = new Date()
         
@@ -870,11 +884,9 @@ async function purchaseInbound(event, wxContext) {
         
         materialId = materialResult._id
         material = { _id: materialId, ...newMaterial }
-        console.log('新物料创建成功:', materialId)
       }
       
       // 3. 创建采购记录
-      console.log('创建采购记录')
       const recordNumber = generateRecordNumber('purchase')
       const now = new Date()
       const quantity = Number(materialData.quantity)
@@ -930,12 +942,6 @@ async function purchaseInbound(event, wxContext) {
         data: inventoryLog
       })
       
-      console.log('采购入库完成:', {
-        materialId,
-        recordNumber,
-        newStock
-      })
-      
       return {
         success: true,
         data: {
@@ -954,7 +960,6 @@ async function purchaseInbound(event, wxContext) {
       }
     })
   } catch (error) {
-    console.error('采购入库失败:', error)
     throw new Error('采购入库失败: ' + error.message)
   }
 }

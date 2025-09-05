@@ -225,6 +225,53 @@
   text-align: right;
 }
 
+/* 满屏备注框样式 */
+.fullwidth-textarea-container {
+  margin: 0 -32rpx; /* 负边距来抵消父容器的内边距 */
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 0;
+  border: none;
+  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.fullwidth-textarea {
+  padding: 32rpx !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea__control {
+  font-size: 30rpx !important;
+  color: var(--td-text-color-primary, #000000) !important;
+  text-align: left !important;
+  line-height: 1.6 !important;
+  min-height: 120rpx !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea__placeholder {
+  color: var(--td-text-color-placeholder, #bbbbbb) !important;
+  text-align: left !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea__indicator {
+  color: var(--td-text-color-placeholder, #bbbbbb) !important;
+  font-size: 24rpx !important;
+  text-align: right !important;
+  margin-top: 16rpx !important;
+}
+
 /* 表单操作按钮 */
 .form-actions {
   padding: 48rpx 32rpx 32rpx 32rpx;
@@ -323,6 +370,20 @@
   
   .section-title {
     font-size: 26rpx;
+  }
+  
+  /* 满屏备注框响应式 */
+  .fullwidth-textarea-container {
+    margin: 0 -16rpx; /* 适应小屏幕的边距 */
+  }
+  
+  .fullwidth-textarea {
+    padding: 24rpx !important;
+  }
+  
+  .fullwidth-textarea ::deep .t-textarea__control {
+    font-size: 28rpx !important;
+    min-height: 100rpx !important;
   }
 }
 

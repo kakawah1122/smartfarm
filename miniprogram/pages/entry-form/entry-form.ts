@@ -106,8 +106,6 @@ const pageConfig = {
       dateValue: value,
       showDate: false
     })
-
-    console.log('选择日期:', dateString, '生成批次ID:', batchId)
   },
 
   // 表单字段变化
@@ -123,8 +121,6 @@ const pageConfig = {
     if (field === 'quantity' || field === 'unitPrice') {
       this.calculateTotalAmount()
     }
-
-    console.log(`字段 ${field} 更新为:`, value)
   },
 
   // 计算总金额
@@ -202,21 +198,21 @@ const pageConfig = {
         status: '已完成'
       }
 
-      console.log('提交入栏记录数据:', submitData)
-
       // 调用云函数保存数据
       const result = await wx.cloud.callFunction({
         name: 'production-entry',
         data: {
           action: 'create',
           recordData: {
+            batchId: submitData.batchId,  // 添加批次ID字段
             breed: submitData.breed,
             supplier: submitData.supplier,
             quantity: submitData.quantity,
             unitPrice: submitData.unitPrice,
             entryDate: submitData.entryDate,
             notes: submitData.remarks,
-            status: submitData.status
+            status: submitData.status,
+            totalAmount: submitData.totalAmount  // 添加总金额字段
           }
         }
       })
@@ -240,7 +236,6 @@ const pageConfig = {
       }, 2000)
 
     } catch (error) {
-      console.error('提交入栏记录失败:', error)
       wx.showToast({
         title: '提交失败，请重试',
         icon: 'none',

@@ -37,15 +37,15 @@
               <t-card>
                 <view class="stat-content stat-primary">
                   <view class="stat-value">{{entryStats.total}}</view>
-                  <view class="stat-label">总数量(羽)</view>
+                  <view class="stat-label">入栏总数(羽)</view>
                 </view>
               </t-card>
             </t-col>
             <t-col span="8">
               <t-card>
                 <view class="stat-content stat-success">
-                  <view class="stat-value">{{entryStats.survivalRate}}%</view>
-                  <view class="stat-label">存活率</view>
+                  <view class="stat-value">{{entryStats.stockQuantity}}</view>
+                  <view class="stat-label">存栏数量</view>
                 </view>
               </t-card>
             </t-col>
@@ -85,23 +85,16 @@
               
               <!-- 记录列表 -->
               <view wx:for="{{entryRecords}}" wx:key="id" 
-                    class="record-item" 
-                    bind:tap="viewRecord" 
-                    data-item="{{item}}">
+                    class="record-item">
                 <view class="record-main">
                   <view class="record-header">
-                    <text class="record-location">{{item.breed}}</text>
-                    <t-tag theme="{{item.status === '已完成' ? 'success' : 'warning'}}" size="small">{{item.status}}</t-tag>
+                    <text class="record-location">{{item.displayTitle}}</text>
+                    <t-tag theme="{{item.status === '已完成' ? 'success' : 'warning'}}" size="small" class="record-status-tag">{{item.status}}</t-tag>
                   </view>
                   <view class="record-content">
                     <text class="record-symptoms">{{item.supplier}} • {{item.quantity}}羽</text>
+                    <view class="record-date-tag">{{item.entryDate || item.date}}</view>
                   </view>
-                  <view class="record-footer">
-                    <text class="record-date">{{item.date}}</text>
-                  </view>
-                </view>
-                <view class="record-arrow">
-                  <t-icon name="chevron-right" size="16" color="#c8c9cc" />
                 </view>
               </view>
             </view>
@@ -118,15 +111,7 @@
               <t-card>
                 <view class="stat-content stat-success">
                   <view class="stat-value">{{exitStats.total}}</view>
-                  <view class="stat-label">总数量(羽)</view>
-                </view>
-              </t-card>
-            </t-col>
-            <t-col span="8">
-              <t-card>
-                <view class="stat-content stat-success">
-                  <view class="stat-value">{{exitStats.batches}}</view>
-                  <view class="stat-label">出栏批次</view>
+                  <view class="stat-label">出栏总数(羽)</view>
                 </view>
               </t-card>
             </t-col>
@@ -135,6 +120,14 @@
                 <view class="stat-content stat-primary">
                   <view class="stat-value">{{exitStats.avgWeight}}斤</view>
                   <view class="stat-label">平均重量</view>
+                </view>
+              </t-card>
+            </t-col>
+            <t-col span="8">
+              <t-card>
+                <view class="stat-content stat-success">
+                  <view class="stat-value">{{exitStats.batches}}</view>
+                  <view class="stat-label">出栏批次</view>
                 </view>
               </t-card>
             </t-col>
@@ -166,23 +159,16 @@
               
               <!-- 记录列表 -->
               <view wx:for="{{exitRecords}}" wx:key="id" 
-                    class="record-item" 
-                    bind:tap="viewRecord" 
-                    data-item="{{item}}">
+                    class="record-item">
                 <view class="record-main">
                   <view class="record-header">
-                    <text class="record-location">{{item.type}}</text>
-                    <t-tag theme="{{item.status === '已交付' ? 'success' : 'primary'}}" size="small">{{item.status}}</t-tag>
+                    <text class="record-location">{{item.displayTitle}}</text>
+                    <t-tag theme="{{item.status === '已交付' ? 'success' : 'primary'}}" size="small" class="record-status-tag">{{item.status}}</t-tag>
                   </view>
                   <view class="record-content">
                     <text class="record-symptoms">{{item.customer}} • {{item.quantity}}羽 • 平均{{item.avgWeight}}斤</text>
+                    <view class="record-date-tag">{{item.exitDate || item.date}}</view>
                   </view>
-                  <view class="record-footer">
-                    <text class="record-date">{{item.date}}</text>
-                  </view>
-                </view>
-                <view class="record-arrow">
-                  <t-icon name="chevron-right" size="16" color="#c8c9cc" />
                 </view>
               </view>
             </view>
@@ -192,28 +178,53 @@
 
       <!-- 物料管理 -->
       <view wx:if="{{activeTab === 'material'}}" class="tab-content">
-        <!-- 库存状态 -->
+        <!-- 库存状态 - 四宫格布局 -->
         <view class="stats-section">
-          <t-row gutter="16" class="overview-stats">
-            <t-col span="12">
-              <t-card bind:tap="viewInventoryDetail">
-                <view class="stat-content {{materialStats.feed > 0 ? 'stat-success' : 'stat-warning'}}">
-                  <view class="stat-value">{{materialStats.feed}}吨</view>
-                  <view class="stat-label">饲料库存</view>
-                  <view class="stat-status {{materialStats.feed > 0 ? 'success' : 'warning'}}">{{materialStats.feed > 0 ? '状态良好' : '库存不足'}}</view>
+          <t-grid column="2" class="material-grid">
+            <!-- 饲料库存 -->
+            <t-grid-item text="饲料库存" bind:click="viewFeedInventory" class="grid-item">
+              <view class="grid-content">
+                <view class="grid-count">{{materialStats.feedDetails.totalCount}}种物料</view>
+                <view class="grid-status {{materialStats.feedDetails.status}}">
+                  {{materialStats.feedDetails.statusText}}
                 </view>
-              </t-card>
-            </t-col>
-            <t-col span="12">
-              <t-card bind:tap="viewInventoryDetail">
-                <view class="stat-content {{materialStats.medicineStatus === '充足' ? 'stat-success' : 'stat-warning'}}">
-                  <view class="stat-value">{{materialStats.medicineStatus}}</view>
-                  <view class="stat-label">药品库存</view>
-                  <view class="stat-status {{materialStats.medicineStatus === '充足' ? 'success' : 'warning'}}">{{materialStats.medicineStatus === '充足' ? '状态良好' : '需要补货'}}</view>
+                <view class="grid-desc">{{materialStats.feedDetails.description}}</view>
+              </view>
+            </t-grid-item>
+            
+            <!-- 药品库存 -->
+            <t-grid-item text="药品库存" bind:click="viewMedicineInventory" class="grid-item">
+              <view class="grid-content">
+                <view class="grid-count">{{materialStats.medicineDetails.totalCount}}种物料</view>
+                <view class="grid-status {{materialStats.medicineDetails.status}}">
+                  {{materialStats.medicineDetails.statusText}}
                 </view>
-              </t-card>
-            </t-col>
-          </t-row>
+                <view class="grid-desc">{{materialStats.medicineDetails.description}}</view>
+              </view>
+            </t-grid-item>
+
+            <!-- 设备物料 -->
+            <t-grid-item text="设备物料" bind:click="viewEquipmentInventory" class="grid-item">
+              <view class="grid-content">
+                <view class="grid-count">{{materialStats.equipmentDetails.totalCount}}种物料</view>
+                <view class="grid-status {{materialStats.equipmentDetails.status}}">
+                  {{materialStats.equipmentDetails.statusText}}
+                </view>
+                <view class="grid-desc">{{materialStats.equipmentDetails.description}}</view>
+              </view>
+            </t-grid-item>
+
+            <!-- 总览统计 -->
+            <t-grid-item text="库存总览" bind:click="viewInventoryDetail" class="grid-item">
+              <view class="grid-content">
+                <view class="grid-count">{{materialStats.feedDetails.totalCount + materialStats.medicineDetails.totalCount + materialStats.equipmentDetails.totalCount}}种物料</view>
+                <view class="grid-status {{(materialStats.feedDetails.status === 'critical' || materialStats.medicineDetails.status === 'critical' || materialStats.equipmentDetails.status === 'critical') ? 'critical' : (materialStats.feedDetails.status === 'warning' || materialStats.medicineDetails.status === 'warning' || materialStats.equipmentDetails.status === 'warning') ? 'warning' : 'normal'}}">
+                  {{(materialStats.feedDetails.status === 'critical' || materialStats.medicineDetails.status === 'critical' || materialStats.equipmentDetails.status === 'critical') ? '需要关注' : (materialStats.feedDetails.status === 'warning' || materialStats.medicineDetails.status === 'warning' || materialStats.equipmentDetails.status === 'warning') ? '部分偏低' : '状态良好'}}
+                </view>
+                <view class="grid-desc">点击查看详情</view>
+              </view>
+            </t-grid-item>
+          </t-grid>
         </view>
 
         <!-- 快速操作 -->
@@ -247,23 +258,16 @@
               <!-- 记录列表 - 直接显示，不用复杂条件 -->
               <view wx:if="{{!loading && materialRecords && materialRecords.length > 0}}">
                 <view wx:for="{{materialRecords}}" wx:key="id" 
-                      class="record-item" 
-                      bind:tap="viewRecord" 
-                      data-item="{{item}}">
+                      class="record-item">
                   <view class="record-main">
                     <view class="record-header">
                       <text class="record-location">{{item.name}}</text>
-                      <t-tag theme="{{item.type === '采购' ? 'success' : 'warning'}}" size="small">{{item.type}}</t-tag>
+                      <t-tag theme="{{item.type === '采购' ? 'success' : 'warning'}}" size="small" class="record-status-tag">{{item.type}}</t-tag>
                     </view>
                     <view class="record-content">
                       <text class="record-symptoms">{{item.description}} • {{item.quantity}}</text>
+                      <view class="record-date-tag">{{item.date}}</view>
                     </view>
-                    <view class="record-footer">
-                      <text class="record-date">{{item.date}}</text>
-                    </view>
-                  </view>
-                  <view class="record-arrow">
-                    <t-icon name="chevron-right" size="16" color="#c8c9cc" />
                   </view>
                 </view>
               </view>

@@ -43,7 +43,6 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('出栏管理操作失败:', error)
     return {
       success: false,
       error: error.message,

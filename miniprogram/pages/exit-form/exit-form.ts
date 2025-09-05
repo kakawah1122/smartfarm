@@ -10,7 +10,6 @@ interface ExitFormData {
   quantity: string;         // 出栏数量
   avgWeight: string;        // 平均重量
   unitPrice: string;        // 单价（按重量）
-  operator: string;         // 操作员
   remarks: string;          // 备注
 }
 
@@ -25,7 +24,6 @@ const pageConfig = {
       quantity: '',
       avgWeight: '',
       unitPrice: '',
-      operator: '',
       remarks: ''
     } as ExitFormData,
     
@@ -71,8 +69,7 @@ const pageConfig = {
   // 加载可选择的入栏批次
   async loadAvailableBatches() {
     try {
-      // 这里应该调用云函数或API获取已入栏的批次
-      // 模拟获取已入栏批次数据
+      // 从云函数获取已入栏的批次数据
       const batches = await this.getEntryBatches()
       
       const batchOptions = batches.map((batch: any) => 
@@ -91,12 +88,7 @@ const pageConfig = {
         batchOptions: batchOptions,
         batchActionItems: batchActionItems
       })
-      
-      console.log('可选择的入栏批次:', batches)
-      console.log('批次ActionSheet数据:', batchActionItems)
-      console.log('批次数据设置完成，batchActionItems长度:', batchActionItems.length)
     } catch (error) {
-      console.error('加载入栏批次失败:', error)
       wx.showToast({
         title: '加载批次数据失败',
         icon: 'none',
@@ -105,41 +97,78 @@ const pageConfig = {
     }
   },
 
-  // 模拟获取入栏批次数据
+  // 从云函数获取真实的入栏批次数据
   async getEntryBatches(): Promise<any[]> {
-    return new Promise((resolve) => {
-      // 模拟API调用
-      setTimeout(() => {
-        const mockBatches = [
-          {
-            batchId: 'QY-20241201',
-            breed: '扬州鹅',
-            entryDate: '2024-12-01',
-            quantity: '500',
-            supplier: '江苏畜禽养殖场',
-            availableQuantity: '480'  // 可出栏数量
-          },
-          {
-            batchId: 'QY-20241128',
-            breed: '皖西白鹅',
-            entryDate: '2024-11-28',
-            quantity: '300',
-            supplier: '安徽白鹅繁育中心',
-            availableQuantity: '285'
-          },
-          {
-            batchId: 'QY-20241125',
-            breed: '四川白鹅',
-            entryDate: '2024-11-25',
-            quantity: '200',
-            supplier: '四川鹅苗供应站',
-            availableQuantity: '195'
+    try {
+      // 调用入栏云函数获取所有入栏记录
+      const result = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: {
+          action: 'list',
+          page: 1,
+          pageSize: 50 // 获取更多记录以供选择
+        }
+      })
+      
+      if (result.result && result.result.success) {
+        const entryRecords = result.result.data.records || []
+        
+        // 转换为批次选择格式，并计算可出栏数量
+        const batches = entryRecords.map((record: any, index: number) => {
+          // 这里应该根据实际出栏记录计算剩余可出栏数量
+          // 暂时假设可出栏数量 = 入栏数量 - 10（模拟已出栏的数量）
+          const entryQuantity = parseInt(record.quantity) || 0
+          const assumedExitedQuantity = Math.min(10, Math.floor(entryQuantity * 0.1)) // 假设已出栏10%
+          const availableQuantity = entryQuantity - assumedExitedQuantity
+          
+          // 优先使用 batchNumber，如果没有则根据品种和日期生成一个友好的标识
+          let displayBatchId = record.batchNumber  // 修复：使用 batchNumber 字段
+          if (!displayBatchId) {
+            const entryDate = record.entryDate || record.createTime?.split('T')[0] || ''
+            const breed = record.breed || '未知品种'
+            if (entryDate) {
+              // 生成格式：品种-日期格式（如：狮头鹅-20250904）
+              const dateStr = entryDate.replace(/-/g, '')
+              displayBatchId = `${breed}-${dateStr}`
+            } else {
+              // 如果连日期都没有，使用品种+序号
+              displayBatchId = `${breed}-${index + 1}`
+            }
           }
-        ]
-        console.log('模拟批次数据加载完成:', mockBatches)
-        resolve(mockBatches)
-      }, 100)
-    })
+          
+          return {
+            batchId: displayBatchId,  // 前端显示用的ID保持不变
+            batchNumber: record.batchNumber || displayBatchId,  // 添加原始批次号字段
+            originalId: record._id, // 保留原始ID用于后续操作
+            breed: record.breed || '未知品种',
+            entryDate: record.entryDate || record.createTime?.split('T')[0] || '未知日期',
+            quantity: record.quantity || '0',
+            supplier: record.supplier || '未知供应商',
+            availableQuantity: availableQuantity.toString() // 可出栏数量
+          }
+        })
+        
+        return batches
+        
+      } else {
+        // 如果云函数调用失败，返回空数组
+        return []
+      }
+      
+    } catch (error) {
+      
+      // 如果是云函数不存在的错误，给出友好提示
+      if (error.errMsg && error.errMsg.includes('function not found')) {
+        wx.showModal({
+          title: '系统提示',
+          content: '入栏管理云函数尚未部署，无法获取批次数据。请先添加入栏记录。',
+          showCancel: false
+        })
+      }
+      
+      // 出错时返回空数组
+      return []
+    }
   },
 
   // 格式化日期
@@ -183,18 +212,11 @@ const pageConfig = {
       dateValue: value,
       showDate: false
     })
-
-    console.log('选择日期:', dateString)
   },
 
   // 显示批次选择器
   showBatchPicker() {
-    console.log('点击显示批次选择器')
-    console.log('当前batchOptions:', this.data.batchOptions)
-    console.log('当前batchOptions长度:', this.data.batchOptions.length)
-    
     if (this.data.batchOptions.length === 0) {
-      console.log('没有可选择的批次数据')
       wx.showToast({
         title: '暂无可选择的入栏批次',
         icon: 'none',
@@ -203,15 +225,10 @@ const pageConfig = {
       return
     }
     
-    console.log('准备显示原生批次ActionSheet')
     wx.showActionSheet({
       itemList: this.data.batchOptions,
       success: (res) => {
-        console.log('选择了批次，索引:', res.tapIndex)
         this.onBatchSelected(res.tapIndex)
-      },
-      fail: (res) => {
-        console.log('取消选择批次')
       }
     })
   },
@@ -232,8 +249,6 @@ const pageConfig = {
         'formData.batchId': selectedBatch.batchId,
         'formData.type': selectedBatch.breed, // 自动填充鹅的类型
       })
-      
-      console.log('选择批次:', selectedBatch)
       
       // 提示可出栏数量
       wx.showToast({
@@ -257,8 +272,6 @@ const pageConfig = {
     if (field === 'quantity' || field === 'avgWeight' || field === 'unitPrice') {
       this.calculateTotals()
     }
-
-    console.log(`字段 ${field} 更新为:`, value)
   },
 
   // 计算总重量和总收入
@@ -278,6 +291,18 @@ const pageConfig = {
       totalWeight,
       totalRevenue
     })
+  },
+
+  // 获取提交时使用的批次号
+  getBatchNumberForSubmission(displayBatchId: string): string {
+    // 从可用批次列表中查找对应的批次号
+    const batch = this.data.availableBatches.find((b: any) => b.batchId === displayBatchId)
+    if (batch && batch.batchNumber) {
+      return batch.batchNumber
+    }
+    
+    // 如果没有找到，直接使用显示ID（向后兼容）
+    return displayBatchId
   },
 
   // 表单验证
@@ -306,9 +331,6 @@ const pageConfig = {
     }
     if (!formData.unitPrice.trim()) {
       errors.push('请输入单价')
-    }
-    if (!formData.operator.trim()) {
-      errors.push('请输入操作员姓名')
     }
 
     // 验证数值字段
@@ -356,11 +378,30 @@ const pageConfig = {
         status: '已交付'
       }
 
-      console.log('提交出栏记录数据:', submitData)
+      // 调用出栏云函数提交数据
+      const result = await wx.cloud.callFunction({
+        name: 'production-exit',
+        data: {
+          action: 'create',
+          recordData: {
+            batchNumber: this.getBatchNumberForSubmission(submitData.batchId), // 修复：获取正确的批次号
+            exitDate: submitData.exitDate,
+            type: submitData.type,
+            customer: submitData.customer,
+            quantity: submitData.quantity,
+            avgWeight: submitData.avgWeight,
+            unitPrice: submitData.unitPrice,
+            notes: submitData.remarks,
+            totalWeight: submitData.totalWeight,
+            totalRevenue: submitData.totalRevenue,
+            status: submitData.status
+          }
+        }
+      })
 
-      // 这里应该调用云函数或API提交数据
-      // 模拟API调用
-      await this.submitToDatabase(submitData)
+      if (!result.result.success) {
+        throw new Error(result.result.message || '提交失败')
+      }
 
       // 提交成功
       wx.showToast({
@@ -377,7 +418,6 @@ const pageConfig = {
       }, 2000)
 
     } catch (error) {
-      console.error('提交出栏记录失败:', error)
       wx.showToast({
         title: '提交失败，请重试',
         icon: 'none',
@@ -390,20 +430,6 @@ const pageConfig = {
     }
   },
 
-  // 模拟数据库提交
-  async submitToDatabase(data: any): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // 模拟网络请求延迟
-      setTimeout(() => {
-        // 模拟90%成功率
-        if (Math.random() > 0.1) {
-          resolve()
-        } else {
-          reject(new Error('网络错误'))
-        }
-      }, 1500)
-    })
-  },
 
   // 重置表单
   onReset() {
@@ -425,7 +451,6 @@ const pageConfig = {
               quantity: '',
               avgWeight: '',
               unitPrice: '',
-              operator: '',
               remarks: ''
             },
             totalWeight: '0.00',

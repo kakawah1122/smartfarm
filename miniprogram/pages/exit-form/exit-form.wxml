@@ -154,43 +154,23 @@
         </view>
       </view>
 
-      <!-- 其他信息卡片 -->
+      <!-- 备注信息 -->
       <view class="form-section">
         <view class="section-header">
-          <text class="section-title">其他信息</text>
+          <text class="section-title">备注</text>
         </view>
-        <view class="form-card">
-          <!-- 操作员 -->
-          <view class="form-item">
-            <view class="item-label required">操作员</view>
-            <view class="item-input">
-              <t-input
-                placeholder="请输入操作员姓名"
-                value="{{formData.operator}}"
-                bind:change="onFieldChange"
-                data-field="operator"
-                borderless
-                align="right"
-              />
-            </view>
-          </view>
-
-          <!-- 备注信息 -->
-          <view class="form-item textarea-item">
-            <view class="item-label">备注</view>
-            <view class="item-textarea">
-              <t-textarea
-                placeholder="请输入备注信息（可选）"
-                value="{{formData.remarks}}"
-                bind:change="onFieldChange"
-                data-field="remarks"
-                maxlength="200"
-                indicator
-                borderless
-                autosize
-              />
-            </view>
-          </view>
+        <!-- 备注输入框 - 左右满屏 -->
+        <view class="fullwidth-textarea-container">
+          <t-textarea
+            placeholder="请输入备注信息（可选）"
+            value="{{formData.remarks}}"
+            bind:change="onFieldChange"
+            data-field="remarks"
+            maxlength="200"
+            indicator
+            autosize
+            class="fullwidth-textarea"
+          />
         </view>
       </view>
 

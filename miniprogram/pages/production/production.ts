@@ -8,7 +8,7 @@ const pageConfig = {
     // 入栏统计（默认值，将被真实数据覆盖）
     entryStats: {
       total: '0',
-      survivalRate: '0.0',
+      stockQuantity: '0', // 存栏数量
       batches: '0'
     },
     
@@ -21,7 +21,27 @@ const pageConfig = {
     
     // 物料统计（默认值，将被真实数据覆盖）
     materialStats: {
-      feed: '0'
+      feed: '0',
+      medicineStatus: '无数据',
+      // 详细状态信息的默认值
+      feedDetails: {
+        statusText: '无数据',
+        status: 'empty',
+        totalCount: 0,
+        description: '暂无数据'
+      },
+      medicineDetails: {
+        statusText: '无数据',
+        status: 'empty',
+        totalCount: 0,
+        description: '暂无数据'
+      },
+      equipmentDetails: {
+        statusText: '无数据',
+        status: 'empty',
+        totalCount: 0,
+        description: '暂无数据'
+      }
     },
     
     // 入栏记录（空数组，将从云函数加载真实数据）
@@ -39,25 +59,22 @@ const pageConfig = {
   },
 
   onLoad() {
-    console.log('🚀 页面加载 - onLoad')
     this.loadData()
   },
 
   onReady() {
-    console.log('📱 页面准备完毕 - onReady')
     // 页面初次渲染完成时加载数据
     this.refreshData()
   },
 
   onShow() {
-    console.log('👀 页面显示 - onShow')
     // 每次页面显示时刷新数据，确保数据最新
+    // 特别是从其他页面返回时，需要刷新物料状态
     this.refreshData()
   },
 
   // 加载数据
   loadData() {
-    console.log('📊 开始加载所有数据')
     this.loadDashboardData()
     this.loadEntryData()
     this.loadExitData()
@@ -77,24 +94,38 @@ const pageConfig = {
         }
       })
       
-      console.log('🔍 Dashboard调用结果:', JSON.stringify(result, null, 2))
-      
       if (result.result && result.result.success) {
         const data = result.result.data
-        console.log('📊 接收到的data:', JSON.stringify(data, null, 2))
-        console.log('🥬 material数据:', JSON.stringify(data.material, null, 2))
         
+        // 使用新的详细物料状态信息
         const newMaterialStats = {
           feed: data.material?.feedStock || '0',
-          medicineStatus: data.material?.medicineStatus || '未知'
+          medicineStatus: data.material?.medicineStatus || '未知',
+          // 新增详细状态信息
+          feedDetails: data.material?.categoryDetails?.feed || {
+            statusText: '无数据',
+            status: 'empty',
+            totalCount: 0,
+            description: '暂无数据'
+          },
+          medicineDetails: data.material?.categoryDetails?.medicine || {
+            statusText: '无数据', 
+            status: 'empty',
+            totalCount: 0,
+            description: '暂无数据'
+          },
+          equipmentDetails: data.material?.categoryDetails?.equipment || {
+            statusText: '无数据',
+            status: 'empty', 
+            totalCount: 0,
+            description: '暂无数据'
+          }
         }
-        
-        console.log('🎯 设置的materialStats:', JSON.stringify(newMaterialStats, null, 2))
         
         this.setData({
           entryStats: {
             total: data.entry?.total || '0',
-            survivalRate: data.entry?.survivalRate || '0.0',
+            stockQuantity: data.entry?.stockQuantity || '0', // 直接使用云函数计算的存栏数量
             batches: data.entry?.batches || '0'
           },
           exitStats: {
@@ -104,13 +135,14 @@ const pageConfig = {
           },
           materialStats: newMaterialStats
         })
-        
-        console.log('✅ 页面数据已更新')
       } else {
-        console.error('❌ Dashboard调用失败或返回success=false')
+        // 设置默认数据
+        this.setDefaultStats()
       }
     } catch (error) {
-      console.error('加载仪表盘数据失败:', error)
+      // 设置默认数据
+      this.setDefaultStats()
+      
       // 如果是云函数不存在的错误，给出友好提示
       if (error.errMsg && error.errMsg.includes('function not found')) {
         wx.showModal({
@@ -129,6 +161,44 @@ const pageConfig = {
     }
   },
 
+  // 设置默认统计数据
+  setDefaultStats() {
+    this.setData({
+      entryStats: {
+        total: '0',
+        stockQuantity: '0',
+        batches: '0'
+      },
+      exitStats: {
+        total: '0',
+        batches: '0',
+        avgWeight: '0.0'
+      },
+      materialStats: {
+        feed: '0',
+        medicineStatus: '无数据',
+        feedDetails: {
+          statusText: '无数据',
+          status: 'empty',
+          totalCount: 0,
+          description: '暂无数据'
+        },
+        medicineDetails: {
+          statusText: '无数据',
+          status: 'empty',
+          totalCount: 0,
+          description: '暂无数据'
+        },
+        equipmentDetails: {
+          statusText: '无数据',
+          status: 'empty',
+          totalCount: 0,
+          description: '暂无数据'
+        }
+      }
+    })
+  },
+
   // 加载入栏数据
   async loadEntryData() {
     try {
@@ -143,13 +213,21 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const records = result.result.data.records || []
+        // 格式化入栏记录数据，确保显示字段完整
+        const formattedRecords = records.map((record: any) => ({
+          ...record,
+          id: record._id || record.batchNumber,
+          date: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
+          // 生成显示标题：品种 + 批次号
+          displayTitle: `${record.breed || '未知品种'} - ${record.batchNumber || '批次号'}`
+        }))
+        
         this.setData({
-          entryRecords: records,
-          isEmpty: records.length === 0
+          entryRecords: formattedRecords,
+          isEmpty: formattedRecords.length === 0
         })
       }
     } catch (error) {
-      console.error('加载入栏数据失败:', error)
       this.setData({ entryRecords: [], isEmpty: true })
     }
   },
@@ -168,12 +246,20 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const records = result.result.data.records || []
+        // 格式化出栏记录数据，确保显示字段完整
+        const formattedRecords = records.map((record: any) => ({
+          ...record,
+          id: record._id || record.exitNumber,
+          date: record.exitDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
+          // 确保有标题显示
+          displayTitle: record.batchNumber || record.type || `出栏-${record.exitNumber || record._id}`
+        }))
+        
         this.setData({
-          exitRecords: records
+          exitRecords: formattedRecords
         })
       }
     } catch (error) {
-      console.error('加载出栏数据失败:', error)
       this.setData({ exitRecords: [] })
     }
   },
@@ -181,7 +267,6 @@ const pageConfig = {
   // 加载物料数据
   async loadMaterialData() {
     try {
-      console.log('📦 开始加载物料记录数据')
       const result = await wx.cloud.callFunction({
         name: 'production-material',
         data: {
@@ -190,8 +275,6 @@ const pageConfig = {
           pageSize: 10
         }
       })
-      
-      console.log('🔍 物料记录云函数结果:', result)
       
       if (result.result && result.result.success) {
         const records = result.result.data.records || []
@@ -215,7 +298,6 @@ const pageConfig = {
         this.setData({ materialRecords: [] })
       }
     } catch (error) {
-      console.error('❌ 加载物料数据失败:', error)
       this.setData({ materialRecords: [] })
     }
   },
@@ -246,7 +328,7 @@ const pageConfig = {
       ])
       
     } catch (error) {
-      console.error('❌ 数据刷新失败:', error)
+      // 数据刷新失败时静默处理
     } finally {
       this.setData({ loading: false })
     }
@@ -296,6 +378,27 @@ const pageConfig = {
     })
   },
 
+  // 查看饲料库存详情
+  viewFeedInventory() {
+    wx.navigateTo({
+      url: '/pages/inventory-detail/inventory-detail?category=feed'
+    })
+  },
+
+  // 查看药品库存详情
+  viewMedicineInventory() {
+    wx.navigateTo({
+      url: '/pages/inventory-detail/inventory-detail?category=medicine'
+    })
+  },
+
+  // 查看设备物料详情
+  viewEquipmentInventory() {
+    wx.navigateTo({
+      url: '/pages/inventory-detail/inventory-detail?category=equipment'
+    })
+  },
+
   // 采购物料
   purchaseMaterial() {
     wx.navigateTo({
@@ -310,53 +413,13 @@ const pageConfig = {
     })
   },
 
-  // 查看记录详情
-  viewRecord(e: any) {
-    const { item } = e.currentTarget.dataset
-    wx.showModal({
-      title: '记录详情',
-      content: `查看${item.breed || item.type || item.name}的详细信息`,
-      showCancel: false,
-      success: () => {
-        // 实际开发中这里会跳转到详情页面
-        wx.showToast({
-          title: '功能开发中',
-          icon: 'none'
-        })
-      }
-    })
-  },
 
   // 下拉刷新
   onPullDownRefresh() {
-    console.log('🔄 下拉刷新触发')
     this.refreshData()
     setTimeout(() => {
       wx.stopPullDownRefresh()
     }, 1500)
-  },
-
-  // 强制刷新数据（调试用）
-  async forceRefreshData() {
-    console.log('🔥 强制刷新数据')
-    try {
-      this.setData({ loading: true })
-      await this.loadDashboardData()
-      await this.loadMaterialData()
-      console.log('💾 当前页面materialStats:', JSON.stringify(this.data.materialStats, null, 2))
-      wx.showToast({
-        title: '数据已刷新',
-        icon: 'success'
-      })
-    } catch (error) {
-      console.error('强制刷新失败:', error)
-      wx.showToast({
-        title: '刷新失败',
-        icon: 'error'
-      })
-    } finally {
-      this.setData({ loading: false })
-    }
   },
 
 }
