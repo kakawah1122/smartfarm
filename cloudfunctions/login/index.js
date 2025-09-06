@@ -85,11 +85,30 @@ exports.main = async (event, context) => {
     try {
       const allUsersQuery = await db.collection('users').count()
       isFirstUser = allUsersQuery.total === 0
+      console.log('用户总数检查:', { total: allUsersQuery.total, isFirstUser })
     } catch (countError) {
       // 如果集合不存在，说明是第一个用户
+      console.log('数据库集合不存在，这是第一个用户')
       isFirstUser = true
     }
     
+    // 为第一个用户设置完整的管理员权限
+    const adminPermissions = [
+      'all',
+      'basic',
+      'production.view',
+      'production.manage', 
+      'health.view',
+      'health.manage',
+      'finance.view',
+      'finance.manage',
+      'finance.approve',
+      'employee.view',
+      'employee.manage',
+      'employee.invite',
+      'system.admin'
+    ]
+
     const userInfo = {
       _openid: OPENID,
       appid: APPID,
@@ -101,25 +120,36 @@ exports.main = async (event, context) => {
       gender: 0,
       // 角色和权限字段
       role: isFirstUser ? 'admin' : 'user', // admin: 管理员, employee: 员工, user: 普通用户
-      permissions: isFirstUser ? ['all'] : ['basic'], // all: 所有权限, basic: 基础权限
-      department: '', // 部门
-      position: '', // 职位
-      managedBy: null, // 管理者ID
+      permissions: isFirstUser ? adminPermissions : ['basic'], // 第一个用户获得所有权限
+      department: isFirstUser ? '管理部门' : '', // 部门
+      position: isFirstUser ? '超级管理员' : '', // 职位
+      managedBy: null, // 管理者ID（第一个用户没有上级）
       organizationId: null, // 组织ID（用于多组织管理）
       // 邀请审批相关字段
       inviteCode: '', // 使用的邀请码
       approvalStatus: isFirstUser ? 'approved' : 'pending', // pending: 待审批, approved: 已审批, rejected: 已拒绝
-      approvedBy: isFirstUser ? OPENID : null, // 审批人OPENID
+      approvedBy: isFirstUser ? OPENID : null, // 审批人OPENID（第一个用户自己审批自己）
       approvedTime: isFirstUser ? createTime : null, // 审批时间
       rejectedBy: null, // 拒绝人OPENID
       rejectedTime: null, // 拒绝时间
       rejectedReason: '', // 拒绝原因
-      approvalRemark: '', // 审批备注
+      approvalRemark: isFirstUser ? '系统自动创建的超级管理员账户' : '', // 审批备注
       // 时间字段
       createTime: createTime,
       lastLoginTime: createTime,
       loginCount: 1,
       isActive: isFirstUser // 第一个用户直接激活，其他用户需要审批
+    }
+    
+    // 第一个用户特殊处理日志
+    if (isFirstUser) {
+      console.log('正在创建第一个用户（超级管理员）:', {
+        openid: OPENID,
+        role: userInfo.role,
+        permissions: userInfo.permissions,
+        department: userInfo.department,
+        position: userInfo.position
+      })
     }
     
     let user = null
@@ -230,7 +260,13 @@ exports.main = async (event, context) => {
       loginResult.message = '账户审批未通过：' + (user.rejectedReason || '请联系管理员了解详情')
       loginResult.isRejected = true
     } else {
-      loginResult.message = isNewUser ? '新用户注册成功' : '登录成功'
+      // 特殊处理第一个用户（超级管理员）的消息
+      if (isNewUser && isFirstUser) {
+        loginResult.message = '🎉 欢迎！您是第一个用户，已自动获得超级管理员权限'
+        loginResult.isFirstAdmin = true
+      } else {
+        loginResult.message = isNewUser ? '新用户注册成功' : '登录成功'
+      }
       loginResult.canUseApp = true
     }
     

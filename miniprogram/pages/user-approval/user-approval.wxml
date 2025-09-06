@@ -2,9 +2,9 @@
 <view class="page-container">
   <navigation-bar
     title="用户审批管理"
-    show-back="{{true}}"
-    show-menu="{{false}}"
-    show-record="{{false}}"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
     bind:back="goBack"
   />
 

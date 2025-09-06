@@ -3,7 +3,7 @@
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="用户登录"
-    show-back="{{true}}"
+    show-back="true"
     bind:back="goBack"
   />
   
@@ -113,13 +113,14 @@
 
           <t-cell-group>
             <t-cell title="昵称" required>
-              <t-input 
+              <input 
                 slot="note"
-                type="text"
+                type="nickname"
                 placeholder="请输入您的昵称"
                 value="{{nickname}}"
-                bind:change="onNicknameInput"
-                maxlength="{{20}}"
+                bind:input="onNicknameInput"
+                bind:change="onNicknameChange"
+                maxlength="20"
                 class="form-input"
               />
             </t-cell>
@@ -194,12 +195,13 @@
 
           <t-cell-group>
             <t-cell title="昵称" required>
-              <t-input 
+              <input 
                 slot="note"
-                type="text"
+                type="nickname"
                 value="{{userInfo.nickname}}"
-                bind:change="onNicknameInput"
-                maxlength="{{20}}"
+                bind:input="onNicknameInput"
+                bind:change="onNicknameChange"
+                maxlength="20"
                 class="form-input"
               />
             </t-cell>

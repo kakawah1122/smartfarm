@@ -3,9 +3,9 @@
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="新增入栏记录"
-    show-back="{{true}}"
-    show-menu="{{false}}"
-    show-record="{{false}}"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
     bind:back="goBack"
   />
 

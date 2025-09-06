@@ -50,10 +50,19 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const { action } = event
   
+  console.log('云函数调用:', {
+    action: action,
+    openid: wxContext.OPENID,
+    event: event
+  })
+  
   try {
     // 验证管理员权限
     const hasPermission = await verifyAdminPermission(wxContext.OPENID)
+    console.log('权限验证结果:', hasPermission)
+    
     if (!hasPermission && action !== 'validate_invite' && action !== 'use_invite') {
+      console.log('权限不足，拒绝访问')
       return {
         success: false,
         error: 'PERMISSION_DENIED',
@@ -93,7 +102,10 @@ exports.main = async (event, context) => {
 // 验证管理员权限
 async function verifyAdminPermission(openid) {
   try {
+    console.log('验证权限，用户 openid:', openid)
+    
     if (!openid) {
+      console.log('权限验证失败：缺少 openid')
       return false
     }
 
@@ -101,95 +113,77 @@ async function verifyAdminPermission(openid) {
       _openid: openid
     }).get()
 
+    console.log('用户查询结果:', userResult.data)
+
     if (userResult.data.length === 0) {
+      console.log('权限验证失败：用户不存在')
       return false
     }
 
     const user = userResult.data[0]
-    return user.isSuper === true || user.role === 'admin' || user.role === 'manager' || user.role === 'operator'
+    const hasPermission = user.isSuper === true || user.role === 'admin' || user.role === 'manager' || user.role === 'operator'
+    
+    console.log('用户权限信息:', {
+      isSuper: user.isSuper,
+      role: user.role,
+      hasPermission: hasPermission
+    })
+    
+    return hasPermission
   } catch (error) {
+    console.error('权限验证异常:', error)
     return false
   }
 }
 
-// 创建邀请
+// 创建邀请码
 async function createInvite(event, wxContext) {
   const {
-    inviteeName,
-    inviteePhone,
-    department,
-    position,
     role = 'user',
     remark = '',
     expiryDays = 7
   } = event
 
+  console.log('创建邀请码参数:', { role, remark, expiryDays })
+
   try {
-    // 数据验证
-    if (!inviteeName || !inviteePhone) {
-      throw new Error('缺少必填字段：姓名和手机号')
-    }
-
-    // 验证手机号格式
-    const phoneRegex = /^1[3-9]\d{9}$/
-    if (!phoneRegex.test(inviteePhone)) {
-      throw new Error('手机号格式不正确')
-    }
-
-    // 检查是否已有未使用的邀请
-    const existingInvites = await db.collection('employee_invites')
-      .where({
-        inviteePhone: inviteePhone,
-        status: _.in(['pending', 'used'])
-      })
-      .get()
-
-    if (existingInvites.data.length > 0) {
-      const existingInvite = existingInvites.data[0]
-      if (existingInvite.status === 'pending') {
-        throw new Error('该手机号已有待使用的邀请')
-      } else if (existingInvite.status === 'used') {
-        throw new Error('该手机号已被邀请并注册')
-      }
-    }
-
-    // 检查用户是否已注册
-    const existingUsers = await db.collection('users')
-      .where({ phone: inviteePhone })
-      .get()
-
-    if (existingUsers.data.length > 0) {
-      throw new Error('该手机号用户已存在')
-    }
-
     // 获取邀请人信息
     const inviterResult = await db.collection('users')
       .where({ _openid: wxContext.OPENID })
       .get()
 
+    console.log('邀请人查询结果:', inviterResult.data)
+
     if (inviterResult.data.length === 0) {
+      console.error('邀请人信息不存在')
       throw new Error('邀请人信息不存在')
     }
 
     const inviter = inviterResult.data[0]
     
     // 生成邀请码
+    console.log('开始生成唯一邀请码')
     const inviteCode = await generateUniqueInviteCode()
+    console.log('生成的邀请码:', inviteCode)
     
     // 计算过期时间
     const now = new Date()
     const expiryTime = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000)
+    console.log('邀请码过期时间:', expiryTime)
 
     // 创建邀请记录
     const inviteData = {
       inviteCode: inviteCode,
       inviterOpenId: wxContext.OPENID,
       inviterName: inviter.nickname || '管理员',
-      inviteeName: inviteeName,
-      inviteePhone: inviteePhone,
-      department: department || '',
-      position: position || '',
-      role: role,
+      // 被邀请人信息将在使用邀请码时填写
+      inviteeName: null,
+      inviteePhone: null,
+      department: null,
+      position: null,
+      // 预设的默认角色，注册时可调整
+      defaultRole: role,
+      role: null, // 实际角色在注册时确定
       status: 'pending',
       createTime: now,
       expiryTime: expiryTime,
@@ -198,19 +192,31 @@ async function createInvite(event, wxContext) {
       remark: remark
     }
 
+    console.log('准备保存邀请数据:', inviteData)
+    
     const result = await db.collection('employee_invites').add({
       data: inviteData
     })
 
-    return {
+    console.log('数据库保存结果:', result)
+
+    // 清理旧记录，只保留最新的5个邀请码
+    await cleanupOldInvites()
+
+    const responseData = {
       success: true,
       data: {
         inviteId: result._id,
         inviteCode: inviteCode,
-        ...inviteData
+        role: role,
+        expiryTime: expiryTime,
+        remark: remark
       },
-      message: '邀请创建成功'
+      message: '邀请码生成成功'
     }
+    
+    console.log('返回成功响应:', responseData)
+    return responseData
   } catch (error) {
     throw error
   }
@@ -239,9 +245,11 @@ async function listInvites(event, wxContext) {
     // 搜索功能
     if (searchKeyword) {
       where.$or = [
+        { inviteCode: new RegExp(searchKeyword, 'i') },
+        { remark: new RegExp(searchKeyword, 'i') },
+        // 只有已使用的邀请才有被邀请人信息
         { inviteeName: new RegExp(searchKeyword, 'i') },
-        { inviteePhone: new RegExp(searchKeyword, 'i') },
-        { inviteCode: new RegExp(searchKeyword, 'i') }
+        { inviteePhone: new RegExp(searchKeyword, 'i') }
       ]
     }
 
@@ -406,7 +414,14 @@ async function validateInvite(event, wxContext) {
 
 // 使用邀请码（注册时调用）
 async function useInvite(event, wxContext) {
-  const { inviteCode } = event
+  const { 
+    inviteCode,
+    inviteeName,
+    inviteePhone,
+    department,
+    position,
+    finalRole // 最终确定的角色，可能与默认角色不同
+  } = event
 
   try {
     if (!inviteCode) {
@@ -421,19 +436,33 @@ async function useInvite(event, wxContext) {
 
     const invite = validateResult.data.invite
 
-    // 标记邀请码为已使用
+    // 准备更新数据
+    const updateData = {
+      status: 'used',
+      usedTime: new Date(),
+      usedByOpenId: wxContext.OPENID
+    }
+
+    // 如果提供了用户信息，则更新邀请记录
+    if (inviteeName) updateData.inviteeName = inviteeName
+    if (inviteePhone) updateData.inviteePhone = inviteePhone
+    if (department) updateData.department = department
+    if (position) updateData.position = position
+    if (finalRole) updateData.role = finalRole
+
+    // 标记邀请码为已使用并更新用户信息
     await db.collection('employee_invites').doc(invite._id).update({
-      data: {
-        status: 'used',
-        usedTime: new Date(),
-        usedByOpenId: wxContext.OPENID
-      }
+      data: updateData
     })
 
     return {
       success: true,
       data: {
-        invite: invite
+        invite: {
+          ...invite,
+          defaultRole: invite.defaultRole, // 返回默认角色供注册时参考
+          ...updateData
+        }
       },
       message: '邀请码使用成功'
     }
@@ -520,6 +549,40 @@ async function resendInvite(event, wxContext) {
     }
   } catch (error) {
     throw error
+  }
+}
+
+// 清理旧的邀请记录，只保留最新的5个
+async function cleanupOldInvites() {
+  try {
+    console.log('开始清理旧邀请记录')
+    
+    // 获取所有邀请记录，按创建时间倒序排列
+    const allInvites = await db.collection('employee_invites')
+      .orderBy('createTime', 'desc')
+      .get()
+
+    console.log(`当前总共有 ${allInvites.data.length} 个邀请记录`)
+
+    // 如果总数超过5个，删除多余的记录
+    if (allInvites.data.length > 5) {
+      // 保留前5个最新的，删除其余的
+      const invitesToDelete = allInvites.data.slice(5)
+      console.log(`需要删除 ${invitesToDelete.length} 个旧记录`)
+
+      // 批量删除
+      for (const invite of invitesToDelete) {
+        await db.collection('employee_invites').doc(invite._id).remove()
+        console.log(`已删除邀请记录：${invite.inviteCode} (${invite.status})`)
+      }
+
+      console.log(`清理完成，保留了最新的5个邀请记录`)
+    } else {
+      console.log('邀请记录数量未超过5个，无需清理')
+    }
+  } catch (error) {
+    console.error('清理旧邀请记录失败:', error)
+    // 清理失败不影响主流程，只记录错误
   }
 }
 

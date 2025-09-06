@@ -2,9 +2,9 @@
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="财务管理"
-    show-back="{{true}}"
-    show-menu="{{true}}"
-    show-record="{{false}}"
+    show-back="true"
+    show-menu="true"
+    show-record="false"
     bind:back="goBack"
     bind:menu="onMenuTap"
   />

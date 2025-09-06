@@ -2,9 +2,9 @@
 <view class="page-container">
   <navigation-bar
     title="用户管理"
-    show-back="{{true}}"
-    show-menu="{{false}}"
-    show-record="{{false}}"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
     bind:back="goBack"
   />
 
@@ -219,11 +219,17 @@
   <view class="role-dialog">
     <view class="form-item">
       <text class="form-label">选择角色：</text>
-      <t-picker
-        value="{{newRole}}"
-        options="{{roleOptions}}"
+      <picker 
+        range="{{roleOptions}}" 
+        range-key="label" 
+        value="{{selectedRoleIndex[0]}}" 
         bind:change="onRoleChange"
-      />
+      >
+        <view class="picker-container">
+          <text class="picker-text">{{roleOptions[selectedRoleIndex[0]].label}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
     </view>
     <view class="form-item">
       <text class="form-label">修改原因：</text>

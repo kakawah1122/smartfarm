@@ -32,6 +32,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 角色修改弹窗
     showRoleDialog: false,
     newRole: '',
+    selectedRoleIndex: [0], // picker需要数组格式
     roleChangeReason: '',
     roleOptions: [
       { label: '普通用户', value: 'user' },
@@ -388,9 +389,15 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   showRoleDialog() {
+    // 找到当前用户角色在选项中的索引
+    const currentRoleIndex = this.data.roleOptions.findIndex(
+      option => option.value === this.data.selectedUser.role
+    )
+    
     this.setData({
       showRoleDialog: true,
       newRole: this.data.selectedUser.role,
+      selectedRoleIndex: [Math.max(0, currentRoleIndex)],
       roleChangeReason: ''
     })
   },
@@ -399,13 +406,18 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({
       showRoleDialog: false,
       newRole: '',
+      selectedRoleIndex: [0],
       roleChangeReason: ''
     })
   },
 
   onRoleChange(e: any) {
+    const selectedIndex = e.detail.value
+    const selectedRole = this.data.roleOptions[selectedIndex]?.value || 'user'
+    
     this.setData({
-      newRole: e.detail.value
+      selectedRoleIndex: [selectedIndex],
+      newRole: selectedRole
     })
   },
 
@@ -427,9 +439,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   getUserRoleTheme(role: string): string {
+    if (!role) return 'default'
     const themeMap = {
       'user': 'default',
-      'operator': 'primary',
+      'operator': 'primary', 
       'admin': 'warning',
       'manager': 'danger'
     }
@@ -437,6 +450,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   getUserStatusText(status: string): string {
+    if (!status) return '正常'
     const statusMap = {
       'active': '正常',
       'disabled': '禁用',
@@ -446,6 +460,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   getUserStatusTheme(status: string): string {
+    if (!status) return 'success'
     const themeMap = {
       'active': 'success',
       'disabled': 'danger',

@@ -1,0 +1,56 @@
+<!-- employee-management.wxml - 员工管理中心页面 -->
+<view class="page-container">
+  <navigation-bar
+    title="员工管理"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
+    bind:back="goBack"
+  />
+
+  <!-- 功能模块卡片 -->
+  <view class="modules-section">
+    <view class="section-title">功能模块</view>
+    <view class="modules-grid">
+      <view
+        wx:for="{{moduleItems}}"
+        wx:key="id"
+        class="module-card"
+        style="border-left-color: {{item.color}}"
+        bind:tap="navigateToModule"
+        data-item="{{item}}"
+      >
+        <view class="module-header">
+          <view class="module-icon-wrapper" style="background: {{item.color}}15;">
+            <text wx:if="{{item.icon === 'user-add'}}">👥</text>
+            <text wx:elif="{{item.icon === 'user-setting'}}">⚙️</text>
+            <text wx:elif="{{item.icon === 'user-list'}}">📋</text>
+            <text wx:else>📋</text>
+          </view>
+          <view class="module-info">
+            <text class="module-title">{{item.title}}</text>
+            <text class="module-description">{{item.description}}</text>
+          </view>
+          <view class="module-arrow">›</view>
+        </view>
+        
+        <view class="module-features">
+          <text wx:for="{{item.features}}" wx:for-item="feature" wx:key="*this" class="feature-tag">
+            {{feature}}
+          </text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 权限提示 -->
+  <view wx:if="{{!userInfo || (!userInfo.isSuper && userInfo.role !== 'admin')}}" class="permission-notice">
+    <view class="notice-icon">ℹ️</view>
+    <view class="notice-content">
+      <text class="notice-text">当前权限仅可查看部分功能，如需完整权限请联系管理员</text>
+    </view>
+  </view>
+
+  <!-- 底部安全区域 -->
+  <view class="safe-area-bottom"></view>
+</view>

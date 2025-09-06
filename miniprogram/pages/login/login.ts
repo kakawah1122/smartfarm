@@ -218,10 +218,51 @@ Page({
           }
 
           if (!checkResult.result?.exists) {
-        // 用户不存在，提示注册
+        // 用户不存在，检查是否是第一个用户
         wx.hideLoading()
         this.setData({ isLoading: false })
         
+        // 检查数据库中是否还没有任何用户（第一个用户）
+        try {
+          const result = await wx.cloud.callFunction({
+            name: 'login',
+            data: {} // 直接尝试创建用户
+          })
+          
+          if (result.result && result.result.success) {
+            const app = getApp()
+            app.globalData.openid = result.result.openid
+            app.globalData.isLoggedIn = true
+            app.globalData.userInfo = result.result.user
+            
+            wx.setStorageSync('openid', result.result.openid)
+            wx.setStorageSync('userInfo', result.result.user)
+            
+            // 如果是第一个管理员，显示特殊欢迎信息
+            if (result.result.isFirstAdmin) {
+              wx.showModal({
+                title: '🎉 超级管理员',
+                content: result.result.message + '\n\n您现在拥有系统的所有管理权限！',
+                showCancel: false,
+                confirmText: '开始使用',
+                success: () => {
+                  wx.reLaunch({
+                    url: '/pages/index/index'
+                  })
+                }
+              })
+            } else {
+              wx.reLaunch({
+                url: '/pages/index/index'
+              })
+            }
+            return
+          }
+        } catch (createError) {
+          console.log('不是第一个用户，需要邀请码注册')
+        }
+        
+        // 不是第一个用户，需要邀请码注册
         wx.showModal({
           title: '用户未注册',
           content: '检测到您尚未注册，请使用邀请码进行注册',
@@ -267,10 +308,82 @@ Page({
 
         console.log('登录成功，用户信息:', result.result.user)
 
-        // 直接跳转到首页，不显示中间页面和Toast
-        wx.reLaunch({
-          url: '/pages/index/index'
-        })
+        // 特殊处理第一个用户（超级管理员）
+        if (result.result.isFirstAdmin) {
+          wx.showModal({
+            title: '🎉 超级管理员',
+            content: result.result.message + '\n\n您现在拥有系统的所有管理权限，包括：\n• 员工管理和邀请\n• 财务审批\n• 系统设置\n• 生产和健康数据管理',
+            showCancel: false,
+            confirmText: '开始使用',
+            success: () => {
+              wx.reLaunch({
+                url: '/pages/index/index'
+              })
+            }
+          })
+        } else {
+          // 其他用户检查信息是否完整
+          if (result.result.canUseApp) {
+            const userInfo = result.result.user
+            
+            // 更严格的信息完整性检查
+            const isInfoComplete = userInfo.nickname && 
+                                  userInfo.nickname.trim() !== '' && 
+                                  userInfo.nickname !== '未设置' &&
+                                  userInfo.phone && 
+                                  userInfo.phone.trim() !== '' &&
+                                  userInfo.farmName && 
+                                  userInfo.farmName.trim() !== '' && 
+                                  userInfo.farmName !== '智慧养殖场' &&
+                                  userInfo.farmName !== '未设置'
+            
+            // 检查用户是否已经跳过完善信息
+            const hasSkippedInfo = wx.getStorageSync('hasSkippedProfileSetup') || false
+            
+            if (!isInfoComplete && !hasSkippedInfo) {
+              // 信息不完整且用户未跳过，提示用户完善
+              wx.showModal({
+                title: '完善个人信息',
+                content: '为了更好的使用体验，请先完善您的个人信息（昵称、手机号、养殖场名称）',
+                confirmText: '去完善',
+                cancelText: '稍后再说',
+                success: (modalRes) => {
+                  if (modalRes.confirm) {
+                    // 设置标记，表示用户需要完善信息
+                    wx.setStorageSync('needProfileSetup', true)
+                    // 跳转到个人中心（tabBar页面需要用switchTab）
+                    wx.switchTab({
+                      url: '/pages/profile/profile'
+                    })
+                  } else {
+                    // 用户选择稍后再说，记录状态（24小时内不再提示）
+                    const skipUntil = Date.now() + 24 * 60 * 60 * 1000 // 24小时后
+                    wx.setStorageSync('hasSkippedProfileSetup', true)
+                    wx.setStorageSync('skipProfileSetupUntil', skipUntil)
+                    
+                    // 直接进入首页
+                    wx.reLaunch({
+                      url: '/pages/index/index'
+                    })
+                  }
+                }
+              })
+            } else {
+              // 信息完整或用户已跳过，直接进入首页
+              wx.reLaunch({
+                url: '/pages/index/index'
+              })
+            }
+          } else {
+            // 处理需要审批或被拒绝的情况
+            wx.showModal({
+              title: '登录提示',
+              content: result.result.message,
+              showCancel: false,
+              confirmText: '确定'
+            })
+          }
+        }
       } else {
         console.error('云函数返回失败:', result)
         console.error('完整的result结构:', JSON.stringify(result, null, 2))
@@ -391,6 +504,14 @@ Page({
     })
   },
 
+  // 获取微信昵称
+  onNicknameChange(e: any) {
+    const nickname = e.detail.value
+    this.setData({
+      nickname: nickname
+    })
+  },
+
   // 保存用户信息
   async onSaveProfile() {
     const { nickname, phone, farmName, selectedAvatarUrl } = this.data
@@ -435,9 +556,11 @@ Page({
         mask: true
       })
 
+      // 使用 user-management 云函数更新用户信息
       const result = await wx.cloud.callFunction({
-        name: 'register',
+        name: 'user-management',
         data: {
+          action: 'update_profile',
           nickname: nickname.trim(),
           phone: phone.trim(),
           farmName: farmName.trim(),
@@ -448,7 +571,7 @@ Page({
       wx.hideLoading()
 
       if (result.result && result.result.success) {
-        const updatedUserInfo = result.result.user
+        const updatedUserInfo = result.result.data.user
         
         // 更新页面状态
         this.setData({

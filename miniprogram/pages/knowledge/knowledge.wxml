@@ -3,9 +3,9 @@
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="养鹅知识库"
-    show-back="{{true}}"
-    show-menu="{{false}}"
-    show-record="{{false}}"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
     bind:back="goBack"
   />
   

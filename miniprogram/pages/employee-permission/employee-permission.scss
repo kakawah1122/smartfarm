@@ -1,0 +1,418 @@
+/* employee-permission.scss - 员工权限设置页面样式 */
+.page-container {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding-bottom: 40rpx;
+}
+
+
+/* 搜索和筛选区域 */
+.search-section {
+  padding: 40rpx 32rpx 0;
+  margin-bottom: 24rpx;
+}
+
+.filter-tabs {
+  margin-top: 24rpx;
+}
+
+/* 内容区域 */
+.content-container {
+  padding: 0 32rpx;
+}
+
+.loading-container,
+.empty-container {
+  padding: 100rpx 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 员工列表 */
+.employee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.employee-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  border: 2rpx solid transparent;
+  transition: all 0.3s ease;
+  
+  &.selected {
+    border-color: #3498db;
+    background: #f8fbff;
+  }
+  
+  &:active {
+    transform: translateY(2rpx);
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+  }
+}
+
+.employee-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.employee-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecf0f1;
+  margin-right: 24rpx;
+  overflow: hidden;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 40rpx;
+}
+
+.default-avatar {
+  font-size: 32rpx;
+  color: #7f8c8d;
+  font-weight: 600;
+}
+
+.employee-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.3;
+}
+
+.employee-phone {
+  font-size: 26rpx;
+  color: #7f8c8d;
+  margin-top: 4rpx;
+}
+
+.employee-farm {
+  font-size: 24rpx;
+  color: #95a5a6;
+  margin-top: 4rpx;
+}
+
+.employee-role {
+  margin-right: 16rpx;
+}
+
+.role-tag {
+  padding: 8rpx 16rpx;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  border: 1rpx solid;
+}
+
+.employee-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.select-checkbox {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 8rpx;
+  border: 2rpx solid #bdc3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #ffffff;
+  transition: all 0.3s ease;
+  
+  &.checked {
+    background: #3498db;
+    border-color: #3498db;
+  }
+}
+
+.edit-button {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 8rpx;
+  background: #f8f9fa;
+  border: 1rpx solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  transition: all 0.3s ease;
+  
+  &:active {
+    background: #e9ecef;
+  }
+}
+
+.employee-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #ecf0f1;
+}
+
+.detail-item {
+  font-size: 24rpx;
+  color: #7f8c8d;
+  line-height: 1.4;
+}
+
+/* 加载更多 */
+.load-more {
+  margin-top: 40rpx;
+}
+
+/* 权限详情弹窗 */
+.permission-detail {
+  padding: 0;
+}
+
+.employee-basic-info,
+.permissions-section {
+  margin-bottom: 32rpx;
+}
+
+.info-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #ecf0f1;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: #7f8c8d;
+  min-width: 100rpx;
+}
+
+.info-value {
+  font-size: 26rpx;
+  color: #2c3e50;
+  flex: 1;
+  
+  &.role-text {
+    font-weight: 600;
+  }
+}
+
+.permission-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.permission-tag {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+  font-size: 22rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(52, 152, 219, 0.2);
+}
+
+/* 角色编辑弹窗 */
+.role-edit-form {
+  padding: 0;
+}
+
+.employee-summary {
+  background: #f8f9fa;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.summary-text {
+  display: block;
+  font-size: 26rpx;
+  color: #2c3e50;
+  line-height: 1.4;
+  
+  &:last-child {
+    margin-top: 8rpx;
+    font-weight: 600;
+  }
+}
+
+.form-group {
+  margin-bottom: 24rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16rpx;
+}
+
+.picker-container {
+  background: #f8f9fa;
+  border: 1rpx solid #e9ecef;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: #2c3e50;
+}
+
+.picker-arrow {
+  font-size: 24rpx;
+  color: #7f8c8d;
+}
+
+.form-description {
+  display: block;
+  font-size: 24rpx;
+  color: #7f8c8d;
+  margin-top: 12rpx;
+  line-height: 1.4;
+}
+
+/* 批量操作浮动面板 */
+.batch-actions-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.batch-actions-panel {
+  background: #ffffff;
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom, 0));
+}
+
+.batch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.batch-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.batch-close {
+  font-size: 32rpx;
+  color: #7f8c8d;
+  padding: 8rpx;
+}
+
+.batch-buttons {
+  display: flex;
+  gap: 20rpx;
+  
+  t-button {
+    flex: 1;
+  }
+}
+
+/* 响应式适配 */
+@media (max-width: 750rpx) {
+  .employee-card {
+    padding: 24rpx;
+  }
+  
+  .employee-avatar {
+    width: 64rpx;
+    height: 64rpx;
+    margin-right: 20rpx;
+  }
+  
+  .employee-name {
+    font-size: 28rpx;
+  }
+  
+  .employee-phone,
+  .employee-farm {
+    font-size: 24rpx;
+  }
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .page-container {
+    background: #1a1a1a;
+  }
+  
+  .employee-card {
+    background: #2d2d2d;
+    
+    &.selected {
+      background: #1e3a5f;
+    }
+  }
+  
+  .employee-name {
+    color: #ffffff;
+  }
+  
+  .employee-phone,
+  .employee-farm,
+  .detail-item {
+    color: #bbb;
+  }
+  
+  .employee-avatar {
+    background: #404040;
+  }
+  
+  .default-avatar {
+    color: #bbb;
+  }
+  
+  .edit-button {
+    background: #404040;
+    border-color: #555;
+  }
+  
+  .batch-actions-panel {
+    background: #2d2d2d;
+  }
+  
+  .batch-title {
+    color: #ffffff;
+  }
+}

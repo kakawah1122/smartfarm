@@ -41,9 +41,9 @@ const pageConfig = {
             {
                 id: 2,
                 title: '员工管理',
-                description: '员工账号、权限设置、考勤统计',
+                description: '邀请码管理、员工权限设置',
                 icon: 'user-group',
-                page: '/pages/employee/employee',
+                page: '/pages/invite-management/invite-management',
                 requiredPermission: 'employee.view'
             },
             {

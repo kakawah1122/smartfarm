@@ -1,0 +1,197 @@
+<!-- employee-permission.wxml - 员工权限设置页面 -->
+<view class="page-container">
+  <navigation-bar
+    title="员工权限设置"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
+    bind:back="goBack"
+  />
+
+  <!-- 搜索和筛选 -->
+  <view class="search-section">
+    <t-search
+      value="{{searchKeyword}}"
+      placeholder="搜索员工姓名或手机号"
+      bind:change="onSearchChange"
+      bind:submit="onSearch"
+    />
+    
+    <t-tabs value="{{activeTab}}" bind:change="onTabChange" class="filter-tabs">
+      <t-tab-panel label="全部" value="all" />
+      <t-tab-panel label="管理员" value="admin" />
+      <t-tab-panel label="经理" value="manager" />
+      <t-tab-panel label="操作员" value="operator" />
+      <t-tab-panel label="用户" value="user" />
+    </t-tabs>
+  </view>
+
+  <!-- 员工列表 -->
+  <view class="content-container">
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <t-loading theme="spinner" size="40rpx" text="加载中..." />
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:elif="{{employeeList.length === 0}}" class="empty-container">
+      <t-empty icon="user" description="暂无员工数据" />
+    </view>
+
+    <!-- 员工卡片列表 -->
+    <view wx:else class="employee-list">
+      <view
+        wx:for="{{employeeList}}"
+        wx:key="_id"
+        class="employee-card {{isEmployeeSelected(item._id) ? 'selected' : ''}}"
+        bind:tap="onEmployeeClick"
+        data-employee="{{item}}"
+      >
+        <view class="employee-header">
+          <view class="employee-avatar">
+            <image wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" class="avatar-image" />
+            <text wx:else class="default-avatar">{{item.nickname ? item.nickname[0] : '用'}}</text>
+          </view>
+          
+          <view class="employee-info">
+            <text class="employee-name">{{item.nickname || '未设置'}}</text>
+            <text class="employee-phone">{{item.phone || '未设置'}}</text>
+            <text class="employee-farm">{{item.farmName || '未设置'}}</text>
+          </view>
+
+          <view class="employee-role">
+            <view class="role-tag" style="background-color: {{getRoleColor(item.role)}}15; border-color: {{getRoleColor(item.role)}}; color: {{getRoleColor(item.role)}}">
+              {{getRoleDisplayName(item.role)}}
+            </view>
+          </view>
+
+          <view class="employee-actions">
+            <view 
+              class="select-checkbox {{isEmployeeSelected(item._id) ? 'checked' : ''}}"
+              catch:tap="onEmployeeSelect"
+              data-employee="{{item}}"
+            >
+              <text wx:if="{{isEmployeeSelected(item._id)}}">✓</text>
+            </view>
+            <view 
+              class="edit-button"
+              catch:tap="editEmployeeRole"
+              data-employee="{{item}}"
+            >
+              ⚙️
+            </view>
+          </view>
+        </view>
+
+        <view class="employee-details">
+          <text class="detail-item">部门：{{item.department || '未设置'}}</text>
+          <text class="detail-item">职位：{{item.position || '未设置'}}</text>
+          <text class="detail-item">注册时间：{{item.formattedRegisterTime || '未知'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{hasMore && employeeList.length > 0}}" class="load-more">
+      <t-button
+        theme="default"
+        size="large"
+        block
+        loading="{{loadingMore}}"
+        bind:tap="loadMore"
+      >
+        {{loadingMore ? '加载中...' : '加载更多'}}
+      </t-button>
+    </view>
+  </view>
+</view>
+
+<!-- 权限详情弹窗 -->
+<t-dialog
+  visible="{{showPermissionDetail}}"
+  title="员工权限详情"
+  confirm-btn="确定"
+  bind:confirm="closePermissionDetail"
+  bind:cancel="closePermissionDetail"
+>
+  <view wx:if="{{selectedEmployee}}" class="permission-detail">
+    <view class="employee-basic-info">
+      <text class="info-title">基本信息</text>
+      <view class="info-item">
+        <text class="info-label">姓名：</text>
+        <text class="info-value">{{selectedEmployee.nickname || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">手机：</text>
+        <text class="info-value">{{selectedEmployee.phone || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">角色：</text>
+        <text class="info-value role-text" style="color: {{getRoleColor(selectedEmployee.role)}}">
+          {{getRoleDisplayName(selectedEmployee.role)}}
+        </text>
+      </view>
+    </view>
+
+    <view class="permissions-section">
+      <text class="info-title">权限清单</text>
+      <view class="permission-tags">
+        <text 
+          wx:for="{{permissionTemplates[selectedEmployee.role] || []}}"
+          wx:key="*this"
+          class="permission-tag"
+        >
+          {{item}}
+        </text>
+      </view>
+    </view>
+  </view>
+</t-dialog>
+
+<!-- 角色编辑弹窗 -->
+<t-dialog
+  visible="{{showRoleEdit}}"
+  title="修改员工角色"
+  confirm-btn="确认修改"
+  cancel-btn="取消"
+  bind:confirm="updateEmployeeRole"
+  bind:cancel="closeRoleEdit"
+>
+  <view wx:if="{{editingEmployee}}" class="role-edit-form">
+    <view class="employee-summary">
+      <text class="summary-text">员工：{{editingEmployee.nickname || '未设置'}}</text>
+      <text class="summary-text">当前角色：{{getRoleDisplayName(editingEmployee.role)}}</text>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">新角色</text>
+      <picker 
+        range="{{roleOptions}}" 
+        range-key="label" 
+        value="{{selectedRoleIndex[0]}}" 
+        bind:change="onRoleChange"
+      >
+        <view class="picker-container">
+          <text class="picker-text">{{roleOptions[selectedRoleIndex[0]].label}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+      <text class="form-description">{{roleOptions[selectedRoleIndex[0]].description}}</text>
+    </view>
+  </view>
+</t-dialog>
+
+<!-- 批量操作浮动按钮 -->
+<view wx:if="{{showBatchActions}}" class="batch-actions-overlay">
+  <view class="batch-actions-panel">
+    <view class="batch-header">
+      <text class="batch-title">已选择 {{selectedEmployees.length}} 名员工</text>
+      <text class="batch-close" bind:tap="closeBatchActions">✕</text>
+    </view>
+    <view class="batch-buttons">
+      <t-button theme="primary" size="medium" bind:tap="batchSetUser">设为用户</t-button>
+      <t-button theme="success" size="medium" bind:tap="batchSetOperator">设为操作员</t-button>
+      <t-button theme="warning" size="medium" bind:tap="batchSetManager">设为经理</t-button>
+    </view>
+  </view>
+</view>

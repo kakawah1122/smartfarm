@@ -14,13 +14,25 @@ exports.main = async (event, context) => {
   const { action } = event
   
   try {
-    // 首先验证管理员权限
-    const hasPermission = await verifyAdminPermission(wxContext.OPENID)
-    if (!hasPermission) {
-      return {
-        success: false,
-        error: 'PERMISSION_DENIED',
-        message: '权限不足，仅管理员可访问'
+    // 对于更新个人资料，允许用户修改自己的信息
+    if (action === 'update_profile') {
+      const hasPermission = await verifyUserPermission(wxContext.OPENID, event.targetUserId)
+      if (!hasPermission) {
+        return {
+          success: false,
+          error: 'PERMISSION_DENIED',
+          message: '权限不足，您只能修改自己的资料'
+        }
+      }
+    } else {
+      // 其他操作需要管理员权限
+      const hasPermission = await verifyAdminPermission(wxContext.OPENID)
+      if (!hasPermission) {
+        return {
+          success: false,
+          error: 'PERMISSION_DENIED',
+          message: '权限不足，仅管理员可访问'
+        }
       }
     }
 
@@ -39,6 +51,10 @@ exports.main = async (event, context) => {
         return await searchUsers(event, wxContext)
       case 'export_users':
         return await exportUsers(event, wxContext)
+      case 'set_super_admin':
+        return await setSuperAdmin(event, wxContext)
+      case 'update_profile':
+        return await updateProfile(event, wxContext)
       default:
         throw new Error('无效的操作类型')
     }
@@ -73,6 +89,41 @@ async function verifyAdminPermission(openid) {
     
     // 检查是否为超级管理员或管理员（包含operator角色）
     return user.isSuper === true || user.role === 'admin' || user.role === 'manager' || user.role === 'operator'
+  } catch (error) {
+    return false
+  }
+}
+
+// 验证用户权限（用户可以修改自己的资料）
+async function verifyUserPermission(openid, targetUserId) {
+  try {
+    if (!openid) {
+      return false
+    }
+
+    // 查询用户信息
+    const userResult = await db.collection('users').where({
+      _openid: openid
+    }).get()
+
+    if (userResult.data.length === 0) {
+      return false
+    }
+
+    const user = userResult.data[0]
+    
+    // 如果是管理员，有权限修改任何用户
+    if (user.isSuper === true || user.role === 'admin' || user.role === 'manager' || user.role === 'operator') {
+      return true
+    }
+    
+    // 如果没有指定目标用户ID，说明是修改自己的资料
+    if (!targetUserId) {
+      return true
+    }
+    
+    // 用户只能修改自己的资料
+    return user._id === targetUserId
   } catch (error) {
     return false
   }
@@ -453,6 +504,152 @@ async function exportUsers(event, wxContext) {
         users: exportData,
         exportTime: new Date().toISOString(),
         total: exportData.length
+      }
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
+// 设置超级管理员
+async function setSuperAdmin(event, wxContext) {
+  try {
+    // 检查当前用户是否存在
+    const currentUser = await db.collection('users').where({
+      _openid: wxContext.OPENID
+    }).get()
+
+    if (currentUser.data.length === 0) {
+      throw new Error('用户不存在')
+    }
+
+    const user = currentUser.data[0]
+    
+    // 检查用户是否已经是管理员或超级管理员
+    if (user.role !== 'admin' && !user.isSuper) {
+      throw new Error('只有管理员才能设置为超级管理员')
+    }
+
+    // 如果已经是超级管理员，直接返回成功
+    if (user.isSuper === true) {
+      return {
+        success: true,
+        message: '您已经是超级管理员',
+        data: {
+          user: user
+        }
+      }
+    }
+
+    // 更新用户为超级管理员
+    await db.collection('users').doc(user._id).update({
+      data: {
+        isSuper: true,
+        role: 'admin', // 确保角色是管理员
+        superAdminSetTime: new Date(),
+        updateTime: new Date()
+      }
+    })
+
+    // 记录操作日志
+    await db.collection('admin_logs').add({
+      data: {
+        action: 'set_super_admin',
+        operatorId: wxContext.OPENID,
+        targetUserId: user._id,
+        createTime: new Date(),
+        description: '用户设置为超级管理员'
+      }
+    })
+
+    // 获取更新后的用户信息
+    const updatedUser = await db.collection('users').doc(user._id).get()
+
+    return {
+      success: true,
+      message: '已成功设置为超级管理员',
+      data: {
+        user: updatedUser.data
+      }
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
+// 更新用户个人资料
+async function updateProfile(event, wxContext) {
+  try {
+    const {
+      nickname,
+      avatarUrl,
+      farmName,
+      phone
+    } = event
+
+    // 获取当前用户信息
+    const currentUser = await db.collection('users').where({
+      _openid: wxContext.OPENID
+    }).get()
+
+    if (currentUser.data.length === 0) {
+      throw new Error('用户不存在')
+    }
+
+    const user = currentUser.data[0]
+    
+    // 准备更新数据
+    const updateData = {
+      updateTime: new Date()
+    }
+
+    // 只更新提供的字段
+    if (nickname !== undefined && nickname !== null) {
+      updateData.nickname = nickname.trim()
+    }
+    
+    if (avatarUrl !== undefined && avatarUrl !== null) {
+      updateData.avatarUrl = avatarUrl
+    }
+    
+    if (farmName !== undefined && farmName !== null) {
+      updateData.farmName = farmName.trim()
+    }
+    
+    if (phone !== undefined && phone !== null) {
+      // 验证手机号格式
+      const phoneRegex = /^1[3-9]\d{9}$/
+      if (!phoneRegex.test(phone)) {
+        throw new Error('手机号格式不正确')
+      }
+      updateData.phone = phone.trim()
+    }
+
+    // 更新用户信息
+    await db.collection('users').doc(user._id).update({
+      data: updateData
+    })
+
+    // 记录操作日志
+    await db.collection('admin_logs').add({
+      data: {
+        action: 'update_profile',
+        operatorId: wxContext.OPENID,
+        targetUserId: user._id,
+        updateFields: Object.keys(updateData),
+        createTime: new Date(),
+        description: '用户更新个人资料'
+      }
+    })
+
+    // 获取更新后的用户信息
+    const updatedUser = await db.collection('users').doc(user._id).get()
+
+    return {
+      success: true,
+      message: '个人资料更新成功',
+      data: {
+        user: updatedUser.data
       }
     }
   } catch (error) {

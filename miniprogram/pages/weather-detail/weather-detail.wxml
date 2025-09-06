@@ -2,7 +2,7 @@
   <!-- 导航栏 -->
   <navigation-bar 
     title="天气详情"
-    show-back="{{true}}"
+    show-back="true"
   />
 
   <scroll-view class="scroll-container" scroll-y enhanced="{{true}}" show-scrollbar="{{false}}">

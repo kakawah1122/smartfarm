@@ -143,6 +143,28 @@ $spacing-xl: 40rpx;
   margin: $spacing-l $spacing-s;
 }
 
+/* 创建邀请按钮 */
+.create-button-container {
+  position: fixed;
+  bottom: 120rpx;
+  left: $spacing-s;
+  right: $spacing-s;
+  z-index: 100;
+  
+  .create-invite-btn {
+    width: 100%;
+    height: 88rpx !important;
+    border-radius: 24rpx !important;
+    font-size: 32rpx !important;
+    font-weight: 600 !important;
+    box-shadow: 0 6rpx 20rpx rgba(0, 82, 217, 0.3) !important;
+    
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
+
 /* 邀请详情弹窗 */
 .invite-detail {
   padding: $spacing-l 0;
@@ -195,7 +217,21 @@ $spacing-xl: 40rpx;
 
 /* 创建邀请表单 */
 .create-form {
-  padding: $spacing-l 0;
+  padding: 0;
+}
+
+.form-description {
+  padding: $spacing-l;
+  background: rgba($primary-color, 0.06);
+  border-radius: 12rpx;
+  margin-bottom: $spacing-l;
+  
+  .description-text {
+    font-size: 26rpx;
+    color: $text-secondary;
+    line-height: 1.6;
+    display: block;
+  }
 }
 
 .form-item {
@@ -207,17 +243,54 @@ $spacing-xl: 40rpx;
     color: $text-primary;
     margin-bottom: $spacing-s;
     font-weight: 500;
+    line-height: 1.4;
   }
   
   .form-label-required::after {
     content: ' *';
     color: $error-color;
   }
+  
+  /* 确保输入框在表单中的样式 */
+  .t-input {
+    margin-top: $spacing-xs;
+    
+    &__control {
+      height: 72rpx !important;
+      padding: 0 $spacing-s !important;
+      line-height: 72rpx !important;
+    }
+  }
+  
+  .t-textarea {
+    margin-top: $spacing-xs;
+    
+    &__control {
+      padding: $spacing-s !important;
+      line-height: 1.5 !important;
+    }
+  }
+  
+  .t-picker {
+    margin-top: $spacing-xs;
+    
+    &__trigger {
+      height: 72rpx !important;
+      border: 1rpx solid $border-color-light !important;
+      border-radius: 12rpx !important;
+      background: $bg-color-page !important;
+      padding: 0 $spacing-s !important;
+      font-size: 28rpx !important;
+      color: $text-primary !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+  }
 }
 
 /* 撤销确认弹窗 */
 .revoke-form {
-  padding: $spacing-l 0;
+  padding: 0;
 }
 
 .revoke-warning {
@@ -226,16 +299,22 @@ $spacing-xl: 40rpx;
   border-radius: 12rpx;
   margin-bottom: $spacing-l;
   
-  text {
+  .revoke-text {
     font-size: 28rpx;
     color: $warning-color;
     line-height: 1.6;
+    display: block;
   }
 }
 
 /* Cell组件样式覆盖 */
 .t-cell {
   padding: $spacing-l !important;
+  border-bottom: 1rpx solid $border-color-light !important;
+  
+  &:last-child {
+    border-bottom: none !important;
+  }
   
   &__title {
     font-size: 30rpx !important;
@@ -353,13 +432,57 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 浮动按钮样式覆盖 */
-.t-fab {
-  background: $primary-color !important;
-  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.3) !important;
+/* 对话框样式覆盖 */
+.t-dialog {
+  &__container {
+    border-radius: 24rpx !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
   
-  &__icon {
-    color: white !important;
+  &__header {
+    padding: $spacing-l $spacing-l $spacing-s !important;
+    border-bottom: 1rpx solid $border-color-light !important;
+    
+    .t-dialog__title {
+      font-size: 32rpx !important;
+      font-weight: 600 !important;
+      color: $text-primary !important;
+      text-align: center !important;
+    }
+  }
+  
+  &__body {
+    padding: $spacing-s $spacing-l !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+  }
+  
+  &__footer {
+    padding: $spacing-s $spacing-l $spacing-l !important;
+    border-top: 1rpx solid $border-color-light !important;
+    display: flex !important;
+    gap: $spacing-s !important;
+    
+    .t-button {
+      flex: 1 !important;
+      height: 72rpx !important;
+      border-radius: 12rpx !important;
+      font-size: 28rpx !important;
+      font-weight: 500 !important;
+    }
+    
+    .t-button--primary {
+      background: $primary-color !important;
+      border-color: $primary-color !important;
+      color: white !important;
+    }
+    
+    .t-button--default {
+      background: $bg-color-page !important;
+      border-color: $border-color !important;
+      color: $text-primary !important;
+    }
   }
 }
 
@@ -382,6 +505,297 @@ $spacing-xl: 40rpx;
   &:active {
     background: rgba(0, 0, 0, 0.02) !important;
   }
+}
+
+/* 创建邀请码弹窗样式 */
+.create-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-dialog-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.create-dialog-content {
+  position: relative;
+  background: white;
+  margin: 40rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+  max-width: 600rpx;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.create-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 32rpx 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.create-dialog-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.create-dialog-close {
+  font-size: 40rpx;
+  color: #999;
+  padding: 8rpx;
+  line-height: 1;
+}
+
+.create-dialog-body {
+  padding: 32rpx;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.form-tip {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 32rpx;
+  padding: 16rpx;
+  background-color: rgba($primary-color, 0.06);
+  border-radius: 8rpx;
+}
+
+.tip-icon {
+  margin-right: 12rpx;
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.tip-text {
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: 32rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  color: $text-primary;
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+
+.picker-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 80rpx;
+  padding: 16rpx 20rpx;
+  border: 2rpx solid $border-color-light;
+  border-radius: 8rpx;
+  background-color: white;
+  box-sizing: border-box;
+  
+  &:active {
+    border-color: $primary-color;
+  }
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: $text-primary;
+  flex: 1;
+}
+
+.picker-arrow {
+  font-size: 24rpx;
+  color: $text-secondary;
+  transition: transform 0.2s ease;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 16rpx 20rpx;
+  border: 2rpx solid $border-color-light;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  color: $text-primary;
+  background-color: white;
+  box-sizing: border-box;
+  resize: none;
+  
+  &:focus {
+    border-color: $primary-color;
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: $text-placeholder;
+  }
+}
+
+.create-dialog-footer {
+  display: flex;
+  padding: 24rpx 32rpx 32rpx;
+  gap: 16rpx;
+  border-top: 1rpx solid $border-color-light;
+}
+
+.create-btn-cancel,
+.create-btn-confirm {
+  flex: 1;
+  height: 72rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.create-btn-cancel {
+  background-color: $bg-color-page;
+  color: $text-secondary;
+  
+  &:active {
+    background-color: $border-color;
+  }
+}
+
+.create-btn-confirm {
+  background-color: $primary-color;
+  color: white;
+  
+  &:active {
+    background-color: darken($primary-color, 10%);
+  }
+}
+
+.create-btn-copy {
+  background: linear-gradient(135deg, $success-color 0%, #00c576 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0, 168, 112, 0.3);
+  
+  &:active {
+    transform: translateY(2rpx);
+    box-shadow: 0 1rpx 4rpx rgba(0, 168, 112, 0.4);
+  }
+}
+
+/* 邀请码生成成功内容样式 */
+.invite-success-content {
+  padding: 16rpx 0;
+}
+
+.success-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 32rpx;
+  padding: 20rpx;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 12rpx;
+  border-left: 6rpx solid $success-color;
+}
+
+.success-icon {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.success-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $success-color;
+}
+
+.invite-code-section {
+  margin-bottom: 32rpx;
+}
+
+.invite-code-label {
+  font-size: 28rpx;
+  color: $text-secondary;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.invite-code-box {
+  background: #f8f9fa;
+  border: 3rpx solid $primary-color;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:active {
+    background: #e9ecef;
+    transform: scale(0.98);
+  }
+}
+
+.invite-code-value {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: $primary-color;
+  letter-spacing: 4rpx;
+  font-family: 'Courier New', Monaco, monospace;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.copy-hint {
+  font-size: 24rpx;
+  color: $text-placeholder;
+  opacity: 0.8;
+}
+
+.usage-instructions {
+  background: #fafafa;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  border: 1rpx solid #e5e5e5;
+}
+
+.instructions-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.instruction-item {
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.6;
+  margin-bottom: 8rpx;
+  display: block;
 }
 
 /* 响应式布局 - 使用更简单的实现 */

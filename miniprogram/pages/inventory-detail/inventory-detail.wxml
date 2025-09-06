@@ -3,9 +3,9 @@
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="{{pageTitle}}"
-    show-back="{{true}}"
-    show-menu="{{false}}"
-    show-record="{{false}}"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
     bind:back="goBack"
   />
 
