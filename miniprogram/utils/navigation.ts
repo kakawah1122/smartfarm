@@ -2,6 +2,7 @@
  * 导航栏适配工具类
  * 统一处理状态栏高度适配问题
  */
+import { checkPageAuth } from './auth-guard'
 
 export interface NavbarSizes {
   statusBarHeight: number;  // 状态栏高度(rpx)
@@ -51,6 +52,11 @@ export function createPageWithNavbar(pageConfig: any) {
     },
     
     onLoad(options: any) {
+      // 检查登录状态
+      if (!checkPageAuth()) {
+        return // 如果未登录，停止页面加载
+      }
+      
       // 设置状态栏高度
       this.setStatusBarHeight();
       

@@ -39,29 +39,18 @@ const pageConfig = {
     employees: [] as Employee[],
     totalEmployees: 0,
     
-    // 邀请列表
-    invites: [] as Invite[],
-    
     // 权限定义
     permissions: {},
     
     // 界面状态
-    activeTab: 'employees', // employees | invites
     loading: false,
     refreshing: false,
     
     // 弹窗状态
-    showInviteDialog: false,
     showEditDialog: false,
     showJoinDialog: false,
     
     // 表单数据
-    inviteForm: {
-      department: '',
-      position: '',
-      permissions: ['basic'],
-      validDays: 7
-    },
     editForm: {
       employeeId: '',
       department: '',
@@ -135,7 +124,6 @@ const pageConfig = {
     try {
       await Promise.all([
         this.loadEmployees(),
-        this.loadInvites(),
         this.loadPermissions()
       ])
     } catch (error) {
@@ -175,28 +163,6 @@ const pageConfig = {
     }
   },
 
-  // 加载邀请列表
-  async loadInvites() {
-    if (!this.data.hasInvitePermission) return
-    
-    try {
-      const result = await wx.cloud.callFunction({
-        name: 'employeeManage',
-        data: {
-          action: 'getInvites'
-        }
-      })
-      
-      if (result.result?.success) {
-        this.setData({
-          invites: result.result.invites
-        })
-        console.log('邀请列表加载成功:', result.result.invites.length)
-      }
-    } catch (error) {
-      console.error('获取邀请列表出错:', error)
-    }
-  },
 
   // 加载权限定义
   async loadPermissions() {
@@ -224,114 +190,6 @@ const pageConfig = {
     await this.loadData()
     this.setData({ refreshing: false })
     wx.stopPullDownRefresh()
-  },
-
-  // 切换标签页
-  switchTab(e: any) {
-    const { tab } = e.currentTarget.dataset
-    this.setData({
-      activeTab: tab
-    })
-  },
-
-  // 显示邀请员工对话框
-  showInviteEmployee() {
-    if (!this.data.hasInvitePermission) {
-      wx.showToast({
-        title: '无邀请权限',
-        icon: 'error'
-      })
-      return
-    }
-    
-    this.setData({
-      showInviteDialog: true,
-      inviteForm: {
-        department: '',
-        position: '',
-        permissions: ['basic'],
-        validDays: 7
-      }
-    })
-  },
-
-  // 邀请员工
-  async inviteEmployee() {
-    const { inviteForm } = this.data
-    
-    if (!inviteForm.department.trim()) {
-      wx.showToast({
-        title: '请输入部门',
-        icon: 'error'
-      })
-      return
-    }
-    
-    if (!inviteForm.position.trim()) {
-      wx.showToast({
-        title: '请输入职位',
-        icon: 'error'
-      })
-      return
-    }
-    
-    try {
-      wx.showLoading({
-        title: '生成邀请码...'
-      })
-      
-      const result = await wx.cloud.callFunction({
-        name: 'employeeManage',
-        data: {
-          action: 'inviteEmployee',
-          department: inviteForm.department.trim(),
-          position: inviteForm.position.trim(),
-          permissions: inviteForm.permissions,
-          validDays: inviteForm.validDays
-        }
-      })
-      
-      wx.hideLoading()
-      
-      if (result.result?.success) {
-        wx.showModal({
-          title: '邀请码生成成功',
-          content: `邀请码：${result.result.inviteCode}\n\n有效期：${inviteForm.validDays}天\n\n请将此邀请码发送给员工`,
-          showCancel: false,
-          success: () => {
-            // 复制邀请码到剪贴板
-            wx.setClipboardData({
-              data: result.result.inviteCode,
-              success: () => {
-                wx.showToast({
-                  title: '邀请码已复制',
-                  icon: 'success'
-                })
-              }
-            })
-          }
-        })
-        
-        this.setData({
-          showInviteDialog: false
-        })
-        
-        // 刷新邀请列表
-        await this.loadInvites()
-      } else {
-        wx.showToast({
-          title: result.result?.message || '邀请失败',
-          icon: 'error'
-        })
-      }
-    } catch (error) {
-      wx.hideLoading()
-      console.error('邀请员工失败:', error)
-      wx.showToast({
-        title: '邀请失败',
-        icon: 'error'
-      })
-    }
   },
 
   // 显示加入组织对话框
@@ -547,18 +405,6 @@ const pageConfig = {
     })
   },
 
-  // 表单输入处理
-  onInviteDepartmentInput(e: any) {
-    this.setData({
-      'inviteForm.department': e.detail.value
-    })
-  },
-
-  onInvitePositionInput(e: any) {
-    this.setData({
-      'inviteForm.position': e.detail.value
-    })
-  },
 
   onEditDepartmentInput(e: any) {
     this.setData({
@@ -578,11 +424,6 @@ const pageConfig = {
     })
   },
 
-  onInviteValidDaysInput(e: any) {
-    this.setData({
-      'inviteForm.validDays': parseInt(e.detail.value) || 7
-    })
-  },
 
   onEditActiveChange(e: any) {
     this.setData({
@@ -613,7 +454,6 @@ const pageConfig = {
   // 关闭对话框
   closeDialog() {
     this.setData({
-      showInviteDialog: false,
       showEditDialog: false,
       showJoinDialog: false
     })
@@ -627,6 +467,13 @@ const pageConfig = {
           url: '/pages/index/index'
         })
       }
+    })
+  },
+
+  // 跳转到邀请管理页面
+  goToInviteManagement() {
+    wx.navigateTo({
+      url: '/pages/invite-management/invite-management'
     })
   }
 }

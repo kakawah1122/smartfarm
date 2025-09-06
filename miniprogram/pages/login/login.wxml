@@ -21,29 +21,35 @@
 
       <!-- 登录按钮区域 -->
       <view class="login-actions">
-        <t-button 
-          theme="primary" 
-          size="large" 
-          block
-          loading="{{isLoading}}"
-          bind:tap="onWeChatLogin"
-          disabled="{{isLoading}}"
-          class="wechat-login-btn"
-        >
-          <t-icon name="wechat" slot="prefix" wx:if="{{!isLoading}}" />
-          {{isLoading ? '登录中...' : '微信快捷登录'}}
-        </t-button>
+        <!-- 微信快捷登录 -->
+        <view class="login-button-container">
+          <t-button 
+            theme="primary" 
+            size="large" 
+            block
+            loading="{{isLoading}}"
+            bind:tap="onWeChatLogin"
+            disabled="{{isLoading}}"
+            class="wechat-login-btn"
+          >
+            <t-icon name="wechat" slot="prefix" wx:if="{{!isLoading}}" />
+            {{isLoading ? '登录中...' : '微信快捷登录'}}
+          </t-button>
+        </view>
 
-        <t-button 
-          theme="light" 
-          size="large" 
-          block
-          bind:tap="onGuestLogin"
-          class="guest-login-btn"
-        >
-          <t-icon name="user" slot="prefix" />
-          游客模式体验
-        </t-button>
+        <!-- 邀请码注册 -->
+        <view class="register-button-container">
+          <t-button 
+            theme="default" 
+            size="large" 
+            block
+            bind:tap="showInviteRegister"
+            class="invite-register-btn"
+          >
+            <t-icon name="user-add" slot="prefix" />
+            使用邀请码注册
+          </t-button>
+        </view>
       </view>
 
       <!-- 协议提示 -->
@@ -55,8 +61,8 @@
     </view>
   </block>
 
-  <!-- 已登录状态 -->
-  <block wx:if="{{isLoggedIn}}">
+  <!-- 已登录状态 - 移除中间页面，直接跳转 -->
+  <block wx:if="{{false}}">
     <!-- 用户信息展示 -->
     <view class="user-info-section" wx:if="{{userInfo && userInfo.nickname}}">
       <view class="user-info-card">
@@ -259,5 +265,64 @@
       </t-button>
     </view>
   </block>
+
+  <!-- 邀请码注册弹窗 -->
+  <view wx:if="{{showInviteDialog}}" class="invite-dialog-overlay">
+    <view class="invite-dialog-mask" bind:tap="closeInviteDialog"></view>
+    <view class="invite-dialog-content">
+      <view class="invite-dialog-header">
+        <text class="invite-dialog-title">邀请码注册</text>
+        <text class="invite-dialog-close" bind:tap="closeInviteDialog">✕</text>
+      </view>
+      
+      <view class="invite-dialog-body">
+        <view class="form-tip">
+          <text class="tip-icon">💡</text>
+          <text class="tip-text">请输入管理员提供的邀请码</text>
+        </view>
+        
+        <view class="form-group">
+          <text class="form-label">邀请码</text>
+          <input 
+            class="form-input" 
+            placeholder="请输入8位邀请码" 
+            value="{{inviteCode}}" 
+            bind:input="onInviteCodeInput" 
+            maxlength="8"
+            focus="{{inviteCodeFocus}}"
+          />
+        </view>
+        
+        <view class="form-group">
+          <text class="form-label">姓名</text>
+          <input 
+            class="form-input" 
+            placeholder="请输入您的姓名" 
+            value="{{inviteNickname}}" 
+            bind:input="onInviteNicknameInput"
+            bind:focus="onInputFocus"
+          />
+        </view>
+        
+        <view class="form-group">
+          <text class="form-label">手机号</text>
+          <input 
+            class="form-input" 
+            placeholder="请输入手机号" 
+            value="{{invitePhone}}" 
+            bind:input="onInvitePhoneInput" 
+            type="number"
+            maxlength="11"
+            bind:focus="onInputFocus"
+          />
+        </view>
+      </view>
+      
+      <view class="invite-dialog-footer">
+        <button class="invite-btn-cancel" bind:tap="closeInviteDialog">取消</button>
+        <button class="invite-btn-confirm" bind:tap="onInviteRegister">确定注册</button>
+      </view>
+    </view>
+  </view>
 
 </view>

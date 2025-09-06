@@ -1,5 +1,6 @@
 // profile.ts
 import { createPageWithNavbar } from '../../utils/navigation'
+import { checkPageAuth } from '../../utils/auth-guard'
 
 // 获取全局应用实例
 const app = getApp<IAppOption>()

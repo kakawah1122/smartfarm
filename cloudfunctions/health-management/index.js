@@ -717,9 +717,10 @@ async function createFollowupRecord(event, wxContext) {
       const originalAffectedCount = Number(originalRecord.data.affectedCount || 0)
       
       // 处理数量统计
-        已治愈: totalCured,
-        已死亡: totalDeaths,
-        已处理总数: totalProcessed
+      console.log('跟进处理统计:', {
+        '已治愈': totalCured,
+        '已死亡': totalDeaths,
+        '已处理总数': totalProcessed
       })
       
       // 根据处理情况决定记录状态

@@ -1,4 +1,6 @@
 // index.ts - 清理版本，只使用和风天气地理编码
+import { checkPageAuth } from '../../utils/auth-guard'
+
 Page({
   data: {
     // 状态栏信息
@@ -64,6 +66,11 @@ Page({
   },
 
   onLoad() {
+    // 检查登录状态
+    if (!checkPageAuth()) {
+      return // 如果未登录，停止页面加载
+    }
+    
     this.initStatusBar()
     this.loadData()
   },

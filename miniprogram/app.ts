@@ -16,6 +16,11 @@ interface AppOption {
   login(): Promise<void>;
 }
 
+// 登录白名单页面（不需要登录就能访问的页面）
+const LOGIN_WHITELIST = [
+  '/pages/login/login',
+]
+
 App<AppOption>({
   globalData: {
     statusBarHeight: 44, // 默认状态栏高度
@@ -42,6 +47,33 @@ App<AppOption>({
 
     // 检查用户登录状态
     this.checkLoginStatus()
+    
+    // 如果未登录，直接跳转到登录页
+    if (!this.globalData.isLoggedIn) {
+      console.log('用户未登录，启动时直接跳转到登录页')
+      wx.reLaunch({
+        url: '/pages/login/login'
+      })
+    }
+  },
+
+  onShow() {
+    // 每次小程序显示时都检查登录状态
+    this.checkLoginStatus()
+    
+    // 如果用户在非登录页面但未登录，跳转到登录页
+    const pages = getCurrentPages()
+    if (pages.length > 0) {
+      const currentPage = pages[pages.length - 1]
+      const currentRoute = `/${currentPage.route}`
+      
+      if (!this.globalData.isLoggedIn && !currentRoute.startsWith('/pages/login/login')) {
+        console.log('用户未登录且不在登录页，跳转到登录页')
+        wx.reLaunch({
+          url: '/pages/login/login'
+        })
+      }
+    }
   },
   
 
@@ -85,13 +117,19 @@ App<AppOption>({
   // 检查用户登录状态
   checkLoginStatus() {
     const openid = wx.getStorageSync('openid')
-    if (openid) {
+    const userInfo = wx.getStorageSync('userInfo')
+    
+    if (openid && userInfo) {
       this.globalData.openid = openid
+      this.globalData.userInfo = userInfo
       this.globalData.isLoggedIn = true
+      console.log('用户已登录:', openid)
     } else {
       this.globalData.isLoggedIn = false
+      console.log('用户未登录')
     }
   },
+
 
   // 用户登录
   async login() {

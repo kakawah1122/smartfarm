@@ -10,10 +10,72 @@ const db = cloud.database()
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
+  const { checkOnly } = event // 如果 checkOnly 为 true，只检查用户是否存在
   
   try {
     // 获取用户的 openid
     const { OPENID, APPID, UNIONID } = wxContext
+    
+    // 如果只是检查用户是否存在
+    if (checkOnly) {
+      try {
+        console.log('检查用户是否存在，OPENID:', OPENID)
+        
+        const userQuery = await db.collection('users').where({
+          _openid: OPENID
+        }).get()
+        
+        console.log('查询结果:', {
+          total: userQuery.data.length,
+          exists: userQuery.data.length > 0,
+          firstUser: userQuery.data[0] ? {
+            _id: userQuery.data[0]._id,
+            _openid: userQuery.data[0]._openid,
+            nickname: userQuery.data[0].nickname,
+            role: userQuery.data[0].role
+          } : null
+        })
+        
+        const exists = userQuery.data.length > 0
+        
+        return {
+          success: true,
+          exists: exists,
+          openid: OPENID,
+          debug: {
+            queryCount: userQuery.data.length,
+            searchOpenid: OPENID
+          }
+        }
+      } catch (error) {
+        console.error('checkOnly 查询用户失败:', error)
+        
+        // 如果是集合不存在的错误，用户确实不存在
+        if (error.errCode === -502005 || error.message?.includes('collection not exists')) {
+          return {
+            success: true,
+            exists: false,
+            openid: OPENID,
+            debug: {
+              error: 'collection_not_exists',
+              message: '用户集合不存在'
+            }
+          }
+        }
+        
+        // 其他错误，返回错误信息用于调试
+        return {
+          success: false,
+          exists: false,
+          openid: OPENID,
+          error: error.message,
+          debug: {
+            errorCode: error.errCode,
+            errorMessage: error.message
+          }
+        }
+      }
+    }
     
     // 创建用户信息对象
     const createTime = new Date()

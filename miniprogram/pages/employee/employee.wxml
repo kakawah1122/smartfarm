@@ -1,5 +1,5 @@
 <!--pages/employee/employee.wxml-->
-<navigation-bar title="员工管理" bind:back="goBack"></navigation-bar>
+<navigation-bar title="员工管理" show-back="{{true}}" bind:back="goBack"></navigation-bar>
 
 <view class="container">
   <!-- 权限检查 -->
@@ -12,21 +12,16 @@
 
   <!-- 主要内容 -->
   <view wx:else class="main-content">
-    <!-- 标签页导航 -->
-    <view class="tab-nav">
-      <view class="tab-item {{activeTab === 'employees' ? 'active' : ''}}" data-tab="employees" bindtap="switchTab">
-        员工列表 ({{totalEmployees}})
-      </view>
-      <view wx:if="{{hasInvitePermission}}" class="tab-item {{activeTab === 'invites' ? 'active' : ''}}" data-tab="invites" bindtap="switchTab">
-        邀请记录
-      </view>
+    <!-- 页面标题 -->
+    <view class="page-header">
+      <text class="page-title">员工列表 ({{totalEmployees}})</text>
     </view>
 
     <!-- 操作按钮 -->
     <view class="action-buttons">
-      <button wx:if="{{hasInvitePermission}}" class="invite-btn" bindtap="showInviteEmployee">
+      <button wx:if="{{hasInvitePermission}}" class="invite-btn" bindtap="goToInviteManagement">
         <text class="icon">➕</text>
-        邀请员工
+        邀请管理
       </button>
       <button class="join-btn" bindtap="showJoinOrganization">
         <text class="icon">🔗</text>
@@ -35,7 +30,7 @@
     </view>
 
     <!-- 员工列表 -->
-    <view wx:if="{{activeTab === 'employees'}}" class="employees-tab">
+    <view class="employees-section">
       <view wx:if="{{loading}}" class="loading">
         <text>加载中...</text>
       </view>
@@ -43,7 +38,7 @@
       <view wx:elif="{{employees.length === 0}}" class="empty-state">
         <view class="empty-icon">👥</view>
         <view class="empty-text">暂无员工</view>
-        <view class="empty-desc">邀请员工加入您的组织</view>
+        <view class="empty-desc">点击邀请管理创建邀请码</view>
       </view>
       
       <view wx:else class="employee-list">
@@ -70,98 +65,9 @@
       </view>
     </view>
 
-    <!-- 邀请记录 -->
-    <view wx:if="{{activeTab === 'invites' && hasInvitePermission}}" class="invites-tab">
-      <view wx:if="{{loading}}" class="loading">
-        <text>加载中...</text>
-      </view>
-      
-      <view wx:elif="{{invites.length === 0}}" class="empty-state">
-        <view class="empty-icon">📨</view>
-        <view class="empty-text">暂无邀请记录</view>
-        <view class="empty-desc">点击邀请员工创建邀请码</view>
-      </view>
-      
-      <view wx:else class="invite-list">
-        <view class="invite-item" wx:for="{{invites}}" wx:key="_id">
-          <view class="invite-header">
-            <view class="invite-code" data-code="{{item.inviteCode}}" bindtap="copyInviteCode">
-              {{item.inviteCode}}
-              <text class="copy-hint">点击复制</text>
-            </view>
-            <view class="invite-status {{item.isUsed ? 'used' : 'pending'}}">
-              {{item.isUsed ? '已使用' : '待使用'}}
-            </view>
-          </view>
-          
-          <view class="invite-info">
-            <view class="invite-detail">
-              <text class="label">部门：</text>{{item.department || '未设置'}}
-            </view>
-            <view class="invite-detail">
-              <text class="label">职位：</text>{{item.position || '未设置'}}
-            </view>
-            <view class="invite-detail">
-              <text class="label">创建时间：</text>{{item.createTime}}
-            </view>
-            <view class="invite-detail">
-              <text class="label">过期时间：</text>{{item.expireTime}}
-            </view>
-          </view>
-          
-          <view wx:if="{{item.isUsed}}" class="invite-usage">
-            <text class="label">使用者：</text>{{item.usedBy}}
-            <text class="label">使用时间：</text>{{item.usedTime}}
-          </view>
-        </view>
-      </view>
-    </view>
   </view>
 </view>
 
-<!-- 邀请员工对话框 -->
-<view wx:if="{{showInviteDialog}}" class="dialog-overlay" bindtap="closeDialog">
-  <view class="dialog-content" catchtap="">
-    <view class="dialog-header">
-      <text class="dialog-title">邀请员工</text>
-      <text class="dialog-close" bindtap="closeDialog">✕</text>
-    </view>
-    
-    <view class="dialog-body">
-      <view class="form-group">
-        <text class="form-label">部门</text>
-        <input class="form-input" placeholder="请输入部门名称" value="{{inviteForm.department}}" bindinput="onInviteDepartmentInput" />
-      </view>
-      
-      <view class="form-group">
-        <text class="form-label">职位</text>
-        <input class="form-input" placeholder="请输入职位名称" value="{{inviteForm.position}}" bindinput="onInvitePositionInput" />
-      </view>
-      
-      <view class="form-group">
-        <text class="form-label">权限设置</text>
-        <checkbox-group data-type="invite" bindchange="onPermissionChange">
-          <view class="permission-list">
-            <label class="permission-item" wx:for="{{permissions}}" wx:key="*this" wx:for-index="permKey" wx:for-item="permName">
-              <checkbox value="{{permKey}}" checked="{{inviteForm.permissions.includes(permKey)}}" />
-              <text class="permission-name">{{permName}}</text>
-            </label>
-          </view>
-        </checkbox-group>
-      </view>
-      
-      <view class="form-group">
-        <text class="form-label">有效期（天）</text>
-        <input class="form-input" type="number" value="{{inviteForm.validDays}}" bindinput="onInviteValidDaysInput" />
-      </view>
-    </view>
-    
-    <view class="dialog-footer">
-      <button class="btn-cancel" bindtap="closeDialog">取消</button>
-      <button class="btn-confirm" bindtap="inviteEmployee">生成邀请码</button>
-    </view>
-  </view>
-</view>
 
 <!-- 编辑员工对话框 -->
 <view wx:if="{{showEditDialog}}" class="dialog-overlay" bindtap="closeDialog">

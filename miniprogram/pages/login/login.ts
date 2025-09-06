@@ -33,6 +33,12 @@ interface LoginPageData {
   selectedAvatarUrl: string;
   statusBarHeight: number;
   navBarHeight: number;
+  // 邀请码注册相关
+  showInviteDialog: boolean;
+  inviteCode: string;
+  inviteNickname: string;
+  invitePhone: string;
+  inviteCodeFocus: boolean;
 }
 
 Page({
@@ -46,6 +52,12 @@ Page({
     selectedAvatarUrl: '',
     statusBarHeight: 44,
     navBarHeight: 88,
+    // 邀请码注册相关
+    showInviteDialog: false,
+    inviteCode: '',
+    inviteNickname: '',
+    invitePhone: '',
+    inviteCodeFocus: false,
   },
 
   onLoad() {
@@ -174,13 +186,64 @@ Page({
       }
 
       wx.showLoading({
+        title: '检查用户状态...',
+        mask: true
+      })
+
+      console.log('检查用户是否已注册...')
+
+          // 首先检查用户是否存在
+          const checkResult = await wx.cloud.callFunction({
+            name: 'login',
+            data: {
+              checkOnly: true
+            }
+          })
+
+          console.log('checkOnly 云函数返回结果:', checkResult)
+          console.log('checkResult.result:', checkResult.result)
+
+          if (!checkResult.result?.success) {
+            // 如果云函数调用失败
+            wx.hideLoading()
+            this.setData({ isLoading: false })
+            
+            wx.showModal({
+              title: '登录检查失败',
+              content: `云函数调用出错：${checkResult.result?.error || '未知错误'}\n\n调试信息：${JSON.stringify(checkResult.result?.debug, null, 2)}`,
+              showCancel: false,
+              confirmText: '确定'
+            })
+            return
+          }
+
+          if (!checkResult.result?.exists) {
+        // 用户不存在，提示注册
+        wx.hideLoading()
+        this.setData({ isLoading: false })
+        
+        wx.showModal({
+          title: '用户未注册',
+          content: '检测到您尚未注册，请使用邀请码进行注册',
+          confirmText: '去注册',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              this.showInviteRegister()
+            }
+          }
+        })
+        return
+      }
+
+      wx.showLoading({
         title: '登录中...',
         mask: true
       })
 
-      console.log('开始调用登录云函数...')
+      console.log('用户已注册，开始登录...')
 
-      // 调用登录云函数
+      // 用户存在，执行登录
       const result = await wx.cloud.callFunction({
         name: 'login',
         data: {}
@@ -202,34 +265,12 @@ Page({
         wx.setStorageSync('openid', result.result.openid)
         wx.setStorageSync('userInfo', result.result.user)
 
-        // 更新页面状态
-        this.setData({
-          isLoggedIn: true,
-          userInfo: result.result.user,
-          nickname: result.result.user.nickname || '',
-          phone: result.result.user.phone || '',
-          farmName: result.result.user.farmName || ''
-        })
-
-        wx.showToast({
-          title: result.result.message || '登录成功',
-          icon: 'success'
-        })
-
         console.log('登录成功，用户信息:', result.result.user)
 
-        // 如果是新用户或信息不完整，显示完善信息界面
-        if (!result.result.user.nickname || !result.result.user.phone || !result.result.user.farmName) {
-          console.log('用户信息不完整，需要完善')
-        } else {
-          console.log('用户信息已完善，准备跳转到首页')
-          // 如果用户信息已完善，自动跳转到首页
-          setTimeout(() => {
-            wx.switchTab({
-              url: '/pages/index/index'
-            })
-          }, 1500)
-        }
+        // 直接跳转到首页，不显示中间页面和Toast
+        wx.reLaunch({
+          url: '/pages/index/index'
+        })
       } else {
         console.error('云函数返回失败:', result)
         console.error('完整的result结构:', JSON.stringify(result, null, 2))
@@ -317,27 +358,6 @@ Page({
     }
   },
 
-  // 游客登录
-  onGuestLogin() {
-    wx.showModal({
-      title: '提示',
-      content: '游客模式下功能有限，建议使用微信登录获得完整体验',
-      confirmText: '继续',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          // 设置游客模式
-          const app = getApp()
-          app.globalData.isLoggedIn = false
-          
-          // 返回首页
-          wx.switchTab({
-            url: '/pages/index/index'
-          })
-        }
-      }
-    })
-  },
 
   // 输入框事件
   onNicknameInput(e: any) {
@@ -519,5 +539,176 @@ Page({
     wx.navigateBack({
       delta: 1
     })
+  },
+
+  // 显示邀请码注册弹窗
+  showInviteRegister() {
+    console.log('显示邀请码注册弹窗')
+    this.setData({
+      showInviteDialog: true,
+      inviteCode: '',
+      inviteNickname: '',
+      invitePhone: '',
+      inviteCodeFocus: true
+    })
+    console.log('弹窗状态已设置:', this.data.showInviteDialog)
+  },
+
+  // 关闭邀请码注册弹窗
+  closeInviteDialog() {
+    this.setData({
+      showInviteDialog: false,
+      inviteCode: '',
+      inviteNickname: '',
+      invitePhone: '',
+      inviteCodeFocus: false
+    })
+  },
+
+  // 输入框聚焦处理
+  onInputFocus() {
+    console.log('输入框获得焦点')
+  },
+
+  // 邀请码输入
+  onInviteCodeInput(e: any) {
+    this.setData({
+      inviteCode: e.detail.value.toUpperCase()
+    })
+  },
+
+  // 姓名输入
+  onInviteNicknameInput(e: any) {
+    this.setData({
+      inviteNickname: e.detail.value
+    })
+  },
+
+  // 手机号输入
+  onInvitePhoneInput(e: any) {
+    this.setData({
+      invitePhone: e.detail.value
+    })
+  },
+
+  // 邀请码注册
+  async onInviteRegister() {
+    const { inviteCode, inviteNickname, invitePhone } = this.data
+
+    // 验证输入
+    if (!inviteCode.trim()) {
+      wx.showToast({
+        title: '请输入邀请码',
+        icon: 'error'
+      })
+      return
+    }
+
+    if (!inviteNickname.trim()) {
+      wx.showToast({
+        title: '请输入姓名',
+        icon: 'error'
+      })
+      return
+    }
+
+    if (!invitePhone.trim()) {
+      wx.showToast({
+        title: '请输入手机号',
+        icon: 'error'
+      })
+      return
+    }
+
+    // 验证手机号格式
+    const phoneRegex = /^1[3-9]\d{9}$/
+    if (!phoneRegex.test(invitePhone)) {
+      wx.showToast({
+        title: '手机号格式不正确',
+        icon: 'error'
+      })
+      return
+    }
+
+    try {
+      wx.showLoading({
+        title: '注册中...',
+        mask: true
+      })
+
+      // 调用云函数进行用户登录（创建用户记录）
+      const cloudLoginResult = await wx.cloud.callFunction({
+        name: 'login'
+      })
+
+      if (!cloudLoginResult.result?.success) {
+        throw new Error('登录失败')
+      }
+
+      // 使用邀请码注册
+      const registerResult = await wx.cloud.callFunction({
+        name: 'register',
+        data: {
+          nickname: inviteNickname.trim(),
+          avatarUrl: '', // 后续可以在个人中心设置
+          phone: invitePhone.trim(),
+          gender: 0, // 默认值
+          farmName: '', // 邀请码注册时养殖场名称可能由邀请信息确定
+          inviteCode: inviteCode.trim()
+        }
+      })
+
+      wx.hideLoading()
+
+      if (registerResult.result?.success) {
+        // 更新全局状态
+        const app = getApp()
+        app.globalData.openid = cloudLoginResult.result.openid
+        app.globalData.isLoggedIn = true
+        app.globalData.userInfo = registerResult.result.user
+
+        // 存储到本地
+        wx.setStorageSync('openid', cloudLoginResult.result.openid)
+        wx.setStorageSync('userInfo', registerResult.result.user)
+
+        // 关闭弹窗
+        this.setData({
+          showInviteDialog: false,
+          isLoggedIn: true,
+          userInfo: registerResult.result.user
+        })
+
+        wx.showToast({
+          title: '注册成功！',
+          icon: 'success',
+          duration: 2000
+        })
+
+        // 直接跳转到首页
+        wx.reLaunch({
+          url: '/pages/index/index'
+        })
+
+      } else {
+        wx.showToast({
+          title: registerResult.result?.message || '注册失败',
+          icon: 'error'
+        })
+      }
+
+    } catch (error) {
+      wx.hideLoading()
+      console.error('邀请码注册失败:', error)
+      
+      let errorMessage = '注册失败，请重试'
+      if (error.message) {
+        errorMessage = error.message
+      }
+      
+      wx.showToast({
+        title: errorMessage,
+        icon: 'error'
+      })
+    }
   }
 })
