@@ -71,7 +71,7 @@
               <view class="record-main">
                 <view class="record-header">
                   <text class="record-location">{{item.location}}</text>
-                  <t-tag theme="{{item.severity}}" size="small">{{item.priorityText}}</t-tag>
+                  <t-tag theme="{{item.severity || 'default'}}" size="small">{{item.priorityText || '未知'}}</t-tag>
                 </view>
                 <view class="record-content">
                   <text class="record-symptoms">{{item.symptoms}}</text>

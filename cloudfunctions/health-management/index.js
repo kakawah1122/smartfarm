@@ -71,6 +71,8 @@ exports.main = async (event, context) => {
         return await getHealthDetail(event, wxContext)
       case 'get_health_record':
         return await getHealthRecord(event, wxContext)
+      case 'get_health_record_detail':  // 添加客户端使用的action名称
+        return await getHealthDetail(event, wxContext)
       case 'create_followup_record':
         return await createFollowupRecord(event, wxContext)
       case 'list_followup_records':
@@ -79,8 +81,6 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('健康管理云函数错误:', error)
-    console.error('错误堆栈:', error.stack)
     return {
       success: false,
       error: error.message,
@@ -141,7 +141,6 @@ async function getActiveBatches(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取活跃批次失败:', error)
     throw error
   }
 }
@@ -228,7 +227,6 @@ async function createHealthRecord(event, wxContext) {
     }
     
   } catch (error) {
-    console.error('创建健康记录失败:', error)
     throw error
   }
 }
@@ -362,7 +360,6 @@ async function listHealthRecords(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取健康记录列表失败:', error)
     throw error
   }
 }
@@ -437,7 +434,6 @@ async function getHealthStats(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取健康统计失败:', error)
     throw error
   }
 }
@@ -466,7 +462,6 @@ async function getStockStats() {
       totalStock
     }
   } catch (error) {
-    console.error('获取存栏统计失败:', error)
     throw error
   }
 }
@@ -502,7 +497,6 @@ async function getHealthTrend(dateRange) {
     
     return dailyStats
   } catch (error) {
-    console.error('获取健康趋势失败:', error)
     return {}
   }
 }
@@ -556,7 +550,6 @@ async function listDeathRecords(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取死亡记录失败:', error)
     throw error
   }
 }
@@ -591,7 +584,6 @@ async function updateHealthRecord(event, wxContext) {
       message: '健康记录更新成功'
     }
   } catch (error) {
-    console.error('更新健康记录失败:', error)
     throw error
   }
 }
@@ -632,7 +624,6 @@ async function getHealthDetail(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取健康记录详情失败:', error)
     throw error
   }
 }
@@ -658,7 +649,6 @@ async function getHealthRecord(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取健康记录失败:', error)
     throw error
   }
 }
@@ -668,12 +658,10 @@ async function createFollowupRecord(event, wxContext) {
   const { followupData } = event
   
   try {
-    console.log('收到跟进数据:', followupData)
     
     // 数据验证
     if (!followupData.recordId || !followupData.followupDate) {
       const error = `缺少必填字段: recordId=${followupData.recordId}, followupDate=${followupData.followupDate}`
-      console.error('数据验证失败:', error)
       throw new Error(error)
     }
     
@@ -686,16 +674,11 @@ async function createFollowupRecord(event, wxContext) {
     }
     
     // 检查原始记录是否存在
-    console.log('查询原始记录:', followupData.recordId)
     const originalRecord = await db.collection('health_records').doc(followupData.recordId).get()
-    console.log('原始记录查询结果:', originalRecord)
     
     if (!originalRecord.data) {
-      console.error('原始记录不存在，recordId:', followupData.recordId)
       throw new Error('原始健康记录不存在')
     }
-    
-    console.log('原始记录数据:', originalRecord.data)
     
     const now = new Date()
     const followupRecordId = generateFollowupRecordId()
@@ -715,19 +698,12 @@ async function createFollowupRecord(event, wxContext) {
       updateTime: now
     }
     
-    console.log('准备创建跟进记录:', followupRecord)
-    
-    // 简化版本：先尝试直接创建跟进记录
+    // 创建跟进记录
     try {
-      console.log('尝试创建跟进记录集合（如果不存在）')
-      
-      // 直接添加跟进记录
-      console.log('添加跟进记录到数据库')
+      // 添加跟进记录
       const addResult = await db.collection('followup_records').add({
         data: followupRecord
       })
-      
-      console.log('跟进记录创建成功:', addResult)
       
       // 计算已处理的总数量
       const currentCuredCount = Number(originalRecord.data.curedCount || 0)
@@ -740,8 +716,7 @@ async function createFollowupRecord(event, wxContext) {
       const totalProcessed = totalCured + totalDeaths
       const originalAffectedCount = Number(originalRecord.data.affectedCount || 0)
       
-      console.log('处理数量统计:', {
-        原始受影响: originalAffectedCount,
+      // 处理数量统计
         已治愈: totalCured,
         已死亡: totalDeaths,
         已处理总数: totalProcessed
@@ -773,7 +748,7 @@ async function createFollowupRecord(event, wxContext) {
         currentAffectedCount: Math.max(0, originalAffectedCount - totalProcessed)
       }
       
-      console.log('更新原始健康记录:', followupData.recordId, updateData)
+      // 更新原始健康记录
       await db.collection('health_records').doc(followupData.recordId).update({
         data: updateData
       })
@@ -797,7 +772,7 @@ async function createFollowupRecord(event, wxContext) {
           updateTime: now
         }
         
-        console.log('创建治愈记录:', cureRecord)
+        // 创建治愈记录
         await db.collection('cure_records').add({
           data: cureRecord
         })
@@ -831,7 +806,7 @@ async function createFollowupRecord(event, wxContext) {
           updateTime: now
         }
         
-        console.log('创建死亡记录:', deathRecord)
+        // 创建死亡记录
         await db.collection('death_records').add({
           data: deathRecord
         })
@@ -845,10 +820,7 @@ async function createFollowupRecord(event, wxContext) {
         })
       }
       
-      console.log('所有操作完成')
     } catch (dbError) {
-      console.error('数据库操作失败:', dbError)
-      console.error('数据库错误详细信息:', dbError.code, dbError.message)
       throw new Error(`数据库操作失败: ${dbError.message}`)
     }
     
@@ -862,7 +834,6 @@ async function createFollowupRecord(event, wxContext) {
     }
     
   } catch (error) {
-    console.error('创建跟进记录失败:', error)
     throw error
   }
 }
@@ -916,7 +887,6 @@ async function listFollowupRecords(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取跟进记录失败:', error)
     throw error
   }
 }

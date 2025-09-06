@@ -1,0 +1,18 @@
+{
+  "usingComponents": {
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-picker": "tdesign-miniprogram/picker/picker",
+    "t-input": "tdesign-miniprogram/input/input",
+    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+  },
+  "navigationStyle": "custom"
+}

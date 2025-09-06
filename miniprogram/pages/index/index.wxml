@@ -86,7 +86,7 @@
             <view class="todo-dot {{item.priority}}"></view>
             <text class="todo-text">{{item.content}}</text>
           </view>
-          <t-tag theme="{{item.tagTheme}}" size="small" class="todo-tag">{{item.priorityText}}</t-tag>
+          <t-tag theme="{{item.tagTheme || 'default'}}" size="small" class="todo-tag">{{item.priorityText || '普通'}}</t-tag>
         </view>
       </view>
       <t-button theme="light" size="medium" block bind:tap="viewAllTodos" class="view-all-btn">

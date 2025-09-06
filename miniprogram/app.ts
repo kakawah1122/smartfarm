@@ -109,7 +109,6 @@ App<AppOption>({
         // 保存到本地存储
         wx.setStorageSync('openid', loginRes.result.openid)
         
-        console.log('登录成功', loginRes.result.openid)
       }
     } catch (error) {
       console.error('登录失败', error)

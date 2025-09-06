@@ -10,11 +10,15 @@
     "pages/inventory-detail/inventory-detail",
     "pages/health/health",
     "pages/health-record-form/health-record-form",
+    "pages/health-record-detail/health-record-detail",
     "pages/treatment-followup/treatment-followup",
     "pages/profile/profile",
     "pages/finance/finance",
     "pages/login/login",
-    "pages/employee/employee"
+    "pages/employee/employee",
+    "pages/user-management/user-management",
+    "pages/invite-management/invite-management",
+    "pages/user-approval/user-approval"
   ],
   "tabBar": {
     "color": "#999",

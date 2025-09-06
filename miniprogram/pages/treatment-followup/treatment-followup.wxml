@@ -28,7 +28,7 @@
               <text class="stat-number">{{originalRecord.affectedCount}}</text>
               <text class="stat-unit">羽</text>
             </view>
-            <t-tag theme="{{originalRecord.severity}}" size="small">{{originalRecord.severityText}}</t-tag>
+            <t-tag theme="{{originalRecord.severity || 'default'}}" size="small">{{originalRecord.severityText || '未知'}}</t-tag>
           </view>
         </view>
         

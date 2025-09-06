@@ -10,7 +10,7 @@ const db = cloud.database()
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
-  const { nickname, avatarUrl, phone, gender, farmName } = event
+  const { nickname, avatarUrl, phone, gender, farmName, inviteCode } = event
   
   try {
     // 获取用户的 openid
@@ -42,7 +42,6 @@ exports.main = async (event, context) => {
       user = userQuery.data[0]
       
     } catch (queryError) {
-      console.error('查询用户时出错:', queryError)
       
       if (queryError.errCode === -502005 || queryError.message?.includes('collection not exists')) {
         return {
@@ -53,6 +52,41 @@ exports.main = async (event, context) => {
       }
       
       throw queryError
+    }
+    
+    // 处理邀请码验证（如果提供了邀请码）
+    let inviteInfo = null
+    if (inviteCode) {
+      try {
+        // 验证邀请码
+        const inviteValidation = await validateInviteCode(inviteCode, OPENID)
+        if (!inviteValidation.success) {
+          return {
+            success: false,
+            message: inviteValidation.message,
+            error: inviteValidation.error
+          }
+        }
+        
+        inviteInfo = inviteValidation.data.invite
+        
+        // 使用邀请码
+        const useResult = await useInviteCode(inviteCode, OPENID)
+        if (!useResult.success) {
+          return {
+            success: false,
+            message: useResult.message,
+            error: useResult.error
+          }
+        }
+        
+      } catch (inviteError) {
+        return {
+          success: false,
+          message: '邀请码验证失败，请重试',
+          error: 'invite_code_validation_failed'
+        }
+      }
     }
     
     // 准备更新数据
@@ -75,6 +109,18 @@ exports.main = async (event, context) => {
     }
     if (farmName !== undefined) {
       updateData.farmName = farmName
+    }
+    
+    // 如果有邀请信息，更新相关字段
+    if (inviteInfo) {
+      updateData.inviteCode = inviteCode
+      updateData.department = inviteInfo.department || ''
+      updateData.position = inviteInfo.position || ''
+      if (inviteInfo.role) {
+        updateData.role = inviteInfo.role
+      }
+      // 保持待审批状态
+      updateData.approvalStatus = 'pending'
     }
     
     // 更新用户信息
@@ -112,11 +158,127 @@ exports.main = async (event, context) => {
     }
     
   } catch (error) {
-    console.error('注册/更新用户信息失败:', error)
     return {
       success: false,
       error: error.message,
       message: '操作失败，请重试'
+    }
+  }
+}
+
+// 验证邀请码
+async function validateInviteCode(inviteCode, openid) {
+  try {
+    if (!inviteCode) {
+      return {
+        success: false,
+        message: '缺少邀请码',
+        error: 'missing_invite_code'
+      }
+    }
+
+    // 查找邀请记录
+    const inviteResult = await db.collection('employee_invites')
+      .where({ inviteCode: inviteCode.toUpperCase() })
+      .get()
+
+    if (inviteResult.data.length === 0) {
+      return {
+        success: false,
+        message: '邀请码不存在',
+        error: 'invite_not_found'
+      }
+    }
+
+    const invite = inviteResult.data[0]
+
+    // 检查邀请状态
+    if (invite.status === 'used') {
+      return {
+        success: false,
+        message: '邀请码已被使用',
+        error: 'invite_used'
+      }
+    }
+
+    if (invite.status === 'revoked') {
+      return {
+        success: false,
+        message: '邀请码已被撤销',
+        error: 'invite_revoked'
+      }
+    }
+
+    if (invite.status === 'expired') {
+      return {
+        success: false,
+        message: '邀请码已过期',
+        error: 'invite_expired'
+      }
+    }
+
+    // 检查是否过期
+    if (new Date() > new Date(invite.expiryTime)) {
+      // 自动标记为过期
+      await db.collection('employee_invites').doc(invite._id).update({
+        data: { status: 'expired' }
+      })
+
+      return {
+        success: false,
+        message: '邀请码已过期',
+        error: 'invite_expired'
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        invite: invite
+      },
+      message: '邀请码有效'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: '邀请码验证失败',
+      error: 'validation_failed'
+    }
+  }
+}
+
+// 使用邀请码
+async function useInviteCode(inviteCode, openid) {
+  try {
+    // 再次验证邀请码
+    const validateResult = await validateInviteCode(inviteCode, openid)
+    if (!validateResult.success) {
+      return validateResult
+    }
+
+    const invite = validateResult.data.invite
+
+    // 标记邀请码为已使用
+    await db.collection('employee_invites').doc(invite._id).update({
+      data: {
+        status: 'used',
+        usedTime: new Date(),
+        usedByOpenId: openid
+      }
+    })
+
+    return {
+      success: true,
+      data: {
+        invite: invite
+      },
+      message: '邀请码使用成功'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: '使用邀请码失败',
+      error: 'use_invite_failed'
     }
   }
 }

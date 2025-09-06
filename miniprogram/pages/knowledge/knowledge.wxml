@@ -60,7 +60,7 @@
                 bind:click="viewArticle"
                 data-item="{{item}}">
           <view slot="right" class="article-meta">
-            <t-tag theme="{{item.categoryTheme}}" size="small">{{item.categoryName}}</t-tag>
+            <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
           </view>
         </t-cell>
       </t-cell-group>

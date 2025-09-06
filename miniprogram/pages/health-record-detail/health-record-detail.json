@@ -1,0 +1,12 @@
+{
+  "usingComponents": {
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-divider": "tdesign-miniprogram/divider/divider",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+  },
+  "navigationStyle": "custom"
+}

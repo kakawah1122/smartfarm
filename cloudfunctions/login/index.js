@@ -12,22 +12,8 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   
   try {
-    // 如果是测试请求，直接返回测试结果
-    if (event.test) {
-      return {
-        success: true,
-        message: '云开发环境测试成功！',
-        timestamp: new Date().toISOString(),
-        environment: cloud.DYNAMIC_CURRENT_ENV,
-        openid: wxContext.OPENID || 'unknown',
-        appid: wxContext.APPID || 'unknown'
-      }
-    }
-
     // 获取用户的 openid
     const { OPENID, APPID, UNIONID } = wxContext
-    
-    console.log('用户登录，OPENID:', OPENID)
     
     // 创建用户信息对象
     const createTime = new Date()
@@ -58,11 +44,20 @@ exports.main = async (event, context) => {
       position: '', // 职位
       managedBy: null, // 管理者ID
       organizationId: null, // 组织ID（用于多组织管理）
+      // 邀请审批相关字段
+      inviteCode: '', // 使用的邀请码
+      approvalStatus: isFirstUser ? 'approved' : 'pending', // pending: 待审批, approved: 已审批, rejected: 已拒绝
+      approvedBy: isFirstUser ? OPENID : null, // 审批人OPENID
+      approvedTime: isFirstUser ? createTime : null, // 审批时间
+      rejectedBy: null, // 拒绝人OPENID
+      rejectedTime: null, // 拒绝时间
+      rejectedReason: '', // 拒绝原因
+      approvalRemark: '', // 审批备注
       // 时间字段
       createTime: createTime,
       lastLoginTime: createTime,
       loginCount: 1,
-      isActive: true
+      isActive: isFirstUser // 第一个用户直接激活，其他用户需要审批
     }
     
     let user = null
@@ -79,8 +74,7 @@ exports.main = async (event, context) => {
       } catch (queryError) {
         // 如果查询失败且是集合不存在错误，直接跳到创建逻辑
         if (queryError.errCode === -502005 || queryError.message?.includes('collection not exists')) {
-          console.log('users集合不存在，将通过创建用户来初始化集合')
-          userQuery = { data: [] } // 模拟空查询结果
+          userQuery = { data: [] } // 空查询结果
         } else {
           throw queryError
         }
@@ -88,7 +82,6 @@ exports.main = async (event, context) => {
       
       if (userQuery.data.length === 0) {
         // 用户不存在，创建新用户记录
-        console.log('创建新用户:', OPENID)
         
         try {
           const createResult = await db.collection('users').add({
@@ -100,10 +93,8 @@ exports.main = async (event, context) => {
             _id: createResult._id
           }
           isNewUser = true
-          console.log('新用户创建成功:', OPENID)
           
         } catch (createError) {
-          console.error('创建用户时出错:', createError)
           // 特别处理集合不存在的错误
           if (createError.errCode === -502005 || createError.message?.includes('collection not exists')) {
             throw new Error('数据库集合不存在。请联系管理员初始化数据库，或尝试重新部署云函数。')
@@ -113,7 +104,6 @@ exports.main = async (event, context) => {
         
       } else {
         // 用户已存在，更新登录信息
-        console.log('用户已存在，更新登录信息:', OPENID)
         user = userQuery.data[0]
         
         try {
@@ -129,45 +119,62 @@ exports.main = async (event, context) => {
           user.loginCount = (user.loginCount || 0) + 1
           
         } catch (updateError) {
-          console.error('更新用户信息时出错:', updateError)
-          // 更新失败不影响登录流程，只记录错误
+          // 更新失败不影响登录流程
         }
       }
     } catch (error) {
-      console.error('数据库操作出错:', error)
       throw error
     }
     
-    // 返回登录结果
-    return {
+    // 检查用户审批状态
+    const approvalStatus = user.approvalStatus || 'pending'
+    
+    // 返回登录结果（包含审批状态）
+    const loginResult = {
       success: true,
       openid: OPENID,
-              user: {
-          _id: user._id,
-          openid: OPENID,
-          nickname: user.nickname || '',
-          avatarUrl: user.avatarUrl || '',
-          phone: user.phone || '',
-          farmName: user.farmName || '', // 添加养殖场名称到返回数据
-          gender: user.gender || 0,
-          // 角色和权限信息
-          role: user.role || 'user',
-          permissions: user.permissions || ['basic'],
-          department: user.department || '',
-          position: user.position || '',
-          managedBy: user.managedBy || null,
-          organizationId: user.organizationId || null,
-          // 时间信息
-          createTime: user.createTime,
-          lastLoginTime: user.lastLoginTime || new Date(),
-          loginCount: user.loginCount || 1,
-          isActive: user.isActive !== undefined ? user.isActive : true
-        },
-      message: isNewUser ? '新用户注册成功' : '登录成功'
+      user: {
+        _id: user._id,
+        openid: OPENID,
+        nickname: user.nickname || '',
+        avatarUrl: user.avatarUrl || '',
+        phone: user.phone || '',
+        farmName: user.farmName || '', // 添加养殖场名称到返回数据
+        gender: user.gender || 0,
+        // 角色和权限信息
+        role: user.role || 'user',
+        permissions: user.permissions || ['basic'],
+        department: user.department || '',
+        position: user.position || '',
+        managedBy: user.managedBy || null,
+        organizationId: user.organizationId || null,
+        // 审批相关信息
+        approvalStatus: approvalStatus,
+        approvedTime: user.approvedTime || null,
+        rejectedReason: user.rejectedReason || '',
+        // 时间信息
+        createTime: user.createTime,
+        lastLoginTime: user.lastLoginTime || new Date(),
+        loginCount: user.loginCount || 1,
+        isActive: user.isActive !== undefined ? user.isActive : true
+      }
     }
     
+    // 根据审批状态返回不同的消息和状态
+    if (approvalStatus === 'pending') {
+      loginResult.message = isNewUser ? '注册成功，等待管理员审批' : '账户待审批，请联系管理员'
+      loginResult.needApproval = true
+    } else if (approvalStatus === 'rejected') {
+      loginResult.message = '账户审批未通过：' + (user.rejectedReason || '请联系管理员了解详情')
+      loginResult.isRejected = true
+    } else {
+      loginResult.message = isNewUser ? '新用户注册成功' : '登录成功'
+      loginResult.canUseApp = true
+    }
+    
+    return loginResult
+    
   } catch (error) {
-    console.error('登录失败:', error)
     return {
       success: false,
       error: error.message,

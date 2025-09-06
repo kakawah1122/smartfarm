@@ -18,64 +18,6 @@
 
     <!-- 表单主体 -->
     <view wx:else class="health-record-form">
-      <!-- 基础信息 -->
-      <view class="form-section">
-        <view class="section-header">
-          <text class="section-title">基础信息</text>
-        </view>
-        
-        <view class="form-card">
-          <!-- 批次选择 -->
-          <view class="form-item">
-            <view class="form-label required">选择批次</view>
-            <view class="form-content">
-              <picker 
-                wx:if="{{availableBatches.length > 0}}"
-                bindchange="onBatchChange" 
-                range="{{availableBatches}}" 
-                range-key="displayName"
-                value="{{batchIndex >= 0 ? batchIndex : 0}}"
-              >
-                <view class="picker-display">
-                  {{batchIndex >= 0 && availableBatches[batchIndex] ? availableBatches[batchIndex].displayName : '请选择存栏批次'}}
-                </view>
-              </picker>
-              <view wx:else class="picker-display disabled">
-                暂无可选批次
-              </view>
-            </view>
-          </view>
-
-          <!-- 记录日期 -->
-          <view class="form-item">
-            <view class="form-label required">记录日期</view>
-            <view class="form-content">
-              <view class="picker-content" bind:tap="showDatePicker" data-type="record">
-                <text class="picker-text">{{formData.recordDate || '请选择记录日期'}}</text>
-                <t-icon name="calendar" size="24rpx" color="#bbb" />
-              </view>
-            </view>
-          </view>
-
-          <!-- 受影响数量 -->
-          <view class="form-item">
-            <view class="form-label required">受影响数量</view>
-            <view class="form-content">
-              <t-input
-                placeholder="请输入数量"
-                value="{{formData.affectedCount}}"
-                type="number"
-                bind:change="onFieldChange"
-                data-field="affectedCount"
-                suffix="羽"
-                align="right"
-                class="form-input"
-              />
-            </view>
-          </view>
-        </view>
-      </view>
-
       <!-- 症状信息 -->
       <view class="form-section">
         <view class="section-header">
@@ -121,22 +63,52 @@
             </view>
           </view>
 
-          <!-- 严重程度 -->
+          <!-- 诊断病种 -->
           <view class="form-item">
-            <view class="form-label required">严重程度</view>
+            <view class="form-label">诊断病种</view>
             <view class="form-content">
               <picker 
-                bindchange="onSeverityChange" 
-                range="{{severityOptions}}" 
-                range-key="label"
-                value="{{severityIndex}}"
-                class="form-picker"
+                wx:if="{{commonDiseases.length > 0}}"
+                bindchange="onDiseaseChange" 
+                range="{{commonDiseases}}" 
+                range-key="name"
+                value="{{diseaseIndex >= 0 ? diseaseIndex : 0}}"
               >
-                <view class="picker-content">
-                  <text class="picker-text">{{severityOptions[severityIndex].label}}</text>
-                  <view class="severity-indicator severity-{{severityOptions[severityIndex].value}}"></view>
+                <view class="picker-display">
+                  {{diseaseIndex >= 0 && commonDiseases[diseaseIndex] ? commonDiseases[diseaseIndex].name : '请选择诊断病种'}}
                 </view>
               </picker>
+              <view wx:else class="picker-display disabled">
+                病种选项加载中...
+              </view>
+            </view>
+          </view>
+
+          <!-- 异常数量 -->
+          <view class="form-item">
+            <view class="form-label required">异常数量</view>
+            <view class="form-content">
+              <t-input
+                placeholder="请输入异常数量"
+                value="{{formData.abnormalCount}}"
+                type="number"
+                bind:change="onFieldChange"
+                data-field="abnormalCount"
+                suffix="羽"
+                align="right"
+                class="form-input"
+              />
+            </view>
+          </view>
+
+          <!-- 记录日期 -->
+          <view class="form-item">
+            <view class="form-label required">记录日期</view>
+            <view class="form-content">
+              <view class="picker-content" bind:tap="showDatePicker" data-type="record">
+                <text class="picker-text">{{formData.recordDate || '请选择记录日期'}}</text>
+                <t-icon name="calendar" size="24rpx" color="#bbb" />
+              </view>
             </view>
           </view>
         </view>
@@ -232,73 +204,23 @@
         </view>
       </view>
 
-      <!-- 治疗结果 -->
-      <view class="form-section">
-        <view class="section-header">
-          <text class="section-title">治疗结果</text>
-        </view>
-        
-        <view class="form-card">
-          <!-- 治疗结果 -->
-          <view class="form-item">
-            <view class="form-label required">治疗结果</view>
-            <view class="form-content">
-              <picker 
-                bindchange="onResultChange" 
-                range="{{resultOptions}}" 
-                range-key="label"
-                value="{{resultIndex}}"
-                class="form-picker"
-              >
-                <view class="picker-content">
-                  <text class="picker-text">{{resultOptions[resultIndex].label}}</text>
-                  <view class="result-indicator result-{{resultOptions[resultIndex].value}}"></view>
-                </view>
-              </picker>
-            </view>
-          </view>
-
-          <!-- 死亡数量（仅死亡时显示） -->
-          <view wx:if="{{formData.result === 'death'}}" class="form-item death-item">
-            <view class="form-label required">死亡数量</view>
-            <view class="form-content">
-              <t-input
-                placeholder="请输入死亡数量"
-                value="{{formData.deathCount}}"
-                type="number"
-                bind:change="onFieldChange"
-                data-field="deathCount"
-                suffix="羽"
-                align="right"
-                class="form-input death-input"
-              />
-            </view>
-          </view>
-        </view>
-      </view>
-
       <!-- 备注信息 -->
       <view class="form-section">
         <view class="section-header">
           <text class="section-title">备注信息</text>
         </view>
         
-        <view class="form-card">
-          <view class="form-item form-item-vertical">
-            <view class="form-label">备注</view>
-            <view class="form-content">
-              <t-textarea
-                placeholder="请输入其他备注信息（可选）"
-                value="{{formData.notes}}"
-                bind:change="onFieldChange"
-                data-field="notes"
-                maxlength="200"
-                indicator
-                autosize
-                class="form-textarea"
-              />
-            </view>
-          </view>
+        <view class="form-card notes-card">
+          <t-textarea
+            placeholder="请输入其他备注信息（可选）"
+            value="{{formData.notes}}"
+            bind:change="onFieldChange"
+            data-field="notes"
+            maxlength="200"
+            indicator
+            autosize
+            class="fullwidth-notes-textarea"
+          />
         </view>
       </view>
 
@@ -327,7 +249,7 @@
 
       <!-- 温馨提示 -->
       <view class="form-tips">
-        <t-notice-bar theme="info" content="💡 提示：如果治疗结果选择【死亡】，系统将自动创建死亡记录并更新存栏数量。" />
+        <t-notice-bar theme="info" content="💡 提示：健康记录提交后，可通过健康管理页面进行治疗跟进和结果记录。" />
       </view>
     </view>
   </view>

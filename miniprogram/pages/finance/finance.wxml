@@ -160,7 +160,7 @@
               </view>
               <view slot="note" class="record-meta">
                 <text class="record-time">{{item.date}}</text>
-                <t-tag theme="{{item.statusTheme}}" size="small">{{item.status}}</t-tag>
+                <t-tag theme="{{item.statusTheme || 'default'}}" size="small">{{item.status || '未知'}}</t-tag>
               </view>
             </t-cell>
           </t-cell-group>

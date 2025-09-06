@@ -3,15 +3,12 @@ import { createPageWithNavbar } from '../../utils/navigation'
 
 // 表单数据接口
 interface HealthRecordFormData {
-  batchNumber: string;          // 批次号
   recordDate: string;           // 记录日期
-  affectedCount: string;        // 受影响数量
+  abnormalCount: string;        // 异常数量
   symptoms: string;             // 症状描述
-  severity: string;             // 严重程度
+  diagnosisDisease: string;     // 诊断病种
   treatment: string;            // 治疗方案
   treatmentDate: string;        // 治疗日期
-  result: string;               // 治疗结果：进行中、治愈、死亡
-  deathCount: string;           // 死亡数量（仅死亡时）
   medicineQuantity: string;     // 药品/营养品使用数量
   notes: string;                // 备注
 }
@@ -20,21 +17,15 @@ const pageConfig = {
   data: {
     // 表单数据
     formData: {
-      batchNumber: '',
       recordDate: '',
-      affectedCount: '',
+      abnormalCount: '',
       symptoms: '',
-      severity: 'mild',
+      diagnosisDisease: '',
       treatment: '',
       treatmentDate: '',
-      result: 'ongoing',
-      deathCount: '',
       medicineQuantity: '',
       notes: ''
     } as HealthRecordFormData,
-    
-    // 可选的批次列表
-    availableBatches: [] as any[],
     
     // 日期选择器相关
     showRecordDate: false,
@@ -42,25 +33,11 @@ const pageConfig = {
     recordDateValue: '',
     treatmentDateValue: '',
     
-    // 选择器数据
-    severityOptions: [
-      { label: '轻微', value: 'mild' },
-      { label: '中等', value: 'moderate' },
-      { label: '严重', value: 'severe' }
-    ],
-    
-    resultOptions: [
-      { label: '治疗中', value: 'ongoing' },
-      { label: '已治愈', value: 'cured' },
-      { label: '死亡', value: 'death' }
-    ],
-    
-    severityIndex: 0,
-    resultIndex: 0,
-    batchIndex: -1,
     symptomIndex: -1,
+    diseaseIndex: -1,
     treatmentIndex: -1,
     selectedSymptom: '',
+    selectedDisease: '',
     selectedTreatment: '',
     
     // 常见症状选项
@@ -74,6 +51,25 @@ const pageConfig = {
       { id: 7, name: '跛行' },
       { id: 8, name: '羽毛松乱' },
       { id: 9, name: '其他症状' }
+    ],
+    
+    // 狮头鹅常见病害选项
+    commonDiseases: [
+      { id: 1, name: '小鹅瘟', code: 'GPV' },
+      { id: 2, name: '鹅副粘病毒病', code: 'GPMV' },
+      { id: 3, name: '禽流感', code: 'AI' },
+      { id: 4, name: '大肠杆菌病', code: 'ECO' },
+      { id: 5, name: '沙门氏菌病', code: 'SAL' },
+      { id: 6, name: '球虫病', code: 'COC' },
+      { id: 7, name: '曲霉菌病', code: 'ASP' },
+      { id: 8, name: '禽霍乱', code: 'FC' },
+      { id: 9, name: '鹅瘟', code: 'GP' },
+      { id: 10, name: '肠炎', code: 'ENT' },
+      { id: 11, name: '呼吸道感染', code: 'RTI' },
+      { id: 12, name: '营养缺乏症', code: 'NUT' },
+      { id: 13, name: '寄生虫病', code: 'PAR' },
+      { id: 14, name: '中毒症', code: 'POI' },
+      { id: 15, name: '其他病害', code: 'OTH' }
     ],
     
     // 治疗方案选项
@@ -103,7 +99,6 @@ const pageConfig = {
   onLoad() {
     console.log('健康记录表单页面加载')
     this.initializeForm()
-    this.loadAvailableBatches()
     // 不再自动加载药品记录，只有选择需要药品的治疗方案时才加载
   },
 
@@ -118,72 +113,20 @@ const pageConfig = {
       recordDateValue: today.getTime(),
       treatmentDateValue: today.getTime(),
       // 确保选择器索引正确初始化
-      severityIndex: 0,
-      resultIndex: 0,
-      batchIndex: -1,
       symptomIndex: -1,
+      diseaseIndex: -1,
       treatmentIndex: -1,
       selectedSymptom: '',
+      selectedDisease: '',
       selectedTreatment: ''
     })
     
     console.log('表单初始化完成:', {
       recordDate: dateString,
-      treatmentDate: dateString,
-      severityIndex: 0,
-      resultIndex: 0
+      treatmentDate: dateString
     })
   },
 
-  // 加载可用批次
-  async loadAvailableBatches() {
-    try {
-      this.setData({ loading: true })
-      
-      console.log('开始加载批次数据')
-      
-      // 获取所有活跃批次（有存栏的批次）
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'get_active_batches'
-        }
-      })
-      
-      console.log('批次数据加载结果:', result)
-      
-      if (result.result && result.result.success) {
-        const batches = result.result.data.batches || []
-        this.setData({
-          availableBatches: batches
-        })
-        
-        console.log('批次数据设置完成:', {
-          batchCount: batches.length,
-          batches: batches
-        })
-        
-        if (batches.length === 0) {
-          wx.showToast({
-            title: '暂无可用批次',
-            icon: 'none',
-            duration: 2000
-          })
-        }
-      } else {
-        throw new Error(result.result?.message || '获取批次数据失败')
-      }
-    } catch (error) {
-      console.error('加载批次失败:', error)
-      wx.showToast({
-        title: '加载批次失败: ' + error.message,
-        icon: 'none',
-        duration: 3000
-      })
-    } finally {
-      this.setData({ loading: false })
-    }
-  },
 
   // 格式化日期
   formatDate(date: Date): string {
@@ -193,80 +136,8 @@ const pageConfig = {
     return `${year}-${month}-${day}`
   },
 
-  // 批次选择
-  onBatchChange(e: any) {
-    const { value } = e.detail
-    const batchIndex = parseInt(value)
-    const batch = this.data.availableBatches[batchIndex]
-    
-    console.log('批次选择事件触发:', {
-      originalValue: value,
-      parsedIndex: batchIndex,
-      batchData: batch,
-      availableBatches: this.data.availableBatches
-    })
-    
-    if (batch) {
-      // 强制更新界面数据
-      const updateData = {
-        batchIndex: batchIndex,
-        'formData.batchNumber': batch.batchNumber || batch.displayName || ''
-      }
-      
-      this.setData(updateData, () => {
-        console.log('批次选择成功设置并完成界面更新:', {
-          batchIndex: batchIndex,
-          batchData: batch,
-          formDataBatchNumber: batch.batchNumber || batch.displayName || '',
-          currentDisplayData: this.data
-        })
-      })
-      
-      // 验证数据是否正确设置
-      setTimeout(() => {
-        console.log('批次选择后的数据状态验证:', {
-          batchIndex: this.data.batchIndex,
-          formDataBatchNumber: this.data.formData.batchNumber,
-          currentBatch: this.data.availableBatches[this.data.batchIndex],
-          availableBatches: this.data.availableBatches
-        })
-      }, 100)
-    } else {
-      console.error('批次数据不存在:', {
-        value,
-        batchIndex,
-        availableBatchesLength: this.data.availableBatches.length,
-        availableBatches: this.data.availableBatches
-      })
-    }
-  },
 
-  // 严重程度选择
-  onSeverityChange(e: any) {
-    const { value } = e.detail
-    this.setData({
-      severityIndex: value,
-      'formData.severity': this.data.severityOptions[value].value
-    })
-  },
 
-  // 治疗结果选择
-  onResultChange(e: any) {
-    const { value } = e.detail
-    const resultValue = this.data.resultOptions[value].value
-    
-    this.setData({
-      resultIndex: value,
-      'formData.result': resultValue
-    })
-
-    // 如果选择死亡，清空死亡数量以便重新输入
-    if (resultValue === 'death') {
-      this.setData({
-        'formData.deathCount': ''
-      })
-    }
-  },
 
   // 症状选择
   onSymptomChange(e: any) {
@@ -307,6 +178,44 @@ const pageConfig = {
         symptomIndex,
         commonSymptomsLength: this.data.commonSymptoms.length,
         commonSymptoms: this.data.commonSymptoms
+      })
+    }
+  },
+
+  // 诊断病种选择
+  onDiseaseChange(e: any) {
+    const { value } = e.detail
+    const diseaseIndex = parseInt(value)
+    const disease = this.data.commonDiseases[diseaseIndex]
+    
+    console.log('诊断病种选择事件触发:', {
+      originalValue: value,
+      parsedIndex: diseaseIndex,
+      diseaseData: disease,
+      commonDiseases: this.data.commonDiseases
+    })
+    
+    if (disease) {
+      const updateData = {
+        diseaseIndex: diseaseIndex,
+        selectedDisease: disease.name,
+        'formData.diagnosisDisease': disease.name
+      }
+      
+      this.setData(updateData, () => {
+        console.log('诊断病种选择成功设置并完成界面更新:', {
+          diseaseName: disease.name,
+          diseaseIndex: diseaseIndex,
+          selectedDisease: disease.name,
+          formDataDiagnosisDisease: disease.name
+        })
+      })
+    } else {
+      console.error('诊断病种数据不存在:', {
+        value,
+        diseaseIndex,
+        commonDiseasesLength: this.data.commonDiseases.length,
+        commonDiseases: this.data.commonDiseases
       })
     }
   },
@@ -529,14 +438,11 @@ const pageConfig = {
     const errors: string[] = []
 
     // 检查必填字段
-    if (!formData.batchNumber) {
-      errors.push('请选择批次')
-    }
     if (!formData.recordDate) {
       errors.push('请选择记录日期')
     }
-    if (!formData.affectedCount.trim()) {
-      errors.push('请输入受影响数量')
+    if (!formData.abnormalCount.trim()) {
+      errors.push('请输入异常数量')
     }
     if (!formData.symptoms.trim()) {
       errors.push('请描述症状')
@@ -547,20 +453,10 @@ const pageConfig = {
     // }
 
     // 验证数值字段
-    if (formData.affectedCount && (isNaN(Number(formData.affectedCount)) || Number(formData.affectedCount) <= 0)) {
-      errors.push('受影响数量必须为正数')
+    if (formData.abnormalCount && (isNaN(Number(formData.abnormalCount)) || Number(formData.abnormalCount) <= 0)) {
+      errors.push('异常数量必须为正数')
     }
 
-    // 如果结果是死亡，检查死亡数量
-    if (formData.result === 'death') {
-      if (!formData.deathCount.trim()) {
-        errors.push('死亡结果需要填写死亡数量')
-      } else if (isNaN(Number(formData.deathCount)) || Number(formData.deathCount) <= 0) {
-        errors.push('死亡数量必须为正数')
-      } else if (Number(formData.deathCount) > Number(formData.affectedCount)) {
-        errors.push('死亡数量不能超过受影响数量')
-      }
-    }
 
     // 如果选择了药品/营养品，检查使用数量
     if (this.data.selectedMedicine && this.data.showMedicineSelector) {
@@ -606,8 +502,7 @@ const pageConfig = {
       // 准备提交数据
       const submitData = {
         ...this.data.formData,
-        affectedCount: Number(this.data.formData.affectedCount),
-        deathCount: this.data.formData.deathCount ? Number(this.data.formData.deathCount) : 0,
+        abnormalCount: Number(this.data.formData.abnormalCount),
         medicineQuantity: this.data.formData.medicineQuantity ? Number(this.data.formData.medicineQuantity) : 0,
         createTime: new Date().toISOString()
       }
@@ -708,25 +603,21 @@ const pageConfig = {
           
           this.setData({
             formData: {
-              batchNumber: '',
               recordDate: dateString,
-              affectedCount: '',
+              abnormalCount: '',
               symptoms: '',
-              severity: 'mild',
+              diagnosisDisease: '',
               treatment: '',
               treatmentDate: dateString,
-              result: 'ongoing',
-              deathCount: '',
               medicineQuantity: '',
               notes: ''
             },
-            severityIndex: 0,
-            resultIndex: 0,
-            batchIndex: -1,
             symptomIndex: -1,
+            diseaseIndex: -1,
             treatmentIndex: -1,
             medicineRecordIndex: -1,
             selectedSymptom: '',
+            selectedDisease: '',
             selectedTreatment: '',
             selectedMedicine: null,
             recordDateValue: today.getTime(),
@@ -747,24 +638,14 @@ const pageConfig = {
   validatePickerData() {
     const validations = []
     
-    // 检查批次数据
-    if (!this.data.availableBatches || this.data.availableBatches.length === 0) {
-      validations.push('批次选项未加载')
-    }
-    
     // 检查症状数据
     if (!this.data.commonSymptoms || this.data.commonSymptoms.length === 0) {
       validations.push('症状选项未加载')
     }
     
-    // 检查治疗方案数据
-    if (!this.data.commonTreatments || this.data.commonTreatments.length === 0) {
-      validations.push('治疗方案选项未加载')
-    }
-    
-    // 检查严重程度数据
-    if (!this.data.severityOptions || this.data.severityOptions.length === 0) {
-      validations.push('严重程度选项未加载')
+    // 检查诊断病种数据
+    if (!this.data.commonDiseases || this.data.commonDiseases.length === 0) {
+      validations.push('诊断病种选项未加载')
     }
     
     if (validations.length > 0) {
@@ -776,71 +657,20 @@ const pageConfig = {
     return true
   },
 
-  // 测试选择器功能（调试用）
-  testPickerFunctionality() {
-    console.log('=== 开始测试选择器功能 ===')
-    
-    // 输出当前数据状态
-    console.log('当前数据状态:', {
-      availableBatches: this.data.availableBatches,
-      commonSymptoms: this.data.commonSymptoms,
-      commonTreatments: this.data.commonTreatments,
-      batchIndex: this.data.batchIndex,
-      symptomIndex: this.data.symptomIndex,
-      treatmentIndex: this.data.treatmentIndex,
-      selectedSymptom: this.data.selectedSymptom,
-      selectedTreatment: this.data.selectedTreatment,
-      formData: this.data.formData
-    })
-    
-    // 测试批次选择
-    if (this.data.availableBatches.length > 0) {
-      console.log('测试批次选择第一项...')
-      this.onBatchChange({ detail: { value: 0 } })
-    }
-    
-    // 测试症状选择
-    if (this.data.commonSymptoms.length > 0) {
-      console.log('测试症状选择第一项...')
-      this.onSymptomChange({ detail: { value: 0 } })
-    }
-    
-    // 测试治疗方案选择
-    if (this.data.commonTreatments.length > 0) {
-      console.log('测试治疗方案选择第一项...')
-      this.onTreatmentChange({ detail: { value: 0 } })
-    }
-    
-    console.log('=== 选择器功能测试完成 ===')
-    
-    // 延迟检查界面更新结果
-    setTimeout(() => {
-      console.log('=== 测试结果检查 ===')
-      console.log('最终数据状态:', {
-        batchIndex: this.data.batchIndex,
-        symptomIndex: this.data.symptomIndex,
-        treatmentIndex: this.data.treatmentIndex,
-        selectedSymptom: this.data.selectedSymptom,
-        selectedTreatment: this.data.selectedTreatment,
-        formData: this.data.formData
-      })
-    }, 500)
-  },
 
   // 检查界面数据状态（调试用）
   checkUIStatus() {
     console.log('=== 界面数据状态检查 ===')
     console.log('页面数据:', this.data)
-    console.log('批次显示状态:', {
-      batchIndex: this.data.batchIndex,
-      formDataBatchNumber: this.data.formData.batchNumber,
-      availableBatches: this.data.availableBatches,
-      shouldShowBatchName: this.data.batchIndex >= 0 && this.data.availableBatches[this.data.batchIndex] ? this.data.availableBatches[this.data.batchIndex].displayName : null
-    })
     console.log('症状显示状态:', {
       symptomIndex: this.data.symptomIndex,
       selectedSymptom: this.data.selectedSymptom,
       formDataSymptoms: this.data.formData.symptoms
+    })
+    console.log('诊断病种显示状态:', {
+      diseaseIndex: this.data.diseaseIndex,
+      selectedDisease: this.data.selectedDisease,
+      formDataDiagnosisDisease: this.data.formData.diagnosisDisease
     })
     console.log('治疗方案显示状态:', {
       treatmentIndex: this.data.treatmentIndex,
@@ -851,13 +681,6 @@ const pageConfig = {
 
   // Cell点击事件处理函数 - 这些方法主要用于提供视觉反馈
   // picker组件会自动响应点击事件，无需手动触发
-  onBatchCellClick() {
-    console.log('批次选择器被点击')
-    this.validatePickerData()
-    wx.vibrateShort({
-      type: 'light'
-    });
-  },
 
   onSymptomCellClick() {
     console.log('症状选择器被点击')
@@ -866,8 +689,8 @@ const pageConfig = {
     });
   },
 
-  onSeverityCellClick() {
-    console.log('严重程度选择器被点击')
+  onDiseaseCellClick() {
+    console.log('诊断病种选择器被点击')
     wx.vibrateShort({
       type: 'light'
     });
@@ -875,13 +698,6 @@ const pageConfig = {
 
   onTreatmentCellClick() {
     console.log('治疗方案选择器被点击')
-    wx.vibrateShort({
-      type: 'light'
-    });
-  },
-
-  onResultCellClick() {
-    console.log('治疗结果选择器被点击')
     wx.vibrateShort({
       type: 'light'
     });

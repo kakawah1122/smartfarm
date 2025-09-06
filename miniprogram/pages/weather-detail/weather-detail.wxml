@@ -65,7 +65,7 @@
         <view class="warning-list">
           <view class="warning-item" wx:for="{{warningList}}" wx:key="id">
             <view class="warning-header">
-              <t-tag theme="{{item.theme}}" size="small">{{item.severity}}</t-tag>
+              <t-tag theme="{{item.theme || 'default'}}" size="small">{{item.severity || '未知'}}</t-tag>
               <text class="warning-type">{{item.typeName || item.type}}</text>
             </view>
             <text class="warning-title">{{item.title}}</text>

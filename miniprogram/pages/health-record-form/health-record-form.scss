@@ -312,18 +312,6 @@ $spacing-xl: 40rpx;
     top: 0 !important;
     z-index: 1 !important;
   }
-  
-  &.death-input {
-    --td-input-text-color: #{$error-color} !important;
-    --td-input-bg-color: #ffffff !important;
-    --td-input-border-color: rgba(#{red($error-color)}, #{green($error-color)}, #{blue($error-color)}, 0.2) !important;
-    font-weight: 600 !important;
-    
-    .t-input__wrap {
-      background: #ffffff !important;
-      border-color: rgba($error-color, 0.2) !important;
-    }
-  }
 }
 
 /* 表单文本域 */
@@ -339,25 +327,51 @@ $spacing-xl: 40rpx;
   min-height: 100rpx !important;
 }
 
-/* 状态指示器 */
-.severity-indicator {
-  width: 12rpx;
-  height: 12rpx;
-  border-radius: 50%;
-  flex-shrink: 0;
+/* 备注卡片优化样式 */
+.notes-card {
+  padding: $spacing-l !important;
+}
+
+/* 全宽度备注文本框 */
+.fullwidth-notes-textarea {
+  --td-textarea-bg-color: transparent !important;
+  --td-textarea-border-color: transparent !important;
+  --td-textarea-border-radius: 0 !important;
+  --td-textarea-font-size: 28rpx !important;
+  --td-textarea-text-color: #{$text-primary} !important;
+  --td-textarea-placeholder-color: #{$text-placeholder} !important;
+  --td-textarea-padding: 0 !important;
+  width: 100% !important;
+  min-height: 120rpx !important;
+  border: none !important;
   
-  &.severity-mild {
-    background: $success-color;
+  .t-textarea__inner {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 28rpx !important;
+    color: $text-primary !important;
+    line-height: 44rpx !important;
+    
+    &::placeholder {
+      color: $text-placeholder !important;
+      font-size: 28rpx !important;
+    }
   }
   
-  &.severity-moderate {
-    background: $warning-color;
-  }
-  
-  &.severity-severe {
-    background: $error-color;
+  .t-textarea__indicator {
+    color: $text-secondary !important;
+    font-size: 24rpx !important;
+    position: absolute !important;
+    bottom: $spacing-s !important;
+    right: $spacing-s !important;
+    background: rgba($bg-color-container, 0.8) !important;
+    padding: 4rpx 8rpx !important;
+    border-radius: 4rpx !important;
   }
 }
+
+/* 状态指示器 */
 
 .result-indicator {
   width: 12rpx;
@@ -372,32 +386,9 @@ $spacing-xl: 40rpx;
   &.result-cured {
     background: $success-color;
   }
-  
-  &.result-death {
-    background: $error-color;
-  }
 }
 
 /* 特殊状态项 */
-.death-item {
-  background: rgba($error-color, 0.03);
-  border-radius: 8rpx;
-  margin: 8rpx (-$spacing-l) 0;
-  padding: $spacing-m $spacing-l;
-  border: 1rpx solid rgba($error-color, 0.15);
-  min-height: 60rpx;
-  
-  .form-label {
-    color: $error-color;
-    font-weight: 600;
-    
-    &::before {
-      content: '⚠️ ';
-      margin-right: 4rpx;
-      font-size: 20rpx;
-    }
-  }
-}
 
 /* 库存信息项 */
 .stock-info {
@@ -866,26 +857,12 @@ $spacing-xl: 40rpx;
       color: #8b949e;
     }
   }
-
-  .death-item {
-    background: rgba(248, 81, 73, 0.1);
-    border-color: rgba(248, 81, 73, 0.3);
-    
-    .form-label {
-      color: #f85149;
-    }
-  }
   
   .form-input {
     --td-input-text-color: #f0f6fc !important;
     --td-input-bg-color: rgba(88, 166, 255, 0.05) !important;
     --td-input-border-color: #30363d !important;
     --td-input-placeholder-color: #8b949e !important;
-    
-    &.death-input {
-      --td-input-text-color: #f85149 !important;
-      --td-input-bg-color: rgba(248, 81, 73, 0.1) !important;
-    }
   }
   
   .form-textarea {
@@ -893,6 +870,24 @@ $spacing-xl: 40rpx;
     --td-textarea-bg-color: rgba(88, 166, 255, 0.05) !important;
     --td-textarea-border-color: #30363d !important;
     --td-textarea-placeholder-color: #8b949e !important;
+  }
+  
+  .fullwidth-notes-textarea {
+    --td-textarea-text-color: #f0f6fc !important;
+    --td-textarea-placeholder-color: #8b949e !important;
+    
+    .t-textarea__inner {
+      color: #f0f6fc !important;
+      
+      &::placeholder {
+        color: #8b949e !important;
+      }
+    }
+    
+    .t-textarea__indicator {
+      color: #8b949e !important;
+      background: rgba(22, 27, 34, 0.8) !important;
+    }
   }
   
   .form-actions .t-button--theme-default {
