@@ -1,0 +1,979 @@
+/* abnormal-detail.scss - TDesign原生设计规范 */
+page {
+  background-color: var(--td-bg-color-page, #f5f5f5);
+  --td-brand-color: #0052d9;
+  --td-brand-color-hover: #266fe8;
+  --td-brand-color-focus: #0052d9;
+  --td-brand-color-active: #003cab;
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: var(--color-bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400rpx;
+  flex-direction: column;
+}
+
+/* 内容容器 */
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab样式 - 刘海屏适配 */
+.detail-tabs {
+  background: var(--td-bg-color-container, var(--color-bg-primary));
+  --td-tab-track-color: var(--td-brand-color);
+  --td-tab-item-active-color: var(--td-brand-color);
+  --td-tab-item-color: var(--td-text-color-secondary, var(--color-text-secondary));
+  position: sticky;
+  top: 0;
+  z-index: var(--z-index-sticky);
+  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--td-border-level-1-color, var(--color-border-light));
+}
+
+/* 滚动容器 - 刘海屏适配 */
+.scroll-container {
+  flex: 1;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.tab-content {
+  min-height: 100%;
+  padding-bottom: calc(120rpx + var(--safe-area-inset-bottom, 0));
+  padding-left: var(--safe-area-inset-left, 0);
+  padding-right: var(--safe-area-inset-right, 0);
+}
+
+/* 各个模块的间距 */
+.stats-overview,
+.time-range-section,
+.chart-section,
+.disease-list-section,
+.trend-section,
+.medication-overview-section,
+.medication-ranking-section,
+.cost-benefit-section,
+.medication-recommendations-section {
+  margin: var(--spacing-lg) var(--spacing-base);
+}
+
+/* 概览统计卡片 */
+.overview-stats {
+  margin: 32rpx 0;
+}
+
+.stat-card {
+  margin-bottom: 24rpx;
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 16rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.12);
+  }
+}
+
+.stat-content {
+  text-align: center;
+  padding: 32rpx 16rpx;
+  min-height: 140rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-value {
+  font-size: 48rpx;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 8rpx;
+  color: var(--td-text-color-primary, #000000);
+}
+
+.stat-content.stat-success .stat-value {
+  color: var(--td-success-color, #00a870);
+}
+
+.stat-content.stat-warning .stat-value {
+  color: var(--td-warning-color, #ed7b2f);
+}
+
+.stat-content.stat-danger .stat-value {
+  color: var(--td-error-color, #e34d59);
+}
+
+.stat-content.stat-primary .stat-value {
+  color: var(--td-brand-color, #0052d9);
+}
+
+.stat-label {
+  font-size: 28rpx;
+  color: var(--td-text-color-secondary, #555555);
+  line-height: 1.4;
+  font-weight: 400;
+  margin-bottom: 4rpx;
+}
+
+.stat-unit {
+  font-size: 24rpx;
+  color: var(--td-text-color-placeholder, #999999);
+  font-weight: 400;
+}
+
+.stat-hint {
+  font-size: 20rpx;
+  color: var(--td-text-color-placeholder, #999999);
+  margin-top: 4rpx;
+}
+
+/* TDesign原生卡片样式 */
+/* 通用卡片样式 */
+.card {
+  margin: 32rpx 0;
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 16rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  padding: 32rpx 24rpx;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.12);
+  }
+}
+
+.card-header {
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.4;
+}
+
+/* 时间范围统计 */
+.time-range-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.time-range-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 16rpx;
+  border-left: 4rpx solid var(--td-brand-color, #0052d9);
+}
+
+.time-label {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+  min-width: 80rpx;
+}
+
+.time-stats {
+  display: flex;
+  gap: 32rpx;
+  align-items: center;
+}
+
+.time-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.time-stat-label {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #555555);
+}
+
+.time-stat-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  
+  &.success {
+    color: var(--td-success-color, #00a870);
+  }
+  
+  &.warning {
+    color: var(--td-warning-color, #ed7b2f);
+  }
+  
+  &.danger {
+    color: var(--td-error-color, #e34d59);
+  }
+}
+
+/* 图表容器 */
+.chart-section {
+  margin: 32rpx 0;
+}
+
+.pie-chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32rpx;
+}
+
+/* CSS饼图样式 */
+.css-pie-chart {
+  position: relative;
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.pie-slice-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #e34d59 0deg 198deg,        /* 禽流感 55% = 198度 */
+    #ed7b2f 198deg 284.4deg,    /* 肠道感染 24% = 86.4度 */
+    #0052d9 284.4deg 342deg,    /* 呼吸道感染 16% = 57.6度 */
+    #00a870 342deg 360deg       /* 营养不良 5% = 18度 */
+  );
+  animation: pieRotate 1.5s ease-out;
+}
+
+@keyframes pieRotate {
+  from {
+    transform: rotate(-90deg) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-90deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.pie-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140rpx;
+  height: 140rpx;
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16rpx rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.pie-center-text {
+  text-align: center;
+}
+
+.pie-total {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.2;
+}
+
+.pie-label {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #666666);
+  margin-top: 4rpx;
+}
+
+/* CSS柱状图样式 */
+.bar-chart-container {
+  width: 100%;
+  height: 400rpx;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  padding: 40rpx 60rpx 60rpx 40rpx;
+  box-sizing: border-box;
+}
+
+.css-bar-chart {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar-chart-content {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  height: 280rpx;
+  position: relative;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 100rpx;
+}
+
+.bar-column {
+  width: 60rpx;
+  height: 280rpx;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 8rpx 8rpx 0 0;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: 8rpx 8rpx 0 0;
+  position: relative;
+  min-height: 20rpx;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  transition: height 1s ease-out;
+  animation: barGrow 1.2s ease-out;
+}
+
+@keyframes barGrow {
+  from {
+    height: 0 !important;
+  }
+}
+
+.bar-value {
+  position: absolute;
+  top: -30rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+  background: var(--td-bg-color-container, #ffffff);
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.bar-label {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: var(--td-text-color-secondary, #666666);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 80rpx;
+  word-break: break-all;
+}
+
+/* Y轴标签 */
+.y-axis-labels {
+  position: absolute;
+  left: 0;
+  top: 40rpx;
+  height: 280rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 60rpx;
+}
+
+.y-label {
+  font-size: 20rpx;
+  color: var(--td-text-color-placeholder, #999999);
+  padding-right: 8rpx;
+  position: relative;
+}
+
+.y-label::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 6rpx;
+  height: 1rpx;
+  background: var(--td-text-color-placeholder, #999999);
+}
+
+/* 图表图例 */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  justify-content: center;
+  max-width: 600rpx;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 20rpx;
+}
+
+.legend-color {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.legend-text {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #555555);
+}
+
+/* 病种详细列表 */
+.disease-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.disease-item {
+  position: relative;
+  padding: 32rpx 24rpx;
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 16rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.98);
+    background: var(--td-bg-color-component, #f3f3f3);
+  }
+}
+
+.disease-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.disease-name {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+}
+
+.disease-color {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.disease-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+}
+
+.disease-stats {
+  display: flex;
+  gap: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.disease-stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.disease-stat-label {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #555555);
+}
+
+.disease-stat-value {
+  font-size: 28rpx;
+  font-weight: 500;
+  
+  &.success {
+    color: var(--td-success-color, #00a870);
+  }
+  
+  &.danger {
+    color: var(--td-error-color, #e34d59);
+  }
+}
+
+.disease-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.progress-label {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #555555);
+  min-width: 80rpx;
+}
+
+.progress-bar {
+  flex: 1;
+}
+
+.disease-arrow {
+  position: absolute;
+  right: 24rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--td-text-color-placeholder, #bbbbbb);
+}
+
+/* 趋势分析 */
+.trend-content {
+  padding: 16rpx 0;
+}
+
+.trend-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.trend-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 12rpx;
+}
+
+.trend-text {
+  font-size: 28rpx;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.4;
+}
+
+.trend-suggestions {
+  padding-top: 32rpx;
+}
+
+.suggestion-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 24rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 16rpx;
+  border-left: 4rpx solid var(--td-warning-color, #ed7b2f);
+}
+
+.suggestion-item {
+  font-size: 28rpx;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.5;
+  padding-left: 16rpx;
+}
+
+/* TDesign原生响应式设计 */
+@media screen and (max-width: 480px) {
+  .stats-overview,
+  .time-range-section,
+  .chart-section,
+  .disease-list-section,
+  .trend-section {
+    margin: 32rpx 16rpx;
+  }
+
+  .stat-content {
+    padding: 24rpx 12rpx;
+    min-height: 120rpx;
+  }
+
+  .stat-value {
+    font-size: 40rpx;
+  }
+
+  .time-stats {
+    gap: 24rpx;
+  }
+
+  .disease-stats {
+    gap: 24rpx;
+    flex-wrap: wrap;
+  }
+
+  .disease-item {
+    padding: 24rpx 16rpx;
+  }
+
+  .pie-chart-canvas {
+    width: 250rpx;
+    height: 250rpx;
+  }
+
+  .chart-legend {
+    max-width: 500rpx;
+  }
+}
+
+/* 用药效果分析样式 */
+.medication-stats {
+  margin: 24rpx 0;
+}
+
+.medication-stat-item {
+  text-align: center;
+  padding: 24rpx 12rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 12rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  }
+}
+
+.medication-stat-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 8rpx;
+  
+  &.success {
+    color: var(--td-success-color, #00a870);
+  }
+  
+  &.primary {
+    color: var(--td-brand-color, #0052d9);
+  }
+  
+  &.warning {
+    color: var(--td-warning-color, #ed7b2f);
+  }
+  
+  &.info {
+    color: var(--td-info-color, #8b5cf6);
+  }
+}
+
+.medication-stat-label {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #666666);
+  line-height: 1.2;
+}
+
+/* 药物效果排行 */
+.medication-ranking-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.medication-rank-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 12rpx;
+  border-left: 4rpx solid var(--td-brand-color, #0052d9);
+}
+
+.rank-number {
+  width: 40rpx;
+  height: 40rpx;
+  background: var(--td-brand-color, #0052d9);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 600;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.medication-info {
+  flex: 1;
+  margin-right: 16rpx;
+}
+
+.medication-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+  margin-bottom: 8rpx;
+}
+
+.medication-details {
+  display: flex;
+  gap: 24rpx;
+}
+
+.detail-item {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #666666);
+}
+
+.effectiveness-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+  min-width: 120rpx;
+}
+
+.bar-bg {
+  width: 100rpx;
+  height: 8rpx;
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4rpx;
+  transition: width 1s ease-out;
+  animation: effectivenessGrow 1.5s ease-out;
+}
+
+@keyframes effectivenessGrow {
+  from {
+    width: 0% !important;
+  }
+}
+
+.effectiveness-value {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+}
+
+/* 成本效益分析 */
+.cost-benefit-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.cost-benefit-item {
+  padding: 24rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 12rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.medication-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.medication-name-badge {
+  color: white;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.cost-benefit-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metric-label {
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary, #666666);
+}
+
+.metric-value {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+  
+  &.success {
+    color: var(--td-success-color, #00a870);
+  }
+  
+  &.warning {
+    color: var(--td-warning-color, #ed7b2f);
+  }
+  
+  &.danger {
+    color: var(--td-error-color, #e34d59);
+  }
+}
+
+.cost-efficiency-progress {
+  margin-top: 16rpx;
+}
+
+.efficiency-progress-bar {
+  width: 100%;
+}
+
+/* 智能用药建议 */
+.recommendations-content {
+  padding: 16rpx 0;
+}
+
+.recommendation-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+}
+
+.recommendation-category {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.category-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+}
+
+.recommendation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.recommendation-item {
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  border-left: 4rpx solid;
+  
+  &.preferred {
+    background: var(--td-success-color-1, #f0f9f0);
+    border-left-color: var(--td-success-color, #00a870);
+  }
+  
+  &.reminder {
+    background: var(--td-brand-color-1, #f2f3ff);
+    border-left-color: var(--td-brand-color, #0052d9);
+  }
+  
+  &.warning {
+    background: var(--td-error-color-1, #fef0f0);
+    border-left-color: var(--td-error-color, #e34d59);
+  }
+}
+
+.recommendation-text {
+  font-size: 26rpx;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.5;
+}
+
+/* TDesign原生响应式设计 - 用药分析 */
+@media screen and (max-width: 480px) {
+  .medication-overview-section,
+  .medication-ranking-section,
+  .cost-benefit-section,
+  .medication-recommendations-section {
+    margin: 32rpx 16rpx;
+  }
+
+  .medication-stat-item {
+    padding: 20rpx 8rpx;
+  }
+
+  .medication-stat-value {
+    font-size: 28rpx;
+  }
+
+  .medication-rank-item {
+    padding: 16rpx;
+  }
+
+  .cost-benefit-item {
+    padding: 16rpx;
+  }
+
+  .effectiveness-bar {
+    min-width: 80rpx;
+  }
+
+  .bar-bg {
+    width: 80rpx;
+  }
+}
+
+/* TDesign原生无障碍支持 */
+.stat-content:focus,
+.disease-item:focus,
+.medication-rank-item:focus,
+.cost-benefit-item:focus {
+  outline: 2rpx solid var(--td-brand-color, #0052d9);
+  outline-offset: 4rpx;
+}

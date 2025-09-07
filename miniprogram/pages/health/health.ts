@@ -350,6 +350,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
+  // 查看异常个体详情
+  viewAbnormalDetail() {
+    wx.navigateTo({
+      url: '/pages/abnormal-detail/abnormal-detail'
+    })
+  },
+
   // 查看健康记录
   viewHealthRecord(e: any) {
     const { item } = e.currentTarget.dataset || e.detail || {}

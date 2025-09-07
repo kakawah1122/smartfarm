@@ -32,7 +32,7 @@
             </t-card>
           </t-col>
           <t-col span="8">
-            <t-card>
+            <t-card bind:tap="viewAbnormalDetail" class="clickable-card">
               <view class="stat-content stat-warning">
                 <view class="stat-value">{{healthStats.abnormal}}</view>
                 <view class="stat-label">异常个体</view>
