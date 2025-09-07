@@ -55,7 +55,7 @@ const pageConfig = {
         title: '员工管理',
         description: '邀请码管理、员工权限设置',
         icon: 'user-group',
-        page: '/pages/employee-management/employee-management',
+        page: '/pages/employee-permission/employee-permission',
         requiredPermission: 'employee.view'
       },
       {

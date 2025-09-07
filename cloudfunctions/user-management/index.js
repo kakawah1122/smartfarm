@@ -584,19 +584,32 @@ async function updateProfile(event, wxContext) {
       nickname,
       avatarUrl,
       farmName,
-      phone
+      phone,
+      department,
+      position,
+      targetUserId
     } = event
 
-    // 获取当前用户信息
-    const currentUser = await db.collection('users').where({
-      _openid: wxContext.OPENID
-    }).get()
+    // 获取要更新的用户信息
+    let user
+    if (targetUserId) {
+      // 更新其他用户（管理员操作）
+      const targetUser = await db.collection('users').doc(targetUserId).get()
+      if (!targetUser.data) {
+        throw new Error('目标用户不存在')
+      }
+      user = targetUser.data
+    } else {
+      // 更新自己的信息
+      const currentUser = await db.collection('users').where({
+        _openid: wxContext.OPENID
+      }).get()
 
-    if (currentUser.data.length === 0) {
-      throw new Error('用户不存在')
+      if (currentUser.data.length === 0) {
+        throw new Error('用户不存在')
+      }
+      user = currentUser.data[0]
     }
-
-    const user = currentUser.data[0]
     
     // 准备更新数据
     const updateData = {
@@ -614,6 +627,14 @@ async function updateProfile(event, wxContext) {
     
     if (farmName !== undefined && farmName !== null) {
       updateData.farmName = farmName.trim()
+    }
+    
+    if (department !== undefined && department !== null) {
+      updateData.department = department.trim()
+    }
+    
+    if (position !== undefined && position !== null) {
+      updateData.position = position.trim()
     }
     
     if (phone !== undefined && phone !== null) {
@@ -638,7 +659,7 @@ async function updateProfile(event, wxContext) {
         targetUserId: user._id,
         updateFields: Object.keys(updateData),
         createTime: new Date(),
-        description: '用户更新个人资料'
+        description: targetUserId ? '管理员更新用户资料' : '用户更新个人资料'
       }
     })
 

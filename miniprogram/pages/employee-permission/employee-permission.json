@@ -7,7 +7,9 @@
     "t-loading": "../../miniprogram_npm/tdesign-miniprogram/loading/loading",
     "t-empty": "../../miniprogram_npm/tdesign-miniprogram/empty/empty",
     "t-button": "../../miniprogram_npm/tdesign-miniprogram/button/button",
-    "t-dialog": "../../miniprogram_npm/tdesign-miniprogram/dialog/dialog"
+    "t-dialog": "../../miniprogram_npm/tdesign-miniprogram/dialog/dialog",
+    "t-popup": "../../miniprogram_npm/tdesign-miniprogram/popup/popup",
+    "t-icon": "../../miniprogram_npm/tdesign-miniprogram/icon/icon"
   },
   "navigationStyle": "custom",
   "backgroundColor": "#f5f6fa",

@@ -5,6 +5,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 用户信息
     userInfo: null as any,
+    fromEmployeeManagement: false,  // 标记是否从员工管理中间页进入
     
     // 邀请列表数据
     inviteList: [] as any[],
@@ -66,8 +67,24 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     ]
   },
 
-  onLoad() {
-    this.checkUserPermission()
+  onLoad(options: any) {
+    // 检查是否从员工管理中间页传递了权限信息
+    if (options && options.from === 'employee-management' && options.hasPermission === 'true') {
+      const userInfo = {
+        role: options.userRole,
+        isSuper: options.isSuper === 'true'
+      }
+      
+      this.setData({
+        userInfo: userInfo,
+        fromEmployeeManagement: true
+      })
+      
+      console.log('从员工管理中间页接收权限信息，跳过权限检查')
+    } else {
+      this.checkUserPermission()
+    }
+    
     this.loadInviteStats()
     this.loadInviteList()
   },
@@ -686,7 +703,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 返回上一页
   goBack() {
-    wx.navigateBack()
+    // 智能返回逻辑
+    if (this.data.fromEmployeeManagement) {
+      // 如果是从员工管理中间页来的，替换当前页面返回到员工管理中心
+      wx.redirectTo({
+        url: '/pages/employee-permission/employee-permission'
+      })
+    } else {
+      // 否则执行普通返回
+      wx.navigateBack({
+        fail: () => {
+          wx.switchTab({
+            url: '/pages/profile/profile'
+          })
+        }
+      })
+    }
   },
 
   // 手动设置超级管理员（临时调试用）

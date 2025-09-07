@@ -16,7 +16,6 @@
     "pages/finance/finance",
     "pages/login/login",
     "pages/user-management/user-management",
-    "pages/employee-management/employee-management",
     "pages/employee-permission/employee-permission",
     "pages/invite-management/invite-management",
     "pages/user-approval/user-approval"

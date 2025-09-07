@@ -28,14 +28,7 @@ Component({
 
   methods: {
     goBack() {
-      wx.navigateBack({
-        delta: 1,
-        fail: () => {
-          wx.switchTab({
-            url: '/pages/index/index'
-          })
-        }
-      })
+      // 触发页面的返回事件，让页面自己处理返回逻辑
       this.triggerEvent('back')
     }
   }
