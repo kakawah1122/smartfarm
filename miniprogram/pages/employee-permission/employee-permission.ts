@@ -48,6 +48,9 @@ const pageConfig = {
     showInviteDetail: false,
     selectedInvite: null,
     
+    // 防重复提交状态
+    isSubmitting: false,
+    
     // 创建邀请弹窗
     showCreateDialog: false,
     newInvite: {
@@ -320,7 +323,13 @@ const pageConfig = {
   // 修改员工角色
   updateEmployeeRole: function() {
     const self = this
-    const { selectedEmployee, selectedRoleIndex, roleOptions } = self.data
+    const { selectedEmployee, selectedRoleIndex, roleOptions, isSubmitting } = self.data
+    
+    // 防重复提交
+    if (isSubmitting) {
+      return
+    }
+    
     if (!selectedEmployee) return
 
     const newRole = roleOptions[selectedRoleIndex[0]].value
@@ -333,6 +342,7 @@ const pageConfig = {
       return
     }
 
+    self.setData({ isSubmitting: true })
     wx.showLoading({ title: '更新中...' })
 
     wx.cloud.callFunction({
@@ -383,6 +393,7 @@ const pageConfig = {
         })
       },
       complete: function() {
+        self.setData({ isSubmitting: false })
         wx.hideLoading()
       }
     })
@@ -505,7 +516,12 @@ const pageConfig = {
   // 保存员工基本信息
   saveEmployeeInfo: function() {
     const self = this
-    const { selectedEmployee, tempEmployee } = self.data
+    const { selectedEmployee, tempEmployee, isSubmitting } = self.data
+    
+    // 防重复提交
+    if (isSubmitting) {
+      return
+    }
     
     if (!selectedEmployee || !selectedEmployee._id) {
       wx.showToast({
@@ -515,6 +531,7 @@ const pageConfig = {
       return
     }
     
+    self.setData({ isSubmitting: true })
     wx.showLoading({ title: '保存中...' })
     
     wx.cloud.callFunction({
@@ -563,11 +580,24 @@ const pageConfig = {
         })
       },
       complete: function() {
+        self.setData({ isSubmitting: false })
         wx.hideLoading()
       }
     })
   },
 
+  // 页面生命周期管理
+  onUnload: function() {
+    // 确保页面销毁时隐藏loading
+    wx.hideLoading()
+    // 重置提交状态
+    this.setData({ isSubmitting: false })
+  },
+
+  onHide: function() {
+    // 页面隐藏时也清理loading状态
+    wx.hideLoading()
+  },
 
   // 选择角色
   selectRole: function(e) {
@@ -873,8 +903,14 @@ const pageConfig = {
   // 创建邀请码
   createInvite: function() {
     const self = this
-    const { role, expiryDays, remark } = self.data.newInvite
+    const { role, expiryDays, remark, isSubmitting } = self.data.newInvite
+    
+    // 防重复提交
+    if (self.data.isSubmitting) {
+      return
+    }
 
+    self.setData({ isSubmitting: true })
     wx.showLoading({ title: '生成邀请码中...' })
 
     wx.cloud.callFunction({
@@ -928,6 +964,7 @@ const pageConfig = {
         })
       },
       complete: function() {
+        self.setData({ isSubmitting: false })
         wx.hideLoading()
       }
     })

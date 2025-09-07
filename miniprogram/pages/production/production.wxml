@@ -62,9 +62,121 @@
 
         <!-- 快速操作 -->
         <view class="quick-action">
-          <t-button theme="primary" block icon="add" bind:tap="addEntry">
-            新增入栏记录
-          </t-button>
+          <t-row gutter="16">
+            <t-col span="12">
+              <t-button theme="primary" block icon="add" bind:tap="addEntry">
+                新增入栏记录
+              </t-button>
+            </t-col>
+            <t-col span="12">
+              <t-button theme="light" variant="outline" block icon="camera" bind:tap="startAICount">
+                🤖 AI智能盘点
+              </t-button>
+            </t-col>
+          </t-row>
+        </view>
+
+        <!-- AI盘点功能区域 -->
+        <view wx:if="{{aiCount.active}}" class="ai-count-section">
+          <view class="card ai-count-card">
+            <view class="card-header">
+              <t-icon name="robot" size="32rpx" color="#0052D9" />
+              <text class="card-title">AI智能盘点</text>
+              <t-icon wx:if="{{!aiCount.loading && !aiCount.result}}" name="close" size="28rpx" color="#999" bind:tap="closeAICount" class="close-btn" />
+            </view>
+            
+            <!-- 盘点操作区域 -->
+            <view wx:if="{{!aiCount.result}}" class="count-operation">
+              <!-- 拍照区域 -->
+              <view class="camera-section">
+                <view wx:if="{{!aiCount.imageUrl}}" class="camera-placeholder" bind:tap="takePhoto">
+                  <t-icon name="camera" size="80rpx" color="#0052D9" />
+                  <text class="placeholder-text">点击拍照</text>
+                  <text class="placeholder-desc">请对准鹅群拍摄清晰照片</text>
+                </view>
+                
+                <view wx:else class="photo-preview">
+                  <image src="{{aiCount.imageUrl}}" mode="aspectFit" class="preview-image" />
+                  <view class="photo-actions">
+                    <t-button size="small" theme="light" bind:tap="retakePhoto">重新拍照</t-button>
+                    <t-button size="small" theme="primary" bind:tap="analyzeImage" loading="{{aiCount.loading}}" disabled="{{aiCount.loading}}">
+                      {{aiCount.loading ? 'AI分析中...' : '开始识别'}}
+                    </t-button>
+                  </view>
+                </view>
+              </view>
+              
+              <!-- 拍摄建议 -->
+              <view class="shooting-tips">
+                <text class="tips-title">📸 拍摄建议</text>
+                <view class="tips-list">
+                  <text class="tip-item">• 选择光线充足的环境</text>
+                  <text class="tip-item">• 尽量包含完整的鹅群</text>
+                  <text class="tip-item">• 避免过度拥挤或遮挡</text>
+                  <text class="tip-item">• 保持相机稳定清晰</text>
+                </view>
+              </view>
+            </view>
+            
+            <!-- 识别结果 -->
+            <view wx:if="{{aiCount.result}}" class="count-result">
+              <view class="result-header">
+                <t-icon name="check-circle" size="32rpx" color="#52c41a" />
+                <text class="result-title">识别完成</text>
+                <text class="confidence-badge">置信度 {{aiCount.result.confidence}}%</text>
+              </view>
+              
+              <view class="result-content">
+                <!-- 主要结果 -->
+                <view class="main-result">
+                  <view class="count-display">
+                    <text class="count-number">{{aiCount.result.totalCount}}</text>
+                    <text class="count-unit">只</text>
+                  </view>
+                  <text class="count-label">识别到的鹅群数量</text>
+                </view>
+                
+                <!-- 详细信息 -->
+                <view wx:if="{{aiCount.result.regions && aiCount.result.regions.length > 0}}" class="result-details">
+                  <view class="detail-item">
+                    <text class="detail-label">检测区域：</text>
+                    <text class="detail-value">{{aiCount.result.regions.length}} 个</text>
+                  </view>
+                </view>
+                
+                <!-- 异常提醒 -->
+                <view wx:if="{{aiCount.result.abnormalDetection && aiCount.result.abnormalDetection.suspiciousAnimals > 0}}" class="abnormal-alert">
+                  <view class="alert-content">
+                    <t-icon name="error-circle" size="24rpx" color="#ff4d4f" />
+                    <text class="alert-text">发现 {{aiCount.result.abnormalDetection.suspiciousAnimals}} 只疑似异常个体</text>
+                  </view>
+                  <view wx:if="{{aiCount.result.abnormalDetection.healthConcerns.length > 0}}" class="health-concerns">
+                    <text wx:for="{{aiCount.result.abnormalDetection.healthConcerns}}" wx:key="index" class="concern-item">
+                      • {{item}}
+                    </text>
+                  </view>
+                </view>
+                
+                <!-- 补充建议 -->
+                <view wx:if="{{aiCount.result.suggestions && aiCount.result.suggestions.length > 0}}" class="suggestions">
+                  <text class="suggestions-title">💡 建议</text>
+                  <view wx:for="{{aiCount.result.suggestions}}" wx:key="index" class="suggestion-item">
+                    • {{item}}
+                  </view>
+                </view>
+              </view>
+              
+              <!-- 操作按钮 -->
+              <view class="result-actions">
+                <t-button theme="primary" size="medium" bind:tap="saveCountRecord">
+                  保存盘点记录
+                </t-button>
+                <t-button theme="light" variant="outline" size="medium" bind:tap="restartCount">
+                  重新盘点
+                </t-button>
+              </view>
+            </view>
+          </view>
         </view>
 
         <!-- 记录列表 -->

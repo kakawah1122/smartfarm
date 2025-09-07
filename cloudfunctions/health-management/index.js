@@ -79,6 +79,16 @@ exports.main = async (event, context) => {
         return await listFollowupRecords(event, wxContext)
       case 'get_abnormal_statistics':
         return await getAbnormalStatistics(event, wxContext)
+      case 'ai_diagnosis':
+        return await aiDiagnosis(event, wxContext)
+      case 'get_diagnosis_history':
+        return await getDiagnosisHistory(event, wxContext)
+      case 'get_overall_health_stats':
+        return await getOverallHealthStats(event, wxContext)
+      case 'get_current_abnormal_animals':
+        return await getCurrentAbnormalAnimals(event, wxContext)
+      case 'get_treatment_records':
+        return await getTreatmentRecords(event, wxContext)
       default:
         throw new Error('无效的操作类型')
     }
@@ -1037,6 +1047,554 @@ async function getAbnormalStatistics(event, wxContext) {
   }
 }
 
+// AI智能诊断功能
+async function aiDiagnosis(event, wxContext) {
+  const { 
+    symptoms = [], 
+    environmentData = {}, 
+    flockData = {}, 
+    images = [], 
+    priority = 'balanced' 
+  } = event
+  
+  try {
+    // 构建诊断提示词
+    const diagnosisPrompt = buildDiagnosisPrompt(symptoms, environmentData, flockData)
+    
+    // 调用AI多模型服务
+    const aiResult = await callAIService({
+      action: 'chat_completion',
+      messages: [
+        {
+          role: 'system',
+          content: `你是一个专业的鹅类疾病诊断专家，擅长根据症状、环境数据和鹅群信息进行疾病诊断和治疗建议。
+          
+请按以下JSON格式返回诊断结果：
+{
+  "diagnosis": {
+    "primaryDisease": "主要诊断疾病名称",
+    "confidence": 85,
+    "differentialDiagnosis": ["鉴别诊断1", "鉴别诊断2"]
+  },
+  "treatment": {
+    "medications": [
+      {
+        "name": "药物名称",
+        "dosage": "用法用量",
+        "duration": "使用天数",
+        "priority": "high/medium/low"
+      }
+    ],
+    "procedures": ["处理步骤1", "处理步骤2"],
+    "monitoring": ["监控要点1", "监控要点2"]
+  },
+  "prognosis": {
+    "expectedRecovery": "预期恢复时间",
+    "riskFactors": ["风险因素1", "风险因素2"],
+    "preventiveMeasures": ["预防措施1", "预防措施2"]
+  }
+}`
+        },
+        {
+          role: 'user',
+          content: diagnosisPrompt
+        }
+      ],
+      taskType: 'detailed_analysis',
+      priority: priority,
+      options: {
+        temperature: 0.3 // 降低随机性，提高准确性
+      }
+    })
+    
+    let diagnosisResult
+    
+    if (aiResult.success && aiResult.data) {
+      try {
+        // 解析AI返回的JSON结果
+        const aiContent = aiResult.data.content
+        const jsonMatch = aiContent.match(/\{[\s\S]*\}/)
+        
+        if (jsonMatch) {
+          diagnosisResult = JSON.parse(jsonMatch[0])
+        } else {
+          // 如果无法解析JSON，则使用文本解析
+          diagnosisResult = parseTextDiagnosis(aiContent)
+        }
+        
+        // 保存诊断记录
+        const diagnosisRecord = {
+          _id: generateDiagnosisId(),
+          symptoms: symptoms,
+          environmentData: environmentData,
+          flockData: flockData,
+          aiDiagnosis: diagnosisResult,
+          aiModel: aiResult.modelId,
+          confidence: diagnosisResult.diagnosis?.confidence || 0,
+          createTime: new Date(),
+          createdBy: wxContext.OPENID || 'anonymous',
+          status: 'pending_review' // 待人工审核
+        }
+        
+        await db.collection('ai_diagnosis_records').add({
+          data: diagnosisRecord
+        })
+        
+        return {
+          success: true,
+          data: {
+            diagnosis: diagnosisResult,
+            recordId: diagnosisRecord._id,
+            aiModel: aiResult.modelId,
+            timestamp: new Date()
+          }
+        }
+        
+      } catch (parseError) {
+        console.error('解析AI诊断结果失败:', parseError)
+        
+        return {
+          success: false,
+          error: 'AI诊断结果解析失败',
+          rawResponse: aiResult.data?.content || '',
+          fallback: '建议联系兽医进行人工诊断'
+        }
+      }
+      
+    } else {
+      // AI服务调用失败，返回静态建议
+      return {
+        success: false,
+        error: aiResult.error || 'AI服务不可用',
+        fallback: generateFallbackDiagnosis(symptoms, environmentData)
+      }
+    }
+    
+  } catch (error) {
+    console.error('AI诊断失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      fallback: '系统暂时不可用，请稍后重试或联系兽医'
+    }
+  }
+}
+
+// 构建诊断提示词
+function buildDiagnosisPrompt(symptoms, environmentData, flockData) {
+  let prompt = '请基于以下信息进行鹅类疾病诊断：\n\n'
+  
+  // 症状信息
+  if (symptoms && symptoms.length > 0) {
+    prompt += '**观察到的症状:**\n'
+    symptoms.forEach((symptom, index) => {
+      prompt += `${index + 1}. ${symptom}\n`
+    })
+    prompt += '\n'
+  }
+  
+  // 环境信息
+  if (environmentData && Object.keys(environmentData).length > 0) {
+    prompt += '**环境数据:**\n'
+    if (environmentData.temperature) {
+      prompt += `- 温度: ${environmentData.temperature}°C\n`
+    }
+    if (environmentData.humidity) {
+      prompt += `- 湿度: ${environmentData.humidity}%\n`
+    }
+    if (environmentData.ventilation) {
+      prompt += `- 通风情况: ${environmentData.ventilation}\n`
+    }
+    if (environmentData.lighting) {
+      prompt += `- 光照条件: ${environmentData.lighting}\n`
+    }
+    prompt += '\n'
+  }
+  
+  // 鹅群信息
+  if (flockData && Object.keys(flockData).length > 0) {
+    prompt += '**鹅群基础信息:**\n'
+    if (flockData.totalCount) {
+      prompt += `- 总数量: ${flockData.totalCount}只\n`
+    }
+    if (flockData.affectedCount) {
+      prompt += `- 患病数量: ${flockData.affectedCount}只\n`
+    }
+    if (flockData.averageAge) {
+      prompt += `- 平均日龄: ${flockData.averageAge}天\n`
+    }
+    if (flockData.breed) {
+      prompt += `- 品种: ${flockData.breed}\n`
+    }
+    prompt += '\n'
+  }
+  
+  prompt += '请提供详细的诊断分析和治疗建议。'
+  
+  return prompt
+}
+
+// 解析文本格式的诊断结果
+function parseTextDiagnosis(content) {
+  // 简化的文本解析逻辑
+  return {
+    diagnosis: {
+      primaryDisease: "需要进一步检查",
+      confidence: 70,
+      differentialDiagnosis: ["请咨询专业兽医"]
+    },
+    treatment: {
+      medications: [],
+      procedures: ["隔离观察", "改善环境条件"],
+      monitoring: ["密切观察症状变化"]
+    },
+    prognosis: {
+      expectedRecovery: "待确定",
+      riskFactors: ["环境因素"],
+      preventiveMeasures: ["定期消毒", "保持通风"]
+    },
+    rawContent: content
+  }
+}
+
+// 生成静态诊断建议（AI服务不可用时的备用方案）
+function generateFallbackDiagnosis(symptoms, environmentData) {
+  const commonSuggestions = {
+    diagnosis: {
+      primaryDisease: "症状分析中",
+      confidence: 0,
+      differentialDiagnosis: ["建议专业兽医诊断"]
+    },
+    treatment: {
+      medications: [],
+      procedures: [
+        "立即隔离可疑病鹅",
+        "改善饲养环境",
+        "加强日常观察"
+      ],
+      monitoring: [
+        "每日观察食欲和精神状态",
+        "监测体温变化",
+        "记录症状发展情况"
+      ]
+    },
+    prognosis: {
+      expectedRecovery: "待专业诊断后确定",
+      riskFactors: [
+        "环境应激",
+        "营养不良",
+        "传染性疾病风险"
+      ],
+      preventiveMeasures: [
+        "定期环境消毒",
+        "保证饲料质量",
+        "维持适宜温湿度",
+        "减少应激因素"
+      ]
+    }
+  }
+  
+  return commonSuggestions
+}
+
+// 调用AI多模型服务
+async function callAIService(params) {
+  try {
+    return await cloud.callFunction({
+      name: 'ai-multi-model',
+      data: params
+    }).then(res => res.result)
+  } catch (error) {
+    console.error('调用AI服务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 生成诊断记录ID
+function generateDiagnosisId() {
+  const now = new Date()
+  const year = now.getFullYear().toString().slice(-2)
+  const month = (now.getMonth() + 1).toString().padStart(2, '0')
+  const day = now.getDate().toString().padStart(2, '0')
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  return `AI${year}${month}${day}${random}`
+}
+
+// 获取诊断历史
+async function getDiagnosisHistory(event, wxContext) {
+  const { limit = 20, offset = 0, status = 'all' } = event
+  
+  try {
+    let query = db.collection('ai_diagnosis_records')
+      .where({
+        createdBy: wxContext.OPENID
+      })
+    
+    if (status !== 'all') {
+      query = query.where({
+        status: status
+      })
+    }
+    
+    const result = await query
+      .orderBy('createTime', 'desc')
+      .limit(limit)
+      .skip(offset)
+      .get()
+    
+    return {
+      success: true,
+      data: {
+        records: result.data,
+        total: result.data.length,
+        hasMore: result.data.length === limit
+      }
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 获取当前异常个体数据
+async function getCurrentAbnormalAnimals(event, wxContext) {
+  try {
+    // 获取当前状态为 ongoing 的健康记录（当前患病的个体）
+    const ongoingRecords = await db.collection('health_records')
+      .where({ result: 'ongoing' })
+      .orderBy('createTime', 'desc')
+      .get()
+    
+    // 构建动物列表
+    const animals = []
+    const diseaseCount = {}
+    const locationCount = {}
+    
+    // 获取批次信息
+    for (const record of ongoingRecords.data) {
+      // 获取批次信息
+      const batchInfo = await db.collection('entry_records')
+        .where({ batchNumber: record.batchNumber })
+        .limit(1)
+        .get()
+      
+      const batch = batchInfo.data[0]
+      const currentAffected = record.currentAffectedCount || record.affectedCount || 0
+      
+      // 为每个受影响的个体创建记录
+      for (let i = 0; i < currentAffected; i++) {
+        const animal = {
+          id: `${record._id}_${i}`,
+          animalId: `${record.batchNumber}_${i + 1}`,
+          disease: record.diagnosisDisease || '未确诊',
+          priority: record.severity || 'mild',
+          location: record.location || '未知位置',
+          discoveredTime: formatTimeAgo(record.createTime),
+          symptoms: record.symptoms || '',
+          treatmentStatus: record.result === 'ongoing' ? 'treating' : 'pending'
+        }
+        animals.push(animal)
+        
+        // 统计疾病分布
+        const disease = animal.disease
+        diseaseCount[disease] = (diseaseCount[disease] || 0) + 1
+        
+        // 统计位置分布
+        const location = animal.location
+        if (!locationCount[location]) {
+          locationCount[location] = {
+            name: location,
+            totalCount: batch ? batch.quantity : 100, // 默认值
+            abnormalCount: 0,
+            diseases: {}
+          }
+        }
+        locationCount[location].abnormalCount++
+        locationCount[location].diseases[disease] = (locationCount[location].diseases[disease] || 0) + 1
+      }
+    }
+    
+    // 转换为前端期望的格式
+    const diseases = Object.entries(diseaseCount).map(([name, count], index) => ({
+      name,
+      count,
+      color: getDiseaseColor(name, index)
+    }))
+    
+    const locations = Object.values(locationCount).map(location => ({
+      name: location.name,
+      totalCount: location.totalCount,
+      abnormalCount: location.abnormalCount,
+      diseases: Object.entries(location.diseases).map(([name, count], index) => ({
+        name,
+        count,
+        color: getDiseaseColor(name, index)
+      }))
+    }))
+    
+    return {
+      success: true,
+      data: {
+        animals,
+        diseases,
+        locations
+      }
+    }
+    
+  } catch (error) {
+    console.error('获取当前异常个体数据失败:', error)
+    throw error
+  }
+}
+
+// 获取治疗记录数据
+async function getTreatmentRecords(event, wxContext) {
+  try {
+    // 获取跟进记录统计
+    const followupRecords = await db.collection('followup_records')
+      .orderBy('createTime', 'desc')
+      .limit(50)
+      .get()
+    
+    // 获取健康记录状态统计
+    const healthRecords = await db.collection('health_records').get()
+    
+    // 计算治疗统计
+    const treatingCount = healthRecords.data.filter(record => record.result === 'ongoing').length
+    const recoveringCount = followupRecords.data.filter(record => record.curedCount > 0).length
+    const completedCount = healthRecords.data.filter(record => record.result === 'cured').length
+    
+    const treatmentStats = {
+      treating: treatingCount,
+      recovering: recoveringCount,
+      completed: completedCount
+    }
+    
+    // 处理治疗记录
+    const treatmentRecords = []
+    for (const followup of followupRecords.data.slice(0, 20)) {
+      // 获取关联的健康记录
+      const healthRecord = await db.collection('health_records')
+        .doc(followup.healthRecordId)
+        .get()
+      
+      if (healthRecord.data) {
+        treatmentRecords.push({
+          id: followup._id,
+          animalId: followup.batchNumber,
+          disease: healthRecord.data.diagnosisDisease || '未确诊',
+          treatment: healthRecord.data.treatment || '治疗中',
+          date: followup.followupDate,
+          result: followup.curedCount > 0 ? '好转' : (followup.deathCount > 0 ? '死亡' : '治疗中'),
+          notes: followup.notes || ''
+        })
+      }
+    }
+    
+    return {
+      success: true,
+      data: {
+        stats: treatmentStats,
+        records: treatmentRecords
+      }
+    }
+    
+  } catch (error) {
+    console.error('获取治疗记录失败:', error)
+    throw error
+  }
+}
+
+// 获取整体健康统计数据
+async function getOverallHealthStats(event, wxContext) {
+  try {
+    // 获取存栏统计
+    const stockStats = await getStockStats()
+    
+    // 获取健康记录统计
+    const healthRecords = await db.collection('health_records').get()
+    const deathRecords = await db.collection('death_records').get()
+    const followupRecords = await db.collection('followup_records').get()
+    
+    // 计算总数量（当前存栏 + 已出栏 + 已死亡）
+    const totalAnimals = stockStats.totalEntry || 0
+    
+    // 计算死亡率 = 死亡数量 / 总入栏数量 * 100%
+    const totalDeaths = deathRecords.data.reduce((sum, record) => sum + (record.deathCount || 0), 0)
+    const mortalityRate = totalAnimals > 0 ? ((totalDeaths / totalAnimals) * 100) : 0
+    
+    // 计算存活率 = (1 - 死亡率)
+    const survivalRate = 100 - mortalityRate
+    
+    // 计算治愈率 = 治愈数量 / 总患病数量 * 100%
+    const totalAffected = healthRecords.data.reduce((sum, record) => sum + (record.affectedCount || 0), 0)
+    const totalCured = followupRecords.data
+      .filter(record => record.curedCount > 0)
+      .reduce((sum, record) => sum + (record.curedCount || 0), 0)
+    const recoveryRate = totalAffected > 0 ? ((totalCured / totalAffected) * 100) : 0
+    
+    return {
+      success: true,
+      data: {
+        totalAnimals: totalAnimals,
+        survivalRate: Number(survivalRate.toFixed(1)),
+        recoveryRate: Number(recoveryRate.toFixed(1)),
+        mortalityRate: Number(mortalityRate.toFixed(1))
+      }
+    }
+    
+  } catch (error) {
+    console.error('获取整体健康统计失败:', error)
+    throw error
+  }
+}
+
+// 辅助函数：格式化时间为相对时间
+function formatTimeAgo(dateTime) {
+  const now = new Date()
+  const time = new Date(dateTime)
+  const diffMs = now.getTime() - time.getTime()
+  
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffMinutes < 60) {
+    return `${diffMinutes}分钟前`
+  } else if (diffHours < 24) {
+    return `${diffHours}小时前`
+  } else {
+    return `${diffDays}天前`
+  }
+}
+
+// 辅助函数：根据疾病名称和索引获取颜色
+function getDiseaseColor(diseaseName, index) {
+  const colors = ['#e34d59', '#ed7b2f', '#0052d9', '#00a870', '#7356f1', '#f59a23']
+  
+  // 特定疾病的固定颜色
+  const diseaseColors = {
+    '禽流感': '#e34d59',
+    '肠道感染': '#ed7b2f', 
+    '呼吸道感染': '#0052d9',
+    '营养不良': '#00a870',
+    '未确诊': '#666666'
+  }
+  
+  return diseaseColors[diseaseName] || colors[index % colors.length]
+}
+
 module.exports = {
-  getAbnormalStatistics
+  getAbnormalStatistics,
+  aiDiagnosis,
+  getDiagnosisHistory,
+  getOverallHealthStats,
+  getCurrentAbnormalAnimals,
+  getTreatmentRecords
 }

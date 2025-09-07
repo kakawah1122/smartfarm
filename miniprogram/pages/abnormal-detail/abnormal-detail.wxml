@@ -2,7 +2,7 @@
 <view class="page page-container">
   <!-- 导航栏 -->
   <navigation-bar 
-    title="异常个体详情"
+    title="当前异常管理"
     show-back="true"
     show-menu="false"
     show-record="false"
@@ -14,107 +14,109 @@
 
   <!-- 主要内容 -->
   <view wx:else class="content-container">
+    <!-- 异常概览卡片 -->
+    <view class="current-status-overview">
+      <view class="status-header">
+        <t-icon name="error-circle" size="32rpx" color="#ff4d4f" />
+        <text class="status-title">当前异常状态</text>
+        <text class="status-time">{{updateTime}}</text>
+      </view>
+      
+      <t-row gutter="12" class="status-stats">
+        <t-col span="6">
+          <view class="status-card urgent">
+            <view class="status-value">{{currentStats.urgent}}</view>
+            <view class="status-label">紧急</view>
+          </view>
+        </t-col>
+        <t-col span="6">
+          <view class="status-card moderate">
+            <view class="status-value">{{currentStats.moderate}}</view>
+            <view class="status-label">中等</view>
+          </view>
+        </t-col>
+        <t-col span="6">
+          <view class="status-card mild">
+            <view class="status-value">{{currentStats.mild}}</view>
+            <view class="status-label">轻微</view>
+          </view>
+        </t-col>
+        <t-col span="6">
+          <view class="status-card treating">
+            <view class="status-value">{{currentStats.treating}}</view>
+            <view class="status-label">治疗中</view>
+          </view>
+        </t-col>
+      </t-row>
+    </view>
+
     <!-- Tab 切换 -->
     <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" class="detail-tabs">
-      <t-tab-panel value="overview" label="概览"></t-tab-panel>
-      <t-tab-panel value="diseases" label="病种分析"></t-tab-panel>
-      <t-tab-panel value="medication" label="用药效果"></t-tab-panel>
-      <t-tab-panel value="trend" label="趋势分析"></t-tab-panel>
+      <t-tab-panel value="distribution" label="当前分布"></t-tab-panel>
+      <t-tab-panel value="priority" label="紧急排序"></t-tab-panel>
+      <t-tab-panel value="treatment" label="治疗跟踪"></t-tab-panel>
+      <t-tab-panel value="ai_advice" label="AI建议"></t-tab-panel>
     </t-tabs>
 
     <view class="scroll-container">
-      <!-- 概览页面 -->
-      <view wx:if="{{activeTab === 'overview'}}" class="tab-content">
-        <!-- 核心指标 -->
-        <view class="stats-overview">
-          <t-row gutter="16" class="overview-stats">
-            <t-col span="8">
-              <view class="stat-card">
-                <view class="stat-content stat-danger">
-                  <view class="stat-value">{{chartData.totalAbnormal}}</view>
-                  <view class="stat-label">异常个体</view>
-                  <view class="stat-unit">只</view>
-                </view>
-              </view>
-            </t-col>
-            <t-col span="8">
-              <view class="stat-card">
-                <view class="stat-content stat-warning">
-                  <view class="stat-value">{{chartData.overallMortality}}%</view>
-                  <view class="stat-label">死亡率</view>
-                  <view class="stat-hint">整体死亡比例</view>
-                </view>
-              </view>
-            </t-col>
-            <t-col span="8">
-              <view class="stat-card">
-                <view class="stat-content stat-success">
-                  <view class="stat-value">{{chartData.overallRecovery}}%</view>
-                  <view class="stat-label">治愈率</view>
-                  <view class="stat-hint">整体治愈比例</view>
-                </view>
-              </view>
-            </t-col>
-          </t-row>
-        </view>
-
-        <!-- 时间范围统计 -->
-        <view class="time-range-section">
+      <!-- 当前分布 Tab -->
+      <view wx:if="{{activeTab === 'distribution'}}" class="tab-content">
+        <!-- 病种分布图表 -->
+        <view class="current-distribution-section">
           <view class="card">
             <view class="card-header">
-              <text class="card-title">时间段统计</text>
+              <text class="card-title">当前异常病种分布</text>
+              <text class="data-note">仅统计当前异常个体</text>
             </view>
-            <view class="time-range-list">
-              <view wx:for="{{timeRangeData}}" wx:key="label" class="time-range-item">
-                <view class="time-label">{{item.label}}</view>
-                <view class="time-stats">
-                  <view class="time-stat">
-                    <text class="time-stat-label">异常</text>
-                    <text class="time-stat-value danger">{{item.abnormal}}</text>
-                  </view>
-                  <view class="time-stat">
-                    <text class="time-stat-label">死亡</text>
-                    <text class="time-stat-value warning">{{item.mortality}}</text>
-                  </view>
-                  <view class="time-stat">
-                    <text class="time-stat-label">治愈</text>
-                    <text class="time-stat-value success">{{item.recovery}}</text>
-                  </view>
+            
+            <!-- 病种饼图 -->
+            <view class="disease-pie-chart">
+              <view class="css-pie-chart" wx:if="{{currentDiseases.length > 0}}">
+                <view wx:for="{{currentDiseases}}" wx:key="name" 
+                      class="pie-slice-container" 
+                      style="transform: rotate({{item.startAngle}}deg)">
+                  <view class="pie-slice" 
+                        style="--slice-color: {{item.color}}; --slice-angle: {{item.angle}}deg"></view>
                 </view>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 病种分布饼图 -->
-        <view class="chart-section">
-          <view class="card">
-            <view class="card-header">
-              <text class="card-title">病种分布</text>
-            </view>
-            <view class="pie-chart-container">
-              <!-- CSS饼图 -->
-              <view class="css-pie-chart" wx:if="{{pieChartData.length > 0}}">
-                <view class="pie-slice-container">
-                  <view wx:for="{{pieChartData}}" wx:key="name" 
-                        class="pie-slice" 
-                        style="--percentage: {{item.percentage}}; --color: {{item.color}}; --rotation: {{item.startAngle || 0}}deg;">
-                  </view>
-                </view>
-                <!-- 中心圆 -->
                 <view class="pie-center">
-                  <view class="pie-center-text">
-                    <view class="pie-total">{{chartData.totalAbnormal}}</view>
-                    <view class="pie-label">异常个体</view>
-                  </view>
+                  <text class="center-value">{{currentStats.total}}</text>
+                  <text class="center-label">异常个体</text>
                 </view>
               </view>
               
               <!-- 图例 -->
               <view class="chart-legend">
-                <view wx:for="{{pieChartData}}" wx:key="name" class="legend-item">
+                <view wx:for="{{currentDiseases}}" wx:key="name" class="legend-item">
                   <view class="legend-color" style="background-color: {{item.color}}"></view>
-                  <text class="legend-text">{{item.name}} ({{item.percentage}}%)</text>
+                  <text class="legend-name">{{item.name}}</text>
+                  <text class="legend-count">{{item.count}}只</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 位置分布 -->
+        <view class="location-distribution-section">
+          <view class="card">
+            <view class="card-header">
+              <text class="card-title">各鹅舍分布情况</text>
+            </view>
+            <view class="location-list">
+              <view wx:for="{{locationDistribution}}" wx:key="location" class="location-item">
+                <view class="location-header">
+                  <view class="location-name">{{item.location}}</view>
+                  <view class="location-total">{{item.abnormalCount}}/{{item.totalCount}}只异常</view>
+                </view>
+                <view class="location-diseases">
+                  <view wx:for="{{item.diseases}}" wx:for-item="disease" wx:key="name" class="disease-tag">
+                    <view class="disease-dot" style="background-color: {{disease.color}}"></view>
+                    <text class="disease-text">{{disease.name}} {{disease.count}}只</text>
+                  </view>
+                </view>
+                <view class="location-rate">
+                  <text class="rate-label">异常率:</text>
+                  <text class="rate-value {{item.rate >= 20 ? 'high' : item.rate >= 10 ? 'medium' : 'low'}}">{{item.rate}}%</text>
                 </view>
               </view>
             </view>
@@ -122,291 +124,267 @@
         </view>
       </view>
 
-      <!-- 病种分析页面 -->
-      <view wx:if="{{activeTab === 'diseases'}}" class="tab-content">
-        <!-- 病种柱状图 -->
-        <view class="chart-section">
+      <!-- 紧急排序 Tab -->
+      <view wx:if="{{activeTab === 'priority'}}" class="tab-content">
+        <!-- 紧急程度筛选 -->
+        <view class="priority-filter">
+          <view class="filter-buttons">
+            <t-button wx:for="{{priorityLevels}}" wx:key="level" 
+                      theme="{{activePriority === item.level ? 'primary' : 'light'}}"
+                      variant="{{activePriority === item.level ? 'base' : 'outline'}}"
+                      size="small"
+                      bind:tap="onPriorityFilter"
+                      data-level="{{item.level}}"
+                      class="priority-btn">
+              {{item.label}} ({{item.count}})
+            </t-button>
+          </view>
+        </view>
+        
+        <!-- 异常个体列表 -->
+        <view class="abnormal-animals-list">
+          <view wx:for="{{filteredAbnormalAnimals}}" wx:key="id" class="animal-card">
+            <view class="animal-header">
+              <view class="animal-info">
+                <view class="animal-id">编号: {{item.animalId}}</view>
+                <view class="priority-badge {{item.priority}}">
+                  {{item.priority === 'urgent' ? '🔴 紧急' : item.priority === 'moderate' ? '🟡 中等' : '🟢 轻微'}}
+                </view>
+              </view>
+              <view class="animal-status">
+                <t-tag theme="{{item.treatmentStatus === 'treating' ? 'primary' : 'default'}}" size="small">
+                  {{item.treatmentStatus === 'treating' ? '治疗中' : '待处理'}}
+                </t-tag>
+              </view>
+            </view>
+            
+            <view class="animal-details">
+              <view class="detail-row">
+                <text class="detail-label">疾病:</text>
+                <text class="detail-value">{{item.disease}}</text>
+              </view>
+              <view class="detail-row">
+                <text class="detail-label">位置:</text>
+                <text class="detail-value">{{item.location}}</text>
+              </view>
+              <view class="detail-row">
+                <text class="detail-label">发现时间:</text>
+                <text class="detail-value">{{item.discoveredTime}}</text>
+              </view>
+              <view wx:if="{{item.symptoms}}" class="detail-row">
+                <text class="detail-label">主要症状:</text>
+                <text class="detail-value">{{item.symptoms}}</text>
+              </view>
+            </view>
+            
+            <view class="animal-actions">
+              <t-button size="small" theme="primary" bind:tap="startTreatment" data-animal="{{item}}">
+                开始治疗
+              </t-button>
+              <t-button size="small" theme="light" bind:tap="viewAnimalDetail" data-animal="{{item}}">
+                查看详情
+              </t-button>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治疗跟踪 Tab -->
+      <view wx:if="{{activeTab === 'treatment'}}" class="tab-content">
+        <!-- 治疗状态概览 -->
+        <view class="treatment-overview">
+          <t-row gutter="12" class="treatment-stats">
+            <t-col span="8">
+              <view class="treatment-stat-card treating">
+                <view class="stat-value">{{treatmentStats.treating}}</view>
+                <view class="stat-label">治疗中</view>
+              </view>
+            </t-col>
+            <t-col span="8">
+              <view class="treatment-stat-card recovering">
+                <view class="stat-value">{{treatmentStats.recovering}}</view>
+                <view class="stat-label">恢复中</view>
+              </view>
+            </t-col>
+            <t-col span="8">
+              <view class="treatment-stat-card completed">
+                <view class="stat-value">{{treatmentStats.completed}}</view>
+                <view class="stat-label">本周治愈</view>
+              </view>
+            </t-col>
+          </t-row>
+        </view>
+        
+        <!-- 治疗进度列表 -->
+        <view class="treatment-progress-list">
+          <view wx:for="{{treatmentRecords}}" wx:key="id" class="treatment-card">
+            <view class="treatment-header">
+              <view class="animal-info">
+                <text class="animal-id">{{item.animalId}}</text>
+                <text class="disease-name">{{item.disease}}</text>
+              </view>
+              <view class="treatment-status {{item.status}}">
+                {{item.statusText}}
+              </view>
+            </view>
+            
+            <view class="treatment-progress">
+              <view class="progress-info">
+                <text class="progress-label">治疗进度</text>
+                <text class="progress-text">第{{item.currentDay}}天 / 共{{item.totalDays}}天</text>
+              </view>
+              <t-progress 
+                percentage="{{item.progressPercentage}}"
+                theme="{{item.status === 'treating' ? 'primary' : item.status === 'recovering' ? 'success' : 'warning'}}"
+                size="medium"
+                class="progress-bar"
+              />
+            </view>
+            
+            <view class="treatment-details">
+              <view class="detail-item">
+                <text class="detail-label">用药:</text>
+                <text class="detail-value">{{item.medication}}</text>
+              </view>
+              <view class="detail-item">
+                <text class="detail-label">剂量:</text>
+                <text class="detail-value">{{item.dosage}}</text>
+              </view>
+              <view class="detail-item">
+                <text class="detail-label">负责人:</text>
+                <text class="detail-value">{{item.operator}}</text>
+              </view>
+            </view>
+            
+            <view class="treatment-actions">
+              <t-button size="small" theme="primary" bind:tap="updateTreatment" data-record="{{item}}">
+                更新记录
+              </t-button>
+              <t-button wx:if="{{item.status === 'treating'}}" size="small" theme="success" bind:tap="markRecovered" data-record="{{item}}">
+                标记治愈
+              </t-button>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- AI建议 Tab -->
+      <view wx:if="{{activeTab === 'ai_advice'}}" class="tab-content">
+        <!-- AI分析触发器 -->
+        <view class="ai-analysis-trigger">
           <view class="card">
             <view class="card-header">
-              <text class="card-title">各病种病例数量</text>
+              <t-icon name="robot" size="32rpx" color="#0052D9" />
+              <text class="card-title">AI智能分析</text>
+              <t-button wx:if="{{!aiAdvice.loading}}" size="small" theme="primary" bind:tap="generateAIAdvice">
+                {{aiAdvice.result ? '重新分析' : '开始分析'}}
+              </t-button>
             </view>
-            <view class="bar-chart-container">
-              <!-- CSS柱状图 -->
-              <view class="css-bar-chart" wx:if="{{chartData.diseases.length > 0}}">
-                <view class="bar-chart-content">
-                  <view wx:for="{{chartData.diseases}}" wx:key="name" class="bar-item">
-                    <view class="bar-column">
-                      <view class="bar-fill" 
-                            style="height: {{item.count / chartData.diseases[0].count * 100}}%; background-color: {{item.color}}">
-                        <view class="bar-value">{{item.count}}</view>
-                      </view>
+            
+            <!-- AI分析进行中 -->
+            <view wx:if="{{aiAdvice.loading}}" class="ai-loading">
+              <t-loading theme="spinner" size="40rpx" />
+              <text class="loading-text">AI正在分析当前异常情况...</text>
+            </view>
+            
+            <!-- AI分析结果 -->
+            <view wx:elif="{{aiAdvice.result}}" class="ai-results">
+              <!-- 风险评估 -->
+              <view class="risk-assessment">
+                <view class="assessment-title">🎯 风险评估</view>
+                <view class="risk-level {{aiAdvice.result.riskLevel}}">
+                  整体风险等级: {{aiAdvice.result.riskLevelText}}
+                </view>
+                <view class="risk-factors">
+                  <text wx:for="{{aiAdvice.result.riskFactors}}" wx:key="index" class="risk-factor">
+                    • {{item}}
+                  </text>
+                </view>
+              </view>
+              
+              <!-- 紧急处理建议 -->
+              <view class="urgent-recommendations">
+                <view class="recommendation-title">⚡ 紧急处理建议</view>
+                <view class="urgent-actions">
+                  <view wx:for="{{aiAdvice.result.urgentActions}}" wx:key="index" class="urgent-action">
+                    <view class="action-priority">{{item.priority}}</view>
+                    <view class="action-content">
+                      <view class="action-title">{{item.title}}</view>
+                      <view class="action-description">{{item.description}}</view>
                     </view>
-                    <view class="bar-label">{{item.name}}</view>
                   </view>
                 </view>
-                
-                <!-- Y轴标签 -->
-                <view class="y-axis-labels">
-                  <view class="y-label">{{chartData.diseases[0].count || 0}}</view>
-                  <view class="y-label">{{Math.floor((chartData.diseases[0].count || 0) / 2)}}</view>
-                  <view class="y-label">0</view>
+              </view>
+              
+              <!-- 治疗方案建议 -->
+              <view class="treatment-recommendations">
+                <view class="recommendation-title">💊 治疗方案建议</view>
+                <view wx:for="{{aiAdvice.result.treatmentPlan}}" wx:key="disease" class="treatment-plan">
+                  <view class="plan-header">
+                    <text class="disease-name">{{item.disease}}</text>
+                    <text class="affected-count">影响 {{item.affectedCount}} 只</text>
+                  </view>
+                  <view class="plan-medications">
+                    <view wx:for="{{item.medications}}" wx:for-item="med" wx:key="name" class="medication-item">
+                      <view class="med-name">{{med.name}}</view>
+                      <view class="med-dosage">{{med.dosage}}</view>
+                      <view class="med-priority {{med.priority}}">{{med.priorityText}}</view>
+                    </view>
+                  </view>
+                  <view class="plan-notes">
+                    <text wx:for="{{item.notes}}" wx:key="index" class="plan-note">
+                      • {{item}}
+                    </text>
+                  </view>
+                </view>
+              </view>
+              
+              <!-- 预防措施 -->
+              <view class="prevention-measures">
+                <view class="recommendation-title">🛡️ 预防措施</view>
+                <view class="prevention-categories">
+                  <view wx:for="{{aiAdvice.result.preventionMeasures}}" wx:key="category" class="prevention-category">
+                    <view class="category-title">{{item.category}}</view>
+                    <view class="category-measures">
+                      <text wx:for="{{item.measures}}" wx:for-item="measure" wx:key="index" class="prevention-measure">
+                        • {{measure}}
+                      </text>
+                    </view>
+                  </view>
                 </view>
               </view>
             </view>
-          </view>
-        </view>
-
-        <!-- 病种详细列表 -->
-        <view class="disease-list-section">
-          <view class="card">
-            <view class="card-header">
-              <text class="card-title">病种详细数据</text>
-            </view>
-            <view class="disease-list">
-              <view wx:for="{{chartData.diseases}}" wx:key="name" 
-                    class="disease-item" 
-                    bind:tap="viewDiseaseDetail" 
-                    data-disease="{{item}}">
-                <view class="disease-header">
-                  <view class="disease-name">
-                    <view class="disease-color" style="background-color: {{item.color}}"></view>
-                    <text class="disease-title">{{item.name}}</text>
-                  </view>
-                  <t-tag theme="primary" size="small">{{item.count}}只</t-tag>
-                </view>
-                <view class="disease-stats">
-                  <view class="disease-stat-row">
-                    <text class="disease-stat-label">占比:</text>
-                    <text class="disease-stat-value">{{item.percentage}}%</text>
-                  </view>
-                  <view class="disease-stat-row">
-                    <text class="disease-stat-label">死亡:</text>
-                    <text class="disease-stat-value danger">{{item.mortality}}只</text>
-                  </view>
-                  <view class="disease-stat-row">
-                    <text class="disease-stat-label">治愈:</text>
-                    <text class="disease-stat-value success">{{item.recovery}}只</text>
-                  </view>
-                </view>
-                <view class="disease-progress">
-                  <view class="progress-item">
-                    <text class="progress-label">死亡率</text>
-                    <t-progress 
-                      percentage="{{item.count > 0 ? (item.mortality / item.count * 100) : 0}}"
-                      theme="error"
-                      size="small"
-                      class="progress-bar"
-                    />
-                  </view>
-                  <view class="progress-item">
-                    <text class="progress-label">治愈率</text>
-                    <t-progress 
-                      percentage="{{item.count > 0 ? (item.recovery / item.count * 100) : 0}}"
-                      theme="success"
-                      size="small"
-                      class="progress-bar"
-                    />
-                  </view>
-                </view>
-                <view class="disease-arrow">
-                  <t-icon name="chevron-right" size="16" color="#c8c9cc" />
-                </view>
-              </view>
+            
+            <!-- 无分析结果时的提示 -->
+            <view wx:else class="ai-empty">
+              <view class="empty-icon">🤖</view>
+              <view class="empty-text">点击"开始分析"获取AI智能建议</view>
+              <view class="empty-desc">基于当前异常情况进行智能分析和处理建议</view>
             </view>
           </view>
         </view>
-      </view>
-
-      <!-- 用药效果分析页面 -->
-      <view wx:if="{{activeTab === 'medication'}}" class="tab-content">
-        <!-- 用药统计概览 -->
-        <view class="medication-overview-section">
+        
+        <!-- 历史AI建议 -->
+        <view wx:if="{{aiAdviceHistory.length > 0}}" class="ai-history-section">
           <view class="card">
             <view class="card-header">
-              <text class="card-title">用药统计概览</text>
+              <text class="card-title">历史AI建议</text>
             </view>
-            <t-row gutter="12" class="medication-stats">
-              <t-col span="6">
-                <view class="medication-stat-item">
-                  <view class="medication-stat-value success">{{medicationData.totalMedications}}</view>
-                  <view class="medication-stat-label">总用药种类</view>
-                </view>
-              </t-col>
-              <t-col span="6">
-                <view class="medication-stat-item">
-                  <view class="medication-stat-value primary">{{medicationData.averageEffectiveness}}%</view>
-                  <view class="medication-stat-label">平均有效率</view>
-                </view>
-              </t-col>
-              <t-col span="6">
-                <view class="medication-stat-item">
-                  <view class="medication-stat-value warning">{{medicationData.totalCost}}</view>
-                  <view class="medication-stat-label">总成本(元)</view>
-                </view>
-              </t-col>
-              <t-col span="6">
-                <view class="medication-stat-item">
-                  <view class="medication-stat-value info">{{medicationData.avgTreatmentDays}}</view>
-                  <view class="medication-stat-label">平均疗程(天)</view>
-                </view>
-              </t-col>
-            </t-row>
-          </view>
-        </view>
-
-        <!-- 药物效果排行 -->
-        <view class="medication-ranking-section">
-          <view class="card">
-            <view class="card-header">
-              <text class="card-title">药物效果排行</text>
-            </view>
-            <view class="medication-ranking-chart">
-              <view wx:for="{{medicationData.medications}}" wx:key="name" class="medication-rank-item">
-                <view class="rank-number">{{index + 1}}</view>
-                <view class="medication-info">
-                  <view class="medication-name">{{item.name}}</view>
-                  <view class="medication-details">
-                    <text class="detail-item">治愈率: {{item.cureRate}}%</text>
-                    <text class="detail-item">使用次数: {{item.usageCount}}次</text>
-                  </view>
-                </view>
-                <view class="effectiveness-bar">
-                  <view class="bar-bg">
-                    <view class="bar-fill" style="width: {{item.cureRate}}%; background-color: {{item.color}}"></view>
-                  </view>
-                  <text class="effectiveness-value">{{item.cureRate}}%</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 成本效益分析 -->
-        <view class="cost-benefit-section">
-          <view class="card">
-            <view class="card-header">
-              <text class="card-title">成本效益分析</text>
-            </view>
-            <view class="cost-benefit-chart">
-              <view wx:for="{{medicationData.medications}}" wx:key="name" class="cost-benefit-item">
-                <view class="medication-header">
-                  <view class="medication-name-badge" style="background-color: {{item.color}}">{{item.name}}</view>
-                  <t-tag theme="{{item.costEfficiency >= 70 ? 'success' : item.costEfficiency >= 50 ? 'warning' : 'danger'}}" size="small">
-                    {{item.costEfficiency >= 70 ? '高效' : item.costEfficiency >= 50 ? '中效' : '低效'}}
+            <view class="history-list">
+              <view wx:for="{{aiAdviceHistory}}" wx:key="id" class="history-item">
+                <view class="history-header">
+                  <text class="history-time">{{item.createTime}}</text>
+                  <t-tag theme="{{item.adopted ? 'success' : 'default'}}" size="small">
+                    {{item.adopted ? '已采用' : '未采用'}}
                   </t-tag>
                 </view>
-                <view class="cost-benefit-metrics">
-                  <view class="metric-row">
-                    <text class="metric-label">单次成本:</text>
-                    <text class="metric-value">¥{{item.unitCost}}</text>
-                  </view>
-                  <view class="metric-row">
-                    <text class="metric-label">治愈率:</text>
-                    <text class="metric-value success">{{item.cureRate}}%</text>
-                  </view>
-                  <view class="metric-row">
-                    <text class="metric-label">成本效益:</text>
-                    <text class="metric-value {{item.costEfficiency >= 70 ? 'success' : item.costEfficiency >= 50 ? 'warning' : 'danger'}}">{{item.costEfficiency}}%</text>
-                  </view>
+                <view class="history-content">
+                  <text class="history-summary">{{item.summary}}</text>
                 </view>
-                <!-- 成本效益进度条 -->
-                <view class="cost-efficiency-progress">
-                  <t-progress 
-                    percentage="{{item.costEfficiency}}"
-                    theme="{{item.costEfficiency >= 70 ? 'success' : item.costEfficiency >= 50 ? 'warning' : 'error'}}"
-                    size="small"
-                    class="efficiency-progress-bar"
-                  />
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 用药建议 -->
-        <view class="medication-recommendations-section">
-          <view class="card">
-            <view class="card-header">
-              <text class="card-title">智能用药建议</text>
-            </view>
-            <view class="recommendations-content">
-              <view class="recommendation-categories">
-                <view class="recommendation-category">
-                  <view class="category-header">
-                    <t-icon name="trending-up" size="18" color="#00a870" />
-                    <text class="category-title">推荐用药</text>
-                  </view>
-                  <view class="recommendation-list">
-                    <view wx:for="{{medicationData.recommendations.preferred}}" wx:key="index" class="recommendation-item preferred">
-                      <view class="recommendation-text">{{item}}</view>
-                    </view>
-                  </view>
-                </view>
-
-                <view class="recommendation-category">
-                  <view class="category-header">
-                    <t-icon name="info-circle" size="18" color="#0052d9" />
-                    <text class="category-title">用药提醒</text>
-                  </view>
-                  <view class="recommendation-list">
-                    <view wx:for="{{medicationData.recommendations.reminders}}" wx:key="index" class="recommendation-item reminder">
-                      <view class="recommendation-text">{{item}}</view>
-                    </view>
-                  </view>
-                </view>
-
-                <view class="recommendation-category">
-                  <view class="category-header">
-                    <t-icon name="error-circle" size="18" color="#e34d59" />
-                    <text class="category-title">注意事项</text>
-                  </view>
-                  <view class="recommendation-list">
-                    <view wx:for="{{medicationData.recommendations.warnings}}" wx:key="index" class="recommendation-item warning">
-                      <view class="recommendation-text">{{item}}</view>
-                    </view>
-                  </view>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 趋势分析页面 -->
-      <view wx:if="{{activeTab === 'trend'}}" class="tab-content">
-        <view class="trend-section">
-          <view class="card">
-            <view class="card-header">
-              <text class="card-title">趋势分析</text>
-            </view>
-            <view class="trend-content">
-              <view class="trend-summary">
-                <view class="trend-item">
-                  <t-icon name="trending-up" size="20" color="#e34d59" />
-                  <text class="trend-text">异常个体数量呈上升趋势</text>
-                </view>
-                <view class="trend-item">
-                  <t-icon name="trending-down" size="20" color="#00a870" />
-                  <text class="trend-text">整体治愈率在改善</text>
-                </view>
-                <view class="trend-item">
-                  <t-icon name="info-circle" size="20" color="#0052d9" />
-                  <text class="trend-text">禽流感仍是主要威胁</text>
-                </view>
-              </view>
-
-              <t-divider />
-
-              <view class="trend-suggestions">
-                <view class="suggestion-title">
-                  <t-icon name="lightbulb" size="18" color="#ed7b2f" />
-                  <text>建议措施</text>
-                </view>
-                <view class="suggestion-list">
-                  <view class="suggestion-item">• 加强禽流感防控，定期接种疫苗</view>
-                  <view class="suggestion-item">• 改善鹅舍通风条件，预防呼吸道感染</view>
-                  <view class="suggestion-item">• 合理搭配饲料，减少营养不良</view>
-                  <view class="suggestion-item">• 建立健康档案，及时发现异常</view>
+                <view class="history-actions">
+                  <t-button size="small" theme="light" bind:tap="viewHistoryDetail" data-item="{{item}}">
+                    查看详情
+                  </t-button>
                 </view>
               </view>
             </view>

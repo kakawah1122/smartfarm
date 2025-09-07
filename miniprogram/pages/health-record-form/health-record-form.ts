@@ -1,5 +1,6 @@
 // health-record-form.ts - 健康记录表单页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
+import { DynamicStorageManager } from '../../utils/dynamic-storage'
 
 // 表单数据接口
 interface HealthRecordFormData {
@@ -12,6 +13,11 @@ interface HealthRecordFormData {
   treatmentDate: string;        // 治疗日期
   medicineQuantity: string;     // 药品/营养品使用数量
   notes: string;                // 备注
+  
+  // 动态存储图片字段
+  symptomImages: string[];      // 症状图片文件ID数组
+  treatmentImages: string[];    // 治疗过程图片文件ID数组
+  recoveryImages: string[];     // 康复记录图片文件ID数组
 }
 
 const pageConfig = {
@@ -26,7 +32,11 @@ const pageConfig = {
       treatment: '',
       treatmentDate: '',
       medicineQuantity: '',
-      notes: ''
+      notes: '',
+      // 动态存储图片字段
+      symptomImages: [],
+      treatmentImages: [],
+      recoveryImages: []
     } as HealthRecordFormData,
     
     // 日期选择器相关
@@ -100,7 +110,27 @@ const pageConfig = {
     submitting: false,
     
     // 加载状态
-    loading: false
+    loading: false,
+    
+    // AI诊断相关
+    aiDiagnosis: {
+      loading: false,
+      result: null as any,
+      error: null as string | null,
+      history: [] as any[]
+    },
+    
+    // 动态存储图片上传相关
+    imageUpload: {
+      loading: false,
+      currentType: '', // 'symptom', 'treatment', 'recovery'
+      uploadProgress: 0,
+      previewUrls: {
+        symptom: [] as string[],
+        treatment: [] as string[],
+        recovery: [] as string[]
+      }
+    }
   },
 
   onLoad() {
@@ -565,6 +595,261 @@ const pageConfig = {
     }
   },
 
+  // ================ 动态存储图片上传功能 ================
+  
+  /**
+   * 选择并上传症状图片
+   */
+  async onUploadSymptomImage() {
+    await this.uploadImages('symptom');
+  },
+  
+  /**
+   * 选择并上传治疗过程图片
+   */
+  async onUploadTreatmentImage() {
+    await this.uploadImages('treatment');
+  },
+  
+  /**
+   * 选择并上传康复记录图片
+   */
+  async onUploadRecoveryImage() {
+    await this.uploadImages('recovery');
+  },
+  
+  /**
+   * 通用图片上传方法 - 基于动态存储
+   * @param imageType 图片类型: 'symptom' | 'treatment' | 'recovery'
+   */
+  async uploadImages(imageType: 'symptom' | 'treatment' | 'recovery') {
+    try {
+      // 检查记录日期是否已选择
+      if (!this.data.formData.recordDate) {
+        wx.showToast({
+          title: '请先选择记录日期',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 设置上传状态
+      this.setData({
+        'imageUpload.loading': true,
+        'imageUpload.currentType': imageType
+      });
+      
+      // 选择图片
+      const chooseResult = await wx.chooseImage({
+        count: 9, // 最多选择9张图片
+        sourceType: ['camera', 'album'],
+        sizeType: ['compressed'] // 压缩图片以提升上传速度
+      });
+      
+      if (chooseResult.tempFilePaths.length === 0) {
+        this.setData({
+          'imageUpload.loading': false
+        });
+        return;
+      }
+      
+      wx.showLoading({ 
+        title: `上传中 (0/${chooseResult.tempFilePaths.length})`,
+        mask: true 
+      });
+      
+      const uploadResults: string[] = [];
+      const previewUrls: string[] = [...this.data.imageUpload.previewUrls[imageType]];
+      
+      // 批量上传图片
+      for (let i = 0; i < chooseResult.tempFilePaths.length; i++) {
+        const filePath = chooseResult.tempFilePaths[i];
+        
+        try {
+          // 使用动态存储管理器上传
+          const uploadResult = await DynamicStorageManager.uploadFile(filePath, {
+            category: 'health',
+            subCategory: this.getSubCategoryByImageType(imageType),
+            recordDate: this.data.formData.recordDate, // 使用用户选择的记录日期！
+            metadata: {
+              batchId: this.data.formData.batchNumber,
+              relatedRecordId: this.generateTempRecordId(),
+              fileType: 'image/jpeg',
+              originalName: `${imageType}_${Date.now()}.jpg`
+            }
+          });
+          
+          if (uploadResult.success && uploadResult.fileID) {
+            uploadResults.push(uploadResult.fileID);
+            previewUrls.push(filePath); // 添加预览URL
+            
+            // 显示上传进度和文件夹信息
+            wx.showLoading({ 
+              title: `上传中 (${i + 1}/${chooseResult.tempFilePaths.length})\n已保存至: ${uploadResult.timeDimension}`,
+              mask: true 
+            });
+            
+          } else {
+            console.error('上传失败:', uploadResult.error);
+            wx.showToast({
+              title: `第${i + 1}张图片上传失败`,
+              icon: 'none'
+            });
+          }
+          
+        } catch (error) {
+          console.error('图片上传异常:', error);
+          wx.showToast({
+            title: `第${i + 1}张图片上传异常`,
+            icon: 'none'
+          });
+        }
+      }
+      
+      // 更新表单数据和预览
+      if (uploadResults.length > 0) {
+        const formDataKey = this.getFormDataKeyByImageType(imageType);
+        const currentImages = [...this.data.formData[formDataKey]];
+        const updatedImages = [...currentImages, ...uploadResults];
+        
+        this.setData({
+          [`formData.${formDataKey}`]: updatedImages,
+          [`imageUpload.previewUrls.${imageType}`]: previewUrls
+        });
+        
+        wx.showToast({
+          title: `成功上传 ${uploadResults.length} 张图片`,
+          icon: 'success',
+          duration: 2000
+        });
+        
+        // 显示文件夹生成提示
+        if (uploadResults.length > 0) {
+          setTimeout(() => {
+            wx.showModal({
+              title: '动态文件夹已创建',
+              content: `图片已按记录日期自动保存至对应的时间文件夹中，便于后续按时间查询和管理。`,
+              showCancel: false,
+              confirmText: '知道了'
+            });
+          }, 1500);
+        }
+      }
+      
+    } catch (error) {
+      console.error('图片上传流程失败:', error);
+      wx.showToast({
+        title: '图片上传失败，请重试',
+        icon: 'error'
+      });
+    } finally {
+      wx.hideLoading();
+      this.setData({
+        'imageUpload.loading': false,
+        'imageUpload.currentType': ''
+      });
+    }
+  },
+  
+  /**
+   * 根据图片类型获取子分类
+   */
+  getSubCategoryByImageType(imageType: string): string {
+    const mapping = {
+      'symptom': 'symptoms',
+      'treatment': 'treatment', 
+      'recovery': 'recovery'
+    };
+    return mapping[imageType] || 'symptoms';
+  },
+  
+  /**
+   * 根据图片类型获取表单数据字段名
+   */
+  getFormDataKeyByImageType(imageType: string): string {
+    const mapping = {
+      'symptom': 'symptomImages',
+      'treatment': 'treatmentImages',
+      'recovery': 'recoveryImages'
+    };
+    return mapping[imageType] || 'symptomImages';
+  },
+  
+  /**
+   * 生成临时记录ID
+   */
+  generateTempRecordId(): string {
+    return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  },
+  
+  /**
+   * 预览图片
+   */
+  onPreviewImage(event: any) {
+    const { type, index } = event.currentTarget.dataset;
+    const previewUrls = this.data.imageUpload.previewUrls[type];
+    
+    if (previewUrls && previewUrls.length > 0) {
+      wx.previewImage({
+        urls: previewUrls,
+        current: previewUrls[index]
+      });
+    }
+  },
+  
+  /**
+   * 删除图片
+   */
+  async onDeleteImage(event: any) {
+    const { type, index } = event.currentTarget.dataset;
+    
+    try {
+      const result = await wx.showModal({
+        title: '确认删除',
+        content: '确定要删除这张图片吗？此操作不可撤销。'
+      });
+      
+      if (!result.confirm) return;
+      
+      // 获取要删除的文件ID
+      const formDataKey = this.getFormDataKeyByImageType(type);
+      const currentImages = [...this.data.formData[formDataKey]];
+      const fileIDToDelete = currentImages[index];
+      
+      if (fileIDToDelete) {
+        // 从云存储删除文件
+        const deleteResult = await DynamicStorageManager.deleteFile(fileIDToDelete);
+        if (!deleteResult.success) {
+          console.warn('云存储删除失败:', deleteResult.error);
+        }
+      }
+      
+      // 更新本地数据
+      currentImages.splice(index, 1);
+      const previewUrls = [...this.data.imageUpload.previewUrls[type]];
+      previewUrls.splice(index, 1);
+      
+      this.setData({
+        [`formData.${formDataKey}`]: currentImages,
+        [`imageUpload.previewUrls.${type}`]: previewUrls
+      });
+      
+      wx.showToast({
+        title: '图片已删除',
+        icon: 'success'
+      });
+      
+    } catch (error) {
+      console.error('删除图片失败:', error);
+      wx.showToast({
+        title: '删除失败，请重试',
+        icon: 'error'
+      });
+    }
+  },
+  
+  // ================ 图片上传功能结束 ================
+
   // 提交表单
   async onSubmit() {
     // 验证表单
@@ -833,6 +1118,206 @@ const pageConfig = {
       title: '健康记录表单',
       path: '/pages/health-record-form/health-record-form'
     }
+  },
+
+  // ========== AI诊断功能 ==========
+  
+  // 开始AI智能诊断
+  async startAIDiagnosis() {
+    const { formData, selectedBatch } = this.data
+    
+    if (!formData.symptoms) {
+      wx.showToast({
+        title: '请先描述症状',
+        icon: 'none'
+      })
+      return
+    }
+    
+    console.log('开始AI诊断，症状:', formData.symptoms)
+    
+    // 显示加载状态
+    this.setData({
+      'aiDiagnosis.loading': true,
+      'aiDiagnosis.error': null
+    })
+    
+    try {
+      // 收集环境数据（可以扩展获取实际环境数据）
+      const environmentData = {
+        temperature: 25, // 默认温度，实际可从传感器获取
+        humidity: 65,    // 默认湿度
+        ventilation: '良好',
+        lighting: '自然光'
+      }
+      
+      // 收集鹅群数据
+      const flockData = {
+        totalCount: selectedBatch?.initialCount || 500,
+        affectedCount: parseInt(formData.abnormalCount) || 0,
+        averageAge: selectedBatch ? this.calculateAverageAge(selectedBatch.hatchDate) : 30,
+        breed: '狮头鹅'
+      }
+      
+      // 构建症状数组
+      const symptoms = [formData.symptoms]
+      if (this.data.selectedSymptom && this.data.selectedSymptom !== '其他症状') {
+        symptoms.push(`常见症状：${this.data.selectedSymptom}`)
+      }
+      
+      console.log('调用AI诊断服务，参数:', { symptoms, environmentData, flockData })
+      
+      // 调用云函数进行AI诊断
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'ai_diagnosis',
+          symptoms,
+          environmentData,
+          flockData,
+          priority: 'balanced'
+        }
+      })
+      
+      console.log('AI诊断结果:', result)
+      
+      if (result.result.success) {
+        // 诊断成功
+        this.setData({
+          'aiDiagnosis.loading': false,
+          'aiDiagnosis.result': result.result.data.diagnosis,
+          'aiDiagnosis.error': null
+        })
+        
+        // 触觉反馈
+        wx.vibrateShort({ type: 'medium' })
+        
+        wx.showToast({
+          title: 'AI诊断完成',
+          icon: 'success',
+          duration: 1500
+        })
+        
+      } else {
+        // 诊断失败但有备用建议
+        this.setData({
+          'aiDiagnosis.loading': false,
+          'aiDiagnosis.error': result.result.error,
+          'aiDiagnosis.result': result.result.fallback
+        })
+        
+        wx.showToast({
+          title: result.result.error || 'AI诊断失败',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+      
+    } catch (error) {
+      console.error('AI诊断调用失败:', error)
+      
+      this.setData({
+        'aiDiagnosis.loading': false,
+        'aiDiagnosis.error': '网络错误',
+        'aiDiagnosis.result': null
+      })
+      
+      wx.showToast({
+        title: '网络错误，请稍后重试',
+        icon: 'none',
+        duration: 2000
+      })
+    }
+  },
+  
+  // 采用AI诊断结果
+  adoptAIDiagnosis() {
+    const { aiDiagnosis } = this.data
+    if (!aiDiagnosis.result) return
+    
+    const diagnosis = aiDiagnosis.result.diagnosis
+    const treatment = aiDiagnosis.result.treatment
+    
+    // 自动填充诊断病种
+    if (diagnosis.primaryDisease) {
+      // 查找匹配的病种
+      const matchedDisease = this.data.commonDiseases.find(disease => 
+        disease.name.includes(diagnosis.primaryDisease) || 
+        diagnosis.primaryDisease.includes(disease.name)
+      )
+      
+      if (matchedDisease) {
+        const diseaseIndex = this.data.commonDiseases.indexOf(matchedDisease)
+        this.setData({
+          diseaseIndex,
+          selectedDisease: matchedDisease.name,
+          'formData.diagnosisDisease': matchedDisease.name
+        })
+      } else {
+        // 如果没有完全匹配，设置为"其他病害"
+        const otherDiseaseIndex = this.data.commonDiseases.findIndex(d => d.name === '其他病害')
+        if (otherDiseaseIndex >= 0) {
+          this.setData({
+            diseaseIndex: otherDiseaseIndex,
+            selectedDisease: '其他病害',
+            'formData.diagnosisDisease': diagnosis.primaryDisease
+          })
+        }
+      }
+    }
+    
+    // 自动填充治疗方案
+    if (treatment && treatment.medications && treatment.medications.length > 0) {
+      const firstMed = treatment.medications[0]
+      let treatmentText = `${firstMed.name}（${firstMed.dosage}）`
+      
+      if (treatment.procedures && treatment.procedures.length > 0) {
+        treatmentText += `；${treatment.procedures.join('；')}`
+      }
+      
+      this.setData({
+        treatmentIndex: 1, // 设置为"药品治疗"
+        selectedTreatment: '药品治疗',
+        'formData.treatment': treatmentText
+      })
+    }
+    
+    wx.showToast({
+      title: '已采用AI建议',
+      icon: 'success',
+      duration: 1500
+    })
+  },
+  
+  // 查看完整诊断详情
+  viewFullDiagnosis() {
+    const { aiDiagnosis } = this.data
+    if (!aiDiagnosis.result) return
+    
+    // 跳转到AI诊断详情页面（需要创建）
+    wx.navigateTo({
+      url: `/pages/ai-diagnosis-detail/ai-diagnosis-detail?data=${encodeURIComponent(JSON.stringify(aiDiagnosis.result))}`
+    })
+  },
+  
+  // 清除AI诊断结果
+  clearAIDiagnosis() {
+    this.setData({
+      'aiDiagnosis.result': null,
+      'aiDiagnosis.error': null
+    })
+  },
+  
+  // 计算平均日龄
+  calculateAverageAge(hatchDate: string): number {
+    if (!hatchDate) return 30
+    
+    const hatch = new Date(hatchDate)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - hatch.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    return diffDays
   }
 }
 

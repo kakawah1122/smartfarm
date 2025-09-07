@@ -1,414 +1,428 @@
-// abnormal-detail.ts
+// abnormal-detail.ts - 当前异常管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
-interface DiseaseData {
+// 异常个体接口
+interface AbnormalAnimal {
+  id: string
+  animalId: string
+  disease: string
+  priority: 'urgent' | 'moderate' | 'mild'
+  location: string
+  discoveredTime: string
+  symptoms?: string
+  treatmentStatus: 'pending' | 'treating'
+}
+
+// 治疗记录接口
+interface TreatmentRecord {
+  id: string
+  animalId: string
+  disease: string
+  medication: string
+  dosage: string
+  operator: string
+  currentDay: number
+  totalDays: number
+  progressPercentage: number
+  status: 'treating' | 'recovering' | 'completed'
+  statusText: string
+}
+
+// 当前病种数据
+interface CurrentDisease {
   name: string
   count: number
   percentage: number
-  mortality: number
-  recovery: number
   color: string
+  startAngle: number
+  angle: number
 }
 
-interface ChartData {
-  diseases: DiseaseData[]
-  totalAbnormal: number
-  overallMortality: number
-  overallRecovery: number
-}
-
-interface MedicationData {
-  name: string
-  cureRate: number
-  usageCount: number
-  unitCost: number
-  costEfficiency: number
-  color: string
-}
-
-interface MedicationAnalysis {
-  totalMedications: number
-  averageEffectiveness: number
-  totalCost: number
-  avgTreatmentDays: number
-  medications: MedicationData[]
-  recommendations: {
-    preferred: string[]
-    reminders: string[]
-    warnings: string[]
-  }
+// 位置分布数据
+interface LocationDistribution {
+  location: string
+  totalCount: number
+  abnormalCount: number
+  rate: number
+  diseases: Array<{
+    name: string
+    count: number
+    color: string
+  }>
 }
 
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     loading: true,
-    activeTab: 'overview',
+    activeTab: 'distribution',
+    updateTime: '',
     
-    // 统计数据
-    chartData: {
-      diseases: [],
-      totalAbnormal: 0,
-      overallMortality: 0,
-      overallRecovery: 0
-    } as ChartData,
+    // 当前异常状态统计
+    currentStats: {
+      urgent: 0,      // 紧急
+      moderate: 0,    // 中等
+      mild: 0,        // 轻微
+      treating: 0,    // 治疗中
+      total: 0
+    },
     
-    // 时间范围数据
-    timeRangeData: [
-      { label: '今日', abnormal: 0, mortality: 0, recovery: 0 },
-      { label: '本周', abnormal: 0, mortality: 0, recovery: 0 },
-      { label: '本月', abnormal: 0, mortality: 0, recovery: 0 }
+    // 当前病种分布 (仅当前异常个体)
+    currentDiseases: [] as CurrentDisease[],
+    
+    // 位置分布
+    locationDistribution: [] as LocationDistribution[],
+    
+    // 优先级筛选
+    priorityLevels: [
+      { level: 'all', label: '全部', count: 0 },
+      { level: 'urgent', label: '紧急', count: 0 },
+      { level: 'moderate', label: '中等', count: 0 },
+      { level: 'mild', label: '轻微', count: 0 }
     ],
+    activePriority: 'all',
     
-    // 趋势数据
-    trendData: [],
+    // 异常个体列表
+    abnormalAnimals: [] as AbnormalAnimal[],
+    filteredAbnormalAnimals: [] as AbnormalAnimal[],
     
-    // 饼图数据（用于简单展示）
-    pieChartData: [],
+    // 治疗统计
+    treatmentStats: {
+      treating: 0,
+      recovering: 0,
+      completed: 0
+    },
     
-    // 用药数据
-    medicationData: {
-      totalMedications: 0,
-      averageEffectiveness: 0,
-      totalCost: 0,
-      avgTreatmentDays: 0,
-      medications: [],
-      recommendations: {
-        preferred: [],
-        reminders: [],
-        warnings: []
-      }
-    } as MedicationAnalysis
+    // 治疗记录
+    treatmentRecords: [] as TreatmentRecord[],
+    
+    // AI建议
+    aiAdvice: {
+      loading: false,
+      result: null as any,
+      error: null as string | null
+    },
+    
+    // AI建议历史
+    aiAdviceHistory: [] as any[]
   },
 
   onLoad() {
-    this.loadAbnormalData()
+    this.loadCurrentAbnormalData()
   },
 
   onShow() {
     // 页面显示时刷新数据
-    this.loadAbnormalData()
+    this.refreshData()
   },
 
   onPullDownRefresh() {
-    this.loadAbnormalData().then(() => {
+    this.loadCurrentAbnormalData().then(() => {
       wx.stopPullDownRefresh()
     })
   },
 
-  // 加载异常个体数据
-  async loadAbnormalData() {
+  // 刷新所有数据
+  async refreshData() {
+    await this.loadCurrentAbnormalData()
+  },
+
+  // 加载当前异常个体数据
+  async loadCurrentAbnormalData() {
     try {
       this.setData({ loading: true })
       
-      // 获取异常个体详细统计
+      // 获取当前异常个体数据
       const result = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
-          action: 'get_abnormal_statistics'
+          action: 'get_current_abnormal_animals'
         }
       })
       
       if (result.result && result.result.success) {
         const data = result.result.data
-        this.processChartData(data)
+        this.processCurrentData(data)
       } else {
-        console.log('获取数据失败，使用模拟数据')
-        this.loadMockData()
+        console.log('获取当前异常数据失败，使用模拟数据')
+        this.loadMockCurrentData()
       }
     } catch (error) {
-      console.error('加载异常个体数据失败:', error)
-      this.loadMockData()
+      console.error('加载当前异常数据失败:', error)
+      this.loadMockCurrentData()
     } finally {
-      this.setData({ loading: false })
+      this.setData({ 
+        loading: false,
+        updateTime: new Date().toLocaleString()
+      })
     }
   },
 
-  // 处理图表数据
-  processChartData(rawData: any) {
+  // 处理当前异常数据
+  processCurrentData(rawData: any) {
+    const animals = rawData.animals || []
     const diseases = rawData.diseases || []
-    const totalAbnormal = rawData.totalAbnormal || 0
+    const locations = rawData.locations || []
     
-    // 计算每种病症的统计数据
-    const processedDiseases: DiseaseData[] = diseases.map((disease: any, index: number) => {
-      const colors = ['#0052d9', '#00a870', '#ed7b2f', '#e34d59', '#8b5cf6', '#06b6d4']
-      return {
-        name: disease.name || '未知疾病',
-        count: disease.count || 0,
-        percentage: totalAbnormal > 0 ? Math.round((disease.count / totalAbnormal) * 100) : 0,
-        mortality: disease.mortality || 0,
-        recovery: disease.recovery || 0,
-        color: colors[index % colors.length]
+    // 统计当前状态
+    const stats = animals.reduce((acc: any, animal: any) => {
+      acc.total++
+      acc[animal.priority]++
+      if (animal.treatmentStatus === 'treating') {
+        acc.treating++
       }
-    })
+      return acc
+    }, { urgent: 0, moderate: 0, mild: 0, treating: 0, total: 0 })
     
-    // 计算整体数据
-    const overallMortality = diseases.reduce((sum: number, d: any) => sum + (d.mortality || 0), 0)
-    const overallRecovery = diseases.reduce((sum: number, d: any) => sum + (d.recovery || 0), 0)
+    // 处理病种分布
+    const currentDiseases = this.processCurrentDiseases(diseases)
     
-    const chartData: ChartData = {
-      diseases: processedDiseases,
-      totalAbnormal,
-      overallMortality: totalAbnormal > 0 ? Math.round((overallMortality / totalAbnormal) * 100) : 0,
-      overallRecovery: totalAbnormal > 0 ? Math.round((overallRecovery / totalAbnormal) * 100) : 0
-    }
+    // 处理位置分布
+    const locationDistribution = this.processLocationDistribution(locations)
     
-    // 生成饼图数据，计算起始角度
-    let currentAngle = 0
-    const pieChartData = processedDiseases.map(disease => {
-      const data = {
-        name: disease.name,
-        value: disease.count,
-        percentage: disease.percentage,
-        color: disease.color,
-        startAngle: currentAngle
-      }
-      currentAngle += (disease.percentage / 100) * 360
-      return data
-    })
+    // 更新优先级筛选计数
+    const priorityLevels = [
+      { level: 'all', label: '全部', count: stats.total },
+      { level: 'urgent', label: '紧急', count: stats.urgent },
+      { level: 'moderate', label: '中等', count: stats.moderate },
+      { level: 'mild', label: '轻微', count: stats.mild }
+    ]
     
-    // 用药数据处理（真实数据时可扩展）
-    const medicationData = rawData.medicationData || this.generateMockMedicationData()
-
     this.setData({
-      chartData,
-      pieChartData,
-      timeRangeData: rawData.timeRangeData || this.data.timeRangeData,
-      trendData: rawData.trendData || [],
-      medicationData
+      currentStats: stats,
+      currentDiseases,
+      locationDistribution,
+      priorityLevels,
+      abnormalAnimals: animals,
+      filteredAbnormalAnimals: animals // 初始显示所有
     })
     
-    // 数据已经准备完成，CSS图表会自动渲染
+    // 同时加载治疗数据
+    this.loadTreatmentData()
   },
-
-  // 加载模拟数据
-  loadMockData() {
-    const mockDiseases: DiseaseData[] = [
-      {
-        name: '禽流感',
-        count: 28,
-        percentage: 55,
-        mortality: 8,
-        recovery: 15,
-        color: '#e34d59'
-      },
-      {
-        name: '肠道感染',
-        count: 12,
-        percentage: 24,
-        mortality: 3,
-        recovery: 8,
-        color: '#ed7b2f'
-      },
-      {
-        name: '呼吸道感染',
-        count: 8,
-        percentage: 16,
-        mortality: 1,
-        recovery: 6,
-        color: '#0052d9'
-      },
-      {
-        name: '营养不良',
-        count: 3,
-        percentage: 5,
-        mortality: 0,
-        recovery: 2,
-        color: '#00a870'
-      }
-    ]
+  
+  // 处理当前病种数据
+  processCurrentDiseases(diseases: any[]): CurrentDisease[] {
+    const colors = ['#e34d59', '#ed7b2f', '#0052d9', '#00a870', '#8b5cf6', '#06b6d4']
+    const total = diseases.reduce((sum, d) => sum + d.count, 0)
     
-    const mockTimeRangeData = [
-      { label: '今日', abnormal: 5, mortality: 1, recovery: 3 },
-      { label: '本周', abnormal: 18, mortality: 4, recovery: 12 },
-      { label: '本月', abnormal: 51, mortality: 12, recovery: 31 }
-    ]
-    
-    const chartData: ChartData = {
-      diseases: mockDiseases,
-      totalAbnormal: 51,
-      overallMortality: 24,
-      overallRecovery: 61
-    }
-    
-    // 生成饼图数据，计算起始角度
     let currentAngle = 0
-    const pieChartData = mockDiseases.map(disease => {
-      const data = {
+    return diseases.map((disease, index) => {
+      const percentage = total > 0 ? Math.round((disease.count / total) * 100) : 0
+      const angle = (percentage / 100) * 360
+      
+      const result: CurrentDisease = {
         name: disease.name,
-        value: disease.count,
-        percentage: disease.percentage,
-        color: disease.color,
-        startAngle: currentAngle
+        count: disease.count,
+        percentage,
+        color: colors[index % colors.length],
+        startAngle: currentAngle,
+        angle
       }
-      currentAngle += (disease.percentage / 100) * 360
-      return data
+      
+      currentAngle += angle
+      return result
     })
-    
-    // 模拟用药数据
-    const mockMedicationData: MedicationAnalysis = {
-      totalMedications: 6,
-      averageEffectiveness: 78,
-      totalCost: 3240,
-      avgTreatmentDays: 7,
-      medications: [
-        {
-          name: '阿莫西林',
-          cureRate: 85,
-          usageCount: 24,
-          unitCost: 12.5,
-          costEfficiency: 85,
-          color: '#00a870'
-        },
-        {
-          name: '恩诺沙星',
-          cureRate: 82,
-          usageCount: 18,
-          unitCost: 18.0,
-          costEfficiency: 76,
-          color: '#0052d9'
-        },
-        {
-          name: '头孢噻呋',
-          cureRate: 78,
-          usageCount: 15,
-          unitCost: 25.0,
-          costEfficiency: 62,
-          color: '#ed7b2f'
-        },
-        {
-          name: '氟苯尼考',
-          cureRate: 75,
-          usageCount: 12,
-          unitCost: 22.0,
-          costEfficiency: 68,
-          color: '#8b5cf6'
-        },
-        {
-          name: '多西环素',
-          cureRate: 70,
-          usageCount: 10,
-          unitCost: 15.5,
-          costEfficiency: 72,
-          color: '#06b6d4'
-        },
-        {
-          name: '林可霉素',
-          cureRate: 65,
-          usageCount: 8,
-          unitCost: 28.0,
-          costEfficiency: 46,
-          color: '#e34d59'
+  },
+  
+  // 处理位置分布数据
+  processLocationDistribution(locations: any[]): LocationDistribution[] {
+    return locations.map((location: any) => ({
+      location: location.name,
+      totalCount: location.totalCount,
+      abnormalCount: location.abnormalCount,
+      rate: location.totalCount > 0 ? Math.round((location.abnormalCount / location.totalCount) * 100) : 0,
+      diseases: location.diseases || []
+    }))
+  },
+  
+  // 加载治疗数据
+  async loadTreatmentData() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'get_treatment_records'
         }
-      ].sort((a, b) => b.cureRate - a.cureRate), // 按治愈率排序
-      recommendations: {
-        preferred: [
-          '对于禽流感，首选阿莫西林+维生素C组合',
-          '肠道感染推荐使用恩诺沙星，疗效显著',
-          '轻度感染可优先选择成本效益高的多西环素'
-        ],
-        reminders: [
-          '用药期间需密切观察鹅只精神状态',
-          '按照疗程足量使用，避免产生耐药性',
-          '用药后3天内禁止宰杀，确保食品安全'
-        ],
-        warnings: [
-          '林可霉素成本效益较低，建议谨慎使用',
-          '头孢类药物对严重感染效果好，但成本较高',
-          '避免同时使用多种抗生素，防止药物相互作用'
+      })
+      
+      if (result.result && result.result.success) {
+        const data = result.result.data
+        this.setData({
+          treatmentStats: data.stats,
+          treatmentRecords: data.records
+        })
+      } else {
+        this.loadMockTreatmentData()
+      }
+    } catch (error) {
+      console.error('加载治疗数据失败:', error)
+      this.loadMockTreatmentData()
+    }
+  },
+  
+  // 加载模拟当前数据
+  loadMockCurrentData() {
+    const mockAnimals: AbnormalAnimal[] = [
+      {
+        id: '1',
+        animalId: 'G001',
+        disease: '禽流感',
+        priority: 'urgent',
+        location: '1号鹅舍',
+        discoveredTime: '2小时前',
+        symptoms: '发热、食欲不振、呼吸困难',
+        treatmentStatus: 'pending'
+      },
+      {
+        id: '2',
+        animalId: 'G045',
+        disease: '肠道感染',
+        priority: 'moderate',
+        location: '2号鹅舍',
+        discoveredTime: '1天前',
+        symptoms: '腹泻、精神萎靡',
+        treatmentStatus: 'treating'
+      },
+      {
+        id: '3',
+        animalId: 'G078',
+        disease: '呼吸道感染',
+        priority: 'mild',
+        location: '1号鹅舍',
+        discoveredTime: '3天前',
+        symptoms: '轻微咳嗽',
+        treatmentStatus: 'treating'
+      },
+      {
+        id: '4',
+        animalId: 'G089',
+        disease: '禽流感',
+        priority: 'urgent',
+        location: '3号鹅舍',
+        discoveredTime: '6小时前',
+        symptoms: '高热、拒食',
+        treatmentStatus: 'pending'
+      },
+      {
+        id: '5',
+        animalId: 'G156',
+        disease: '营养不良',
+        priority: 'mild',
+        location: '2号鹅舍',
+        discoveredTime: '1周前',
+        symptoms: '体重下降、羽毛蓬乱',
+        treatmentStatus: 'treating'
+      }
+    ]
+    
+    const mockDiseases = [
+      { name: '禽流感', count: 8, color: '#e34d59' },
+      { name: '肠道感染', count: 5, color: '#ed7b2f' },
+      { name: '呼吸道感染', count: 3, color: '#0052d9' },
+      { name: '营养不良', count: 2, color: '#00a870' }
+    ]
+    
+    const mockLocations = [
+      {
+        name: '1号鹅舍',
+        totalCount: 150,
+        abnormalCount: 8,
+        diseases: [
+          { name: '禽流感', count: 4, color: '#e34d59' },
+          { name: '呼吸道感染', count: 3, color: '#0052d9' },
+          { name: '营养不良', count: 1, color: '#00a870' }
+        ]
+      },
+      {
+        name: '2号鹅舍',
+        totalCount: 120,
+        abnormalCount: 6,
+        diseases: [
+          { name: '肠道感染', count: 4, color: '#ed7b2f' },
+          { name: '营养不良', count: 1, color: '#00a870' },
+          { name: '禽流感', count: 1, color: '#e34d59' }
+        ]
+      },
+      {
+        name: '3号鹅舍',
+        totalCount: 180,
+        abnormalCount: 4,
+        diseases: [
+          { name: '禽流感', count: 3, color: '#e34d59' },
+          { name: '肠道感染', count: 1, color: '#ed7b2f' }
         ]
       }
-    }
-
-    this.setData({
-      chartData,
-      pieChartData,
-      timeRangeData: mockTimeRangeData,
-      medicationData: mockMedicationData
-    })
+    ]
     
-    // 数据已经准备完成，CSS图表会自动渲染
+    const mockData = {
+      animals: mockAnimals,
+      diseases: mockDiseases,
+      locations: mockLocations
+    }
+    
+    this.processCurrentData(mockData)
     
     wx.showToast({
       title: '已加载模拟数据',
-      icon: 'success'
+      icon: 'success',
+      duration: 1500
     })
   },
-
-  // 生成模拟用药数据
-  generateMockMedicationData(): MedicationAnalysis {
-    return {
-      totalMedications: 6,
-      averageEffectiveness: 78,
-      totalCost: 3240,
-      avgTreatmentDays: 7,
-      medications: [
-        {
-          name: '阿莫西林',
-          cureRate: 85,
-          usageCount: 24,
-          unitCost: 12.5,
-          costEfficiency: 85,
-          color: '#00a870'
-        },
-        {
-          name: '恩诺沙星',
-          cureRate: 82,
-          usageCount: 18,
-          unitCost: 18.0,
-          costEfficiency: 76,
-          color: '#0052d9'
-        },
-        {
-          name: '头孢噻呋',
-          cureRate: 78,
-          usageCount: 15,
-          unitCost: 25.0,
-          costEfficiency: 62,
-          color: '#ed7b2f'
-        },
-        {
-          name: '氟苯尼考',
-          cureRate: 75,
-          usageCount: 12,
-          unitCost: 22.0,
-          costEfficiency: 68,
-          color: '#8b5cf6'
-        },
-        {
-          name: '多西环素',
-          cureRate: 70,
-          usageCount: 10,
-          unitCost: 15.5,
-          costEfficiency: 72,
-          color: '#06b6d4'
-        },
-        {
-          name: '林可霉素',
-          cureRate: 65,
-          usageCount: 8,
-          unitCost: 28.0,
-          costEfficiency: 46,
-          color: '#e34d59'
-        }
-      ].sort((a, b) => b.cureRate - a.cureRate), // 按治愈率排序
-      recommendations: {
-        preferred: [
-          '对于禽流感，首选阿莫西林+维生素C组合',
-          '肠道感染推荐使用恩诺沙星，疗效显著',
-          '轻度感染可优先选择成本效益高的多西环素'
-        ],
-        reminders: [
-          '用药期间需密切观察鹅只精神状态',
-          '按照疗程足量使用，避免产生耐药性',
-          '用药后3天内禁止宰杀，确保食品安全'
-        ],
-        warnings: [
-          '林可霉素成本效益较低，建议谨慎使用',
-          '头孢类药物对严重感染效果好，但成本较高',
-          '避免同时使用多种抗生素，防止药物相互作用'
-        ]
-      }
+  
+  // 加载模拟治疗数据
+  loadMockTreatmentData() {
+    const mockTreatmentStats = {
+      treating: 8,
+      recovering: 5,
+      completed: 12
     }
+    
+    const mockTreatmentRecords: TreatmentRecord[] = [
+      {
+        id: '1',
+        animalId: 'G045',
+        disease: '肠道感染',
+        medication: '恩诺沙星',
+        dosage: '10mg/kg',
+        operator: '张三',
+        currentDay: 3,
+        totalDays: 7,
+        progressPercentage: 43,
+        status: 'treating',
+        statusText: '治疗中'
+      },
+      {
+        id: '2',
+        animalId: 'G078',
+        disease: '呼吸道感染',
+        medication: '阿莫西林',
+        dosage: '15mg/kg',
+        operator: '李四',
+        currentDay: 5,
+        totalDays: 7,
+        progressPercentage: 71,
+        status: 'recovering',
+        statusText: '恢复中'
+      },
+      {
+        id: '3',
+        animalId: 'G156',
+        disease: '营养不良',
+        medication: '复合维生素',
+        dosage: '1粒/天',
+        operator: '王五',
+        currentDay: 7,
+        totalDays: 10,
+        progressPercentage: 70,
+        status: 'treating',
+        statusText: '治疗中'
+      }
+    ]
+    
+    this.setData({
+      treatmentStats: mockTreatmentStats,
+      treatmentRecords: mockTreatmentRecords
+    })
   },
 
   // Tab切换
@@ -417,15 +431,324 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({
       activeTab: value
     })
+    
+    // 触觉反馈
+    wx.vibrateShort({ type: 'light' })
   },
 
-  // 查看特定疾病详情
-  viewDiseaseDetail(e: any) {
-    const { disease } = e.currentTarget.dataset
+  // ========== 优先级筛选功能 ==========
+  
+  // 优先级筛选
+  onPriorityFilter(e: any) {
+    const { level } = e.currentTarget.dataset
+    let filteredAnimals = this.data.abnormalAnimals
+    
+    if (level !== 'all') {
+      filteredAnimals = this.data.abnormalAnimals.filter(animal => animal.priority === level)
+    }
+    
+    this.setData({
+      activePriority: level,
+      filteredAbnormalAnimals: filteredAnimals
+    })
+    
+    wx.vibrateShort({ type: 'light' })
+  },
+
+  // ========== 治疗管理功能 ==========
+  
+  // 开始治疗
+  startTreatment(e: any) {
+    const { animal } = e.currentTarget.dataset
+    
     wx.showModal({
-      title: `${disease.name} 详情`,
-      content: `病例数量: ${disease.count}只\n死亡率: ${Math.round((disease.mortality / disease.count) * 100)}%\n治愈率: ${Math.round((disease.recovery / disease.count) * 100)}%`,
-      showCancel: false
+      title: '开始治疗',
+      content: `确定开始治疗 ${animal.animalId} (${animal.disease})？`,
+      success: (res) => {
+        if (res.confirm) {
+          // 这里可以调用云函数开始治疗
+          wx.showToast({
+            title: '已开始治疗',
+            icon: 'success'
+          })
+          
+          // 更新本地状态
+          const updatedAnimals = this.data.abnormalAnimals.map(a => 
+            a.id === animal.id 
+              ? { ...a, treatmentStatus: 'treating' as const }
+              : a
+          )
+          
+          this.setData({
+            abnormalAnimals: updatedAnimals,
+            filteredAbnormalAnimals: this.data.activePriority === 'all' 
+              ? updatedAnimals 
+              : updatedAnimals.filter(a => a.priority === this.data.activePriority)
+          })
+        }
+      }
+    })
+  },
+  
+  // 查看个体详情
+  viewAnimalDetail(e: any) {
+    const { animal } = e.currentTarget.dataset
+    wx.navigateTo({
+      url: `/pages/health-record-detail/health-record-detail?animalId=${animal.animalId}`
+    })
+  },
+  
+  // 更新治疗记录
+  updateTreatment(e: any) {
+    const { record } = e.currentTarget.dataset
+    wx.navigateTo({
+      url: `/pages/health-record-form/health-record-form?type=update&recordId=${record.id}`
+    })
+  },
+  
+  // 标记治愈
+  markRecovered(e: any) {
+    const { record } = e.currentTarget.dataset
+    
+    wx.showModal({
+      title: '确认治愈',
+      content: `确定标记 ${record.animalId} 已治愈？`,
+      success: (res) => {
+        if (res.confirm) {
+          // 这里可以调用云函数标记治愈
+          wx.showToast({
+            title: '已标记治愈',
+            icon: 'success'
+          })
+          
+          // 刷新数据
+          this.refreshData()
+        }
+      }
+    })
+  },
+
+  // ========== AI建议功能 ==========
+  
+  // 生成AI建议
+  async generateAIAdvice() {
+    console.log('生成AI异常管理建议')
+    
+    this.setData({
+      'aiAdvice.loading': true,
+      'aiAdvice.error': null
+    })
+    
+    try {
+      // 构建AI分析提示词
+      const prompt = this.buildAbnormalAnalysisPrompt()
+      
+      // 调用AI分析云函数
+      const result = await wx.cloud.callFunction({
+        name: 'ai-multi-model',
+        data: {
+          action: 'chat_completion',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一个专业的鹅类养殖健康管理专家，擅长分析当前异常情况并提供紧急处理建议和治疗方案。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          taskType: 'urgent_diagnosis',
+          priority: 'fast'
+        }
+      })
+      
+      if (result.result.success) {
+        const adviceData = this.parseAIAdviceResult(result.result.data.content)
+        
+        this.setData({
+          'aiAdvice.loading': false,
+          'aiAdvice.result': adviceData,
+          'aiAdvice.error': null
+        })
+        
+        wx.vibrateShort({ type: 'medium' })
+        
+        wx.showToast({
+          title: 'AI分析完成',
+          icon: 'success',
+          duration: 1500
+        })
+        
+      } else {
+        // AI分析失败，使用fallback建议
+        this.setData({
+          'aiAdvice.loading': false,
+          'aiAdvice.result': this.generateFallbackAdvice(),
+          'aiAdvice.error': result.result.error
+        })
+        
+        wx.showToast({
+          title: '分析完成(基于规则)',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+      
+    } catch (error) {
+      console.error('AI建议生成失败:', error)
+      
+      this.setData({
+        'aiAdvice.loading': false,
+        'aiAdvice.error': error.message || 'AI服务异常',
+        'aiAdvice.result': null
+      })
+      
+      wx.showToast({
+        title: '分析失败，请稍后重试',
+        icon: 'none',
+        duration: 2000
+      })
+    }
+  },
+  
+  // 构建AI分析提示词
+  buildAbnormalAnalysisPrompt(): string {
+    const { currentStats, currentDiseases, locationDistribution, abnormalAnimals } = this.data
+    
+    // 筛选紧急和中等优先级的个体
+    const urgentAnimals = abnormalAnimals.filter(a => a.priority === 'urgent')
+    const moderateAnimals = abnormalAnimals.filter(a => a.priority === 'moderate')
+    
+    return `请基于以下当前异常情况，提供紧急处理建议和治疗方案：
+
+当前异常统计：
+- 紧急：${currentStats.urgent} 只
+- 中等：${currentStats.moderate} 只
+- 轻微：${currentStats.mild} 只
+- 治疗中：${currentStats.treating} 只
+
+病种分布：
+${currentDiseases.map(d => `- ${d.name}：${d.count}只 (${d.percentage}%)`).join('\n')}
+
+鹅舍分布：
+${locationDistribution.map(l => `- ${l.location}：${l.abnormalCount}/${l.totalCount}只异常 (异常率${l.rate}%)`).join('\n')}
+
+紧急个体：
+${urgentAnimals.map(a => `- ${a.animalId} (${a.disease}, ${a.location}, ${a.discoveredTime})`).join('\n')}
+
+请提供以下格式的JSON分析结果：
+{
+  "riskLevel": "high|medium|low",
+  "riskLevelText": "风险等级描述",
+  "riskFactors": ["风险因素1", "风险因素2"],
+  "urgentActions": [
+    {
+      "priority": "立即",
+      "title": "紧急措施标题",
+      "description": "具体操作描述"
+    }
+  ],
+  "treatmentPlan": [
+    {
+      "disease": "疾病名称",
+      "affectedCount": "影响数量",
+      "medications": [
+        {
+          "name": "药物名称",
+          "dosage": "剂量",
+          "priority": "high|medium|low",
+          "priorityText": "优先级描述"
+        }
+      ],
+      "notes": ["注意事项1", "注意事项2"]
+    }
+  ],
+  "preventionMeasures": [
+    {
+      "category": "环境管理",
+      "measures": ["具体措施1", "具体措施2"]
+    }
+  ]
+}`
+  },
+  
+  // 解析AI建议结果
+  parseAIAdviceResult(content: string): any {
+    try {
+      // 尝试提取JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0])
+      } else {
+        // 如果无法解析，返回fallback
+        return this.generateFallbackAdvice()
+      }
+    } catch (error) {
+      console.error('解析AI建议结果失败:', error)
+      return this.generateFallbackAdvice()
+    }
+  },
+  
+  // 生成fallback建议
+  generateFallbackAdvice(): any {
+    const { currentStats, currentDiseases } = this.data
+    const hasUrgent = currentStats.urgent > 0
+    const mainDisease = currentDiseases.length > 0 ? currentDiseases[0].name : '未知疾病'
+    
+    return {
+      riskLevel: hasUrgent ? 'high' : currentStats.moderate > 5 ? 'medium' : 'low',
+      riskLevelText: hasUrgent ? '高风险 - 需立即处理' : currentStats.moderate > 5 ? '中等风险 - 需密切关注' : '低风险 - 常规处理',
+      riskFactors: [
+        hasUrgent ? '存在紧急异常个体' : '异常个体数量较多',
+        `${mainDisease}传播风险`,
+        '鹅群密度较高'
+      ],
+      urgentActions: [
+        {
+          priority: '立即',
+          title: '隔离异常个体',
+          description: `立即隔离所有${hasUrgent ? '紧急' : '异常'}个体，防止疾病传播`
+        },
+        {
+          priority: '1小时内',
+          title: '环境消毒',
+          description: '对相关鹅舍进行全面消毒，特别是饮水和饲料区域'
+        }
+      ],
+      treatmentPlan: [
+        {
+          disease: mainDisease,
+          affectedCount: currentDiseases.length > 0 ? currentDiseases[0].count : 0,
+          medications: [
+            {
+              name: '广谱抗生素',
+              dosage: '按体重计算',
+              priority: 'high',
+              priorityText: '首选药物'
+            }
+          ],
+          notes: ['密切观察治疗反应', '记录用药情况']
+        }
+      ],
+      preventionMeasures: [
+        {
+          category: '环境管理',
+          measures: ['加强通风', '保持干燥', '定期消毒']
+        },
+        {
+          category: '饲养管理',
+          measures: ['调整饲养密度', '强化营养', '监测健康状况']
+        }
+      ]
+    }
+  },
+  
+  // 查看历史AI建议详情
+  viewHistoryDetail(e: any) {
+    const { item } = e.currentTarget.dataset
+    wx.navigateTo({
+      url: `/pages/ai-diagnosis-detail/ai-diagnosis-detail?id=${item.id}`
     })
   }
 }

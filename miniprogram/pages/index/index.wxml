@@ -75,6 +75,87 @@
       </view>
     </view>
 
+    <!-- AI智能建议 -->
+    <view class="card ai-advice-card">
+      <view class="card-header">
+        <text class="card-title">🤖 AI智能建议</text>
+        <t-button wx:if="{{!aiAdvice.loading}}" size="small" theme="primary" bind:tap="generateFarmingAdvice" class="refresh-btn">
+          {{aiAdvice.result ? '刷新建议' : '生成建议'}}
+        </t-button>
+      </view>
+      
+      <!-- AI分析进行中 -->
+      <view wx:if="{{aiAdvice.loading}}" class="ai-loading">
+        <t-loading theme="spinner" size="40rpx" />
+        <text class="loading-text">AI正在分析环境和生产数据...</text>
+      </view>
+      
+      <!-- AI建议结果 -->
+      <view wx:elif="{{aiAdvice.result}}" class="ai-advice-content">
+        <!-- 综合评级 -->
+        <view class="advice-rating">
+          <view class="rating-icon {{aiAdvice.result.overallRating.level}}">
+            {{aiAdvice.result.overallRating.emoji}}
+          </view>
+          <view class="rating-content">
+            <text class="rating-title">{{aiAdvice.result.overallRating.title}}</text>
+            <text class="rating-desc">{{aiAdvice.result.overallRating.description}}</text>
+          </view>
+          <view class="rating-score {{aiAdvice.result.overallRating.level}}">
+            {{aiAdvice.result.overallRating.score}}分
+          </view>
+        </view>
+        
+        <!-- 关键建议 -->
+        <view class="key-advice">
+          <view class="advice-section">
+            <text class="section-title">🎯 今日关键建议</text>
+            <view class="advice-list">
+              <view wx:for="{{aiAdvice.result.keyAdvice}}" wx:key="index" class="advice-item {{item.priority}}">
+                <view class="advice-icon">{{item.icon}}</view>
+                <view class="advice-content">
+                  <text class="advice-title">{{item.title}}</text>
+                  <text class="advice-desc">{{item.description}}</text>
+                </view>
+                <view class="advice-priority">{{item.priorityText}}</view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 环境建议 -->
+          <view class="advice-section">
+            <text class="section-title">🌤️ 环境管理</text>
+            <view class="env-advice">
+              <view wx:for="{{aiAdvice.result.environmentAdvice}}" wx:key="category" class="env-category">
+                <view class="env-header">
+                  <text class="env-category-name">{{item.category}}</text>
+                  <view class="env-status {{item.status}}">{{item.statusText}}</view>
+                </view>
+                <text class="env-recommendation">{{item.recommendation}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 快速操作 -->
+        <view class="quick-actions">
+          <t-button size="small" theme="light" variant="outline" bind:tap="viewDetailedAdvice">
+            查看详细建议
+          </t-button>
+          <t-button size="small" theme="success" variant="outline" bind:tap="addAdviceToTodo">
+            添加到待办
+          </t-button>
+        </view>
+      </view>
+      
+      <!-- 无建议时的提示 -->
+      <view wx:else class="ai-advice-empty">
+        <view class="empty-icon">🤖</view>
+        <text class="empty-text">点击"生成建议"获取AI智能建议</text>
+        <text class="empty-desc">基于天气、生产、健康等数据提供个性化建议</text>
+      </view>
+    </view>
+
     <!-- 待办事项 -->
     <view class="card todo-card">
       <view class="card-header">

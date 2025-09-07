@@ -1,0 +1,21 @@
+{
+  "name": "dynamic-file-manager",
+  "version": "1.0.0",
+  "description": "动态文件管理云函数 - 基于微信云开发最佳实践",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wechat",
+    "miniprogram",
+    "cloud",
+    "storage",
+    "dynamic"
+  ],
+  "author": "Smart Goose Management System",
+  "license": "MIT"
+}

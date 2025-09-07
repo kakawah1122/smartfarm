@@ -1,0 +1,401 @@
+<!--health-stats-analysis.wxml - 健康统计分析页面-->
+<view class="page page-container">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="健康统计分析"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
+    bind:back="goBack"
+  />
+
+  <!-- 主内容区域 -->
+  <view class="main-content">
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <t-loading theme="spinner" size="40rpx" text="加载中..." />
+    </view>
+
+    <!-- 内容区域 -->
+    <view wx:else class="content-container">
+      <!-- 整体统计概览 -->
+      <view class="stats-overview">
+        <view class="overview-header">
+          <t-icon name="chart-line" size="32rpx" color="#0052D9" />
+          <text class="overview-title">整体健康概况</text>
+          <text class="data-period">（基于全历史数据）</text>
+        </view>
+        
+        <t-row gutter="16" class="overview-stats">
+          <t-col span="6">
+            <view class="stat-card stat-primary">
+              <view class="stat-value">{{overallStats.totalAnimals}}</view>
+              <view class="stat-label">累计养殖</view>
+              <view class="stat-unit">只</view>
+            </view>
+          </t-col>
+          <t-col span="6">
+            <view class="stat-card stat-success">
+              <view class="stat-value">{{overallStats.survivalRate}}%</view>
+              <view class="stat-label">整体存活率</view>
+            </view>
+          </t-col>
+          <t-col span="6">
+            <view class="stat-card stat-info">
+              <view class="stat-value">{{overallStats.recoveryRate}}%</view>
+              <view class="stat-label">治愈率</view>
+            </view>
+          </t-col>
+          <t-col span="6">
+            <view class="stat-card stat-warning">
+              <view class="stat-value">{{overallStats.mortalityRate}}%</view>
+              <view class="stat-label">死亡率</view>
+            </view>
+          </t-col>
+        </t-row>
+      </view>
+
+      <!-- Tab导航 -->
+      <t-tabs 
+        value="{{activeTab}}" 
+        bind:change="onTabChange" 
+        theme="line" 
+        class="analysis-tabs"
+        sticky
+        sticky-offset="{{navBarHeight}}"
+      >
+        <t-tab-panel value="trend" label="健康趋势" />
+        <t-tab-panel value="diseases" label="病种统计" />
+        <t-tab-panel value="treatment" label="治疗效果" />
+        <t-tab-panel value="cost" label="成本分析" />
+        <t-tab-panel value="ai_prediction" label="AI预测" />
+      </t-tabs>
+
+      <!-- Tab内容区域 -->
+      <view class="tab-content">
+        
+        <!-- 健康趋势 Tab -->
+        <view wx:if="{{activeTab === 'trend'}}" class="trend-panel">
+          <!-- 趋势图表 -->
+          <view class="chart-section">
+            <view class="section-header">
+              <text class="section-title">📈 健康指标趋势</text>
+            </view>
+            <view class="chart-container">
+              <!-- 月度健康趋势 -->
+              <view class="trend-chart">
+                <view class="chart-title">月度存活率变化</view>
+                <view class="trend-line-chart">
+                  <view wx:for="{{trendData.monthlyData}}" wx:key="month" class="trend-point">
+                    <view class="point-bar" style="height: {{item.percentage}}%"></view>
+                    <view class="point-value">{{item.rate}}%</view>
+                    <view class="point-label">{{item.month}}</view>
+                  </view>
+                </view>
+              </view>
+              
+              <!-- 季度对比 -->
+              <view class="seasonal-comparison">
+                <view class="chart-title">季度健康对比</view>
+                <t-row gutter="12">
+                  <t-col wx:for="{{trendData.seasonalData}}" wx:key="season" span="6">
+                    <view class="season-card">
+                      <view class="season-name">{{item.season}}</view>
+                      <view class="season-rate {{item.status}}">{{item.rate}}%</view>
+                      <view class="season-trend">
+                        <t-icon name="{{item.trend === 'up' ? 'chevron-up' : 'chevron-down'}}" size="20rpx" color="{{item.trend === 'up' ? '#52c41a' : '#ff4d4f'}}" />
+                        <text class="trend-text">{{item.change}}</text>
+                      </view>
+                    </view>
+                  </t-col>
+                </t-row>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 关键指标卡片 -->
+          <view class="key-indicators">
+            <view class="section-header">
+              <text class="section-title">📊 关键健康指标</text>
+            </view>
+            <view class="indicators-grid">
+              <view wx:for="{{healthIndicators}}" wx:key="index" class="indicator-card">
+                <view class="indicator-icon">{{item.icon}}</view>
+                <view class="indicator-content">
+                  <view class="indicator-name">{{item.name}}</view>
+                  <view class="indicator-value">{{item.value}}</view>
+                  <view class="indicator-desc">{{item.description}}</view>
+                </view>
+                <view class="indicator-trend {{item.trendDirection}}">
+                  <t-icon name="{{item.trendDirection === 'up' ? 'chevron-up' : 'chevron-down'}}" size="20rpx" />
+                  <text>{{item.trendValue}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 病种统计 Tab -->
+        <view wx:if="{{activeTab === 'diseases'}}" class="diseases-panel">
+          <!-- 病种分布 -->
+          <view class="disease-distribution">
+            <view class="section-header">
+              <text class="section-title">🧬 历史病种分布</text>
+            </view>
+            
+            <!-- 饼图展示 -->
+            <view class="pie-chart-container">
+              <view class="css-pie-chart">
+                <view wx:for="{{diseaseStats.pieData}}" wx:key="index" 
+                      class="pie-slice-container" 
+                      style="transform: rotate({{item.startAngle}}deg)">
+                  <view class="pie-slice" 
+                        style="--slice-color: {{item.color}}; --slice-angle: {{item.angle}}deg"></view>
+                </view>
+                <view class="pie-center">
+                  <text class="center-value">{{diseaseStats.totalCases}}</text>
+                  <text class="center-label">总病例</text>
+                </view>
+              </view>
+              
+              <!-- 图例 -->
+              <view class="chart-legend">
+                <view wx:for="{{diseaseStats.legendData}}" wx:key="index" class="legend-item">
+                  <view class="legend-color" style="background-color: {{item.color}}"></view>
+                  <text class="legend-name">{{item.name}}</text>
+                  <text class="legend-value">{{item.percentage}}%</text>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 高发病种详情 -->
+          <view class="top-diseases">
+            <view class="section-header">
+              <text class="section-title">🔥 高发病种排名</text>
+            </view>
+            <view class="diseases-ranking">
+              <view wx:for="{{diseaseStats.topDiseases}}" wx:key="index" class="disease-rank-item">
+                <view class="rank-badge rank-{{index + 1}}">{{index + 1}}</view>
+                <view class="disease-info">
+                  <view class="disease-name">{{item.name}}</view>
+                  <view class="disease-cases">累计 {{item.cases}} 例</view>
+                </view>
+                <view class="disease-stats">
+                  <view class="mortality-rate">死亡率 {{item.mortalityRate}}%</view>
+                  <view class="recovery-rate">治愈率 {{item.recoveryRate}}%</view>
+                </view>
+                <view class="disease-trend">
+                  <view class="trend-bar">
+                    <view class="bar-fill" style="width: {{item.trendPercentage}}%; background: {{item.trendColor}}"></view>
+                  </view>
+                  <text class="trend-label">{{item.trendLabel}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 治疗效果 Tab -->
+        <view wx:if="{{activeTab === 'treatment'}}" class="treatment-panel">
+          <!-- 药物效果统计 -->
+          <view class="medication-effectiveness">
+            <view class="section-header">
+              <text class="section-title">💊 药物治疗效果</text>
+            </view>
+            
+            <view class="effectiveness-chart">
+              <view wx:for="{{treatmentStats.medications}}" wx:key="index" class="medication-item">
+                <view class="medication-header">
+                  <view class="medication-name">{{item.name}}</view>
+                  <view class="success-rate">有效率 {{item.effectiveRate}}%</view>
+                </view>
+                <view class="effectiveness-bar">
+                  <view class="bar-bg">
+                    <view class="bar-fill" style="width: {{item.effectiveRate}}%"></view>
+                  </view>
+                  <view class="bar-stats">
+                    <text class="stat-item">使用次数: {{item.usageCount}}</text>
+                    <text class="stat-item">平均治愈天数: {{item.avgRecoveryDays}}天</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 治疗方案分析 -->
+          <view class="treatment-methods">
+            <view class="section-header">
+              <text class="section-title">🏥 治疗方案对比</text>
+            </view>
+            
+            <view class="methods-comparison">
+              <view wx:for="{{treatmentStats.methods}}" wx:key="index" class="method-card">
+                <view class="method-header">
+                  <view class="method-icon">{{item.icon}}</view>
+                  <view class="method-name">{{item.name}}</view>
+                </view>
+                <view class="method-stats">
+                  <view class="stat-row">
+                    <text class="stat-label">成功率:</text>
+                    <text class="stat-value success">{{item.successRate}}%</text>
+                  </view>
+                  <view class="stat-row">
+                    <text class="stat-label">平均成本:</text>
+                    <text class="stat-value cost">¥{{item.avgCost}}</text>
+                  </view>
+                  <view class="stat-row">
+                    <text class="stat-label">治疗周期:</text>
+                    <text class="stat-value duration">{{item.avgDuration}}天</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 成本分析 Tab -->
+        <view wx:if="{{activeTab === 'cost'}}" class="cost-panel">
+          <!-- 成本结构 -->
+          <view class="cost-structure">
+            <view class="section-header">
+              <text class="section-title">💰 医疗成本结构</text>
+            </view>
+            
+            <view class="cost-breakdown">
+              <view class="total-cost-card">
+                <view class="cost-value">¥{{costAnalysis.totalMedicalCost}}</view>
+                <view class="cost-label">累计医疗支出</view>
+                <view class="cost-period">（全历史周期）</view>
+              </view>
+              
+              <view class="cost-categories">
+                <view wx:for="{{costAnalysis.categories}}" wx:key="index" class="category-item">
+                  <view class="category-info">
+                    <view class="category-name">{{item.name}}</view>
+                    <view class="category-amount">¥{{item.amount}}</view>
+                  </view>
+                  <view class="category-percentage">
+                    <view class="percentage-bar">
+                      <view class="bar-fill" style="width: {{item.percentage}}%; background: {{item.color}}"></view>
+                    </view>
+                    <text class="percentage-text">{{item.percentage}}%</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 成本效益分析 -->
+          <view class="cost-benefit-analysis">
+            <view class="section-header">
+              <text class="section-title">📈 成本效益分析</text>
+            </view>
+            
+            <view class="benefit-metrics">
+              <t-row gutter="16">
+                <t-col span="12">
+                  <view class="metric-card">
+                    <view class="metric-value">¥{{costAnalysis.avgCostPerAnimal}}</view>
+                    <view class="metric-label">单只平均医疗成本</view>
+                    <view class="metric-trend down">
+                      <t-icon name="chevron-down" size="16rpx" />
+                      <text>较去年↓{{costAnalysis.costReduction}}%</text>
+                    </view>
+                  </view>
+                </t-col>
+                <t-col span="12">
+                  <view class="metric-card">
+                    <view class="metric-value">{{costAnalysis.preventionEffectiveness}}%</view>
+                    <view class="metric-label">预防措施有效性</view>
+                    <view class="metric-trend up">
+                      <t-icon name="chevron-up" size="16rpx" />
+                      <text>较去年↑{{costAnalysis.preventionImprovement}}%</text>
+                    </view>
+                  </view>
+                </t-col>
+              </t-row>
+            </view>
+          </view>
+        </view>
+
+        <!-- AI预测 Tab -->
+        <view wx:if="{{activeTab === 'ai_prediction'}}" class="ai-prediction-panel">
+          <!-- AI预测功能 -->
+          <view class="prediction-section">
+            <view class="section-header">
+              <t-icon name="robot" size="32rpx" color="#0052D9" />
+              <text class="section-title">🔮 AI健康预测</text>
+              <t-button wx:if="{{!aiPrediction.loading}}" size="small" theme="primary" bind:tap="generateAIPrediction">
+                {{aiPrediction.result ? '重新预测' : '生成预测'}}
+              </t-button>
+            </view>
+            
+            <!-- AI预测进行中 -->
+            <view wx:if="{{aiPrediction.loading}}" class="prediction-loading">
+              <t-loading theme="spinner" size="40rpx" />
+              <text class="loading-text">AI正在分析历史数据...</text>
+            </view>
+            
+            <!-- AI预测结果 -->
+            <view wx:elif="{{aiPrediction.result}}" class="prediction-results">
+              <!-- 风险预警 -->
+              <view class="risk-alerts">
+                <view class="alert-title">⚠️ 风险预警</view>
+                <view wx:for="{{aiPrediction.result.riskAlerts}}" wx:key="index" class="alert-item {{item.level}}">
+                  <view class="alert-icon">{{item.icon}}</view>
+                  <view class="alert-content">
+                    <view class="alert-message">{{item.message}}</view>
+                    <view class="alert-probability">预测概率: {{item.probability}}%</view>
+                  </view>
+                </view>
+              </view>
+              
+              <!-- 趋势预测 -->
+              <view class="trend-prediction">
+                <view class="prediction-title">📊 未来3个月趋势预测</view>
+                <view class="prediction-chart">
+                  <view wx:for="{{aiPrediction.result.monthlyPrediction}}" wx:key="month" class="prediction-month">
+                    <view class="month-header">
+                      <text class="month-name">{{item.month}}</text>
+                    </view>
+                    <view class="month-metrics">
+                      <view class="metric-item">
+                        <text class="metric-name">预测存活率</text>
+                        <text class="metric-value success">{{item.survivalRate}}%</text>
+                      </view>
+                      <view class="metric-item">
+                        <text class="metric-name">疾病风险</text>
+                        <text class="metric-value {{item.riskLevel}}">{{item.diseaseRisk}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </view>
+              
+              <!-- AI建议 -->
+              <view class="ai-recommendations">
+                <view class="recommendation-title">💡 AI优化建议</view>
+                <view class="recommendations-list">
+                  <view wx:for="{{aiPrediction.result.recommendations}}" wx:key="index" class="recommendation-item">
+                    <view class="recommendation-category">{{item.category}}</view>
+                    <view class="recommendation-content">{{item.content}}</view>
+                    <view class="recommendation-impact">预期收益: {{item.expectedBenefit}}</view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            
+            <!-- 无预测结果时的提示 -->
+            <view wx:else class="prediction-empty">
+              <view class="empty-icon">🤖</view>
+              <view class="empty-text">点击"生成预测"获取AI健康分析</view>
+              <view class="empty-desc">基于历史数据进行智能预测和建议</view>
+            </view>
+          </view>
+        </view>
+
+      </view>
+    </view>
+  </view>
+</view>

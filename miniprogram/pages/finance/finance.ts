@@ -27,30 +27,13 @@ const pageConfig = {
       otherPercent: '11.9'
     },
     
-    // AI建议
-    aiSuggestions: [
-      {
-        id: 1,
-        type: 'success',
-        icon: '✅',
-        title: '市场机会',
-        description: '当前鹅价处于上升期，建议适量增加出栏量，预计可增收15%'
-      },
-      {
-        id: 2,
-        type: 'warning',
-        icon: '⚠️',
-        title: '成本控制',
-        description: '饲料成本偏高，建议更换XX品牌饲料，预计可节省成本8%'
-      },
-      {
-        id: 3,
-        type: 'primary',
-        icon: '💡',
-        title: '投资建议',
-        description: '鹅苗价格下降，建议适当补栏，投资回报率预计达25%'
-      }
-    ],
+  // AI财务分析
+  aiAnalysis: {
+    loading: false,
+    result: null as any,
+    error: null as string | null,
+    lastUpdateTime: null as string | null
+  },
     
     // 筛选条件
     filters: {
@@ -259,20 +242,322 @@ const pageConfig = {
     }, 1000)
   },
 
-  // 获取详细报告
-  getDetailedReport() {
-    wx.showLoading({
-      title: 'AI分析中...'
+  // ========== AI财务分析功能 ==========
+  
+  // 生成AI财务分析
+  async generateFinancialAnalysis() {
+    try {
+      this.setData({ 
+        'aiAnalysis.loading': true,
+        'aiAnalysis.error': null
+      })
+      
+      // 收集财务数据
+      const financialData = this.collectFinancialData()
+      
+      // 构建分析提示词
+      const prompt = this.buildFinancialAnalysisPrompt(financialData)
+      
+      // 调用AI云函数
+      const result = await wx.cloud.callFunction({
+        name: 'ai-multi-model',
+        data: {
+          task: 'financial_analysis',
+          content: prompt,
+          options: {
+            model: 'glm-4-flash', // 使用GLM-4进行财务分析
+            temperature: 0.3,
+            maxTokens: 2000
+          }
+        }
+      })
+      
+      if (result.result.success) {
+        const analysisResult = this.parseFinancialAnalysisResult(result.result.data.content)
+        
+        this.setData({
+          'aiAnalysis.loading': false,
+          'aiAnalysis.result': analysisResult,
+          'aiAnalysis.lastUpdateTime': new Date().toLocaleString('zh-CN')
+        })
+        
+        // 触觉反馈
+        wx.vibrateShort()
+        
+        wx.showToast({
+          title: 'AI分析完成',
+          icon: 'success'
+        })
+      } else {
+        throw new Error(result.result.error || 'AI分析失败')
+      }
+      
+    } catch (error) {
+      console.error('财务AI分析失败:', error)
+      
+      // 提供备用分析结果
+      const fallbackResult = this.generateFallbackAnalysis()
+      
+      this.setData({
+        'aiAnalysis.loading': false,
+        'aiAnalysis.result': fallbackResult,
+        'aiAnalysis.error': '使用离线分析模式'
+      })
+      
+      wx.showToast({
+        title: '使用离线分析',
+        icon: 'none'
+      })
+    }
+  },
+  
+  // 收集财务数据
+  collectFinancialData() {
+    const { overview, records } = this.data
+    
+    // 计算近期数据统计
+    const recentRecords = records.filter(record => {
+      const recordDate = new Date(record.date)
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      return recordDate >= sevenDaysAgo
     })
     
-    setTimeout(() => {
-      wx.hideLoading()
-      wx.showModal({
-        title: 'AI分析报告',
-        content: '基于您的财务数据分析，建议优化饲料采购成本，适时增加出栏量，预计可提升利润15-20%。',
-        showCancel: false
-      })
-    }, 2000)
+    // 收入支出分类统计
+    const incomeRecords = recentRecords.filter(r => r.type === 'income')
+    const expenseRecords = recentRecords.filter(r => r.type === 'expense')
+    
+    // 按类别统计支出
+    const expenseCategories = {}
+    expenseRecords.forEach(record => {
+      const category = record.category || '其他'
+      expenseCategories[category] = (expenseCategories[category] || 0) + parseFloat(record.amount)
+    })
+    
+    return {
+      overview,
+      recentIncome: incomeRecords.reduce((sum, r) => sum + parseFloat(r.amount), 0),
+      recentExpense: expenseRecords.reduce((sum, r) => sum + parseFloat(r.amount), 0),
+      expenseCategories,
+      recordCount: records.length,
+      recentRecordCount: recentRecords.length,
+      profitMargin: ((parseFloat(overview.totalIncome) - parseFloat(overview.totalExpense)) / parseFloat(overview.totalIncome) * 100).toFixed(1)
+    }
+  },
+  
+  // 构建财务分析提示词
+  buildFinancialAnalysisPrompt(financialData: any): string {
+    return `你是一位专业的养殖业财务顾问，请基于以下财务数据进行深度分析，并提供专业的财务管理建议。请以JSON格式回复，包含以下结构：
+
+{
+  "healthScore": 数值(0-100),
+  "healthLevel": "excellent|good|average|poor",
+  "healthIndicators": [
+    {"category": "现金流", "score": 数值, "level": "excellent|good|average|poor"},
+    {"category": "盈利能力", "score": 数值, "level": "excellent|good|average|poor"},
+    {"category": "成本控制", "score": 数值, "level": "excellent|good|average|poor"},
+    {"category": "增长潜力", "score": 数值, "level": "excellent|good|average|poor"}
+  ],
+  "costOptimization": [
+    {
+      "category": "分类名称",
+      "potentialSaving": "预计节省金额",
+      "recommendation": "优化建议",
+      "expectedImpact": "预期效果描述",
+      "timeline": "实施周期"
+    }
+  ],
+  "monthlyForecast": [
+    {
+      "month": "月份名称",
+      "income": "预测收入(万元)",
+      "expense": "预测支出(万元)", 
+      "profit": "预测净利润(万元)",
+      "trendDirection": "up|down|stable",
+      "trendText": "趋势描述"
+    }
+  ],
+  "forecastConfidence": 数值(0-100),
+  "investmentOpportunities": [
+    {
+      "type": "投资类型",
+      "description": "投资描述",
+      "requiredInvestment": "所需投资金额(万元)",
+      "expectedROI": 预期回报率百分比,
+      "paybackPeriod": "回收周期",
+      "riskLevel": "low|medium|high",
+      "riskLevelText": "风险等级文本"
+    }
+  ],
+  "riskAlerts": [
+    {
+      "severity": "high|medium|low",
+      "icon": "图标",
+      "title": "风险标题",
+      "description": "风险描述",
+      "suggestion": "建议措施"
+    }
+  ]
+}
+
+## 当前财务数据分析：
+
+**总体财务状况：**
+- 月收入：¥${financialData.overview.totalIncome}万
+- 月支出：¥${financialData.overview.totalExpense}万
+- 净利润：¥${financialData.overview.profit}万
+- 利润率：${financialData.profitMargin}%
+
+**成本结构分析：**
+- 饲料成本：¥${financialData.overview.feedCost}万 (占比${financialData.overview.feedPercent}%)
+- 人工成本：¥${financialData.overview.laborCost}万 (占比${financialData.overview.laborPercent}%)
+- 医疗成本：¥${financialData.overview.medicalCost}万 (占比${financialData.overview.medicalPercent}%)
+- 其他成本：¥${financialData.overview.otherCost}万 (占比${financialData.overview.otherPercent}%)
+
+**近期财务趋势：**
+- 近7天收入：¥${(financialData.recentIncome/10000).toFixed(2)}万
+- 近7天支出：¥${(financialData.recentExpense/10000).toFixed(2)}万
+- 记录数量：${financialData.recordCount}条
+- 近期记录：${financialData.recentRecordCount}条
+
+**支出分类明细：**
+${Object.entries(financialData.expenseCategories).map(([category, amount]: [string, any]) => 
+  `- ${category}：¥${(amount/10000).toFixed(2)}万`
+).join('\n')}
+
+请基于以上数据进行专业的财务健康度评估，提供成本优化建议，进行盈利预测，给出投资建议，并识别潜在的财务风险。分析应该具体、实用，针对鹅类养殖业的特点。`
+  },
+  
+  // 解析AI财务分析结果
+  parseFinancialAnalysisResult(content: string): any {
+    try {
+      // 尝试提取JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0])
+        
+        // 数据验证和处理
+        return {
+          healthScore: result.healthScore || 75,
+          healthLevel: result.healthLevel || 'good',
+          healthIndicators: result.healthIndicators || [],
+          costOptimization: result.costOptimization || [],
+          monthlyForecast: result.monthlyForecast || [],
+          forecastConfidence: result.forecastConfidence || 80,
+          investmentOpportunities: result.investmentOpportunities || [],
+          riskAlerts: result.riskAlerts || []
+        }
+      }
+    } catch (error) {
+      console.error('解析AI分析结果失败:', error)
+    }
+    
+    // 解析失败时返回备用结果
+    return this.generateFallbackAnalysis()
+  },
+  
+  // 生成备用财务分析结果
+  generateFallbackAnalysis(): any {
+    const { overview } = this.data
+    const profitMargin = parseFloat(overview.profit) / parseFloat(overview.totalIncome) * 100
+    
+    return {
+      healthScore: profitMargin > 20 ? 85 : profitMargin > 10 ? 70 : profitMargin > 0 ? 60 : 45,
+      healthLevel: profitMargin > 20 ? 'excellent' : profitMargin > 10 ? 'good' : profitMargin > 0 ? 'average' : 'poor',
+      healthIndicators: [
+        {
+          category: '现金流',
+          score: profitMargin > 0 ? 75 : 40,
+          level: profitMargin > 0 ? 'good' : 'poor'
+        },
+        {
+          category: '盈利能力',
+          score: Math.max(30, Math.min(90, profitMargin * 3)),
+          level: profitMargin > 15 ? 'excellent' : profitMargin > 8 ? 'good' : profitMargin > 0 ? 'average' : 'poor'
+        },
+        {
+          category: '成本控制',
+          score: parseFloat(overview.feedPercent) < 60 ? 80 : 60,
+          level: parseFloat(overview.feedPercent) < 60 ? 'good' : 'average'
+        },
+        {
+          category: '增长潜力',
+          score: 70,
+          level: 'good'
+        }
+      ],
+      costOptimization: [
+        {
+          category: '饲料采购',
+          potentialSaving: '1.2',
+          recommendation: '建议批量采购优质饲料，选择性价比更高的供应商',
+          expectedImpact: '降低饲料成本8-12%',
+          timeline: '1-2个月'
+        },
+        {
+          category: '能源管理',
+          potentialSaving: '0.8',
+          recommendation: '优化养殖环境控制系统，减少不必要的能耗',
+          expectedImpact: '节省电费和燃料成本',
+          timeline: '即时执行'
+        }
+      ],
+      monthlyForecast: [
+        {
+          month: '下个月',
+          income: (parseFloat(overview.totalIncome) * 1.05).toFixed(1),
+          expense: (parseFloat(overview.totalExpense) * 1.02).toFixed(1),
+          profit: (parseFloat(overview.profit) * 1.15).toFixed(1),
+          trendDirection: 'up',
+          trendText: '稳步增长'
+        },
+        {
+          month: '两个月后',
+          income: (parseFloat(overview.totalIncome) * 1.08).toFixed(1),
+          expense: (parseFloat(overview.totalExpense) * 1.03).toFixed(1),
+          profit: (parseFloat(overview.profit) * 1.25).toFixed(1),
+          trendDirection: 'up',
+          trendText: '持续向好'
+        },
+        {
+          month: '三个月后',
+          income: (parseFloat(overview.totalIncome) * 1.12).toFixed(1),
+          expense: (parseFloat(overview.totalExpense) * 1.05).toFixed(1),
+          profit: (parseFloat(overview.profit) * 1.35).toFixed(1),
+          trendDirection: 'up',
+          trendText: '显著提升'
+        }
+      ],
+      forecastConfidence: 75,
+      investmentOpportunities: [
+        {
+          type: '设备升级',
+          description: '投资自动化喂养设备，提高养殖效率',
+          requiredInvestment: '5.0',
+          expectedROI: 35,
+          paybackPeriod: '18个月',
+          riskLevel: 'low',
+          riskLevelText: '低风险'
+        },
+        {
+          type: '规模扩张',
+          description: '新建养殖区域，扩大养殖规模',
+          requiredInvestment: '12.0',
+          expectedROI: 28,
+          paybackPeriod: '24个月',
+          riskLevel: 'medium',
+          riskLevelText: '中等风险'
+        }
+      ],
+      riskAlerts: profitMargin < 5 ? [
+        {
+          severity: 'high',
+          icon: '🚨',
+          title: '盈利能力偏低',
+          description: '当前利润率较低，存在经营风险',
+          suggestion: '优化成本结构，提高产品价值'
+        }
+      ] : []
+    }
   },
 
   // 查看记录详情

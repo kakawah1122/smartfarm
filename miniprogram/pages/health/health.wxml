@@ -24,7 +24,7 @@
       <view class="stats-section">
         <t-row gutter="16" class="health-stats">
           <t-col span="8">
-            <t-card>
+            <t-card bind:tap="viewHealthStats" class="clickable-card">
               <view class="stat-content stat-success">
                 <view class="stat-value">{{healthStats.survivalRate}}%</view>
                 <view class="stat-label">存活率</view>

@@ -13,6 +13,7 @@
     "pages/health-record-detail/health-record-detail",
     "pages/health-records-list/health-records-list",
     "pages/abnormal-detail/abnormal-detail",
+    "pages/health-stats-analysis/health-stats-analysis",
     "pages/treatment-followup/treatment-followup",
     "pages/profile/profile",
     "pages/finance/finance",

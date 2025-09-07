@@ -350,6 +350,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
+  // 查看健康统计分析
+  viewHealthStats() {
+    wx.navigateTo({
+      url: '/pages/health-stats-analysis/health-stats-analysis'
+    })
+  },
+
   // 查看异常个体详情
   viewAbnormalDetail() {
     wx.navigateTo({

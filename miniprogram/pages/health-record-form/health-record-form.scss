@@ -951,3 +951,293 @@ $spacing-xl: 40rpx;
     color: $text-secondary !important;
   }
 }
+
+/* ========== AI诊断功能样式 ========== */
+
+// AI诊断容器
+.ai-diagnosis-container {
+  margin-top: 20rpx;
+  display: flex;
+  justify-content: flex-end;
+  
+  .ai-diagnosis-btn {
+    --td-button-default-color: #0052D9;
+    --td-button-default-border-color: #0052D9;
+    font-size: 24rpx;
+    
+    &[disabled] {
+      opacity: 0.5;
+    }
+  }
+  
+  .ai-diagnosis-loading {
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+    font-size: 24rpx;
+    color: #666;
+    
+    .loading-text {
+      font-size: 24rpx;
+    }
+  }
+}
+
+// AI诊断结果展示
+.ai-diagnosis-result {
+  margin-top: 30rpx;
+  background: linear-gradient(135deg, #f8faff 0%, #f0f7ff 100%);
+  border: 2rpx solid #e1edff;
+  border-radius: 16rpx;
+  padding: 0;
+  overflow: hidden;
+  
+  .result-header {
+    background: #0052D9;
+    color: white;
+    padding: 24rpx 30rpx;
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    position: relative;
+    
+    .result-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      flex: 1;
+    }
+    
+    .confidence-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8rpx 16rpx;
+      border-radius: 20rpx;
+      font-size: 22rpx;
+      font-weight: 500;
+    }
+    
+    .close-btn {
+      position: absolute;
+      top: 24rpx;
+      right: 24rpx;
+      padding: 10rpx;
+      opacity: 0.8;
+      
+      &:active {
+        opacity: 1;
+      }
+    }
+  }
+  
+  .result-content {
+    padding: 30rpx;
+  }
+  
+  .diagnosis-section, .treatment-section {
+    margin-bottom: 30rpx;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .section-label {
+      font-size: 26rpx;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16rpx;
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+    }
+    
+    .diagnosis-primary {
+      background: #fff;
+      padding: 20rpx;
+      border-radius: 12rpx;
+      border-left: 6rpx solid #0052D9;
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #0052D9;
+      margin-bottom: 16rpx;
+    }
+    
+    .diagnosis-differential {
+      font-size: 24rpx;
+      color: #666;
+      line-height: 1.5;
+      
+      .diff-label {
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .diff-item {
+        color: #666;
+      }
+    }
+    
+    .medications {
+      margin-bottom: 20rpx;
+      
+      .medication-item {
+        background: #fff;
+        padding: 20rpx;
+        border-radius: 12rpx;
+        margin-bottom: 12rpx;
+        border-left: 4rpx solid #52c41a;
+        
+        &.priority-high {
+          border-left-color: #ff4d4f;
+          
+          .med-name::before {
+            content: '🔴 ';
+          }
+        }
+        
+        &.priority-medium {
+          border-left-color: #faad14;
+          
+          .med-name::before {
+            content: '🟡 ';
+          }
+        }
+        
+        &.priority-low {
+          border-left-color: #52c41a;
+          
+          .med-name::before {
+            content: '🟢 ';
+          }
+        }
+        
+        .med-name {
+          font-size: 26rpx;
+          font-weight: 600;
+          color: #333;
+          margin-bottom: 8rpx;
+        }
+        
+        .med-dosage {
+          font-size: 24rpx;
+          color: #666;
+          margin-bottom: 4rpx;
+        }
+        
+        .med-duration {
+          font-size: 22rpx;
+          color: #999;
+        }
+      }
+    }
+    
+    .procedures {
+      .procedure-label {
+        font-size: 24rpx;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 12rpx;
+      }
+      
+      .procedure-item {
+        background: #fff;
+        padding: 16rpx 20rpx;
+        border-radius: 8rpx;
+        margin-bottom: 8rpx;
+        font-size: 24rpx;
+        color: #666;
+        border-left: 3rpx solid #1890ff;
+      }
+    }
+  }
+  
+  .result-actions {
+    display: flex;
+    gap: 20rpx;
+    margin-top: 30rpx;
+    padding-top: 30rpx;
+    border-top: 2rpx solid #e8f0ff;
+    
+    .adopt-btn, .detail-btn {
+      flex: 1;
+      font-size: 26rpx;
+      height: 80rpx;
+    }
+    
+    .adopt-btn {
+      background: #0052D9;
+      
+      &:active {
+        background: #0040a6;
+      }
+    }
+  }
+}
+
+// AI诊断响应式适配
+@media (max-width: 375px) {
+  .ai-diagnosis-result {
+    .result-header {
+      padding: 20rpx 24rpx;
+      
+      .result-title {
+        font-size: 28rpx;
+      }
+      
+      .confidence-badge {
+        font-size: 20rpx;
+        padding: 6rpx 12rpx;
+      }
+    }
+    
+    .result-content {
+      padding: 24rpx;
+    }
+    
+    .diagnosis-primary {
+      font-size: 26rpx !important;
+    }
+    
+    .result-actions {
+      flex-direction: column;
+      gap: 16rpx;
+    }
+  }
+}
+
+// AI诊断加载动画
+@keyframes ai-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.ai-diagnosis-loading {
+  animation: ai-pulse 1.5s ease-in-out infinite;
+}
+
+// AI诊断错误状态
+.ai-diagnosis-error {
+  background: #fff2f0;
+  border: 2rpx solid #ffccc7;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-top: 20rpx;
+  
+  .error-title {
+    color: #ff4d4f;
+    font-size: 26rpx;
+    font-weight: 600;
+    margin-bottom: 8rpx;
+  }
+  
+  .error-message {
+    color: #666;
+    font-size: 24rpx;
+    line-height: 1.4;
+  }
+  
+  .retry-btn {
+    margin-top: 16rpx;
+    --td-button-default-color: #ff4d4f;
+    --td-button-default-border-color: #ff4d4f;
+  }
+}

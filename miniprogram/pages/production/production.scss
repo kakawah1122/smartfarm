@@ -381,3 +381,372 @@ page {
     font-size: 22rpx;
   }
 }
+
+/* ========== AI智能盘点功能样式 ========== */
+
+// AI盘点功能区域
+.ai-count-section {
+  margin: 30rpx 0;
+  
+  .ai-count-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2rpx solid #b3e5fc;
+    border-radius: 16rpx;
+    overflow: hidden;
+    
+    .card-header {
+      background: linear-gradient(135deg, #0052D9 0%, #1976D2 100%);
+      color: white;
+      padding: 24rpx 30rpx;
+      display: flex;
+      align-items: center;
+      gap: 12rpx;
+      position: relative;
+      
+      .card-title {
+        font-size: 30rpx;
+        font-weight: 600;
+        flex: 1;
+      }
+      
+      .close-btn {
+        position: absolute;
+        top: 24rpx;
+        right: 24rpx;
+        padding: 10rpx;
+        opacity: 0.8;
+        
+        &:active {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+// 盘点操作区域
+.count-operation {
+  padding: 30rpx;
+}
+
+// 相机拍照区域
+.camera-section {
+  margin-bottom: 30rpx;
+  
+  .camera-placeholder {
+    background: #ffffff;
+    border: 3rpx dashed #0052D9;
+    border-radius: 16rpx;
+    height: 400rpx;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16rpx;
+    position: relative;
+    transition: all 0.3s ease;
+    
+    &:active {
+      background: #f8faff;
+      border-color: #1976D2;
+      transform: scale(0.98);
+    }
+    
+    .placeholder-text {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #0052D9;
+    }
+    
+    .placeholder-desc {
+      font-size: 24rpx;
+      color: #666;
+      text-align: center;
+    }
+  }
+  
+  .photo-preview {
+    background: #ffffff;
+    border-radius: 16rpx;
+    overflow: hidden;
+    box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.1);
+    
+    .preview-image {
+      width: 100%;
+      max-height: 400rpx;
+      display: block;
+    }
+    
+    .photo-actions {
+      padding: 20rpx;
+      display: flex;
+      gap: 16rpx;
+      background: #f8faff;
+      
+      button {
+        flex: 1;
+        height: 72rpx;
+        font-size: 26rpx;
+      }
+    }
+  }
+}
+
+// 拍摄建议
+.shooting-tips {
+  background: #ffffff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  border-left: 4rpx solid #0052D9;
+  
+  .tips-title {
+    font-size: 26rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16rpx;
+    display: block;
+  }
+  
+  .tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+    
+    .tip-item {
+      font-size: 24rpx;
+      color: #666;
+      line-height: 1.5;
+    }
+  }
+}
+
+// 识别结果区域
+.count-result {
+  padding: 30rpx;
+  
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 30rpx;
+    
+    .result-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #333;
+      flex: 1;
+    }
+    
+    .confidence-badge {
+      background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+      color: white;
+      padding: 8rpx 16rpx;
+      border-radius: 20rpx;
+      font-size: 22rpx;
+      font-weight: 500;
+    }
+  }
+  
+  .result-content {
+    margin-bottom: 30rpx;
+  }
+  
+  .main-result {
+    background: #ffffff;
+    border-radius: 16rpx;
+    padding: 30rpx;
+    text-align: center;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+    border: 2rpx solid #e6f7ff;
+    
+    .count-display {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 8rpx;
+      margin-bottom: 12rpx;
+      
+      .count-number {
+        font-size: 64rpx;
+        font-weight: 700;
+        color: #0052D9;
+        line-height: 1;
+      }
+      
+      .count-unit {
+        font-size: 32rpx;
+        font-weight: 500;
+        color: #666;
+      }
+    }
+    
+    .count-label {
+      font-size: 26rpx;
+      color: #666;
+      font-weight: 500;
+    }
+  }
+  
+  .result-details {
+    background: #ffffff;
+    border-radius: 12rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    border-left: 4rpx solid #1890ff;
+    
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 24rpx;
+      
+      .detail-label {
+        color: #333;
+        font-weight: 500;
+      }
+      
+      .detail-value {
+        color: #666;
+      }
+    }
+  }
+  
+  .abnormal-alert {
+    background: linear-gradient(135deg, #fff2f0 0%, #ffebe8 100%);
+    border: 2rpx solid #ffccc7;
+    border-radius: 12rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    
+    .alert-content {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      margin-bottom: 12rpx;
+      
+      .alert-text {
+        font-size: 26rpx;
+        font-weight: 600;
+        color: #ff4d4f;
+      }
+    }
+    
+    .health-concerns {
+      padding-left: 32rpx;
+      
+      .concern-item {
+        display: block;
+        font-size: 24rpx;
+        color: #ff7875;
+        line-height: 1.5;
+        margin-bottom: 4rpx;
+      }
+    }
+  }
+  
+  .suggestions {
+    background: #ffffff;
+    border-radius: 12rpx;
+    padding: 20rpx;
+    border-left: 4rpx solid #faad14;
+    
+    .suggestions-title {
+      font-size: 26rpx;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12rpx;
+      display: block;
+    }
+    
+    .suggestion-item {
+      font-size: 24rpx;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 6rpx;
+      display: block;
+    }
+  }
+  
+  .result-actions {
+    display: flex;
+    gap: 20rpx;
+    
+    button {
+      flex: 1;
+      height: 80rpx;
+      font-size: 26rpx;
+      
+      &[theme="primary"] {
+        background: linear-gradient(135deg, #0052D9 0%, #1976D2 100%);
+        
+        &:active {
+          background: linear-gradient(135deg, #0040a6 0%, #1565C0 100%);
+        }
+      }
+    }
+  }
+}
+
+// 响应式适配
+@media (max-width: 375px) {
+  .ai-count-card {
+    .card-header {
+      padding: 20rpx 24rpx;
+      
+      .card-title {
+        font-size: 28rpx;
+      }
+    }
+  }
+  
+  .count-operation, .count-result {
+    padding: 24rpx;
+  }
+  
+  .camera-placeholder {
+    height: 320rpx !important;
+    
+    .placeholder-text {
+      font-size: 28rpx !important;
+    }
+    
+    .placeholder-desc {
+      font-size: 22rpx !important;
+    }
+  }
+  
+  .main-result {
+    padding: 24rpx !important;
+    
+    .count-display {
+      .count-number {
+        font-size: 56rpx !important;
+      }
+      
+      .count-unit {
+        font-size: 28rpx !important;
+      }
+    }
+    
+    .count-label {
+      font-size: 24rpx !important;
+    }
+  }
+  
+  .result-actions {
+    flex-direction: column;
+    gap: 16rpx;
+  }
+}
+
+// 加载动画
+@keyframes count-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.ai-count-loading {
+  animation: count-pulse 1.5s ease-in-out infinite;
+}

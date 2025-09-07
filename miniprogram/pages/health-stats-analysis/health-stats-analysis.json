@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "当前异常管理",
+  "navigationBarTitleText": "健康统计分析",
   "navigationStyle": "custom",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "dark",
@@ -8,14 +8,9 @@
     "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
     "t-row": "tdesign-miniprogram/row/row",
     "t-col": "tdesign-miniprogram/col/col",
-    "t-tag": "tdesign-miniprogram/tag/tag",
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-button": "tdesign-miniprogram/button/button",
-    "t-divider": "tdesign-miniprogram/divider/divider",
-    "t-progress": "tdesign-miniprogram/progress/progress",
     "t-loading": "tdesign-miniprogram/loading/loading",
-    "t-cell": "tdesign-miniprogram/cell/cell",
-    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
     "navigation-bar": "../../components/navigation-bar/navigation-bar"
   }
 }

@@ -1,0 +1,15 @@
+{
+  "name": "ai-multi-model",
+  "version": "1.0.0",
+  "description": "AI多模型管理系统 - 智能路由、负载均衡、成本控制",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^0.27.2"
+  },
+  "author": "智能养鹅健康管理系统",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

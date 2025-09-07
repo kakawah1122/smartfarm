@@ -72,33 +72,149 @@
       </view>
     </view>
 
-    <!-- AI智能建议 -->
-    <view class="card ai-card">
+    <!-- AI财务分析 -->
+    <view class="card ai-analysis-card">
       <view class="card-content">
         <view class="ai-header">
           <view class="ai-icon">
             <text>🤖</text>
           </view>
           <view class="ai-info">
-            <text class="ai-title">AI智能建议</text>
-            <text class="ai-subtitle">基于财务数据的养殖优化建议</text>
+            <text class="ai-title">AI财务分析</text>
+            <text class="ai-subtitle">智能成本优化与盈利预测</text>
           </view>
+          <t-button wx:if="{{!aiAnalysis.loading}}" size="small" theme="primary" bind:tap="generateFinancialAnalysis">
+            {{aiAnalysis.result ? '重新分析' : '开始分析'}}
+          </t-button>
         </view>
         
-        <view class="ai-content">
-          <view class="suggestion-item" wx:for="{{aiSuggestions}}" wx:key="id">
-            <view class="suggestion-icon {{item.type}}">
-              <text>{{item.icon}}</text>
+        <!-- AI分析进行中 -->
+        <view wx:if="{{aiAnalysis.loading}}" class="ai-loading">
+          <t-loading theme="spinner" size="40rpx" />
+          <text class="loading-text">AI正在分析财务数据...</text>
+        </view>
+        
+        <!-- AI分析结果 -->
+        <view wx:elif="{{aiAnalysis.result}}" class="ai-analysis-content">
+          <!-- 财务健康度评级 -->
+          <view class="financial-health">
+            <view class="health-header">
+              <text class="health-title">📊 财务健康度</text>
+              <view class="health-score {{aiAnalysis.result.healthLevel}}">
+                {{aiAnalysis.result.healthScore}}分
+              </view>
             </view>
-            <view class="suggestion-content">
-              <text class="suggestion-title">{{item.title}}</text>
-              <text class="suggestion-desc">{{item.description}}</text>
+            <view class="health-indicators">
+              <view wx:for="{{aiAnalysis.result.healthIndicators}}" wx:key="category" class="health-indicator">
+                <text class="indicator-name">{{item.category}}</text>
+                <view class="indicator-bar">
+                  <view class="bar-fill {{item.level}}" style="width: {{item.score}}%"></view>
+                </view>
+                <text class="indicator-score">{{item.score}}</text>
+              </view>
             </view>
           </view>
           
-          <t-button theme="primary" size="medium" block bind:tap="getDetailedReport">
-            获取详细分析报告
-          </t-button>
+          <!-- 成本优化建议 -->
+          <view class="cost-optimization">
+            <text class="section-title">💰 成本优化建议</text>
+            <view class="optimization-list">
+              <view wx:for="{{aiAnalysis.result.costOptimization}}" wx:key="category" class="optimization-item">
+                <view class="opt-header">
+                  <text class="opt-category">{{item.category}}</text>
+                  <text class="opt-saving">节省 ¥{{item.potentialSaving}}</text>
+                </view>
+                <text class="opt-recommendation">{{item.recommendation}}</text>
+                <view class="opt-details">
+                  <text class="opt-impact">预期效果：{{item.expectedImpact}}</text>
+                  <text class="opt-timeline">实施周期：{{item.timeline}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 盈利预测 -->
+          <view class="profit-forecast">
+            <text class="section-title">📈 盈利预测</text>
+            <view class="forecast-chart">
+              <view class="chart-header">
+                <text class="chart-title">未来3个月预测</text>
+                <text class="forecast-confidence">预测准确度: {{aiAnalysis.result.forecastConfidence}}%</text>
+              </view>
+              <view class="monthly-forecast">
+                <view wx:for="{{aiAnalysis.result.monthlyForecast}}" wx:key="month" class="forecast-month">
+                  <text class="month-name">{{item.month}}</text>
+                  <view class="forecast-metrics">
+                    <view class="metric-item">
+                      <text class="metric-label">预测收入</text>
+                      <text class="metric-value income">¥{{item.income}}万</text>
+                    </view>
+                    <view class="metric-item">
+                      <text class="metric-label">预测支出</text>
+                      <text class="metric-value expense">¥{{item.expense}}万</text>
+                    </view>
+                    <view class="metric-item">
+                      <text class="metric-label">净利润</text>
+                      <text class="metric-value profit">¥{{item.profit}}万</text>
+                    </view>
+                  </view>
+                  <view class="profit-trend {{item.trendDirection}}">
+                    {{item.trendDirection === 'up' ? '↗' : item.trendDirection === 'down' ? '↘' : '→'}} {{item.trendText}}
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 投资建议 -->
+          <view class="investment-advice">
+            <text class="section-title">💡 投资建议</text>
+            <view class="investment-opportunities">
+              <view wx:for="{{aiAnalysis.result.investmentOpportunities}}" wx:key="opportunity" class="investment-item">
+                <view class="investment-header">
+                  <text class="investment-type">{{item.type}}</text>
+                  <view class="roi-badge">ROI {{item.expectedROI}}%</view>
+                </view>
+                <text class="investment-desc">{{item.description}}</text>
+                <view class="investment-details">
+                  <view class="detail-item">
+                    <text class="detail-label">投资金额：</text>
+                    <text class="detail-value">¥{{item.requiredInvestment}}万</text>
+                  </view>
+                  <view class="detail-item">
+                    <text class="detail-label">回收周期：</text>
+                    <text class="detail-value">{{item.paybackPeriod}}</text>
+                  </view>
+                  <view class="detail-item">
+                    <text class="detail-label">风险等级：</text>
+                    <text class="detail-value {{item.riskLevel}}">{{item.riskLevelText}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 风险预警 -->
+          <view wx:if="{{aiAnalysis.result.riskAlerts && aiAnalysis.result.riskAlerts.length > 0}}" class="risk-alerts">
+            <text class="section-title">⚠️ 风险预警</text>
+            <view class="alert-list">
+              <view wx:for="{{aiAnalysis.result.riskAlerts}}" wx:key="index" class="alert-item {{item.severity}}">
+                <view class="alert-icon">{{item.icon}}</view>
+                <view class="alert-content">
+                  <text class="alert-title">{{item.title}}</text>
+                  <text class="alert-description">{{item.description}}</text>
+                  <text class="alert-suggestion">建议措施：{{item.suggestion}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 无分析结果时的提示 -->
+        <view wx:else class="ai-analysis-empty">
+          <view class="empty-icon">📊</view>
+          <text class="empty-text">点击"开始分析"获取AI财务洞察</text>
+          <text class="empty-desc">基于收支数据进行智能分析和预测</text>
         </view>
       </view>
     </view>

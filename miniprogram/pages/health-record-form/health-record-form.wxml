@@ -81,6 +81,91 @@
                 autosize
                 class="form-textarea"
               />
+              
+              <!-- AI智能诊断按钮 -->
+              <view class="ai-diagnosis-container">
+                <t-button 
+                  wx:if="{{!aiDiagnosis.loading && !aiDiagnosis.result}}"
+                  theme="light" 
+                  variant="outline"
+                  size="small"
+                  icon="robot"
+                  bind:tap="startAIDiagnosis"
+                  disabled="{{!formData.symptoms || submitting}}"
+                  class="ai-diagnosis-btn"
+                >
+                  🤖 AI智能诊断
+                </t-button>
+                
+                <!-- AI诊断进行中 -->
+                <view wx:elif="{{aiDiagnosis.loading}}" class="ai-diagnosis-loading">
+                  <t-loading theme="spinner" size="20rpx" />
+                  <text class="loading-text">AI分析中...</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- AI诊断结果展示 -->
+          <view wx:if="{{aiDiagnosis.result}}" class="ai-diagnosis-result">
+            <view class="result-header">
+              <t-icon name="robot" size="32rpx" color="#0052D9" />
+              <text class="result-title">AI诊断建议</text>
+              <text class="confidence-badge">置信度 {{aiDiagnosis.result.diagnosis.confidence}}%</text>
+              <t-icon name="close" size="28rpx" color="#999" bind:tap="clearAIDiagnosis" class="close-btn" />
+            </view>
+            
+            <view class="result-content">
+              <!-- 主要诊断 -->
+              <view class="diagnosis-section">
+                <view class="section-label">🔍 初步诊断</view>
+                <view class="diagnosis-primary">{{aiDiagnosis.result.diagnosis.primaryDisease}}</view>
+                <view wx:if="{{aiDiagnosis.result.diagnosis.differentialDiagnosis.length > 0}}" class="diagnosis-differential">
+                  <text class="diff-label">鉴别诊断：</text>
+                  <text wx:for="{{aiDiagnosis.result.diagnosis.differentialDiagnosis}}" wx:key="index" class="diff-item">
+                    {{item}}{{index < aiDiagnosis.result.diagnosis.differentialDiagnosis.length - 1 ? '、' : ''}}
+                  </text>
+                </view>
+              </view>
+              
+              <!-- 治疗建议 -->
+              <view wx:if="{{aiDiagnosis.result.treatment}}" class="treatment-section">
+                <view class="section-label">💊 治疗建议</view>
+                <view wx:if="{{aiDiagnosis.result.treatment.medications.length > 0}}" class="medications">
+                  <view wx:for="{{aiDiagnosis.result.treatment.medications}}" wx:key="index" class="medication-item priority-{{item.priority}}">
+                    <view class="med-name">{{item.name}}</view>
+                    <view class="med-dosage">{{item.dosage}}</view>
+                    <view class="med-duration">{{item.duration}}</view>
+                  </view>
+                </view>
+                <view wx:if="{{aiDiagnosis.result.treatment.procedures.length > 0}}" class="procedures">
+                  <view class="procedure-label">处理程序：</view>
+                  <view wx:for="{{aiDiagnosis.result.treatment.procedures}}" wx:key="index" class="procedure-item">
+                    • {{item}}
+                  </view>
+                </view>
+              </view>
+              
+              <!-- 采用AI建议按钮 -->
+              <view class="result-actions">
+                <t-button 
+                  theme="primary" 
+                  size="small" 
+                  bind:tap="adoptAIDiagnosis"
+                  class="adopt-btn"
+                >
+                  采用此诊断
+                </t-button>
+                <t-button 
+                  theme="light" 
+                  variant="outline"
+                  size="small" 
+                  bind:tap="viewFullDiagnosis"
+                  class="detail-btn"
+                >
+                  查看详情
+                </t-button>
+              </view>
             </view>
           </view>
 
