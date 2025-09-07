@@ -10,7 +10,13 @@ if [ ! -d "cloudfunctions" ]; then
 fi
 
 # 要部署的云函数列表
-functions=("employee-invite-management" "user-management" "login")
+if [ $# -eq 0 ]; then
+    # 默认部署的云函数列表
+    functions=("employee-invite-management" "user-management" "login" "notification-management")
+else
+    # 使用命令行参数指定的云函数
+    functions=("$@")
+fi
 
 for func in "${functions[@]}"; do
     echo "部署云函数: $func"

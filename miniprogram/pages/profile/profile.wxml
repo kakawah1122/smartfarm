@@ -61,8 +61,8 @@
             </view>
             <text class="user-farm">{{userInfo.farm}}</text>
           </view>
-          <view wx:if="{{notifications.length > 0}}" class="notification-area" bind:tap="showNotifications">
-            <view class="notification-badge">{{notifications.length}}</view>
+          <view wx:if="{{notificationStats.unreadCount > 0}}" class="notification-area" bind:tap="showNotifications">
+            <view class="notification-badge">{{notificationStats.unreadCount}}</view>
             <view class="notification-icon">🔔</view>
           </view>
         </view>
@@ -80,17 +80,11 @@
           bind:tap="navigateToMenu"
           data-item="{{item}}">
           <view class="tdesign-card-content">
-            <view class="tdesign-card-icon-wrapper">
-              <view class="tdesign-card-icon">
-                <text wx:if="{{item.icon === 'money-circle'}}">💰</text>
-                <text wx:elif="{{item.icon === 'user-group'}}">👥</text>
-                <text wx:elif="{{item.icon === 'file-text'}}">📋</text>
-                <text wx:else>⚙️</text>
-              </view>
-              <view wx:if="{{item.badge}}" class="tdesign-card-badge">{{item.badge}}</view>
-            </view>
             <view class="tdesign-card-info">
-              <view class="tdesign-card-title">{{item.title}}</view>
+              <view class="tdesign-card-title-wrapper">
+                <view class="tdesign-card-title">{{item.title}}</view>
+                <view wx:if="{{item.badge}}" class="tdesign-card-badge-inline">{{item.badge}}</view>
+              </view>
               <view class="tdesign-card-description">{{item.description}}</view>
             </view>
             <view class="tdesign-card-arrow">›</view>

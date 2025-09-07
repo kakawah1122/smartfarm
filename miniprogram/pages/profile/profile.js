@@ -58,7 +58,7 @@ const pageConfig = {
                 title: '系统设置',
                 description: '隐私设置、帮助反馈、关于我们',
                 icon: 'setting'
-            }
+            },
         ],
         // 待处理事项
         pendingItems: [
@@ -96,24 +96,12 @@ const pageConfig = {
             profitGrowth: '32'
         },
         // 消息通知
-        notifications: [
-            {
-                id: 1,
-                title: '系统消息',
-                content: '您有3条待审核的报销申请',
-                time: '10分钟前',
-                type: 'system',
-                read: false
-            },
-            {
-                id: 2,
-                title: '健康提醒',
-                content: '今日疫苗接种提醒：200只鹅需要接种',
-                time: '1小时前',
-                type: 'health',
-                read: false
-            }
-        ]
+        notifications: [],
+        notificationStats: {
+            unreadCount: 0,
+            totalCount: 0,
+            recentCount: 0
+        }
     },
     onLoad() {
         this.checkLoginStatus();
@@ -121,14 +109,14 @@ const pageConfig = {
     },
     async onShow() {
         // 页面显示时刷新数据
-        console.log('个人中心页面显示，开始检查登录状态');
         await this.checkLoginStatus();
         if (this.data.isLoggedIn) {
-            console.log('用户已登录，加载云端用户信息');
-            await this.loadCloudUserInfo();
+            await Promise.all([
+                this.loadCloudUserInfo(),
+                this.loadNotifications()
+            ]);
         }
         else {
-            console.log('用户未登录');
         }
     },
     // 检查登录状态
@@ -141,7 +129,6 @@ const pageConfig = {
             const storedOpenid = wx.getStorageSync('openid');
             const storedUserInfo = wx.getStorageSync('userInfo');
             if (storedOpenid && storedUserInfo) {
-                console.log('个人中心: 从本地存储恢复登录状态');
                 app.globalData.openid = storedOpenid;
                 app.globalData.isLoggedIn = true;
                 app.globalData.userInfo = storedUserInfo;
@@ -164,7 +151,6 @@ const pageConfig = {
         this.setData({
             isLoggedIn: isLoggedIn
         });
-        console.log('个人中心登录状态检查:', { isLoggedIn, hasOpenid: !!openid });
     },
     // 从云开发加载用户信息
     async loadCloudUserInfo() {
@@ -191,15 +177,9 @@ const pageConfig = {
                         avatarUrl: cloudUserInfo.avatarUrl || '/assets/icons/profile.png'
                     }
                 });
-                console.log('个人中心用户信息已更新:', {
-                    name: cloudUserInfo.nickname,
-                    farm: cloudUserInfo.farmName,
-                    phone: cloudUserInfo.phone
-                });
             }
         }
         catch (error) {
-            console.error('加载用户信息失败:', error);
         }
     },
     // 初始化用户信息
@@ -266,7 +246,6 @@ const pageConfig = {
             });
         }
         catch (error) {
-            console.error('登录失败:', error);
             wx.hideLoading();
             wx.showToast({
                 title: '登录失败，请重试',
@@ -467,27 +446,103 @@ const pageConfig = {
             });
         }
     },
+    // 加载通知数据
+    async loadNotifications() {
+        try {
+            const { NotificationHelper } = require('../../utils/notification-helper');
+            
+            // 获取通知统计
+            const stats = await NotificationHelper.getNotificationStats();
+            
+            // 获取最新的通知列表
+            const notificationsData = await NotificationHelper.getUserNotifications({
+                page: 1,
+                pageSize: 10
+            });
+            
+            this.setData({
+                notificationStats: stats,
+                notifications: notificationsData.notifications || []
+            });
+            
+        } catch (error) {
+            // 失败时使用默认数据，不影响页面正常显示
+        }
+    },
+
     // 显示消息通知
-    showNotifications() {
-        const unreadCount = this.data.notifications.filter(n => !n.read).length;
-        const notificationList = this.data.notifications.map(n => `${n.title}: ${n.content}`).join('\n\n');
+    async showNotifications() {
+        if (!this.data.isLoggedIn) {
+            wx.showToast({
+                title: '请先登录',
+                icon: 'none'
+            });
+            return;
+        }
+
+        const notifications = this.data.notifications;
+        const unreadCount = this.data.notificationStats.unreadCount;
+        
+        if (notifications.length === 0) {
+            wx.showModal({
+                title: '消息通知',
+                content: '暂无通知消息',
+                showCancel: false
+            });
+            return;
+        }
+
+        // 跳转到通知列表页面（如果有的话）或显示通知摘要
+        const notificationList = notifications.slice(0, 3).map(n => 
+            `${this.getNotificationTypeIcon(n.type)} ${n.title}\n${n.content.substring(0, 30)}${n.content.length > 30 ? '...' : ''}`
+        ).join('\n\n');
+        
+        const moreText = notifications.length > 3 ? `\n\n...还有${notifications.length - 3}条通知` : '';
+        
         wx.showModal({
             title: `消息通知 (${unreadCount}条未读)`,
-            content: notificationList || '暂无消息',
+            content: notificationList + moreText,
             confirmText: '全部已读',
             cancelText: '关闭',
-            success: (res) => {
+            success: async (res) => {
                 if (res.confirm) {
                     // 标记所有消息为已读
-                    const notifications = this.data.notifications.map(n => ({ ...n, read: true }));
-                    this.setData({ notifications });
-                    wx.showToast({
-                        title: '已标记为已读',
-                        icon: 'success'
-                    });
+                    try {
+                        const { NotificationHelper } = require('../../utils/notification-helper');
+                        const result = await NotificationHelper.markAllRead();
+                        
+                        if (result.success) {
+                            // 重新加载通知数据
+                            await this.loadNotifications();
+                            wx.showToast({
+                                title: '已标记为已读',
+                                icon: 'success'
+                            });
+                        } else {
+                            throw new Error(result.message || '标记失败');
+                        }
+                    } catch (error) {
+                        console.error('标记已读失败:', error);
+                        wx.showToast({
+                            title: '操作失败，请重试',
+                            icon: 'error'
+                        });
+                    }
                 }
             }
         });
+    },
+
+    // 获取通知类型图标
+    getNotificationTypeIcon(type) {
+        const iconMap = {
+            'system': '⚙️',
+            'approval': '📋', 
+            'health': '🏥',
+            'production': '🏭',
+            'finance': '💰'
+        };
+        return iconMap[type] || '📢';
     },
     // 隐私设置
     privacySettings() {

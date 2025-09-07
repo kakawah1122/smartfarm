@@ -25,6 +25,27 @@
         </view>
         
         <view class="form-card">
+          <!-- 批次选择 -->
+          <view class="form-item">
+            <view class="form-label required">选择批次</view>
+            <view class="form-content">
+              <picker 
+                wx:if="{{activeBatches.length > 0}}"
+                bindchange="onBatchChange" 
+                range="{{activeBatches}}" 
+                range-key="displayName"
+                value="{{batchIndex >= 0 ? batchIndex : 0}}"
+              >
+                <view class="picker-display" bind:tap="onBatchCellClick">
+                  {{batchIndex >= 0 && activeBatches[batchIndex] ? activeBatches[batchIndex].displayName : '请选择存栏批次'}}
+                </view>
+              </picker>
+              <view wx:else class="picker-display disabled">
+                暂无存栏批次
+              </view>
+            </view>
+          </view>
+
           <!-- 常见症状选择 -->
           <view class="form-item">
             <view class="form-label">常见症状</view>

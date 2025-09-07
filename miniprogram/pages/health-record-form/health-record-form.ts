@@ -3,6 +3,7 @@ import { createPageWithNavbar } from '../../utils/navigation'
 
 // 表单数据接口
 interface HealthRecordFormData {
+  batchNumber: string;          // 批次号码
   recordDate: string;           // 记录日期
   abnormalCount: string;        // 异常数量
   symptoms: string;             // 症状描述
@@ -17,6 +18,7 @@ const pageConfig = {
   data: {
     // 表单数据
     formData: {
+      batchNumber: '',
       recordDate: '',
       abnormalCount: '',
       symptoms: '',
@@ -32,6 +34,11 @@ const pageConfig = {
     showTreatmentDate: false,
     recordDateValue: '',
     treatmentDateValue: '',
+    
+    // 批次相关
+    activeBatches: [] as any[],     // 活跃批次列表
+    batchIndex: -1,                 // 选中的批次索引
+    selectedBatch: null as any,     // 选中的批次
     
     symptomIndex: -1,
     diseaseIndex: -1,
@@ -99,6 +106,7 @@ const pageConfig = {
   onLoad() {
     console.log('健康记录表单页面加载')
     this.initializeForm()
+    this.loadActiveBatches()
     // 不再自动加载药品记录，只有选择需要药品的治疗方案时才加载
   },
 
@@ -113,9 +121,11 @@ const pageConfig = {
       recordDateValue: today.getTime(),
       treatmentDateValue: today.getTime(),
       // 确保选择器索引正确初始化
+      batchIndex: -1,
       symptomIndex: -1,
       diseaseIndex: -1,
       treatmentIndex: -1,
+      selectedBatch: null,
       selectedSymptom: '',
       selectedDisease: '',
       selectedTreatment: ''
@@ -136,8 +146,85 @@ const pageConfig = {
     return `${year}-${month}-${day}`
   },
 
+  // 加载活跃批次
+  async loadActiveBatches() {
+    try {
+      console.log('开始加载活跃批次')
+      
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'get_active_batches'
+        }
+      })
+      
+      console.log('活跃批次加载结果:', result)
+      
+      if (result.result && result.result.success) {
+        const batches = result.result.data.batches || []
+        
+        this.setData({
+          activeBatches: batches
+        })
+        
+        console.log('活跃批次加载成功:', {
+          数量: batches.length,
+          批次列表: batches
+        })
+      } else {
+        console.warn('加载活跃批次失败:', result.result?.error || '未知错误')
+        this.setData({
+          activeBatches: []
+        })
+      }
+      
+    } catch (error) {
+      console.error('加载活跃批次异常:', error)
+      this.setData({
+        activeBatches: []
+      })
+    }
+  },
 
 
+
+
+  // 批次选择
+  onBatchChange(e: any) {
+    const { value } = e.detail
+    const batchIndex = parseInt(value)
+    const batch = this.data.activeBatches[batchIndex]
+    
+    console.log('批次选择事件触发:', {
+      originalValue: value,
+      parsedIndex: batchIndex,
+      batchData: batch,
+      activeBatches: this.data.activeBatches
+    })
+    
+    if (batch) {
+      const updateData = {
+        batchIndex: batchIndex,
+        selectedBatch: batch,
+        'formData.batchNumber': batch.batchNumber
+      }
+      
+      this.setData(updateData, () => {
+        console.log('批次选择成功设置并完成界面更新:', {
+          batchNumber: batch.batchNumber,
+          batchIndex: batchIndex,
+          selectedBatch: batch
+        })
+      })
+    } else {
+      console.error('批次数据不存在:', {
+        value,
+        batchIndex,
+        activeBatchesLength: this.data.activeBatches.length,
+        activeBatches: this.data.activeBatches
+      })
+    }
+  },
 
   // 症状选择
   onSymptomChange(e: any) {
@@ -438,6 +525,9 @@ const pageConfig = {
     const errors: string[] = []
 
     // 检查必填字段
+    if (!formData.batchNumber.trim()) {
+      errors.push('请选择批次')
+    }
     if (!formData.recordDate) {
       errors.push('请选择记录日期')
     }
@@ -502,10 +592,13 @@ const pageConfig = {
       // 准备提交数据
       const submitData = {
         ...this.data.formData,
-        abnormalCount: Number(this.data.formData.abnormalCount),
+        affectedCount: Number(this.data.formData.abnormalCount), // 映射字段名
         medicineQuantity: this.data.formData.medicineQuantity ? Number(this.data.formData.medicineQuantity) : 0,
         createTime: new Date().toISOString()
       }
+      
+      // 移除前端字段名（避免混淆）
+      delete submitData.abnormalCount
 
       // 调用云函数保存数据
       const result = await wx.cloud.callFunction({
@@ -603,6 +696,7 @@ const pageConfig = {
           
           this.setData({
             formData: {
+              batchNumber: '',
               recordDate: dateString,
               abnormalCount: '',
               symptoms: '',
@@ -612,10 +706,12 @@ const pageConfig = {
               medicineQuantity: '',
               notes: ''
             },
+            batchIndex: -1,
             symptomIndex: -1,
             diseaseIndex: -1,
             treatmentIndex: -1,
             medicineRecordIndex: -1,
+            selectedBatch: null,
             selectedSymptom: '',
             selectedDisease: '',
             selectedTreatment: '',
@@ -681,6 +777,13 @@ const pageConfig = {
 
   // Cell点击事件处理函数 - 这些方法主要用于提供视觉反馈
   // picker组件会自动响应点击事件，无需手动触发
+
+  onBatchCellClick() {
+    console.log('批次选择器被点击')
+    wx.vibrateShort({
+      type: 'light'
+    });
+  },
 
   onSymptomCellClick() {
     console.log('症状选择器被点击')
