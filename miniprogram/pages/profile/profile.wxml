@@ -1,5 +1,5 @@
 <!--profile.wxml - 重新设计的个人中心页面-->
-<view class="profile-page">
+<view class="page profile-page">
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="个人中心"

@@ -124,13 +124,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
       
-      // 获取健康记录列表
+      // 获取健康记录列表（默认最近10条）
       const recordsResult = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
           action: 'list_health_records',
           page: 1,
-          pageSize: 10
+          pageSize: 10 // 限制显示最近10条
         }
       })
       
@@ -146,7 +146,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           priorityText: this.getPriorityText(record.severity, record.recordType),
           date: record.displayDate || record.recordDate,
           time: record.createTime ? new Date(record.createTime).toLocaleTimeString() : '',
-          operator: '系统用户',
+          operator: record.operator || '系统用户',
           status: this.getResultText(record.result, record.recordType),
           result: record.result,
           recordType: record.recordType, // 记录类型
@@ -340,6 +340,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   addHealthRecord() {
     wx.navigateTo({
       url: '/pages/health-record-form/health-record-form'
+    })
+  },
+
+  // 查看所有健康记录
+  viewAllHealthRecords() {
+    wx.navigateTo({
+      url: '/pages/health-records-list/health-records-list'
     })
   },
 

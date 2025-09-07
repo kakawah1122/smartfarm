@@ -1,0 +1,18 @@
+{
+  "navigationBarTitleText": "健康记录",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 100,
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
+    "t-picker": "tdesign-miniprogram/picker/picker",
+    "t-fab": "tdesign-miniprogram/fab/fab",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-overlay": "tdesign-miniprogram/overlay/overlay",
+    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+  }
+}

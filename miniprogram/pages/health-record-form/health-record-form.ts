@@ -594,6 +594,10 @@ const pageConfig = {
         ...this.data.formData,
         affectedCount: Number(this.data.formData.abnormalCount), // 映射字段名
         medicineQuantity: this.data.formData.medicineQuantity ? Number(this.data.formData.medicineQuantity) : 0,
+        // 添加缺失的字段
+        location: this.data.selectedBatch?.location || '未指定位置',
+        severity: this.inferSeverity(this.data.formData.abnormalCount, this.data.formData.symptoms),
+        result: 'ongoing', // 新建记录默认为进行中
         createTime: new Date().toISOString()
       }
       
@@ -601,6 +605,7 @@ const pageConfig = {
       delete submitData.abnormalCount
 
       // 调用云函数保存数据
+      console.log('=== 提交到云函数的数据 ===', submitData)
       const result = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
@@ -608,6 +613,7 @@ const pageConfig = {
           recordData: submitData
         }
       })
+      console.log('=== 云函数返回结果 ===', result)
 
       if (!result.result.success) {
         throw new Error(result.result.message || '提交失败')
@@ -804,6 +810,21 @@ const pageConfig = {
     wx.vibrateShort({
       type: 'light'
     });
+  },
+
+  // 推断严重程度
+  inferSeverity(abnormalCount: string, symptoms: string): string {
+    const count = Number(abnormalCount) || 0
+    const symptomsLower = symptoms.toLowerCase()
+    
+    // 根据异常数量和症状关键词判断严重程度
+    if (count >= 50 || symptomsLower.includes('死亡') || symptomsLower.includes('急性')) {
+      return 'severe'
+    } else if (count >= 10 || symptomsLower.includes('发热') || symptomsLower.includes('呼吸困难')) {
+      return 'moderate'
+    } else {
+      return 'mild'
+    }
   },
 
   // 页面分享

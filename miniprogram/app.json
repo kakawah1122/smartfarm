@@ -11,6 +11,7 @@
     "pages/health/health",
     "pages/health-record-form/health-record-form",
     "pages/health-record-detail/health-record-detail",
+    "pages/health-records-list/health-records-list",
     "pages/treatment-followup/treatment-followup",
     "pages/profile/profile",
     "pages/finance/finance",

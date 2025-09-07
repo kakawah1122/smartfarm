@@ -1,5 +1,5 @@
 <!--production.wxml - 重新设计的生产管理页面-->
-<view class="page-container">
+<view class="page page-container">
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="生产管理"

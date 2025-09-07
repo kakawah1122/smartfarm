@@ -33,10 +33,10 @@
   font-style: normal !important;
 }
 
-/* 全局设计系统 */
-/* 强制浅色背景 - 解决真机暗色问题 */
+/* 全局设计系统 - 遵循TDesign规范 */
 page {
-  background-color: #f5f5f5 !important;
+  /* 使用TDesign标准背景色变量，支持深色模式自动切换 */
+  background-color: var(--td-bg-color-page, #f5f5f5);
   
   /* 安全区域变量 - 刘海屏适配 */
   --safe-area-inset-top: env(safe-area-inset-top);
@@ -44,16 +44,16 @@ page {
   --safe-area-inset-left: env(safe-area-inset-left);
   --safe-area-inset-right: env(safe-area-inset-right);
   
-  /* 状态栏高度适配 */
-  --status-bar-height: var(--safe-area-inset-top, 44rpx);
-  --navbar-height: calc(88rpx + var(--safe-area-inset-top, 0rpx));
-  --total-header-height: calc(160rpx + var(--safe-area-inset-top, 0rpx));
+  /* 状态栏高度适配 - 更精确的计算 */
+  --status-bar-height: max(var(--safe-area-inset-top, 44rpx), 44rpx);
+  --navbar-height: calc(88rpx + max(var(--safe-area-inset-top, 0rpx), 44rpx));
+  --total-header-height: calc(160rpx + max(var(--safe-area-inset-top, 0rpx), 44rpx));
   
-  /* TDesign 主题色覆盖 */
-  --td-brand-color: #14b8a6;
-  --td-warning-color: #f59e0b;
-  --td-error-color: #ef4444;
-  --td-success-color: #10b981;
+  /* TDesign 主题色覆盖 - 使用标准变量 */
+  --td-brand-color: #0052d9;
+  --td-warning-color: #ed7b2f;
+  --td-error-color: #d54941;
+  --td-success-color: #00a870;
   
   /* 主色调系统 - 参照BOSS直聘蓝绿色设计 */
   --primary-blue: #4ade80;
@@ -87,12 +87,12 @@ page {
   --color-text-quaternary: #9ca3af;
   --color-text-disabled: #d1d5db;
   
-  /* 背景色系统 - 强制浅色 */
-  --color-bg-primary: #ffffff !important;
-  --color-bg-secondary: #f9fafb !important;
-  --color-bg-tertiary: #f3f4f6 !important;
-  --color-bg-quaternary: #e5e7eb !important;
-  --color-bg-page: #f5f5f5 !important;
+  /* 背景色系统 - 支持深色模式自动切换 */
+  --color-bg-primary: var(--td-bg-color-container, #ffffff);
+  --color-bg-secondary: var(--td-bg-color-component, #f9fafb);
+  --color-bg-tertiary: var(--td-bg-color-secondarycontainer, #f3f4f6);
+  --color-bg-quaternary: #e5e7eb;
+  --color-bg-page: var(--td-bg-color-page, #f5f5f5);
   
   /* 边框色系统 */
   --color-border-light: #f3f4f6;
@@ -156,9 +156,9 @@ page {
   --z-index-popover: 1050;
   --z-index-tooltip: 1060;
   
-  background-color: var(--color-bg-page) !important;
+  background-color: var(--color-bg-page);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  color: var(--color-text-primary);
+  color: var(--td-text-color-primary, var(--color-text-primary));
   line-height: var(--line-height-base);
 }
 
@@ -452,7 +452,7 @@ page {
 /* 页面容器 - 刘海屏适配 */
 .page-container {
   min-height: 100vh;
-  background-color: var(--color-bg-page) !important;
+  background-color: var(--color-bg-page);
   position: relative;
   padding-bottom: var(--safe-area-inset-bottom, 0);
 }
@@ -465,10 +465,10 @@ page {
 }
 
 .t-tabs {
-  background: var(--color-bg-primary) !important;
-  --td-tab-track-color: var(--primary-teal) !important;
-  --td-tab-item-active-color: var(--primary-teal) !important;
-  --td-tab-item-color: var(--color-text-secondary) !important;
+  background: var(--color-bg-primary);
+  --td-tab-track-color: var(--td-brand-color);
+  --td-tab-item-active-color: var(--td-brand-color);
+  --td-tab-item-color: var(--td-text-color-secondary, var(--color-text-secondary));
   position: sticky;
   top: 0;
   z-index: var(--z-index-sticky);
@@ -526,16 +526,16 @@ page {
 }
 
 .t-cell {
-  --td-cell-bg-color: var(--color-bg-primary) !important;
-  --td-cell-border-color: var(--color-border-light) !important;
-  --td-cell-title-color: var(--color-text-primary) !important;
-  --td-cell-description-color: var(--color-text-secondary) !important;
-  --td-cell-note-color: var(--color-text-tertiary) !important;
+  --td-cell-bg-color: var(--color-bg-primary);
+  --td-cell-border-color: var(--td-border-level-1-color, var(--color-border-light));
+  --td-cell-title-color: var(--td-text-color-primary, var(--color-text-primary));
+  --td-cell-description-color: var(--td-text-color-secondary, var(--color-text-secondary));
+  --td-cell-note-color: var(--td-text-color-placeholder, var(--color-text-tertiary));
 }
 
 .t-grid {
-  --td-grid-item-bg-color: var(--color-bg-primary) !important;
-  --td-grid-border-color: var(--color-border-light) !important;
+  --td-grid-item-bg-color: var(--color-bg-primary);
+  --td-grid-border-color: var(--td-border-level-1-color, var(--color-border-light));
 }
 
 .t-grid-item {
@@ -545,26 +545,28 @@ page {
 
 .t-grid-item:active {
   transform: scale(0.97);
-  background-color: var(--color-bg-secondary) !important;
+  background-color: var(--color-bg-secondary);
 }
 
 .t-input {
   border-radius: var(--radius-sm) !important;
-  border-color: var(--color-border-base) !important;
-  --td-input-border-color: var(--color-border-base) !important;
-  --td-input-border-color-focus: var(--primary-teal) !important;
+  --td-input-border-color: var(--td-border-level-1-color, var(--color-border-base));
+  --td-input-border-color-focus: var(--td-brand-color);
+  --td-input-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
+  --td-input-text-color: var(--td-text-color-primary, var(--color-text-primary));
 }
 
 .t-textarea {
   border-radius: var(--radius-sm) !important;
-  border-color: var(--color-border-base) !important;
-  --td-textarea-border-color: var(--color-border-base) !important;
-  --td-textarea-border-color-focus: var(--primary-teal) !important;
+  --td-textarea-border-color: var(--td-border-level-1-color, var(--color-border-base));
+  --td-textarea-border-color-focus: var(--td-brand-color);
+  --td-textarea-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
+  --td-textarea-text-color: var(--td-text-color-primary, var(--color-text-primary));
 }
 
 .t-dropdown-menu {
-  --td-dropdown-menu-color: var(--color-text-primary) !important;
-  --td-dropdown-menu-bg-color: var(--color-bg-primary) !important;
+  --td-dropdown-menu-color: var(--td-text-color-primary, var(--color-text-primary));
+  --td-dropdown-menu-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
 }
 
 .t-notice-bar {
@@ -579,7 +581,7 @@ page {
 }
 
 .t-swipe-cell {
-  --td-swipe-cell-bg-color: var(--color-bg-primary) !important;
+  --td-swipe-cell-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
 }
 
 /* 设备适配媒体查询 */

@@ -105,48 +105,59 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 处理记录数据
   processRecordData(recordData: any) {
-    // console.log('处理记录数据:', recordData)
+    console.log('=== 处理记录数据 ===', recordData)
     
-    const curedCount = recordData.curedCount || 0
-    const deathCount = recordData.deathCount || 0
-    const remainingCount = (recordData.currentAffectedCount !== undefined) 
-      ? recordData.currentAffectedCount 
-      : Math.max(0, (recordData.abnormalCount || recordData.affectedCount || 0) - curedCount - deathCount)
+    // 如果数据结构包含healthRecord字段，则提取healthRecord
+    const actualRecord = recordData.healthRecord || recordData
+    
+    console.log('=== 实际记录数据 ===', actualRecord)
+    console.log('actualRecord.diagnosisDisease:', actualRecord.diagnosisDisease)
+    console.log('actualRecord.symptoms:', actualRecord.symptoms)
+    console.log('actualRecord.affectedCount:', actualRecord.affectedCount)
+    console.log('actualRecord.result:', actualRecord.result)
+    
+    const curedCount = actualRecord.curedCount || 0
+    const deathCount = actualRecord.deathCount || 0
+    const remainingCount = (actualRecord.currentAffectedCount !== undefined) 
+      ? actualRecord.currentAffectedCount 
+      : Math.max(0, (actualRecord.abnormalCount || actualRecord.affectedCount || 0) - curedCount - deathCount)
 
     // 判断是否可以跟进治疗
-    const canFollowUp = (recordData.result === 'ongoing' || remainingCount > 0) 
-      && (recordData.recordType !== 'cure' && recordData.recordType !== 'death')
+    const canFollowUp = (actualRecord.result === 'ongoing' || remainingCount > 0) 
+      && (actualRecord.recordType !== 'cure' && actualRecord.recordType !== 'death')
 
     // 处理记录状态显示
-    let status = recordData.result === 'ongoing' ? '治疗中' : 
-                 recordData.result === 'cured' ? '已治愈' : 
-                 recordData.result === 'death' ? '已死亡' : '未知状态'
+    let status = actualRecord.result === 'ongoing' ? '治疗中' : 
+                 actualRecord.result === 'cured' ? '已治愈' : 
+                 actualRecord.result === 'death' ? '已死亡' : '未知状态'
 
-    if (recordData.recordType === 'cure') {
+    if (actualRecord.recordType === 'cure') {
       status = '治愈记录'
-    } else if (recordData.recordType === 'death') {
+    } else if (actualRecord.recordType === 'death') {
       status = '死亡记录'
     }
 
     const processedRecord = {
-      id: recordData._id || recordData.id || 'unknown',
-      location: recordData.diagnosisDisease || recordData.location || '未确诊',
-      symptoms: recordData.symptoms || '无症状描述',
-      treatment: recordData.treatment || '暂无治疗方案',
-      priorityText: this.getPriorityText(recordData.severity, recordData.recordType),
-      severity: this.getSeverityTheme(recordData.severity, recordData.recordType),
-      affectedCount: recordData.abnormalCount || recordData.affectedCount || recordData.cureCount || recordData.deathCount || 0,
+      id: actualRecord._id || actualRecord.id || 'unknown',
+      location: actualRecord.diagnosisDisease || actualRecord.location || '未确诊',
+      symptoms: actualRecord.symptoms || '无症状描述',
+      treatment: actualRecord.treatment || '暂无治疗方案',
+      priorityText: this.getPriorityText(actualRecord.severity, actualRecord.recordType),
+      severity: this.getSeverityTheme(actualRecord.severity, actualRecord.recordType),
+      affectedCount: actualRecord.abnormalCount || actualRecord.affectedCount || actualRecord.cureCount || actualRecord.deathCount || 0,
       status: status,
-      date: recordData.displayDate || recordData.recordDate || recordData.date || '未知时间',
-      time: recordData.createTime ? new Date(recordData.createTime).toLocaleTimeString() : (recordData.time || ''),
-      operator: recordData.operator || '系统用户',
+      date: actualRecord.displayDate || actualRecord.recordDate || actualRecord.date || '未知时间',
+      time: actualRecord.createTime ? new Date(actualRecord.createTime).toLocaleTimeString() : (actualRecord.time || ''),
+      operator: actualRecord.operator || '系统用户',
       curedCount,
       deathCount, 
       remainingCount,
-      hasFollowUp: curedCount > 0 || deathCount > 0 || remainingCount !== (recordData.abnormalCount || recordData.affectedCount || 0),
+      hasFollowUp: curedCount > 0 || deathCount > 0 || remainingCount !== (actualRecord.abnormalCount || actualRecord.affectedCount || 0),
       canFollowUp,
-      rawRecord: recordData
+      rawRecord: actualRecord
     }
+    
+    console.log('=== 处理后的记录数据 ===', processedRecord)
 
     // console.log('处理后的记录数据:', processedRecord)
 
@@ -187,6 +198,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const record = this.data.record
     const recordId = record.id
     const diagnosisDisease = record.rawRecord?.diagnosisDisease || record.location
+    
+    console.log('跳转到跟进治疗页面:', { recordId, diagnosisDisease, record })
     
     wx.navigateTo({
       url: `/pages/treatment-followup/treatment-followup?recordId=${recordId}&diagnosisDisease=${encodeURIComponent(diagnosisDisease || '')}`

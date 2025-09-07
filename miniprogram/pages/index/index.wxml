@@ -1,4 +1,4 @@
-<view class="page-container mobile-container">
+<view class="page page-container mobile-container">
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="智慧养鹅"

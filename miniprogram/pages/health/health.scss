@@ -26,15 +26,17 @@ page {
 
 /* 健康管理Tab样式 - 刘海屏适配 */
 .health-tabs {
-  background: var(--color-bg-primary) !important;
-  --td-tab-track-color: var(--primary-blue) !important;
-  --td-tab-item-active-color: var(--primary-blue) !important;
-  --td-tab-item-color: var(--color-text-secondary) !important;
+  background: var(--td-bg-color-container, var(--color-bg-primary));
+  --td-tab-track-color: var(--td-brand-color);
+  --td-tab-item-active-color: var(--td-brand-color);
+  --td-tab-item-color: var(--td-text-color-secondary, var(--color-text-secondary));
   position: sticky;
   top: 0;
   z-index: var(--z-index-sticky);
   box-shadow: var(--shadow-sm);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--td-border-level-1-color, var(--color-border-light));
+  /* 优化与导航栏的间距 */
+  margin-top: 0;
 }
 
 /* 滚动容器 - 刘海屏适配 */
@@ -107,6 +109,21 @@ page {
   color: var(--td-text-color-secondary, #555555);
   line-height: 1.4;
   font-weight: 400;
+}
+
+.stat-hint {
+  font-size: 20rpx;
+  color: var(--td-text-color-placeholder, #999999);
+  margin-top: 4rpx;
+}
+
+.clickable-card {
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
 }
 
 /* TDesign原生卡片样式 */

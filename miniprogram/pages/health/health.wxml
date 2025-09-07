@@ -1,5 +1,5 @@
 <!--health.wxml-->
-<view class="page-container">
+<view class="page page-container">
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="健康管理"
@@ -40,7 +40,7 @@
             </t-card>
           </t-col>
           <t-col span="8">
-            <t-card>
+            <t-card bind:tap="viewAllHealthRecords" class="clickable-card">
               <view class="stat-content stat-primary">
                 <view class="stat-value">{{healthStats.records}}</view>
                 <view class="stat-label">本月记录</view>

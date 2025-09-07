@@ -167,10 +167,11 @@ async function createHealthRecord(event, wxContext) {
       location: recordData.location,
       affectedCount: Number(recordData.affectedCount),
       symptoms: recordData.symptoms,
-      severity: recordData.severity,
-      treatment: recordData.treatment,
+      diagnosisDisease: recordData.diagnosisDisease || '待确诊', // 添加诊断病种字段
+      severity: recordData.severity || 'mild',
+      treatment: recordData.treatment || '',
       treatmentDate: recordData.treatmentDate,
-      result: recordData.result,
+      result: recordData.result || 'ongoing',
       notes: recordData.notes || '',
       createTime: now,
       updateTime: now
@@ -298,7 +299,9 @@ async function listHealthRecords(event, wxContext) {
         symptoms: `治愈跟进：${record.cureCount}只已康复`,
         treatment: record.treatment,
         severity: 'success',
-        result: 'cured'
+        result: 'cured',
+        // 确保诊断病种字段正确传递
+        diagnosisDisease: record.diagnosisDisease || '未确诊'
       })
     }
     
@@ -313,7 +316,9 @@ async function listHealthRecords(event, wxContext) {
         symptoms: `死亡记录：${record.deathCount}只死亡，原因：${record.deathReason}`,
         treatment: record.treatment,
         severity: 'danger', 
-        result: 'death'
+        result: 'death',
+        // 确保诊断病种字段正确传递
+        diagnosisDisease: record.diagnosisDisease || '未确诊'
       })
     }
     
@@ -400,10 +405,16 @@ async function getHealthStats(event, wxContext) {
     const curedRecords = healthData.filter(record => record.result === 'cured').length
     const ongoingRecords = healthData.filter(record => record.result === 'ongoing').length
     
-    // 计算当前患病数量（只统计状态为 ongoing 的记录）
+    // 计算当前患病数量（只统计状态为 ongoing 的记录，使用实际剩余的受影响数量）
     const currentAffected = healthData
       .filter(record => record.result === 'ongoing')
-      .reduce((sum, record) => sum + (record.affectedCount || 0), 0)
+      .reduce((sum, record) => {
+        // 优先使用 currentAffectedCount（剩余需要治疗的数量），如果不存在则使用原始的 affectedCount
+        const actualAffected = record.currentAffectedCount !== undefined 
+          ? record.currentAffectedCount 
+          : record.affectedCount || 0
+        return sum + actualAffected
+      }, 0)
     
     // 计算存活率：(总入栏数量 - 死亡数量) / 总入栏数量 * 100%
     const survivalRate = stockStats.totalEntry > 0 ? 
@@ -767,6 +778,8 @@ async function createFollowupRecord(event, wxContext) {
           cureDate: followupData.followupDate,
           cureCount: curedCount,
           treatment: originalRecord.data.treatment,
+          diagnosisDisease: followupData.diagnosisDisease || originalRecord.data.diagnosisDisease || '未确诊',
+          symptoms: followupData.symptoms || originalRecord.data.symptoms || '',
           location: originalRecord.data.location,
           notes: followupData.notes || '',
           createTime: now,
@@ -799,8 +812,10 @@ async function createFollowupRecord(event, wxContext) {
           batchNumber: originalRecord.data.batchNumber,
           deathDate: followupData.followupDate,
           deathCount: deathCount,
-          deathReason: originalRecord.data.symptoms,
+          deathReason: followupData.symptoms || originalRecord.data.symptoms || '',
           treatment: originalRecord.data.treatment,
+          diagnosisDisease: followupData.diagnosisDisease || originalRecord.data.diagnosisDisease || '未确诊',
+          symptoms: followupData.symptoms || originalRecord.data.symptoms || '',
           location: originalRecord.data.location,
           notes: followupData.notes || '',
           createTime: now,

@@ -119,6 +119,7 @@ const pageConfig = {
             deathCount: deathCount,
             symptoms: record.symptoms,
             treatment: record.treatment,
+            diagnosisDisease: record.diagnosisDisease || '未确诊', // 添加诊断病种
             severity: severityThemes[record.severity] || 'primary',
             severityText: severityTexts[record.severity] || '未知'
           }
@@ -253,7 +254,13 @@ const pageConfig = {
         curedCount: this.data.formData.curedCount ? Number(this.data.formData.curedCount) : 0,
         deathCount: this.data.formData.deathCount ? Number(this.data.formData.deathCount) : 0,
         createTime: new Date().toISOString(),
-        operator: '系统用户'
+        operator: '系统用户',
+        // 从原始记录继承的重要信息
+        originalRecordId: this.data.originalRecord._id,
+        batchNumber: this.data.originalRecord.batchNumber,
+        diagnosisDisease: this.data.originalRecord.diagnosisDisease,
+        symptoms: this.data.originalRecord.symptoms,
+        treatment: this.data.originalRecord.treatment
       }
 
       console.log('准备提交跟进数据:', submitData)

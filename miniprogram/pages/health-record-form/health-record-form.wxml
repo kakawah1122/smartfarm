@@ -1,5 +1,5 @@
 <!--health-record-form.wxml - 健康记录表单页面-->
-<view class="page-container">
+<view class="page page-container">
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="新增健康记录"

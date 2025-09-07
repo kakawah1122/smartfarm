@@ -74,23 +74,20 @@ $spacing-xl: 40rpx;
 }
 
 .form-card {
-  background: $bg-color-container;
+  background: var(--td-bg-color-container, $bg-color-container);
   border-radius: 12rpx;
   margin: $spacing-m;
   padding: $spacing-l;
   box-shadow: 0 1rpx 2rpx 0 rgba(0, 0, 0, 0.05);
-  border: 1rpx solid $border-color-light;
+  border: 1rpx solid var(--td-border-level-1-color, $border-color-light);
 }
 
 /* 全新的表单设计系统 */
 
-/* 表单卡片 */
+/* 表单卡片样式增强 */
 .form-card {
-  background: $bg-color-container;
   border-radius: 16rpx;
-  margin: $spacing-m;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-  border: 1rpx solid $border-color-light;
   overflow: hidden;
 }
 
@@ -99,7 +96,7 @@ $spacing-xl: 40rpx;
   display: table;
   width: 100%;
   padding: $spacing-m $spacing-l;
-  border-bottom: 1rpx solid $border-color-light;
+  border-bottom: 1rpx solid var(--td-border-level-1-color, $border-color-light);
   height: 48rpx;
   
   &:last-child {
@@ -134,7 +131,7 @@ $spacing-xl: 40rpx;
   width: 120rpx;
   font-size: 28rpx;
   font-weight: 500;
-  color: $text-primary;
+  color: var(--td-text-color-primary, $text-primary);
   line-height: 48rpx;
   height: 48rpx;
   margin: 0;
@@ -176,8 +173,8 @@ $spacing-xl: 40rpx;
   line-height: 48rpx;
   padding: 0 12rpx;
   margin: 0;
-  background: rgba($primary-color, 0.02);
-  border: 1rpx solid $border-color-light;
+  background: var(--td-bg-color-container, rgba($primary-color, 0.02));
+  border: 1rpx solid var(--td-border-level-1-color, $border-color-light);
   border-radius: 8rpx;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -202,15 +199,15 @@ $spacing-xl: 40rpx;
   line-height: 48rpx;
   padding: 0 32rpx 0 12rpx;
   margin: 0;
-  background: rgba($primary-color, 0.02);
-  border: 1rpx solid $border-color-light;
+  background: var(--td-bg-color-container, rgba($primary-color, 0.02));
+  border: 1rpx solid var(--td-border-level-1-color, $border-color-light);
   border-radius: 8rpx;
   transition: all 0.2s ease;
   box-sizing: border-box;
   vertical-align: middle;
   position: relative;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--td-text-color-primary, $text-primary);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -223,7 +220,7 @@ $spacing-xl: 40rpx;
   &.disabled {
     background: rgba($text-placeholder, 0.03);
     opacity: 0.7;
-    color: $text-placeholder;
+    color: var(--td-text-color-placeholder, $text-placeholder);
   }
   
   &::after {
@@ -250,7 +247,7 @@ $spacing-xl: 40rpx;
   font-size: 28rpx;
   line-height: 46rpx;
   height: 46rpx;
-  color: $text-primary;
+  color: var(--td-text-color-primary, $text-primary);
   margin: 0;
   padding: 0;
   flex: 1;
@@ -259,19 +256,19 @@ $spacing-xl: 40rpx;
   text-overflow: ellipsis;
   
   &.placeholder {
-    color: $text-placeholder;
+    color: var(--td-text-color-placeholder, $text-placeholder);
     font-style: italic;
   }
 }
 
 /* 表单输入框 */
 .form-input {
-  --td-input-bg-color: #ffffff !important;
-  --td-input-border-color: #{$border-color-light} !important;
+  --td-input-bg-color: var(--td-bg-color-container, #ffffff) !important;
+  --td-input-border-color: var(--td-border-level-1-color, #{$border-color-light}) !important;
   --td-input-border-radius: 8rpx !important;
   --td-input-font-size: 28rpx !important;
-  --td-input-text-color: #{$text-primary} !important;
-  --td-input-placeholder-color: #{$text-placeholder} !important;
+  --td-input-text-color: var(--td-text-color-primary, #{$text-primary}) !important;
+  --td-input-placeholder-color: var(--td-text-color-placeholder, #{$text-placeholder}) !important;
   --td-input-padding: 0 12rpx !important;
   height: 48rpx !important;
   line-height: 48rpx !important;
@@ -285,8 +282,8 @@ $spacing-xl: 40rpx;
     padding: 0 32rpx 0 12rpx !important;
     margin: 0 !important;
     box-sizing: border-box !important;
-    border: 1rpx solid $border-color-light !important;
-    background: #ffffff !important;
+    border: 1rpx solid var(--td-border-level-1-color, $border-color-light) !important;
+    background: var(--td-bg-color-container, #ffffff) !important;
     border-radius: 8rpx !important;
     transition: all 0.2s ease !important;
   }
@@ -316,12 +313,12 @@ $spacing-xl: 40rpx;
 
 /* 表单文本域 */
 .form-textarea {
-  --td-textarea-bg-color: rgba(#{red($primary-color)}, #{green($primary-color)}, #{blue($primary-color)}, 0.02) !important;
-  --td-textarea-border-color: #{$border-color-light} !important;
+  --td-textarea-bg-color: var(--td-bg-color-container, rgba(#{red($primary-color)}, #{green($primary-color)}, #{blue($primary-color)}, 0.02)) !important;
+  --td-textarea-border-color: var(--td-border-level-1-color, #{$border-color-light}) !important;
   --td-textarea-border-radius: 8rpx !important;
   --td-textarea-font-size: 28rpx !important;
-  --td-textarea-text-color: #{$text-primary} !important;
-  --td-textarea-placeholder-color: #{$text-placeholder} !important;
+  --td-textarea-text-color: var(--td-text-color-primary, #{$text-primary}) !important;
+  --td-textarea-placeholder-color: var(--td-text-color-placeholder, #{$text-placeholder}) !important;
   --td-textarea-padding: 12rpx !important;
   width: 100% !important;
   min-height: 100rpx !important;
