@@ -309,4 +309,64 @@
     <!-- 底部安全区域 -->
     <view style="height: 120rpx;"></view>
   </view>
+
+  <!-- 健康记录详情弹窗 -->
+  <bottom-popup
+    visible="{{showHealthDetailPopup}}"
+    title="健康记录详情"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="确定"
+    bind:close="closeHealthDetailPopup"
+    bind:confirm="closeHealthDetailPopup"
+    bind:visiblechange="onHealthDetailPopupChange"
+  >
+    <view wx:if="{{selectedHealthRecord}}" class="record-detail-content">
+      <view class="info-card">
+        <view class="card-content">
+          <view class="info-row">
+            <text class="info-label">症状描述：</text>
+            <text class="info-value">{{selectedHealthRecord.location || selectedHealthRecord.symptoms}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedHealthRecord.diagnosisDisease}}">
+            <text class="info-label">诊断疾病：</text>
+            <text class="info-value">{{selectedHealthRecord.diagnosisDisease}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedHealthRecord.treatment}}">
+            <text class="info-label">治疗方案：</text>
+            <text class="info-value note-text">{{selectedHealthRecord.treatment}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedHealthRecord.batchNumber}}">
+            <text class="info-label">批次号：</text>
+            <text class="info-value">{{selectedHealthRecord.batchNumber}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedHealthRecord.affectedCount}}">
+            <text class="info-label">受影响数量：</text>
+            <text class="info-value">{{selectedHealthRecord.affectedCount}}只</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedHealthRecord.severity}}">
+            <text class="info-label">严重程度：</text>
+            <view class="status-value">
+              <t-tag theme="{{selectedHealthRecord.severity}}" size="small">
+                {{selectedHealthRecord.priorityText || '未知'}}
+              </t-tag>
+            </view>
+          </view>
+          <view class="info-row">
+            <text class="info-label">操作员：</text>
+            <text class="info-value">{{selectedHealthRecord.operator}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">记录时间：</text>
+            <text class="info-value">{{selectedHealthRecord.date}} {{selectedHealthRecord.time}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedHealthRecord.notes}}">
+            <text class="info-label">备注：</text>
+            <text class="info-value note-text">{{selectedHealthRecord.notes}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
 </view>

@@ -1,0 +1,193 @@
+/* 底部弹窗组件样式 */
+
+.bottom-popup-content {
+  border-radius: 32rpx 32rpx 0 0 !important;
+  max-height: 80vh !important;
+  padding: 0 !important;
+}
+
+.bottom-popup-container {
+  padding: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+/* 弹窗头部 */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40rpx 40rpx 32rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  background: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.popup-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.close-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 32rpx;
+  
+  &:active {
+    background: #e9ecef;
+  }
+}
+
+.close-text {
+  font-size: 48rpx;
+  color: #6c757d;
+  line-height: 1;
+  font-weight: 300;
+}
+
+/* 内容区域 */
+.popup-content {
+  min-height: 200rpx;
+  max-height: calc(80vh - 200rpx);
+  overflow-y: auto;
+}
+
+/* 操作按钮 */
+.popup-actions {
+  border-top: 1rpx solid #f0f0f0;
+  background: #ffffff;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 24rpx;
+  padding: 32rpx 40rpx;
+}
+
+.secondary-button {
+  flex: 1;
+  background: #f8f9fa !important;
+  color: #6c757d !important;
+  border: 1rpx solid #e9ecef !important;
+  
+  &:active {
+    background: #e9ecef !important;
+  }
+}
+
+.primary-button {
+  flex: 1;
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
+  border: none !important;
+  
+  &:active {
+    background: linear-gradient(135deg, #1976d2 0%, #3a73d7 100%) !important;
+  }
+  
+  &.disabled {
+    background: #e9ecef !important;
+    color: #6c757d !important;
+    opacity: 0.6;
+  }
+}
+
+/* 自定义内容区域常用样式 */
+.content-section {
+  padding: 32rpx;
+}
+
+.info-card {
+  background: #ffffff;
+  margin: 24rpx 32rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  background: #f8f9fa;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.card-content {
+  padding: 32rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+  
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #6c757d;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #1a1a1a;
+  text-align: right;
+  flex: 1;
+}
+
+/* 头像区域 */
+.profile-section {
+  padding: 32rpx;
+  background: #f8f9fa;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.profile-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 16rpx;
+}
+
+.profile-tag {
+  padding: 8rpx 16rpx;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  border: 2rpx solid;
+}
+
+/* 小程序组件适配 - 使用rpx单位自适应 */
+.info-row-last {
+  margin-bottom: 0;
+}

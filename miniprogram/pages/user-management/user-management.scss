@@ -361,51 +361,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 暗色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .page-container {
-    background: #0d1117;
-  }
-
-  .stats-section,
-  .filter-section,
-  .user-list,
-  .action-section {
-    background: #161b22;
-    border-color: #30363d;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.3);
-  }
-
-  .stat-number {
-    color: #58a6ff;
-  }
-
-  .stat-label,
-  .detail-label {
-    color: #8b949e;
-  }
-
-  .section-title,
-  .detail-value {
-    color: #f0f6fc;
-  }
-
-  .t-cell {
-    background: #161b22 !important;
-    
-    &__title {
-      color: #f0f6fc !important;
-    }
-    
-    &__note {
-      color: #8b949e !important;
-    }
-    
-    &__description {
-      color: #6e7681 !important;
-    }
-  }
-}
 
 /* 动画效果 */
 .stats-section,

@@ -130,6 +130,17 @@ const pageConfig = {
         treatment: [] as string[],
         recovery: [] as string[]
       }
+    },
+    
+    // 统一弹窗状态
+    showSuccessPopup: false,
+    showDeleteConfirmPopup: false,
+    showResetConfirmPopup: false,
+    popupData: {
+      title: '',
+      content: '',
+      deleteImageIndex: -1,
+      deleteImageType: ''
     }
   },
 
@@ -726,11 +737,14 @@ const pageConfig = {
         // 显示文件夹生成提示
         if (uploadResults.length > 0) {
           setTimeout(() => {
-            wx.showModal({
-              title: '动态文件夹已创建',
-              content: `图片已按记录日期自动保存至对应的时间文件夹中，便于后续按时间查询和管理。`,
-              showCancel: false,
-              confirmText: '知道了'
+            this.setData({
+              showSuccessPopup: true,
+              popupData: {
+                title: '动态文件夹已创建',
+                content: '图片已按记录日期自动保存至对应的时间文件夹中，便于后续按时间查询和管理。',
+                deleteImageIndex: -1,
+                deleteImageType: ''
+              }
             });
           }, 1500);
         }
@@ -803,13 +817,23 @@ const pageConfig = {
   async onDeleteImage(event: any) {
     const { type, index } = event.currentTarget.dataset;
     
-    try {
-      const result = await wx.showModal({
+    // 显示删除确认弹窗
+    this.setData({
+      showDeleteConfirmPopup: true,
+      popupData: {
         title: '确认删除',
-        content: '确定要删除这张图片吗？此操作不可撤销。'
-      });
-      
-      if (!result.confirm) return;
+        content: '确定要删除这张图片吗？此操作不可撤销。',
+        deleteImageIndex: index,
+        deleteImageType: type
+      }
+    });
+  },
+  
+  // 确认删除图片
+  async confirmDeleteImage() {
+    const { deleteImageIndex: index, deleteImageType: type } = this.data.popupData;
+    
+    try {
       
       // 获取要删除的文件ID
       const formDataKey = this.getFormDataKeyByImageType(type);
@@ -976,48 +1000,81 @@ const pageConfig = {
 
   // 重置表单
   onReset() {
-    wx.showModal({
-      title: '确认重置',
-      content: '确定要重置表单吗？所有已填写的数据将被清空。',
-      success: (res) => {
-        if (res.confirm) {
-          // 重置表单数据
-          const today = new Date()
-          const dateString = this.formatDate(today)
-          
-          this.setData({
-            formData: {
-              batchNumber: '',
-              recordDate: dateString,
-              abnormalCount: '',
-              symptoms: '',
-              diagnosisDisease: '',
-              treatment: '',
-              treatmentDate: dateString,
-              medicineQuantity: '',
-              notes: ''
-            },
-            batchIndex: -1,
-            symptomIndex: -1,
-            diseaseIndex: -1,
-            treatmentIndex: -1,
-            medicineRecordIndex: -1,
-            selectedBatch: null,
-            selectedSymptom: '',
-            selectedDisease: '',
-            selectedTreatment: '',
-            selectedMedicine: null,
-            recordDateValue: today.getTime(),
-            treatmentDateValue: today.getTime()
-          })
-
-          wx.showToast({
-            title: '表单已重置',
-            icon: 'success',
-            duration: 1500
-          })
-        }
+    this.setData({
+      showResetConfirmPopup: true,
+      popupData: {
+        title: '确认重置',
+        content: '确定要重置表单吗？所有已填写的数据将被清空。',
+        deleteImageIndex: -1,
+        deleteImageType: ''
       }
+    });
+  },
+  
+  // 确认重置表单
+  confirmResetForm() {
+    const today = new Date()
+    const dateString = this.formatDate(today)
+    
+    this.setData({
+      formData: {
+        batchNumber: '',
+        recordDate: dateString,
+        abnormalCount: '',
+        symptoms: '',
+        diagnosisDisease: '',
+        treatment: '',
+        treatmentDate: dateString,
+        medicineQuantity: '',
+        notes: '',
+        symptomImages: [],
+        treatmentImages: [],
+        recoveryImages: []
+      },
+      batchIndex: -1,
+      symptomIndex: -1,
+      diseaseIndex: -1,
+      treatmentIndex: -1,
+      medicineRecordIndex: -1,
+      selectedBatch: null,
+      selectedSymptom: '',
+      selectedDisease: '',
+      selectedTreatment: '',
+      selectedMedicine: null,
+      recordDateValue: today.getTime(),
+      treatmentDateValue: today.getTime(),
+      showResetConfirmPopup: false,
+      // 重置图片预览
+      'imageUpload.previewUrls.symptom': [],
+      'imageUpload.previewUrls.treatment': [],
+      'imageUpload.previewUrls.recovery': []
+    })
+
+    wx.showToast({
+      title: '表单已重置',
+      icon: 'success',
+      duration: 1500
+    })
+  },
+  
+  // 关闭成功弹窗
+  closeSuccessPopup() {
+    this.setData({
+      showSuccessPopup: false
+    })
+  },
+  
+  // 关闭删除确认弹窗
+  closeDeleteConfirmPopup() {
+    this.setData({
+      showDeleteConfirmPopup: false
+    })
+  },
+  
+  // 关闭重置确认弹窗
+  closeResetConfirmPopup() {
+    this.setData({
+      showResetConfirmPopup: false
     })
   },
 

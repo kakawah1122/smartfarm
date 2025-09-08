@@ -420,3 +420,21 @@
     min-height: 100rpx !important;
   }
 }
+
+/* 弹窗样式 */
+.confirm-content {
+  text-align: center;
+  padding: 20rpx 0;
+}
+
+.warning-icon {
+  font-size: 48rpx;
+  margin-bottom: 24rpx;
+}
+
+.warning-text {
+  font-size: 28rpx;
+  color: #6c757d;
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+}

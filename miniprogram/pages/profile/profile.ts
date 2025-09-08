@@ -22,12 +22,27 @@ const pageConfig = {
     // 云开发用户信息
     cloudUserInfo: null,
     // 编辑弹窗显示
-    showEditDialog: false,
+    showEditProfilePopup: false,
     editNickname: '',
     editFarmName: '',
     editPhone: '',
     // 是否需要完善信息提示
     showProfileSetupTip: false,
+    
+    // 统一弹窗状态
+    showEditNicknamePopup: false,
+    showEditFarmPopup: false,
+    showLogoutConfirmPopup: false,
+    showPermissionDeniedPopup: false,
+    showNotificationPopup: false,
+    showAboutPopup: false,
+    // 弹窗数据
+    popupData: {
+      title: '',
+      content: '',
+      inputValue: '',
+      originalValue: ''
+    },
     
 
     
@@ -609,21 +624,39 @@ const pageConfig = {
 
     const cloudUserInfo = this.data.cloudUserInfo
     this.setData({
-      showEditDialog: true,
+      showEditProfilePopup: true,
       editNickname: cloudUserInfo?.nickname || this.data.userInfo.name || '',
       editFarmName: cloudUserInfo?.farmName || this.data.userInfo.farm || '',
       editPhone: cloudUserInfo?.phone || ''
     })
   },
 
-  // 关闭编辑弹窗
-  closeEditDialog() {
+  // 关闭编辑个人信息弹窗
+  closeEditProfilePopup() {
     this.setData({
-      showEditDialog: false,
+      showEditProfilePopup: false,
       editNickname: '',
       editFarmName: '',
       editPhone: ''
     })
+  },
+
+  // 确认编辑个人信息
+  confirmEditProfile() {
+    this.onSaveEditProfile()
+  },
+
+  // 编辑个人信息弹窗可见性变化
+  onEditProfilePopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showEditProfilePopup: false,
+        editNickname: '',
+        editFarmName: '',
+        editPhone: ''
+      })
+    }
   },
 
   // 编辑昵称输入
@@ -716,7 +749,7 @@ const pageConfig = {
           'userInfo.name': updatedUserInfo.nickname,
           'userInfo.farm': updatedUserInfo.farmName,
           cloudUserInfo: updatedUserInfo,
-          showEditDialog: false
+          showEditProfilePopup: false
         })
         
         // 先隐藏loading再显示toast
@@ -870,17 +903,42 @@ const pageConfig = {
   editNickname() {
     const currentNickname = this.data.userInfo.name || '未设置'
     
-    wx.showModal({
-      title: '编辑昵称',
-      content: `当前昵称：${currentNickname}`,
-      placeholderText: '请输入新的昵称',
-      editable: true,
-      confirmText: '保存',
-      success: (res) => {
-        if (res.confirm && res.content && res.content.trim()) {
-          this.updateNickname(res.content.trim())
-        }
+    this.setData({
+      showEditNicknamePopup: true,
+      popupData: {
+        title: '编辑昵称',
+        content: `当前昵称：${currentNickname}`,
+        inputValue: currentNickname,
+        originalValue: currentNickname
       }
+    })
+  },
+  
+  // 确认修改昵称
+  confirmEditNickname() {
+    const inputValue = this.data.popupData.inputValue
+    if (inputValue && inputValue.trim()) {
+      this.updateNickname(inputValue.trim())
+      this.closeEditNicknamePopup()
+    } else {
+      wx.showToast({
+        title: '请输入有效昵称',
+        icon: 'none'
+      })
+    }
+  },
+  
+  // 关闭编辑昵称弹窗
+  closeEditNicknamePopup() {
+    this.setData({
+      showEditNicknamePopup: false
+    })
+  },
+  
+  // 昵称输入变化
+  onNicknameInput(e: any) {
+    this.setData({
+      'popupData.inputValue': e.detail.value
     })
   },
 
@@ -888,17 +946,42 @@ const pageConfig = {
   editFarmName() {
     const currentFarmName = this.data.userInfo.farm || '智慧养殖场'
     
-    wx.showModal({
-      title: '编辑养殖场名称',
-      content: `当前养殖场：${currentFarmName}`,
-      placeholderText: '请输入新的养殖场名称',
-      editable: true,
-      confirmText: '保存',
-      success: (res) => {
-        if (res.confirm && res.content && res.content.trim()) {
-          this.updateFarmName(res.content.trim())
-        }
+    this.setData({
+      showEditFarmPopup: true,
+      popupData: {
+        title: '编辑养殖场名称',
+        content: `当前养殖场：${currentFarmName}`,
+        inputValue: currentFarmName,
+        originalValue: currentFarmName
       }
+    })
+  },
+  
+  // 确认修改养殖场名称
+  confirmEditFarm() {
+    const inputValue = this.data.popupData.inputValue
+    if (inputValue && inputValue.trim()) {
+      this.updateFarmName(inputValue.trim())
+      this.closeEditFarmPopup()
+    } else {
+      wx.showToast({
+        title: '请输入有效名称',
+        icon: 'none'
+      })
+    }
+  },
+  
+  // 关闭编辑养殖场弹窗
+  closeEditFarmPopup() {
+    this.setData({
+      showEditFarmPopup: false
+    })
+  },
+  
+  // 养殖场名称输入变化
+  onFarmNameInput(e: any) {
+    this.setData({
+      'popupData.inputValue': e.detail.value
     })
   },
 
@@ -1129,44 +1212,57 @@ const pageConfig = {
       return
     }
 
-    wx.showModal({
-      title: '退出登录',
-      content: '确定要退出登录吗？退出后需要重新登录才能使用完整功能。',
-      success: (res) => {
-        if (res.confirm) {
-          // 清除全局登录状态
-          const app = getApp<App.AppOption>()
-          app.globalData.openid = undefined
-          app.globalData.isLoggedIn = false
-          app.globalData.userInfo = undefined
-
-          // 清除本地存储
-          wx.removeStorageSync('openid')
-          wx.removeStorageSync('userInfo')
-
-          // 重置页面数据
-          this.setData({
-            isLoggedIn: false,
-            cloudUserInfo: null,
-            userInfo: {
-              name: '游客',
-              role: '用户',
-              farm: '示范养殖场',
-              experience: '0',
-              currentStock: '0',
-              healthRate: '0',
-              avatarUrl: '/assets/icons/profile.png'
-            }
-          })
-          
-          wx.showToast({
-            title: '已退出登录',
-            icon: 'success'
-          })
-
-          console.log('已退出登录，状态已重置')
-        }
+    this.setData({
+      showLogoutConfirmPopup: true,
+      popupData: {
+        title: '退出登录',
+        content: '确定要退出登录吗？退出后需要重新登录才能使用完整功能。',
+        inputValue: '',
+        originalValue: ''
       }
+    })
+  },
+  
+  // 确认退出登录
+  confirmLogout() {
+    // 清除全局登录状态
+    const app = getApp<App.AppOption>()
+    app.globalData.openid = undefined
+    app.globalData.isLoggedIn = false
+    app.globalData.userInfo = undefined
+
+    // 清除本地存储
+    wx.removeStorageSync('openid')
+    wx.removeStorageSync('userInfo')
+
+    // 重置页面数据
+    this.setData({
+      isLoggedIn: false,
+      cloudUserInfo: null,
+      showLogoutConfirmPopup: false,
+      userInfo: {
+        name: '游客',
+        role: '用户',
+        farm: '示范养殖场',
+        experience: '0',
+        currentStock: '0',
+        healthRate: '0',
+        avatarUrl: '/assets/icons/profile.png'
+      }
+    })
+    
+    wx.showToast({
+      title: '已退出登录',
+      icon: 'success'
+    })
+
+    console.log('已退出登录，状态已重置')
+  },
+  
+  // 关闭退出确认弹窗
+  closeLogoutPopup() {
+    this.setData({
+      showLogoutConfirmPopup: false
     })
   }
 }

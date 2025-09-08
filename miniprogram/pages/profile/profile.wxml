@@ -125,39 +125,36 @@
   </scroll-view>
 
   <!-- 编辑个人信息弹窗 -->
-  <view wx:if="{{showEditDialog}}" class="edit-dialog-overlay">
-    <view class="edit-dialog-mask" bind:tap="closeEditDialog"></view>
-    <view class="edit-dialog-content">
-      <view class="edit-dialog-header">
-        <text class="edit-dialog-title">编辑个人信息</text>
-        <text class="edit-dialog-close" bind:tap="closeEditDialog">✕</text>
+  <bottom-popup
+    visible="{{showEditProfilePopup}}"
+    title="编辑个人信息"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="保存"
+    bind:close="closeEditProfilePopup"
+    bind:cancel="closeEditProfilePopup"
+    bind:confirm="confirmEditProfile"
+    bind:visiblechange="onEditProfilePopupChange"
+  >
+    <view class="edit-profile-content">
+      <view class="form-group">
+        <text class="form-label">昵称 *</text>
+        <view class="input-container">
+          <input 
+            class="form-input" 
+            type="nickname"
+            placeholder="请输入您的昵称" 
+            value="{{editNickname}}" 
+            bind:input="onEditNicknameInput"
+            maxlength="20"
+          />
+        </view>
       </view>
       
-      <view class="edit-dialog-body">
-        <!-- 快捷操作提示 -->
-        <view class="quick-tips">
-          <view class="tip-item">
-            <text class="tip-icon">💡</text>
-            <text class="tip-text">请填写完整信息，昵称框支持微信昵称获取</text>
-          </view>
-        </view>
-        
-        <view class="form-group">
-          <text class="form-label">昵称 *</text>
-          <view class="input-with-button">
-            <input 
-              class="form-input nickname-input" 
-              type="nickname"
-              placeholder="请输入您的昵称" 
-              value="{{editNickname}}" 
-              bind:input="onEditNicknameInput"
-              maxlength="20"
-            />
-          </view>
-        </view>
-        
-        <view class="form-group">
-          <text class="form-label">手机号 *</text>
+      <view class="form-group">
+        <text class="form-label">手机号 *</text>
+        <view class="input-container">
           <input 
             class="form-input" 
             type="number"
@@ -167,9 +164,11 @@
             maxlength="11"
           />
         </view>
-        
-        <view class="form-group">
-          <text class="form-label">养殖场名称 *</text>
+      </view>
+      
+      <view class="form-group">
+        <text class="form-label">养殖场名称 *</text>
+        <view class="input-container">
           <input 
             class="form-input" 
             placeholder="请输入养殖场名称" 
@@ -179,11 +178,86 @@
           />
         </view>
       </view>
-      
-      <view class="edit-dialog-footer">
-        <button class="edit-btn-cancel" bind:tap="closeEditDialog">取消</button>
-        <button class="edit-btn-confirm" bind:tap="onSaveEditProfile">保存</button>
+    </view>
+  </bottom-popup>
+
+  <!-- 编辑昵称弹窗 -->
+  <bottom-popup
+    visible="{{showEditNicknamePopup}}"
+    title="{{popupData.title}}"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="保存"
+    bind:close="closeEditNicknamePopup"
+    bind:cancel="closeEditNicknamePopup"
+    bind:confirm="confirmEditNickname"
+  >
+    <view class="edit-content">
+      <view class="content-section">
+        <view class="info-text">{{popupData.content}}</view>
+        <view class="input-group">
+          <text class="input-label">新昵称</text>
+          <input 
+            class="input-field" 
+            type="nickname"
+            placeholder="请输入新的昵称" 
+            value="{{popupData.inputValue}}" 
+            bind:input="onNicknameInput"
+            maxlength="20"
+          />
+        </view>
       </view>
     </view>
-  </view>
+  </bottom-popup>
+
+  <!-- 编辑养殖场名称弹窗 -->
+  <bottom-popup
+    visible="{{showEditFarmPopup}}"
+    title="{{popupData.title}}"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="保存"
+    bind:close="closeEditFarmPopup"
+    bind:cancel="closeEditFarmPopup"
+    bind:confirm="confirmEditFarm"
+  >
+    <view class="edit-content">
+      <view class="content-section">
+        <view class="info-text">{{popupData.content}}</view>
+        <view class="input-group">
+          <text class="input-label">新名称</text>
+          <input 
+            class="input-field" 
+            placeholder="请输入新的养殖场名称" 
+            value="{{popupData.inputValue}}" 
+            bind:input="onFarmNameInput"
+            maxlength="30"
+          />
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 退出登录确认弹窗 -->
+  <bottom-popup
+    visible="{{showLogoutConfirmPopup}}"
+    title="{{popupData.title}}"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="确认退出"
+    bind:close="closeLogoutPopup"
+    bind:cancel="closeLogoutPopup"
+    bind:confirm="confirmLogout"
+  >
+    <view class="confirm-content">
+      <view class="content-section">
+        <view class="warning-icon">⚠️</view>
+        <view class="warning-text">{{popupData.content}}</view>
+      </view>
+    </view>
+  </bottom-popup>
+
 </view>

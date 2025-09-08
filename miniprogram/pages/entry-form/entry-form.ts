@@ -35,6 +35,9 @@ const pageConfig = {
     // 提交状态
     submitting: false,
     
+    // 弹窗状态
+    showResetConfirmPopup: false,
+    
     // 提交状态
     validationErrors: [] as string[]
   },
@@ -251,35 +254,41 @@ const pageConfig = {
 
   // 重置表单
   onReset() {
-    wx.showModal({
-      title: '确认重置',
-      content: '确定要重置表单吗？所有已填写的数据将被清空。',
-      success: (res) => {
-        if (res.confirm) {
-          // 重置表单数据（保留日期和批次ID）
-          const currentDate = this.data.formData.entryDate
-          const currentBatchId = this.data.formData.batchId
-          
-          this.setData({
-            formData: {
-              batchId: currentBatchId,
-              entryDate: currentDate,
-              breed: '',
-              supplier: '',
-              quantity: '',
-              unitPrice: '',
-              remarks: ''
-            },
-            totalAmount: '0.00'
-          })
+    this.setData({
+      showResetConfirmPopup: true
+    })
+  },
+  
+  // 确认重置表单
+  confirmReset() {
+    const currentDate = this.data.formData.entryDate
+    const currentBatchId = this.data.formData.batchId
+    
+    this.setData({
+      formData: {
+        batchId: currentBatchId,
+        entryDate: currentDate,
+        breed: '',
+        supplier: '',
+        quantity: '',
+        unitPrice: '',
+        remarks: ''
+      },
+      totalAmount: '0.00',
+      showResetConfirmPopup: false
+    })
 
-          wx.showToast({
-            title: '表单已重置',
-            icon: 'success',
-            duration: 1500
-          })
-        }
-      }
+    wx.showToast({
+      title: '表单已重置',
+      icon: 'success',
+      duration: 1500
+    })
+  },
+  
+  // 关闭重置确认弹窗
+  closeResetConfirmPopup() {
+    this.setData({
+      showResetConfirmPopup: false
     })
   },
 

@@ -13,14 +13,17 @@ const pageConfig = {
     totalPages: 0,
     hasMore: false,
     
-    // 筛选条件
-    activeFilter: 'all', // 'all', 'pending', 'delivered'
+    // 搜索条件
     searchKeyword: '',
     
     // 加载状态
     loading: false,
     loadingMore: false,
-    isEmpty: false
+    isEmpty: false,
+    
+    // 弹窗相关
+    showDetailPopup: false,
+    selectedRecord: null
   },
 
   onLoad() {
@@ -132,15 +135,6 @@ const pageConfig = {
     }
   },
 
-  // 筛选切换
-  onFilterChange(e: any) {
-    const { value } = e.detail
-    this.setData({
-      activeFilter: value,
-      currentPage: 1
-    })
-    this.loadRecords()
-  },
 
   // 搜索功能
   onSearch(e: any) {
@@ -194,32 +188,29 @@ const pageConfig = {
   viewRecordDetail(e: any) {
     const { record } = e.currentTarget.dataset
     
-    // 构建详情内容
-    let content = `客户：${record.customer}\n出栏号：${record.exitNumber}\n数量：${record.displayQuantity}`
-    
-    if (record.batchNumber) {
-      content += `\n批次号：${record.batchNumber}`
-    }
-    
-    if (record.avgWeight > 0) {
-      content += `\n平均重量：${record.avgWeight}斤`
-    }
-    
-    if (record.totalWeight > 0) {
-      content += `\n总重量：${record.totalWeight}斤`
-    }
-    
-    content += `\n操作员：${record.operator}\n时间：${record.date}\n状态：${record.status}`
-    
-    if (record.notes) {
-      content += `\n备注：${record.notes}`
-    }
-    
-    wx.showModal({
-      title: '出栏记录详情',
-      content: content,
-      showCancel: false
+    this.setData({
+      selectedRecord: record,
+      showDetailPopup: true
     })
+  },
+  
+  // 关闭详情弹窗
+  closeDetailPopup() {
+    this.setData({
+      showDetailPopup: false,
+      selectedRecord: null
+    })
+  },
+  
+  // 弹窗可见性变化
+  onDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showDetailPopup: false,
+        selectedRecord: null
+      })
+    }
   },
 
   // 新增出栏记录

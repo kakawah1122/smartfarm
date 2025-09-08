@@ -235,22 +235,6 @@ page {
   }
 }
 
-/* 暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-  .card,
-  .collection-item {
-    background: #1a202c;
-    box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.3);
-  }
-  
-  .hot-card {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(249, 115, 22, 0.15) 100%);
-  }
-  
-  .collection-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.15) 100%);
-  }
-}
 
 /* 加载状态 */
 .card.loading {

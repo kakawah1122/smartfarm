@@ -27,7 +27,11 @@ const pageConfig = {
     filteredMaterialsList: [] as MaterialDetail[],
     
     // 加载状态
-    loading: false
+    loading: false,
+    
+    // 弹窗相关
+    showDetailPopup: false,
+    selectedMaterial: null as MaterialDetail | null
   },
 
   onLoad(options: any) {
@@ -210,7 +214,29 @@ const pageConfig = {
   // 显示物料详情
   showMaterialDetail(e: any) {
     const material = e.currentTarget.dataset.material
-    console.log('查看物料详情:', material)
+    this.setData({
+      selectedMaterial: material,
+      showDetailPopup: true
+    })
+  },
+  
+  // 关闭详情弹窗
+  closeMaterialDetailPopup() {
+    this.setData({
+      showDetailPopup: false,
+      selectedMaterial: null
+    })
+  },
+  
+  // 弹窗可见性变化
+  onDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showDetailPopup: false,
+        selectedMaterial: null
+      })
+    }
   },
 
 

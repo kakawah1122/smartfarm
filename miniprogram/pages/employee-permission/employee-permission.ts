@@ -65,9 +65,7 @@ const pageConfig = {
     generatedInviteCode: '',
     isInviteGenerated: false,
     
-    // 撤销邀请弹窗
-    showRevokeDialog: false,
-    revokeReason: '',
+    // 撤销邀请弹窗已移除
     
     // 邀请选项数据
     inviteRoleOptions: [
@@ -1018,6 +1016,13 @@ const pageConfig = {
     })
   },
 
+  // 邀请详情弹窗状态变化
+  onInviteDetailChange: function(e) {
+    if (!e.detail.visible) {
+      this.closeInviteDetail()
+    }
+  },
+
   // 关闭邀请详情
   closeInviteDetail: function() {
     this.setData({
@@ -1026,47 +1031,58 @@ const pageConfig = {
     })
   },
 
-  // 撤销邀请
-  revokeInvite: function() {
-    this.setData({
-      showRevokeDialog: true,
-      revokeReason: ''
-    })
-  },
-
-  closeRevokeDialog: function() {
-    this.setData({
-      showRevokeDialog: false,
-      revokeReason: ''
-    })
-  },
-
-  onRevokeReasonChange: function(e) {
-    this.setData({
-      revokeReason: e.detail.value
-    })
-  },
-
-  // 确认撤销
-  confirmRevoke: function() {
-    const self = this
-    
-    if (!self.data.revokeReason.trim()) {
+  // 复制邀请码（从详情页）
+  copyInviteCodeFromDetail: function() {
+    const selectedInvite = this.data.selectedInvite
+    if (!selectedInvite || !selectedInvite.inviteCode) {
       wx.showToast({
-        title: '请填写撤销原因',
+        title: '邀请码为空',
         icon: 'none'
       })
       return
     }
 
-    wx.showLoading({ title: '撤销中...' })
+    wx.setClipboardData({
+      data: selectedInvite.inviteCode,
+      success: () => {
+        wx.showToast({
+          title: '已复制到剪贴板',
+          icon: 'success'
+        })
+      },
+      fail: () => {
+        wx.showToast({
+          title: '复制失败',
+          icon: 'none'
+        })
+      }
+    })
+  },
+
+  // 撤销邀请（直接执行）
+  revokeInvite: function() {
+    const self = this
+    
+    if (!self.data.selectedInvite || !self.data.selectedInvite._id) {
+      wx.showToast({
+        title: '邀请信息错误',
+        icon: 'none'
+      })
+      return
+    }
+
+    // 显示加载状态
+    wx.showLoading({
+      title: '撤销中...',
+      mask: true
+    })
 
     wx.cloud.callFunction({
       name: 'employee-invite-management',
       data: {
         action: 'revoke_invite',
         inviteId: self.data.selectedInvite._id,
-        reason: self.data.revokeReason.trim()
+        reason: '管理员撤销'
       },
       success: function(result) {
         if (result.result && result.result.success) {
@@ -1075,9 +1091,13 @@ const pageConfig = {
             icon: 'success'
           })
           
-          self.closeRevokeDialog()
+          // 关闭详情弹窗
           self.closeInviteDetail()
-          self.loadInviteList()
+          
+          // 从列表中移除该邀请
+          self.removeInviteFromList(self.data.selectedInvite._id)
+          
+          // 刷新统计数据
           self.loadInviteStats()
         } else {
           wx.showToast({
@@ -1095,6 +1115,18 @@ const pageConfig = {
       complete: function() {
         wx.hideLoading()
       }
+    })
+  },
+
+  // 从列表中移除指定邀请
+  removeInviteFromList: function(inviteId) {
+    const currentList = this.data.inviteList
+    const updatedList = currentList.filter(function(invite) {
+      return invite._id !== inviteId
+    })
+    
+    this.setData({
+      inviteList: updatedList
     })
   },
 
@@ -1154,12 +1186,17 @@ const pageConfig = {
       role: invite.role || 'user',
       status: invite.status || 'pending',
       createTime: invite.createTime || new Date(),
-      expiresAt: invite.expiresAt || new Date(),
+      expiresAt: invite.expiresAt || invite.expiryTime || new Date(),
       remark: invite.remark || ''
     })
     
     // 计算状态文本
     normalized.statusText = self.getInviteStatusText(normalized.status)
+    
+    // 添加格式化的显示字段
+    normalized.roleDisplayName = self.getInviteRoleText(normalized.role)
+    normalized.formattedCreateTime = self.formatInviteTime(normalized.createTime)
+    normalized.formattedExpiresAt = self.formatInviteTime(normalized.expiresAt)
     
     // 计算剩余天数（如果是待使用状态）
     if (normalized.status === 'pending') {
@@ -1207,7 +1244,16 @@ const pageConfig = {
   formatInviteTime: function(time) {
     if (!time) return '未知'
     const date = new Date(time)
-    return date.toLocaleString()
+    // 使用24小时制格式
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
   },
 
   // 返回上一页

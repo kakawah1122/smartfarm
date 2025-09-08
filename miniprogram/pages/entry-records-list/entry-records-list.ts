@@ -13,14 +13,17 @@ const pageConfig = {
     totalPages: 0,
     hasMore: false,
     
-    // 筛选条件
-    activeFilter: 'all', // 'all', 'pending', 'completed'
+    // 搜索条件
     searchKeyword: '',
     
     // 加载状态
     loading: false,
     loadingMore: false,
-    isEmpty: false
+    isEmpty: false,
+    
+    // 弹窗相关
+    showDetailPopup: false,
+    selectedRecord: null
   },
 
   onLoad() {
@@ -130,15 +133,6 @@ const pageConfig = {
     }
   },
 
-  // 筛选切换
-  onFilterChange(e: any) {
-    const { value } = e.detail
-    this.setData({
-      activeFilter: value,
-      currentPage: 1
-    })
-    this.loadRecords()
-  },
 
   // 搜索功能
   onSearch(e: any) {
@@ -209,11 +203,29 @@ const pageConfig = {
       content += `\n备注：${record.notes}`
     }
     
-    wx.showModal({
-      title: '入栏记录详情',
-      content: content,
-      showCancel: false
+    this.setData({
+      selectedRecord: record,
+      showDetailPopup: true
     })
+  },
+  
+  // 关闭详情弹窗
+  closeDetailPopup() {
+    this.setData({
+      showDetailPopup: false,
+      selectedRecord: null
+    })
+  },
+  
+  // 弹窗可见性变化
+  onDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showDetailPopup: false,
+        selectedRecord: null
+      })
+    }
   },
 
   // 新增入栏记录

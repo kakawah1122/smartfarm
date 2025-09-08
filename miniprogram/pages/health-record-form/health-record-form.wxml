@@ -383,4 +383,63 @@
     bind:confirm="onDateConfirm"
     data-type="treatment"
   />
+  
+  <!-- 成功提示弹窗 -->
+  <bottom-popup
+    visible="{{showSuccessPopup}}"
+    title="{{popupData.title}}"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="知道了"
+    bind:close="closeSuccessPopup"
+    bind:confirm="closeSuccessPopup"
+  >
+    <view class="success-content">
+      <view class="content-section">
+        <view class="success-icon">✅</view>
+        <view class="success-text">{{popupData.content}}</view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 删除图片确认弹窗 -->
+  <bottom-popup
+    visible="{{showDeleteConfirmPopup}}"
+    title="{{popupData.title}}"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="确认删除"
+    bind:close="closeDeleteConfirmPopup"
+    bind:cancel="closeDeleteConfirmPopup"
+    bind:confirm="confirmDeleteImage"
+  >
+    <view class="confirm-content">
+      <view class="content-section">
+        <view class="warning-icon">⚠️</view>
+        <view class="warning-text">{{popupData.content}}</view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 重置表单确认弹窗 -->
+  <bottom-popup
+    visible="{{showResetConfirmPopup}}"
+    title="{{popupData.title}}"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="确认重置"
+    bind:close="closeResetConfirmPopup"
+    bind:cancel="closeResetConfirmPopup"
+    bind:confirm="confirmResetForm"
+  >
+    <view class="confirm-content">
+      <view class="content-section">
+        <view class="warning-icon">🔄</view>
+        <view class="warning-text">{{popupData.content}}</view>
+      </view>
+    </view>
+  </bottom-popup>
+
 </view>

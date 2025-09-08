@@ -245,7 +245,7 @@
   title="批准用户"
   confirm-btn="确认批准"
   cancel-btn="取消"
-  bind:confirm="approveUser"
+  bind:confirm="showApproveConfirm"
   bind:cancel="closeApprovalDialog"
 >
   <view class="approval-form">
@@ -275,7 +275,7 @@
   title="拒绝用户"
   confirm-btn="确认拒绝"
   cancel-btn="取消"
-  bind:confirm="rejectUser"
+  bind:confirm="showRejectConfirm"
   bind:cancel="closeRejectDialog"
 >
   <view class="reject-form">
@@ -300,7 +300,7 @@
   title="{{batchAction === 'approve' ? '批量批准' : '批量拒绝'}}"
   confirm-btn="{{batchAction === 'approve' ? '确认批准' : '确认拒绝'}}"
   cancel-btn="取消"
-  bind:confirm="confirmBatchAction"
+  bind:confirm="showBatchConfirm"
   bind:cancel="closeBatchDialog"
 >
   <view class="batch-form">
@@ -328,3 +328,73 @@
     </view>
   </view>
 </t-dialog>
+
+<!-- 权限不足弹窗 -->
+<bottom-popup
+  visible="{{showPermissionDeniedPopup}}"
+  title="{{popupData.title}}"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="我知道了"
+  bind:close="closePermissionDeniedPopup"
+  bind:confirm="closePermissionDeniedPopup"
+>
+  <view class="alert-content">
+    <view class="alert-icon">⚠️</view>
+    <view class="alert-text">{{popupData.content}}</view>
+  </view>
+</bottom-popup>
+
+<!-- 审批确认弹窗 -->
+<bottom-popup
+  visible="{{showApproveConfirmPopup}}"
+  title="{{popupData.title}}"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  cancel-text="取消"
+  confirm-text="确认批准"
+  bind:close="closeApproveConfirmPopup"
+  bind:cancel="closeApproveConfirmPopup"
+  bind:confirm="confirmApprove"
+>
+  <view class="confirm-content">
+    <view class="confirm-icon">✅</view>
+    <view class="confirm-text">{{popupData.content}}</view>
+  </view>
+</bottom-popup>
+
+<!-- 拒绝确认弹窗 -->
+<bottom-popup
+  visible="{{showRejectConfirmPopup}}"
+  title="{{popupData.title}}"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  cancel-text="取消"
+  confirm-text="确认拒绝"
+  bind:close="closeRejectConfirmPopup"
+  bind:cancel="closeRejectConfirmPopup"
+  bind:confirm="confirmReject"
+>
+  <view class="confirm-content">
+    <view class="warning-icon">⚠️</view>
+    <view class="warning-text">{{popupData.content}}</view>
+  </view>
+</bottom-popup>
+
+<!-- 批量操作确认弹窗 -->
+<bottom-popup
+  visible="{{showBatchConfirmPopup}}"
+  title="{{popupData.title}}"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  cancel-text="取消"
+  confirm-text="{{popupData.action === 'approve' ? '确认批准' : '确认拒绝'}}"
+  bind:close="closeBatchConfirmPopup"
+  bind:cancel="closeBatchConfirmPopup"
+  bind:confirm="confirmBatch"
+>
+  <view class="confirm-content">
+    <view class="batch-icon">{{popupData.action === 'approve' ? '✅' : '⚠️'}}</view>
+    <view class="batch-text">{{popupData.content}}</view>
+  </view>
+</bottom-popup>

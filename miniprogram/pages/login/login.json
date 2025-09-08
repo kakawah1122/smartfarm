@@ -1,5 +1,6 @@
 {
   "usingComponents": {
+    "bottom-popup": "../../components/bottom-popup/bottom-popup",
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-cell": "tdesign-miniprogram/cell/cell",

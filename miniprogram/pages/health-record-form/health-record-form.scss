@@ -801,86 +801,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 暗色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .page-container {
-    background: #0d1117;
-  }
-
-  .form-card {
-    background: #161b22;
-    border-color: #30363d;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.3);
-  }
-
-  .section-title {
-    color: #f0f6fc;
-    
-    &::before {
-      background: #58a6ff;
-    }
-  }
-
-  .form-label {
-    color: #f0f6fc;
-  }
-
-  .picker-content {
-    background: rgba(88, 166, 255, 0.05);
-    border-color: #30363d;
-    
-    &:active {
-      background: rgba(88, 166, 255, 0.15);
-      border-color: #58a6ff;
-    }
-  }
-
-  .picker-text {
-    color: #f0f6fc;
-
-    &.placeholder {
-      color: #8b949e;
-    }
-  }
-  
-  .form-input {
-    --td-input-text-color: #f0f6fc !important;
-    --td-input-bg-color: rgba(88, 166, 255, 0.05) !important;
-    --td-input-border-color: #30363d !important;
-    --td-input-placeholder-color: #8b949e !important;
-  }
-  
-  .form-textarea {
-    --td-textarea-text-color: #f0f6fc !important;
-    --td-textarea-bg-color: rgba(88, 166, 255, 0.05) !important;
-    --td-textarea-border-color: #30363d !important;
-    --td-textarea-placeholder-color: #8b949e !important;
-  }
-  
-  .fullwidth-notes-textarea {
-    --td-textarea-text-color: #f0f6fc !important;
-    --td-textarea-placeholder-color: #8b949e !important;
-    
-    .t-textarea__inner {
-      color: #f0f6fc !important;
-      
-      &::placeholder {
-        color: #8b949e !important;
-      }
-    }
-    
-    .t-textarea__indicator {
-      color: #8b949e !important;
-      background: rgba(22, 27, 34, 0.8) !important;
-    }
-  }
-  
-  .form-actions .t-button--theme-default {
-    background: #21262d !important;
-    color: #f0f6fc !important;
-    border-color: #30363d !important;
-  }
-}
 
 /* 表单项特殊状态 */
 .form-item.has-error {
@@ -1228,4 +1148,29 @@ $spacing-xl: 40rpx;
     --td-button-default-color: #ff4d4f;
     --td-button-default-border-color: #ff4d4f;
   }
+}
+
+/* 弹窗样式 */
+.success-content,
+.confirm-content {
+  text-align: center;
+  padding: 16rpx 0;
+}
+
+.success-icon {
+  font-size: 48rpx;
+  margin-bottom: 24rpx;
+}
+
+.warning-icon {
+  font-size: 48rpx;
+  margin-bottom: 24rpx;
+}
+
+.success-text,
+.warning-text {
+  font-size: 28rpx;
+  color: #6c757d;
+  line-height: 1.6;
+  margin-bottom: 16rpx;
 }

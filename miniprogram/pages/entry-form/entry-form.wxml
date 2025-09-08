@@ -182,4 +182,23 @@
     bind:cancel="hideDatePicker"
     bind:confirm="onDateConfirm"
   />
+
+  <!-- 重置表单确认弹窗 -->
+  <bottom-popup
+    visible="{{showResetConfirmPopup}}"
+    title="确认重置"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="确认重置"
+    bind:close="closeResetConfirmPopup"
+    bind:cancel="closeResetConfirmPopup"
+    bind:confirm="confirmReset"
+  >
+    <view class="confirm-content">
+      <view class="warning-icon">🔄</view>
+      <view class="warning-text">确定要重置表单吗？所有已填写的数据将被清空。</view>
+    </view>
+  </bottom-popup>
+
 </view>

@@ -38,7 +38,7 @@
 /* 搜索框样式通过WXML内联样式设置 */
 
 /* 筛选按钮样式 */
-.search-bar t-button {
+.filter-button {
   border: 1rpx solid var(--td-component-stroke, #e7e7e7) !important;
   box-shadow: none !important;
   background: var(--td-bg-color-container, #ffffff) !important;
@@ -142,5 +142,74 @@
 .empty-state {
   padding: 60rpx 24rpx;
   text-align: center;
+}
+
+/* 物料详情弹窗样式 */
+.material-detail-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.material-detail-content .info-row {
+  margin-bottom: 20rpx;
+  padding: 0 8rpx;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 16rpx;
+  display: flex;
+  align-items: center;
+}
+
+.material-detail-content .info-label {
+  font-size: 26rpx;
+  color: #6c757d;
+  font-weight: 500;
+  min-width: 140rpx;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.material-detail-content .info-value {
+  font-size: 28rpx;
+  color: #1a1a1a;
+  font-weight: 400;
+  text-align: right;
+  flex: 1;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.stock-value {
+  font-weight: 600;
+  color: #0052d9 !important;
+}
+
+.price-value {
+  font-weight: 600;
+  color: #e3711e !important;
+}
+
+.status-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.status-text {
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  
+  &.low-stock {
+    background: #fff2f0;
+    color: #ff4d4f;
+  }
+  
+  &.normal-stock {
+    background: #f6ffed;
+    color: #52c41a;
+  }
 }
 

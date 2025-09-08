@@ -20,7 +20,11 @@ const pageConfig = {
     // 加载状态
     loading: false,
     loadingMore: false,
-    isEmpty: false
+    isEmpty: false,
+    
+    // 弹窗相关
+    showDetailPopup: false,
+    selectedRecord: null
   },
 
   onLoad() {
@@ -218,11 +222,29 @@ const pageConfig = {
       content += `\n备注：${record.notes}`
     }
     
-    wx.showModal({
-      title: `${record.type}记录详情`,
-      content: content,
-      showCancel: false
+    this.setData({
+      selectedRecord: record,
+      showDetailPopup: true
     })
+  },
+  
+  // 关闭详情弹窗
+  closeDetailPopup() {
+    this.setData({
+      showDetailPopup: false,
+      selectedRecord: null
+    })
+  },
+  
+  // 弹窗可见性变化
+  onDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showDetailPopup: false,
+        selectedRecord: null
+      })
+    }
   }
 }
 

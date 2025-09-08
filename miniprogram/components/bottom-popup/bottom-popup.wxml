@@ -1,0 +1,51 @@
+<!-- 底部弹窗组件 -->
+<t-popup
+  visible="{{visible}}"
+  placement="bottom"
+  close-on-overlay-click="{{closeOnOverlayClick}}"
+  show-overlay="{{showOverlay}}"
+  z-index="{{zIndex}}"
+  bind:visible-change="onVisibleChange"
+  t-class-content="bottom-popup-content"
+>
+  <view class="bottom-popup-container">
+    <!-- 弹窗头部 -->
+    <view class="popup-header" wx:if="{{title || showClose}}">
+      <text class="popup-title" wx:if="{{title}}">{{title}}</text>
+      <view class="close-btn" wx:if="{{showClose}}" bind:tap="onClose">
+        <text class="close-text">×</text>
+      </view>
+    </view>
+
+    <!-- 自定义内容区域 -->
+    <view class="popup-content">
+      <slot></slot>
+    </view>
+
+    <!-- 底部操作按钮 -->
+    <view class="popup-actions" wx:if="{{showActions}}">
+      <view class="action-buttons">
+        <t-button 
+          wx:if="{{cancelText}}"
+          theme="default" 
+          size="large" 
+          bind:tap="onCancel"
+          class="secondary-button"
+        >
+          {{cancelText}}
+        </t-button>
+        <t-button 
+          wx:if="{{confirmText}}"
+          theme="primary" 
+          size="large" 
+          bind:tap="onConfirm"
+          class="primary-button {{confirmDisabled ? 'disabled' : ''}}"
+          disabled="{{confirmDisabled}}"
+          loading="{{confirmLoading}}"
+        >
+          {{confirmText}}
+        </t-button>
+      </view>
+    </view>
+  </view>
+</t-popup>

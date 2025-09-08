@@ -680,29 +680,6 @@ page {
 
 }
 
-/* 强制浅色主题 - 禁用暗色模式，确保真机显示正常 */
-@media (prefers-color-scheme: dark) {
-  .page-container {
-    background-color: #f5f5f5 !important;
-  }
-  
-  .mobile-container {
-    background: #f9fafb !important;
-  }
-  
-  .scroll-container {
-    background: #f9fafb !important;
-  }
-  
-  .card {
-    background: #ffffff !important;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1) !important;
-  }
-  
-  .weather-card {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(59, 130, 246, 0.12) 100%) !important;
-  }
-}
 
 /* 动效增强 */
 .card {

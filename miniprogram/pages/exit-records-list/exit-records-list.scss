@@ -34,20 +34,6 @@ page {
   width: 100%;
 }
 
-/* 筛选标签区域 */
-.filter-section {
-  margin-bottom: 16rpx;
-  background: var(--td-bg-color-container, #ffffff);
-  border-radius: 12rpx;
-  overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-}
-
-.filter-tabs {
-  --td-tab-track-color: var(--td-brand-color, #0052d9);
-  --td-tab-item-active-color: var(--td-brand-color, #0052d9);
-  --td-tab-item-color: var(--td-text-color-secondary, #555555);
-}
 
 /* 统计信息区域 */
 .stats-section {
@@ -67,10 +53,6 @@ page {
   color: var(--td-text-color-primary, #000000);
 }
 
-.filter-text {
-  font-size: 24rpx;
-  color: var(--td-text-color-secondary, #666666);
-}
 
 /* 记录列表区域 */
 .records-section {
@@ -265,7 +247,6 @@ page {
   }
   
   .search-section,
-  .filter-section,
   .stats-section {
     margin-left: 0;
     margin-right: 0;
@@ -353,4 +334,44 @@ page {
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
+}
+
+/* 记录详情弹窗样式 */
+.record-detail-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.record-detail-content .info-row {
+  margin-bottom: 20rpx;
+  padding: 0 8rpx;
+}
+
+.record-detail-content .info-label {
+  font-size: 26rpx;
+  color: #6c757d;
+  font-weight: 500;
+  min-width: 120rpx;
+  text-align: left;
+}
+
+.record-detail-content .info-value {
+  font-size: 28rpx;
+  color: #1a1a1a;
+  font-weight: 400;
+  text-align: right;
+  flex: 1;
+}
+
+.status-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.note-text {
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  text-align: left !important;
 }

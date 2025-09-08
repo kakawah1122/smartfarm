@@ -90,7 +90,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         date: '2024-03-13 15:45',
         adopted: false
       }
-    ]
+    ],
+
+    // 弹窗相关
+    showHealthDetailPopup: false,
+    selectedHealthRecord: null
   },
 
   onLoad() {
@@ -368,8 +372,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   viewHealthRecord(e: any) {
     const { item } = e.currentTarget.dataset || e.detail || {}
     
-    // console.log('点击的健康记录:', item)
-    
     if (!item) {
       wx.showToast({
         title: '记录信息错误',
@@ -378,21 +380,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       return
     }
     
-    // 将当前记录存储到全局数据中，供详情页使用
-    const app = getApp<any>()
-    if (!app.globalData) {
-      app.globalData = {}
-    }
-    
-    // 优先使用rawRecord，如果没有则使用item本身
-    const recordToStore = item.rawRecord || item
-    app.globalData.currentHealthRecord = recordToStore
-    
-    // console.log('存储到全局的记录数据:', recordToStore)
-    
-    // 直接跳转到详情页
-    wx.navigateTo({
-      url: `/pages/health-record-detail/health-record-detail?recordId=${item.id || 'unknown'}`
+    // 使用弹窗显示详情
+    const recordToShow = item.rawRecord || item
+    this.setData({
+      selectedHealthRecord: recordToShow,
+      showHealthDetailPopup: true
     })
   },
 
@@ -545,6 +537,25 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({
       uploadedImages: images
     })
+  },
+
+  // 关闭健康详情弹窗
+  closeHealthDetailPopup() {
+    this.setData({
+      showHealthDetailPopup: false,
+      selectedHealthRecord: null
+    })
+  },
+
+  // 健康弹窗可见性变化
+  onHealthDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showHealthDetailPopup: false,
+        selectedHealthRecord: null
+      })
+    }
   }
 }
 

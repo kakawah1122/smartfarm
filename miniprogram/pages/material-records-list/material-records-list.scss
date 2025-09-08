@@ -339,3 +339,50 @@ page {
   justify-content: center !important;
   text-align: center !important;
 }
+
+/* 记录详情弹窗样式 */
+.record-detail-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.record-detail-content .info-row {
+  margin-bottom: 20rpx;
+  padding: 0 8rpx;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 16rpx;
+}
+
+.record-detail-content .info-label {
+  font-size: 26rpx;
+  color: #6c757d;
+  font-weight: 500;
+  min-width: 120rpx;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.record-detail-content .info-value {
+  font-size: 28rpx;
+  color: #1a1a1a;
+  font-weight: 400;
+  text-align: right;
+  flex: 1;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.status-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.note-text {
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  text-align: left !important;
+}

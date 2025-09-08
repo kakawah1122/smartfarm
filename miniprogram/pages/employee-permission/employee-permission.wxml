@@ -61,11 +61,13 @@
           <view class="employee-info">
             <view class="employee-basic">
               <text class="employee-name">{{item.nickname || '未设置'}}</text>
+              <text class="employee-details">{{item.farmName || '未设置农场'}} · {{item.department || '未设置部门'}}</text>
             </view>
             <view class="employee-role">
               <view class="role-tag" style="background-color: {{getRoleColor(item.role)}}15; border-color: {{getRoleColor(item.role)}}; color: {{getRoleColor(item.role)}}">
                 {{item.roleDisplayName || '未知角色'}}
               </view>
+              <t-icon name="chevron-right" size="16" color="#c8c9cc" />
             </view>
           </view>
         </view>
@@ -124,12 +126,14 @@
 
     <!-- 筛选选项卡 -->
     <view class="filter-section">
-      <t-tabs value="{{inviteActiveTab}}" bind:change="onInviteTabChange">
-        <t-tab-panel label="全部邀请" value="all" />
-        <t-tab-panel label="待使用" value="pending" />
-        <t-tab-panel label="已使用" value="used" />
-        <t-tab-panel label="已过期" value="expired" />
-      </t-tabs>
+      <view class="filter-tabs">
+        <t-tabs value="{{inviteActiveTab}}" bind:change="onInviteTabChange">
+          <t-tab-panel label="全部邀请" value="all" />
+          <t-tab-panel label="待使用" value="pending" />
+          <t-tab-panel label="已使用" value="used" />
+          <t-tab-panel label="已过期" value="expired" />
+        </t-tabs>
+      </view>
     </view>
 
     <!-- 邀请列表内容 -->
@@ -163,6 +167,7 @@
               <view class="status-tag {{getInviteStatusTheme(item.status)}}-tag">
                 {{item.statusText || '未知状态'}}
               </view>
+              <t-icon name="chevron-right" size="16" color="#c8c9cc" />
             </view>
           </view>
           <view wx:if="{{item.remark}}" class="invite-remark">
@@ -353,64 +358,87 @@
 </t-popup>
 
 <!-- 邀请详情弹窗 -->
-<t-dialog
+<t-popup
   visible="{{showInviteDetail}}"
-  title="邀请详情"
-  confirm-btn="确定"
-  bind:confirm="closeInviteDetail"
-  bind:cancel="closeInviteDetail"
+  placement="bottom"
+  close-on-overlay-click="{{true}}"
+  show-overlay="{{true}}"
+  z-index="{{12000}}"
+  bind:visible-change="onInviteDetailChange"
+  t-class-content="invite-detail-popup"
 >
-  <view wx:if="{{selectedInvite}}" class="invite-detail">
-    <view class="detail-section">
-      <view class="detail-item">
-        <text class="detail-label">邀请码：</text>
-        <text class="detail-value">{{selectedInvite.inviteCode}}</text>
+  <view wx:if="{{selectedInvite}}" class="invite-detail-container">
+    <!-- 弹窗头部 -->
+    <view class="popup-header">
+      <text class="popup-title">邀请详情</text>
+      <view class="close-btn" bind:tap="closeInviteDetail">
+        <text class="close-text">×</text>
       </view>
-      <view class="detail-item">
-        <text class="detail-label">角色：</text>
-        <text class="detail-value">{{getInviteRoleText(selectedInvite.role)}}</text>
-      </view>
-      <view class="detail-item">
-        <text class="detail-label">状态：</text>
-        <text class="detail-value">{{selectedInvite.statusText}}</text>
-      </view>
-      <view class="detail-item">
-        <text class="detail-label">创建时间：</text>
-        <text class="detail-value">{{formatInviteTime(selectedInvite.createTime)}}</text>
-      </view>
-      <view class="detail-item">
-        <text class="detail-label">过期时间：</text>
-        <text class="detail-value">{{formatInviteTime(selectedInvite.expiresAt)}}</text>
-      </view>
-      <view wx:if="{{selectedInvite.remark}}" class="detail-item">
-        <text class="detail-label">备注：</text>
-        <text class="detail-value">{{selectedInvite.remark}}</text>
+    </view>
+
+    <!-- 邀请详情内容 -->
+    <view class="invite-detail-content">
+      <view class="detail-section">
+        <view class="detail-item">
+          <text class="detail-label">邀请码</text>
+          <text class="detail-value">{{selectedInvite.inviteCode}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">角色</text>
+          <text class="detail-value">{{selectedInvite.roleDisplayName || getInviteRoleText(selectedInvite.role) || '未知角色'}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">状态</text>
+          <view class="status-tag {{getInviteStatusTheme(selectedInvite.status)}}-tag">
+            {{selectedInvite.statusText || '未知状态'}}
+          </view>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">创建时间</text>
+          <text class="detail-value">{{selectedInvite.formattedCreateTime || formatInviteTime(selectedInvite.createTime) || '未知时间'}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">过期时间</text>
+          <text class="detail-value">{{selectedInvite.formattedExpiresAt || formatInviteTime(selectedInvite.expiresAt) || formatInviteTime(selectedInvite.expiryTime) || '未知时间'}}</text>
+        </view>
+        <view wx:if="{{selectedInvite.remark}}" class="detail-item">
+          <text class="detail-label">备注</text>
+          <text class="detail-value">{{selectedInvite.remark}}</text>
+        </view>
       </view>
     </view>
 
     <!-- 操作按钮 -->
-    <view class="invite-actions-section">
+    <view class="popup-actions">
       <t-button
         wx:if="{{selectedInvite.status === 'pending'}}"
         theme="warning"
-        size="medium"
+        size="large"
         bind:tap="revokeInvite"
-        class="action-btn"
+        class="warning-button"
       >
         撤销邀请
       </t-button>
       <t-button
         wx:if="{{selectedInvite.status === 'pending'}}"
         theme="primary"
-        size="medium"
+        size="large"
         bind:tap="resendInvite"
-        class="action-btn"
+        class="primary-button"
       >
         重新发送
       </t-button>
+      <t-button
+        theme="default"
+        size="large"
+        bind:tap="copyInviteCodeFromDetail"
+        class="secondary-button"
+      >
+        复制邀请码
+      </t-button>
     </view>
   </view>
-</t-dialog>
+</t-popup>
 
 <!-- 创建邀请码弹窗 -->
 <t-popup
@@ -523,29 +551,5 @@
   </view>
 </t-popup>
 
-<!-- 撤销确认弹窗 -->
-<t-dialog
-  visible="{{showRevokeDialog}}"
-  title="撤销邀请"
-  confirm-btn="确认撤销"
-  cancel-btn="取消"
-  bind:confirm="confirmRevoke"
-  bind:cancel="closeRevokeDialog"
->
-  <view class="revoke-form">
-    <view class="revoke-warning">
-      <text class="revoke-text">确定要撤销此邀请吗？</text>
-    </view>
-    <view class="form-item">
-      <text class="form-label">撤销原因</text>
-      <textarea
-        class="revoke-textarea"
-        value="{{revokeReason}}"
-        placeholder="请输入撤销原因"
-        maxlength="200"
-        bind:input="onRevokeReasonChange"
-      />
-    </view>
-  </view>
-</t-dialog>
+<!-- 撤销确认弹窗已移除 -->
 

@@ -57,6 +57,14 @@ const pageConfig = {
     loading: false,
     isEmpty: false,  // 用于显示空状态
     
+    // 弹窗相关
+    showEntryDetailPopup: false,
+    showExitDetailPopup: false,
+    showMaterialDetailPopup: false,
+    selectedEntryRecord: null,
+    selectedExitRecord: null,
+    selectedMaterialRecord: null,
+    
     // AI智能盘点相关
     aiCount: {
       active: false,        // 是否激活AI盘点功能
@@ -900,6 +908,90 @@ const pageConfig = {
       duration: 1500
     })
   },
+
+  // 查看入栏记录详情
+  viewEntryRecordDetail(e: any) {
+    const record = e.currentTarget.dataset.record
+    this.setData({
+      selectedEntryRecord: record,
+      showEntryDetailPopup: true
+    })
+  },
+
+  // 查看出栏记录详情
+  viewExitRecordDetail(e: any) {
+    const record = e.currentTarget.dataset.record
+    this.setData({
+      selectedExitRecord: record,
+      showExitDetailPopup: true
+    })
+  },
+
+  // 关闭入栏详情弹窗
+  closeEntryDetailPopup() {
+    this.setData({
+      showEntryDetailPopup: false,
+      selectedEntryRecord: null
+    })
+  },
+
+  // 关闭出栏详情弹窗
+  closeExitDetailPopup() {
+    this.setData({
+      showExitDetailPopup: false,
+      selectedExitRecord: null
+    })
+  },
+
+  // 入栏弹窗可见性变化
+  onEntryDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showEntryDetailPopup: false,
+        selectedEntryRecord: null
+      })
+    }
+  },
+
+  // 出栏弹窗可见性变化
+  onExitDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showExitDetailPopup: false,
+        selectedExitRecord: null
+      })
+    }
+  },
+
+  // 查看物料记录详情
+  viewMaterialRecordDetail(e: any) {
+    const record = e.currentTarget.dataset.record
+    this.setData({
+      selectedMaterialRecord: record,
+      showMaterialDetailPopup: true
+    })
+  },
+
+  // 关闭物料详情弹窗
+  closeMaterialDetailPopup() {
+    this.setData({
+      showMaterialDetailPopup: false,
+      selectedMaterialRecord: null
+    })
+  },
+
+  // 物料弹窗可见性变化
+  onMaterialDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showMaterialDetailPopup: false,
+        selectedMaterialRecord: null
+      })
+    }
+  }
 
 }
 

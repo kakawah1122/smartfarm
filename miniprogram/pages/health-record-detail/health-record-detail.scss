@@ -247,48 +247,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 暗色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .page-container {
-    background: #0d1117;
-  }
-
-  .status-card,
-  .info-card {
-    background: #161b22;
-    border-color: #30363d;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.3);
-  }
-
-  .card-title {
-    color: #f0f6fc;
-  }
-
-  .status-text {
-    color: #58a6ff;
-  }
-
-  .record-date {
-    color: #8b949e;
-  }
-
-  .content-text {
-    color: #f0f6fc;
-  }
-  
-  .t-cell {
-    --td-cell-bg-color: #161b22 !important;
-    --td-cell-border-color: #30363d !important;
-    --td-cell-title-color: #8b949e !important;
-    --td-cell-note-color: #f0f6fc !important;
-  }
-  
-  .action-btn.t-button--theme-default {
-    --td-button-default-bg-color: #21262d !important;
-    --td-button-default-color: #f0f6fc !important;
-    --td-button-default-border-color: #30363d !important;
-  }
-}
 
 /* 无障碍支持 */
 .action-btn:focus {

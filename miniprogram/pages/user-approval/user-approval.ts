@@ -57,7 +57,19 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       { label: '普通用户', value: 'user' },
       { label: '操作员', value: 'operator' },
       { label: '管理员', value: 'admin' }
-    ]
+    ],
+    
+    // 统一弹窗状态
+    showPermissionDeniedPopup: false,
+    showApproveConfirmPopup: false,
+    showRejectConfirmPopup: false,
+    showBatchConfirmPopup: false,
+    popupData: {
+      title: '',
+      content: '',
+      type: '', // 'approve', 'reject', 'batch'
+      action: ''
+    }
   },
 
   onLoad() {
@@ -138,10 +150,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       })
       
       if (error.message?.includes('权限不足')) {
-        wx.showModal({
-          title: '权限不足',
-          content: '您没有用户审批权限，请联系超级管理员',
-          showCancel: false
+        this.setData({
+          showPermissionDeniedPopup: true,
+          popupData: {
+            title: '权限不足',
+            content: '您没有用户审批权限，请联系超级管理员',
+            type: 'permission',
+            action: ''
+          }
         })
       } else {
         wx.showToast({
@@ -181,6 +197,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
+  // 显示审批确认弹窗
+  showApproveConfirm() {
+    const user = this.data.selectedUser
+    const roleName = this.data.roleOptions.find(r => r.value === this.data.approvalData.assignedRole)?.label || '普通用户'
+    
+    this.setData({
+      showApproveConfirmPopup: true,
+      popupData: {
+        title: '确认审批通过',
+        content: `确定要审批通过用户 "${user.nickname}" 吗？\n分配角色：${roleName}`,
+        type: 'approve',
+        action: 'approve'
+      }
+    })
+  },
+  
   // 批准用户
   async approveUser() {
     const { assignedRole, approvalRemark } = this.data.approvalData
@@ -219,6 +251,30 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
+  // 显示拒绝确认弹窗
+  showRejectConfirm() {
+    const user = this.data.selectedUser
+    const reason = this.data.rejectedReason.trim()
+    
+    if (!reason) {
+      wx.showToast({
+        title: '请先填写拒绝原因',
+        icon: 'none'
+      })
+      return
+    }
+    
+    this.setData({
+      showRejectConfirmPopup: true,
+      popupData: {
+        title: '确认拒绝审批',
+        content: `确定要拒绝用户 "${user.nickname}" 的申请吗？\n拒绝原因：${reason}`,
+        type: 'reject',
+        action: 'reject'
+      }
+    })
+  },
+  
   // 拒绝用户
   async rejectUser() {
     if (!this.data.rejectedReason.trim()) {
@@ -262,6 +318,48 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
+  // 显示批量操作确认弹窗
+  showBatchConfirm() {
+    const { selectedUsers, batchAction, batchData } = this.data
+
+    if (selectedUsers.length === 0) {
+      wx.showToast({
+        title: '请选择用户',
+        icon: 'none'
+      })
+      return
+    }
+
+    if (batchAction === 'reject' && !batchData.remark.trim()) {
+      wx.showToast({
+        title: '请填写拒绝原因',
+        icon: 'none'
+      })
+      return
+    }
+
+    const actionText = batchAction === 'approve' ? '批准' : '拒绝'
+    const roleName = batchAction === 'approve' ? 
+      (this.data.roleOptions.find(r => r.value === batchData.assignedRole)?.label || '普通用户') : ''
+    
+    let content = `确定要${actionText} ${selectedUsers.length} 个用户吗？`
+    if (batchAction === 'approve') {
+      content += `\n分配角色：${roleName}`
+    } else {
+      content += `\n拒绝原因：${batchData.remark}`
+    }
+
+    this.setData({
+      showBatchConfirmPopup: true,
+      popupData: {
+        title: `确认${actionText}操作`,
+        content: content,
+        type: 'batch',
+        action: batchAction
+      }
+    })
+  },
+  
   // 批量操作
   async confirmBatchAction() {
     const { selectedUsers, batchAction, batchData } = this.data
@@ -481,6 +579,58 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({
       'batchData.remark': e.detail.value
     })
+  },
+  
+  // 关闭权限不足弹窗
+  closePermissionDeniedPopup() {
+    this.setData({
+      showPermissionDeniedPopup: false
+    })
+  },
+  
+  // 关闭审批确认弹窗
+  closeApproveConfirmPopup() {
+    this.setData({
+      showApproveConfirmPopup: false
+    })
+  },
+  
+  // 确认审批操作
+  confirmApprove() {
+    this.setData({
+      showApproveConfirmPopup: false
+    })
+    this.approveUser()
+  },
+  
+  // 关闭拒绝确认弹窗
+  closeRejectConfirmPopup() {
+    this.setData({
+      showRejectConfirmPopup: false
+    })
+  },
+  
+  // 确认拒绝操作
+  confirmReject() {
+    this.setData({
+      showRejectConfirmPopup: false
+    })
+    this.rejectUser()
+  },
+  
+  // 关闭批量确认弹窗
+  closeBatchConfirmPopup() {
+    this.setData({
+      showBatchConfirmPopup: false
+    })
+  },
+  
+  // 确认批量操作
+  confirmBatch() {
+    this.setData({
+      showBatchConfirmPopup: false
+    })
+    this.confirmBatchAction()
   },
 
   // 数据标准化函数

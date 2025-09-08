@@ -22,26 +22,9 @@
       />
     </view>
 
-    <!-- 筛选标签 -->
-    <view class="filter-section">
-      <t-tabs 
-        value="{{activeFilter}}" 
-        bind:change="onFilterChange" 
-        theme="line"
-        class="filter-tabs"
-      >
-        <t-tab-panel label="全部" value="all" />
-        <t-tab-panel label="进行中" value="pending" />
-        <t-tab-panel label="已交付" value="delivered" />
-      </t-tabs>
-    </view>
-
     <!-- 统计信息 -->
     <view class="stats-section">
       <text class="stats-text">共{{totalRecords}}条记录</text>
-      <text wx:if="{{activeFilter !== 'all'}}" class="filter-text">
-        ({{activeFilter === 'pending' ? '进行中' : '已交付'}})
-      </text>
     </view>
 
     <!-- 记录列表 -->
@@ -143,7 +126,7 @@
       <view wx:if="{{!loading && isEmpty}}" class="empty-state">
         <t-empty 
           icon="file" 
-          description="{{activeFilter === 'all' ? '暂无出栏记录' : (activeFilter === 'pending' ? '暂无进行中记录' : '暂无已交付记录')}}"
+          description="暂无出栏记录"
         >
           <t-button theme="primary" size="small" bind:tap="addExit" class="primary-button">
             新增出栏记录
@@ -154,3 +137,70 @@
     </view>
   </view>
 </view>
+
+<!-- 出栏记录详情弹窗 -->
+<bottom-popup
+  visible="{{showDetailPopup}}"
+  title="出栏记录详情"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确定"
+  bind:close="closeDetailPopup"
+  bind:confirm="closeDetailPopup"
+  bind:visiblechange="onDetailPopupChange"
+>
+  <view wx:if="{{selectedRecord}}" class="record-detail-content">
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row">
+          <text class="info-label">客户：</text>
+          <text class="info-value">{{selectedRecord.customer}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">出栏号：</text>
+          <text class="info-value">{{selectedRecord.exitNumber}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">数量：</text>
+          <text class="info-value">{{selectedRecord.displayQuantity}}</text>
+        </view>
+        <view class="info-row" wx:if="{{selectedRecord.batchNumber}}">
+          <text class="info-label">批次号：</text>
+          <text class="info-value">{{selectedRecord.batchNumber}}</text>
+        </view>
+        <view class="info-row" wx:if="{{selectedRecord.breed}}">
+          <text class="info-label">品种：</text>
+          <text class="info-value">{{selectedRecord.breed}}</text>
+        </view>
+        <view class="info-row" wx:if="{{selectedRecord.avgWeight > 0}}">
+          <text class="info-label">平均重量：</text>
+          <text class="info-value">{{selectedRecord.avgWeight}}斤</text>
+        </view>
+        <view class="info-row" wx:if="{{selectedRecord.totalWeight > 0}}">
+          <text class="info-label">总重量：</text>
+          <text class="info-value">{{selectedRecord.totalWeight}}斤</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">操作员：</text>
+          <text class="info-value">{{selectedRecord.operator}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">时间：</text>
+          <text class="info-value">{{selectedRecord.date}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">状态：</text>
+          <view class="status-value">
+            <t-tag theme="{{selectedRecord.status === '已交付' ? 'success' : 'primary'}}" size="small">
+              {{selectedRecord.status}}
+            </t-tag>
+          </view>
+        </view>
+        <view class="info-row" wx:if="{{selectedRecord.notes}}">
+          <text class="info-label">备注：</text>
+          <text class="info-value note-text">{{selectedRecord.notes}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
