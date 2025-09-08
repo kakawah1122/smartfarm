@@ -69,6 +69,10 @@ const pageConfig = {
   },
 
   onLoad() {
+    // 确保 aiCount 数据结构完整
+    this.setData({
+      'aiCount.history': []
+    })
     this.loadData()
   },
 
@@ -223,13 +227,26 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const records = result.result.data.records || []
+        
+        // 获取当前用户信息
+        const app = getApp()
+        const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
+        
         // 格式化入栏记录数据，确保显示字段完整
         const formattedRecords = records.map((record: any) => ({
           ...record,
           id: record._id || record.batchNumber,
+          batchNumber: record.batchNumber || record._id,
+          breed: record.breed || '未知品种',
+          supplier: record.supplier || '',
+          quantity: record.quantity || 0,
+          avgWeight: record.avgWeight || 0,
+          operator: record.operator || currentUser,
+          status: record.status || '已完成',
           date: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          // 生成显示标题：品种 + 批次号
-          displayTitle: `${record.breed || '未知品种'} - ${record.batchNumber || '批次号'}`
+          entryDate: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
+          // 生成显示标题：仅显示品种
+          displayTitle: record.breed || '未知品种'
         }))
         
         this.setData({
@@ -256,13 +273,28 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const records = result.result.data.records || []
+        
+        // 获取当前用户信息
+        const app = getApp()
+        const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
+        
         // 格式化出栏记录数据，确保显示字段完整
         const formattedRecords = records.map((record: any) => ({
           ...record,
           id: record._id || record.exitNumber,
+          exitNumber: record.exitNumber || record._id,
+          batchNumber: record.batchNumber || '',
+          breed: record.breed || '未知品种',
+          customer: record.customer || '未知客户',
+          quantity: record.quantity || 0,
+          avgWeight: record.avgWeight || 0,
+          totalWeight: record.totalWeight || 0,
+          operator: record.operator || currentUser,
+          status: record.status || '已交付',
           date: record.exitDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          // 确保有标题显示
-          displayTitle: record.batchNumber || record.type || `出栏-${record.exitNumber || record._id}`
+          exitDate: record.exitDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
+          // 生成显示标题：显示品种名（与入栏记录逻辑一致）
+          displayTitle: record.breed || '未知品种'
         }))
         
         this.setData({
@@ -289,15 +321,25 @@ const pageConfig = {
       if (result.result && result.result.success) {
         const records = result.result.data.records || []
         
-        // 转换数据格式以匹配界面显示
+        // 获取当前用户信息
+        const app = getApp()
+        const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
+        
+        // 转换数据格式以匹配优化后的界面显示
         const formattedRecords = records.map(record => ({
           id: record._id || record.recordNumber,
+          recordNumber: record.recordNumber || record._id,
           name: record.material?.name || '未知物料',
+          category: record.material?.category || '未分类',
           type: record.type === 'purchase' ? '采购' : '领用',
-          description: `${record.material?.category || '未分类'} • ${record.supplier || record.targetLocation || ''}`,
           quantity: `${record.quantity}${record.material?.unit || '件'}`,
+          supplier: record.supplier || '',
+          targetLocation: record.targetLocation || '',
+          operator: record.operator || currentUser,
           date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          status: record.status || '已完成'
+          status: record.status || '已完成',
+          // 兼容旧版显示格式  
+          description: `${record.material?.category || '未分类'} • ${record.supplier || record.targetLocation || ''}`
         }))
         
         this.setData({
@@ -423,6 +465,50 @@ const pageConfig = {
     })
   },
 
+  // 查看全部物料记录
+  viewAllMaterialRecords() {
+    wx.navigateTo({
+      url: '/pages/material-records-list/material-records-list',
+      fail: (error) => {
+        console.error('跳转失败:', error)
+        wx.showToast({
+          title: '页面跳转失败',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+    })
+  },
+
+  // 查看全部入栏记录
+  viewAllEntryRecords() {
+    wx.navigateTo({
+      url: '/pages/entry-records-list/entry-records-list',
+      fail: (error) => {
+        console.error('跳转失败:', error)
+        wx.showToast({
+          title: '页面跳转失败',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+    })
+  },
+
+  // 查看全部出栏记录
+  viewAllExitRecords() {
+    wx.navigateTo({
+      url: '/pages/exit-records-list/exit-records-list',
+      fail: (error) => {
+        console.error('跳转失败:', error)
+        wx.showToast({
+          title: '页面跳转失败',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+    })
+  },
 
   // 下拉刷新
   onPullDownRefresh() {
@@ -443,8 +529,6 @@ const pageConfig = {
       'aiCount.result': null,
       'aiCount.error': null
     })
-    
-    wx.vibrateShort({ type: 'light' })
   },
   
   // 关闭AI盘点功能
@@ -473,8 +557,6 @@ const pageConfig = {
         this.setData({
           'aiCount.imageUrl': tempFilePath
         })
-        
-        wx.vibrateShort({ type: 'medium' })
         
         wx.showToast({
           title: '拍照成功',
@@ -582,8 +664,6 @@ const pageConfig = {
           'aiCount.error': null
         })
         
-        wx.vibrateShort({ type: 'heavy' })
-        
         wx.showToast({
           title: `识别完成：${processedResult.totalCount}只`,
           icon: 'success',
@@ -674,6 +754,66 @@ const pageConfig = {
     })
   },
   
+  // 从AI盘点结果直接创建出栏记录
+  createExitFromAI() {
+    const { result } = this.data.aiCount
+    if (!result) {
+      wx.showToast({
+        title: '没有可用的盘点数据',
+        icon: 'none'
+      })
+      return
+    }
+    
+    // 检查是否有异常个体
+    if (result.abnormalDetection && result.abnormalDetection.suspiciousAnimals > 0) {
+      wx.showModal({
+        title: '发现异常个体',
+        content: `检测到${result.abnormalDetection.suspiciousAnimals}只疑似异常个体，建议先处理异常情况再进行出栏。是否继续创建出栏记录？`,
+        success: (res) => {
+          if (res.confirm) {
+            this.navigateToExitForm(result)
+          }
+        }
+      })
+    } else {
+      this.navigateToExitForm(result)
+    }
+  },
+
+  // 导航到出栏表单并预填数据
+  navigateToExitForm(aiResult: any) {
+    // 构造传递给出栏表单的参数
+    const params = {
+      fromAI: true,
+      aiCount: aiResult.totalCount,
+      confidence: aiResult.confidence,
+      imageUrl: aiResult.imageUrl || '',
+      abnormalCount: aiResult.abnormalDetection?.suspiciousAnimals || 0,
+      suggestions: JSON.stringify(aiResult.suggestions || [])
+    }
+    
+    // 构建URL参数字符串
+    const urlParams = Object.entries(params)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&')
+    
+    wx.navigateTo({
+      url: `/pages/exit-form/exit-form?${urlParams}`,
+      success: () => {
+        // 导航成功后关闭AI盘点界面
+        this.closeAICount()
+      },
+      fail: (error) => {
+        console.error('导航到出栏表单失败:', error)
+        wx.showToast({
+          title: '跳转失败，请重试',
+          icon: 'none'
+        })
+      }
+    })
+  },
+
   // 保存盘点记录
   async saveCountRecord() {
     const { result } = this.data.aiCount
@@ -685,7 +825,7 @@ const pageConfig = {
       return
     }
     
-    console.log('保存盘点记录')
+    console.log('保存出栏盘点记录')
     
     try {
       wx.showLoading({
@@ -693,10 +833,10 @@ const pageConfig = {
         mask: true
       })
       
-      // 构建盘点记录数据
+      // 构建出栏盘点记录数据
       const countRecord = {
-        type: 'ai_count',
-        location: '1号鹅舍',
+        type: 'exit_ai_count', // 出栏AI盘点
+        location: '出栏区域',
         totalCount: result.totalCount,
         confidence: result.confidence,
         imageUrl: result.imageUrl,
@@ -706,7 +846,8 @@ const pageConfig = {
         timestamp: new Date(),
         operator: '系统用户', // 可以获取当前用户信息
         aiModel: 'baidu-vision', // 记录使用的AI模型
-        fallback: result.fallback || false
+        fallback: result.fallback || false,
+        purpose: '出栏盘点' // 标记用途
       }
       
       // 这里可以调用云函数保存记录到数据库
@@ -718,7 +859,7 @@ const pageConfig = {
       wx.hideLoading()
       
       wx.showToast({
-        title: '保存成功',
+        title: '盘点记录保存成功',
         icon: 'success',
         duration: 1500
       })
@@ -727,11 +868,6 @@ const pageConfig = {
       this.setData({
         'aiCount.history': records
       })
-      
-      // 可选：自动关闭AI盘点界面
-      setTimeout(() => {
-        this.closeAICount()
-      }, 1500)
       
       // 刷新页面数据
       this.refreshData()

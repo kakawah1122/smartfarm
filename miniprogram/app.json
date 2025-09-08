@@ -7,6 +7,9 @@
     "pages/exit-form/exit-form",
     "pages/purchase-form/purchase-form", 
     "pages/material-use-form/material-use-form",
+    "pages/material-records-list/material-records-list",
+    "pages/entry-records-list/entry-records-list",
+    "pages/exit-records-list/exit-records-list",
     "pages/inventory-detail/inventory-detail",
     "pages/health/health",
     "pages/health-record-form/health-record-form",
@@ -25,7 +28,7 @@
   ],
   "tabBar": {
     "color": "#999",
-    "selectedColor": "#14b8a6",
+    "selectedColor": "#0052d9",
     "backgroundColor": "#fff",
     "borderStyle": "black",
     "list": [

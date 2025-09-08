@@ -155,6 +155,7 @@
           block 
           bind:tap="onSubmit"
           loading="{{submitting}}"
+          class="action-button primary-button"
         >
           {{submitting ? '提交中...' : '提交入栏记录'}}
         </t-button>
@@ -163,6 +164,7 @@
           size="large" 
           block 
           bind:tap="onReset"
+          class="action-button secondary-button"
         >
           重置表单
         </t-button>

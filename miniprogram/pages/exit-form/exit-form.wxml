@@ -30,6 +30,32 @@
       </view>
     </view>
 
+    <!-- AI盘点信息卡片 -->
+    <view wx:if="{{showAIInfo}}" class="ai-info-section">
+      <view class="ai-info-card">
+        <view class="ai-header">
+          <view class="ai-icon">🤖</view>
+          <view class="ai-title">
+            <text class="ai-title-text">AI智能盘点结果</text>
+            <view class="ai-confidence">置信度 {{aiData.confidence}}%</view>
+          </view>
+        </view>
+        <view class="ai-content">
+          <view class="ai-count-info">
+            <text class="ai-count-label">识别数量：</text>
+            <text class="ai-count-value">{{aiData.count}} 只</text>
+          </view>
+          <view wx:if="{{aiData.abnormalCount > 0}}" class="ai-warning">
+            <text class="warning-text">⚠️ 发现 {{aiData.abnormalCount}} 只疑似异常个体</text>
+          </view>
+          <view wx:if="{{aiData.suggestions.length > 0}}" class="ai-suggestions">
+            <text class="suggestions-title">建议：</text>
+            <text wx:for="{{aiData.suggestions}}" wx:key="index" class="suggestion-item">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <!-- 主要表单 -->
     <view class="entry-form">
       <!-- 基础信息卡片 -->
@@ -47,18 +73,12 @@
             </view>
           </view>
 
-          <!-- 鹅的类型 -->
+          <!-- 鹅的类型（从入栏批次自动获取） -->
           <view class="form-item">
-            <view class="item-label required">鹅的类型</view>
+            <view class="item-label">鹅的品种</view>
             <view class="item-input">
-              <t-input
-                placeholder="请输入鹅的类型，如：成年白鹅"
-                value="{{formData.type}}"
-                bind:change="onFieldChange"
-                data-field="type"
-                borderless
-                align="right"
-              />
+              <text class="auto-fill-text">{{formData.type || '请先选择入栏批次'}}</text>
+              <t-tag wx:if="{{formData.type}}" theme="light" size="small">自动获取</t-tag>
             </view>
           </view>
 
@@ -182,6 +202,7 @@
           block 
           bind:tap="onSubmit"
           loading="{{submitting}}"
+          class="action-button primary-button"
         >
           {{submitting ? '提交中...' : '提交出栏记录'}}
         </t-button>
@@ -190,6 +211,7 @@
           size="large" 
           block 
           bind:tap="onReset"
+          class="action-button secondary-button"
         >
           重置表单
         </t-button>

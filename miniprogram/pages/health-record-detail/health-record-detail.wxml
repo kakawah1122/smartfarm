@@ -18,7 +18,7 @@
   <view wx:elif="{{!record.id}}" class="empty-container">
     <view class="empty-icon">📝</view>
     <view class="empty-text">暂无记录信息</view>
-    <t-button theme="primary" size="medium" bind:tap="goBack" class="empty-btn">
+    <t-button theme="primary" size="medium" bind:tap="goBack" class="empty-btn primary-button">
       返回列表
     </t-button>
   </view>

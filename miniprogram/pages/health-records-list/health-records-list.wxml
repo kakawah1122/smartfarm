@@ -63,10 +63,10 @@
 
         <!-- 操作按钮 -->
         <view class="filter-actions">
-          <t-button theme="default" bind:tap="resetFilter" class="filter-action-btn">
+          <t-button theme="default" bind:tap="resetFilter" class="filter-action-btn secondary-button">
             重置
           </t-button>
-          <t-button theme="primary" bind:tap="applyFilter" class="filter-action-btn">
+          <t-button theme="primary" bind:tap="applyFilter" class="filter-action-btn primary-button">
             确定
           </t-button>
         </view>

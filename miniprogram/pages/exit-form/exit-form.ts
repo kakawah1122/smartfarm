@@ -45,14 +45,73 @@ const pageConfig = {
     submitting: false,
     
     // 验证错误
-    validationErrors: [] as string[]
+    validationErrors: [] as string[],
+
+    // AI盘点相关数据
+    fromAI: false,            // 是否来自AI盘点
+    aiData: {                 // AI盘点数据
+      count: 0,
+      confidence: 0,
+      imageUrl: '',
+      abnormalCount: 0,
+      suggestions: [] as string[]
+    },
+    showAIInfo: false         // 是否显示AI信息卡片
   },
 
-  onLoad() {
+  onLoad(options: any) {
     // 初始化表单
     this.initializeForm()
+    
+    // 处理来自AI盘点的参数
+    if (options && options.fromAI) {
+      this.handleAIParams(options)
+    }
+    
     // 加载可选择的批次
     this.loadAvailableBatches()
+  },
+
+  // 处理来自AI盘点的参数
+  handleAIParams(options: any) {
+    try {
+      const aiData = {
+        count: parseInt(options.aiCount) || 0,
+        confidence: parseInt(options.confidence) || 0,
+        imageUrl: options.imageUrl || '',
+        abnormalCount: parseInt(options.abnormalCount) || 0,
+        suggestions: options.suggestions ? JSON.parse(decodeURIComponent(options.suggestions)) : []
+      }
+      
+      this.setData({
+        fromAI: true,
+        aiData: aiData,
+        showAIInfo: true,
+        'formData.quantity': aiData.count.toString()
+      })
+      
+      // 如果有异常提醒，添加到备注中
+      if (aiData.abnormalCount > 0) {
+        const abnormalNote = `AI检测提醒：发现${aiData.abnormalCount}只疑似异常个体，请人工核查。`
+        this.setData({
+          'formData.remarks': abnormalNote
+        })
+      }
+      
+      // 显示AI盘点信息
+      wx.showToast({
+        title: `AI识别到${aiData.count}只，置信度${aiData.confidence}%`,
+        icon: 'none',
+        duration: 3000
+      })
+      
+    } catch (error) {
+      console.error('处理AI参数失败:', error)
+      wx.showToast({
+        title: '处理AI数据失败',
+        icon: 'none'
+      })
+    }
   },
 
   // 初始化表单

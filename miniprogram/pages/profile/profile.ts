@@ -195,13 +195,18 @@ const pageConfig = {
   // 从云开发加载用户信息
   async loadCloudUserInfo() {
     try {
-      const db = wx.cloud.database()
-      const result = await db.collection('users').where({
-        _openid: wx.cloud.database().command.exists(true)
-      }).get()
+      console.log('加载用户信息...')
+      
+      // 优先使用云函数获取用户信息（更稳定）
+      const result = await wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'get_user_info'
+        }
+      })
 
-      if (result.data.length > 0) {
-        const cloudUserInfo = result.data[0]
+      if (result.result && result.result.success && result.result.data) {
+        const cloudUserInfo = result.result.data
         
         // 更新本地和全局用户信息
         const app = getApp<App.AppOption>()
@@ -213,7 +218,7 @@ const pageConfig = {
           userInfo: {
             name: cloudUserInfo.nickname || '未设置',
             role: this.getRoleDisplayName(cloudUserInfo.role || 'user', cloudUserInfo.isSuper),
-            farm: cloudUserInfo.farmName || '智慧养殖场', // 使用数据库中的养殖场名称
+            farm: cloudUserInfo.farmName || '智慧养殖场',
             experience: '1',
             currentStock: '1280',
             healthRate: '95.2',
@@ -221,14 +226,31 @@ const pageConfig = {
           }
         })
         
-        console.log('个人中心用户信息已更新:', {
-          name: cloudUserInfo.nickname,
-          farm: cloudUserInfo.farmName,
-          phone: cloudUserInfo.phone
-        })
+        console.log('用户信息加载成功')
+        return
       }
     } catch (error) {
-      console.error('加载用户信息失败:', error)
+      console.warn('云函数获取用户信息失败，使用本地存储的信息:', error)
+      
+      // 使用本地存储的用户信息作为备选
+      const storedUserInfo = wx.getStorageSync('userInfo')
+      if (storedUserInfo) {
+        this.setData({
+          cloudUserInfo: storedUserInfo,
+          userInfo: {
+            name: storedUserInfo.nickname || '未设置',
+            role: this.getRoleDisplayName(storedUserInfo.role || 'user', storedUserInfo.isSuper),
+            farm: storedUserInfo.farmName || '智慧养殖场',
+            experience: '1',
+            currentStock: '1280',
+            healthRate: '95.2',
+            avatarUrl: storedUserInfo.avatarUrl || '/assets/icons/profile.png'
+          }
+        })
+        console.log('使用本地存储的用户信息')
+      } else {
+        console.log('未找到用户信息，保持默认状态')
+      }
     }
   },
 

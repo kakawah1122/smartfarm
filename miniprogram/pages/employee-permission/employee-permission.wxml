@@ -300,10 +300,10 @@
 
       <!-- 查看模式操作按钮 -->
       <view class="popup-actions">
-        <t-button theme="default" size="large" bind:tap="closePermissionDetail">
+        <t-button theme="default" size="large" bind:tap="closePermissionDetail" class="secondary-button">
           关闭
         </t-button>
-        <t-button theme="primary" size="large" bind:tap="switchToEditMode">
+        <t-button theme="primary" size="large" bind:tap="switchToEditMode" class="primary-button">
           修改权限
         </t-button>
       </view>
@@ -341,10 +341,10 @@
 
       <!-- 编辑模式操作按钮 -->
       <view class="popup-actions">
-        <t-button theme="default" size="large" bind:tap="switchToViewMode">
+        <t-button theme="default" size="large" bind:tap="switchToViewMode" class="secondary-button">
           取消
         </t-button>
-        <t-button theme="primary" size="large" bind:tap="updateEmployeeRole" disabled="{{selectedRoleIndex[0] === getRoleIndex(selectedEmployee.role)}}">
+        <t-button theme="primary" size="large" bind:tap="updateEmployeeRole" disabled="{{selectedRoleIndex[0] === getRoleIndex(selectedEmployee.role)}}" class="primary-button">
           确认修改
         </t-button>
       </view>

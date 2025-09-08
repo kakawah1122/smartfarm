@@ -223,24 +223,18 @@
   gap: 24rpx;
 }
 
-.form-actions ::deep .t-button {
-  height: 96rpx;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  font-weight: 500;
+
+/* === TDesign规范按钮样式 - 使用全局变量 === */
+/* 所有按钮样式已在app.scss中全局定义 */
+
+.primary-button {
+  /* 继承全局TDesign主要按钮样式 */
 }
 
-.form-actions ::deep .t-button--theme-primary {
-  background: linear-gradient(135deg, var(--td-brand-color, #0052d9) 0%, var(--td-brand-color-8, #4582e8) 100%);
-  border: none;
-  box-shadow: 0 8rpx 24rpx rgba(0, 82, 217, 0.24);
+.secondary-button {
+  /* 继承全局TDesign默认按钮样式 */
 }
 
-.form-actions ::deep .t-button--theme-default {
-  background: var(--td-bg-color-container, #ffffff);
-  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-  color: var(--td-text-color-secondary, #555555);
-}
 
 /* 表单交互效果 */
 .form-item:active {
@@ -309,9 +303,6 @@
 }
 
 /* 加载状态 */
-.form-actions ::deep .t-button--loading {
-  opacity: 0.6;
-}
 
 /* 表单验证错误样式 */
 .form-item.error {
@@ -349,13 +340,7 @@
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
 }
 
-.form-actions ::deep .t-button {
-  transition: all 0.3s ease;
-}
 
-.form-actions ::deep .t-button:active {
-  transform: scale(0.98);
-}
 
 /* 满屏备注框样式 */
 .fullwidth-textarea-container {

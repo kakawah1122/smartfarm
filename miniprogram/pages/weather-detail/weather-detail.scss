@@ -29,7 +29,7 @@
   box-shadow: var(--shadow-base);
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--color-border-light);
+  border: 2rpx solid var(--color-border-light);
 }
 
 .card:first-child {
@@ -43,7 +43,7 @@
 /* 卡片头部统一样式 */
 .card-header {
   padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 2rpx solid var(--color-border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -65,12 +65,12 @@
 /* 当前天气卡片 */
 .current-weather-card {
   background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(14, 165, 233, 0.08) 100%);
-  border: 1px solid rgba(20, 184, 166, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(20, 184, 166, 0.1));
 }
 
 .current-weather-card .card-header {
   background: transparent;
-  border-bottom: 1px solid rgba(20, 184, 166, 0.15);
+  border-bottom: 2rpx solid rgba(20, 184, 166, 0.15);
 }
 
 .header-left {
@@ -203,7 +203,7 @@
   backdrop-filter: blur(10rpx);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(20, 184, 166, 0.15);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(20, 184, 166, 0.15));
 }
 
 /* 今日概览数据 */
@@ -213,7 +213,7 @@
   padding: var(--spacing-base) var(--spacing-lg);
   background: rgba(20, 184, 166, 0.05);
   border-radius: var(--radius-base);
-  border: 1px solid rgba(20, 184, 166, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(20, 184, 166, 0.1));
 }
 
 .overview-item {
@@ -263,7 +263,7 @@
   padding: var(--td-comp-paddingLR-l);
   background: var(--td-bg-color-container);
   border-radius: var(--td-radius-medium);
-  border: 1px solid var(--td-border-color);
+  border: 2rpx solid var(--td-border-color);
   box-shadow: var(--td-shadow-1);
 }
 
@@ -309,7 +309,7 @@
   gap: var(--td-comp-margin-xs);
   margin-top: var(--td-comp-margin-xs);
   padding-top: var(--td-comp-margin-xs);
-  border-top: 1px dashed var(--td-border-color);
+  border-top: 2rpx dashed var(--td-border-color);
 }
 
 .warning-time {
@@ -402,7 +402,7 @@
   font-size: var(--td-font-size-s);
   color: var(--td-text-color-secondary);
   padding: var(--td-comp-margin-xs) 0;
-  border-top: 1px dashed var(--td-border-color);
+  border-top: 2rpx dashed var(--td-border-color);
 }
 
 /* 24小时预报卡片 */
@@ -438,7 +438,7 @@
   padding: var(--spacing-lg) var(--spacing-base);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-base);
-  border: 1px solid var(--color-border-light);
+  border: 2rpx solid var(--color-border-light);
   transition: all 0.3s ease;
 }
 
@@ -497,7 +497,7 @@
   padding: var(--spacing-lg);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-base);
-  border: 1px solid var(--color-border-light);
+  border: 2rpx solid var(--color-border-light);
   transition: all 0.3s ease;
 }
 
@@ -625,7 +625,7 @@
   padding: var(--spacing-xl);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20rpx);
-  border-top: 1px solid var(--color-border-light);
+  border-top: 2rpx solid var(--color-border-light);
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
   z-index: 100;
 }

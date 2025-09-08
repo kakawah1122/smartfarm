@@ -178,10 +178,10 @@
             </view>
             
             <view class="animal-actions">
-              <t-button size="small" theme="primary" bind:tap="startTreatment" data-animal="{{item}}">
+              <t-button size="small" theme="primary" bind:tap="startTreatment" data-animal="{{item}}" class="primary-button">
                 开始治疗
               </t-button>
-              <t-button size="small" theme="light" bind:tap="viewAnimalDetail" data-animal="{{item}}">
+              <t-button size="small" theme="light" bind:tap="viewAnimalDetail" data-animal="{{item}}" class="light-button">
                 查看详情
               </t-button>
             </view>
@@ -257,10 +257,10 @@
             </view>
             
             <view class="treatment-actions">
-              <t-button size="small" theme="primary" bind:tap="updateTreatment" data-record="{{item}}">
+              <t-button size="small" theme="primary" bind:tap="updateTreatment" data-record="{{item}}" class="primary-button">
                 更新记录
               </t-button>
-              <t-button wx:if="{{item.status === 'treating'}}" size="small" theme="success" bind:tap="markRecovered" data-record="{{item}}">
+              <t-button wx:if="{{item.status === 'treating'}}" size="small" theme="success" bind:tap="markRecovered" data-record="{{item}}" class="success-button">
                 标记治愈
               </t-button>
             </view>
@@ -276,7 +276,7 @@
             <view class="card-header">
               <t-icon name="robot" size="32rpx" color="#0052D9" />
               <text class="card-title">AI智能分析</text>
-              <t-button wx:if="{{!aiAdvice.loading}}" size="small" theme="primary" bind:tap="generateAIAdvice">
+              <t-button wx:if="{{!aiAdvice.loading}}" size="small" theme="primary" bind:tap="generateAIAdvice" class="ai-button primary-button">
                 {{aiAdvice.result ? '重新分析' : '开始分析'}}
               </t-button>
             </view>
@@ -382,7 +382,7 @@
                   <text class="history-summary">{{item.summary}}</text>
                 </view>
                 <view class="history-actions">
-                  <t-button size="small" theme="light" bind:tap="viewHistoryDetail" data-item="{{item}}">
+                  <t-button size="small" theme="light" bind:tap="viewHistoryDetail" data-item="{{item}}" class="light-button">
                     查看详情
                   </t-button>
                 </view>

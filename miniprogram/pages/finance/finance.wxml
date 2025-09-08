@@ -83,7 +83,7 @@
             <text class="ai-title">AI财务分析</text>
             <text class="ai-subtitle">智能成本优化与盈利预测</text>
           </view>
-          <t-button wx:if="{{!aiAnalysis.loading}}" size="small" theme="primary" bind:tap="generateFinancialAnalysis">
+          <t-button wx:if="{{!aiAnalysis.loading}}" size="small" theme="primary" bind:tap="generateFinancialAnalysis" class="ai-button primary-button">
             {{aiAnalysis.result ? '重新分析' : '开始分析'}}
           </t-button>
         </view>
@@ -357,12 +357,12 @@
         </view>
         <t-row gutter="24" class="actions-grid">
           <t-col span="12">
-            <t-button theme="primary" block size="large" icon="add" bind:tap="addManualRecord">
+            <t-button theme="primary" block size="large" icon="add" bind:tap="addManualRecord" class="primary-button">
               手动记账
             </t-button>
           </t-col>
           <t-col span="12">
-            <t-button theme="light" block size="large" icon="download" bind:tap="exportReport">
+            <t-button theme="light" block size="large" icon="download" bind:tap="exportReport" class="light-button">
               导出报表
             </t-button>
           </t-col>

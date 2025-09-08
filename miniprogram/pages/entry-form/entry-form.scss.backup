@@ -1,0 +1,547 @@
+/* entry-form.scss - 入栏记录表单样式 - 与TDesign主题保持一致 */
+
+.page-container {
+  min-height: 100vh;
+  background-color: var(--td-bg-color-page, #f5f5f5);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 表单内容区域 - 极致紧凑间距优化 */
+.form-content {
+  flex: 1;
+  padding-top: calc(var(--status-bar-height) + 16rpx); /* 极致紧凑的顶部间距 */
+  padding-bottom: calc(32rpx + var(--safe-area-inset-bottom, 0));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 表单头部信息卡片 - 极致紧凑间距 */
+.form-header {
+  margin: 0rpx 24rpx 16rpx 24rpx; /* 与主表单边距保持一致 */
+}
+
+.form-card {
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 16rpx;
+  padding: 24rpx 20rpx; /* 减少内边距 */
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+/* 批次ID区域 */
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.batch-id-section {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.batch-label {
+  font-size: 28rpx;
+  color: var(--td-text-color-secondary, #555555);
+  font-weight: 500;
+}
+
+.batch-id {
+  font-size: 32rpx;
+  color: var(--td-brand-color, #0052d9);
+  font-weight: 600;
+  flex: 1;
+}
+
+/* 日期信息 */
+.date-info {
+  padding: 16rpx 0;
+  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.date-text {
+  font-size: 28rpx;
+  color: var(--td-text-color-secondary, #555555);
+}
+
+/* 主表单样式 - 减少左右内边距 */
+.entry-form {
+  padding: 0 24rpx; /* 减少左右内边距，让内容更贴近屏幕边缘 */
+}
+
+/* 表单分组样式 - 减少间距 */
+.form-section {
+  margin-bottom: 16rpx; /* 减少分组间距 */
+}
+
+.section-header {
+  margin-bottom: 8rpx; /* 减少标题与内容间距 */
+  padding: 0 8rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  color: var(--td-text-color-secondary, #555555);
+  font-weight: 500;
+}
+
+/* 表单卡片样式 */
+.form-card {
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 16rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  overflow: hidden;
+}
+
+/* 表单项样式 */
+.form-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88rpx;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+/* 表单项标签 */
+.item-label {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  font-weight: 500;
+  min-width: 160rpx;
+  flex-shrink: 0;
+}
+
+/* 必填标识 */
+.item-label.required::before {
+  content: '*';
+  color: var(--td-error-color, #d54941);
+  margin-right: 8rpx;
+  font-weight: bold;
+}
+
+/* 输入框容器 */
+.item-input {
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.item-input ::deep .t-input__control {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  text-align: right;
+}
+
+.item-input ::deep .t-input__placeholder {
+  color: var(--td-text-color-placeholder, #bbbbbb);
+  text-align: right;
+}
+
+.item-input ::deep .t-input__suffix {
+  color: var(--td-text-color-secondary, #555555);
+  font-size: 28rpx;
+}
+
+/* 日期输入特殊样式 */
+.date-input {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16rpx;
+}
+
+.date-text {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+}
+
+/* 金额显示 */
+.amount-item {
+  background: var(--td-bg-color-page, #f5f5f5);
+}
+
+.item-value {
+  margin-left: 24rpx;
+}
+
+.amount-value {
+  font-size: 34rpx;
+  color: var(--td-success-color, #00a870);
+  font-weight: 600;
+}
+
+/* 文本域特殊样式 */
+.textarea-item {
+  align-items: flex-start;
+  min-height: 120rpx;
+  padding-top: 32rpx;
+  padding-bottom: 32rpx;
+}
+
+.item-textarea {
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.item-textarea ::deep .t-textarea__control {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  text-align: right;
+  min-height: 80rpx;
+}
+
+.item-textarea ::deep .t-textarea__placeholder {
+  color: var(--td-text-color-placeholder, #bbbbbb);
+  text-align: right;
+}
+
+/* 表单操作按钮 - 现代化样式 */
+.form-actions {
+  padding: 48rpx 32rpx 32rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  border: none !important; 
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* === TDesign规范按钮样式 - 使用全局变量 === */
+/* 所有按钮样式已在app.scss中全局定义 */
+
+.primary-button {
+  /* 继承全局TDesign主要按钮样式 */
+}
+
+.secondary-button {
+  /* 继承全局TDesign默认按钮样式 */
+}
+
+/* 按钮基础样式 - 彻底移除所有边框和轮廓线 */
+.form-actions ::deep .t-button,
+.form-actions .t-button {
+  height: 96rpx !important;
+  border-radius: 16rpx !important;
+  font-size: 32rpx !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* 彻底移除按钮所有状态的边框 - 多层覆盖 */
+.form-actions ::deep .t-button:focus,
+.form-actions ::deep .t-button:active,
+.form-actions ::deep .t-button:hover,
+.form-actions ::deep .t-button:visited,
+.form-actions ::deep .t-button::before,
+.form-actions ::deep .t-button::after,
+.form-actions .t-button:focus,
+.form-actions .t-button:active,
+.form-actions .t-button:hover,
+.form-actions .t-button:visited,
+.form-actions .t-button::before,
+.form-actions .t-button::after {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* 移除微信小程序默认按钮样式 - 全面重置 */
+.form-actions button,
+.form-actions .t-button,
+.form-actions .t-button__content,
+.form-actions .t-button__text {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* TDesign组件深层样式重置 */
+.form-actions ::deep .t-button__content,
+.form-actions ::deep .t-button__text,
+.form-actions ::deep .t-class-prefix,
+.form-actions .t-button__content,
+.form-actions .t-button__text {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* 主要按钮样式 - 多层覆盖确保无边框 */
+.form-actions ::deep .t-button--theme-primary,
+.form-actions .t-button--theme-primary {
+  background: linear-gradient(135deg, var(--td-brand-color, #0052d9) 0%, var(--td-brand-color-8, #4582e8) 100%) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 8rpx 24rpx rgba(0, 82, 217, 0.24) !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* 默认按钮样式 - 移除边框使用阴影替代TDesign风格 */
+.form-actions ::deep .t-button--theme-default,
+.form-actions .t-button--theme-default {
+  background: var(--td-bg-color-container, #ffffff) !important;
+  border: none !important; /* 完全移除边框 */
+  color: var(--td-text-color-secondary, #555555) !important;
+  outline: none !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08) !important; /* 使用轻微阴影替代边框 */
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* 默认按钮悬停状态 */
+.form-actions ::deep .t-button--theme-default:hover,
+.form-actions .t-button--theme-default:hover {
+  background: var(--td-bg-color-container-hover, #f8f8f8) !important;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.12) !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* 默认按钮按下状态 */
+.form-actions ::deep .t-button--theme-default:active,
+.form-actions .t-button--theme-default:active {
+  background: var(--td-bg-color-container-active, #f0f0f0) !important;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
+  outline: none !important;
+  transform: scale(0.98) !important;
+}
+
+/* 表单交互效果 */
+.form-item:active {
+  background-color: var(--td-bg-color-page, #f5f5f5);
+}
+
+/* 日期选择器样式 */
+.entry-form ::deep .t-date-time-picker {
+  --td-picker-title-color: var(--td-text-color-primary, #000000);
+  --td-picker-bg: var(--td-bg-color-container, #ffffff);
+  --td-picker-toolbar-bg: var(--td-bg-color-container, #ffffff);
+}
+
+/* 响应式设计 - 极致紧凑间距优化 */
+@media screen and (max-width: 480px) {
+  .form-content {
+    padding-top: calc(var(--status-bar-height) + 16rpx); /* 与主样式保持一致的紧凑间距 */
+  }
+  
+  .form-header {
+    margin: 0rpx 16rpx 12rpx 16rpx; /* 与主样式保持一致，顶部无边距 */
+  }
+  
+  .form-card {
+    padding: 20rpx 16rpx; /* 进一步减少小屏幕的内边距 */
+  }
+  
+  .form-section {
+    margin-bottom: 12rpx; /* 小屏幕上更紧凑的分组间距 */
+  }
+  
+  .entry-form {
+    padding: 0 16rpx;
+  }
+  
+  .form-actions {
+    padding: 32rpx 16rpx 24rpx 16rpx;
+  }
+  
+  /* 现代化按钮响应式样式 */
+  .action-button {
+    height: 72rpx !important;
+    font-size: 28rpx !important;
+    line-height: 72rpx !important;
+  }
+  
+  /* 表单项响应式 */
+  .form-item {
+    padding: 20rpx 24rpx;
+    min-height: 80rpx;
+  }
+  
+  .item-label {
+    font-size: 28rpx;
+    min-width: 140rpx;
+  }
+  
+  .item-input ::deep .t-input__control {
+    font-size: 28rpx;
+  }
+  
+  .item-textarea ::deep .t-textarea__control {
+    font-size: 28rpx;
+  }
+  
+  .amount-value {
+    font-size: 30rpx;
+  }
+  
+  .batch-id {
+    font-size: 28rpx;
+  }
+  
+  .date-text {
+    font-size: 28rpx;
+  }
+  
+  .section-title {
+    font-size: 26rpx;
+  }
+}
+
+/* 加载状态 */
+.form-actions ::deep .t-button--loading {
+  opacity: 0.6;
+}
+
+/* 表单验证错误样式 */
+.form-item.error {
+  border-left: 4rpx solid var(--td-error-color, #d54941);
+  background: var(--td-error-color-1, #ffeae9);
+}
+
+.form-item.error .item-label {
+  color: var(--td-error-color, #d54941);
+}
+
+.form-item.error ::deep .t-input__control {
+  color: var(--td-error-color, #d54941);
+}
+
+.form-item.error ::deep .t-textarea__control {
+  color: var(--td-error-color, #d54941);
+}
+
+/* 无障碍支持 */
+.batch-id-section:focus,
+.amount-display:focus {
+  outline: 2rpx solid var(--td-brand-color, #0052d9);
+  outline-offset: 4rpx;
+  border-radius: 8rpx;
+}
+
+/* 动画效果 */
+.form-card {
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.form-card:hover {
+  transform: translateY(-4rpx);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+}
+
+.form-actions ::deep .t-button {
+  transition: all 0.3s ease;
+}
+
+.form-actions ::deep .t-button:active {
+  transform: scale(0.98);
+}
+
+/* 额外的样式重置 - 微信小程序兼容版本 */
+.form-actions {
+  border: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* 特殊情况下的边框重置 - 简化选择器 */
+.form-actions .t-button {
+  border: none !important;
+}
+
+/* 微信小程序button标签重置 - 简化选择器 */
+.form-actions button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box !important;
+}
+
+/* 满屏备注框样式 */
+.fullwidth-textarea-container {
+  margin: 0 -32rpx; /* 负边距来抵消父容器的内边距 */
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 0;
+  border: none;
+  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.fullwidth-textarea {
+  padding: 32rpx !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea__control {
+  font-size: 30rpx !important;
+  color: var(--td-text-color-primary, #000000) !important;
+  text-align: left !important;
+  line-height: 1.6 !important;
+  min-height: 120rpx !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea__placeholder {
+  color: var(--td-text-color-placeholder, #bbbbbb) !important;
+  text-align: left !important;
+}
+
+.fullwidth-textarea ::deep .t-textarea__indicator {
+  color: var(--td-text-color-placeholder, #bbbbbb) !important;
+  font-size: 24rpx !important;
+  text-align: right !important;
+  margin-top: 16rpx !important;
+}
+
+/* 响应式满屏备注框 */
+@media screen and (max-width: 480px) {
+  .fullwidth-textarea-container {
+    margin: 0 -16rpx; /* 适应小屏幕的边距 */
+  }
+  
+  .fullwidth-textarea {
+    padding: 24rpx !important;
+  }
+  
+  .fullwidth-textarea ::deep .t-textarea__control {
+    font-size: 28rpx !important;
+    min-height: 100rpx !important;
+  }
+}

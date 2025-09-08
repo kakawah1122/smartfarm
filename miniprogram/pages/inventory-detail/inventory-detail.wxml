@@ -13,7 +13,6 @@
   <view class="content">
     <!-- 库存列表 -->
     <view class="materials-section">
-      <view class="section-title">{{pageTitle}}</view>
       <view wx:if="{{filterCategory}}" class="filter-info">
         <t-tag theme="primary" size="small">
           {{filterCategory === 'feed' ? '饲料分类' : filterCategory === 'medicine' ? '药品分类' : filterCategory === 'equipment' ? '设备分类' : '全部分类'}}
@@ -31,7 +30,7 @@
             style="height: 28px; line-height: 28px; font-size: 13px; padding: 4px 10px;"
           />
         </view>
-        <t-button theme="primary" size="small" bind:tap="showFilter">筛选</t-button>
+        <t-button theme="light" size="small" bind:tap="showFilter" class="light-button">筛选</t-button>
       </view>
 
       <!-- 物料列表 -->

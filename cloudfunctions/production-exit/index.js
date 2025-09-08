@@ -95,10 +95,48 @@ async function listExitRecords(event, wxContext) {
     .limit(pageSize)
     .get()
   
+  // 为每个出栏记录关联获取入栏记录的品种信息
+  const enrichedRecords = await Promise.all(
+    records.data.map(async (record) => {
+      try {
+        // 通过批次号获取对应的入栏记录信息
+        const entryRecord = await db.collection('entry_records')
+          .where({ batchNumber: record.batchNumber })
+          .limit(1)
+          .get()
+        
+        if (entryRecord.data.length > 0) {
+          const entry = entryRecord.data[0]
+          return {
+            ...record,
+            breed: entry.breed || '未知品种',
+            supplier: entry.supplier || '',
+            entryDate: entry.entryDate
+          }
+        } else {
+          return {
+            ...record,
+            breed: '未知品种',
+            supplier: '',
+            entryDate: ''
+          }
+        }
+      } catch (error) {
+        console.error('获取入栏信息失败:', error)
+        return {
+          ...record,
+          breed: '未知品种',
+          supplier: '',
+          entryDate: ''
+        }
+      }
+    })
+  )
+  
   return {
     success: true,
     data: {
-      records: records.data,
+      records: enrichedRecords,
       pagination: {
         page,
         pageSize,
@@ -146,11 +184,16 @@ async function createExitRecord(event, wxContext) {
   // 生成出栏单号
   const exitNumber = generateExitNumber()
   
+  // 获取入栏记录的品种信息
+  const entryInfo = entryRecord.data[0]
+  
   const now = new Date()
   const newRecord = {
     userId: wxContext.OPENID,
     exitNumber,
     batchNumber: recordData.batchNumber,
+    breed: entryInfo.breed || '未知品种', // 从入栏记录获取品种
+    supplier: entryInfo.supplier || '',   // 从入栏记录获取供应商信息
     customer: recordData.customer,
     customerContact: recordData.customerContact || '',
     quantity: Number(recordData.quantity),

@@ -107,7 +107,7 @@ page {
 .weather-card {
   margin-top: 0;
   background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(59, 130, 246, 0.12) 100%);
-  border: 1px solid rgba(14, 165, 233, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(14, 165, 233, 0.1));
   min-height: 180rpx;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(1);
@@ -242,7 +242,7 @@ page {
   padding: var(--spacing-xs) var(--spacing-sm);
   background: rgba(14, 165, 233, 0.08);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(14, 165, 233, 0.15);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(14, 165, 233, 0.15));
   display: inline-block;
   transition: all 0.3s ease;
 }
@@ -262,7 +262,7 @@ page {
   border-radius: var(--radius-sm);
   text-align: center;
   background: rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
   transition: all 0.2s ease;
 }
 
@@ -304,7 +304,7 @@ page {
   padding: var(--spacing-xs) var(--spacing-sm);
   background: rgba(59, 130, 246, 0.06);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
   margin-bottom: var(--spacing-xs);
 }
 
@@ -317,7 +317,7 @@ page {
   padding: var(--spacing-xs) var(--spacing-sm);
   background: rgba(14, 165, 233, 0.08);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(14, 165, 233, 0.15);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(14, 165, 233, 0.15));
 }
 
 /* 天气详细信息样式 */
@@ -326,7 +326,7 @@ page {
   justify-content: space-between;
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-lg);
-  border-top: 1px solid rgba(14, 165, 233, 0.1);
+  border-top: 2rpx solid rgba(14, 165, 233, 0.1);
   gap: var(--spacing-base);
 }
 
@@ -427,12 +427,12 @@ page {
 
 .success-bg {
   background: linear-gradient(135deg, var(--color-success-light), var(--color-success-lighter));
-  border: 1px solid rgba(16, 185, 129, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(16, 185, 129, 0.1));
 }
 
 .primary-bg {
   background: linear-gradient(135deg, var(--color-info-light), var(--color-info-lighter));
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
 }
 
 .price-label {
@@ -523,17 +523,17 @@ page {
 
 .todo-item:nth-child(1) {
   background: linear-gradient(135deg, var(--color-danger-lighter), rgba(254, 202, 202, 0.8));
-  border: 1px solid rgba(239, 68, 68, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(239, 68, 68, 0.1));
 }
 
 .todo-item:nth-child(2) {
   background: linear-gradient(135deg, var(--color-warning-lighter), rgba(254, 243, 199, 0.8));
-  border: 1px solid rgba(245, 158, 11, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(245, 158, 11, 0.1));
 }
 
 .todo-item:nth-child(3) {
   background: linear-gradient(135deg, var(--color-info-lighter), rgba(191, 219, 254, 0.8));
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
 }
 
 .todo-left {
@@ -612,7 +612,7 @@ page {
   margin-bottom: 0;
   color: var(--primary-blue) !important;
   background: transparent !important;
-  border: 1px solid var(--color-border-light) !important;
+  border: 2rpx solid var(--color-border-light) !important;
   border-radius: var(--radius-md) !important;
 }
 

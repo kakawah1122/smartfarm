@@ -52,7 +52,7 @@
 
       <!-- 添加按钮 -->
       <view class="action-section">
-        <t-button theme="primary" size="large" block icon="add" bind:tap="addHealthRecord">
+        <t-button theme="primary" size="large" block icon="add" bind:tap="addHealthRecord" class="primary-button">
           新增健康记录
         </t-button>
       </view>
@@ -124,10 +124,10 @@
       <!-- 操作按钮 -->
       <view class="action-section">
         <view class="vaccine-actions">
-          <t-button theme="primary" size="large" icon="add" bind:tap="addVaccinePlan" class="vaccine-action-btn">
+          <t-button theme="primary" size="large" icon="add" bind:tap="addVaccinePlan" class="vaccine-action-btn primary-button">
             添加疫苗计划
           </t-button>
-          <t-button theme="success" size="large" icon="check" bind:tap="recordVaccination" class="vaccine-action-btn">
+          <t-button theme="success" size="large" icon="check" bind:tap="recordVaccination" class="vaccine-action-btn success-button">
             记录接种
           </t-button>
         </view>
@@ -228,7 +228,7 @@
             <t-notice-bar theme="warning" content="⚠️ AI建议仅供参考，请结合专业兽医诊断进行治疗决策" />
             <t-button theme="primary" size="large" block bind:tap="getAIAdvice" 
                       disabled="{{!symptomInput && uploadedImages.length === 0}}" 
-                      class="ai-submit-btn">
+                      class="ai-submit-btn primary-button">
               获取AI精准诊断
             </t-button>
           </view>
@@ -256,8 +256,8 @@
             </view>
           </view>
           <view class="advice-actions">
-            <t-button theme="success" size="small" bind:tap="adoptAdvice">采纳建议</t-button>
-            <t-button theme="light" size="small" bind:tap="saveAdvice">保存记录</t-button>
+            <t-button theme="success" size="small" bind:tap="adoptAdvice" class="success-button">采纳建议</t-button>
+            <t-button theme="light" size="small" bind:tap="saveAdvice" class="light-button">保存记录</t-button>
           </view>
         </view>
       </view>

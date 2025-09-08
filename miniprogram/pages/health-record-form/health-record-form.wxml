@@ -92,7 +92,7 @@
                   icon="robot"
                   bind:tap="startAIDiagnosis"
                   disabled="{{!formData.symptoms || submitting}}"
-                  class="ai-diagnosis-btn"
+                  class="ai-diagnosis-btn light-button ai-button"
                 >
                   🤖 AI智能诊断
                 </t-button>
@@ -152,7 +152,7 @@
                   theme="primary" 
                   size="small" 
                   bind:tap="adoptAIDiagnosis"
-                  class="adopt-btn"
+                  class="adopt-btn primary-button"
                 >
                   采用此诊断
                 </t-button>
@@ -161,7 +161,7 @@
                   variant="outline"
                   size="small" 
                   bind:tap="viewFullDiagnosis"
-                  class="detail-btn"
+                  class="detail-btn light-button"
                 >
                   查看详情
                 </t-button>
@@ -339,6 +339,7 @@
           bind:tap="onSubmit"
           loading="{{submitting}}"
           disabled="{{submitting}}"
+          class="action-button primary-button"
         >
           {{submitting ? '提交中...' : '提交健康记录'}}
         </t-button>
@@ -348,6 +349,7 @@
           block 
           bind:tap="onReset"
           disabled="{{submitting}}"
+          class="action-button secondary-button"
         >
           重置表单
         </t-button>

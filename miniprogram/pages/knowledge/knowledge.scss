@@ -29,7 +29,7 @@ page {
   padding: var(--spacing-base) var(--spacing-lg);
   padding-left: max(var(--spacing-lg), var(--safe-area-inset-left, 0));
   padding-right: max(var(--spacing-lg), var(--safe-area-inset-right, 0));
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 2rpx solid var(--color-border-light);
 }
 
 .search-container {
@@ -42,7 +42,7 @@ page {
   top: var(--navbar-height);
   z-index: var(--z-index-sticky);
   background: var(--color-bg-primary);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 2rpx solid var(--color-border-light);
 }
 
 .knowledge-tabs {
@@ -110,7 +110,7 @@ page {
 /* 热门推荐卡片 */
 .hot-card {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.02) 0%, rgba(249, 115, 22, 0.05) 100%);
-  border: 1px solid rgba(239, 68, 68, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(239, 68, 68, 0.1));
 }
 
 .hot-card::before {
@@ -141,7 +141,7 @@ page {
 /* 收藏卡片 */
 .collection-card {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.02) 0%, rgba(168, 85, 247, 0.05) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(139, 92, 246, 0.1));
 }
 
 .collection-card::before {
@@ -179,7 +179,7 @@ page {
   text-align: center;
   gap: var(--spacing-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--color-border-light);
+  border: 2rpx solid var(--color-border-light);
 }
 
 .collection-item:active {

@@ -49,7 +49,13 @@ Page({
     refreshing: false,
     
     // 加载状态
-    isLoading: false
+    isLoading: false,
+    
+    // Loading 状态管理
+    loadingVisible: false,
+    
+    // 位置获取重试次数
+    locationRetryCount: 0
   },
 
   onLoad(options: any) {
@@ -63,9 +69,74 @@ Page({
     this.loadWeatherData()
   },
 
+  // 安全显示 Loading
+  showLoadingSafe(title = '加载中...') {
+    if (!this.data.loadingVisible) {
+      console.log('显示 Loading:', title)
+      wx.showLoading({ title })
+      this.setData({ loadingVisible: true })
+    }
+  },
+
+  // 安全隐藏 Loading
+  hideLoadingSafe() {
+    if (this.data.loadingVisible) {
+      console.log('隐藏 Loading')
+      wx.hideLoading()
+      this.setData({ loadingVisible: false })
+    } else {
+      console.log('⚠️ 尝试隐藏 Loading 但状态为未显示，跳过操作')
+    }
+  },
+
+  // 强制清理 Loading 状态（用于异常情况）
+  forceHideLoading() {
+    console.log('强制清理 Loading 状态')
+    try {
+      wx.hideLoading()
+    } catch (e) {
+      // 忽略 hideLoading 可能的异常
+    }
+    this.setData({ loadingVisible: false })
+  },
+
+  // 统一异常处理
+  handleError(error: any, context = '操作') {
+    console.error(`${context}失败:`, error)
+    
+    // 确保 Loading 状态被清理
+    this.forceHideLoading()
+    
+    // 重置相关状态
+    this.setData({ 
+      isLoading: false,
+      refreshing: false 
+    })
+    
+    // 显示错误提示
+    const errorMessage = error?.message || error?.errMsg || `${context}失败，请稍后重试`
+    wx.showToast({
+      title: errorMessage,
+      icon: 'none',
+      duration: 2000
+    })
+  },
+
   onShow() {
+    // 重置 Loading 状态，防止页面切换导致的状态不一致
+    if (this.data.loadingVisible && !this.data.isLoading) {
+      console.log('检测到 Loading 状态不一致，重置状态')
+      this.setData({ loadingVisible: false })
+    }
+    
     // 检查是否需要自动刷新（1小时后）
     this.checkAutoRefresh()
+  },
+
+  onUnload() {
+    // 页面卸载时强制清理 Loading 状态
+    console.log('天气详情页卸载，清理 Loading 状态')
+    this.forceHideLoading()
   },
 
   // 下拉刷新
@@ -88,16 +159,20 @@ Page({
   },
 
   // 获取完整天气数据
-  async getWeatherData() {
+  async getWeatherData(showLoading = true) {
     // 防止重复调用
     if (this.data.isLoading) {
       console.log('正在获取天气数据中，跳过重复请求')
       return
     }
 
+    let shouldHideLoading = false
     try {
       this.setData({ isLoading: true })
-      wx.showLoading({ title: '获取天气中...' })
+      if (showLoading) {
+        this.showLoadingSafe('获取天气中...')
+        shouldHideLoading = true
+      }
       
       const locationRes = await this.getLocation()
       const weatherRes = await this.callCompleteWeatherAPI(locationRes.latitude, locationRes.longitude)
@@ -107,10 +182,13 @@ Page({
         this.updateCompleteWeatherData(weatherData)
         this.cacheWeatherData(weatherData)
         
-        wx.showToast({
-          title: '天气更新成功',
-          icon: 'success'
-        })
+        // 只在显示Loading时显示成功提示
+        if (showLoading) {
+          wx.showToast({
+            title: '天气更新成功',
+            icon: 'success'
+          })
+        }
       } else {
         // 增强错误处理，显示云函数返回的具体错误信息
         const errorMessage = weatherRes.result?.error?.message || weatherRes.result?.message || '天气数据获取失败，请稍后重试'
@@ -118,22 +196,28 @@ Page({
         throw new Error(errorMessage)
       }
     } catch (error: any) {
-      console.error('获取天气数据失败:', error)
-      wx.showModal({
-        title: '获取失败',
-        content: error.message || '天气数据获取失败，请检查网络连接',
-        showCancel: false
-      })
+      this.handleError(error, '获取天气数据')
     } finally {
       this.setData({ isLoading: false })
-      wx.hideLoading()
+      // 确保 Loading 状态正确清理
+      if (shouldHideLoading) {
+        this.hideLoadingSafe()
+      }
     }
   },
 
   // 获取位置 - 彻底重写，确保获取真实位置
-  getLocation(): Promise<any> {
+  getLocation(retryCount = 0): Promise<any> {
     return new Promise((resolve, reject) => {
       console.log('🌍 === 天气详情页开始获取真实地理位置 ===')
+      console.log('🌍 当前重试次数:', retryCount)
+      
+      // 防止无限递归重试
+      if (retryCount >= 3) {
+        console.error('🌍 位置获取重试次数超限，停止重试')
+        reject(new Error('位置获取失败，重试次数超限'))
+        return
+      }
       
       // 先检查位置权限
       wx.getSetting({
@@ -198,8 +282,8 @@ Page({
                 confirmText: '重试',
                 success: (res) => {
                   if (res.confirm) {
-                    // 重新尝试获取位置
-                    this.getLocation().then(resolve).catch(reject)
+                    // 重新尝试获取位置，递增重试次数
+                    this.getLocation(retryCount + 1).then(resolve).catch(reject)
                   } else {
                     reject(error)
                   }
@@ -638,6 +722,8 @@ Page({
       // 清除缓存，强制获取新数据
       this.clearWeatherCache()
       await this.getWeatherData()
+    } catch (error) {
+      this.handleError(error, '刷新天气数据')
     } finally {
       this.setData({ refreshing: false })
     }
@@ -645,21 +731,25 @@ Page({
 
   // 检查是否需要自动刷新
   async checkAutoRefresh() {
-    const cachedData = this.getCachedWeatherData()
-    if (!cachedData) {
-      // 没有缓存数据，自动获取
-      console.log('没有缓存数据，自动获取天气')
-      await this.getWeatherData()
-    } else {
-      // 有缓存数据，检查是否过期（1小时）
-      const now = Date.now()
-      const cacheTime = cachedData.timestamp || 0
-      const oneHour = 60 * 60 * 1000
-      
-      if (now - cacheTime > oneHour) {
-        console.log('缓存已过期，自动刷新天气')
-        await this.getWeatherData()
+    try {
+      const cachedData = this.getCachedWeatherData()
+      if (!cachedData) {
+        // 没有缓存数据，自动获取（静默模式，不显示Loading）
+        console.log('没有缓存数据，自动获取天气（静默模式）')
+        await this.getWeatherData(false)
+      } else {
+        // 有缓存数据，检查是否过期（1小时）
+        const now = Date.now()
+        const cacheTime = cachedData.timestamp || 0
+        const oneHour = 60 * 60 * 1000
+        
+        if (now - cacheTime > oneHour) {
+          console.log('缓存已过期，自动刷新天气（静默模式）')
+          await this.getWeatherData(false)
+        }
       }
+    } catch (error) {
+      this.handleError(error, '自动刷新检查')
     }
   },
 

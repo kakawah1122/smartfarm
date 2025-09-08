@@ -77,6 +77,14 @@ exports.main = async (event, context) => {
       case 'usage_analysis':
         return await getUsageAnalysis(event, wxContext)
       
+      // 快速统计接口
+      case 'quick_stats':
+        return await getQuickStats(event, wxContext)
+      
+      // 财务统计接口（供财务管理模块使用）
+      case 'financial_stats':
+        return await getFinancialStats(event, wxContext)
+      
       // 采购入库专用接口
       case 'purchase_inbound':
         return await purchaseInbound(event, wxContext)
@@ -964,5 +972,261 @@ async function purchaseInbound(event, wxContext) {
     })
   } catch (error) {
     throw new Error('采购入库失败: ' + error.message)
+  }
+}
+
+// ===================
+// 快速统计接口
+// ===================
+
+// 获取快速统计信息（用于查看全部功能的优化）
+async function getQuickStats(event, wxContext) {
+  try {
+    // 并行查询以提高性能
+    const [recordsCount, recentRecords] = await Promise.all([
+      // 获取总记录数
+      db.collection('material_records').count(),
+      // 获取最新的几条记录用于预览
+      db.collection('material_records')
+        .orderBy('createTime', 'desc')
+        .limit(3)
+        .get()
+    ])
+    
+    const stats = {
+      totalRecords: recordsCount.total,
+      hasRecords: recordsCount.total > 0,
+      recentRecordsPreview: recentRecords.data.map(record => ({
+        id: record._id,
+        type: record.type,
+        date: record.recordDate,
+        createTime: record.createTime
+      }))
+    }
+    
+    // 按类型统计（可选）
+    if (recordsCount.total > 0) {
+      const typeStats = await db.collection('material_records')
+        .aggregate()
+        .group({
+          _id: '$type',
+          count: db.command.aggregate.sum(1)
+        })
+        .end()
+      
+      stats.typeBreakdown = {}
+      typeStats.list.forEach(item => {
+        stats.typeBreakdown[item._id] = item.count
+      })
+    }
+    
+    return {
+      success: true,
+      data: stats
+    }
+  } catch (error) {
+    console.error('获取快速统计失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      data: {
+        totalRecords: 0,
+        hasRecords: false,
+        recentRecordsPreview: []
+      }
+    }
+  }
+}
+
+// ===================
+// 财务统计接口（供财务管理模块使用）
+// ===================
+
+// 获取物料记录的财务统计信息
+async function getFinancialStats(event, wxContext) {
+  try {
+    const { 
+      dateRange = null,
+      groupBy = 'month' // 'month', 'week', 'day'
+    } = event
+    
+    let query = db.collection('material_records')
+    
+    // 构建查询条件
+    const where = {}
+    
+    if (dateRange && dateRange.start && dateRange.end) {
+      where.recordDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
+    }
+    
+    if (Object.keys(where).length > 0) {
+      query = query.where(where)
+    }
+    
+    // 获取所有记录用于统计
+    const records = await query.get()
+    
+    // 按类型分类统计
+    const purchaseStats = {
+      totalAmount: 0,
+      totalQuantity: 0,
+      recordCount: 0,
+      avgAmount: 0,
+      categoryBreakdown: {}
+    }
+    
+    const useStats = {
+      totalAmount: 0,
+      totalQuantity: 0,
+      recordCount: 0,
+      avgAmount: 0,
+      categoryBreakdown: {}
+    }
+    
+    // 时间分组统计
+    const timeSeriesData = {}
+    
+    records.data.forEach(record => {
+      const amount = record.totalAmount || 0
+      const quantity = record.quantity || 0
+      const category = record.material?.category || '未分类'
+      
+      // 分类统计
+      if (record.type === 'purchase') {
+        purchaseStats.totalAmount += amount
+        purchaseStats.totalQuantity += quantity
+        purchaseStats.recordCount++
+        
+        if (!purchaseStats.categoryBreakdown[category]) {
+          purchaseStats.categoryBreakdown[category] = {
+            amount: 0,
+            quantity: 0,
+            count: 0
+          }
+        }
+        purchaseStats.categoryBreakdown[category].amount += amount
+        purchaseStats.categoryBreakdown[category].quantity += quantity
+        purchaseStats.categoryBreakdown[category].count++
+        
+      } else if (record.type === 'use') {
+        useStats.totalAmount += amount
+        useStats.totalQuantity += quantity
+        useStats.recordCount++
+        
+        if (!useStats.categoryBreakdown[category]) {
+          useStats.categoryBreakdown[category] = {
+            amount: 0,
+            quantity: 0,
+            count: 0
+          }
+        }
+        useStats.categoryBreakdown[category].amount += amount
+        useStats.categoryBreakdown[category].quantity += quantity
+        useStats.categoryBreakdown[category].count++
+      }
+      
+      // 时间序列统计
+      const recordDate = record.recordDate || record.createTime?.split('T')[0]
+      if (recordDate) {
+        let timeKey = recordDate
+        
+        // 根据groupBy参数调整时间分组
+        if (groupBy === 'month') {
+          timeKey = recordDate.substring(0, 7) // YYYY-MM
+        } else if (groupBy === 'week') {
+          // 简化处理，按天统计
+          timeKey = recordDate
+        }
+        
+        if (!timeSeriesData[timeKey]) {
+          timeSeriesData[timeKey] = {
+            purchase: { amount: 0, count: 0 },
+            use: { amount: 0, count: 0 }
+          }
+        }
+        
+        if (record.type === 'purchase') {
+          timeSeriesData[timeKey].purchase.amount += amount
+          timeSeriesData[timeKey].purchase.count++
+        } else if (record.type === 'use') {
+          timeSeriesData[timeKey].use.amount += amount
+          timeSeriesData[timeKey].use.count++
+        }
+      }
+    })
+    
+    // 计算平均值
+    purchaseStats.avgAmount = purchaseStats.recordCount > 0 
+      ? (purchaseStats.totalAmount / purchaseStats.recordCount).toFixed(2)
+      : 0
+    
+    useStats.avgAmount = useStats.recordCount > 0 
+      ? (useStats.totalAmount / useStats.recordCount).toFixed(2)
+      : 0
+    
+    // 整体统计
+    const totalStats = {
+      totalRecords: records.data.length,
+      totalTransactionAmount: purchaseStats.totalAmount + useStats.totalAmount,
+      netCostImpact: purchaseStats.totalAmount - useStats.totalAmount, // 净成本影响
+      mostActiveCategory: getMostActiveCategory(purchaseStats, useStats),
+      averageTransactionSize: records.data.length > 0 
+        ? ((purchaseStats.totalAmount + useStats.totalAmount) / records.data.length).toFixed(2)
+        : 0
+    }
+    
+    return {
+      success: true,
+      data: {
+        summary: totalStats,
+        purchase: purchaseStats,
+        usage: useStats,
+        timeSeries: timeSeriesData,
+        dateRange: dateRange,
+        generatedAt: new Date().toISOString()
+      }
+    }
+  } catch (error) {
+    console.error('获取财务统计失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      data: {
+        summary: { totalRecords: 0, totalTransactionAmount: 0 },
+        purchase: { totalAmount: 0, recordCount: 0 },
+        usage: { totalAmount: 0, recordCount: 0 },
+        timeSeries: {}
+      }
+    }
+  }
+}
+
+// 辅助函数：获取最活跃的物料分类
+function getMostActiveCategory(purchaseStats, useStats) {
+  const allCategories = {}
+  
+  // 合并采购和使用的分类数据
+  Object.keys(purchaseStats.categoryBreakdown).forEach(category => {
+    allCategories[category] = (allCategories[category] || 0) + purchaseStats.categoryBreakdown[category].amount
+  })
+  
+  Object.keys(useStats.categoryBreakdown).forEach(category => {
+    allCategories[category] = (allCategories[category] || 0) + useStats.categoryBreakdown[category].amount
+  })
+  
+  // 找出金额最大的分类
+  let maxCategory = '未知'
+  let maxAmount = 0
+  
+  Object.entries(allCategories).forEach(([category, amount]) => {
+    if (amount > maxAmount) {
+      maxAmount = amount
+      maxCategory = category
+    }
+  })
+  
+  return {
+    category: maxCategory,
+    totalAmount: maxAmount
   }
 }

@@ -79,7 +79,7 @@
     <view class="card ai-advice-card">
       <view class="card-header">
         <text class="card-title">🤖 AI智能建议</text>
-        <t-button wx:if="{{!aiAdvice.loading}}" size="small" theme="primary" bind:tap="generateFarmingAdvice" class="refresh-btn">
+        <t-button wx:if="{{!aiAdvice.loading}}" size="small" theme="primary" bind:tap="generateFarmingAdvice" class="refresh-btn ai-button primary-button">
           {{aiAdvice.result ? '刷新建议' : '生成建议'}}
         </t-button>
       </view>
@@ -139,10 +139,10 @@
         
         <!-- 快速操作 -->
         <view class="quick-actions">
-          <t-button size="small" theme="light" variant="outline" bind:tap="viewDetailedAdvice">
+          <t-button size="small" theme="light" variant="outline" bind:tap="viewDetailedAdvice" class="light-button">
             查看详细建议
           </t-button>
-          <t-button size="small" theme="success" variant="outline" bind:tap="addAdviceToTodo">
+          <t-button size="small" theme="success" variant="outline" bind:tap="addAdviceToTodo" class="success-button">
             添加到待办
           </t-button>
         </view>
@@ -170,7 +170,7 @@
           <t-tag theme="{{item.tagTheme || 'default'}}" size="small" class="todo-tag">{{item.priorityText || '普通'}}</t-tag>
         </view>
       </view>
-      <t-button theme="light" size="medium" block bind:tap="viewAllTodos" class="view-all-btn">
+      <t-button theme="light" size="medium" block bind:tap="viewAllTodos" class="view-all-btn light-button">
         查看全部
       </t-button>
     </view>

@@ -14,6 +14,13 @@ exports.main = async (event, context) => {
   const { action } = event
   
   try {
+    // 不需要权限验证的操作
+    const noPermissionRequired = [
+      'get_user_info', 
+      'ensure_user_exists', 
+      'debug_user_record'
+    ]
+    
     // 对于更新个人资料，允许用户修改自己的信息
     if (action === 'update_profile') {
       const hasPermission = await verifyUserPermission(wxContext.OPENID, event.targetUserId)
@@ -24,7 +31,7 @@ exports.main = async (event, context) => {
           message: '权限不足，您只能修改自己的资料'
         }
       }
-    } else {
+    } else if (!noPermissionRequired.includes(action)) {
       // 其他操作需要管理员权限
       const hasPermission = await verifyAdminPermission(wxContext.OPENID)
       if (!hasPermission) {
@@ -41,6 +48,12 @@ exports.main = async (event, context) => {
         return await listUsers(event, wxContext)
       case 'get_user_detail':
         return await getUserDetail(event, wxContext)
+      case 'get_user_info':
+        return await getUserInfo(event, wxContext)
+      case 'ensure_user_exists':
+        return await ensureUserExists(event, wxContext)
+      case 'debug_user_record':
+        return await debugUserRecord(event, wxContext)
       case 'update_user_role':
         return await updateUserRole(event, wxContext)
       case 'toggle_user_status':
@@ -675,5 +688,152 @@ async function updateProfile(event, wxContext) {
     }
   } catch (error) {
     throw error
+  }
+}
+
+// 获取当前用户信息（用于个人中心）
+async function getUserInfo(event, wxContext) {
+  try {
+    console.log('获取用户信息，openid:', wxContext.OPENID)
+    
+    if (!wxContext.OPENID) {
+      throw new Error('用户未登录')
+    }
+
+    // 查询用户信息
+    const userResult = await db.collection('users').where({
+      _openid: wxContext.OPENID
+    }).get()
+
+    if (userResult.data.length === 0) {
+      throw new Error('用户记录不存在')
+    }
+
+    const user = userResult.data[0]
+
+    return {
+      success: true,
+      data: {
+        _id: user._id,
+        _openid: user._openid,
+        nickname: user.nickname,
+        avatarUrl: user.avatarUrl,
+        farmName: user.farmName,
+        phone: user.phone,
+        role: user.role,
+        isSuper: user.isSuper,
+        status: user.status || 'active',
+        createTime: user.createTime,
+        lastLoginTime: user.lastLoginTime
+      }
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
+// 确保用户记录存在（如果不存在则创建）
+async function ensureUserExists(event, wxContext) {
+  try {
+    console.log('确保用户记录存在，openid:', wxContext.OPENID)
+    
+    if (!wxContext.OPENID) {
+      throw new Error('用户未登录')
+    }
+
+    // 查询用户是否存在
+    const existingUser = await db.collection('users').where({
+      _openid: wxContext.OPENID
+    }).get()
+
+    if (existingUser.data.length > 0) {
+      return {
+        success: true,
+        message: '用户记录已存在',
+        data: existingUser.data[0]
+      }
+    }
+
+    // 用户不存在，创建新记录
+    const newUser = {
+      _openid: wxContext.OPENID,
+      nickname: '新用户',
+      avatarUrl: '',
+      farmName: '我的养殖场',
+      phone: '',
+      role: 'user',
+      isSuper: false,
+      status: 'active',
+      createTime: new Date(),
+      lastLoginTime: new Date(),
+      loginCount: 1
+    }
+
+    const createResult = await db.collection('users').add({
+      data: newUser
+    })
+
+    // 获取完整的用户记录
+    const createdUser = await db.collection('users').doc(createResult._id).get()
+
+    return {
+      success: true,
+      message: '用户记录创建成功',
+      data: createdUser.data
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
+// 调试用户记录（用于权限问题诊断）
+async function debugUserRecord(event, wxContext) {
+  try {
+    const { targetOpenid } = event
+    const openidToCheck = targetOpenid || wxContext.OPENID
+    
+    console.log('调试用户记录，检查openid:', openidToCheck)
+
+    if (!openidToCheck) {
+      return {
+        success: false,
+        message: '缺少openid参数'
+      }
+    }
+
+    // 查询用户记录
+    const userResult = await db.collection('users').where({
+      _openid: openidToCheck
+    }).get()
+
+    // 统计users集合总记录数
+    const totalCount = await db.collection('users').count()
+
+    return {
+      success: true,
+      data: {
+        targetOpenid: openidToCheck,
+        userExists: userResult.data.length > 0,
+        userRecord: userResult.data.length > 0 ? userResult.data[0] : null,
+        totalUsersInCollection: totalCount.total,
+        debugInfo: {
+          queryTime: new Date(),
+          resultCount: userResult.data.length
+        }
+      }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      data: {
+        targetOpenid: event.targetOpenid || wxContext.OPENID,
+        userExists: false,
+        debugInfo: {
+          errorTime: new Date(),
+          errorMessage: error.message
+        }
+      }
+    }
   }
 }

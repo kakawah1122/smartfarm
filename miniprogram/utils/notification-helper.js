@@ -350,7 +350,7 @@ class NotificationHelper {
   static getPriorityColor(priority) {
     const colorMap = {
       [NotificationPriority.LOW]: '#999999',
-      [NotificationPriority.NORMAL]: '#14b8a6',
+      [NotificationPriority.NORMAL]: '#0052d9',
       [NotificationPriority.HIGH]: '#f59e0b',
       [NotificationPriority.URGENT]: '#ef4444'
     }

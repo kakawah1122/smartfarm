@@ -14,7 +14,7 @@
 .profile-setup-tip {
   position: relative;
   margin: 0 32rpx 24rpx;
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  background: linear-gradient(135deg, var(--td-brand-color, #0052d9) 0%, var(--td-brand-color-8, #4582e8) 100%);
   border-radius: 20rpx;
   padding: 32rpx;
   box-shadow: 0 8rpx 24rpx rgba(6, 182, 212, 0.3);
@@ -87,7 +87,7 @@
 }
 
 .user-card {
-  background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 50%, #0891b2 100%);
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   border-radius: 24rpx;
   padding: 48rpx 40rpx;
   box-shadow: 0 8rpx 32rpx rgba(20, 184, 166, 0.25);
@@ -342,7 +342,7 @@
 }
 
 .tdesign-menu-card:active .tdesign-card-arrow {
-  color: #14b8a6;
+  color: var(--td-brand-color, #0052d9);
   transform: translateX(4rpx);
 }
 
@@ -363,9 +363,9 @@
 }
 
 .auth-section .login-btn.t-button {
-  background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%) !important;
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
   border: none !important;
-  box-shadow: 0 4rpx 24rpx rgba(20, 184, 166, 0.25) !important;
+  box-shadow: 0 4rpx 24rpx rgba(0, 82, 217, 0.25) !important;
   color: white !important;
 }
 
@@ -486,9 +486,9 @@
 .quick-tips {
   margin-bottom: 32rpx;
   padding: 24rpx;
-  background: rgba(20, 184, 166, 0.05);
+  background: rgba(0, 82, 217, 0.05);
   border-radius: 12rpx;
-  border-left: 6rpx solid #14b8a6;
+  border-left: 6rpx solid var(--td-brand-color, #0052d9);
 }
 
 .tip-item {
@@ -539,9 +539,9 @@
 }
 
 .form-input:focus {
-  border-color: #14b8a6;
+  border-color: var(--td-brand-color, #0052d9);
   background: #ffffff;
-  box-shadow: 0 0 0 4rpx rgba(20, 184, 166, 0.1);
+  box-shadow: 0 0 0 4rpx rgba(0, 82, 217, 0.1);
 }
 
 .edit-dialog-footer {
@@ -565,6 +565,6 @@
 }
 
 .edit-btn-confirm {
-  color: #14b8a6;
+  color: var(--td-brand-color, #0052d9);
   font-weight: 600;
 }

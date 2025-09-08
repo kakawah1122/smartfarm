@@ -34,7 +34,7 @@ page {
   top: 0;
   z-index: var(--z-index-sticky);
   box-shadow: var(--shadow-sm);
-  border-bottom: 1px solid var(--td-border-level-1-color, var(--color-border-light));
+  border-bottom: 2rpx solid var(--td-border-level-1-color, var(--color-border-light));
   /* 优化与导航栏的间距 */
   margin-top: 0;
 }

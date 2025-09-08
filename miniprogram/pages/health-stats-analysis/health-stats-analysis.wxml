@@ -326,7 +326,7 @@
             <view class="section-header">
               <t-icon name="robot" size="32rpx" color="#0052D9" />
               <text class="section-title">🔮 AI健康预测</text>
-              <t-button wx:if="{{!aiPrediction.loading}}" size="small" theme="primary" bind:tap="generateAIPrediction">
+              <t-button wx:if="{{!aiPrediction.loading}}" size="small" theme="primary" bind:tap="generateAIPrediction" class="ai-button primary-button">
                 {{aiPrediction.result ? '重新预测' : '生成预测'}}
               </t-button>
             </view>

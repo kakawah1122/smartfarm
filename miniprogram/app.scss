@@ -49,22 +49,60 @@ page {
   --navbar-height: calc(88rpx + max(var(--safe-area-inset-top, 0rpx), 44rpx));
   --total-header-height: calc(160rpx + max(var(--safe-area-inset-top, 0rpx), 44rpx));
   
-  /* TDesign 主题色覆盖 - 使用标准变量 */
+  /* === TDesign 主题色系统 - 现代化蓝色设计 === */
+  /* 核心品牌色 - 现代蓝色渐变系统 */
   --td-brand-color: #0052d9;
+  --td-brand-color-1: #f2f3ff;
+  --td-brand-color-2: #d9e1ff;
+  --td-brand-color-3: #b5c7ff;
+  --td-brand-color-4: #8daeff;
+  --td-brand-color-5: #618dff;
+  --td-brand-color-6: #366ef4;
+  --td-brand-color-7: #0052d9;
+  --td-brand-color-8: #4582e8;
+  --td-brand-color-9: #1976d2;
+  --td-brand-color-10: #003cab;
+  --td-brand-color-light: #f2f3ff;
+  --td-brand-color-light-active: #d9e1ff;
+  --td-brand-color-active: #1976d2;
+  --td-brand-color-disabled: #b5c7ff;
+  
+  /* 语义色彩系统 */
   --td-warning-color: #ed7b2f;
   --td-error-color: #d54941;
   --td-success-color: #00a870;
+  --td-info-color: #0052d9;
   
-  /* 主色调系统 - 参照BOSS直聘蓝绿色设计 */
-  --primary-blue: #4ade80;
-  --primary-teal: #14b8a6;
-  --primary-cyan: #06b6d4;
-  --primary-blue-light: #dcfce7;
-  --primary-blue-lighter: #f0fdf4;
-  --primary-blue-dark: #059669;
-  --primary-gradient: linear-gradient(135deg, #14b8a6 0%, #06b6d4 50%, #0891b2 100%);
-  --primary-gradient-reverse: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #14b8a6 100%);
-  --header-gradient: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+  /* === TDesign 按钮全局样式变量 === */
+  /* 按钮主要颜色 - 现代蓝色渐变 */
+  --td-button-primary-bg-color: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
+  --td-button-primary-border-color: transparent;
+  --td-button-primary-color: #ffffff;
+  --td-button-primary-active-bg-color: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%);
+  --td-button-primary-disabled-bg: #b5c7ff;
+  --td-button-primary-disabled-border-color: #b5c7ff;
+  --td-button-primary-disabled-color: #ffffff;
+  
+  /* 按钮基础样式 */
+  --td-button-border-radius: 12rpx;
+  --td-button-font-weight: 500;
+  --td-button-large-height: 80rpx;
+  --td-button-large-font-size: 30rpx;
+  --td-button-large-padding-horizontal: 32rpx;
+  --td-button-medium-height: 72rpx;
+  --td-button-medium-font-size: 28rpx;
+  --td-button-medium-padding-horizontal: 24rpx;
+  
+  /* === 统一现代蓝色主色调系统 === */
+  /* 与TDesign按钮保持一致的现代蓝色风格 */
+  --primary-blue: #0052d9;
+  --primary-blue-light: #4582e8;
+  --primary-blue-lighter: #f2f3ff;
+  --primary-blue-dark: #1976d2;
+  --primary-blue-darker: #003cab;
+  --primary-gradient: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
+  --primary-gradient-reverse: linear-gradient(135deg, #1976d2 0%, #4582e8 100%);
+  --header-gradient: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   
   /* 语义化色彩 */
   --color-success: #10b981;
@@ -186,7 +224,7 @@ page {
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
-.text-primary { color: var(--primary-teal); }
+.text-primary { color: var(--primary-blue); }
 .text-secondary { color: var(--color-text-secondary); }
 .text-tertiary { color: var(--color-text-tertiary); }
 .text-quaternary { color: var(--color-text-quaternary); }
@@ -381,7 +419,7 @@ page {
   z-index: var(--z-index-fixed);
   background: var(--header-gradient) !important;
   color: white !important;
-  box-shadow: 0 2rpx 20rpx rgba(20, 184, 166, 0.15);
+  box-shadow: 0 2rpx 20rpx rgba(0, 82, 217, 0.15);
   padding-top: var(--safe-area-inset-top, 0);
   padding-left: var(--safe-area-inset-left, 0);
   padding-right: var(--safe-area-inset-right, 0);
@@ -434,7 +472,7 @@ page {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10rpx);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(255, 255, 255, 0.2));
   transition: all 0.3s ease;
 }
 
@@ -475,47 +513,69 @@ page {
   box-shadow: var(--shadow-sm);
 }
 
+/* === TDesign 按钮全局样式优化 === */
 .t-button {
-  border-radius: var(--radius-md) !important;
-  font-weight: var(--font-weight-medium) !important;
+  border-radius: var(--td-button-border-radius) !important;
+  font-weight: var(--td-button-font-weight) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  /* 跨平台兼容性优化 */
+  will-change: transform !important;
+  backface-visibility: hidden !important;
+  -webkit-font-smoothing: antialiased !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) !important;
 }
 
+/* 主要按钮 - 现代蓝色渐变 */
 .t-button--primary {
-  background: var(--header-gradient) !important;
+  background: var(--td-button-primary-bg-color) !important;
   border: none !important;
+  color: var(--td-button-primary-color) !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
 }
 
-.t-button--primary:hover {
-  background: var(--primary-gradient-reverse) !important;
-  transform: translateY(-1rpx);
-  box-shadow: 0 4rpx 24rpx rgba(20, 184, 166, 0.25) !important;
+.t-button--primary:active {
+  background: var(--td-button-primary-active-bg-color) !important;
+  transform: scale3d(0.98, 0.98, 1) !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.3) !important;
 }
 
+.t-button--primary:disabled {
+  background: var(--td-button-primary-disabled-bg) !important;
+  border-color: var(--td-button-primary-disabled-border-color) !important;
+  color: var(--td-button-primary-disabled-color) !important;
+  opacity: 0.6 !important;
+}
+
+/* 语义化按钮样式 */
 .t-button--success {
-  background: linear-gradient(135deg, var(--color-success), #059669) !important;
+  background: linear-gradient(135deg, var(--td-success-color), #059669) !important;
   border: none !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 168, 112, 0.2) !important;
 }
 
 .t-button--warning {
-  background: linear-gradient(135deg, var(--color-warning), #d97706) !important;
+  background: linear-gradient(135deg, var(--td-warning-color), #d97706) !important;
   border: none !important;
+  box-shadow: 0 4rpx 16rpx rgba(237, 123, 47, 0.2) !important;
 }
 
 .t-button--danger {
-  background: linear-gradient(135deg, var(--color-danger), #dc2626) !important;
+  background: linear-gradient(135deg, var(--td-error-color), #dc2626) !important;
   border: none !important;
+  box-shadow: 0 4rpx 16rpx rgba(213, 73, 65, 0.2) !important;
 }
 
+/* 轻量按钮样式 */
 .t-button--light {
-  color: var(--primary-teal) !important;
-  border-color: var(--color-border-light) !important;
-  background: var(--color-bg-primary) !important;
+  background: var(--td-brand-color-light) !important;
+  color: var(--td-brand-color) !important;
+  border: 2rpx solid var(--td-brand-color) !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) !important;
 }
 
-.t-button--light:hover {
-  background: var(--color-info-lighter) !important;
-  border-color: var(--primary-teal) !important;
+.t-button--light:active {
+  background: var(--td-brand-color-light-active) !important;
+  transform: scale3d(0.98, 0.98, 1) !important;
 }
 
 .t-tag {

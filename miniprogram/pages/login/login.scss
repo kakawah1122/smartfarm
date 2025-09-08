@@ -24,13 +24,13 @@
 .login-logo {
   width: 120rpx;
   height: 120rpx;
-  background: #14b8a6;
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 32rpx;
-  box-shadow: 0 8rpx 24rpx rgba(20, 184, 166, 0.2);
+  box-shadow: 0 8rpx 24rpx rgba(0, 82, 217, 0.2);
 }
 
 .logo-emoji {
@@ -67,6 +67,32 @@
   border-radius: 12rpx !important;
   height: 88rpx !important;
   font-size: 32rpx !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.15) !important;
+}
+
+/* === 登录按钮现代化蓝色样式 === */
+.wechat-login-btn {
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.wechat-login-btn:active {
+  background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
+  transform: scale(0.98) !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.3) !important;
+}
+
+/* 邀请注册按钮 */
+.invite-register-btn {
+  background: var(--td-brand-color-light, #f2f3ff) !important;
+  color: var(--td-brand-color, #0052d9) !important;
+  border: 2rpx solid var(--td-brand-color, #0052d9) !important;
+}
+
+.invite-register-btn:active {
+  background: var(--td-brand-color-light-active, #d9e1ff) !important;
+  transform: scale(0.98) !important;
 }
 
 .agreement-tips {
@@ -77,7 +103,7 @@
 }
 
 .agreement-link {
-  color: #14b8a6;
+  color: var(--td-brand-color, #0052d9);
   text-decoration: none;
 }
 
@@ -185,8 +211,9 @@
 }
 
 .form-input:focus {
-  border-color: #14b8a6;
+  border-color: var(--td-brand-color, #0052d9);
   outline: none;
+  box-shadow: 0 0 0 4rpx rgba(0, 82, 217, 0.1);
 }
 
 .form-input::placeholder {
@@ -221,12 +248,15 @@
 }
 
 .invite-btn-confirm {
-  background-color: #14b8a6;
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   color: white;
+  box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.2);
 }
 
 .invite-btn-confirm:active {
-  background-color: #0f9488;
+  background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%);
+  transform: scale(0.98);
+  box-shadow: 0 1rpx 4rpx rgba(0, 82, 217, 0.3);
 }
 
 /* 登录页面样式增强 */
