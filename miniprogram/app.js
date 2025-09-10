@@ -1,9 +1,12 @@
 "use strict";
-// app.ts
+// app.js
+import permissionManager from './utils/permission-manager.js'
+
 App({
     globalData: {
         statusBarHeight: 44, // 默认状态栏高度
         navBarHeight: 88, // 默认导航栏高度
+        permissionManager: permissionManager, // 全局权限管理器
     },
     onLaunch() {
         // 初始化云开发
@@ -24,6 +27,8 @@ App({
         wx.setStorageSync('logs', logs);
         // 检查用户登录状态
         this.checkLoginStatus();
+        // 初始化权限管理器
+        this.initPermissionManager();
     },
     // 设置状态栏高度
     setStatusBarHeight() {
@@ -66,6 +71,25 @@ App({
             this.globalData.isLoggedIn = false;
         }
     },
+    // 初始化权限管理器
+    async initPermissionManager() {
+        try {
+            // 如果用户已登录，初始化权限管理器
+            if (this.globalData.isLoggedIn) {
+                const initialized = await permissionManager.initializeUser();
+                if (initialized) {
+                    console.log('权限管理器初始化成功');
+                } else {
+                    console.warn('权限管理器初始化失败');
+                }
+            } else {
+                console.log('用户未登录，跳过权限管理器初始化');
+            }
+        } catch (error) {
+            console.error('权限管理器初始化失败：', error);
+        }
+    },
+    
     // 用户登录
     async login() {
         try {
@@ -79,12 +103,36 @@ App({
                 this.globalData.isLoggedIn = true;
                 // 保存到本地存储
                 wx.setStorageSync('openid', loginRes.result.openid);
+                // 保存用户信息到本地存储供权限管理器使用
+                wx.setStorageSync('userInfo', {
+                    openid: loginRes.result.openid,
+                    loginTime: new Date().toISOString()
+                });
                 console.log('登录成功', loginRes.result.openid);
+                
+                // 登录成功后初始化权限管理器
+                await this.initPermissionManager();
             }
         }
         catch (error) {
             console.error('登录失败', error);
             throw error;
         }
+    },
+    
+    // 用户登出
+    logout() {
+        this.globalData.openid = null;
+        this.globalData.isLoggedIn = false;
+        // 清除本地存储
+        wx.removeStorageSync('openid');
+        wx.removeStorageSync('userInfo');
+        // 清空权限缓存
+        if (permissionManager) {
+            permissionManager.clearPermissionCache();
+            permissionManager.currentUser = null;
+            permissionManager.userRoles = [];
+        }
+        console.log('用户已登出');
     },
 });

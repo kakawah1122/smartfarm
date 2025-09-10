@@ -74,7 +74,7 @@
       <view class="section-title">功能菜单</view>
       <view class="tdesign-card-grid">
         <t-card 
-          wx:for="{{menuItems}}" 
+          wx:for="{{menuItems || []}}" 
           wx:key="id"
           class="tdesign-menu-card"
           bind:tap="navigateToMenu"

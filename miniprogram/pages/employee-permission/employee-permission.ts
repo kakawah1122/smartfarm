@@ -54,7 +54,7 @@ const pageConfig = {
     // 创建邀请弹窗
     showCreateDialog: false,
     newInvite: {
-      role: 'user',
+      role: 'employee',
       expiryDays: 7,
       remark: ''
     },
@@ -67,11 +67,12 @@ const pageConfig = {
     
     // 撤销邀请弹窗已移除
     
-    // 邀请选项数据
+    // 邀请选项数据 - 使用新的4角色体系
     inviteRoleOptions: [
-      { label: '普通用户', value: 'user' },
-      { label: '操作员', value: 'operator' },
-      { label: '管理员', value: 'admin' }
+      { label: '员工', value: 'employee' },
+      { label: '兽医', value: 'veterinarian' },
+      { label: '经理', value: 'manager' },
+      { label: '超级管理员', value: 'super_admin' }
     ],
     inviteExpiryOptions: [
       { label: '3天', value: 3 },
@@ -80,20 +81,28 @@ const pageConfig = {
       { label: '30天', value: 30 }
     ],
     
-    // 角色选项
+    // 角色选项 - 使用新的4角色体系
     roleOptions: [
-      { label: '用户', value: 'user', description: '基础功能权限' },
-      { label: '操作员', value: 'operator', description: '生产操作权限' },
-      { label: '经理', value: 'manager', description: '部门管理权限' },
-      { label: '管理员', value: 'admin', description: '系统管理权限' }
+      { label: '员工', value: 'employee', description: '日常操作执行权限，包括AI诊断' },
+      { label: '兽医', value: 'veterinarian', description: '健康诊疗专业权限' },
+      { label: '经理', value: 'manager', description: '业务运营管理权限' },
+      { label: '超级管理员', value: 'super_admin', description: '系统全局管理权限' }
     ],
     
-    // 权限模板
+    // 权限模板 - 兼容新旧角色体系
     permissionTemplates: {
-      'user': ['health.view', 'production.view'],
-      'operator': ['health.view', 'health.add', 'production.view', 'production.add'],
-      'manager': ['health.*', 'production.*', 'finance.view'],
-      'admin': ['all']
+      // 新的4角色体系
+      'employee': ['health.view', 'health.add', 'production.view', 'production.add', 'ai_diagnosis.*'],
+      'veterinarian': ['health.*', 'ai_diagnosis.*', 'production.view'],
+      'manager': ['health.*', 'production.*', 'finance.*', 'ai_diagnosis.*', 'user.manage'],
+      'super_admin': ['all'],
+      
+      // 兼容旧角色（映射到对应权限）
+      'admin': ['all'],
+      'user': ['health.view', 'health.add', 'production.view', 'production.add', 'ai_diagnosis.*'],
+      'operator': ['health.view', 'health.add', 'production.view', 'production.add', 'ai_diagnosis.*'],
+      'technician': ['health.*', 'ai_diagnosis.*', 'production.view'],
+      'finance': ['health.*', 'production.*', 'finance.*', 'ai_diagnosis.*', 'user.manage']
     },
     
     // 权限详情弹窗
@@ -196,7 +205,7 @@ const pageConfig = {
         }
         
         // 只有超级管理员和管理员可以管理权限
-        if (!userInfo.isSuper && userInfo.role !== 'admin') {
+        if (userInfo.role !== 'super_admin' && userInfo.role !== 'manager') {
           wx.showModal({
             title: '权限不足',
             content: '只有管理员可以访问权限设置功能',
@@ -609,7 +618,7 @@ const pageConfig = {
   // 表单事件
   onRoleChange: function(e) {
     const selectedIndex = e.detail.value
-    const selectedRole = this.data.roleOptions[selectedIndex]?.value || 'user'
+    const selectedRole = this.data.roleOptions[selectedIndex]?.value || 'employee'
     
     this.setData({
       selectedRoleIndex: [selectedIndex],
@@ -644,10 +653,18 @@ const pageConfig = {
 
   getRoleDisplayName: function(role) {
     const roleMap = {
-      'user': '用户',
-      'operator': '操作员', 
+      // 新的4角色体系
+      'employee': '员工',
+      'veterinarian': '兽医', 
       'manager': '经理',
-      'admin': '管理员'
+      'super_admin': '超级管理员',
+      
+      // 兼容旧角色（向下兼容）
+      'admin': '超级管理员',
+      'user': '员工',
+      'operator': '员工',
+      'technician': '兽医',
+      'finance': '经理'
     }
     return roleMap[role] || '未知角色'
   },
@@ -655,10 +672,18 @@ const pageConfig = {
   getRoleColor: function(role) {
     if (!role) return '#95a5a6'
     const colorMap = {
-      'user': '#3498db',
-      'operator': '#2ecc71',
-      'manager': '#f39c12',
-      'admin': '#e74c3c'
+      // 新的4角色体系
+      'employee': '#52c41a',
+      'veterinarian': '#722ed1',
+      'manager': '#1890ff',
+      'super_admin': '#ff4d4f',
+      
+      // 兼容旧角色（使用相同颜色）
+      'admin': '#ff4d4f',    // 对应超级管理员
+      'user': '#52c41a',     // 对应员工
+      'operator': '#52c41a', // 对应员工
+      'technician': '#722ed1', // 对应兽医
+      'finance': '#1890ff'   // 对应经理
     }
     return colorMap[role] || '#95a5a6'
   },
@@ -681,15 +706,19 @@ const pageConfig = {
       'finance.add': '添加财务记录',
       'finance.edit': '编辑财务记录',
       'finance.*': '财务管理（全部权限）',
+      'ai_diagnosis.create': '发起AI诊断',
+      'ai_diagnosis.read': '查看诊断结果',
+      'ai_diagnosis.validate': '验证诊断结果',
+      'ai_diagnosis.*': 'AI诊断（全部权限）',
       'user.manage': '用户管理',
       'system.config': '系统配置',
-      'all': '系统管理员（全部权限）'
+      'all': '超级管理员（全部权限）'
     }
 
     const permissions = this.data.permissionTemplates[role] || []
     
     if (permissions.includes('all')) {
-      return ['系统管理员（全部权限）', '用户管理', '权限管理', '系统配置', '数据管理']
+      return ['超级管理员（全部权限）', '用户管理', '权限管理', '系统配置', '数据管理', 'AI诊断管理']
     }
 
     const friendlyPermissions = []
@@ -709,10 +738,10 @@ const pageConfig = {
   // 获取角色图标
   getRoleIcon: function(role) {
     const iconMap = {
-      'user': '👤',
-      'operator': '⚙️',
+      'employee': '👤',
+      'veterinarian': '🩺',
       'manager': '👔',
-      'admin': '👑'
+      'super_admin': '👑'
     }
     return iconMap[role] || '👤'
   },
@@ -738,7 +767,7 @@ const pageConfig = {
     const self = this
     
     wx.cloud.callFunction({
-      name: 'employee-invite-management',
+      name: 'user-management',
       data: {
         action: 'get_invite_stats'
       },
@@ -775,7 +804,7 @@ const pageConfig = {
       }
 
       wx.cloud.callFunction({
-        name: 'employee-invite-management',
+        name: 'user-management',
         data: {
           action: 'list_invites',
           page: currentPage,
@@ -871,7 +900,7 @@ const pageConfig = {
     this.setData({
       showCreateDialog: true,
       newInvite: {
-        role: 'user',
+        role: 'employee',
         expiryDays: 7,
         remark: ''
       },
@@ -912,7 +941,7 @@ const pageConfig = {
     wx.showLoading({ title: '生成邀请码中...' })
 
     wx.cloud.callFunction({
-      name: 'employee-invite-management',
+      name: 'user-management',
       data: {
         action: 'create_invite',
         role: role,
@@ -994,7 +1023,7 @@ const pageConfig = {
   // 邀请表单事件
   onInviteRoleChange: function(e) {
     const selectedIndex = e.detail.value
-    const selectedRole = this.data.inviteRoleOptions[selectedIndex]?.value || 'user'
+    const selectedRole = this.data.inviteRoleOptions[selectedIndex]?.value || 'employee'
     this.setData({
       selectedInviteRoleIndex: [selectedIndex],
       'newInvite.role': selectedRole
@@ -1078,7 +1107,7 @@ const pageConfig = {
     })
 
     wx.cloud.callFunction({
-      name: 'employee-invite-management',
+      name: 'user-management',
       data: {
         action: 'revoke_invite',
         inviteId: self.data.selectedInvite._id,
@@ -1137,7 +1166,7 @@ const pageConfig = {
     wx.showLoading({ title: '处理中...' })
 
     wx.cloud.callFunction({
-      name: 'employee-invite-management',
+      name: 'user-management',
       data: {
         action: 'resend_invite',
         inviteId: self.data.selectedInvite._id,
@@ -1233,10 +1262,18 @@ const pageConfig = {
 
   getInviteRoleText: function(role) {
     const roleMap = {
-      'user': '普通用户',
-      'operator': '操作员',
-      'admin': '管理员',
-      'manager': '经理'
+      // 新的4角色体系
+      'employee': '员工',
+      'veterinarian': '兽医',
+      'manager': '经理',
+      'super_admin': '超级管理员',
+      
+      // 兼容旧角色
+      'admin': '超级管理员',
+      'user': '员工',
+      'operator': '员工',
+      'technician': '兽医',
+      'finance': '经理'
     }
     return roleMap[role] || '未知角色'
   },

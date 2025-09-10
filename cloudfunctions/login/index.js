@@ -118,11 +118,11 @@ exports.main = async (event, context) => {
       phone: '',
       farmName: '', // 添加养殖场名称字段
       gender: 0,
-      // 角色和权限字段
-      role: isFirstUser ? 'admin' : 'user', // admin: 管理员, employee: 员工, user: 普通用户
-      permissions: isFirstUser ? adminPermissions : ['basic'], // 第一个用户获得所有权限
-      department: isFirstUser ? '管理部门' : '', // 部门
-      position: isFirstUser ? '超级管理员' : '', // 职位
+    // 角色和权限字段
+    role: isFirstUser ? 'super_admin' : 'employee', // super_admin: 超级管理员, manager: 经理, employee: 员工, veterinarian: 兽医
+    permissions: isFirstUser ? adminPermissions : ['basic'], // 第一个用户获得所有权限
+    department: isFirstUser ? '管理部门' : '', // 部门
+    position: isFirstUser ? '超级管理员' : '', // 职位
       managedBy: null, // 管理者ID（第一个用户没有上级）
       organizationId: null, // 组织ID（用于多组织管理）
       // 邀请审批相关字段

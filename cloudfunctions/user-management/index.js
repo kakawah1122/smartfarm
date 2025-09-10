@@ -1,5 +1,4 @@
-// cloudfunctions/user-management/index.js
-// 用户管理云函数 - 管理员专用
+// user-management/index.js - 用户管理和权限控制云函数
 const cloud = require('wx-server-sdk')
 
 cloud.init({
@@ -9,161 +8,750 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 内置角色配置（避免跨云函数依赖）
+const ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  MANAGER: 'manager',
+  EMPLOYEE: 'employee', 
+  VETERINARIAN: 'veterinarian'
+}
+
+const ROLE_INFO = {
+  [ROLES.SUPER_ADMIN]: {
+    code: 'super_admin',
+    name: '超级管理员',
+    description: '系统全局管理权限，可管理所有功能和用户',
+    level: 1
+  },
+  [ROLES.MANAGER]: {
+    code: 'manager',
+    name: '经理',
+    description: '业务运营管理权限，负责整体运营和决策',
+    level: 2
+  },
+  [ROLES.EMPLOYEE]: {
+    code: 'employee',
+    name: '员工',
+    description: '日常操作执行权限，包括AI诊断功能',
+    level: 3
+  },
+  [ROLES.VETERINARIAN]: {
+    code: 'veterinarian', 
+    name: '兽医',
+    description: '健康诊疗专业权限，负责动物健康和AI诊断验证',
+    level: 3
+  }
+}
+
+function validateRole(roleCode) {
+  return Object.values(ROLES).includes(roleCode)
+}
+
+function hasPermission(userRole, permission) {
+  // 简化的权限检查
+  if (userRole === ROLES.SUPER_ADMIN) return true
+  // 其他权限逻辑可以根据需要扩展
+  return false
+}
+
+// 角色权限定义 - 更新为新的4个角色
+const ROLE_PERMISSIONS = {
+  [ROLES.SUPER_ADMIN]: {
+    name: '超级管理员',
+    permissions: ['*'], // 所有权限
+    description: '系统全局管理权限，可管理所有功能和用户'
+  },
+  [ROLES.MANAGER]: {
+    name: '经理',
+    permissions: [
+      'production.*', 'health.*', 'finance.*', 'ai_diagnosis.*',
+      'user.read', 'user.invite', 'user.update_role', 'user.approve'
+    ],
+    description: '业务运营管理权限，负责整体运营和决策'
+  },
+  [ROLES.EMPLOYEE]: {
+    name: '员工',
+    permissions: [
+      'production.create', 'production.read', 'production.update_own',
+      'health.create', 'health.read', 'health.update_own',
+      'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate',
+      'user.read_own'
+    ],
+    description: '日常操作执行权限，包括AI诊断功能'
+  },
+  [ROLES.VETERINARIAN]: {
+    name: '兽医',
+    permissions: [
+      'health.*', 'ai_diagnosis.*',
+      'production.read', 'user.read_own'
+    ],
+    description: '健康诊疗专业权限，负责动物健康和AI诊断验证'
+  }
+}
+
+// 检查权限
+function checkPermission(userRole, requiredPermission) {
+  const rolePerms = ROLE_PERMISSIONS[userRole]
+  if (!rolePerms) return false
+  
+  // 超级管理员拥有所有权限
+  if (rolePerms.permissions.includes('*')) return true
+  
+  // 检查具体权限
+  return rolePerms.permissions.some(perm => {
+    if (perm === requiredPermission) return true
+    // 支持通配符权限，如 'production.*'
+    if (perm.endsWith('.*')) {
+      const prefix = perm.slice(0, -2)
+      return requiredPermission.startsWith(prefix + '.')
+    }
+    return false
+  })
+}
+
+// 验证用户是否为管理员
+async function validateAdminPermission(openid) {
+  try {
+    const user = await db.collection('users').where({ _openid: openid }).get()
+    if (user.data.length === 0) return false
+    
+    const userRole = user.data[0].role || 'employee'
+    return ['super_admin', 'manager'].includes(userRole)
+  } catch (error) {
+    console.error('管理员权限验证失败:', error)
+    return false
+  }
+}
+
+// 生成邀请码（6位，更专业）
+function generateInviteCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = ''
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
+// 生成唯一邀请码
+async function generateUniqueInviteCode() {
+  let inviteCode = ''
+  let isUnique = false
+  let attempts = 0
+  
+  while (!isUnique && attempts < 10) {
+    inviteCode = generateInviteCode()
+    
+    // 检查是否已存在
+    const existingInvite = await db.collection('employee_invites')
+      .where({ inviteCode: inviteCode })
+      .get()
+    
+    if (existingInvite.data.length === 0) {
+      isUnique = true
+    }
+    attempts++
+  }
+  
+  if (!isUnique) {
+    throw new Error('生成邀请码失败，请重试')
+  }
+  
+  return inviteCode
+}
+
+// 获取状态文本
+function getStatusText(status) {
+  const statusMap = {
+    'pending': '待使用',
+    'used': '已使用',
+    'expired': '已过期',
+    'revoked': '已撤销'
+  }
+  return statusMap[status] || '未知状态'
+}
+
+// 清理旧的邀请记录，只保留最新的5个
+async function cleanupOldInvites() {
+  try {
+    console.log('开始清理旧邀请记录')
+    
+    // 获取所有邀请记录，按创建时间倒序排列
+    const allInvites = await db.collection('employee_invites')
+      .orderBy('createTime', 'desc')
+      .get()
+
+    console.log(`当前总共有 ${allInvites.data.length} 个邀请记录`)
+
+    // 如果总数超过5个，删除多余的记录
+    if (allInvites.data.length > 5) {
+      // 保留前5个最新的，删除其余的
+      const invitesToDelete = allInvites.data.slice(5)
+      console.log(`需要删除 ${invitesToDelete.length} 个旧记录`)
+
+      // 批量删除
+      for (const invite of invitesToDelete) {
+        await db.collection('employee_invites').doc(invite._id).remove()
+        console.log(`已删除邀请记录：${invite.inviteCode} (${invite.status})`)
+      }
+
+      console.log(`清理完成，保留了最新的5个邀请记录`)
+    } else {
+      console.log('邀请记录数量未超过5个，无需清理')
+    }
+  } catch (error) {
+    console.error('清理旧邀请记录失败:', error)
+    // 清理失败不影响主流程，只记录错误
+  }
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const { action } = event
-  
-  try {
-    // 不需要权限验证的操作
-    const noPermissionRequired = [
-      'get_user_info', 
-      'ensure_user_exists', 
-      'debug_user_record'
-    ]
-    
-    // 对于更新个人资料，允许用户修改自己的信息
-    if (action === 'update_profile') {
-      const hasPermission = await verifyUserPermission(wxContext.OPENID, event.targetUserId)
-      if (!hasPermission) {
-        return {
-          success: false,
-          error: 'PERMISSION_DENIED',
-          message: '权限不足，您只能修改自己的资料'
-        }
-      }
-    } else if (!noPermissionRequired.includes(action)) {
-      // 其他操作需要管理员权限
-      const hasPermission = await verifyAdminPermission(wxContext.OPENID)
-      if (!hasPermission) {
-        return {
-          success: false,
-          error: 'PERMISSION_DENIED',
-          message: '权限不足，仅管理员可访问'
-        }
-      }
-    }
 
+  try {
     switch (action) {
-      case 'list_users':
-        return await listUsers(event, wxContext)
-      case 'get_user_detail':
-        return await getUserDetail(event, wxContext)
+      // 用户管理
       case 'get_user_info':
         return await getUserInfo(event, wxContext)
-      case 'ensure_user_exists':
-        return await ensureUserExists(event, wxContext)
-      case 'debug_user_record':
-        return await debugUserRecord(event, wxContext)
+      case 'update_user_profile':
+      case 'update_profile': // 兼容旧版本调用
+        return await updateUserProfile(event, wxContext)
+      case 'list_users':
+        return await listUsers(event, wxContext)
       case 'update_user_role':
         return await updateUserRole(event, wxContext)
-      case 'toggle_user_status':
-        return await toggleUserStatus(event, wxContext)
-      case 'get_user_stats':
-        return await getUserStats(event, wxContext)
-      case 'search_users':
-        return await searchUsers(event, wxContext)
-      case 'export_users':
-        return await exportUsers(event, wxContext)
-      case 'set_super_admin':
-        return await setSuperAdmin(event, wxContext)
-      case 'update_profile':
-        return await updateProfile(event, wxContext)
+      case 'deactivate_user':
+        return await deactivateUser(event, wxContext)
+      
+      // 邀请管理
+      case 'create_invite':
+        return await createInvite(event, wxContext)
+      case 'list_invites':
+        return await listInvites(event, wxContext)
+      case 'use_invite':
+        return await useInvite(event, wxContext)
+      case 'revoke_invite':
+        return await revokeInvite(event, wxContext)
+      case 'validate_invite':
+        return await validateInvite(event, wxContext)
+      case 'get_invite_stats':
+        return await getInviteStats(event, wxContext)
+      case 'resend_invite':
+        return await resendInvite(event, wxContext)
+      
+      // 权限管理
+      case 'check_permission':
+        return await checkUserPermission(event, wxContext)
+      case 'get_role_permissions':
+        return await getRolePermissions(event, wxContext)
+      case 'get_user_roles':
+        return await getUserRoles(event, wxContext)
+      
+      // 审计日志
+      case 'log_operation':
+        return await logOperation(event, wxContext)
+      case 'get_audit_logs':
+        return await getAuditLogs(event, wxContext)
+      
       default:
         throw new Error('无效的操作类型')
     }
   } catch (error) {
+    console.error('用户管理操作失败:', error)
     return {
       success: false,
       error: error.message,
-      message: error.message || '操作失败，请重试',
-      errorCode: error.code,
-      errorStack: error.stack
+      message: error.message || '用户管理操作失败，请重试'
     }
   }
 }
 
-// 验证管理员权限
-async function verifyAdminPermission(openid) {
+// 获取用户信息
+async function getUserInfo(event, wxContext) {
+  const openid = wxContext.OPENID
+  
   try {
-    if (!openid) {
-      return false
-    }
-
-    // 查询用户信息
-    const userResult = await db.collection('users').where({
-      _openid: openid
-    }).get()
-
-    if (userResult.data.length === 0) {
-      return false
-    }
-
-    const user = userResult.data[0]
+    const user = await db.collection('users').where({ _openid: openid }).get()
     
-    // 检查是否为超级管理员或管理员（包含operator角色）
-    return user.isSuper === true || user.role === 'admin' || user.role === 'manager' || user.role === 'operator'
+    if (user.data.length === 0) {
+      // 如果用户不存在，创建默认用户记录
+      const newUser = {
+        _openid: openid,
+        nickName: '新用户',
+        role: 'employee',
+        status: 'pending', // pending, active, inactive
+        createTime: new Date().toISOString(),
+        updateTime: new Date().toISOString(),
+        lastLoginTime: new Date().toISOString()
+      }
+      
+      await db.collection('users').add({ data: newUser })
+      
+      return {
+        success: true,
+        data: {
+          ...newUser,
+          roleInfo: ROLE_PERMISSIONS[newUser.role]
+        }
+      }
+    }
+    
+    const userData = user.data[0]
+    
+    // 更新最后登录时间
+    await db.collection('users').doc(userData._id).update({
+      data: { lastLoginTime: new Date().toISOString() }
+    })
+    
+    return {
+      success: true,
+      data: {
+        ...userData,
+        roleInfo: ROLE_PERMISSIONS[userData.role || 'employee']
+      }
+    }
   } catch (error) {
-    return false
+    console.error('获取用户信息失败:', error)
+    throw new Error('获取用户信息失败')
   }
 }
 
-// 验证用户权限（用户可以修改自己的资料）
-async function verifyUserPermission(openid, targetUserId) {
-  try {
-    if (!openid) {
-      return false
+// 更新用户资料
+async function updateUserProfile(event, wxContext) {
+  const { nickName, avatarUrl, phone, department } = event
+  const openid = wxContext.OPENID
+  
+  const updateData = {
+    updateTime: new Date().toISOString()
+  }
+  
+  if (nickName) updateData.nickName = nickName
+  if (avatarUrl) updateData.avatarUrl = avatarUrl
+  if (phone) updateData.phone = phone
+  if (department) updateData.farmName = department // 将department映射到farmName
+  
+  await db.collection('users').where({ _openid: openid }).update({
+    data: updateData
+  })
+  
+  // 获取更新后的用户信息
+  const updatedUser = await db.collection('users').where({ _openid: openid }).get()
+  
+  if (updatedUser.data.length > 0) {
+    return {
+      success: true,
+      data: {
+        user: {
+          ...updatedUser.data[0],
+          nickname: updatedUser.data[0].nickName, // 添加nickname字段以保持兼容性
+          farmName: updatedUser.data[0].farmName || updatedUser.data[0].department
+        }
+      },
+      message: '用户资料更新成功'
     }
-
-    // 查询用户信息
-    const userResult = await db.collection('users').where({
-      _openid: openid
-    }).get()
-
-    if (userResult.data.length === 0) {
-      return false
-    }
-
-    const user = userResult.data[0]
-    
-    // 如果是管理员，有权限修改任何用户
-    if (user.isSuper === true || user.role === 'admin' || user.role === 'manager' || user.role === 'operator') {
-      return true
-    }
-    
-    // 如果没有指定目标用户ID，说明是修改自己的资料
-    if (!targetUserId) {
-      return true
-    }
-    
-    // 用户只能修改自己的资料
-    return user._id === targetUserId
-  } catch (error) {
-    return false
+  } else {
+    throw new Error('用户不存在')
   }
 }
 
 // 获取用户列表
 async function listUsers(event, wxContext) {
+  const { page = 1, pageSize = 10, role, status } = event
+  const openid = wxContext.OPENID
+  
+  if (!await validateAdminPermission(openid)) {
+    throw new Error('无权限查看用户列表')
+  }
+  
+  let query = db.collection('users')
+  
+  if (role) query = query.where({ role })
+  if (status) query = query.where({ status })
+  
+  const total = await query.count()
+  const users = await query
+    .orderBy('createTime', 'desc')
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .get()
+  
+  // 添加角色信息
+  const usersWithRoleInfo = users.data.map(user => ({
+    ...user,
+    roleInfo: ROLE_PERMISSIONS[user.role || 'employee']
+  }))
+  
+  return {
+    success: true,
+    data: {
+      users: usersWithRoleInfo,
+      pagination: {
+        page,
+        pageSize,
+        total: total.total,
+        totalPages: Math.ceil(total.total / pageSize)
+      }
+    }
+  }
+}
+
+// 更新用户角色
+async function updateUserRole(event, wxContext) {
+  const { targetUserId, newRole } = event
+  const openid = wxContext.OPENID
+  
+  if (!await validateAdminPermission(openid)) {
+    throw new Error('无权限修改用户角色')
+  }
+  
+  if (!ROLE_PERMISSIONS[newRole]) {
+    throw new Error('无效的角色类型')
+  }
+  
+  // 不能修改自己的角色（防止锁定）
+  const targetUser = await db.collection('users').doc(targetUserId).get()
+  if (targetUser.data._openid === openid) {
+    throw new Error('不能修改自己的角色')
+  }
+  
+  await db.collection('users').doc(targetUserId).update({
+    data: {
+      role: newRole,
+      updateTime: new Date().toISOString()
+    }
+  })
+  
+  // 记录操作日志
+  await logOperation({
+    action: 'update_user_role',
+    targetUserId,
+    newRole,
+    description: `将用户角色修改为${ROLE_PERMISSIONS[newRole].name}`
+  }, wxContext)
+  
+  return {
+    success: true,
+    message: '用户角色更新成功'
+  }
+}
+
+// 创建邀请（整合专业功能）
+async function createInvite(event, wxContext) {
+  const {
+    role = 'employee', // 默认角色改为员工
+    remark = '',
+    expiryDays = 7
+  } = event
+
+  console.log('创建邀请码参数:', { role, remark, expiryDays })
+
+  try {
+    const openid = wxContext.OPENID
+    
+    if (!await validateAdminPermission(openid)) {
+      throw new Error('无权限创建邀请')
+    }
+    
+    if (!ROLE_PERMISSIONS[role]) {
+      throw new Error('无效的角色类型')
+    }
+
+    // 获取邀请人信息
+    const inviterResult = await db.collection('users')
+      .where({ _openid: openid })
+      .get()
+
+    console.log('邀请人查询结果:', inviterResult.data)
+
+    if (inviterResult.data.length === 0) {
+      console.error('邀请人信息不存在')
+      throw new Error('邀请人信息不存在')
+    }
+
+    const inviter = inviterResult.data[0]
+    
+    // 生成唯一邀请码
+    console.log('开始生成唯一邀请码')
+    const inviteCode = await generateUniqueInviteCode()
+    console.log('生成的邀请码:', inviteCode)
+    
+    // 计算过期时间
+    const now = new Date()
+    const expiryTime = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000)
+    console.log('邀请码过期时间:', expiryTime)
+
+    // 创建邀请记录
+    const inviteData = {
+      inviteCode: inviteCode,
+      inviterOpenId: openid,
+      inviterName: inviter.nickname || inviter.nickName || '管理员',
+      // 被邀请人信息将在使用邀请码时填写
+      inviteeName: null,
+      inviteePhone: null,
+      department: null,
+      position: null,
+      // 预设的默认角色，注册时可调整
+      defaultRole: role,
+      role: null, // 实际角色在注册时确定
+      status: 'pending',
+      createTime: now,
+      expiryTime: expiryTime,
+      usedTime: null,
+      usedByOpenId: null,
+      remark: remark
+    }
+
+    console.log('准备保存邀请数据:', inviteData)
+    
+    const result = await db.collection('employee_invites').add({
+      data: inviteData
+    })
+
+    console.log('数据库保存结果:', result)
+
+    // 清理旧记录，只保留最新的5个邀请码
+    await cleanupOldInvites()
+
+    const responseData = {
+      success: true,
+      data: {
+        inviteId: result._id,
+        inviteCode: inviteCode,
+        role: role,
+        expiryTime: expiryTime,
+        remark: remark
+      },
+      message: '邀请码生成成功'
+    }
+    
+    console.log('返回成功响应:', responseData)
+    return responseData
+  } catch (error) {
+    console.error('创建邀请失败:', error)
+    throw error
+  }
+}
+
+// 使用邀请码（注册时调用）
+async function useInvite(event, wxContext) {
   const { 
-    page = 1, 
-    pageSize = 20, 
-    role = null,
+    inviteCode,
+    inviteeName,
+    inviteePhone,
+    department,
+    position,
+    finalRole // 最终确定的角色，可能与默认角色不同
+  } = event
+  const openid = wxContext.OPENID
+
+  try {
+    if (!inviteCode) {
+      throw new Error('缺少邀请码')
+    }
+
+    // 验证邀请码
+    const validateResult = await validateInvite({ inviteCode }, wxContext)
+    if (!validateResult.success) {
+      return validateResult
+    }
+
+    const invite = validateResult.data.invite
+
+    // 准备更新数据
+    const updateData = {
+      status: 'used',
+      usedTime: new Date(),
+      usedByOpenId: openid
+    }
+
+    // 如果提供了用户信息，则更新邀请记录
+    if (inviteeName) updateData.inviteeName = inviteeName
+    if (inviteePhone) updateData.inviteePhone = inviteePhone
+    if (department) updateData.department = department
+    if (position) updateData.position = position
+    if (finalRole) updateData.role = finalRole
+
+    // 标记邀请码为已使用并更新用户信息
+    await db.collection('employee_invites').doc(invite._id).update({
+      data: updateData
+    })
+
+    // 更新用户角色和状态
+    const userRole = finalRole || invite.defaultRole || 'employee'
+    await db.collection('users').where({ _openid: openid }).update({
+      data: {
+        role: userRole,
+        status: 'active',
+        nickName: inviteeName || undefined,
+        phone: inviteePhone || undefined,
+        department: department || undefined,
+        position: position || undefined,
+        updateTime: new Date().toISOString()
+      }
+    })
+
+    return {
+      success: true,
+      data: {
+        invite: {
+          ...invite,
+          defaultRole: invite.defaultRole, // 返回默认角色供注册时参考
+          ...updateData
+        }
+      },
+      message: '邀请码使用成功，账户已激活'
+    }
+  } catch (error) {
+    console.error('使用邀请码失败:', error)
+    throw error
+  }
+}
+
+// 检查用户权限
+async function checkUserPermission(event, wxContext) {
+  const { permission } = event
+  const openid = wxContext.OPENID
+  
+  try {
+    const user = await db.collection('users').where({ _openid: openid }).get()
+    if (user.data.length === 0) {
+      return { success: true, data: { hasPermission: false } }
+    }
+    
+    const userRole = user.data[0].role || 'employee'
+    const hasPermission = checkPermission(userRole, permission)
+    
+    return {
+      success: true,
+      data: {
+        hasPermission,
+        userRole,
+        permission
+      }
+    }
+  } catch (error) {
+    console.error('权限检查失败:', error)
+    return { success: true, data: { hasPermission: false } }
+  }
+}
+
+// 获取角色权限信息
+async function getRolePermissions(event, wxContext) {
+  return {
+    success: true,
+    data: ROLE_PERMISSIONS
+  }
+}
+
+// 记录操作日志
+async function logOperation(event, wxContext) {
+  const { action, targetId, targetType, description, additionalData } = event
+  const openid = wxContext.OPENID
+  
+  try {
+    const log = {
+      _openid: openid,
+      action,
+      targetId: targetId || '',
+      targetType: targetType || '',
+      description: description || '',
+      additionalData: additionalData || {},
+      ipAddress: wxContext.SOURCE || '',
+      userAgent: wxContext.SOURCE || '',
+      createTime: new Date().toISOString()
+    }
+    
+    await db.collection('audit_logs').add({ data: log })
+    
+    return {
+      success: true,
+      message: '操作日志记录成功'
+    }
+  } catch (error) {
+    console.error('操作日志记录失败:', error)
+    // 日志记录失败不应影响业务操作
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 获取审计日志
+async function getAuditLogs(event, wxContext) {
+  const { page = 1, pageSize = 20, action, targetType, dateRange } = event
+  const openid = wxContext.OPENID
+  
+  if (!await validateAdminPermission(openid)) {
+    throw new Error('无权限查看审计日志')
+  }
+  
+  let query = db.collection('audit_logs')
+  
+  if (action) query = query.where({ action })
+  if (targetType) query = query.where({ targetType })
+  if (dateRange && dateRange.start && dateRange.end) {
+    query = query.where({
+      createTime: _.gte(dateRange.start).and(_.lte(dateRange.end))
+    })
+  }
+  
+  const total = await query.count()
+  const logs = await query
+    .orderBy('createTime', 'desc')
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .get()
+  
+  return {
+    success: true,
+    data: {
+      logs: logs.data,
+      pagination: {
+        page,
+        pageSize,
+        total: total.total,
+        totalPages: Math.ceil(total.total / pageSize)
+      }
+    }
+  }
+}
+
+// 获取邀请列表（整合专业搜索功能）
+async function listInvites(event, wxContext) {
+  const {
+    page = 1,
+    pageSize = 20,
     status = null,
+    searchKeyword = null,
     sortBy = 'createTime',
     sortOrder = 'desc'
   } = event
+  const openid = wxContext.OPENID
 
   try {
-    // 构建查询条件
-    let query = db.collection('users')
-    const where = {}
-
-    if (role) {
-      where.role = role
+    if (!await validateAdminPermission(openid)) {
+      throw new Error('无权限查看邀请列表')
     }
 
-    if (status !== null) {
+    let query = db.collection('employee_invites')
+    const where = {}
+
+    // 状态筛选
+    if (status) {
       where.status = status
+    }
+
+    // 搜索功能
+    if (searchKeyword) {
+      where.$or = [
+        { inviteCode: new RegExp(searchKeyword, 'i') },
+        { remark: new RegExp(searchKeyword, 'i') },
+        // 只有已使用的邀请才有被邀请人信息
+        { inviteeName: new RegExp(searchKeyword, 'i') },
+        { inviteePhone: new RegExp(searchKeyword, 'i') }
+      ]
     }
 
     if (Object.keys(where).length > 0) {
@@ -177,31 +765,24 @@ async function listUsers(event, wxContext) {
     const countResult = await query.count()
     const total = countResult.total
 
-    const users = await query
+    const invites = await query
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .get()
 
-    // 清理敏感信息（保留管理需要的信息）
-    const cleanedUsers = users.data.map(user => ({
-      _id: user._id,
-      _openid: user._openid,
-      nickname: user.nickname,
-      avatarUrl: user.avatarUrl,
-      phone: user.phone ? `${user.phone.slice(0, 3)}****${user.phone.slice(-4)}` : '', // 手机号脱敏
-      role: user.role,
-      farmName: user.farmName,
-      isSuper: user.isSuper,
-      status: user.status || 'active',
-      createTime: user.createTime,
-      lastLoginTime: user.lastLoginTime,
-      loginCount: user.loginCount || 0
+    // 处理数据，添加状态描述
+    const processedInvites = invites.data.map(invite => ({
+      ...invite,
+      statusText: getStatusText(invite.status),
+      isExpired: invite.status === 'pending' && new Date() > new Date(invite.expiryTime),
+      remainingDays: invite.status === 'pending' ? 
+        Math.max(0, Math.ceil((new Date(invite.expiryTime) - new Date()) / (24 * 60 * 60 * 1000))) : 0
     }))
 
     return {
       success: true,
       data: {
-        users: cleanedUsers,
+        invites: processedInvites,
         pagination: {
           page,
           pageSize,
@@ -211,629 +792,310 @@ async function listUsers(event, wxContext) {
       }
     }
   } catch (error) {
+    console.error('获取邀请列表失败:', error)
     throw error
   }
 }
 
-// 获取用户详情
-async function getUserDetail(event, wxContext) {
-  const { userId } = event
+// 撤销邀请（增强版）
+async function revokeInvite(event, wxContext) {
+  const { inviteId, reason = '' } = event
+  const openid = wxContext.OPENID
 
   try {
-    if (!userId) {
-      throw new Error('缺少用户ID')
+    if (!await validateAdminPermission(openid)) {
+      throw new Error('无权限撤销邀请')
     }
 
-    const user = await db.collection('users').doc(userId).get()
-    if (!user.data) {
-      throw new Error('用户不存在')
+    if (!inviteId) {
+      throw new Error('缺少邀请ID')
     }
 
-    // 获取用户相关的业务数据统计
-    const [healthRecords, entryRecords, exitRecords] = await Promise.all([
-      // 健康记录数量
-      db.collection('health_records').where({
-        userId: user.data._openid
-      }).count(),
-      
-      // 入栏记录数量
-      db.collection('entry_records').where({
-        userId: user.data._openid
-      }).count(),
-      
-      // 出栏记录数量
-      db.collection('exit_records').where({
-        userId: user.data._openid
-      }).count()
-    ])
-
-    // 清理并返回详细信息
-    const userDetail = {
-      ...user.data,
-      phone: user.data.phone ? `${user.data.phone.slice(0, 3)}****${user.data.phone.slice(-4)}` : '',
-      stats: {
-        healthRecords: healthRecords.total,
-        entryRecords: entryRecords.total,
-        exitRecords: exitRecords.total
-      }
+    // 检查邀请是否存在
+    const invite = await db.collection('employee_invites').doc(inviteId).get()
+    if (!invite.data) {
+      throw new Error('邀请不存在')
     }
 
-    return {
-      success: true,
+    if (invite.data.status !== 'pending') {
+      throw new Error('只能撤销待使用的邀请')
+    }
+
+    // 更新邀请状态
+    await db.collection('employee_invites').doc(inviteId).update({
       data: {
-        user: userDetail
-      }
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 更新用户角色
-async function updateUserRole(event, wxContext) {
-  const { userId, newRole, reason } = event
-
-  try {
-    if (!userId || !newRole) {
-      throw new Error('缺少必填参数')
-    }
-
-    // 验证角色值
-    const validRoles = ['user', 'admin', 'manager', 'operator']
-    if (!validRoles.includes(newRole)) {
-      throw new Error('无效的角色类型')
-    }
-
-    // 检查目标用户是否存在
-    const user = await db.collection('users').doc(userId).get()
-    if (!user.data) {
-      throw new Error('目标用户不存在')
-    }
-
-    // 更新用户角色
-    await db.collection('users').doc(userId).update({
-      data: {
-        role: newRole,
-        roleUpdateTime: new Date(),
-        roleUpdateBy: wxContext.OPENID,
-        roleUpdateReason: reason || ''
-      }
-    })
-
-    // 记录操作日志（可选）
-    await db.collection('admin_logs').add({
-      data: {
-        action: 'update_user_role',
-        operatorId: wxContext.OPENID,
-        targetUserId: userId,
-        oldRole: user.data.role,
-        newRole: newRole,
-        reason: reason || '',
-        createTime: new Date()
+        status: 'revoked',
+        revokedTime: new Date(),
+        revokedBy: openid,
+        revokedReason: reason
       }
     })
 
     return {
       success: true,
-      message: '用户角色更新成功'
+      message: '邀请已撤销'
     }
   } catch (error) {
+    console.error('撤销邀请失败:', error)
     throw error
   }
 }
 
-// 切换用户状态（启用/禁用）
-async function toggleUserStatus(event, wxContext) {
-  const { userId, status, reason } = event
-
-  try {
-    if (!userId || !status) {
-      throw new Error('缺少必填参数')
+async function deactivateUser(event, wxContext) {
+  const { targetUserId } = event
+  const openid = wxContext.OPENID
+  
+  if (!await validateAdminPermission(openid)) {
+    throw new Error('无权限停用用户')
+  }
+  
+  await db.collection('users').doc(targetUserId).update({
+    data: {
+      status: 'inactive',
+      updateTime: new Date().toISOString()
     }
-
-    const validStatuses = ['active', 'disabled', 'suspended']
-    if (!validStatuses.includes(status)) {
-      throw new Error('无效的状态类型')
-    }
-
-    const user = await db.collection('users').doc(userId).get()
-    if (!user.data) {
-      throw new Error('目标用户不存在')
-    }
-
-    await db.collection('users').doc(userId).update({
-      data: {
-        status: status,
-        statusUpdateTime: new Date(),
-        statusUpdateBy: wxContext.OPENID,
-        statusUpdateReason: reason || ''
-      }
-    })
-
-    // 记录操作日志
-    await db.collection('admin_logs').add({
-      data: {
-        action: 'toggle_user_status',
-        operatorId: wxContext.OPENID,
-        targetUserId: userId,
-        oldStatus: user.data.status || 'active',
-        newStatus: status,
-        reason: reason || '',
-        createTime: new Date()
-      }
-    })
-
-    return {
-      success: true,
-      message: '用户状态更新成功'
-    }
-  } catch (error) {
-    throw error
+  })
+  
+  return {
+    success: true,
+    message: '用户已停用'
   }
 }
 
-// 获取用户统计信息
-async function getUserStats(event, wxContext) {
+// 获取用户角色信息
+async function getUserRoles(event, wxContext) {
+  const { openid } = event
+  const requestOpenid = openid || wxContext.OPENID
+  
   try {
-    // 获取用户总数和角色分布
-    const [allUsers, adminUsers, activeUsers] = await Promise.all([
-      db.collection('users').count(),
-      db.collection('users').where({
-        role: db.command.in(['admin', 'manager'])
-      }).count(),
-      db.collection('users').where({
-        status: db.command.eq('active')
-      }).count()
-    ])
-
-    // 获取最近登录统计
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    const recentActiveUsers = await db.collection('users').where({
-      lastLoginTime: db.command.gte(thirtyDaysAgo)
-    }).count()
-
-    // 获取角色分布
-    const roleStats = await db.collection('users').aggregate()
-      .group({
-        _id: '$role',
-        count: { $sum: 1 }
-      })
-      .end()
-
-    return {
-      success: true,
-      data: {
-        totalUsers: allUsers.total,
-        adminUsers: adminUsers.total,
-        activeUsers: activeUsers.total,
-        recentActiveUsers: recentActiveUsers.total,
-        roleDistribution: roleStats.list,
-        inactiveUsers: allUsers.total - activeUsers.total
-      }
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 搜索用户
-async function searchUsers(event, wxContext) {
-  const { keyword, searchType = 'all', page = 1, pageSize = 10 } = event
-
-  try {
-    if (!keyword || keyword.trim() === '') {
-      throw new Error('搜索关键词不能为空')
-    }
-
-    let query = db.collection('users')
-    
-    // 根据搜索类型构建查询条件
-    switch (searchType) {
-      case 'nickname':
-        query = query.where({
-          nickname: new RegExp(keyword, 'i')
-        })
-        break
-      case 'farmName':
-        query = query.where({
-          farmName: new RegExp(keyword, 'i')
-        })
-        break
-      case 'phone':
-        // 手机号搜索需要精确匹配（出于安全考虑）
-        query = query.where({
-          phone: keyword
-        })
-        break
-      default:
-        // 全文搜索
-        query = query.where(
-          db.command.or([
-            {
-              nickname: new RegExp(keyword, 'i')
-            },
-            {
-              farmName: new RegExp(keyword, 'i')
-            }
-          ])
-        )
-    }
-
-    const countResult = await query.count()
-    const users = await query
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .get()
-
-    const cleanedUsers = users.data.map(user => ({
-      _id: user._id,
-      nickname: user.nickname,
-      avatarUrl: user.avatarUrl,
-      farmName: user.farmName,
-      role: user.role,
-      status: user.status || 'active',
-      createTime: user.createTime,
-      lastLoginTime: user.lastLoginTime
-    }))
-
-    return {
-      success: true,
-      data: {
-        users: cleanedUsers,
-        pagination: {
-          page,
-          pageSize,
-          total: countResult.total,
-          totalPages: Math.ceil(countResult.total / pageSize)
-        }
-      }
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 导出用户数据（简化版）
-async function exportUsers(event, wxContext) {
-  try {
-    const users = await db.collection('users')
-      .orderBy('createTime', 'desc')
-      .get()
-
-    const exportData = users.data.map(user => ({
-      用户ID: user._id,
-      昵称: user.nickname,
-      农场名称: user.farmName,
-      角色: user.role,
-      状态: user.status || 'active',
-      注册时间: user.createTime ? new Date(user.createTime).toLocaleString() : '',
-      最后登录: user.lastLoginTime ? new Date(user.lastLoginTime).toLocaleString() : '',
-      登录次数: user.loginCount || 0
-    }))
-
-    return {
-      success: true,
-      data: {
-        users: exportData,
-        exportTime: new Date().toISOString(),
-        total: exportData.length
-      }
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 设置超级管理员
-async function setSuperAdmin(event, wxContext) {
-  try {
-    // 检查当前用户是否存在
-    const currentUser = await db.collection('users').where({
-      _openid: wxContext.OPENID
-    }).get()
-
-    if (currentUser.data.length === 0) {
-      throw new Error('用户不存在')
-    }
-
-    const user = currentUser.data[0]
-    
-    // 检查用户是否已经是管理员或超级管理员
-    if (user.role !== 'admin' && !user.isSuper) {
-      throw new Error('只有管理员才能设置为超级管理员')
-    }
-
-    // 如果已经是超级管理员，直接返回成功
-    if (user.isSuper === true) {
-      return {
-        success: true,
-        message: '您已经是超级管理员',
-        data: {
-          user: user
-        }
-      }
-    }
-
-    // 更新用户为超级管理员
-    await db.collection('users').doc(user._id).update({
-      data: {
-        isSuper: true,
-        role: 'admin', // 确保角色是管理员
-        superAdminSetTime: new Date(),
-        updateTime: new Date()
-      }
-    })
-
-    // 记录操作日志
-    await db.collection('admin_logs').add({
-      data: {
-        action: 'set_super_admin',
-        operatorId: wxContext.OPENID,
-        targetUserId: user._id,
-        createTime: new Date(),
-        description: '用户设置为超级管理员'
-      }
-    })
-
-    // 获取更新后的用户信息
-    const updatedUser = await db.collection('users').doc(user._id).get()
-
-    return {
-      success: true,
-      message: '已成功设置为超级管理员',
-      data: {
-        user: updatedUser.data
-      }
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 更新用户个人资料
-async function updateProfile(event, wxContext) {
-  try {
-    const {
-      nickname,
-      avatarUrl,
-      farmName,
-      phone,
-      department,
-      position,
-      targetUserId
-    } = event
-
-    // 获取要更新的用户信息
-    let user
-    if (targetUserId) {
-      // 更新其他用户（管理员操作）
-      const targetUser = await db.collection('users').doc(targetUserId).get()
-      if (!targetUser.data) {
-        throw new Error('目标用户不存在')
-      }
-      user = targetUser.data
-    } else {
-      // 更新自己的信息
-      const currentUser = await db.collection('users').where({
-        _openid: wxContext.OPENID
-      }).get()
-
-      if (currentUser.data.length === 0) {
-        throw new Error('用户不存在')
-      }
-      user = currentUser.data[0]
-    }
-    
-    // 准备更新数据
-    const updateData = {
-      updateTime: new Date()
-    }
-
-    // 只更新提供的字段
-    if (nickname !== undefined && nickname !== null) {
-      updateData.nickname = nickname.trim()
-    }
-    
-    if (avatarUrl !== undefined && avatarUrl !== null) {
-      updateData.avatarUrl = avatarUrl
-    }
-    
-    if (farmName !== undefined && farmName !== null) {
-      updateData.farmName = farmName.trim()
-    }
-    
-    if (department !== undefined && department !== null) {
-      updateData.department = department.trim()
-    }
-    
-    if (position !== undefined && position !== null) {
-      updateData.position = position.trim()
-    }
-    
-    if (phone !== undefined && phone !== null) {
-      // 验证手机号格式
-      const phoneRegex = /^1[3-9]\d{9}$/
-      if (!phoneRegex.test(phone)) {
-        throw new Error('手机号格式不正确')
-      }
-      updateData.phone = phone.trim()
-    }
-
-    // 更新用户信息
-    await db.collection('users').doc(user._id).update({
-      data: updateData
-    })
-
-    // 记录操作日志
-    await db.collection('admin_logs').add({
-      data: {
-        action: 'update_profile',
-        operatorId: wxContext.OPENID,
-        targetUserId: user._id,
-        updateFields: Object.keys(updateData),
-        createTime: new Date(),
-        description: targetUserId ? '管理员更新用户资料' : '用户更新个人资料'
-      }
-    })
-
-    // 获取更新后的用户信息
-    const updatedUser = await db.collection('users').doc(user._id).get()
-
-    return {
-      success: true,
-      message: '个人资料更新成功',
-      data: {
-        user: updatedUser.data
-      }
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 获取当前用户信息（用于个人中心）
-async function getUserInfo(event, wxContext) {
-  try {
-    console.log('获取用户信息，openid:', wxContext.OPENID)
-    
-    if (!wxContext.OPENID) {
-      throw new Error('用户未登录')
-    }
-
     // 查询用户信息
-    const userResult = await db.collection('users').where({
-      _openid: wxContext.OPENID
-    }).get()
-
+    const userResult = await db.collection('users')
+      .where({ _openid: requestOpenid })
+      .get()
+    
     if (userResult.data.length === 0) {
-      throw new Error('用户记录不存在')
-    }
-
-    const user = userResult.data[0]
-
-    return {
-      success: true,
-      data: {
-        _id: user._id,
-        _openid: user._openid,
-        nickname: user.nickname,
-        avatarUrl: user.avatarUrl,
-        farmName: user.farmName,
-        phone: user.phone,
-        role: user.role,
-        isSuper: user.isSuper,
-        status: user.status || 'active',
-        createTime: user.createTime,
-        lastLoginTime: user.lastLoginTime
-      }
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 确保用户记录存在（如果不存在则创建）
-async function ensureUserExists(event, wxContext) {
-  try {
-    console.log('确保用户记录存在，openid:', wxContext.OPENID)
-    
-    if (!wxContext.OPENID) {
-      throw new Error('用户未登录')
-    }
-
-    // 查询用户是否存在
-    const existingUser = await db.collection('users').where({
-      _openid: wxContext.OPENID
-    }).get()
-
-    if (existingUser.data.length > 0) {
-      return {
-        success: true,
-        message: '用户记录已存在',
-        data: existingUser.data[0]
-      }
-    }
-
-    // 用户不存在，创建新记录
-    const newUser = {
-      _openid: wxContext.OPENID,
-      nickname: '新用户',
-      avatarUrl: '',
-      farmName: '我的养殖场',
-      phone: '',
-      role: 'user',
-      isSuper: false,
-      status: 'active',
-      createTime: new Date(),
-      lastLoginTime: new Date(),
-      loginCount: 1
-    }
-
-    const createResult = await db.collection('users').add({
-      data: newUser
-    })
-
-    // 获取完整的用户记录
-    const createdUser = await db.collection('users').doc(createResult._id).get()
-
-    return {
-      success: true,
-      message: '用户记录创建成功',
-      data: createdUser.data
-    }
-  } catch (error) {
-    throw error
-  }
-}
-
-// 调试用户记录（用于权限问题诊断）
-async function debugUserRecord(event, wxContext) {
-  try {
-    const { targetOpenid } = event
-    const openidToCheck = targetOpenid || wxContext.OPENID
-    
-    console.log('调试用户记录，检查openid:', openidToCheck)
-
-    if (!openidToCheck) {
       return {
         success: false,
-        message: '缺少openid参数'
+        message: '用户不存在',
+        roles: []
+      }
+    }
+    
+    const user = userResult.data[0]
+    const userRole = user.role || 'employee'
+    
+    // 验证角色是否有效
+    if (!validateRole(userRole)) {
+      return {
+        success: false,
+        message: '用户角色无效',
+        roles: []
+      }
+    }
+    
+    // 获取角色信息
+    const roleInfo = ROLE_INFO[userRole]
+    
+    // 构造角色数据（模拟user_roles集合的数据结构）
+    const roles = [{
+      roleCode: userRole,
+      roleName: roleInfo.name,
+      level: roleInfo.level,
+      isActive: user.isActive !== false,
+      permissions: ROLE_PERMISSIONS[userRole].permissions,
+      assignTime: user.createTime || new Date(),
+      expiryTime: null // 角色不过期
+    }]
+    
+    return {
+      success: true,
+      roles: roles,
+      message: '获取用户角色成功'
+    }
+  } catch (error) {
+    console.error('获取用户角色失败：', error)
+    return {
+      success: false,
+      message: '获取用户角色失败',
+      error: error.message,
+      roles: []
+    }
+  }
+}
+
+// 验证邀请码
+async function validateInvite(event, wxContext) {
+  const { inviteCode } = event
+
+  try {
+    if (!inviteCode) {
+      throw new Error('缺少邀请码')
+    }
+
+    // 查找邀请记录
+    const inviteResult = await db.collection('employee_invites')
+      .where({ inviteCode: inviteCode.toUpperCase() })
+      .get()
+
+    if (inviteResult.data.length === 0) {
+      return {
+        success: false,
+        error: 'INVITE_NOT_FOUND',
+        message: '邀请码不存在'
       }
     }
 
-    // 查询用户记录
-    const userResult = await db.collection('users').where({
-      _openid: openidToCheck
-    }).get()
+    const invite = inviteResult.data[0]
 
-    // 统计users集合总记录数
-    const totalCount = await db.collection('users').count()
+    // 检查邀请状态
+    if (invite.status === 'used') {
+      return {
+        success: false,
+        error: 'INVITE_USED',
+        message: '邀请码已被使用'
+      }
+    }
+
+    if (invite.status === 'revoked') {
+      return {
+        success: false,
+        error: 'INVITE_REVOKED',
+        message: '邀请码已被撤销'
+      }
+    }
+
+    if (invite.status === 'expired') {
+      return {
+        success: false,
+        error: 'INVITE_EXPIRED',
+        message: '邀请码已过期'
+      }
+    }
+
+    // 检查是否过期
+    if (new Date() > new Date(invite.expiryTime)) {
+      // 自动标记为过期
+      await db.collection('employee_invites').doc(invite._id).update({
+        data: { status: 'expired' }
+      })
+
+      return {
+        success: false,
+        error: 'INVITE_EXPIRED',
+        message: '邀请码已过期'
+      }
+    }
 
     return {
       success: true,
       data: {
-        targetOpenid: openidToCheck,
-        userExists: userResult.data.length > 0,
-        userRecord: userResult.data.length > 0 ? userResult.data[0] : null,
-        totalUsersInCollection: totalCount.total,
-        debugInfo: {
-          queryTime: new Date(),
-          resultCount: userResult.data.length
+        invite: {
+          ...invite,
+          // 不返回敏感信息
+          inviterOpenId: undefined
         }
+      },
+      message: '邀请码有效'
+    }
+  } catch (error) {
+    console.error('验证邀请码失败:', error)
+    throw error
+  }
+}
+
+// 获取邀请统计
+async function getInviteStats(event, wxContext) {
+  const openid = wxContext.OPENID
+
+  try {
+    if (!await validateAdminPermission(openid)) {
+      throw new Error('无权限查看邀请统计')
+    }
+
+    const [
+      totalInvites,
+      pendingInvites,
+      usedInvites,
+      revokedInvites,
+      expiredInvites
+    ] = await Promise.all([
+      db.collection('employee_invites').count(),
+      db.collection('employee_invites').where({ status: 'pending' }).count(),
+      db.collection('employee_invites').where({ status: 'used' }).count(),
+      db.collection('employee_invites').where({ status: 'revoked' }).count(),
+      db.collection('employee_invites').where({ status: 'expired' }).count()
+    ])
+
+    // 获取最近7天的邀请统计
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const recentInvites = await db.collection('employee_invites')
+      .where({
+        createTime: _.gte(sevenDaysAgo)
+      })
+      .get()
+
+    return {
+      success: true,
+      data: {
+        total: totalInvites.total,
+        pending: pendingInvites.total,
+        used: usedInvites.total,
+        revoked: revokedInvites.total,
+        expired: expiredInvites.total,
+        recentCount: recentInvites.data.length,
+        usageRate: totalInvites.total > 0 ? 
+          ((usedInvites.total / totalInvites.total) * 100).toFixed(1) : '0.0'
       }
     }
   } catch (error) {
-    return {
-      success: false,
-      error: error.message,
+    console.error('获取邀请统计失败:', error)
+    throw error
+  }
+}
+
+// 重新发送邀请（延长有效期）
+async function resendInvite(event, wxContext) {
+  const { inviteId, expiryDays = 7 } = event
+  const openid = wxContext.OPENID
+
+  try {
+    if (!await validateAdminPermission(openid)) {
+      throw new Error('无权限重新发送邀请')
+    }
+
+    if (!inviteId) {
+      throw new Error('缺少邀请ID')
+    }
+
+    // 检查邀请是否存在
+    const invite = await db.collection('employee_invites').doc(inviteId).get()
+    if (!invite.data) {
+      throw new Error('邀请不存在')
+    }
+
+    if (invite.data.status !== 'pending') {
+      throw new Error('只能重新发送待使用的邀请')
+    }
+
+    // 延长有效期
+    const newExpiryTime = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
+
+    await db.collection('employee_invites').doc(inviteId).update({
       data: {
-        targetOpenid: event.targetOpenid || wxContext.OPENID,
-        userExists: false,
-        debugInfo: {
-          errorTime: new Date(),
-          errorMessage: error.message
-        }
+        expiryTime: newExpiryTime,
+        lastResendTime: new Date()
+      }
+    })
+
+    return {
+      success: true,
+      message: '邀请已重新发送',
+      data: {
+        newExpiryTime: newExpiryTime
       }
     }
+  } catch (error) {
+    console.error('重新发送邀请失败:', error)
+    throw error
   }
 }

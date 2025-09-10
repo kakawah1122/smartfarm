@@ -1,8 +1,8 @@
-<!--health.wxml-->
-<view class="page page-container">
-  <!-- 新式导航栏 -->
+<!--health.wxml - 健康管理中心完整重构版本-->
+<view class="page health-center-page">
+  <!-- 导航栏 -->
   <navigation-bar 
-    title="健康管理"
+    title="健康管理中心"
     show-back="true"
     show-menu="true"
     show-record="false"
@@ -10,299 +10,424 @@
     bind:menu="onMenuTap"
   />
 
-  <!-- Tab 切换 -->
-  <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" class="health-tabs">
-    <t-tab-panel value="record" label="健康记录"></t-tab-panel>
-    <t-tab-panel value="vaccine" label="疫苗管理"></t-tab-panel>
-    <t-tab-panel value="ai" label="AI诊疗"></t-tab-panel>
+  <!-- 健康概览 -->
+  <view class="health-overview">
+    <view class="overview-grid">
+      <view class="overview-card primary">
+        <view class="overview-value">{{healthOverview.survivalRate}}%</view>
+        <view class="overview-label">存活率</view>
+      </view>
+      <view class="overview-card warning">
+        <view class="overview-value">{{healthOverview.abnormalCount}}</view>
+        <view class="overview-label">异常个体</view>
+      </view>
+      <view class="overview-card success">
+        <view class="overview-value">{{healthOverview.preventionScore}}</view>
+        <view class="overview-label">预防效果</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 活跃预警 -->
+  <view class="active-alerts" wx:if="{{activeAlerts.length > 0}}">
+    <view class="alert-header">
+      <text class="alert-title">活跃预警</text>
+      <text class="alert-count">{{activeAlerts.length}}条</text>
+    </view>
+    <view class="alert-list">
+      <view 
+        class="alert-item alert-{{item.severity}}"
+        wx:for="{{activeAlerts}}"
+        wx:key="_id"
+        bind:tap="onAlertAction"
+        data-alert-id="{{item._id}}"
+        data-action="acknowledge"
+      >
+        <view class="alert-content">
+          <text class="alert-message">{{item.message}}</text>
+          <text class="alert-time">{{item.createTime}}</text>
+        </view>
+        <view class="alert-action">
+          <t-icon name="chevron-right" size="16" color="#c8c9cc" />
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 主要Tab切换 -->
+  <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" class="health-main-tabs">
+    <t-tab-panel value="prevention" label="预防管理"></t-tab-panel>
+    <t-tab-panel value="monitoring" label="健康监控"></t-tab-panel>
+    <t-tab-panel value="treatment" label="诊疗管理"></t-tab-panel>
+    <t-tab-panel value="analysis" label="效果分析"></t-tab-panel>
   </t-tabs>
 
-  <view class="scroll-container">
-    <!-- 健康记录 -->
-    <view wx:if="{{activeTab === 'record'}}" class="tab-content">
-      <!-- 健康概览 -->
-      <view class="stats-section">
-        <t-row gutter="16" class="health-stats">
-          <t-col span="8">
-            <t-card bind:tap="viewHealthStats" class="clickable-card">
-              <view class="stat-content stat-success">
-                <view class="stat-value">{{healthStats.survivalRate}}%</view>
-                <view class="stat-label">存活率</view>
-              </view>
-            </t-card>
-          </t-col>
-          <t-col span="8">
-            <t-card bind:tap="viewAbnormalDetail" class="clickable-card">
-              <view class="stat-content stat-warning">
-                <view class="stat-value">{{healthStats.abnormal}}</view>
-                <view class="stat-label">异常个体</view>
-              </view>
-            </t-card>
-          </t-col>
-          <t-col span="8">
-            <t-card bind:tap="viewAllHealthRecords" class="clickable-card">
-              <view class="stat-content stat-primary">
-                <view class="stat-value">{{healthStats.records}}</view>
-                <view class="stat-label">本月记录</view>
-              </view>
-            </t-card>
-          </t-col>
-        </t-row>
-      </view>
-
-      <!-- 添加按钮 -->
-      <view class="action-section">
-        <t-button theme="primary" size="large" block icon="add" bind:tap="addHealthRecord" class="primary-button">
-          新增健康记录
-        </t-button>
-      </view>
-
-      <!-- 健康记录列表 -->
-      <view class="list-section">
-        <view class="card list-card">
-          <view class="card-header">
-            <text class="card-title">最近健康记录</text>
+  <!-- Tab内容区域 -->
+  <view class="tab-content-container">
+    
+    <!-- 预防管理 Tab -->
+    <view class="tab-content prevention-content" wx:if="{{activeTab === 'prevention'}}">
+      <!-- 预防统计 -->
+      <view class="prevention-stats">
+        <view class="stats-header">
+          <text class="stats-title">预防统计</text>
+          <text class="stats-period">本月数据</text>
+        </view>
+        <view class="stats-grid">
+          <view class="stat-item">
+            <text class="stat-value">{{preventionData.stats.vaccinationRate}}%</text>
+            <text class="stat-label">疫苗接种率</text>
           </view>
-          <view class="records-container">
-            <view wx:for="{{healthRecords}}" wx:key="id" 
-                  class="record-item" 
-                  bind:tap="viewHealthRecord" 
-                  data-item="{{item}}">
-              <view class="record-main">
-                <view class="record-header">
-                  <text class="record-location">{{item.location}}</text>
-                  <t-tag theme="{{item.severity || 'default'}}" size="small">{{item.priorityText || '未知'}}</t-tag>
-                </view>
-                <view class="record-content">
-                  <text class="record-symptoms">{{item.symptoms}}</text>
-                </view>
-                <view class="record-footer">
-                  <text class="record-operator">{{item.operator}}</text>
-                  <text class="record-date">{{item.date}} {{item.time}}</text>
-                </view>
-              </view>
-              <view class="record-arrow">
-                <t-icon name="chevron-right" size="16" color="#c8c9cc" />
-              </view>
+          <view class="stat-item">
+            <text class="stat-value">{{preventionData.stats.disinfectionCount}}</text>
+            <text class="stat-label">消毒次数</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{preventionData.stats.inspectionRate}}%</text>
+            <text class="stat-label">巡检覆盖率</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">¥{{preventionData.stats.preventionCost}}</text>
+            <text class="stat-label">预防成本</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 快速操作 -->
+      <view class="quick-actions">
+        <text class="section-title">快速操作</text>
+        <view class="action-grid">
+          <view class="action-item" bind:tap="onPreventionAction" data-action="add_vaccine">
+            <t-icon name="protection" size="20" color="#0052D9" />
+            <text>疫苗接种</text>
+          </view>
+          <view class="action-item" bind:tap="onPreventionAction" data-action="add_disinfection">
+            <t-icon name="cleaning" size="20" color="#0052D9" />
+            <text>环境消毒</text>
+          </view>
+          <view class="action-item" bind:tap="onPreventionAction" data-action="health_inspection">
+            <t-icon name="search" size="20" color="#0052D9" />
+            <text>健康巡检</text>
+          </view>
+          <view class="action-item" bind:tap="onPreventionAction" data-action="add_healthcare">
+            <t-icon name="heart" size="20" color="#0052D9" />
+            <text>保健管理</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 近期预防记录 -->
+      <view class="prevention-records">
+        <view class="section-header">
+          <text class="section-title">近期预防记录</text>
+          <text class="more-link">查看更多 ></text>
+        </view>
+        <view class="record-list">
+          <view 
+            class="record-item"
+            wx:for="{{preventionData.recentRecords}}"
+            wx:key="_id"
+          >
+            <view class="record-info">
+              <text class="record-title">{{item.preventionType}}</text>
+              <text class="record-desc">{{item.location}} · {{item.targetAnimals}}只</text>
+            </view>
+            <view class="record-meta">
+              <text class="record-date">{{item.createTime}}</text>
+              <t-tag variant="light" theme="success" size="small">已完成</t-tag>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 即将到来的任务 -->
+      <view class="upcoming-tasks">
+        <text class="section-title">即将到来的任务</text>
+        <view class="task-list">
+          <view 
+            class="task-item priority-{{item.priority}}"
+            wx:for="{{preventionData.upcomingTasks}}"
+            wx:key="id"
+          >
+            <view class="task-icon">
+              <t-icon name="{{item.type === 'vaccine' ? 'protection' : 'cleaning'}}" size="18" />
+            </view>
+            <view class="task-info">
+              <text class="task-name">{{item.name}}</text>
+              <text class="task-location">{{item.location}}</text>
+            </view>
+            <view class="task-meta">
+              <text class="task-date">{{item.scheduledDate}}</text>
             </view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 疫苗管理 -->
-    <view wx:if="{{activeTab === 'vaccine'}}" class="tab-content">
-      <!-- 疫苗提醒 -->
-      <view class="reminder-section">
-        <view class="card">
-          <view class="card-header">
-            <text class="card-title">疫苗接种提醒</text>
+    <!-- 健康监控 Tab -->
+    <view class="tab-content monitoring-content" wx:if="{{activeTab === 'monitoring'}}">
+      <!-- 实时状态 -->
+      <view class="real-time-status">
+        <text class="section-title">实时健康状态</text>
+        <view class="status-overview">
+          <view class="status-item healthy">
+            <text class="status-count">{{monitoringData.realTimeStatus.healthyCount}}</text>
+            <text class="status-label">健康</text>
           </view>
-          <t-notice-bar theme="warning" content="有{{vaccineReminders.length}}项疫苗计划即将到期" />
-          <view class="records-container" style="margin-top: 24rpx;">
-            <view wx:for="{{vaccineReminders}}" wx:key="id" 
-                  class="record-item" 
-                  bind:tap="viewVaccineReminder" 
-                  data-item="{{item}}">
-              <view class="record-main">
-                <view class="record-header">
-                  <text class="record-location">{{item.name}} - {{item.location}}</text>
-                  <t-tag theme="warning" size="small">待接种</t-tag>
-                </view>
-                <view class="record-content">
-                  <text class="record-symptoms">预计接种时间：{{item.scheduledDate}}</text>
-                </view>
-              </view>
-              <view class="record-arrow">
-                <t-icon name="chevron-right" size="16" color="#c8c9cc" />
-              </view>
+          <view class="status-item warning">
+            <text class="status-count">{{monitoringData.realTimeStatus.abnormalCount}}</text>
+            <text class="status-label">异常</text>
+          </view>
+          <view class="status-item danger">
+            <text class="status-count">{{monitoringData.realTimeStatus.isolatedCount}}</text>
+            <text class="status-label">隔离</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 监控操作 -->
+      <view class="monitoring-actions">
+        <view class="action-row">
+          <t-button 
+            theme="primary" 
+            size="small" 
+            bind:tap="onMonitoringAction"
+            data-action="batch_check"
+          >批量体检</t-button>
+          <t-button 
+            theme="light" 
+            size="small" 
+            bind:tap="onMonitoringAction"
+            data-action="isolation_manage"
+          >隔离管理</t-button>
+        </view>
+      </view>
+
+      <!-- 异常个体列表 -->
+      <view class="abnormal-list" wx:if="{{monitoringData.abnormalList.length > 0}}">
+        <text class="section-title">异常个体 ({{monitoringData.abnormalList.length}})</text>
+        <view class="abnormal-items">
+          <view 
+            class="abnormal-item"
+            wx:for="{{monitoringData.abnormalList}}"
+            wx:key="_id"
+            bind:tap="onMonitoringAction"
+            data-action="view_abnormal"
+            data-data="{{item}}"
+          >
+            <view class="abnormal-info">
+              <text class="animal-id">{{item.animalId}}</text>
+              <text class="symptoms">{{item.symptoms}}</text>
+              <text class="location">{{item.location}}</text>
+            </view>
+            <view class="severity-indicator severity-{{item.severity}}">
+              {{item.severity === 'high' ? '严重' : item.severity === 'medium' ? '中等' : '轻微'}}
             </view>
           </view>
         </view>
       </view>
 
-      <!-- 操作按钮 -->
-      <view class="action-section">
-        <view class="vaccine-actions">
-          <t-button theme="primary" size="large" icon="add" bind:tap="addVaccinePlan" class="vaccine-action-btn primary-button">
-            添加疫苗计划
-          </t-button>
-          <t-button theme="success" size="large" icon="check" bind:tap="recordVaccination" class="vaccine-action-btn success-button">
-            记录接种
-          </t-button>
-        </view>
-      </view>
-
-      <!-- 疫苗记录 -->
-      <view class="list-section">
-        <view class="card list-card">
-          <view class="card-header">
-            <text class="card-title">疫苗接种记录</text>
-          </view>
-          <view class="records-container">
-            <view wx:for="{{vaccineRecords}}" wx:key="id" 
-                  class="record-item" 
-                  bind:tap="viewVaccineRecord" 
-                  data-item="{{item}}">
-              <view class="record-main">
-                <view class="record-header">
-                  <text class="record-location">{{item.name}}</text>
-                  <t-tag theme="{{item.status === '已完成' ? 'success' : 'primary'}}" size="small">{{item.status}}</t-tag>
-                </view>
-                <view class="record-content">
-                  <text class="record-symptoms">{{item.location}} • {{item.quantity}}只鹅 • {{item.nextDate ? '下次：' + item.nextDate : '计划：' + item.plannedDate}}</text>
-                </view>
-                <view class="record-footer">
-                  <text class="record-operator">{{item.operator}}</text>
-                  <text class="record-date">{{item.date}}</text>
-                </view>
-              </view>
-              <view class="record-arrow">
-                <t-icon name="chevron-right" size="16" color="#c8c9cc" />
-              </view>
+      <!-- 疾病分布统计 -->
+      <view class="disease-distribution" wx:if="{{monitoringData.diseaseDistribution.length > 0}}">
+        <text class="section-title">疾病分布</text>
+        <view class="distribution-chart">
+          <view 
+            class="disease-item"
+            wx:for="{{monitoringData.diseaseDistribution}}"
+            wx:key="disease"
+          >
+            <view class="disease-info">
+              <text class="disease-name">{{item.disease}}</text>
+              <text class="case-count">{{item.count}}例</text>
+            </view>
+            <view class="disease-bar">
+              <view class="bar-fill" style="width: {{item.percentage}}%"></view>
             </view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- AI诊疗 -->
-    <view wx:if="{{activeTab === 'ai'}}" class="tab-content">
-      <!-- 症状输入 -->
-      <view class="input-section">
-        <t-card class="ai-diagnosis-card">
-          <view slot="header" class="ai-card-header">
-            <text class="card-title">AI智能诊断</text>
+    <!-- 诊疗管理 Tab -->
+    <view class="tab-content treatment-content" wx:if="{{activeTab === 'treatment'}}">
+      <!-- 诊疗统计 -->
+      <view class="treatment-stats">
+        <view class="stats-grid">
+          <view class="stat-item">
+            <text class="stat-value">{{treatmentData.stats.pendingDiagnosis}}</text>
+            <text class="stat-label">待诊断</text>
           </view>
-          
-          <!-- 图片上传区域 -->
-          <view class="image-upload-section">
-            <text class="upload-label">上传鹅群图片（可选）</text>
-            <view class="image-upload-container">
-              <view wx:if="{{uploadedImages.length === 0}}" class="upload-placeholder" bind:tap="chooseImage" hover-class="upload-hover">
-                <t-icon name="camera" size="48" color="#c8c9cc" />
-                <text class="upload-text">点击上传图片</text>
-                <text class="upload-hint">支持JPG、PNG格式，最多3张</text>
-              </view>
-              <view wx:else class="uploaded-images">
-                <view wx:for="{{uploadedImages}}" wx:key="index" class="image-item">
-                  <image src="{{item}}" class="uploaded-image" mode="aspectFill" />
-                  <view class="image-delete" bind:tap="deleteImage" data-index="{{index}}" hover-class="delete-hover">
-                    <t-icon name="close" size="16" color="#fff" />
-                  </view>
-                </view>
-                <view wx:if="{{uploadedImages.length < 3}}" class="upload-more" bind:tap="chooseImage" hover-class="upload-hover">
-                  <t-icon name="add" size="24" color="#c8c9cc" />
-                </view>
-              </view>
+          <view class="stat-item">
+            <text class="stat-value">{{treatmentData.stats.ongoingTreatment}}</text>
+            <text class="stat-label">治疗中</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{treatmentData.stats.recovering}}</text>
+            <text class="stat-label">恢复中</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
+            <text class="stat-label">治愈率</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 诊疗快速操作 -->
+      <view class="treatment-actions">
+        <text class="section-title">快速操作</text>
+        <view class="action-grid">
+          <view class="action-item" bind:tap="onTreatmentAction" data-action="start_diagnosis">
+            <t-icon name="scan" size="20" color="#0052D9" />
+            <text>AI诊断</text>
+          </view>
+          <view class="action-item" bind:tap="onTreatmentAction" data-action="add_treatment">
+            <t-icon name="service" size="20" color="#0052D9" />
+            <text>添加治疗</text>
+          </view>
+          <view class="action-item" bind:tap="onTreatmentAction" data-action="recovery_manage">
+            <t-icon name="heart" size="20" color="#0052D9" />
+            <text>康复管理</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 当前治疗记录 -->
+      <view class="current-treatments">
+        <view class="section-header">
+          <text class="section-title">当前治疗</text>
+          <text class="more-link">查看全部 ></text>
+        </view>
+        <view class="treatment-list">
+          <view 
+            class="treatment-item"
+            wx:for="{{treatmentData.currentTreatments}}"
+            wx:key="_id"
+            bind:tap="onTreatmentAction"
+            data-action="view_treatment"
+            data-data="{{item}}"
+          >
+            <view class="treatment-info">
+              <text class="treatment-title">{{item.diagnosisDisease}}</text>
+              <text class="treatment-desc">{{item.location}} · 第{{item.treatmentDay}}天</text>
+            </view>
+            <view class="treatment-meta">
+              <text class="treatment-date">{{item.nextTreatmentDate}}</text>
+              <t-tag variant="light" theme="warning" size="small">进行中</t-tag>
             </view>
           </view>
+        </view>
+      </view>
 
-          <!-- 文字描述 -->
-          <view class="text-input-section">
-            <text class="input-label">症状描述</text>
-            <t-textarea placeholder="请详细描述鹅群症状，如：精神状态、食欲情况、排便状况、体温变化等..." 
-                        value="{{symptomInput}}" 
-                        bind:change="onSymptomInput"
-                        maxlength="500"
-                        autosize 
-                        class="symptom-textarea" />
-          </view>
-
-          <!-- 常见症状标签 -->
-          <view class="symptom-tags-section">
-            <text class="tags-label">常见症状（可多选）</text>
-            <view class="symptom-tags">
-              <t-tag wx:for="{{commonSymptoms}}" wx:key="id" 
-                     theme="{{item.selected ? 'primary' : 'light'}}" 
-                     size="small" 
-                     bind:tap="toggleSymptom" 
-                     data-id="{{item.id}}">
-                {{item.name}}
+      <!-- AI诊断历史 -->
+      <view class="ai-diagnosis-history">
+        <text class="section-title">AI诊断历史</text>
+        <view class="diagnosis-list">
+          <view 
+            class="diagnosis-item"
+            wx:for="{{treatmentData.aiDiagnosisHistory}}"
+            wx:key="_id"
+          >
+            <view class="diagnosis-info">
+              <text class="diagnosis-title">{{item.diagnosisResult}}</text>
+              <text class="diagnosis-desc">置信度：{{item.confidence}}%</text>
+            </view>
+            <view class="diagnosis-meta">
+              <text class="diagnosis-date">{{item.createTime}}</text>
+              <t-tag 
+                variant="light" 
+                theme="{{item.status === 'confirmed' ? 'success' : 'primary'}}" 
+                size="small"
+              >
+                {{item.status === 'confirmed' ? '已确认' : '待确认'}}
               </t-tag>
             </view>
           </view>
-
-          <!-- 提交按钮 -->
-          <view class="submit-section">
-            <t-notice-bar theme="warning" content="⚠️ AI建议仅供参考，请结合专业兽医诊断进行治疗决策" />
-            <t-button theme="primary" size="large" block bind:tap="getAIAdvice" 
-                      disabled="{{!symptomInput && uploadedImages.length === 0}}" 
-                      class="ai-submit-btn primary-button">
-              获取AI精准诊断
-            </t-button>
-          </view>
-        </t-card>
+        </view>
       </view>
+    </view>
 
-      <!-- AI建议结果 -->
-      <view wx:if="{{aiAdvice}}" class="advice-section">
-        <view class="card">
-          <view class="card-header">
-            <text class="card-title">AI诊疗建议</text>
+    <!-- 效果分析 Tab -->
+    <view class="tab-content analysis-content" wx:if="{{activeTab === 'analysis'}}">
+      <!-- 存活率分析 -->
+      <view class="survival-analysis">
+        <text class="section-title">存活率分析</text>
+        <view class="analysis-card">
+          <view class="analysis-header">
+            <text class="analysis-value">{{analysisData.survivalAnalysis.rate}}%</text>
+            <text class="analysis-trend trend-{{analysisData.survivalAnalysis.trend}}">
+              {{analysisData.survivalAnalysis.trend === 'improving' ? '↗ 改善中' : '→ 稳定'}}
+            </text>
           </view>
-          <view class="ai-advice-content">
-            <view class="advice-item">
-              <text class="advice-label">初步诊断</text>
-              <text class="advice-text">{{aiAdvice.diagnosis}}</text>
+          <view class="stage-breakdown">
+            <view 
+              class="stage-item"
+              wx:for="{{analysisData.survivalAnalysis.byStage}}"
+              wx:key="stage"
+            >
+              <text class="stage-name">{{item.stage}}</text>
+              <text class="stage-rate">{{item.rate}}%</text>
             </view>
-            <view class="advice-item">
-              <text class="advice-label">建议措施</text>
-              <view class="treatment-list">
-                <text wx:for="{{aiAdvice.treatments}}" wx:key="index" class="treatment-item">
-                  {{index + 1}}. {{item}}
-                </text>
-              </view>
-            </view>
-          </view>
-          <view class="advice-actions">
-            <t-button theme="success" size="small" bind:tap="adoptAdvice" class="success-button">采纳建议</t-button>
-            <t-button theme="light" size="small" bind:tap="saveAdvice" class="light-button">保存记录</t-button>
           </view>
         </view>
       </view>
 
-      <!-- 历史咨询记录 -->
-      <view class="history-section">
-        <view class="card list-card">
-          <view class="card-header">
-            <text class="card-title">历史咨询记录</text>
+      <!-- 成本分析 -->
+      <view class="cost-analysis">
+        <text class="section-title">成本分析</text>
+        <view class="cost-overview">
+          <view class="cost-item">
+            <text class="cost-label">预防成本</text>
+            <text class="cost-value">¥{{analysisData.costAnalysis.preventionCost}}</text>
           </view>
-          <view class="records-container">
-            <view wx:for="{{consultationHistory}}" wx:key="id" 
-                  class="record-item" 
-                  bind:tap="viewConsultation" 
-                  data-item="{{item}}">
-              <view class="record-main">
-                <view class="record-header">
-                  <text class="record-location">症状咨询</text>
-                  <t-tag theme="{{item.adopted ? 'success' : 'primary'}}" size="small">
-                    {{item.adopted ? '已采纳' : '处理中'}}
-                  </t-tag>
-                </view>
-                <view class="record-content">
-                  <text class="record-symptoms">{{item.symptoms}}</text>
-                </view>
-                <view class="ai-consultation-detail">
-                  <view class="ai-diagnosis">
-                    <text class="diagnosis-label">诊断：</text>
-                    <text class="diagnosis-text">{{item.diagnosis}}</text>
-                  </view>
-                  <view class="ai-treatment">
-                    <text class="treatment-label">建议：</text>
-                    <text class="treatment-text">{{item.mainTreatment}}</text>
-                  </view>
-                </view>
-                <view class="record-footer">
-                  <text class="record-date">{{item.date}}</text>
-                </view>
+          <view class="cost-item">
+            <text class="cost-label">治疗成本</text>
+            <text class="cost-value">¥{{analysisData.costAnalysis.treatmentCost}}</text>
+          </view>
+          <view class="cost-item">
+            <text class="cost-label">总成本</text>
+            <text class="cost-value total">¥{{analysisData.costAnalysis.totalCost}}</text>
+          </view>
+          <view class="cost-item">
+            <text class="cost-label">投入回报率</text>
+            <text class="cost-value">{{analysisData.costAnalysis.roi}}:1</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 性能指标 -->
+      <view class="performance-metrics">
+        <text class="section-title">性能指标</text>
+        <view class="metrics-list">
+          <view 
+            class="metric-item"
+            wx:for="{{analysisData.performanceMetrics}}"
+            wx:key="name"
+          >
+            <view class="metric-info">
+              <text class="metric-name">{{item.name}}</text>
+              <text class="metric-progress">{{item.value}}% / 目标{{item.target}}%</text>
+            </view>
+            <view class="metric-indicator">
+              <view class="progress-bar">
+                <view class="progress-fill" style="width: {{item.value / item.target * 100}}%"></view>
               </view>
-              <view class="record-arrow">
-                <t-icon name="chevron-right" size="16" color="#c8c9cc" />
-              </view>
+              <text class="metric-trend trend-{{item.trend}}">
+                {{item.trend === 'up' ? '↗' : item.trend === 'down' ? '↘' : '→'}}
+              </text>
             </view>
           </view>
         </view>
+      </view>
+
+      <!-- 分析操作 -->
+      <view class="analysis-actions">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block
+          bind:tap="onAnalysisAction"
+          data-action="export_report"
+        >导出健康报告</t-button>
       </view>
     </view>
 
@@ -310,61 +435,19 @@
     <view style="height: 120rpx;"></view>
   </view>
 
-  <!-- 健康记录详情弹窗 -->
+  <!-- 详情弹窗 -->
   <bottom-popup
-    visible="{{showHealthDetailPopup}}"
-    title="健康记录详情"
+    visible="{{showDetailPopup}}"
+    title="详情信息"
     show-close="{{true}}"
-    show-actions="{{true}}"
-    confirm-text="确定"
-    bind:close="closeHealthDetailPopup"
-    bind:confirm="closeHealthDetailPopup"
+    bind:close="onCloseDetail"
     bind:visiblechange="onHealthDetailPopupChange"
   >
-    <view wx:if="{{selectedHealthRecord}}" class="record-detail-content">
-      <view class="info-card">
-        <view class="card-content">
-          <view class="info-row">
-            <text class="info-label">症状描述：</text>
-            <text class="info-value">{{selectedHealthRecord.location || selectedHealthRecord.symptoms}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedHealthRecord.diagnosisDisease}}">
-            <text class="info-label">诊断疾病：</text>
-            <text class="info-value">{{selectedHealthRecord.diagnosisDisease}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedHealthRecord.treatment}}">
-            <text class="info-label">治疗方案：</text>
-            <text class="info-value note-text">{{selectedHealthRecord.treatment}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedHealthRecord.batchNumber}}">
-            <text class="info-label">批次号：</text>
-            <text class="info-value">{{selectedHealthRecord.batchNumber}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedHealthRecord.affectedCount}}">
-            <text class="info-label">受影响数量：</text>
-            <text class="info-value">{{selectedHealthRecord.affectedCount}}只</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedHealthRecord.severity}}">
-            <text class="info-label">严重程度：</text>
-            <view class="status-value">
-              <t-tag theme="{{selectedHealthRecord.severity}}" size="small">
-                {{selectedHealthRecord.priorityText || '未知'}}
-              </t-tag>
-            </view>
-          </view>
-          <view class="info-row">
-            <text class="info-label">操作员：</text>
-            <text class="info-value">{{selectedHealthRecord.operator}}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">记录时间：</text>
-            <text class="info-value">{{selectedHealthRecord.date}} {{selectedHealthRecord.time}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedHealthRecord.notes}}">
-            <text class="info-label">备注：</text>
-            <text class="info-value note-text">{{selectedHealthRecord.notes}}</text>
-          </view>
-        </view>
+    <view wx:if="{{selectedRecord}}" class="detail-content">
+      <view class="detail-card">
+        <text class="detail-info">{{selectedRecord.title || selectedRecord.name || selectedRecord.symptoms}}</text>
+        <text class="detail-desc">{{selectedRecord.description || selectedRecord.content}}</text>
+        <text class="detail-time">{{selectedRecord.createTime || selectedRecord.date}}</text>
       </view>
     </view>
   </bottom-popup>

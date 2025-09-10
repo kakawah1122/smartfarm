@@ -1,0 +1,42 @@
+<!--权限控制组件模板-->
+
+<!-- 加载状态 -->
+<view wx:if="{{loading && showLoader}}" class="permission-loading">
+  <t-loading theme="circular" size="24rpx" text="权限验证中..." />
+</view>
+
+<!-- 有权限时显示内容 -->
+<view wx:elif="{{hasPermission}}" class="permission-content">
+  <slot></slot>
+</view>
+
+<!-- 无权限时的提示 -->
+<view wx:else class="permission-denied">
+  <view wx:if="{{showNoPermissionTip}}" class="permission-denied-content">
+    <!-- 使用TDesign的空状态组件 -->
+    <t-empty 
+      icon="lock" 
+      description="{{error || noPermissionText}}"
+      class="permission-empty"
+    >
+      <!-- 可以添加自定义操作按钮 -->
+      <view slot="action" wx:if="{{!silent}}">
+        <t-button 
+          theme="light" 
+          size="small" 
+          bind:tap="recheckPermission"
+        >
+          重新检查
+        </t-button>
+      </view>
+    </t-empty>
+  </view>
+  
+  <!-- 静默模式或不显示提示时的占位内容 -->
+  <view wx:else class="permission-placeholder">
+    <!-- 可以通过插槽自定义无权限时的内容 -->
+    <slot name="no-permission">
+      <!-- 默认空内容 -->
+    </slot>
+  </view>
+</view>

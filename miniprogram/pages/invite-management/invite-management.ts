@@ -38,11 +38,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 创建邀请弹窗
     showCreateDialog: false,
     newInvite: {
-      role: 'user',
+      role: 'employee',
       expiryDays: 7,
       remark: ''
     },
-    selectedRoleIndex: [0], // 默认选择普通用户（索引0）
+    selectedRoleIndex: [0], // 默认选择员工（索引0）
     selectedExpiryIndex: [1], // 默认选择7天（索引1）
     
     // 邀请码生成结果
@@ -53,11 +53,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     showRevokeDialog: false,
     revokeReason: '',
     
-    // 选项数据
+    // 选项数据 - 使用新的4角色体系
     roleOptions: [
-      { label: '普通用户', value: 'user' },
-      { label: '操作员', value: 'operator' },
-      { label: '管理员', value: 'admin' }
+      { label: '员工', value: 'employee' },
+      { label: '兽医', value: 'veterinarian' },
+      { label: '经理', value: 'manager' },
+      { label: '超级管理员', value: 'super_admin' }
     ],
     expiryOptions: [
       { label: '3天', value: 3 },
@@ -195,7 +196,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   async loadInviteStats() {
     try {
       const result = await wx.cloud.callFunction({
-        name: 'employee-invite-management',
+        name: 'user-management',
         data: {
           action: 'get_invite_stats'
         }
@@ -228,7 +229,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       }
 
       const result = await wx.cloud.callFunction({
-        name: 'employee-invite-management',
+        name: 'user-management',
         data: {
           action: 'list_invites',
           page: currentPage,
@@ -297,9 +298,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       const userInfo = app.globalData.userInfo
       console.log('当前用户信息（创建邀请码）：', userInfo)
 
-      console.log('调用云函数：employee-invite-management')
+      console.log('调用云函数：user-management')
       const result = await wx.cloud.callFunction({
-        name: 'employee-invite-management',
+        name: 'user-management',
         data: {
           action: 'create_invite',
           role: role,
@@ -420,7 +421,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       wx.showLoading({ title: '撤销中...' })
 
       const result = await wx.cloud.callFunction({
-        name: 'employee-invite-management',
+        name: 'user-management',
         data: {
           action: 'revoke_invite',
           inviteId: this.data.selectedInvite._id,
@@ -455,7 +456,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       wx.showLoading({ title: '处理中...' })
 
       const result = await wx.cloud.callFunction({
-        name: 'employee-invite-management',
+        name: 'user-management',
         data: {
           action: 'resend_invite',
           inviteId: this.data.selectedInvite._id,
@@ -526,7 +527,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({
       showCreateDialog: true,
       newInvite: {
-        role: 'user',
+        role: 'employee',
         expiryDays: 7,
         remark: ''
       },
@@ -601,7 +602,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 表单事件
   onRoleChange(e: any) {
     const selectedIndex = e.detail.value
-    const selectedRole = this.data.roleOptions[selectedIndex]?.value || 'user'
+    const selectedRole = this.data.roleOptions[selectedIndex]?.value || 'employee'
     this.setData({
       selectedRoleIndex: [selectedIndex],
       'newInvite.role': selectedRole
@@ -687,10 +688,18 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   getRoleText(role: string): string {
     const roleMap = {
-      'user': '普通用户',
-      'operator': '操作员',
-      'admin': '管理员',
-      'manager': '经理'
+      // 新的4角色体系
+      'employee': '员工',
+      'veterinarian': '兽医',
+      'manager': '经理',
+      'super_admin': '超级管理员',
+      
+      // 兼容旧角色
+      'admin': '超级管理员',
+      'user': '员工',
+      'operator': '员工',
+      'technician': '兽医',
+      'finance': '经理'
     }
     return roleMap[role] || '未知角色'
   },

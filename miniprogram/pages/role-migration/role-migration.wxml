@@ -1,0 +1,227 @@
+<!--角色迁移管理页面-->
+<view class="container">
+  <!-- 导航栏 -->
+  <view class="navbar">
+    <view class="navbar-content">
+      <t-icon name="arrow-left" bind:tap="goBack" />
+      <view class="navbar-title">角色迁移管理</view>
+      <view></view>
+    </view>
+  </view>
+
+  <view wx:if="{{canMigrate}}" class="content">
+    <!-- 操作说明 -->
+    <view class="info-card">
+      <view class="info-title">📋 角色迁移说明</view>
+      <view class="info-content">
+        <text>本工具用于将旧的角色体系迁移到新的4角色体系：</text>
+        <view class="migration-mapping">
+          <view class="mapping-item">
+            <text class="old-role">管理员(admin)</text>
+            <t-icon name="arrow-right" />
+            <text class="new-role">超级管理员</text>
+          </view>
+          <view class="mapping-item">
+            <text class="old-role">普通用户(user)/操作员(operator)</text>
+            <t-icon name="arrow-right" />
+            <text class="new-role">员工</text>
+          </view>
+          <view class="mapping-item">
+            <text class="old-role">技术员(technician)</text>
+            <t-icon name="arrow-right" />
+            <text class="new-role">兽医</text>
+          </view>
+          <view class="mapping-item">
+            <text class="old-role">财务(finance)</text>
+            <t-icon name="arrow-right" />
+            <text class="new-role">经理</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <t-button theme="outline" bind:tap="analyzeRoles">
+        <t-icon name="analytics" />
+        分析角色分布
+      </t-button>
+      <t-button theme="outline" bind:tap="previewMigration">
+        <t-icon name="preview-open" />
+        预览迁移
+      </t-button>
+      <t-button theme="primary" bind:tap="executeMigration">
+        <t-icon name="play-circle" />
+        执行迁移
+      </t-button>
+      <t-button theme="outline" bind:tap="verifyMigration">
+        <t-icon name="check-circle" />
+        验证结果
+      </t-button>
+    </view>
+
+    <!-- 分析结果 -->
+    <view wx:if="{{analysisResult}}" class="result-card">
+      <view class="result-title">📊 角色分析结果</view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <view class="stat-value">{{analysisResult.totalUsers}}</view>
+          <view class="stat-label">总用户数</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-value">{{analysisResult.migrationPlan.length}}</view>
+          <view class="stat-label">需迁移角色</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-value">{{analysisResult.problemUsers.length}}</view>
+          <view class="stat-label">问题用户</view>
+        </view>
+      </view>
+
+      <!-- 当前角色分布 -->
+      <view class="role-distribution">
+        <view class="section-title">当前角色分布</view>
+        <view wx:for="{{analysisResult.roleStats}}" wx:for-item="count" wx:for-index="role" wx:key="role" class="role-stat">
+          <view class="role-badge" style="background-color: {{getRoleColor(role)}}20; color: {{getRoleColor(role)}};">
+            {{getRoleDisplayName(role)}}
+          </view>
+          <view class="role-count">{{count}} 人</view>
+        </view>
+      </view>
+
+      <!-- 迁移计划 -->
+      <view wx:if="{{analysisResult.migrationPlan.length > 0}}" class="migration-plan">
+        <view class="section-title">迁移计划</view>
+        <view wx:for="{{analysisResult.migrationPlan}}" wx:key="oldRole" class="plan-item">
+          <view class="plan-mapping">
+            <view class="old-role-tag" style="background-color: {{getRoleColor(item.oldRole)}}20; color: {{getRoleColor(item.oldRole)}};">
+              {{getRoleDisplayName(item.oldRole)}}
+            </view>
+            <t-icon name="arrow-right" />
+            <view class="new-role-tag" style="background-color: {{getRoleColor(item.newRole)}}20; color: {{getRoleColor(item.newRole)}};">
+              {{getRoleDisplayName(item.newRole)}}
+            </view>
+            <view class="plan-count">({{item.count}}人)</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 问题用户 -->
+      <view wx:if="{{analysisResult.problemUsers.length > 0}}" class="problem-users">
+        <view class="section-title">⚠️ 问题用户（需手动处理）</view>
+        <view wx:for="{{analysisResult.problemUsers}}" wx:key="_id" class="problem-user">
+          <view class="user-info">
+            <view class="user-name">{{item.nickname}}</view>
+            <view class="user-role error-role">{{item.role}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 迁移结果 -->
+    <view wx:if="{{migrationResult}}" class="result-card">
+      <view class="result-title">
+        {{migrationResult.dryRun ? '🔍 迁移预览' : '✅ 迁移结果'}}
+      </view>
+      
+      <view class="stats-grid">
+        <view class="stat-item">
+          <view class="stat-value">{{migrationResult.totalUsers}}</view>
+          <view class="stat-label">总用户</view>
+        </view>
+        <view class="stat-item success">
+          <view class="stat-value">{{migrationResult.successCount}}</view>
+          <view class="stat-label">成功</view>
+        </view>
+        <view class="stat-item error" wx:if="{{migrationResult.errorCount > 0}}">
+          <view class="stat-value">{{migrationResult.errorCount}}</view>
+          <view class="stat-label">失败</view>
+        </view>
+      </view>
+
+      <!-- 迁移详情 -->
+      <view class="migration-details">
+        <view wx:for="{{migrationResult.results}}" wx:key="userId" class="migration-item {{item.status}}">
+          <view class="user-info">
+            <view class="user-name">{{item.nickname}}</view>
+            <view class="role-change">
+              {{getRoleDisplayName(item.oldRole)}} → {{getRoleDisplayName(item.newRole)}}
+            </view>
+          </view>
+          <view class="status-badge {{item.status}}">
+            <text wx:if="{{item.status === 'success'}}">✅</text>
+            <text wx:elif="{{item.status === 'error'}}">❌</text>
+            <text wx:else>⚠️</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 验证结果 -->
+    <view wx:if="{{verificationResult}}" class="result-card">
+      <view class="result-title">✅ 验证结果</view>
+      
+      <view class="verification-summary">
+        <view class="summary-item {{verificationResult.isValid ? 'success' : 'error'}}">
+          <t-icon name="{{verificationResult.isValid ? 'check-circle-filled' : 'close-circle-filled'}}" />
+          <text>{{verificationResult.isValid ? '角色迁移完全成功' : '存在无效角色'}}</text>
+        </view>
+      </view>
+
+      <view class="stats-grid">
+        <view class="stat-item">
+          <view class="stat-value">{{verificationResult.totalUsers}}</view>
+          <view class="stat-label">总用户</view>
+        </view>
+        <view class="stat-item success">
+          <view class="stat-value">{{verificationResult.validRoleCount}}</view>
+          <view class="stat-label">有效角色</view>
+        </view>
+        <view class="stat-item error" wx:if="{{verificationResult.invalidRoles.length > 0}}">
+          <view class="stat-value">{{verificationResult.invalidRoles.length}}</view>
+          <view class="stat-label">无效角色</view>
+        </view>
+      </view>
+
+      <!-- 新角色分布 -->
+      <view class="role-distribution">
+        <view class="section-title">新角色分布</view>
+        <view wx:for="{{verificationResult.newRoleStats}}" wx:for-item="count" wx:for-index="role" wx:key="role" class="role-stat">
+          <view class="role-badge" style="background-color: {{getRoleColor(role)}}20; color: {{getRoleColor(role)}};">
+            {{getRoleDisplayName(role)}}
+          </view>
+          <view class="role-count">{{count}} 人</view>
+        </view>
+      </view>
+
+      <!-- 无效角色 -->
+      <view wx:if="{{verificationResult.invalidRoles.length > 0}}" class="problem-users">
+        <view class="section-title">⚠️ 无效角色</view>
+        <view wx:for="{{verificationResult.invalidRoles}}" wx:key="_id" class="problem-user">
+          <view class="user-info">
+            <view class="user-name">{{item.nickname}}</view>
+            <view class="user-role error-role">{{item.role}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 权限不足提示 -->
+  <view wx:else class="no-permission">
+    <t-icon name="lock-on" size="64" color="#ccc" />
+    <text>权限不足</text>
+    <text>只有超级管理员可以执行角色迁移</text>
+  </view>
+
+  <!-- 确认对话框 -->
+  <t-dialog
+    visible="{{showConfirmDialog}}"
+    title="{{confirmTitle}}"
+    content="{{confirmContent}}"
+    confirm-btn="确认执行"
+    cancel-btn="取消"
+    bind:confirm="onConfirm"
+    bind:cancel="onCancel"
+  />
+</view>

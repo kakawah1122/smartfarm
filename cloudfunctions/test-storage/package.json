@@ -1,0 +1,20 @@
+{
+  "name": "test-storage",
+  "version": "1.0.0",
+  "description": "测试云开发存储自动文件夹创建功能",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wechat",
+    "cloud",
+    "storage",
+    "test"
+  ],
+  "author": "AI Assistant",
+  "license": "ISC"
+}

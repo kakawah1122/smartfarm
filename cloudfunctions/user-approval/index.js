@@ -69,7 +69,7 @@ async function verifyAdminPermission(openid) {
     }
 
     const user = userResult.data[0]
-    return user.isSuper === true || user.role === 'admin' || user.role === 'manager' || user.role === 'operator'
+    return user.role === 'super_admin' || user.role === 'manager'
   } catch (error) {
     return false
   }

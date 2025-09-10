@@ -65,7 +65,7 @@ const NotificationTemplates = {
     priority: NotificationPriority.NORMAL,
     title: '疫苗接种提醒',
     contentTemplate: '批次 {{batchNumber}} 需要进行疫苗接种，预计数量：{{quantity}}只',
-    actionUrl: '/pages/health-record-form/health-record-form'
+    actionUrl: '/pages/health/health'
   },
   
   DEATH_RECORD_ALERT: {

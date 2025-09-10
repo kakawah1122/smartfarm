@@ -1,4 +1,6 @@
-/* health.scss - TDesign原生设计规范 */
+/* health.scss - 健康管理中心完整重构版本 - 基于TDesign设计规范 */
+
+/* 基础页面样式 */
 .page {
   background-color: var(--td-bg-color-page, #f5f5f5);
   --td-brand-color: #0052d9;
@@ -7,639 +9,834 @@
   --td-brand-color-active: #003cab;
 }
 
-.page-container {
+.health-center-page {
   min-height: 100vh;
-  background-color: var(--color-bg-page);
+  background-color: var(--td-bg-color-page);
   display: flex;
   flex-direction: column;
 }
 
-/* 自定义导航栏 - 刘海屏适配 */
-.custom-navbar {
-  background: var(--primary-gradient) !important;
-  color: white !important;
-  box-shadow: var(--shadow-base) !important;
-  padding-top: var(--safe-area-inset-top, 0) !important;
-  padding-left: var(--safe-area-inset-left, 0) !important;
-  padding-right: var(--safe-area-inset-right, 0) !important;
-}
-
-/* 健康管理Tab样式 - 刘海屏适配 */
-.health-tabs {
-  background: var(--td-bg-color-container, var(--color-bg-primary));
-  --td-tab-track-color: var(--td-brand-color);
-  --td-tab-item-active-color: var(--td-brand-color);
-  --td-tab-item-color: var(--td-text-color-secondary, var(--color-text-secondary));
-  position: sticky;
-  top: 0;
-  z-index: var(--z-index-sticky);
-  box-shadow: var(--shadow-sm);
-  border-bottom: 2rpx solid var(--td-border-level-1-color, var(--color-border-light));
-  /* 优化与导航栏的间距 */
-  margin-top: 0;
-}
-
-/* 滚动容器 - 刘海屏适配 */
-.scroll-container {
-  flex: 1;
-  box-sizing: border-box;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-.tab-content {
-  min-height: 100%;
-  padding-bottom: calc(120rpx + var(--safe-area-inset-bottom, 0));
-  padding-left: var(--safe-area-inset-left, 0);
-  padding-right: var(--safe-area-inset-right, 0);
-}
-
-/* 各个模块的间距 */
-.stats-section,
-.action-section,
-.list-section,
-.reminder-section,
-.intro-section,
-.input-section,
-.advice-section,
-.history-section {
-  margin: var(--spacing-lg) var(--spacing-base);
-}
-
-/* 健康统计卡片 - TDesign原生样式 */
-.health-stats {
-  margin: 32rpx 0;
-}
-
-/* 保留TDesign Card组件原生样式 */
-.health-stats .t-card {
-  margin-bottom: 24rpx;
-}
-
-.stat-content {
-  text-align: center;
-  padding: 32rpx 24rpx;
-  min-height: 120rpx;
-}
-
-.stat-value {
-  font-size: 48rpx;
-  font-weight: 600;
-  line-height: 1.2;
-  margin-bottom: 8rpx;
-  color: var(--td-text-color-primary, #000000);
-}
-
-.stat-content.stat-success .stat-value {
-  color: var(--td-success-color, #00a870);
-}
-
-.stat-content.stat-warning .stat-value {
-  color: var(--td-warning-color, #ed7b2f);
-}
-
-.stat-content.stat-primary .stat-value {
-  color: var(--td-brand-color, #0052d9);
-}
-
-.stat-label {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  line-height: 1.4;
-  font-weight: 400;
-}
-
-.stat-hint {
-  font-size: 20rpx;
-  color: var(--td-text-color-placeholder, #999999);
-  margin-top: 4rpx;
-}
-
-.clickable-card {
-  transition: all 0.3s ease;
-  
-  &:active {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-}
-
-/* TDesign原生卡片样式 */
-.card {
-  margin: 32rpx 0;
-}
-
-.card-header {
-  margin-bottom: 24rpx;
-}
-
-.card-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: var(--td-text-color-primary, #000000);
-  margin-bottom: 8rpx;
-  line-height: 1.4;
-}
-
-.card-subtitle {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  font-weight: 400;
-}
-
-/* AI诊断卡片专用样式 - 禁用所有点击效果 */
-.ai-diagnosis-card {
-  margin: 32rpx 0;
-  /* 强制禁用TDesign Card的默认点击效果 */
-  pointer-events: none !important;
-}
-
-/* 恢复内部交互元素的点击能力 */
-.ai-diagnosis-card .upload-placeholder,
-.ai-diagnosis-card .upload-more,
-.ai-diagnosis-card .image-delete,
-.ai-diagnosis-card .t-textarea,
-.ai-diagnosis-card .t-tag,
-.ai-diagnosis-card .t-button,
-.ai-diagnosis-card .t-notice-bar,
-.ai-diagnosis-card .image-upload-container,
-.ai-diagnosis-card .uploaded-images,
-.ai-diagnosis-card .symptom-tags {
-  pointer-events: auto !important;
-}
-
-.ai-card-header {
-  pointer-events: none !important;
-}
-
-/* 列表卡片 */
-.list-card {
-  margin: 32rpx 0;
-}
-
-/* 标题左对齐 */
-.list-card .card-title {
-  text-align: left;
-}
-
-/* TDesign原生记录样式 - 使用Cell组件风格 */
-.records-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.record-item {
+/* 健康概览卡片 */
+.health-overview {
   padding: 24rpx;
-  background: var(--td-bg-color-container, #ffffff);
-  border-radius: 16rpx;
-  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-}
-
-.record-main {
-  flex: 1;
-}
-
-.record-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8rpx;
-}
-
-.record-location {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: var(--td-text-color-primary, #000000);
-  line-height: 1.4;
-  flex: 1;
-}
-
-.record-symptoms {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-bottom: 8rpx;
-}
-
-.record-footer {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.record-operator {
-  font-size: 24rpx;
-  color: var(--td-brand-color, #0052d9);
-  background: var(--td-brand-color-light, #f2f3ff);
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  font-weight: 400;
-}
-
-.record-date {
-  font-size: 24rpx;
-  color: var(--td-text-color-placeholder, #bbbbbb);
-}
-
-.record-arrow {
-  margin-left: 16rpx;
-  color: var(--td-text-color-placeholder, #bbbbbb);
-}
-
-/* TDesign原生按钮样式 */
-.vaccine-actions {
-  display: flex;
-  gap: 24rpx;
-  justify-content: center;
-  margin: 32rpx 0;
-}
-
-.vaccine-action-btn {
-  flex: 1;
-  min-width: 200rpx;
-}
-
-/* 疫苗状态 */
-.vaccine-status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8rpx;
-}
-
-.next-date {
-  font-size: 24rpx;
-  color: var(--td-text-color-secondary, #555555);
-  background: var(--td-bg-color-component, #f3f3f3);
-  padding: 4rpx 8rpx;
-  border-radius: 8rpx;
-}
-
-/* TDesign原生图片上传样式 */
-.image-upload-section {
-  margin: 32rpx 0;
-}
-
-.upload-label,
-.input-label,
-.tags-label {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 500;
-  color: var(--td-text-color-primary, #000000);
+  background: white;
   margin-bottom: 16rpx;
 }
 
-.image-upload-container {
-  border: 2rpx dashed var(--td-border-level-2-color, #dcdcdc);
-  border-radius: 16rpx;
-  background: var(--td-bg-color-component, #f3f3f3);
-}
-
-.upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48rpx;
-  min-height: 200rpx;
-  transition: background-color 0.2s ease;
-}
-
-/* 只有可交互元素的hover效果 */
-.upload-hover {
-  background: var(--td-bg-color-container, #ffffff) !important;
-}
-
-.upload-text {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  margin: 16rpx 0 8rpx;
-}
-
-.upload-hint {
-  font-size: 24rpx;
-  color: var(--td-text-color-placeholder, #bbbbbb);
-}
-
-.uploaded-images {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-  padding: 24rpx;
-}
-
-.image-item {
-  position: relative;
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 16rpx;
-  overflow: hidden;
-}
-
-.uploaded-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 16rpx;
-}
-
-.image-delete {
-  position: absolute;
-  top: 8rpx;
-  right: 8rpx;
-  width: 32rpx;
-  height: 32rpx;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
-}
-
-.delete-hover {
-  background: rgba(0, 0, 0, 0.8) !important;
-}
-
-.upload-more {
-  width: 160rpx;
-  height: 160rpx;
-  border: 2rpx dashed var(--td-border-level-2-color, #dcdcdc);
-  border-radius: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--td-bg-color-container, #ffffff);
-  transition: background-color 0.2s ease;
-}
-
-/* TDesign原生输入区域 */
-.text-input-section {
-  margin: 32rpx 0;
-}
-
-.symptom-textarea {
-  margin-top: 16rpx;
-}
-
-/* TDesign原生标签区域 */
-.symptom-tags-section {
-  margin: 32rpx 0;
-}
-
-.symptom-tags {
+.overview-grid {
   display: flex;
   gap: 16rpx;
-  margin-top: 16rpx;
-  flex-wrap: wrap;
 }
 
-/* TDesign原生提交区域 */
-.submit-section {
-  margin-top: 48rpx;
+.overview-card {
+  flex: 1;
+  padding: 24rpx 16rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  color: white;
+  
+  &.primary {
+    background: linear-gradient(135deg, #0052d9 0%, #266fe8 100%);
+  }
+  
+  &.warning {
+    background: linear-gradient(135deg, #ed7b2f 0%, #f2975a 100%);
+  }
+  
+  &.success {
+    background: linear-gradient(135deg, #00a870 0%, #00c991 100%);
+  }
 }
 
-.ai-submit-btn {
-  margin-top: 24rpx;
-}
-
-/* TDesign原生建议样式 */
-.treatment-list {
-  margin-top: 16rpx;
-  padding: 16rpx;
-  background: var(--td-bg-color-component, #f3f3f3);
-  border-radius: 8rpx;
-  border-left: 4rpx solid var(--td-success-color, #00a870);
-}
-
-.treatment-item {
-  font-size: 28rpx;
-  color: var(--td-text-color-primary, #000000);
-  line-height: 1.4;
-  padding-left: 24rpx;
-  position: relative;
-}
-
-.treatment-item::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--td-success-color, #00a870);
-}
-
-/* TDesign原生AI建议 */
-.ai-advice-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24rpx;
-  margin-bottom: 24rpx;
-}
-
-.advice-item {
-  padding: 24rpx;
-  background: var(--td-bg-color-component, #f3f3f3);
-  border-radius: 16rpx;
-  border-left: 4rpx solid var(--td-brand-color, #0052d9);
-}
-
-.advice-label {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: var(--td-text-color-primary, #000000);
+.overview-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  line-height: 1.2;
   margin-bottom: 8rpx;
 }
 
-.advice-text {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  line-height: 1.4;
+.overview-label {
+  font-size: 24rpx;
+  opacity: 0.9;
 }
 
-/* TDesign原生操作按钮 */
-.advice-actions {
+/* 活跃预警 */
+.active-alerts {
+  margin: 0 24rpx 16rpx;
+  padding: 24rpx;
+  background: white;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.alert-header {
   display: flex;
-  gap: 16rpx;
-  margin-top: 24rpx;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
 }
 
-/* TDesign原生咨询详情 */
-.ai-consultation-detail {
-  margin: 16rpx 0;
-  background: var(--td-bg-color-component, #f3f3f3);
+.alert-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary);
+}
+
+.alert-count {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary);
+}
+
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
   padding: 16rpx;
-  border-radius: 8rpx;
-  border-left: 4rpx solid var(--td-brand-color, #0052d9);
+  border-radius: 12rpx;
+  
+  &.alert-high {
+    background: #fef0f0;
+    border-left: 4rpx solid #e34d59;
+  }
+  
+  &.alert-medium {
+    background: #fff7e6;
+    border-left: 4rpx solid #ed7b2f;
+  }
+  
+  &.alert-low {
+    background: #f0f9ff;
+    border-left: 4rpx solid #0052d9;
+  }
 }
 
-.ai-diagnosis,
-.ai-treatment {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-bottom: 8rpx;
-}
-
-.ai-diagnosis:last-child,
-.ai-treatment:last-child {
-  margin-bottom: 0;
-}
-
-.diagnosis-label,
-.treatment-label {
-  font-size: 24rpx;
-  color: var(--td-text-color-primary, #000000);
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.diagnosis-text,
-.treatment-text {
-  font-size: 24rpx;
-  color: var(--td-text-color-secondary, #555555);
-  line-height: 1.4;
+.alert-content {
   flex: 1;
 }
 
-/* TDesign原生响应式设计 */
-@media screen and (max-width: 480px) {
-  .stats-section,
-  .action-section,
-  .list-section,
-  .reminder-section,
-  .intro-section,
-  .input-section,
-  .advice-section,
-  .history-section {
-    margin: 32rpx 16rpx;
-  }
+.alert-message {
+  font-size: 28rpx;
+  color: var(--td-text-color-primary);
+  display: block;
+  margin-bottom: 4rpx;
+}
 
-  .health-stats,
-  .card,
-  .list-card {
-    margin: 16rpx 0;
+.alert-time {
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary);
+}
+
+/* 主要Tab切换 */
+.health-main-tabs {
+  background: white;
+  --td-tab-track-color: var(--td-brand-color);
+  --td-tab-item-active-color: var(--td-brand-color);
+  --td-tab-item-color: var(--td-text-color-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+/* Tab内容区域 */
+.tab-content-container {
+  flex: 1;
+  padding-bottom: 120rpx;
+}
+
+.tab-content {
+  padding: 24rpx;
+}
+
+/* 通用样式 */
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary);
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.more-link {
+  font-size: 24rpx;
+  color: var(--td-brand-color);
+}
+
+/* 预防管理Tab样式 */
+.prevention-content {
+  .prevention-stats {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   }
   
-  .stat-content {
-    padding: 24rpx 16rpx;
-    min-height: 100rpx;
+  .stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+  }
+  
+  .stats-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: var(--td-text-color-primary);
+  }
+  
+  .stats-period {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20rpx;
+  }
+  
+  .stat-item {
+    text-align: center;
+    padding: 20rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
   }
   
   .stat-value {
-    font-size: 40rpx;
+    font-size: 36rpx;
+    font-weight: 600;
+    color: var(--td-brand-color);
+    display: block;
+    margin-bottom: 8rpx;
   }
   
-  .advice-actions {
+  .stat-label {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+  }
+  
+  .quick-actions {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16rpx;
+    margin-top: 16rpx;
+  }
+  
+  .action-item {
+    display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
+    border: 2rpx solid transparent;
+    transition: all 0.3s ease;
+    
+    &:active {
+      transform: scale(0.95);
+      background: var(--td-bg-color-container-hover);
+    }
+    
+    text {
+      margin-top: 12rpx;
+      font-size: 24rpx;
+      color: var(--td-text-color-primary);
+    }
   }
   
-  .advice-actions .t-button {
-    width: 100%;
+  .prevention-records,
+  .upcoming-tasks {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   }
+  
+  .record-list,
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+  }
+  
+  .record-item,
+  .task-item {
+    display: flex;
+    align-items: center;
+    padding: 16rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
+  }
+  
+  .record-info,
+  .task-info {
+    flex: 1;
+    margin-left: 12rpx;
+  }
+  
+  .record-title,
+  .task-name {
+    font-size: 28rpx;
+    color: var(--td-text-color-primary);
+    display: block;
+    margin-bottom: 4rpx;
+  }
+  
+  .record-desc,
+  .task-location {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+  }
+  
+  .record-meta,
+  .task-meta {
+    text-align: right;
+  }
+  
+  .record-date,
+  .task-date {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+    display: block;
+    margin-bottom: 8rpx;
+  }
+  
+  .task-icon {
+    width: 40rpx;
+    height: 40rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--td-brand-color);
+    border-radius: 50%;
+    color: white;
+  }
+  
+  .priority-high {
+    border-left: 4rpx solid #e34d59;
+  }
+  
+  .priority-medium {
+    border-left: 4rpx solid #ed7b2f;
+  }
+}
 
-  /* 按钮响应式 */
-  .vaccine-actions {
-    flex-direction: column;
+/* 健康监控Tab样式 */
+.monitoring-content {
+  .real-time-status {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .status-overview {
+    display: flex;
+    gap: 16rpx;
+    margin-top: 16rpx;
+  }
+  
+  .status-item {
+    flex: 1;
+    text-align: center;
+    padding: 20rpx;
+    border-radius: 12rpx;
+    
+    &.healthy {
+      background: #f0f9ff;
+      color: #00a870;
+    }
+    
+    &.warning {
+      background: #fff7e6;
+      color: #ed7b2f;
+    }
+    
+    &.danger {
+      background: #fef0f0;
+      color: #e34d59;
+    }
+  }
+  
+  .status-count {
+    font-size: 40rpx;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8rpx;
+  }
+  
+  .status-label {
+    font-size: 24rpx;
+  }
+  
+  .monitoring-actions {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .action-row {
+    display: flex;
     gap: 16rpx;
   }
   
-  .vaccine-action-btn {
-    flex: none;
-    width: 100%;
-    min-width: auto;
-  }
-
-  /* 图片上传响应式 */
-  .uploaded-images {
-    padding: 16rpx;
-  }
-  
-  .image-item,
-  .upload-more {
-    width: 120rpx;
-    height: 120rpx;
-  }
-  
-  .upload-placeholder {
+  .abnormal-list {
+    background: white;
+    border-radius: 16rpx;
     padding: 24rpx;
-    min-height: 160rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   }
-
-  /* 记录列表响应式 */
-  .record-item {
+  
+  .abnormal-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+    margin-top: 16rpx;
+  }
+  
+  .abnormal-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 16rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
   }
   
-  .record-location {
+  .abnormal-info {
+    flex: 1;
+  }
+  
+  .animal-id {
     font-size: 28rpx;
+    font-weight: 600;
+    color: var(--td-text-color-primary);
+    display: block;
+    margin-bottom: 4rpx;
   }
   
-  .record-symptoms {
+  .symptoms {
     font-size: 26rpx;
+    color: var(--td-text-color-secondary);
+    display: block;
+    margin-bottom: 4rpx;
+  }
+  
+  .location {
+    font-size: 24rpx;
+    color: var(--td-text-color-placeholder);
+  }
+  
+  .severity-indicator {
+    padding: 8rpx 16rpx;
+    border-radius: 20rpx;
+    font-size: 24rpx;
+    font-weight: 500;
+    
+    &.severity-high {
+      background: #fef0f0;
+      color: #e34d59;
+    }
+    
+    &.severity-medium {
+      background: #fff7e6;
+      color: #ed7b2f;
+    }
+    
+    &.severity-low {
+      background: #f0f9ff;
+      color: #0052d9;
+    }
+  }
+  
+  .disease-distribution {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .distribution-chart {
+    margin-top: 16rpx;
+  }
+  
+  .disease-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16rpx;
+  }
+  
+  .disease-info {
+    width: 200rpx;
+    margin-right: 16rpx;
+  }
+  
+  .disease-name {
+    font-size: 26rpx;
+    color: var(--td-text-color-primary);
+    display: block;
+    margin-bottom: 4rpx;
+  }
+  
+  .case-count {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+  }
+  
+  .disease-bar {
+    flex: 1;
+    height: 20rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 10rpx;
+    overflow: hidden;
+  }
+  
+  .bar-fill {
+    height: 100%;
+    background: var(--td-brand-color);
+    border-radius: 10rpx;
+    transition: width 0.3s ease;
   }
 }
 
-
-
-/* TDesign原生无障碍支持 */
-.stat-content:focus {
-  outline: 2rpx solid var(--td-brand-color, #0052d9);
-  outline-offset: 4rpx;
+/* 诊疗管理Tab样式 */
+.treatment-content {
+  .treatment-stats {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .treatment-actions {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .current-treatments,
+  .ai-diagnosis-history {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .treatment-list,
+  .diagnosis-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+    margin-top: 16rpx;
+  }
+  
+  .treatment-item,
+  .diagnosis-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
+  }
+  
+  .treatment-info,
+  .diagnosis-info {
+    flex: 1;
+  }
+  
+  .treatment-title,
+  .diagnosis-title {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: var(--td-text-color-primary);
+    display: block;
+    margin-bottom: 4rpx;
+  }
+  
+  .treatment-desc,
+  .diagnosis-desc {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+  }
+  
+  .treatment-meta,
+  .diagnosis-meta {
+    text-align: right;
+  }
+  
+  .treatment-date,
+  .diagnosis-date {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+    display: block;
+    margin-bottom: 8rpx;
+  }
 }
 
-/* 健康记录详情弹窗样式 */
-.record-detail-content {
-  max-height: 60vh;
-  overflow-y: auto;
+/* 效果分析Tab样式 */
+.analysis-content {
+  .survival-analysis,
+  .cost-analysis,
+  .performance-metrics {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
+  
+  .analysis-card {
+    margin-top: 16rpx;
+  }
+  
+  .analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+  }
+  
+  .analysis-value {
+    font-size: 48rpx;
+    font-weight: 600;
+    color: var(--td-brand-color);
+  }
+  
+  .analysis-trend {
+    font-size: 24rpx;
+    padding: 8rpx 12rpx;
+    border-radius: 16rpx;
+    
+    &.trend-improving {
+      background: #f0f9ff;
+      color: #00a870;
+    }
+    
+    &.trend-stable {
+      background: #f5f5f5;
+      color: var(--td-text-color-secondary);
+    }
+  }
+  
+  .stage-breakdown {
+    display: flex;
+    gap: 16rpx;
+  }
+  
+  .stage-item {
+    flex: 1;
+    text-align: center;
+    padding: 16rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
+  }
+  
+  .stage-name {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+    display: block;
+    margin-bottom: 8rpx;
+  }
+  
+  .stage-rate {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: var(--td-text-color-primary);
+  }
+  
+  .cost-overview {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16rpx;
+    margin-top: 16rpx;
+  }
+  
+  .cost-item {
+    text-align: center;
+    padding: 20rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
+  }
+  
+  .cost-label {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+    display: block;
+    margin-bottom: 8rpx;
+  }
+  
+  .cost-value {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: var(--td-text-color-primary);
+    
+    &.total {
+      color: var(--td-brand-color);
+      font-size: 32rpx;
+    }
+  }
+  
+  .metrics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+    margin-top: 16rpx;
+  }
+  
+  .metric-item {
+    display: flex;
+    align-items: center;
+    padding: 16rpx;
+    background: var(--td-bg-color-container);
+    border-radius: 12rpx;
+  }
+  
+  .metric-info {
+    flex: 1;
+    margin-right: 16rpx;
+  }
+  
+  .metric-name {
+    font-size: 26rpx;
+    color: var(--td-text-color-primary);
+    display: block;
+    margin-bottom: 4rpx;
+  }
+  
+  .metric-progress {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+  }
+  
+  .metric-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+  }
+  
+  .progress-bar {
+    width: 120rpx;
+    height: 12rpx;
+    background: var(--td-bg-color-page);
+    border-radius: 6rpx;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: var(--td-brand-color);
+    border-radius: 6rpx;
+    transition: width 0.3s ease;
+  }
+  
+  .metric-trend {
+    font-size: 24rpx;
+    
+    &.trend-up {
+      color: #00a870;
+    }
+    
+    &.trend-down {
+      color: #e34d59;
+    }
+    
+    &.trend-stable {
+      color: var(--td-text-color-secondary);
+    }
+  }
+  
+  .analysis-actions {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  }
 }
 
-.record-detail-content .info-row {
-  margin-bottom: 20rpx;
-  padding: 0 8rpx;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  gap: 16rpx;
-  display: flex;
-  align-items: center;
+/* 详情弹窗样式 */
+.detail-content {
+  padding: 24rpx;
 }
 
-.record-detail-content .info-label {
+.detail-card {
+  background: var(--td-bg-color-container);
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.detail-info {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary);
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.detail-desc {
   font-size: 26rpx;
-  color: #6c757d;
-  font-weight: 500;
-  min-width: 140rpx;
-  text-align: left;
-  flex-shrink: 0;
+  color: var(--td-text-color-secondary);
+  line-height: 1.6;
+  display: block;
+  margin-bottom: 16rpx;
 }
 
-.record-detail-content .info-value {
-  font-size: 28rpx;
-  color: #1a1a1a;
-  font-weight: 400;
-  text-align: right;
-  flex: 1;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+.detail-time {
+  font-size: 24rpx;
+  color: var(--td-text-color-placeholder);
 }
 
-.status-value {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.note-text {
-  word-break: break-all;
-  white-space: pre-wrap;
-  line-height: 1.5;
-  text-align: left !important;
+/* 响应式设计 */
+@media (max-width: 375px) {
+  .stats-grid,
+  .action-grid,
+  .cost-overview {
+    grid-template-columns: 1fr;
+    gap: 12rpx;
+  }
+  
+  .overview-grid,
+  .status-overview {
+    flex-direction: column;
+    gap: 12rpx;
+  }
+  
+  .stage-breakdown,
+  .action-row {
+    flex-direction: column;
+    gap: 12rpx;
+  }
 }

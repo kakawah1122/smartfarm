@@ -1,6 +1,7 @@
 // profile.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 import { checkPageAuth } from '../../utils/auth-guard'
+import { ROLES, getRoleName, getRoleColor, formatRoleDisplay } from '../../utils/role-config.js'
 
 // 获取全局应用实例
 const app = getApp<IAppOption>()
@@ -147,11 +148,190 @@ const pageConfig = {
   },
 
   onLoad() {
+    // 设置全局错误处理
+    this.setupGlobalErrorHandling()
+    // 确保数组字段初始化正确，防止渲染层迭代器错误
+    this.ensureArrayFieldsInitialized()
     this.checkLoginStatus()
     this.initUserInfo()
   },
 
+  // 设置全局错误处理
+  setupGlobalErrorHandling() {
+    const originalSetData = this.setData.bind(this)
+    this.setData = function(data: any, callback?: () => void) {
+      try {
+        // 在设置数据前进行安全检查
+        if (data) {
+          console.log('setData 调用:', Object.keys(data))
+        }
+        originalSetData(data, callback)
+      } catch (error) {
+        console.error('setData 出现错误:', error)
+        console.error('导致错误的数据:', data)
+        
+        // 尝试修复数组字段
+        this.ensureArrayFieldsInitialized()
+        
+        // 重新尝试设置数据（移除可能有问题的字段）
+        if (data && typeof data === 'object') {
+          const safeData = { ...data }
+          // 移除可能导致问题的字段
+          Object.keys(safeData).forEach(key => {
+            if (safeData[key] === undefined) {
+              console.warn(`移除 undefined 字段: ${key}`)
+              delete safeData[key]
+            }
+          })
+          
+          if (Object.keys(safeData).length > 0) {
+            originalSetData(safeData, callback)
+          }
+        }
+      }
+    }
+  },
+
+  // 确保数组字段初始化，防止渲染层迭代器错误
+  ensureArrayFieldsInitialized() {
+    const currentData = this.data
+    const updates = {}
+    
+    // 检查并修复可能为 undefined 的数组字段
+    if (!Array.isArray(currentData.menuItems)) {
+      console.warn('menuItems 不是数组，重置为默认值')
+      updates.menuItems = [
+        {
+          id: 1,
+          title: '财务管理',
+          description: '收支记录、AI建议、报表分析',
+          icon: 'money-circle',
+          page: '/pages/finance/finance'
+        },
+        {
+          id: 2,
+          title: '员工管理',
+          description: '邀请码管理、员工权限设置',
+          icon: 'user-group',
+          page: '/pages/employee-permission/employee-permission',
+          requiredPermission: 'employee.view'
+        },
+        {
+          id: 3,
+          title: '报销审核',
+          description: '待审核报销申请、采购申请',
+          icon: 'file-text',
+          badge: '3'
+        },
+        {
+          id: 4,
+          title: '系统设置',
+          description: '隐私设置、帮助反馈、关于我们',
+          icon: 'setting'
+        }
+      ]
+    }
+    
+    if (!Array.isArray(currentData.pendingItems)) {
+      console.warn('pendingItems 不是数组，重置为默认值')
+      updates.pendingItems = []
+    }
+    
+    if (!Array.isArray(currentData.notifications)) {
+      console.warn('notifications 不是数组，重置为默认值')
+      updates.notifications = []
+    }
+    
+    // 如果有需要更新的字段，执行 setData
+    if (Object.keys(updates).length > 0) {
+      console.log('修复数组字段:', Object.keys(updates))
+      this.setData(updates)
+    }
+  },
+
+  // 安全的 setData 包装，确保不会破坏数组字段
+  safeSetData(data: any, callback?: () => void) {
+    try {
+      // 检查是否有可能破坏数组字段的操作
+      if (data) {
+        // 如果尝试直接设置整个 data 对象，保护数组字段
+        if (data.hasOwnProperty('menuItems') && !Array.isArray(data.menuItems)) {
+          console.warn('尝试将 menuItems 设置为非数组值，已忽略')
+          delete data.menuItems
+        }
+        if (data.hasOwnProperty('pendingItems') && !Array.isArray(data.pendingItems)) {
+          console.warn('尝试将 pendingItems 设置为非数组值，已忽略')
+          delete data.pendingItems
+        }
+        if (data.hasOwnProperty('notifications') && !Array.isArray(data.notifications)) {
+          console.warn('尝试将 notifications 设置为非数组值，已忽略')
+          delete data.notifications
+        }
+      }
+      
+      this.setData(data, callback)
+    } catch (error) {
+      console.error('setData 调用失败:', error)
+      console.error('尝试设置的数据:', data)
+      // 尝试恢复数组字段
+      this.ensureArrayFieldsInitialized()
+      throw error
+    }
+  },
+
+  // 统一的信息完整性检查函数
+  checkUserInfoCompleteness(userInfo: any) {
+    if (!userInfo) return false
+    
+    const nickname = userInfo.nickname || userInfo.nickName || ''
+    const farmName = userInfo.farmName || userInfo.department || ''
+    const phone = userInfo.phone || ''
+    
+    const isComplete = nickname && 
+                      nickname.trim() !== '' && 
+                      nickname !== '未设置' &&
+                      phone && 
+                      phone.trim() !== '' &&
+                      farmName && 
+                      farmName.trim() !== '' && 
+                      farmName !== '智慧养殖场' &&
+                      farmName !== '未设置'
+    
+    console.log('信息完整性检查结果:', {
+      nickname,
+      phone,
+      farmName,
+      isComplete
+    })
+    
+    return isComplete
+  },
+
+  // 统一的云函数调用包装，带错误处理
+  async callCloudFunctionSafely(functionName: string, data: any) {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: functionName,
+        data: data
+      })
+      return result
+    } catch (error) {
+      console.error(`云函数 ${functionName} 调用失败:`, error)
+      
+      // 处理同步错误
+      if (error && (error.message || '').includes('sync-0')) {
+        console.warn('检测到云开发同步错误 (sync-0)，这通常是网络或配置问题')
+        throw new Error('网络连接不稳定，请稍后重试')
+      }
+      
+      // 重新抛出原始错误
+      throw error
+    }
+  },
+
   async onShow() {
+    // 页面显示时也确保数组字段正确
+    this.ensureArrayFieldsInitialized()
     // 页面显示时刷新数据
     console.log('个人中心页面显示，开始检查登录状态')
     await this.checkLoginStatus()
@@ -228,40 +408,82 @@ const pageConfig = {
         app.globalData.userInfo = cloudUserInfo
         wx.setStorageSync('userInfo', cloudUserInfo)
         
+        // 确保所有可能的字段名都被考虑到
+        const displayName = cloudUserInfo.nickname || cloudUserInfo.nickName || '未设置'
+        const displayFarm = cloudUserInfo.farmName || cloudUserInfo.department || '智慧养殖场'
+        const displayAvatar = cloudUserInfo.avatarUrl || '/assets/icons/profile.png'
+        
+        console.log('云端用户信息加载完成:', { 
+          nickname: cloudUserInfo.nickname, 
+          nickName: cloudUserInfo.nickName,
+          farmName: cloudUserInfo.farmName,
+          department: cloudUserInfo.department,
+          avatarUrl: cloudUserInfo.avatarUrl 
+        })
+        
         this.setData({
           cloudUserInfo: cloudUserInfo,
           userInfo: {
-            name: cloudUserInfo.nickname || '未设置',
+            name: displayName,
             role: this.getRoleDisplayName(cloudUserInfo.role || 'user', cloudUserInfo.isSuper),
-            farm: cloudUserInfo.farmName || '智慧养殖场',
+            farm: displayFarm,
             experience: '1',
             currentStock: '1280',
             healthRate: '95.2',
-            avatarUrl: cloudUserInfo.avatarUrl || '/assets/icons/profile.png'
+            avatarUrl: displayAvatar
           }
         })
+        
+        console.log('界面用户信息已更新:', { name: displayName, farm: displayFarm, avatar: displayAvatar })
         
         console.log('用户信息加载成功')
         return
       }
     } catch (error) {
-      console.warn('云函数获取用户信息失败，使用本地存储的信息:', error)
+      console.error('云函数获取用户信息失败:', error)
+      
+      // 处理特定的同步错误
+      if (error && (error.message || '').includes('sync-0')) {
+        console.warn('检测到云开发同步错误，这通常是网络或配置问题')
+        wx.showToast({
+          title: '网络连接不稳定，使用本地数据',
+          icon: 'none',
+          duration: 3000
+        })
+      }
+      
+      console.warn('使用本地存储的信息作为备选')
       
       // 使用本地存储的用户信息作为备选
       const storedUserInfo = wx.getStorageSync('userInfo')
       if (storedUserInfo) {
+        // 确保所有可能的字段名都被考虑到
+        const displayName = storedUserInfo.nickname || storedUserInfo.nickName || '未设置'
+        const displayFarm = storedUserInfo.farmName || storedUserInfo.department || '智慧养殖场'
+        const displayAvatar = storedUserInfo.avatarUrl || '/assets/icons/profile.png'
+        
+        console.log('从本地存储恢复用户信息:', { 
+          nickname: storedUserInfo.nickname, 
+          nickName: storedUserInfo.nickName,
+          farmName: storedUserInfo.farmName,
+          department: storedUserInfo.department,
+          avatarUrl: storedUserInfo.avatarUrl 
+        })
+        
         this.setData({
           cloudUserInfo: storedUserInfo,
           userInfo: {
-            name: storedUserInfo.nickname || '未设置',
+            name: displayName,
             role: this.getRoleDisplayName(storedUserInfo.role || 'user', storedUserInfo.isSuper),
-            farm: storedUserInfo.farmName || '智慧养殖场',
+            farm: displayFarm,
             experience: '1',
             currentStock: '1280',
             healthRate: '95.2',
-            avatarUrl: storedUserInfo.avatarUrl || '/assets/icons/profile.png'
+            avatarUrl: displayAvatar
           }
         })
+        
+        console.log('界面用户信息已恢复:', { name: displayName, farm: displayFarm, avatar: displayAvatar })
         console.log('使用本地存储的用户信息')
       } else {
         console.log('未找到用户信息，保持默认状态')
@@ -521,21 +743,33 @@ const pageConfig = {
 
   // 获取微信头像授权
   async onChooseAvatar(e: any) {
+    console.log('头像选择事件触发:', e.detail)
     const { avatarUrl } = e.detail
-    console.log('获取到新头像:', avatarUrl)
     
     // 检查头像URL是否有效
     if (!avatarUrl || avatarUrl === '') {
-      wx.showToast({
-        title: '头像获取失败，请重试',
-        icon: 'error'
+      console.warn('头像URL无效:', avatarUrl)
+      wx.showModal({
+        title: '提示',
+        content: '头像获取失败，请确保已授权微信头像获取权限，或在真机上测试此功能。',
+        showCancel: false,
+        confirmText: '知道了'
       })
       return
     }
     
+    console.log('获取到有效头像URL:', avatarUrl)
+    
     // 立即显示新头像，提升用户体验
     this.setData({
       'userInfo.avatarUrl': avatarUrl
+    })
+    
+    // 显示成功提示
+    wx.showToast({
+      title: '头像已更新',
+      icon: 'success',
+      duration: 1500
     })
     
     let loadingShown = false
@@ -550,7 +784,7 @@ const pageConfig = {
       const result = await wx.cloud.callFunction({
         name: 'user-management',
         data: {
-          action: 'update_profile',
+          action: 'update_user_profile',
           avatarUrl: avatarUrl
         }
       })
@@ -558,10 +792,12 @@ const pageConfig = {
       if (result.result && result.result.success) {
         // 更新本地显示
         const app = getApp<App.AppOption>()
-        const updatedUserInfo = {
+        const updatedUserInfo = result.result.data?.user || {
           ...app.globalData.userInfo,
           avatarUrl: avatarUrl
         }
+        
+        console.log('头像更新成功，返回数据:', updatedUserInfo)
         
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
@@ -730,9 +966,9 @@ const pageConfig = {
       const result = await wx.cloud.callFunction({
         name: 'user-management',
         data: {
-          action: 'update_profile',
-          nickname: editNickname.trim(),
-          farmName: editFarmName.trim(),
+          action: 'update_user_profile',
+          nickName: editNickname.trim(),
+          department: editFarmName.trim(),
           phone: editPhone.trim()
         }
       })
@@ -742,15 +978,24 @@ const pageConfig = {
         const app = getApp<App.AppOption>()
         const updatedUserInfo = result.result.data.user
         
+        console.log('云函数返回的用户信息:', updatedUserInfo)
+        
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
+        // 确保数据字段正确映射到界面显示
+        const displayName = updatedUserInfo.nickname || updatedUserInfo.nickName || editNickname.trim()
+        const displayFarm = updatedUserInfo.farmName || updatedUserInfo.department || editFarmName.trim()
+        
         this.setData({
-          'userInfo.name': updatedUserInfo.nickname,
-          'userInfo.farm': updatedUserInfo.farmName,
+          'userInfo.name': displayName,
+          'userInfo.farm': displayFarm,
+          'userInfo.avatarUrl': updatedUserInfo.avatarUrl || this.data.userInfo.avatarUrl,
           cloudUserInfo: updatedUserInfo,
           showEditProfilePopup: false
         })
+        
+        console.log('界面数据已更新:', { name: displayName, farm: displayFarm })
         
         // 先隐藏loading再显示toast
         if (loadingShown) {
@@ -763,16 +1008,8 @@ const pageConfig = {
           icon: 'success'
         })
         
-        // 检查信息是否现在完整了
-        const isNowComplete = updatedUserInfo.nickname && 
-                             updatedUserInfo.nickname.trim() !== '' && 
-                             updatedUserInfo.nickname !== '未设置' &&
-                             updatedUserInfo.phone && 
-                             updatedUserInfo.phone.trim() !== '' &&
-                             updatedUserInfo.farmName && 
-                             updatedUserInfo.farmName.trim() !== '' && 
-                             updatedUserInfo.farmName !== '智慧养殖场' &&
-                             updatedUserInfo.farmName !== '未设置'
+        // 检查信息是否现在完整了 - 使用统一的检查逻辑
+        const isNowComplete = this.checkUserInfoCompleteness(updatedUserInfo)
         
         if (isNowComplete) {
           // 信息已完善，清除所有相关标记
@@ -804,27 +1041,32 @@ const pageConfig = {
         loadingShown = false
       }
       
+      // 处理特定的同步错误
+      let errorMessage = error.message || '保存失败'
+      if (error && (error.message || '').includes('sync-0')) {
+        errorMessage = '网络连接不稳定，请稍后重试'
+        console.warn('检测到云开发同步错误，建议检查网络连接和云开发配置')
+      }
+      
       wx.showToast({
-        title: error.message || '保存失败',
-        icon: 'none'
+        title: errorMessage,
+        icon: 'none',
+        duration: 3000
       })
     }
   },
 
   // 检查是否需要显示完善信息提示
   checkProfileSetupNeeded() {
-    // 首先检查当前用户信息是否已经完整
+    // 首先检查当前用户信息是否已经完整 - 使用统一的检查逻辑
     const cloudUserInfo = this.data.cloudUserInfo
     if (cloudUserInfo) {
-      const isInfoComplete = cloudUserInfo.nickname && 
-                            cloudUserInfo.nickname.trim() !== '' && 
-                            cloudUserInfo.nickname !== '未设置' &&
-                            cloudUserInfo.phone && 
-                            cloudUserInfo.phone.trim() !== '' &&
-                            cloudUserInfo.farmName && 
-                            cloudUserInfo.farmName.trim() !== '' && 
-                            cloudUserInfo.farmName !== '智慧养殖场' &&
-                            cloudUserInfo.farmName !== '未设置'
+      const isInfoComplete = this.checkUserInfoCompleteness(cloudUserInfo)
+      
+      console.log('检查是否需要完善信息:', { 
+        isInfoComplete,
+        cloudUserInfo 
+      })
       
       if (isInfoComplete) {
         // 信息已经完整，清除所有相关标记，不显示任何提示
@@ -875,28 +1117,53 @@ const pageConfig = {
 
   // 开发调试：清除所有完善信息相关的缓存（长按用户名触发）
   onLongPressUserName() {
-    if (process.env.NODE_ENV === 'development') {
-      wx.showModal({
-        title: '开发调试',
-        content: '是否清除所有个人信息完善相关的缓存？',
-        success: (res) => {
-          if (res.confirm) {
+    wx.showActionSheet({
+      itemList: ['刷新用户信息显示', '清除个人信息缓存', '查看调试信息'],
+      success: async (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            // 刷新用户信息显示
+            wx.showLoading({ title: '刷新中...' })
+            await this.loadCloudUserInfo()
+            wx.hideLoading()
+            wx.showToast({ title: '信息已刷新', icon: 'success' })
+            break
+          case 1:
+            // 清除缓存
             wx.removeStorageSync('needProfileSetup')
             wx.removeStorageSync('hasSkippedProfileSetup')
             wx.removeStorageSync('skipProfileSetupUntil')
-            
-            this.setData({
-              showProfileSetupTip: false
+            this.setData({ showProfileSetupTip: false })
+            wx.showToast({ title: '缓存已清除', icon: 'success' })
+            break
+          case 2:
+            // 查看调试信息
+            const cloudUserInfo = this.data.cloudUserInfo
+            const userInfo = this.data.userInfo
+            const debugInfo = {
+              云端数据: {
+                nickname: cloudUserInfo?.nickname,
+                nickName: cloudUserInfo?.nickName,
+                farmName: cloudUserInfo?.farmName,
+                department: cloudUserInfo?.department,
+                avatarUrl: cloudUserInfo?.avatarUrl ? '已设置' : '未设置'
+              },
+              界面显示: {
+                name: userInfo.name,
+                farm: userInfo.farm,
+                avatarUrl: userInfo.avatarUrl ? '已设置' : '未设置'
+              }
+            }
+            console.log('调试信息:', debugInfo)
+            wx.showModal({
+              title: '调试信息',
+              content: `界面显示: ${userInfo.name} | ${userInfo.farm}\n云端数据: ${cloudUserInfo?.nickname || cloudUserInfo?.nickName || '无'} | ${cloudUserInfo?.farmName || cloudUserInfo?.department || '无'}`,
+              showCancel: false
             })
-            
-            wx.showToast({
-              title: '缓存已清除',
-              icon: 'success'
-            })
-          }
+            break
         }
-      })
-    }
+      }
+    })
   },
 
   // 编辑昵称
@@ -994,26 +1261,33 @@ const pageConfig = {
       const result = await wx.cloud.callFunction({
         name: 'user-management',
         data: {
-          action: 'update_profile',
-          nickname: newNickname
+          action: 'update_user_profile',
+          nickName: newNickname
         }
       })
       
       if (result.result && result.result.success) {
         // 更新本地显示
         const app = getApp<App.AppOption>()
-        const updatedUserInfo = {
+        const updatedUserInfo = result.result.data?.user || {
           ...app.globalData.userInfo,
-          nickname: newNickname
+          nickname: newNickname,
+          nickName: newNickname
         }
+        
+        console.log('昵称更新成功，返回数据:', updatedUserInfo)
         
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
+        // 确保显示名称正确更新
+        const displayName = updatedUserInfo.nickname || updatedUserInfo.nickName || newNickname
         this.setData({
-          'userInfo.name': newNickname,
+          'userInfo.name': displayName,
           cloudUserInfo: updatedUserInfo
         })
+        
+        console.log('界面昵称已更新为:', displayName)
         
         wx.showToast({
           title: '昵称更新成功',
@@ -1042,26 +1316,33 @@ const pageConfig = {
       const result = await wx.cloud.callFunction({
         name: 'user-management',
         data: {
-          action: 'update_profile',
-          farmName: newFarmName
+          action: 'update_user_profile',
+          department: newFarmName
         }
       })
       
       if (result.result && result.result.success) {
         // 更新本地显示
         const app = getApp<App.AppOption>()
-        const updatedUserInfo = {
+        const updatedUserInfo = result.result.data?.user || {
           ...app.globalData.userInfo,
-          farmName: newFarmName
+          farmName: newFarmName,
+          department: newFarmName
         }
+        
+        console.log('养殖场名称更新成功，返回数据:', updatedUserInfo)
         
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
+        // 确保显示名称正确更新
+        const displayFarm = updatedUserInfo.farmName || updatedUserInfo.department || newFarmName
         this.setData({
-          'userInfo.farm': newFarmName,
+          'userInfo.farm': displayFarm,
           cloudUserInfo: updatedUserInfo
         })
+        
+        console.log('界面养殖场名称已更新为:', displayFarm)
         
         wx.showToast({
           title: '养殖场名称更新成功',
@@ -1158,26 +1439,11 @@ const pageConfig = {
     })
   },
 
-  // 获取角色显示名称
+  // 获取角色显示名称 - 使用新的4角色体系
   getRoleDisplayName(role: string, isSuper?: boolean): string {
-    // 如果是超级管理员，优先显示超级管理员
-    if (isSuper === true) {
-      return '超级管理员'
-    }
-    
-    switch (role) {
-      case 'admin':
-        return '管理员'
-      case 'manager':
-        return '经理'
-      case 'operator':
-        return '操作员'
-      case 'employee':
-        return '员工'
-      case 'user':
-      default:
-        return '用户'
-    }
+    // 使用新的角色配置
+    const roleName = getRoleName(role)
+    return roleName !== '未知角色' ? roleName : '员工'
   },
 
   // 检查用户权限
@@ -1231,15 +1497,22 @@ const pageConfig = {
     app.globalData.isLoggedIn = false
     app.globalData.userInfo = undefined
 
-    // 清除本地存储
+    // 清除本地存储（包括完善信息相关标记）
     wx.removeStorageSync('openid')
     wx.removeStorageSync('userInfo')
+    
+    // 清除完善信息相关的所有标记
+    wx.removeStorageSync('needProfileSetup')
+    wx.removeStorageSync('hasSkippedProfileSetup')
+    wx.removeStorageSync('skipProfileSetupUntil')
+    console.log('已清除所有完善信息相关标记')
 
     // 重置页面数据
     this.setData({
       isLoggedIn: false,
       cloudUserInfo: null,
       showLogoutConfirmPopup: false,
+      showProfileSetupTip: false, // 确保完善信息提示也被隐藏
       userInfo: {
         name: '游客',
         role: '用户',

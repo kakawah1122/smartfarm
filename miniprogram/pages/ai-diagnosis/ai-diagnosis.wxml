@@ -1,0 +1,265 @@
+<!--ai-diagnosis.wxml - AI智能诊断页面-->
+<view class="page ai-diagnosis-page">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="AI智能诊断"
+    show-back="{{true}}"
+    bind:back="goBack"
+  />
+
+  <!-- 页面内容 -->
+  <view class="page-content">
+    
+    <!-- 诊断结果展示 -->
+    <view class="diagnosis-result" wx:if="{{diagnosisResult}}">
+      <view class="result-header">
+        <t-icon name="check-circle" size="40" color="#00a870" />
+        <text class="result-title">AI诊断完成</text>
+        <text class="result-confidence">置信度：{{diagnosisResult.confidence}}%</text>
+      </view>
+
+      <!-- 诊断详情 -->
+      <t-cell-group theme="card" class="result-content">
+        <t-cell 
+          title="初步诊断" 
+          note="{{diagnosisResult.diagnosisResult}}"
+          class="diagnosis-item"
+        />
+
+        <t-cell 
+          title="可能疾病"
+          class="diagnosis-item"
+        >
+          <view slot="note" class="disease-list">
+            <t-tag 
+              wx:for="{{diagnosisResult.possibleDiseases}}" 
+              wx:key="index"
+              theme="light" 
+              variant="outline"
+              size="small"
+            >{{item}}</t-tag>
+          </view>
+        </t-cell>
+
+        <t-cell 
+          title="建议用药"
+          class="diagnosis-item"
+        >
+          <view slot="note" class="medication-list">
+            <view 
+              class="medication-item"
+              wx:for="{{diagnosisResult.recommendedMedications}}" 
+              wx:key="index"
+            >
+              <t-icon name="medicine-box" size="16" color="#0052d9" />
+              <text>{{item}}</text>
+            </view>
+          </view>
+        </t-cell>
+
+        <t-cell 
+          title="治疗周期" 
+          note="{{diagnosisResult.treatmentDuration}}"
+          class="diagnosis-item"
+        />
+
+        <t-cell 
+          title="注意事项"
+          class="diagnosis-item"
+          wx:if="{{diagnosisResult.precautions}}"
+        >
+          <view slot="note" class="precaution-list">
+            <view 
+              class="precaution-item"
+              wx:for="{{diagnosisResult.precautions}}" 
+              wx:key="index"
+            >
+              <t-icon name="info-circle" size="16" color="#ed7b2f" />
+              <text>{{item}}</text>
+            </view>
+          </view>
+        </t-cell>
+      </t-cell-group>
+
+      <!-- 操作按钮 -->
+      <view class="result-actions">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          bind:tap="adoptAdvice"
+          class="adopt-btn"
+        >采纳建议并创建治疗方案</t-button>
+        
+        <view class="secondary-actions">
+          <t-button 
+            theme="light" 
+            size="medium" 
+            bind:tap="saveRecord"
+          >保存记录</t-button>
+          
+          <t-button 
+            theme="light" 
+            size="medium" 
+            bind:tap="resetDiagnosis"
+          >重新诊断</t-button>
+          
+          <t-button 
+            theme="light" 
+            size="medium" 
+            bind:tap="contactVet"
+          >联系兽医</t-button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 症状输入表单 -->
+    <view class="diagnosis-form" wx:else>
+      
+      <!-- 重要提醒 -->
+      <view class="notice-section">
+        <t-notice-bar 
+          theme="warning" 
+          content="⚠️ AI诊断仅供参考，请结合专业兽医建议进行最终诊断和治疗"
+        />
+      </view>
+
+      <!-- 基本信息 -->
+      <view class="form-section">
+        <text class="section-title">基本信息</text>
+        
+        <view class="form-row">
+          <text class="form-label">受影响数量</text>
+          <input 
+            class="form-input"
+            type="number"
+            placeholder="请输入受影响的鹅只数量"
+            value="{{affectedCount}}"
+            bindinput="onAffectedCountInput"
+          />
+          <text class="form-unit">只</text>
+        </view>
+
+        <view class="form-row">
+          <text class="form-label">鹅只日龄</text>
+          <input 
+            class="form-input"
+            type="number"
+            placeholder="请输入鹅只日龄"
+            value="{{dayAge}}"
+            bindinput="onDayAgeInput"
+          />
+          <text class="form-unit">天</text>
+        </view>
+
+        <view class="form-row">
+          <text class="form-label">环境温度</text>
+          <input 
+            class="form-input"
+            type="digit"
+            placeholder="请输入环境温度"
+            value="{{temperature}}"
+            bindinput="onTemperatureInput"
+          />
+          <text class="form-unit">°C</text>
+        </view>
+      </view>
+
+      <!-- 症状描述 -->
+      <view class="form-section">
+        <text class="section-title">症状描述</text>
+        <t-textarea 
+          placeholder="请详细描述鹅群症状，如：精神状态、食欲情况、排便状况、异常行为等..."
+          value="{{symptoms}}"
+          bind:change="onSymptomsInput"
+          maxlength="500"
+          autosize="{{true}}"
+          class="symptoms-textarea"
+        />
+      </view>
+
+      <!-- 常见症状快选 -->
+      <view class="form-section">
+        <text class="section-title">常见症状快选（可多选）</text>
+        <view class="symptom-tags">
+          <t-tag 
+            wx:for="{{commonSymptoms}}" 
+            wx:key="id"
+            theme="{{item.selected ? 'primary' : 'light'}}"
+            variant="{{item.selected ? 'dark' : 'light'}}"
+            size="medium"
+            bind:tap="onSymptomTagTap"
+            data-id="{{item.id}}"
+            class="symptom-tag"
+          >{{item.name}}</t-tag>
+        </view>
+      </view>
+
+      <!-- 图片上传 -->
+      <view class="form-section">
+        <text class="section-title">上传图片（可选，最多3张）</text>
+        
+        <view class="image-upload-container">
+          <!-- 已上传的图片 -->
+          <view 
+            class="uploaded-image-item"
+            wx:for="{{images}}" 
+            wx:key="index"
+          >
+            <t-image 
+              src="{{item}}"
+              mode="aspectFill"
+              width="200rpx"
+              height="200rpx"
+              bind:tap="onPreviewImage"
+              data-src="{{item}}"
+              class="uploaded-image"
+            />
+            <view 
+              class="image-delete-btn"
+              bind:tap="onDeleteImage"
+              data-index="{{index}}"
+            >
+              <t-icon name="close" size="16" color="#fff" />
+            </view>
+          </view>
+
+          <!-- 上传按钮 -->
+          <view 
+            class="upload-placeholder"
+            wx:if="{{images.length < 3}}"
+            bind:tap="onChooseImage"
+          >
+            <t-icon name="add" size="48" color="#c8c9cc" />
+            <text class="upload-text">添加图片</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="submit-section">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block
+          disabled="{{!formValid || submitting}}"
+          loading="{{submitting}}"
+          bind:tap="startDiagnosis"
+          class="submit-btn"
+        >
+          {{submitting ? 'AI诊断中...' : '开始AI智能诊断'}}
+        </t-button>
+      </view>
+
+      <!-- 底部链接 -->
+      <view class="bottom-links">
+        <text class="link-text" bind:tap="viewDiagnosisHistory">查看历史诊断</text>
+        <text class="link-divider">|</text>
+        <text class="link-text" bind:tap="contactVet">联系专业兽医</text>
+      </view>
+
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view class="safe-area-bottom"></view>
+  </view>
+</view>

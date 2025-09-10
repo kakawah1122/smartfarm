@@ -1,5 +1,5 @@
 // cloudfunctions/health-management/index.js
-// 健康管理云函数 - 处理健康记录、死亡记录和存栏数量更新
+// 健康管理云函数 - 完整的健康管理系统
 const cloud = require('wx-server-sdk')
 
 cloud.init({
@@ -8,6 +8,7 @@ cloud.init({
 
 const db = cloud.database()
 const _ = db.command
+const MAX_LIMIT = 100
 
 // 生成健康记录ID
 function generateHealthRecordId() {
@@ -47,6 +48,188 @@ function generateCureRecordId() {
   const day = now.getDate().toString().padStart(2, '0')
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
   return `C${year}${month}${day}${random}`
+}
+
+// 生成预防记录ID
+function generatePreventionRecordId() {
+  const now = new Date()
+  const year = now.getFullYear().toString().slice(-2)
+  const month = (now.getMonth() + 1).toString().padStart(2, '0')
+  const day = now.getDate().toString().padStart(2, '0')
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  return `P${year}${month}${day}${random}`
+}
+
+// 生成治疗记录ID
+function generateTreatmentRecordId() {
+  const now = new Date()
+  const year = now.getFullYear().toString().slice(-2)
+  const month = (now.getMonth() + 1).toString().padStart(2, '0')
+  const day = now.getDate().toString().padStart(2, '0')
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  return `T${year}${month}${day}${random}`
+}
+
+// 生成预警ID
+function generateAlertId() {
+  const now = new Date()
+  const year = now.getFullYear().toString().slice(-2)
+  const month = (now.getMonth() + 1).toString().padStart(2, '0')
+  const day = now.getDate().toString().padStart(2, '0')
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  return `A${year}${month}${day}${random}`
+}
+
+// 工具函数：验证用户权限
+async function validateUserRole(openid, requiredRoles = []) {
+  try {
+    const userResult = await db.collection('users').where({
+      _openid: openid
+    }).get()
+    
+    if (userResult.data.length === 0) {
+      throw new Error('用户不存在')
+    }
+    
+    const user = userResult.data[0]
+    if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+      throw new Error('权限不足')
+    }
+    
+    return user
+  } catch (error) {
+    console.error('验证用户权限失败:', error)
+    throw error
+  }
+}
+
+// 工具函数：计算健康统计数据
+async function calculateHealthStats(batchIds = null, locationIds = null) {
+  try {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    
+    // 构建查询条件
+    let healthQuery = { isDeleted: _.neq(true) }
+    let entryQuery = {}
+    
+    if (batchIds && batchIds.length > 0) {
+      healthQuery.batchId = _.in(batchIds)
+      entryQuery.batchNumber = _.in(batchIds)
+    }
+    
+    if (locationIds && locationIds.length > 0) {
+      healthQuery.locationId = _.in(locationIds)
+      entryQuery.location = _.in(locationIds)
+    }
+    
+    // 获取健康记录统计
+    const healthRecords = await db.collection('health_records')
+      .where(healthQuery)
+      .get()
+    
+    // 获取入栏记录统计
+    const entryRecords = await db.collection('entry_records')
+      .where(entryQuery)
+      .get()
+    
+    // 计算基础统计
+    const totalEntryCount = entryRecords.data.reduce((sum, record) => sum + (record.quantity || 0), 0)
+    const abnormalCount = healthRecords.data.filter(r => r.status === 'ongoing').length
+    const deathCount = healthRecords.data.filter(r => r.result === 'death').reduce((sum, r) => sum + (r.affectedCount || 1), 0)
+    const curedCount = healthRecords.data.filter(r => r.result === 'cured').reduce((sum, r) => sum + (r.affectedCount || 1), 0)
+    
+    const currentCount = Math.max(0, totalEntryCount - deathCount)
+    const survivalRate = totalEntryCount > 0 ? ((currentCount / totalEntryCount) * 100).toFixed(1) : 0
+    
+    return {
+      totalEntryCount,
+      currentCount,
+      abnormalCount,
+      deathCount,
+      curedCount,
+      survivalRate: parseFloat(survivalRate),
+      totalRecords: healthRecords.data.length,
+      todayRecords: healthRecords.data.filter(r => new Date(r.recordDate) >= today).length
+    }
+  } catch (error) {
+    console.error('计算健康统计失败:', error)
+    throw error
+  }
+}
+
+// 工具函数：生成健康预警
+async function generateHealthAlert(triggerData, openid) {
+  try {
+    const { alertType, severity, batchId, locationId, actualValue, threshold, message } = triggerData
+    
+    const alertId = generateAlertId()
+    
+    const alertRecord = {
+      _id: alertId,
+      _openid: openid || 'system',
+      alertType,
+      severity,
+      status: 'active',
+      trigger: {
+        condition: message,
+        threshold,
+        actualValue,
+        batchId,
+        locationId
+      },
+      title: `${locationId || ''}健康异常`,
+      message,
+      recommendations: getAlertRecommendations(alertType, severity),
+      relatedRecords: {
+        batchIds: batchId ? [batchId] : [],
+        locationIds: locationId ? [locationId] : []
+      },
+      handling: {
+        acknowledgedBy: null,
+        acknowledgedTime: null,
+        actions: [],
+        resolvedTime: null,
+        resolvedBy: null,
+        resolution: null
+      },
+      createTime: new Date().toISOString(),
+      updateTime: new Date().toISOString(),
+      isDeleted: false
+    }
+    
+    await db.collection('health_alerts').add({
+      data: alertRecord
+    })
+    
+    return alertRecord
+  } catch (error) {
+    console.error('生成健康预警失败:', error)
+    throw error
+  }
+}
+
+// 获取预警建议
+function getAlertRecommendations(alertType, severity) {
+  const recommendations = {
+    mortality: {
+      high: ['立即隔离异常个体', '联系专业兽医', '全面消毒环境', '调查死亡原因'],
+      medium: ['加强健康监控', '检查环境条件', '预防性治疗'],
+      low: ['记录观察', '定期检查']
+    },
+    abnormal: {
+      high: ['立即隔离', '紧急治疗', '扩大监控范围'],
+      medium: ['加强观察', '准备治疗方案'],
+      low: ['日常监控', '记录症状']
+    },
+    survival_rate: {
+      high: ['紧急干预', '全面检查', '专业诊断'],
+      medium: ['分析原因', '调整管理'],
+      low: ['持续监控']
+    }
+  }
+  
+  return recommendations[alertType]?.[severity] || ['加强监控', '及时处理']
 }
 
 exports.main = async (event, context) => {
@@ -89,6 +272,37 @@ exports.main = async (event, context) => {
         return await getCurrentAbnormalAnimals(event, wxContext)
       case 'get_treatment_records':
         return await getTreatmentRecords(event, wxContext)
+      
+      // === 新增的健康管理功能 ===
+      case 'create_prevention_record':
+        return await createPreventionRecord(event, wxContext)
+      case 'list_prevention_records':
+        return await listPreventionRecords(event, wxContext)
+      case 'create_treatment_record':
+        return await createTreatmentRecord(event, wxContext)
+      case 'list_treatment_records':
+        return await listTreatmentRecords(event, wxContext)
+      case 'update_treatment_record':
+        return await updateTreatmentRecord(event, wxContext)
+      case 'create_vaccine_plan':
+        return await createVaccinePlan(event, wxContext)
+      case 'list_vaccine_plans':
+        return await listVaccinePlans(event, wxContext)
+      case 'update_vaccine_plan':
+        return await updateVaccinePlan(event, wxContext)
+      case 'list_health_alerts':
+        return await listHealthAlerts(event, wxContext)
+      case 'update_health_alert':
+        return await updateHealthAlert(event, wxContext)
+      case 'get_health_overview':
+        return await getHealthOverview(event, wxContext)
+      case 'get_prevention_stats':
+        return await getPreventionStats(event, wxContext)
+      case 'get_treatment_stats':
+        return await getTreatmentStats(event, wxContext)
+      case 'check_health_alerts':
+        return await checkHealthAlerts(event, wxContext)
+        
       default:
         throw new Error('无效的操作类型')
     }
@@ -1590,11 +1804,845 @@ function getDiseaseColor(diseaseName, index) {
   return diseaseColors[diseaseName] || colors[index % colors.length]
 }
 
+// === 新增的健康管理功能实现 ===
+
+// 创建预防记录
+async function createPreventionRecord(event, wxContext) {
+  try {
+    const {
+      preventionType,
+      batchId,
+      locationId,
+      vaccineRecord,
+      disinfectionRecord,
+      nutritionRecord,
+      inspectionRecord,
+      executionDate,
+      executionTime,
+      operator,
+      cost,
+      materialUsed,
+      effectiveness,
+      nextScheduled,
+      notes
+    } = event
+
+    const recordId = generatePreventionRecordId()
+
+    const preventionRecord = {
+      _id: recordId,
+      _openid: wxContext.OPENID,
+      batchId,
+      locationId,
+      preventionType,
+      vaccineRecord: vaccineRecord || null,
+      disinfectionRecord: disinfectionRecord || null,
+      nutritionRecord: nutritionRecord || null,
+      inspectionRecord: inspectionRecord || null,
+      executionDate: executionDate || new Date().toISOString().split('T')[0],
+      executionTime: executionTime || new Date().toTimeString().split(' ')[0],
+      operator: operator || '系统用户',
+      operatorId: wxContext.OPENID,
+      cost: cost || 0,
+      materialUsed: materialUsed || [],
+      effectiveness: effectiveness || 'good',
+      nextScheduled: nextScheduled || null,
+      notes: notes || '',
+      createTime: new Date().toISOString(),
+      updateTime: new Date().toISOString(),
+      isDeleted: false
+    }
+
+    await db.collection('prevention_records').add({
+      data: preventionRecord
+    })
+
+    return {
+      success: true,
+      data: { recordId },
+      message: '预防记录创建成功'
+    }
+  } catch (error) {
+    console.error('创建预防记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '创建预防记录失败'
+    }
+  }
+}
+
+// 查询预防记录列表
+async function listPreventionRecords(event, wxContext) {
+  try {
+    const { 
+      page = 1, 
+      pageSize = 20, 
+      preventionType, 
+      batchId, 
+      locationId,
+      dateRange 
+    } = event
+
+    let query = db.collection('prevention_records')
+      .where({ isDeleted: _.neq(true) })
+
+    if (preventionType) {
+      query = query.where({ preventionType })
+    }
+    if (batchId) {
+      query = query.where({ batchId })
+    }
+    if (locationId) {
+      query = query.where({ locationId })
+    }
+    if (dateRange && dateRange.start && dateRange.end) {
+      query = query.where({
+        executionDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+      })
+    }
+
+    const result = await query
+      .orderBy('executionDate', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .get()
+
+    const total = await query.count()
+
+    return {
+      success: true,
+      data: {
+        records: result.data,
+        pagination: {
+          page,
+          pageSize,
+          total: total.total,
+          totalPages: Math.ceil(total.total / pageSize)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('查询预防记录失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 创建治疗记录
+async function createTreatmentRecord(event, wxContext) {
+  try {
+    const {
+      healthRecordId,
+      batchId,
+      animalIds,
+      treatmentDate,
+      treatmentType,
+      diagnosis,
+      veterinarianId,
+      veterinarianName,
+      treatmentPlan,
+      medications,
+      progress,
+      outcome,
+      cost,
+      materialsUsed
+    } = event
+
+    const recordId = generateTreatmentRecordId()
+
+    const treatmentRecord = {
+      _id: recordId,
+      _openid: wxContext.OPENID,
+      healthRecordId,
+      batchId,
+      animalIds: animalIds || [],
+      treatmentDate: treatmentDate || new Date().toISOString().split('T')[0],
+      treatmentType: treatmentType || 'medication',
+      diagnosis: {
+        preliminary: diagnosis?.preliminary || '',
+        confirmed: diagnosis?.confirmed || '',
+        confidence: diagnosis?.confidence || 0,
+        diagnosisMethod: diagnosis?.diagnosisMethod || 'manual',
+        veterinarianId: veterinarianId || null
+      },
+      veterinarianId: veterinarianId || null,
+      veterinarianName: veterinarianName || '未指定',
+      treatmentPlan: treatmentPlan || {},
+      medications: medications || [],
+      progress: progress || [],
+      outcome: outcome || {
+        status: 'ongoing',
+        curedCount: 0,
+        improvedCount: 0,
+        deathCount: 0,
+        totalTreated: animalIds?.length || 0
+      },
+      cost: cost || {
+        medication: 0,
+        veterinary: 0,
+        supportive: 0,
+        total: 0
+      },
+      materialsUsed: materialsUsed || [],
+      createTime: new Date().toISOString(),
+      updateTime: new Date().toISOString(),
+      isDeleted: false
+    }
+
+    await db.collection('treatment_records').add({
+      data: treatmentRecord
+    })
+
+    return {
+      success: true,
+      data: { recordId },
+      message: '治疗记录创建成功'
+    }
+  } catch (error) {
+    console.error('创建治疗记录失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 更新治疗记录
+async function updateTreatmentRecord(event, wxContext) {
+  try {
+    const { recordId, progress, outcome, cost, updateData } = event
+
+    const updateFields = {
+      updateTime: new Date().toISOString()
+    }
+
+    if (progress) {
+      updateFields.progress = _.push(progress)
+    }
+    if (outcome) {
+      updateFields.outcome = outcome
+    }
+    if (cost) {
+      updateFields.cost = cost
+    }
+    if (updateData) {
+      Object.assign(updateFields, updateData)
+    }
+
+    await db.collection('treatment_records')
+      .doc(recordId)
+      .update({
+        data: updateFields
+      })
+
+    return {
+      success: true,
+      message: '治疗记录更新成功'
+    }
+  } catch (error) {
+    console.error('更新治疗记录失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 查询治疗记录列表
+async function listTreatmentRecords(event, wxContext) {
+  try {
+    const { 
+      page = 1, 
+      pageSize = 20, 
+      status, 
+      batchId,
+      veterinarianId,
+      dateRange 
+    } = event
+
+    let query = db.collection('treatment_records')
+      .where({ isDeleted: _.neq(true) })
+
+    if (status) {
+      query = query.where({ 'outcome.status': status })
+    }
+    if (batchId) {
+      query = query.where({ batchId })
+    }
+    if (veterinarianId) {
+      query = query.where({ veterinarianId })
+    }
+    if (dateRange && dateRange.start && dateRange.end) {
+      query = query.where({
+        treatmentDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+      })
+    }
+
+    const result = await query
+      .orderBy('treatmentDate', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .get()
+
+    const total = await query.count()
+
+    return {
+      success: true,
+      data: {
+        records: result.data,
+        pagination: {
+          page,
+          pageSize,
+          total: total.total,
+          totalPages: Math.ceil(total.total / pageSize)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('查询治疗记录失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 创建疫苗计划
+async function createVaccinePlan(event, wxContext) {
+  try {
+    const {
+      planName,
+      planType,
+      vaccine,
+      schedule,
+      targetBatches,
+      materialRequirements,
+      reminders
+    } = event
+
+    const planId = `VP${Date.now()}`
+
+    const vaccinePlan = {
+      _id: planId,
+      _openid: wxContext.OPENID,
+      planName: planName || '疫苗接种计划',
+      planType: planType || 'routine',
+      status: 'active',
+      vaccine: vaccine || {},
+      schedule: schedule || {},
+      targetBatches: targetBatches || [],
+      materialRequirements: materialRequirements || [],
+      execution: [],
+      effectiveness: {},
+      reminders: reminders || [],
+      createTime: new Date().toISOString(),
+      updateTime: new Date().toISOString(),
+      createdBy: wxContext.OPENID,
+      isDeleted: false
+    }
+
+    await db.collection('vaccine_plans').add({
+      data: vaccinePlan
+    })
+
+    return {
+      success: true,
+      data: { planId },
+      message: '疫苗计划创建成功'
+    }
+  } catch (error) {
+    console.error('创建疫苗计划失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 查询疫苗计划列表
+async function listVaccinePlans(event, wxContext) {
+  try {
+    const { page = 1, pageSize = 20, status, planType } = event
+
+    let query = db.collection('vaccine_plans')
+      .where({ isDeleted: _.neq(true) })
+
+    if (status) {
+      query = query.where({ status })
+    }
+    if (planType) {
+      query = query.where({ planType })
+    }
+
+    const result = await query
+      .orderBy('createTime', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .get()
+
+    return {
+      success: true,
+      data: {
+        plans: result.data,
+        total: result.data.length
+      }
+    }
+  } catch (error) {
+    console.error('查询疫苗计划失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 更新疫苗计划
+async function updateVaccinePlan(event, wxContext) {
+  try {
+    const { planId, updateData, executionRecord } = event
+
+    const updateFields = {
+      updateTime: new Date().toISOString()
+    }
+
+    if (updateData) {
+      Object.assign(updateFields, updateData)
+    }
+
+    if (executionRecord) {
+      updateFields.execution = _.push(executionRecord)
+    }
+
+    await db.collection('vaccine_plans')
+      .doc(planId)
+      .update({
+        data: updateFields
+      })
+
+    return {
+      success: true,
+      message: '疫苗计划更新成功'
+    }
+  } catch (error) {
+    console.error('更新疫苗计划失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 查询健康预警列表
+async function listHealthAlerts(event, wxContext) {
+  try {
+    const { 
+      page = 1, 
+      pageSize = 20, 
+      status, 
+      severity, 
+      alertType,
+      batchId
+    } = event
+
+    let query = db.collection('health_alerts')
+      .where({ isDeleted: _.neq(true) })
+
+    if (status) {
+      query = query.where({ status })
+    }
+    if (severity) {
+      query = query.where({ severity })
+    }
+    if (alertType) {
+      query = query.where({ alertType })
+    }
+    if (batchId) {
+      query = query.where({ 'relatedRecords.batchIds': _.in([batchId]) })
+    }
+
+    const result = await query
+      .orderBy('createTime', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .get()
+
+    const total = await query.count()
+
+    return {
+      success: true,
+      data: {
+        alerts: result.data,
+        pagination: {
+          page,
+          pageSize,
+          total: total.total,
+          totalPages: Math.ceil(total.total / pageSize)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('查询健康预警失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 更新健康预警状态
+async function updateHealthAlert(event, wxContext) {
+  try {
+    const { alertId, action, data } = event
+
+    const updateFields = {
+      updateTime: new Date().toISOString()
+    }
+
+    switch (action) {
+      case 'acknowledge':
+        updateFields['handling.acknowledgedBy'] = data.acknowledgedBy || wxContext.OPENID
+        updateFields['handling.acknowledgedTime'] = new Date().toISOString()
+        if (data.actions) {
+          updateFields['handling.actions'] = data.actions
+        }
+        break
+      case 'resolve':
+        updateFields.status = 'resolved'
+        updateFields['handling.resolvedBy'] = data.resolvedBy || wxContext.OPENID
+        updateFields['handling.resolvedTime'] = new Date().toISOString()
+        updateFields['handling.resolution'] = data.resolution || ''
+        break
+      case 'ignore':
+        updateFields.status = 'ignored'
+        break
+      default:
+        throw new Error('无效的操作类型')
+    }
+
+    await db.collection('health_alerts')
+      .doc(alertId)
+      .update({
+        data: updateFields
+      })
+
+    return {
+      success: true,
+      message: '预警状态更新成功'
+    }
+  } catch (error) {
+    console.error('更新健康预警失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 获取健康概览数据
+async function getHealthOverview(event, wxContext) {
+  try {
+    const { batchIds, locationIds } = event
+
+    // 计算健康统计
+    const healthStats = await calculateHealthStats(batchIds, locationIds)
+
+    // 获取活跃预警
+    const activeAlerts = await db.collection('health_alerts')
+      .where({
+        status: 'active',
+        isDeleted: _.neq(true)
+      })
+      .orderBy('createTime', 'desc')
+      .limit(5)
+      .get()
+
+    // 获取最近的预防记录
+    const recentPrevention = await db.collection('prevention_records')
+      .where({ isDeleted: _.neq(true) })
+      .orderBy('executionDate', 'desc')
+      .limit(5)
+      .get()
+
+    // 获取进行中的治疗
+    const ongoingTreatments = await db.collection('treatment_records')
+      .where({
+        'outcome.status': 'ongoing',
+        isDeleted: _.neq(true)
+      })
+      .orderBy('treatmentDate', 'desc')
+      .limit(5)
+      .get()
+
+    return {
+      success: true,
+      data: {
+        healthStats,
+        activeAlerts: activeAlerts.data,
+        recentPrevention: recentPrevention.data,
+        ongoingTreatments: ongoingTreatments.data,
+        summary: {
+          totalAlerts: activeAlerts.data.length,
+          criticalAlerts: activeAlerts.data.filter(alert => alert.severity === 'critical').length,
+          recentPreventionCount: recentPrevention.data.length,
+          ongoingTreatmentCount: ongoingTreatments.data.length
+        }
+      }
+    }
+  } catch (error) {
+    console.error('获取健康概览失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 获取预防统计数据
+async function getPreventionStats(event, wxContext) {
+  try {
+    const { dateRange, preventionType } = event
+
+    let query = db.collection('prevention_records')
+      .where({ isDeleted: _.neq(true) })
+
+    if (preventionType) {
+      query = query.where({ preventionType })
+    }
+    if (dateRange && dateRange.start && dateRange.end) {
+      query = query.where({
+        executionDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+      })
+    }
+
+    const records = await query.get()
+
+    // 统计各类预防措施
+    const preventionTypeStats = {}
+    const effectivenessStats = {}
+    const costStats = {
+      total: 0,
+      byType: {}
+    }
+
+    records.data.forEach(record => {
+      const type = record.preventionType
+      preventionTypeStats[type] = (preventionTypeStats[type] || 0) + 1
+
+      const effectiveness = record.effectiveness || 'unknown'
+      effectivenessStats[effectiveness] = (effectivenessStats[effectiveness] || 0) + 1
+
+      const cost = record.cost || 0
+      costStats.total += cost
+      costStats.byType[type] = (costStats.byType[type] || 0) + cost
+    })
+
+    return {
+      success: true,
+      data: {
+        totalRecords: records.data.length,
+        preventionTypeStats,
+        effectivenessStats,
+        costStats,
+        records: records.data.slice(0, 20) // 返回最近20条记录
+      }
+    }
+  } catch (error) {
+    console.error('获取预防统计失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 获取治疗统计数据
+async function getTreatmentStats(event, wxContext) {
+  try {
+    const { dateRange, status } = event
+
+    let query = db.collection('treatment_records')
+      .where({ isDeleted: _.neq(true) })
+
+    if (status) {
+      query = query.where({ 'outcome.status': status })
+    }
+    if (dateRange && dateRange.start && dateRange.end) {
+      query = query.where({
+        treatmentDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+      })
+    }
+
+    const records = await query.get()
+
+    // 统计治疗结果
+    const outcomeStats = {}
+    const treatmentTypeStats = {}
+    const costStats = {
+      total: 0,
+      medication: 0,
+      veterinary: 0,
+      supportive: 0
+    }
+
+    let totalTreated = 0
+    let totalCured = 0
+
+    records.data.forEach(record => {
+      const status = record.outcome?.status || 'unknown'
+      outcomeStats[status] = (outcomeStats[status] || 0) + 1
+
+      const type = record.treatmentType || 'unknown'
+      treatmentTypeStats[type] = (treatmentTypeStats[type] || 0) + 1
+
+      if (record.cost) {
+        costStats.total += record.cost.total || 0
+        costStats.medication += record.cost.medication || 0
+        costStats.veterinary += record.cost.veterinary || 0
+        costStats.supportive += record.cost.supportive || 0
+      }
+
+      totalTreated += record.outcome?.totalTreated || 0
+      totalCured += record.outcome?.curedCount || 0
+    })
+
+    const cureRate = totalTreated > 0 ? ((totalCured / totalTreated) * 100).toFixed(1) : 0
+
+    return {
+      success: true,
+      data: {
+        totalRecords: records.data.length,
+        outcomeStats,
+        treatmentTypeStats,
+        costStats,
+        cureRate: parseFloat(cureRate),
+        totalTreated,
+        totalCured,
+        records: records.data.slice(0, 20)
+      }
+    }
+  } catch (error) {
+    console.error('获取治疗统计失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 检查并生成健康预警
+async function checkHealthAlerts(event, wxContext) {
+  try {
+    const alerts = []
+
+    // 获取所有活跃批次的健康数据
+    const entryRecords = await db.collection('entry_records').get()
+    
+    for (const entry of entryRecords.data) {
+      const batchId = entry.batchNumber
+      const locationId = entry.location
+
+      // 计算该批次的健康统计
+      const stats = await calculateHealthStats([batchId], [locationId])
+
+      // 检查死亡率预警
+      const mortalityRate = stats.totalEntryCount > 0 ? 
+        ((stats.deathCount / stats.totalEntryCount) * 100) : 0
+
+      if (mortalityRate > 3) {
+        const alertData = {
+          alertType: 'mortality',
+          severity: mortalityRate > 10 ? 'critical' : (mortalityRate > 5 ? 'high' : 'medium'),
+          batchId,
+          locationId,
+          actualValue: mortalityRate,
+          threshold: 3,
+          message: `批次${batchId}死亡率${mortalityRate.toFixed(1)}%，超过预警阈值3%`
+        }
+        
+        const alert = await generateHealthAlert(alertData, wxContext.OPENID)
+        alerts.push(alert)
+      }
+
+      // 检查存活率预警
+      if (stats.survivalRate < 95) {
+        const alertData = {
+          alertType: 'survival_rate',
+          severity: stats.survivalRate < 90 ? 'critical' : (stats.survivalRate < 93 ? 'high' : 'medium'),
+          batchId,
+          locationId,
+          actualValue: stats.survivalRate,
+          threshold: 95,
+          message: `批次${batchId}存活率${stats.survivalRate}%，低于预警阈值95%`
+        }
+        
+        const alert = await generateHealthAlert(alertData, wxContext.OPENID)
+        alerts.push(alert)
+      }
+
+      // 检查异常个体数量预警
+      if (stats.abnormalCount > 5) {
+        const alertData = {
+          alertType: 'abnormal',
+          severity: stats.abnormalCount > 20 ? 'critical' : (stats.abnormalCount > 10 ? 'high' : 'medium'),
+          batchId,
+          locationId,
+          actualValue: stats.abnormalCount,
+          threshold: 5,
+          message: `批次${batchId}异常个体${stats.abnormalCount}只，超过预警阈值5只`
+        }
+        
+        const alert = await generateHealthAlert(alertData, wxContext.OPENID)
+        alerts.push(alert)
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        generatedAlerts: alerts.length,
+        alerts: alerts
+      },
+      message: `检查完成，生成${alerts.length}条预警`
+    }
+  } catch (error) {
+    console.error('检查健康预警失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
 module.exports = {
+  // 原有导出的函数
   getAbnormalStatistics,
   aiDiagnosis,
   getDiagnosisHistory,
   getOverallHealthStats,
   getCurrentAbnormalAnimals,
-  getTreatmentRecords
+  getTreatmentRecords,
+  
+  // 新增的函数导出
+  createPreventionRecord,
+  listPreventionRecords,
+  createTreatmentRecord,
+  listTreatmentRecords,
+  updateTreatmentRecord,
+  createVaccinePlan,
+  listVaccinePlans,
+  updateVaccinePlan,
+  listHealthAlerts,
+  updateHealthAlert,
+  getHealthOverview,
+  getPreventionStats,
+  getTreatmentStats,
+  checkHealthAlerts,
+  
+  // 工具函数导出
+  calculateHealthStats,
+  generateHealthAlert,
+  validateUserRole
 }

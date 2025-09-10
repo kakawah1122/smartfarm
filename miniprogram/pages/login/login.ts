@@ -1,5 +1,7 @@
 // pages/login/login.ts
 
+import { ROLES, getRoleName, getRoleColor } from '../../utils/role-config.js'
+
 interface UserInfo {
   _id: string;
   openid: string;
@@ -8,8 +10,8 @@ interface UserInfo {
   phone: string;
   farmName: string;
   gender?: number;
-  // 角色和权限字段
-  role: string;
+  // 角色和权限字段 - 使用新的4角色体系
+  role: string; // super_admin | manager | employee | veterinarian
   permissions: string[];
   department: string;
   position: string;
@@ -326,16 +328,27 @@ Page({
           if (result.result.canUseApp) {
             const userInfo = result.result.user
             
-            // 更严格的信息完整性检查
-            const isInfoComplete = userInfo.nickname && 
-                                  userInfo.nickname.trim() !== '' && 
-                                  userInfo.nickname !== '未设置' &&
-                                  userInfo.phone && 
-                                  userInfo.phone.trim() !== '' &&
-                                  userInfo.farmName && 
-                                  userInfo.farmName.trim() !== '' && 
-                                  userInfo.farmName !== '智慧养殖场' &&
-                                  userInfo.farmName !== '未设置'
+            // 更严格的信息完整性检查 - 兼容多种字段名称
+            const nickname = userInfo.nickname || userInfo.nickName || ''
+            const farmName = userInfo.farmName || userInfo.department || ''
+            const phone = userInfo.phone || ''
+            
+            console.log('登录时检查信息完整性:', { 
+              nickname, 
+              phone, 
+              farmName,
+              rawUserInfo: userInfo
+            })
+            
+            const isInfoComplete = nickname && 
+                                  nickname.trim() !== '' && 
+                                  nickname !== '未设置' &&
+                                  phone && 
+                                  phone.trim() !== '' &&
+                                  farmName && 
+                                  farmName.trim() !== '' && 
+                                  farmName !== '智慧养殖场' &&
+                                  farmName !== '未设置'
             
             // 检查用户是否已经跳过完善信息
             const hasSkippedInfo = wx.getStorageSync('hasSkippedProfileSetup') || false
