@@ -70,7 +70,7 @@ const pageConfig = {
 
         // 获取当前用户信息
         const app = getApp()
-        const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
+        const currentUser = app.globalData?.userInfo?.nickname || app.globalData?.userInfo?.nickName || '系统用户'
         
         // 转换数据格式
         const formattedRecords = records.map(record => ({
@@ -81,7 +81,7 @@ const pageConfig = {
           quantity: record.quantity || 0,
           unit: record.unit || '羽',
           avgWeight: record.avgWeight || 0,
-          operator: record.operator || currentUser,
+          operator: (!record.operator || record.operator === '未知') ? currentUser : record.operator,
           status: record.status || '已完成',
           notes: record.notes || '',
           date: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),

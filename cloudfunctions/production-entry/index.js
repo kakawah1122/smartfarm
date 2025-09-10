@@ -124,6 +124,21 @@ async function createEntryRecord(event, wxContext) {
   const batchNumber = recordData.batchId || recordData.batchNumber || generateBatchNumber()
   
   const now = new Date()
+  // 获取用户信息
+  let userName = '未知';
+  try {
+    const userInfo = await db.collection('users').where({
+      _openid: wxContext.OPENID
+    }).get();
+    
+    if (userInfo.data && userInfo.data.length > 0) {
+      const u = userInfo.data[0]
+      userName = u.name || u.nickname || u.nickName || '未知';
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+  }
+
   const newRecord = {
     userId: wxContext.OPENID,
     batchNumber,
@@ -135,7 +150,7 @@ async function createEntryRecord(event, wxContext) {
     totalAmount: Number(recordData.quantity) * (Number(recordData.unitPrice) || 0),
     purchaseDate: recordData.purchaseDate || now.toISOString().split('T')[0],
     entryDate: recordData.entryDate || now.toISOString().split('T')[0],
-    operator: recordData.operator || '未知',
+    operator: userName, // 使用查询到的用户名而不是传入的operator
     status: recordData.status || '待验收',
     notes: recordData.notes || '',
     photos: recordData.photos || [],
@@ -172,6 +187,21 @@ async function updateEntryRecord(event, wxContext) {
   
   if (!existingRecord.data.length) {
     throw new Error('记录不存在')
+  }
+  
+  // 如果要更新operator字段，获取用户信息
+  if (updateData.operator !== undefined) {
+    try {
+      const userInfo = await db.collection('users').where({
+        _openid: wxContext.OPENID
+      }).get();
+      
+      if (userInfo.data && userInfo.data.length > 0) {
+        updateData.operator = userInfo.data[0].name || userInfo.data[0].nickName || '未知';
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+    }
   }
   
   // 准备更新数据
@@ -322,8 +352,37 @@ async function getEntryDetail(event, wxContext) {
     throw new Error('记录不存在')
   }
   
+  const data = record.data[0]
+  let resolvedOperator = data.operator
+  
+  // 如果操作员为空或为“未知”，尝试根据记录创建者补齐
+  if (!resolvedOperator || resolvedOperator === '未知') {
+    try {
+      const userRes = await db.collection('users').where({ _openid: data.userId }).get()
+      if (userRes.data && userRes.data.length > 0) {
+        const u = userRes.data[0]
+        resolvedOperator = u.name || u.nickname || u.nickName || '未知'
+      }
+      
+      // 如果成功解析出有效操作员，回写数据库，避免下次再计算
+      if (resolvedOperator && resolvedOperator !== '未知') {
+        await db.collection('entry_records').doc(recordId).update({
+          data: {
+            operator: resolvedOperator,
+            updateTime: new Date()
+          }
+        })
+      }
+    } catch (err) {
+      console.error('补齐操作员失败:', err)
+    }
+  }
+  
   return {
     success: true,
-    data: record.data[0]
+    data: {
+      ...data,
+      operator: resolvedOperator || data.operator || '未知'
+    }
   }
 }

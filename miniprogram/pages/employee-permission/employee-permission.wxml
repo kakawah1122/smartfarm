@@ -246,17 +246,7 @@
             />
             <text wx:else class="info-value">{{selectedEmployee.farmName || '未设置'}}</text>
           </view>
-          <view class="info-row">
-            <text class="info-label">部门</text>
-            <input wx:if="{{editingInfo}}" 
-              class="info-input" 
-              value="{{tempEmployee.department}}"
-              placeholder="请输入部门名称"
-              data-field="department"
-              bind:input="onInfoInput"
-            />
-            <text wx:else class="info-value">{{selectedEmployee.department || '未设置'}}</text>
-          </view>
+          <!-- 部门字段已与农场名称字段合并，无需单独显示 -->
           <view class="info-row">
             <text class="info-label">职位</text>
             <input wx:if="{{editingInfo}}" 

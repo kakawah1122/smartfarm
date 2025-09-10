@@ -338,7 +338,9 @@ const pageConfig = {
     if (this.data.isLoggedIn) {
       console.log('用户已登录，加载云端用户信息')
       await this.loadCloudUserInfo()
+      
       // 检查是否需要显示完善信息提示
+      // 注意：这个检查会优先检查永久标记，避免重复弹出
       this.checkProfileSetupNeeded()
     } else {
       console.log('用户未登录')
@@ -1012,13 +1014,23 @@ const pageConfig = {
         const isNowComplete = this.checkUserInfoCompleteness(updatedUserInfo)
         
         if (isNowComplete) {
-          // 信息已完善，清除所有相关标记
+          // 信息已完善，设置永久标记并清除临时标记
+          wx.setStorageSync('profileCompleted', true) // 永久标记，表示用户已完善过信息
+          wx.setStorageSync('profileCompletedTime', Date.now()) // 记录完善时间
+          
+          // 清除临时提示标记
           wx.removeStorageSync('needProfileSetup')
           wx.removeStorageSync('hasSkippedProfileSetup')
           wx.removeStorageSync('skipProfileSetupUntil')
           
           this.setData({
             showProfileSetupTip: false
+          })
+          
+          console.log('用户信息已完善，设置永久标记')
+          console.log('永久标记已设置:', {
+            profileCompleted: wx.getStorageSync('profileCompleted'),
+            profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
           })
           
           // 显示完善成功提示
@@ -1029,6 +1041,8 @@ const pageConfig = {
               duration: 2000
             })
           }, 500)
+        } else {
+          console.log('用户信息仍不完整，不设置永久标记')
         }
       } else {
         throw new Error(result.result?.message || '保存失败')
@@ -1058,18 +1072,45 @@ const pageConfig = {
 
   // 检查是否需要显示完善信息提示
   checkProfileSetupNeeded() {
-    // 首先检查当前用户信息是否已经完整 - 使用统一的检查逻辑
+    console.log('=== 开始检查是否需要显示完善信息提示 ===')
+    
+    // 首先检查是否已经有永久完善标记 - 优先检查永久标记
+    const profileCompleted = wx.getStorageSync('profileCompleted') || false
+    const profileCompletedTime = wx.getStorageSync('profileCompletedTime')
+    
+    console.log('永久完善标记检查:', { 
+      profileCompleted, 
+      profileCompletedTime: profileCompletedTime ? new Date(profileCompletedTime).toLocaleString() : '无'
+    })
+    
+    if (profileCompleted) {
+      console.log('用户已有永久完善标记，不显示完善提示')
+      this.setData({
+        showProfileSetupTip: false
+      })
+      return
+    }
+    
+    // 检查当前用户信息是否已经完整 - 使用统一的检查逻辑
     const cloudUserInfo = this.data.cloudUserInfo
+    console.log('云端用户信息:', cloudUserInfo)
+    
     if (cloudUserInfo) {
       const isInfoComplete = this.checkUserInfoCompleteness(cloudUserInfo)
       
-      console.log('检查是否需要完善信息:', { 
+      console.log('信息完整性检查结果:', { 
         isInfoComplete,
-        cloudUserInfo 
+        nickname: cloudUserInfo.nickname || cloudUserInfo.nickName,
+        phone: cloudUserInfo.phone,
+        farmName: cloudUserInfo.farmName || cloudUserInfo.department
       })
       
       if (isInfoComplete) {
-        // 信息已经完整，清除所有相关标记，不显示任何提示
+        // 信息已经完整，设置永久标记并清除临时标记
+        wx.setStorageSync('profileCompleted', true)
+        wx.setStorageSync('profileCompletedTime', Date.now())
+        
+        // 清除临时提示标记
         wx.removeStorageSync('needProfileSetup')
         wx.removeStorageSync('hasSkippedProfileSetup')
         wx.removeStorageSync('skipProfileSetupUntil')
@@ -1077,13 +1118,31 @@ const pageConfig = {
         this.setData({
           showProfileSetupTip: false
         })
+        
+        console.log('检测到信息已完整，设置永久标记')
         return // 直接返回，不执行后续逻辑
       }
+    } else {
+      console.log('云端用户信息为空，无法检查完整性')
     }
     
-    // 信息不完整时才检查是否需要提示
+    // 信息不完整且没有永久标记时才检查是否需要提示
     const needSetup = wx.getStorageSync('needProfileSetup')
-    if (needSetup) {
+    const hasSkipped = wx.getStorageSync('hasSkippedProfileSetup')
+    const skipUntil = wx.getStorageSync('skipProfileSetupUntil')
+    
+    console.log('临时标记检查:', { needSetup, hasSkipped, skipUntil })
+    
+    // 检查跳过状态是否过期
+    if (skipUntil && Date.now() > skipUntil) {
+      console.log('跳过状态已过期，清除相关标记')
+      wx.removeStorageSync('hasSkippedProfileSetup')
+      wx.removeStorageSync('skipProfileSetupUntil')
+    }
+    
+    // 只有在需要完善且用户没有跳过的情况下才显示提示
+    if (needSetup && !hasSkipped) {
+      console.log('需要显示完善信息提示')
       this.setData({
         showProfileSetupTip: true
       })
@@ -1092,15 +1151,14 @@ const pageConfig = {
       setTimeout(() => {
         this.editProfile()
       }, 500)
+    } else {
+      console.log('不需要显示完善信息提示')
+      this.setData({
+        showProfileSetupTip: false
+      })
     }
     
-    // 检查跳过状态是否过期
-    const skipUntil = wx.getStorageSync('skipProfileSetupUntil')
-    if (skipUntil && Date.now() > skipUntil) {
-      // 跳过状态已过期，清除标记
-      wx.removeStorageSync('hasSkippedProfileSetup')
-      wx.removeStorageSync('skipProfileSetupUntil')
-    }
+    console.log('=== 完善信息提示检查完成 ===')
   },
 
   // 关闭完善信息提示
@@ -1118,7 +1176,7 @@ const pageConfig = {
   // 开发调试：清除所有完善信息相关的缓存（长按用户名触发）
   onLongPressUserName() {
     wx.showActionSheet({
-      itemList: ['刷新用户信息显示', '清除个人信息缓存', '查看调试信息'],
+      itemList: ['刷新用户信息显示', '查看完善状态信息', '重置完善状态（测试用）', '查看调试信息'],
       success: async (res) => {
         switch (res.tapIndex) {
           case 0:
@@ -1129,35 +1187,50 @@ const pageConfig = {
             wx.showToast({ title: '信息已刷新', icon: 'success' })
             break
           case 1:
-            // 清除缓存
-            wx.removeStorageSync('needProfileSetup')
-            wx.removeStorageSync('hasSkippedProfileSetup')
-            wx.removeStorageSync('skipProfileSetupUntil')
-            this.setData({ showProfileSetupTip: false })
-            wx.showToast({ title: '缓存已清除', icon: 'success' })
+            // 查看完善状态信息
+            const profileCompleted = wx.getStorageSync('profileCompleted')
+            const profileCompletedTime = wx.getStorageSync('profileCompletedTime')
+            const needSetup = wx.getStorageSync('needProfileSetup')
+            const hasSkipped = wx.getStorageSync('hasSkippedProfileSetup')
+            const skipUntil = wx.getStorageSync('skipProfileSetupUntil')
+            
+            const statusInfo = `完善状态: ${profileCompleted ? '已完善' : '未完善'}\n完善时间: ${profileCompletedTime ? new Date(profileCompletedTime).toLocaleString() : '无'}\n需要完善: ${needSetup ? '是' : '否'}\n已跳过: ${hasSkipped ? '是' : '否'}\n跳过到期: ${skipUntil ? new Date(skipUntil).toLocaleString() : '无'}`
+            
+            wx.showModal({
+              title: '完善状态信息',
+              content: statusInfo,
+              showCancel: false
+            })
             break
           case 2:
+            // 重置完善状态（测试用）
+            wx.showModal({
+              title: '重置完善状态',
+              content: '这将清除所有完善信息相关的标记，用于测试。确定要继续吗？',
+              success: (modalRes) => {
+                if (modalRes.confirm) {
+                  wx.removeStorageSync('profileCompleted')
+                  wx.removeStorageSync('profileCompletedTime')
+                  wx.removeStorageSync('needProfileSetup')
+                  wx.removeStorageSync('hasSkippedProfileSetup')
+                  wx.removeStorageSync('skipProfileSetupUntil')
+                  this.setData({ showProfileSetupTip: false })
+                  wx.showToast({ title: '完善状态已重置', icon: 'success' })
+                  console.log('完善状态已重置，下次登录时会重新判断')
+                }
+              }
+            })
+            break
+          case 3:
             // 查看调试信息
             const cloudUserInfo = this.data.cloudUserInfo
             const userInfo = this.data.userInfo
-            const debugInfo = {
-              云端数据: {
-                nickname: cloudUserInfo?.nickname,
-                nickName: cloudUserInfo?.nickName,
-                farmName: cloudUserInfo?.farmName,
-                department: cloudUserInfo?.department,
-                avatarUrl: cloudUserInfo?.avatarUrl ? '已设置' : '未设置'
-              },
-              界面显示: {
-                name: userInfo.name,
-                farm: userInfo.farm,
-                avatarUrl: userInfo.avatarUrl ? '已设置' : '未设置'
-              }
-            }
-            console.log('调试信息:', debugInfo)
+            const isComplete = this.checkUserInfoCompleteness(cloudUserInfo)
+            
+            console.log('调试信息:', { cloudUserInfo, userInfo, isComplete })
             wx.showModal({
               title: '调试信息',
-              content: `界面显示: ${userInfo.name} | ${userInfo.farm}\n云端数据: ${cloudUserInfo?.nickname || cloudUserInfo?.nickName || '无'} | ${cloudUserInfo?.farmName || cloudUserInfo?.department || '无'}`,
+              content: `界面显示: ${userInfo.name} | ${userInfo.farm}\n云端数据: ${cloudUserInfo?.nickname || cloudUserInfo?.nickName || '无'} | ${cloudUserInfo?.farmName || cloudUserInfo?.department || '无'}\n信息完整: ${isComplete ? '是' : '否'}`,
               showCancel: false
             })
             break
@@ -1293,6 +1366,19 @@ const pageConfig = {
           title: '昵称更新成功',
           icon: 'success'
         })
+        
+        // 检查更新后信息是否完整
+        if (this.checkUserInfoCompleteness(updatedUserInfo)) {
+          wx.setStorageSync('profileCompleted', true)
+          wx.setStorageSync('profileCompletedTime', Date.now())
+          console.log('昵称更新后信息已完整，设置永久标记')
+          console.log('永久标记已设置:', {
+            profileCompleted: wx.getStorageSync('profileCompleted'),
+            profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
+          })
+        } else {
+          console.log('昵称更新后信息仍不完整')
+        }
       } else {
         throw new Error(result.result?.message || '更新失败')
       }
@@ -1348,6 +1434,19 @@ const pageConfig = {
           title: '养殖场名称更新成功',
           icon: 'success'
         })
+        
+        // 检查更新后信息是否完整
+        if (this.checkUserInfoCompleteness(updatedUserInfo)) {
+          wx.setStorageSync('profileCompleted', true)
+          wx.setStorageSync('profileCompletedTime', Date.now())
+          console.log('养殖场名称更新后信息已完整，设置永久标记')
+          console.log('永久标记已设置:', {
+            profileCompleted: wx.getStorageSync('profileCompleted'),
+            profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
+          })
+        } else {
+          console.log('养殖场名称更新后信息仍不完整')
+        }
       } else {
         throw new Error(result.result?.message || '更新失败')
       }
@@ -1497,15 +1596,19 @@ const pageConfig = {
     app.globalData.isLoggedIn = false
     app.globalData.userInfo = undefined
 
-    // 清除本地存储（包括完善信息相关标记）
+    // 清除本地存储
     wx.removeStorageSync('openid')
     wx.removeStorageSync('userInfo')
     
-    // 清除完善信息相关的所有标记
-    wx.removeStorageSync('needProfileSetup')
-    wx.removeStorageSync('hasSkippedProfileSetup')
-    wx.removeStorageSync('skipProfileSetupUntil')
-    console.log('已清除所有完善信息相关标记')
+    // 注意：不清除完善信息的永久状态标记
+    // 用户完善过的信息状态应该永久保持，避免重复弹出完善弹窗
+    // wx.removeStorageSync('needProfileSetup')  // 这个可以清除，因为是临时提示标记
+    // wx.removeStorageSync('hasSkippedProfileSetup')  // 这个也可以清除
+    // wx.removeStorageSync('skipProfileSetupUntil')   // 这个也可以清除
+    
+    // 但是我们需要保留一个永久标记表示用户已经完善过信息
+    // 这样下次登录时就不会再弹出完善弹窗了
+    console.log('已清除登录相关本地存储，保留完善信息状态')
 
     // 重置页面数据
     this.setData({

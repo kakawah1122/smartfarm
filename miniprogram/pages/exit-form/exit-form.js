@@ -29,7 +29,9 @@ const pageConfig = {
         // 提交状态
         submitting: false,
         // 验证错误
-        validationErrors: []
+        validationErrors: [],
+        // 选择批次后的可用数量上限（用于前端输入约束）
+        selectedBatchAvailable: 0
     },
     onLoad() {
         // 初始化表单
@@ -49,9 +51,9 @@ const pageConfig = {
     // 加载可选择的入栏批次
     async loadAvailableBatches() {
         try {
-            // 从云函数获取已入栏的批次数据
+            // 从云函数获取已入栏且有剩余可出栏数量的批次（真实剩余量）
             const batches = await this.getEntryBatches();
-            const batchOptions = batches.map((batch) => `${batch.batchId} (${batch.breed} - ${batch.quantity}羽)`);
+            const batchOptions = batches.map((batch) => `${batch.batchId} (${batch.breed} - 可出栏: ${batch.availableQuantity}羽)`);
             // ActionSheet组件需要的数据格式
             const batchActionItems = batches.map((batch, index) => ({
                 label: `${batch.batchId} (${batch.breed} - 可出栏: ${batch.availableQuantity}羽)`,
@@ -76,56 +78,30 @@ const pageConfig = {
             });
         }
     },
-    // 从云函数获取真实的入栏批次数据
+    // 从云函数获取真实剩余量的入栏批次数据
     async getEntryBatches() {
         try {
-            console.log('开始从云函数获取入栏批次数据');
-            // 调用入栏云函数获取所有入栏记录
+            console.log('开始从云函数获取可用批次数据');
+            // 调用出栏云函数，获取按批次聚合后的真实可用数量
             const result = await wx.cloud.callFunction({
-                name: 'production-entry',
+                name: 'production-exit',
                 data: {
-                    action: 'list',
-                    page: 1,
-                    pageSize: 50 // 获取更多记录以供选择
+                    action: 'available_batches'
                 }
             });
             console.log('云函数返回结果:', result);
             if (result.result && result.result.success) {
-                const entryRecords = result.result.data.records || [];
-                console.log('获取到的入栏记录:', entryRecords);
-                // 转换为批次选择格式，并计算可出栏数量
-                const batches = entryRecords.map((record, index) => {
-                    // 这里应该根据实际出栏记录计算剩余可出栏数量
-                    // 暂时假设可出栏数量 = 入栏数量 - 10（模拟已出栏的数量）
-                    const entryQuantity = parseInt(record.quantity) || 0;
-                    const assumedExitedQuantity = Math.min(10, Math.floor(entryQuantity * 0.1)); // 假设已出栏10%
-                    const availableQuantity = entryQuantity - assumedExitedQuantity;
-                    // 优先使用 batchNumber，如果没有则根据品种和日期生成一个友好的标识
-                    let displayBatchId = record.batchNumber; // 修复：使用 batchNumber 字段
-                    if (!displayBatchId) {
-                        const entryDate = record.entryDate || record.createTime?.split('T')[0] || '';
-                        const breed = record.breed || '未知品种';
-                        if (entryDate) {
-                            // 生成格式：品种-日期格式（如：狮头鹅-20250904）
-                            const dateStr = entryDate.replace(/-/g, '');
-                            displayBatchId = `${breed}-${dateStr}`;
-                        }
-                        else {
-                            // 如果连日期都没有，使用品种+序号
-                            displayBatchId = `${breed}-${index + 1}`;
-                        }
-                    }
-                    return {
-                        batchId: displayBatchId, // 前端显示用的ID保持不变
-                        batchNumber: record.batchNumber || displayBatchId, // 添加原始批次号字段
-                        originalId: record._id, // 保留原始ID用于后续操作
-                        breed: record.breed || '未知品种',
-                        entryDate: record.entryDate || record.createTime?.split('T')[0] || '未知日期',
-                        quantity: record.quantity || '0',
-                        supplier: record.supplier || '未知供应商',
-                        availableQuantity: availableQuantity.toString() // 可出栏数量
-                    };
-                });
+                const availableBatches = result.result.data || [];
+                // 转换为页面使用的数据结构
+                const batches = availableBatches.map((item) => ({
+                    batchId: item.batchNumber,
+                    batchNumber: item.batchNumber,
+                    breed: item.breed || '未知品种',
+                    entryDate: item.entryDate || '未知日期',
+                    quantity: String(item.totalQuantity || 0),
+                    supplier: '未知供应商',
+                    availableQuantity: String(item.availableQuantity || 0)
+                }));
                 console.log('转换后的批次数据:', batches);
                 return batches;
             }
@@ -136,12 +112,12 @@ const pageConfig = {
             }
         }
         catch (error) {
-            console.error('获取入栏批次数据失败:', error);
+            console.error('获取可用批次数据失败:', error);
             // 如果是云函数不存在的错误，给出友好提示
             if (error.errMsg && error.errMsg.includes('function not found')) {
                 wx.showModal({
                     title: '系统提示',
-                    content: '入栏管理云函数尚未部署，无法获取批次数据。请先添加入栏记录。',
+                    content: '出栏管理云函数尚未部署，无法获取批次数据。',
                     showCancel: false
                 });
             }
@@ -226,23 +202,32 @@ const pageConfig = {
             this.setData({
                 'formData.batchId': selectedBatch.batchId,
                 'formData.type': selectedBatch.breed, // 自动填充鹅的类型
+                selectedBatchAvailable: Number(selectedBatch.availableQuantity) || 0
             });
             console.log('选择批次:', selectedBatch);
-            // 提示可出栏数量
-            wx.showToast({
-                title: `可出栏数量: ${selectedBatch.availableQuantity}羽`,
-                icon: 'none',
-                duration: 2000
-            });
         }
     },
     // 表单字段变化
     onFieldChange(e) {
         const { value } = e.detail;
         const { field } = e.currentTarget.dataset;
-        this.setData({
-            [`formData.${field}`]: value
-        });
+        // 针对数量字段，进行不超过可用数量的前端约束（不弹窗，直接限制）
+        if (field === 'quantity') {
+            const max = Number(this.data.selectedBatchAvailable) || 0;
+            let next = value;
+            const num = parseInt(value);
+            if (!isNaN(num) && max > 0 && num > max) {
+                next = String(max);
+            }
+            this.setData({
+                [`formData.${field}`]: next
+            });
+        }
+        else {
+            this.setData({
+                [`formData.${field}`]: value
+            });
+        }
         // 如果是数量、重量或单价变化，重新计算总重量和总收入
         if (field === 'quantity' || field === 'avgWeight' || field === 'unitPrice') {
             this.calculateTotals();
@@ -310,6 +295,11 @@ const pageConfig = {
         }
         if (formData.unitPrice && (isNaN(Number(formData.unitPrice)) || Number(formData.unitPrice) <= 0)) {
             errors.push('单价必须为正数');
+        }
+        // 额外校验：若选择了批次，出栏数量不得超过可用数量（静默限制已做，此处兜底）
+        const max = Number(this.data.selectedBatchAvailable) || 0;
+        if (max > 0 && Number(formData.quantity) > max) {
+            errors.push(`出栏数量不得超过${max}羽`);
         }
         return {
             isValid: errors.length === 0,

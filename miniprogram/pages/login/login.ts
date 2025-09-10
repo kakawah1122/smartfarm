@@ -350,10 +350,21 @@ Page({
                                   farmName !== '智慧养殖场' &&
                                   farmName !== '未设置'
             
+            // 检查用户是否已经完善过信息（永久标记）
+            const profileCompleted = wx.getStorageSync('profileCompleted') || false
+            
             // 检查用户是否已经跳过完善信息
             const hasSkippedInfo = wx.getStorageSync('hasSkippedProfileSetup') || false
             
-            if (!isInfoComplete && !hasSkippedInfo) {
+            console.log('登录时完善信息状态检查:', {
+              isInfoComplete,
+              profileCompleted,
+              hasSkippedInfo,
+              shouldShowPrompt: !isInfoComplete && !profileCompleted && !hasSkippedInfo
+            })
+            
+            // 只有在信息不完整、没有永久完善标记、且用户没有跳过的情况下才提示
+            if (!isInfoComplete && !profileCompleted && !hasSkippedInfo) {
               // 信息不完整且用户未跳过，提示用户完善
               wx.showModal({
                 title: '完善个人信息',
@@ -574,7 +585,7 @@ Page({
         name: 'user-management',
         data: {
           action: 'update_profile',
-          nickname: nickname.trim(),
+          nickName: nickname.trim(),        // 修正字段名称：nickname → nickName
           phone: phone.trim(),
           farmName: farmName.trim(),
           avatarUrl: selectedAvatarUrl || ''

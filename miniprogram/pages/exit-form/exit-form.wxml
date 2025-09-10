@@ -75,10 +75,9 @@
 
           <!-- 鹅的类型（从入栏批次自动获取） -->
           <view class="form-item">
-            <view class="item-label">鹅的品种</view>
+            <view class="item-label non-required">鹅的品种</view>
             <view class="item-input">
-              <text class="auto-fill-text">{{formData.type || '请先选择入栏批次'}}</text>
-              <t-tag wx:if="{{formData.type}}" theme="light" size="small">自动获取</t-tag>
+              <text class="auto-fill-text-right">{{formData.type || '请先选择入栏批次'}}</text>
             </view>
           </view>
 
@@ -158,7 +157,7 @@
 
           <!-- 总重量 -->
           <view class="form-item">
-            <view class="item-label">总重量</view>
+            <view class="item-label non-required">总重量</view>
             <view class="item-value">
               <text class="weight-value">{{totalWeight}}斤</text>
             </view>
@@ -166,7 +165,7 @@
 
           <!-- 总收入 -->
           <view class="form-item amount-item">
-            <view class="item-label">总收入</view>
+            <view class="item-label non-required">总收入</view>
             <view class="item-value">
               <text class="amount-value">￥{{totalRevenue}}</text>
             </view>

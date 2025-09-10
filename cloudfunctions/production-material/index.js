@@ -353,9 +353,23 @@ async function listMaterialRecords(event, wxContext) {
   }
   
   // 组合数据
-  const recordsWithMaterial = records.data.map(record => ({
-    ...record,
-    material: materials[record.materialId] || null
+  const recordsWithMaterial = await Promise.all(records.data.map(async record => {
+    // 兜底操作员
+    let operator = record.operator
+    if (!operator || operator === '未知' || operator === '系统用户') {
+      try {
+        const user = await db.collection('users').where({ _openid: record.userId }).get()
+        if (user.data && user.data.length > 0) {
+          const u = user.data[0]
+          operator = u.name || u.nickname || u.nickName || operator || '未知'
+        }
+      } catch (e) {}
+    }
+    return {
+      ...record,
+      operator,
+      material: materials[record.materialId] || null
+    }
   }))
   
   return {
@@ -427,6 +441,15 @@ async function createMaterialRecord(event, wxContext) {
     const recordNumber = generateRecordNumber(recordData.type)
     
     const now = new Date()
+    // 解析当前用户姓名
+    let operatorName = '未知'
+    try {
+      const res = await db.collection('users').where({ _openid: wxContext.OPENID }).get()
+      if (res.data && res.data.length > 0) {
+        const u = res.data[0]
+        operatorName = u.name || u.nickname || u.nickName || '未知'
+      }
+    } catch (e) {}
     const newRecord = {
       userId: wxContext.OPENID,
       materialId: recordData.materialId,
@@ -437,7 +460,7 @@ async function createMaterialRecord(event, wxContext) {
       totalAmount: Number(recordData.quantity) * (Number(recordData.unitPrice) || materialInfo.unitPrice || 0),
       supplier: recordData.supplier || '',
       targetLocation: recordData.targetLocation || '',
-      operator: recordData.operator || '未知',
+      operator: operatorName,
       status: recordData.status || '已完成',
       notes: recordData.notes || '',
       relatedBatch: recordData.relatedBatch || '',
@@ -470,7 +493,7 @@ async function createMaterialRecord(event, wxContext) {
       quantity: Number(recordData.quantity),
       beforeStock: materialInfo.currentStock,
       afterStock: newStock,
-      operator: recordData.operator || '未知',
+      operator: operatorName,
       operationTime: now
     }
     
@@ -507,6 +530,17 @@ async function updateMaterialRecord(event, wxContext) {
   }
   
   const record = existingRecord.data[0]
+  
+  // 若更新operator，强制替换为当前用户名
+  if (updateData.operator !== undefined) {
+    try {
+      const res = await db.collection('users').where({ _openid: wxContext.OPENID }).get()
+      if (res.data && res.data.length > 0) {
+        const u = res.data[0]
+        updateData.operator = u.name || u.nickname || u.nickName || '未知'
+      }
+    } catch (e) {}
+  }
   
   // 只允许更新状态和备注
   const updateFields = {

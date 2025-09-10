@@ -249,7 +249,7 @@ const pageConfig = {
           supplier: record.supplier || '',
           quantity: record.quantity || 0,
           avgWeight: record.avgWeight || 0,
-          operator: record.operator || currentUser,
+          operator: (!record.operator || record.operator === '未知') ? currentUser : record.operator,
           status: record.status || '已完成',
           date: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
           entryDate: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
@@ -343,7 +343,7 @@ const pageConfig = {
           quantity: `${record.quantity}${record.material?.unit || '件'}`,
           supplier: record.supplier || '',
           targetLocation: record.targetLocation || '',
-          operator: record.operator || currentUser,
+          operator: (!record.operator || record.operator === '未知' || record.operator === '系统用户') ? currentUser : record.operator,
           date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
           status: record.status || '已完成',
           // 兼容旧版显示格式  

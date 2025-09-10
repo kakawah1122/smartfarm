@@ -279,6 +279,10 @@ async function getUserInfo(event, wxContext) {
       const newUser = {
         _openid: openid,
         nickName: '新用户',
+        farmName: '',                    // 主要字段
+        department: '',                  // 兼容字段
+        phone: '',
+        avatarUrl: '',
         role: 'employee',
         status: 'pending', // pending, active, inactive
         createTime: new Date().toISOString(),
@@ -292,6 +296,10 @@ async function getUserInfo(event, wxContext) {
         success: true,
         data: {
           ...newUser,
+          // 提供完整的兼容性字段
+          nickname: newUser.nickName,
+          farmName: newUser.farmName,
+          department: newUser.department,
           roleInfo: ROLE_PERMISSIONS[newUser.role]
         }
       }
@@ -308,6 +316,10 @@ async function getUserInfo(event, wxContext) {
       success: true,
       data: {
         ...userData,
+        // 提供完整的兼容性字段
+        nickname: userData.nickName,           // nickname 兼容字段
+        farmName: userData.farmName,           // 主要字段（如果没有则使用department）
+        department: userData.department,       // 兼容字段（如果没有则使用farmName）
         roleInfo: ROLE_PERMISSIONS[userData.role || 'employee']
       }
     }
@@ -319,7 +331,7 @@ async function getUserInfo(event, wxContext) {
 
 // 更新用户资料
 async function updateUserProfile(event, wxContext) {
-  const { nickName, avatarUrl, phone, department } = event
+  const { nickName, avatarUrl, phone, department, farmName } = event
   const openid = wxContext.OPENID
   
   const updateData = {
@@ -329,7 +341,13 @@ async function updateUserProfile(event, wxContext) {
   if (nickName) updateData.nickName = nickName
   if (avatarUrl) updateData.avatarUrl = avatarUrl
   if (phone) updateData.phone = phone
-  if (department) updateData.farmName = department // 将department映射到farmName
+  
+  // 统一处理养殖场名称字段 - 支持两种字段名
+  const farmNameValue = farmName || department
+  if (farmNameValue) {
+    updateData.farmName = farmNameValue    // 主要字段
+    updateData.department = farmNameValue  // 兼容字段，保持一致
+  }
   
   await db.collection('users').where({ _openid: openid }).update({
     data: updateData
@@ -339,13 +357,16 @@ async function updateUserProfile(event, wxContext) {
   const updatedUser = await db.collection('users').where({ _openid: openid }).get()
   
   if (updatedUser.data.length > 0) {
+    const userData = updatedUser.data[0]
     return {
       success: true,
       data: {
         user: {
-          ...updatedUser.data[0],
-          nickname: updatedUser.data[0].nickName, // 添加nickname字段以保持兼容性
-          farmName: updatedUser.data[0].farmName || updatedUser.data[0].department
+          ...userData,
+          // 提供完整的兼容性字段
+          nickname: userData.nickName,           // nickname 兼容字段
+          farmName: userData.farmName,           // 主要字段
+          department: userData.department        // 兼容字段
         }
       },
       message: '用户资料更新成功'

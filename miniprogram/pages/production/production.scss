@@ -11,6 +11,54 @@ page {
   padding-bottom: var(--safe-area-inset-bottom, 0);
 }
 
+/* 生产概览卡片 */
+.production-overview {
+  padding: 24rpx;
+  background: white;
+  margin-bottom: 16rpx;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.overview-card {
+  padding: 24rpx 16rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  color: white;
+  
+  &.primary {
+    background: linear-gradient(135deg, #0052d9 0%, #266fe8 100%);
+  }
+  
+  &.success {
+    background: linear-gradient(135deg, #00a870 0%, #00c991 100%);
+  }
+  
+  &.warning {
+    background: linear-gradient(135deg, #ed7b2f 0%, #f2975a 100%);
+  }
+  
+  &.info {
+    background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  }
+}
+
+.overview-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 8rpx;
+}
+
+.overview-label {
+  font-size: 24rpx;
+  opacity: 0.9;
+}
+
 /* 主内容区域 */
 .main-content {
   flex: 1;
@@ -46,76 +94,11 @@ page {
   padding: 8rpx 16rpx calc(32rpx + var(--safe-area-inset-bottom, 0));
 }
 
-/* TDesign原生概览区域 */
-.stats-section {
-  margin: 16rpx 16rpx;
+/* TDesign物料管理区域 */
+.material-section {
+  margin: 16rpx 0;
 }
 
-/* TDesign原生概览统计 */
-.overview-stats {
-  margin: 32rpx 0;
-}
-
-/* 保留TDesign Card组件原生样式 */
-.overview-stats .t-card {
-  margin-bottom: 24rpx;
-}
-
-/* TDesign原生统计内容 */
-.stat-content {
-  text-align: center;
-  padding: 32rpx 24rpx;
-  min-height: 120rpx;
-}
-
-/* TDesign原生统计数值 */
-.stat-value {
-  font-size: 48rpx;
-  font-weight: 600;
-  line-height: 1.2;
-  margin-bottom: 8rpx;
-  color: var(--td-text-color-primary, #000000);
-}
-
-.stat-content.stat-success .stat-value {
-  color: var(--td-success-color, #00a870);
-}
-
-.stat-content.stat-warning .stat-value {
-  color: var(--td-warning-color, #ed7b2f);
-}
-
-.stat-content.stat-primary .stat-value {
-  color: var(--td-brand-color, #0052d9);
-}
-
-/* TDesign原生统计标签 */
-.stat-label {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  line-height: 1.4;
-  font-weight: 400;
-}
-
-/* TDesign原生统计状态 */
-.stat-status {
-  display: block;
-  font-size: 24rpx;
-  margin-top: 8rpx;
-  padding: 4rpx 8rpx;
-  border-radius: 8rpx;
-  font-weight: 400;
-}
-
-.stat-status.warning {
-  color: var(--td-warning-color, #ed7b2f);
-  background: var(--td-warning-color-1, #fff1e9);
-}
-
-.stat-status.success {
-  color: var(--td-success-color, #00a870);
-  background: var(--td-success-color-1, #e8f5e8);
-}
 
 /* TDesign原生列表区域 */
 .quick-action {
@@ -162,6 +145,39 @@ page {
 .warning-button:active {
   transform: scale(0.98) !important;
   box-shadow: 0 2rpx 8rpx rgba(237, 123, 47, 0.3) !important;
+}
+
+.purple-button {
+  /* 紫色按钮样式 */
+  background: linear-gradient(135deg, #531dab 0%, #722ed1 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 4rpx 16rpx rgba(83, 29, 171, 0.3) !important;
+}
+
+.purple-button:active {
+  transform: scale(0.98) !important;
+  box-shadow: 0 2rpx 8rpx rgba(83, 29, 171, 0.4) !important;
+}
+
+/* 紫色标签样式 */
+.purple-tag {
+  background: rgba(83, 29, 171, 0.1) !important;
+  color: #531dab !important;
+  border: 1rpx solid rgba(83, 29, 171, 0.2) !important;
+}
+
+.success-button {
+  /* 绿色按钮样式 - 与采购标签保持一致 */
+  background: linear-gradient(135deg, #389e0d 0%, #52c41a 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 4rpx 16rpx rgba(56, 158, 13, 0.3) !important;
+}
+
+.success-button:active {
+  transform: scale(0.98) !important;
+  box-shadow: 0 2rpx 8rpx rgba(56, 158, 13, 0.4) !important;
 }
 
 .list-section {
@@ -404,21 +420,33 @@ page {
     padding: 8rpx 8rpx;
   }
 
-  .stats-section {
-    margin: 12rpx 8rpx;
+  .material-section {
+    margin: 12rpx 0;
+  }
+
+  /* 概览区域响应式 */
+  .production-overview {
+    padding: 16rpx;
+    margin-bottom: 12rpx;
   }
   
-  .overview-stats {
-    margin: 16rpx 0;
+  .overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12rpx;
   }
   
-  .stat-content {
-    padding: 24rpx 16rpx;
-    min-height: 100rpx;
+  .overview-card {
+    padding: 20rpx 12rpx;
+    border-radius: 8rpx;
   }
   
-  .stat-value {
-    font-size: 40rpx;
+  .overview-value {
+    font-size: 32rpx;
+    margin-bottom: 6rpx;
+  }
+  
+  .overview-label {
+    font-size: 22rpx;
   }
 
   /* 记录列表响应式 */
@@ -499,127 +527,152 @@ page {
     align-items: flex-start;
     gap: 4rpx;
   }
+
+  /* 概览区域极小屏幕适配 */
+  .production-overview {
+    padding: 12rpx;
+  }
+  
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 8rpx;
+  }
+  
+  .overview-card {
+    padding: 16rpx 10rpx;
+  }
+  
+  .overview-value {
+    font-size: 28rpx;
+  }
+  
+  .overview-label {
+    font-size: 20rpx;
+  }
+
+  /* 物料卡片极小屏幕适配 */
+  .material-overview-grid {
+    grid-template-columns: 1fr;
+    gap: 8rpx;
+  }
+  
+  .material-overview-card {
+    padding: 16rpx 10rpx;
+  }
+  
+  .material-overview-value {
+    font-size: 28rpx;
+  }
+  
+  .material-overview-label {
+    font-size: 20rpx;
+  }
+  
+  .material-overview-status {
+    font-size: 16rpx;
+    padding: 2rpx 4rpx;
+  }
 }
 
 /* TDesign原生无障碍支持 */
-.stat-content:focus {
-  outline: 2rpx solid var(--td-brand-color, #0052d9);
-  outline-offset: 4rpx;
-}
 
 .record-item:focus {
   outline: 2rpx solid var(--td-brand-color, #0052d9);
   outline-offset: 4rpx;
 }
 
-/* TDesign四宫格物料概览样式 */
-.material-grid {
-  margin: 8rpx 0;
+/* 物料概览卡片 */
+.material-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
 }
 
-/* 重置TDesign Grid组件默认样式 */
-.material-grid .t-grid-item {
-  background: var(--td-bg-color-container, #ffffff);
+.material-overview-card {
+  padding: 24rpx 16rpx;
   border-radius: 12rpx;
-  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-  margin-bottom: 12rpx;
-  min-height: 160rpx;
-}
-
-/* 四宫格网格项内容 */
-.grid-content {
-  padding: 16rpx;
   text-align: center;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 8rpx;
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  
+  &.feed-card {
+    background: linear-gradient(135deg, #f6ffed 0%, #f0f9e8 100%);
+    color: #389e0d;
+    border: 1rpx solid #d9f7be;
+  }
+  
+  &.medicine-card {
+    background: linear-gradient(135deg, #fff0f6 0%, #fce8f0 100%);
+    color: #c41d7f;
+    border: 1rpx solid #ffadd2;
+  }
+  
+  &.equipment-card {
+    background: linear-gradient(135deg, #f9f0ff 0%, #f4e8ff 100%);
+    color: #531dab;
+    border: 1rpx solid #d3adf7;
+  }
+  
+  &.summary-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+    color: #0050b3;
+    border: 1rpx solid #91d5ff;
+  }
 }
 
-/* 宫格标题 */
-.grid-title {
-  font-size: 28rpx;
+.material-overview-value {
+  font-size: 40rpx;
   font-weight: 600;
-  color: var(--td-text-color-primary, #000000);
-  line-height: 1.4;
+  line-height: 1.2;
   margin-bottom: 8rpx;
 }
 
-/* 物料数量 */
-.grid-count {
+.material-overview-label {
   font-size: 24rpx;
-  color: var(--td-text-color-secondary, #555555);
-  line-height: 1.4;
+  opacity: 0.9;
   margin-bottom: 6rpx;
-  font-weight: 500;
 }
 
-/* 状态标签 */
-.grid-status {
-  padding: 4rpx 10rpx;
-  border-radius: 6rpx;
-  font-weight: 500;
+.material-overview-status {
   font-size: 20rpx;
+  font-weight: 500;
+  padding: 4rpx 8rpx;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 10rpx;
+  display: inline-block;
   line-height: 1.2;
-  margin-bottom: 0;
-  min-width: 70rpx;
-  text-align: center;
+  opacity: 0.8;
 }
 
-.grid-status.critical {
-  background: var(--td-error-color-1, #ffebee);
-  color: var(--td-error-color, #e34d59);
-}
-
-.grid-status.warning {
-  background: var(--td-warning-color-1, #fff1e9);
-  color: var(--td-warning-color, #ed7b2f);
-}
-
-.grid-status.normal {
-  background: var(--td-success-color-1, #e8f5e8);
-  color: var(--td-success-color, #00a870);
-}
-
-.grid-status.empty {
-  background: var(--td-bg-color-component, #f3f3f3);
-  color: var(--td-text-color-secondary, #555555);
-}
-
-
-/* Grid组件hover效果 */
-.grid-item:active {
-  background: var(--td-bg-color-component-hover, #f8f8f8);
-}
-
-/* 响应式支持 */
+/* 物料卡片响应式设计 */
 @media screen and (max-width: 480px) {
-  .material-grid .t-grid-item {
-    min-height: 140rpx;
-    margin-bottom: 12rpx;
+  .material-overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12rpx;
   }
   
-  .grid-content {
-    padding: 12rpx 10rpx;
-    gap: 6rpx;
+  .material-overview-card {
+    padding: 20rpx 12rpx;
+    border-radius: 8rpx;
   }
   
-  .grid-title {
-    font-size: 26rpx;
+  .material-overview-value {
+    font-size: 32rpx;
     margin-bottom: 6rpx;
   }
   
-  .grid-count {
+  .material-overview-label {
     font-size: 22rpx;
     margin-bottom: 4rpx;
   }
   
-  .grid-status {
-    padding: 3rpx 8rpx;
+  .material-overview-status {
     font-size: 18rpx;
-    min-width: 60rpx;
+    padding: 3rpx 6rpx;
   }
 }
 

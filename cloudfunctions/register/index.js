@@ -96,7 +96,7 @@ exports.main = async (event, context) => {
     
     // 添加要更新的字段
     if (nickname !== undefined) {
-      updateData.nickname = nickname
+      updateData.nickName = nickname  // 修正：存储为数据库标准字段名nickName
     }
     if (avatarUrl !== undefined) {
       updateData.avatarUrl = avatarUrl
@@ -109,15 +109,20 @@ exports.main = async (event, context) => {
     }
     if (farmName !== undefined) {
       updateData.farmName = farmName
+      updateData.department = farmName  // 保持兼容性字段同步
     }
     
     // 如果有邀请信息，更新相关字段
     if (inviteInfo) {
       updateData.inviteCode = inviteCode
-      updateData.department = inviteInfo.department || ''
       updateData.position = inviteInfo.position || ''
       if (inviteInfo.role) {
         updateData.role = inviteInfo.role
+      }
+      // 如果邀请信息中有部门/养殖场信息，使用邀请信息
+      if (inviteInfo.department) {
+        updateData.farmName = inviteInfo.department
+        updateData.department = inviteInfo.department
       }
       // 保持待审批状态
       updateData.approvalStatus = 'pending'

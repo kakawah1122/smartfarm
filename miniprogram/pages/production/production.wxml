@@ -12,6 +12,28 @@
 
   <!-- 主内容区域 -->
   <view class="main-content">
+    <!-- 生产概览 -->
+    <view class="production-overview">
+      <view class="overview-grid">
+        <view class="overview-card primary">
+          <view class="overview-value">{{entryStats.total}}</view>
+          <view class="overview-label">入栏数量(羽)</view>
+        </view>
+        <view class="overview-card success">
+          <view class="overview-value">{{exitStats.total}}</view>
+          <view class="overview-label">出栏数量(羽)</view>
+        </view>
+        <view class="overview-card warning">
+          <view class="overview-value">{{entryStats.stockQuantity}}</view>
+          <view class="overview-label">存栏数量(羽)</view>
+        </view>
+        <view class="overview-card info">
+          <view class="overview-value">{{exitStats.avgWeight}}斤</view>
+          <view class="overview-label">平均重量</view>
+        </view>
+      </view>
+    </view>
+
     <!-- Tab 导航 -->
     <t-tabs 
       value="{{activeTab}}" 
@@ -30,35 +52,6 @@
     <view class="tab-container">
       <!-- 入栏管理 -->
       <view wx:if="{{activeTab === 'entry'}}" class="tab-content">
-        <!-- 数据概览 -->
-        <view class="stats-section">
-          <t-row gutter="16" class="overview-stats">
-            <t-col span="8">
-              <t-card>
-                <view class="stat-content stat-primary">
-                  <view class="stat-value">{{entryStats.total}}</view>
-                  <view class="stat-label">入栏总数(羽)</view>
-                </view>
-              </t-card>
-            </t-col>
-            <t-col span="8">
-              <t-card>
-                <view class="stat-content stat-success">
-                  <view class="stat-value">{{entryStats.stockQuantity}}</view>
-                  <view class="stat-label">存栏数量</view>
-                </view>
-              </t-card>
-            </t-col>
-            <t-col span="8">
-              <t-card>
-                <view class="stat-content stat-warning">
-                  <view class="stat-value">{{entryStats.batches}}</view>
-                  <view class="stat-label">入栏批次</view>
-                </view>
-              </t-card>
-            </t-col>
-          </t-row>
-        </view>
 
         <!-- 快速操作 -->
         <view class="quick-action">
@@ -149,35 +142,6 @@
 
       <!-- 出栏管理 -->
       <view wx:if="{{activeTab === 'exit'}}" class="tab-content">
-        <!-- 数据概览 -->
-        <view class="stats-section">
-          <t-row gutter="16" class="overview-stats">
-            <t-col span="8">
-              <t-card>
-                <view class="stat-content stat-success">
-                  <view class="stat-value">{{exitStats.total}}</view>
-                  <view class="stat-label">出栏总数(羽)</view>
-                </view>
-              </t-card>
-            </t-col>
-            <t-col span="8">
-              <t-card>
-                <view class="stat-content stat-primary">
-                  <view class="stat-value">{{exitStats.avgWeight}}斤</view>
-                  <view class="stat-label">平均重量</view>
-                </view>
-              </t-card>
-            </t-col>
-            <t-col span="8">
-              <t-card>
-                <view class="stat-content stat-success">
-                  <view class="stat-value">{{exitStats.batches}}</view>
-                  <view class="stat-label">出栏批次</view>
-                </view>
-              </t-card>
-            </t-col>
-          </t-row>
-        </view>
 
         <!-- 快速操作 -->
         <view class="quick-action">
@@ -398,64 +362,48 @@
       <!-- 物料管理 -->
       <view wx:if="{{activeTab === 'material'}}" class="tab-content">
         <!-- 库存状态 - 四宫格布局 -->
-        <view class="stats-section">
-          <t-grid column="2" class="material-grid">
+        <view class="material-section">
+          <view class="material-overview-grid">
             <!-- 饲料库存 -->
-            <t-grid-item bind:click="viewFeedInventory" class="grid-item">
-              <view class="grid-content">
-                <view class="grid-title">饲料库存</view>
-                <view class="grid-count">{{materialStats.feedDetails.totalCount}}种物料</view>
-                <view class="grid-status {{materialStats.feedDetails.status}}">
-                  {{materialStats.feedDetails.statusText}}
-                </view>
-              </view>
-            </t-grid-item>
+            <view class="material-overview-card feed-card" bind:tap="viewFeedInventory">
+              <view class="material-overview-value">{{materialStats.feedDetails.totalCount}}</view>
+              <view class="material-overview-label">饲料库存</view>
+              <view class="material-overview-status">{{materialStats.feedDetails.statusText}}</view>
+            </view>
             
             <!-- 药品库存 -->
-            <t-grid-item bind:click="viewMedicineInventory" class="grid-item">
-              <view class="grid-content">
-                <view class="grid-title">药品库存</view>
-                <view class="grid-count">{{materialStats.medicineDetails.totalCount}}种物料</view>
-                <view class="grid-status {{materialStats.medicineDetails.status}}">
-                  {{materialStats.medicineDetails.statusText}}
-                </view>
-              </view>
-            </t-grid-item>
+            <view class="material-overview-card medicine-card" bind:tap="viewMedicineInventory">
+              <view class="material-overview-value">{{materialStats.medicineDetails.totalCount}}</view>
+              <view class="material-overview-label">药品库存</view>
+              <view class="material-overview-status">{{materialStats.medicineDetails.statusText}}</view>
+            </view>
 
             <!-- 设备物料 -->
-            <t-grid-item bind:click="viewEquipmentInventory" class="grid-item">
-              <view class="grid-content">
-                <view class="grid-title">设备物料</view>
-                <view class="grid-count">{{materialStats.equipmentDetails.totalCount}}种物料</view>
-                <view class="grid-status {{materialStats.equipmentDetails.status}}">
-                  {{materialStats.equipmentDetails.statusText}}
-                </view>
-              </view>
-            </t-grid-item>
+            <view class="material-overview-card equipment-card" bind:tap="viewEquipmentInventory">
+              <view class="material-overview-value">{{materialStats.equipmentDetails.totalCount}}</view>
+              <view class="material-overview-label">设备物料</view>
+              <view class="material-overview-status">{{materialStats.equipmentDetails.statusText}}</view>
+            </view>
 
-            <!-- 总览统计 -->
-            <t-grid-item bind:click="viewInventoryDetail" class="grid-item">
-              <view class="grid-content">
-                <view class="grid-title">库存总览</view>
-                <view class="grid-count">{{materialStats.feedDetails.totalCount + materialStats.medicineDetails.totalCount + materialStats.equipmentDetails.totalCount}}种物料</view>
-                <view class="grid-status {{(materialStats.feedDetails.status === 'critical' || materialStats.medicineDetails.status === 'critical' || materialStats.equipmentDetails.status === 'critical') ? 'critical' : (materialStats.feedDetails.status === 'warning' || materialStats.medicineDetails.status === 'warning' || materialStats.equipmentDetails.status === 'warning') ? 'warning' : 'normal'}}">
-                  {{(materialStats.feedDetails.status === 'critical' || materialStats.medicineDetails.status === 'critical' || materialStats.equipmentDetails.status === 'critical') ? '需要关注' : (materialStats.feedDetails.status === 'warning' || materialStats.medicineDetails.status === 'warning' || materialStats.equipmentDetails.status === 'warning') ? '部分偏低' : '状态良好'}}
-                </view>
-              </view>
-            </t-grid-item>
-          </t-grid>
+            <!-- 库存总览 -->
+            <view class="material-overview-card summary-card" bind:tap="viewInventoryDetail">
+              <view class="material-overview-value">{{materialStats.feedDetails.totalCount + materialStats.medicineDetails.totalCount + materialStats.equipmentDetails.totalCount}}</view>
+              <view class="material-overview-label">库存总览</view>
+              <view class="material-overview-status">{{(materialStats.feedDetails.status === 'critical' || materialStats.medicineDetails.status === 'critical' || materialStats.equipmentDetails.status === 'critical') ? '需要关注' : (materialStats.feedDetails.status === 'warning' || materialStats.medicineDetails.status === 'warning' || materialStats.equipmentDetails.status === 'warning') ? '部分偏低' : '状态良好'}}</view>
+            </view>
+          </view>
         </view>
 
         <!-- 快速操作 -->
         <view class="quick-action">
           <t-row gutter="16">
             <t-col span="12">
-              <t-button theme="primary" size="medium" block icon="add" bind:tap="purchaseMaterial" class="action-button primary-button">
+              <t-button theme="light" size="medium" block icon="add" bind:tap="purchaseMaterial" class="action-button success-button">
                 采购入库
               </t-button>
             </t-col>
             <t-col span="12">
-              <t-button theme="warning" size="medium" block icon="remove" bind:tap="useMaterial" class="action-button warning-button">
+              <t-button theme="light" size="medium" block icon="remove" bind:tap="useMaterial" class="action-button purple-button">
                 物料领用
               </t-button>
             </t-col>
@@ -489,9 +437,9 @@
                       <view class="record-title-row">
                         <text class="record-name">{{item.name}}</text>
                         <t-tag 
-                          theme="{{item.type === '采购' ? 'success' : 'warning'}}" 
+                          theme="{{item.type === '采购' ? 'success' : 'light'}}" 
                           size="small" 
-                          class="record-type-tag"
+                          class="{{item.type === '采购' ? 'record-type-tag' : 'record-type-tag purple-tag'}}"
                         >
                           {{item.type}}
                         </t-tag>
@@ -551,7 +499,7 @@
               <!-- 空状态显示 -->
               <view wx:if="{{!loading && (!materialRecords || materialRecords.length === 0)}}" class="empty-state">
                 <t-empty icon="file" description="暂无物料记录">
-                  <t-button theme="primary" size="small" bind:tap="purchaseMaterial" class="primary-button">
+                  <t-button theme="light" size="small" bind:tap="purchaseMaterial" class="success-button">
                     采购物料
                   </t-button>
                 </t-empty>
@@ -723,7 +671,11 @@
           <view class="info-row">
             <text class="info-label">操作类型：</text>
             <view class="status-value">
-              <t-tag theme="{{selectedMaterialRecord.type === '采购' ? 'success' : 'warning'}}" size="small">
+              <t-tag 
+                theme="{{selectedMaterialRecord.type === '采购' ? 'success' : 'light'}}" 
+                size="small"
+                class="{{selectedMaterialRecord.type === '采购' ? '' : 'purple-tag'}}"
+              >
                 {{selectedMaterialRecord.type}}
               </t-tag>
             </view>

@@ -291,6 +291,8 @@ const pageConfig = {
     
     try {
       // 使用新的采购入库接口，自动处理物料匹配和创建
+      const app = getApp()
+      const currentUserName = app.globalData?.userInfo?.nickname || app.globalData?.userInfo?.nickName || ''
       const result = await wx.cloud.callFunction({
         name: 'production-material',
         data: {
@@ -303,7 +305,7 @@ const pageConfig = {
             supplier: data.supplier || '',
             quantity: parseFloat(data.quantity),
             unitPrice: parseFloat(data.unitPrice),
-            operator: '系统用户',
+            operator: currentUserName,
             recordDate: data.purchaseDate,
             notes: data.remarks || '',
             batchId: data.batchId

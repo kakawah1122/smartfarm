@@ -410,12 +410,13 @@
 {
   _id: "auto_generated_id",
   _openid: "user_openid",
-  nickName: "张三",
-  avatarUrl: "https://...",
-  phone: "13800138000",
-  email: "zhangsan@example.com",
-  department: "技术部",
-  role: "technician", // super_admin, manager, technician, finance, employee, observer
+  nickName: "张三",                    // 用户昵称
+  avatarUrl: "https://...",           // 头像URL
+  phone: "13800138000",               // 手机号
+  email: "zhangsan@example.com",      // 邮箱
+  farmName: "千羽牧业",               // 养殖场名称（主字段）
+  department: "千羽牧业",             // 兼容字段（与farmName保持一致）
+  role: "employee", // super_admin, manager, employee, veterinarian
   status: "active", // active, inactive, pending
   permissions: [], // 额外权限
   createTime: "2024-01-01T12:00:00.000Z",
@@ -423,6 +424,12 @@
   lastLoginTime: "2024-01-01T12:00:00.000Z"
 }
 ```
+
+**字段说明：**
+- `nickName`: 用户昵称（符合微信小程序规范）
+- `farmName`: 养殖场名称（主要业务字段）
+- `department`: 兼容字段，与farmName保持一致，用于向后兼容
+- `role`: 更新为符合养殖场业务的角色体系
 
 #### `roles` - 角色定义
 ```javascript

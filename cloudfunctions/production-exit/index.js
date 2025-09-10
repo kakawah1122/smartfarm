@@ -95,7 +95,7 @@ async function listExitRecords(event, wxContext) {
     .limit(pageSize)
     .get()
   
-  // 为每个出栏记录关联获取入栏记录的品种信息
+  // 为每个出栏记录关联获取入栏记录的品种信息，并兜底操作员
   const enrichedRecords = await Promise.all(
     records.data.map(async (record) => {
       try {
@@ -107,11 +107,23 @@ async function listExitRecords(event, wxContext) {
         
         if (entryRecord.data.length > 0) {
           const entry = entryRecord.data[0]
+          // 兜底operator为创建者用户名
+          let operator = record.operator
+          if (!operator || operator === '未知') {
+            try {
+              const user = await db.collection('users').where({ _openid: record.userId }).get()
+              if (user.data && user.data.length > 0) {
+                const u = user.data[0]
+                operator = u.name || u.nickname || u.nickName || operator || '未知'
+              }
+            } catch (e) {}
+          }
           return {
             ...record,
             breed: entry.breed || '未知品种',
             supplier: entry.supplier || '',
-            entryDate: entry.entryDate
+            entryDate: entry.entryDate,
+            operator
           }
         } else {
           return {
@@ -188,6 +200,17 @@ async function createExitRecord(event, wxContext) {
   const entryInfo = entryRecord.data[0]
   
   const now = new Date()
+  // 获取当前用户姓名作为操作员
+  let operatorName = '未知'
+  try {
+    const userInfo = await db.collection('users').where({ _openid: wxContext.OPENID }).get()
+    if (userInfo.data && userInfo.data.length > 0) {
+      const u = userInfo.data[0]
+      operatorName = u.name || u.nickname || u.nickName || '未知'
+    }
+  } catch (e) {
+    console.error('获取用户信息失败:', e)
+  }
   const newRecord = {
     userId: wxContext.OPENID,
     exitNumber,
@@ -202,7 +225,7 @@ async function createExitRecord(event, wxContext) {
     totalRevenue: Number(recordData.quantity) * Number(recordData.unitPrice || 0),
     exitDate: recordData.exitDate || now.toISOString().split('T')[0],
     deliveryDate: recordData.deliveryDate || '',
-    operator: recordData.operator || '未知',
+    operator: operatorName,
     status: recordData.status || '待出栏',
     notes: recordData.notes || '',
     qualityCheck: recordData.qualityCheck || {},
@@ -240,6 +263,19 @@ async function updateExitRecord(event, wxContext) {
     throw new Error('记录不存在')
   }
   
+  // 若更新operator，自动替换为当前用户名
+  if (updateData.operator !== undefined) {
+    try {
+      const userInfo = await db.collection('users').where({ _openid: wxContext.OPENID }).get()
+      if (userInfo.data && userInfo.data.length > 0) {
+        const u = userInfo.data[0]
+        updateData.operator = u.name || u.nickname || u.nickName || '未知'
+      }
+    } catch (e) {
+      console.error('获取用户信息失败:', e)
+    }
+  }
+
   // 准备更新数据
   const updateFields = {
     updateTime: new Date()
@@ -429,10 +465,33 @@ async function getExitDetail(event, wxContext) {
     .where({ batchNumber: record.data[0].batchNumber })
     .get()
   
+  const data = record.data[0]
+  let resolvedOperator = data.operator
+  if (!resolvedOperator || resolvedOperator === '未知') {
+    try {
+      const user = await db.collection('users').where({ _openid: data.userId }).get()
+      if (user.data && user.data.length > 0) {
+        const u = user.data[0]
+        resolvedOperator = u.name || u.nickname || u.nickName || '未知'
+      }
+      if (resolvedOperator && resolvedOperator !== '未知') {
+        await db.collection('exit_records').doc(data._id).update({
+          data: {
+            operator: resolvedOperator,
+            updateTime: new Date()
+          }
+        })
+      }
+    } catch (e) {
+      console.error('补齐出栏记录操作员失败:', e)
+    }
+  }
+  
   return {
     success: true,
     data: {
-      ...record.data[0],
+      ...data,
+      operator: resolvedOperator || data.operator || '未知',
       entryInfo: entryRecord.data[0] || null
     }
   }

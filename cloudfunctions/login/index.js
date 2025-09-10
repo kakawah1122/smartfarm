@@ -113,15 +113,15 @@ exports.main = async (event, context) => {
       _openid: OPENID,
       appid: APPID,
       unionid: UNIONID,
-      nickname: '',
+      nickName: '',                     // 统一使用nickName字段
       avatarUrl: '',
       phone: '',
-      farmName: '', // 添加养殖场名称字段
+      farmName: '',                     // 主要字段：养殖场名称
+      department: '',                   // 兼容字段：与farmName保持一致
       gender: 0,
     // 角色和权限字段
     role: isFirstUser ? 'super_admin' : 'employee', // super_admin: 超级管理员, manager: 经理, employee: 员工, veterinarian: 兽医
     permissions: isFirstUser ? adminPermissions : ['basic'], // 第一个用户获得所有权限
-    department: isFirstUser ? '管理部门' : '', // 部门
     position: isFirstUser ? '超级管理员' : '', // 职位
       managedBy: null, // 管理者ID（第一个用户没有上级）
       organizationId: null, // 组织ID（用于多组织管理）
@@ -228,15 +228,17 @@ exports.main = async (event, context) => {
       user: {
         _id: user._id,
         openid: OPENID,
-        nickname: user.nickname || '',
+        // 同时返回 nickname 与 nickName，兼容前端各种读取方式
+        nickname: user.nickname || user.nickName || '',
+        nickName: user.nickName || user.nickname || '',
         avatarUrl: user.avatarUrl || '',
         phone: user.phone || '',
         farmName: user.farmName || '', // 添加养殖场名称到返回数据
+        department: user.department || user.farmName || '', // 兼容字段
         gender: user.gender || 0,
         // 角色和权限信息
         role: user.role || 'user',
         permissions: user.permissions || ['basic'],
-        department: user.department || '',
         position: user.position || '',
         managedBy: user.managedBy || null,
         organizationId: user.organizationId || null,
