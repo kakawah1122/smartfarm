@@ -19,16 +19,14 @@
             <view class="weather-info">
               <text class="weather-title">{{weather.loading ? '获取天气中...' : '今日天气'}}</text>
               <text class="weather-location">{{location.city}}{{location.district}}</text>
-              <view class="weather-condition-wrapper">
-                <text class="weather-condition {{weather.hasError ? 'error-text' : ''}}">{{weather.condition || '晴'}}</text>
-                <text wx:if="{{weather.hasError}}" class="weather-error-hint" bindtap="onWeatherRefresh">点击重试</text>
-              </view>
+              <text wx:if="{{weather.hasError}}" class="weather-error-hint" bindtap="onWeatherRefresh">点击重试</text>
             </view>
           </view>
           <view class="weather-right">
-            <text class="temperature {{weather.hasError ? 'error-text' : ''}}">{{weather.temperature}}°C</text>
-            <text class="feels-like">体感 {{weather.feelsLike}}°C</text>
-            <text class="humidity">湿度 {{weather.humidity}}%</text>
+            <view class="temperature-and-condition">
+              <text class="weather-condition {{weather.hasError ? 'error-text' : ''}}">{{weather.condition || '晴'}}</text>
+              <text class="temperature {{weather.hasError ? 'error-text' : ''}}">{{weather.temperature}}°C</text>
+            </view>
           </view>
         </view>
         
@@ -42,7 +40,15 @@
             <text class="detail-label">风力</text>
             <text class="detail-value">{{weather.windScale}}</text>
           </view>
-          <view class="weather-detail-item weather-update-item" bindtap="onWeatherRefresh" catchtap="onWeatherRefresh">
+          <view class="weather-detail-item">
+            <text class="detail-label">体感温度</text>
+            <text class="detail-value">{{weather.feelsLike}}°C</text>
+          </view>
+          <view class="weather-detail-item">
+            <text class="detail-label">湿度</text>
+            <text class="detail-value">{{weather.humidity}}%</text>
+          </view>
+          <view class="weather-detail-item weather-update-item" catchtap="onWeatherRefresh">
             <text class="detail-label">更新时间</text>
             <text class="detail-value">{{weather.updateTime}}</text>
           </view>

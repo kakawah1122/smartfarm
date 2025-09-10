@@ -3,6 +3,7 @@
   <navigation-bar 
     title="天气详情"
     show-back="true"
+    bind:back="onNavigateBack"
   />
 
   <scroll-view class="scroll-container" scroll-y enhanced="{{true}}" show-scrollbar="{{false}}">
@@ -11,29 +12,25 @@
     <view class="card current-weather-card">
       <view class="card-content">
 
-        <!-- 主要天气信息 - 左中右对称布局 -->
+        <!-- 主要天气信息 - 参照首页样式重构 -->
         <view class="weather-main-layout">
-          <!-- 左侧城市信息 -->
+          <!-- 左侧区域 - 图标和信息 -->
           <view class="left-city-section">
-            <text class="city-name">{{location.city}}</text>
-            <text class="district-name">{{location.district}}</text>
-          </view>
-          
-          <!-- 中间温度和天气 -->
-          <view class="center-weather-section">
-            <view class="temperature-row">
-              <text class="main-temperature">{{weather.temperature}}°</text>
-              <view class="weather-info-right">
-                <text class="weather-emoji">{{weather.emoji || '☀️'}}</text>
-                <text class="weather-condition">{{weather.condition}}</text>
-              </view>
+            <view class="weather-icon-wrapper">
+              <text class="weather-emoji">{{weather.emoji || '☀️'}}</text>
+            </view>
+            <view class="weather-info">
+              <text class="weather-title">今日天气</text>
+              <text class="city-name">{{location.city}}{{location.district}}</text>
             </view>
           </view>
           
-          <!-- 右侧体感温度 -->
+          <!-- 右侧温度区域 -->
           <view class="right-feels-section">
-            <text class="feels-label">体感</text>
-            <text class="feels-temperature">{{weather.feelsLike}}°</text>
+            <view class="temperature-and-condition">
+              <text class="weather-condition">{{weather.condition}}</text>
+              <text class="main-temperature">{{weather.temperature}}°C</text>
+            </view>
           </view>
         </view>
         
@@ -48,8 +45,12 @@
             <text class="overview-value">{{todayForecast.tempMin}}°</text>
           </view>
           <view class="overview-item">
+            <text class="overview-label">体感温度</text>
+            <text class="overview-value">{{weather.feelsLike}}°</text>
+          </view>
+          <view class="overview-item">
             <text class="overview-label">湿度</text>
-            <text class="overview-value">{{weather.humidity}}%</text>
+            <text class="overview-value humidity-value">{{weather.humidity}}%</text>
           </view>
         </view>
       </view>

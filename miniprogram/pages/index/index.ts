@@ -534,10 +534,8 @@ Page({
 
   // 手动刷新天气数据
   onWeatherRefresh(event: any) {
-    // 阻止事件冒泡，防止触发卡片点击跳转
-    if (event) {
-      event.stopPropagation()
-    }
+    // 在微信小程序中，使用catchtap来阻止事件冒泡，而不是stopPropagation()
+    console.log('手动刷新天气数据')
     
     wx.showLoading({
       title: '获取天气中...',

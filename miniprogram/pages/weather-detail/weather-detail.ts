@@ -844,6 +844,21 @@ Page({
     return tips
   },
 
+  // 导航栏返回按钮事件
+  onNavigateBack() {
+    console.log('天气详情页：用户点击返回按钮')
+    
+    // 清理页面状态和资源
+    this.forceHideLoading()
+    
+    // 可以在这里添加其他清理逻辑，比如：
+    // - 保存用户浏览历史
+    // - 清理定时器
+    // - 发送统计数据等
+    
+    console.log('天气详情页：返回前清理工作完成')
+  },
+
   // 页面分享
   onShareAppMessage() {
     const { location, weather } = this.data

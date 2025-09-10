@@ -211,7 +211,7 @@ page {
 }
 
 .weather-title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
@@ -220,7 +220,7 @@ page {
 }
 
 .weather-location {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: var(--line-height-base);
   font-weight: var(--font-weight-medium);
@@ -228,26 +228,31 @@ page {
   margin-bottom: var(--spacing-xs);
 }
 
-.weather-condition-wrapper {
+/* 温度和天气状况水平容器 - 与详情页一致 */
+.temperature-and-condition {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
+  align-items: center;
+  justify-content: flex-end;
+  gap: 40rpx;
+  margin-bottom: 8rpx;
 }
 
-.weather-condition {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-  line-height: var(--line-height-base);
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(14, 165, 233, 0.08);
-  border-radius: var(--radius-sm);
-  border: var(--td-border-level-1-color, 2rpx solid rgba(14, 165, 233, 0.15));
-  display: inline-block;
+/* 在温度旁边的天气状况样式 - 与详情页一致 */
+.temperature-and-condition .weather-condition {
+  font-size: 24rpx;
+  color: #374151;
+  line-height: 1.2;
+  font-weight: 500;
+  padding: 6rpx 10rpx;
+  background: rgba(14, 165, 233, 0.1);
+  border-radius: 8rpx;
+  border: 1rpx solid rgba(14, 165, 233, 0.2);
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.3s ease;
 }
 
-.weather-condition.error-text {
+.temperature-and-condition .weather-condition.error-text {
   background: rgba(239, 68, 68, 0.08);
   border-color: rgba(239, 68, 68, 0.15);
   color: var(--color-danger);
@@ -281,7 +286,7 @@ page {
 }
 
 .temperature {
-  font-size: 64rpx;
+  font-size: 72rpx;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-none);
@@ -291,34 +296,13 @@ page {
   -webkit-background-clip: text;
   color: transparent;
   filter: drop-shadow(0 4rpx 8rpx rgba(14, 165, 233, 0.3));
-  transform: scale(1.1);
+  transform: scale(1.2);
   margin-bottom: var(--spacing-xs);
+  min-width: 140rpx;
+  text-align: center;
 }
 
-.feels-like {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-base);
-  display: block;
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(59, 130, 246, 0.06);
-  border-radius: var(--radius-sm);
-  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
-  margin-bottom: var(--spacing-xs);
-}
 
-.humidity {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-base);
-  display: block;
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(14, 165, 233, 0.08);
-  border-radius: var(--radius-sm);
-  border: var(--td-border-level-1-color, 2rpx solid rgba(14, 165, 233, 0.15));
-}
 
 /* 天气详细信息样式 */
 .weather-details {
@@ -337,6 +321,7 @@ page {
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
+  min-width: 0;
 }
 
 .detail-label {
@@ -345,6 +330,7 @@ page {
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-base);
   opacity: 0.8;
+  white-space: nowrap;
 }
 
 .detail-value {
@@ -352,6 +338,7 @@ page {
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
+  white-space: nowrap;
 }
 
 /* 可点击的更新时间样式 */
@@ -360,40 +347,11 @@ page {
   transition: all 0.2s ease;
   border-radius: var(--radius-sm);
   position: relative;
-  
-  &::after {
-    content: '🔄';
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: var(--font-size-sm);
-    opacity: 0.6;
-    transition: all 0.3s ease;
-  }
-  
-  &:hover {
-    background: rgba(14, 165, 233, 0.05);
-    
-    &::after {
-      opacity: 1;
-      transform: translateY(-50%) rotate(180deg);
-    }
-  }
-  
-  &:active {
-    background: rgba(14, 165, 233, 0.1);
-    transform: scale(0.98);
-    
-    &::after {
-      animation: refresh-rotate 1s linear infinite;
-    }
-  }
 }
 
-@keyframes refresh-rotate {
-  from { transform: translateY(-50%) rotate(0deg); }
-  to { transform: translateY(-50%) rotate(360deg); }
+.weather-update-item:active {
+  background: rgba(14, 165, 233, 0.1);
+  transform: scale(0.98);
 }
 
 
