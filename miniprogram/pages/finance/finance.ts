@@ -231,15 +231,32 @@ const pageConfig = {
 
   // 加载财务数据
   loadFinanceData() {
-    // 模拟API调用
     wx.showLoading({
       title: '加载中...'
     })
     
-    setTimeout(() => {
+    // 调用云函数加载财务数据
+    wx.cloud.callFunction({
+      name: 'finance-management',
+      data: {
+        action: 'getFinanceData',
+        month: this.data.selectedMonth
+      }
+    }).then(result => {
       wx.hideLoading()
-      // 这里会根据选择的月份加载对应数据
-    }, 1000)
+      if (result.result && result.result.success) {
+        // 处理财务数据
+        this.processFinanceData(result.result.data)
+      }
+    }).catch(error => {
+      wx.hideLoading()
+      console.error('加载财务数据失败:', error)
+    })
+  },
+  
+  // 处理财务数据
+  processFinanceData(data: any) {
+    // 根据选择的月份处理对应数据
   },
 
   // ========== AI财务分析功能 ==========

@@ -1,0 +1,108 @@
+<!--animal-selector.wxml - 动物选择器组件模板-->
+<view class="animal-selector">
+  
+  <!-- 触发器 -->
+  <view class="selector-trigger {{disabled ? 'selector-trigger--disabled' : ''}}" bind:tap="show">
+    <text class="trigger-text {{selectedAnimals.length === 0 ? 'trigger-text--placeholder' : ''}}">
+      {{getDisplayText()}}
+    </text>
+    <t-icon name="chevron-down" size="16" color="#c8c9cc" />
+  </view>
+
+  <!-- 选择器弹窗 -->
+  <t-popup visible="{{visible}}" bind:visible-change="hide" placement="bottom">
+    <view class="selector-popup">
+      
+      <!-- 弹窗头部 -->
+      <view class="popup-header">
+        <text class="popup-title">选择动物</text>
+        <view class="popup-actions">
+          <text class="action-button" bind:tap="onClear">清空</text>
+          <text class="action-button primary" bind:tap="onConfirm">确定</text>
+        </view>
+      </view>
+
+      <!-- 搜索框 -->
+      <view wx:if="{{showSearch}}" class="search-section">
+        <t-search 
+          value="{{searchValue}}" 
+          placeholder="搜索动物编号/品种/位置"
+          bind:change="onSearch"
+        />
+      </view>
+
+      <!-- 动物列表 -->
+      <view class="animal-list">
+        <t-loading wx:if="{{loading}}" theme="circular" size="40rpx" />
+        
+        <view wx:else class="list-content">
+          <view 
+            class="animal-item {{isSelected(item._id) ? 'animal-item--selected' : ''}}"
+            wx:for="{{filteredList}}"
+            wx:key="_id"
+            bind:tap="onSelectAnimal"
+            data-animal="{{item}}"
+          >
+            <!-- 动物头像 -->
+            <view class="animal-avatar">
+              <image 
+                wx:if="{{item.avatar}}" 
+                src="{{item.avatar}}" 
+                class="avatar-image"
+                mode="aspectFill"
+              />
+              <t-icon wx:else name="user" size="24" color="#666" />
+            </view>
+
+            <!-- 动物信息 -->
+            <view class="animal-info">
+              <view class="animal-header">
+                <text class="animal-id">{{item.animalId}}</text>
+                <view class="animal-status status-{{item.healthStatus}}">
+                  {{item.healthStatus === 'healthy' ? '健康' : item.healthStatus === 'sick' ? '生病' : '异常'}}
+                </view>
+              </view>
+              <view class="animal-details">
+                <text class="animal-breed">{{item.breed}}</text>
+                <text class="animal-location">{{item.location}}</text>
+                <text class="animal-age">{{item.age}}日龄</text>
+              </view>
+            </view>
+
+            <!-- 选择状态 -->
+            <view class="selection-indicator">
+              <t-icon 
+                wx:if="{{isSelected(item._id)}}" 
+                name="check-circle-filled" 
+                size="20" 
+                color="#0052d9" 
+              />
+              <t-icon 
+                wx:else 
+                name="circle" 
+                size="20" 
+                color="#c8c9cc" 
+              />
+            </view>
+          </view>
+
+          <!-- 空状态 -->
+          <view wx:if="{{filteredList.length === 0 && !loading}}" class="empty-state">
+            <t-icon name="search" size="40" color="#c8c9cc" />
+            <text class="empty-text">
+              {{searchValue ? '未找到相关动物' : '暂无动物数据'}}
+            </text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 选中统计 -->
+      <view wx:if="{{multiple && value.length > 0}}" class="selection-summary">
+        <text class="summary-text">已选择 {{value.length}} 个动物</text>
+        <text wx:if="{{max > 0}}" class="summary-limit">（最多{{max}}个）</text>
+      </view>
+
+    </view>
+  </t-popup>
+
+</view>

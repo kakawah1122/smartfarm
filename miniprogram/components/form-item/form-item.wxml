@@ -1,0 +1,27 @@
+<!--form-item.wxml - 通用表单项组件模板-->
+<view class="form-item {{customClass}} {{border ? 'form-item--border' : ''}} {{focused ? 'form-item--focused' : ''}} {{error ? 'form-item--error' : ''}} {{disabled ? 'form-item--disabled' : ''}}" bind:tap="onTap">
+  
+  <!-- 标签部分 -->
+  <view wx:if="{{label}}" class="form-item__label" style="width: {{labelWidth}}">
+    <text class="label-text">{{label}}</text>
+    <text wx:if="{{required}}" class="label-required">*</text>
+  </view>
+
+  <!-- 内容部分 -->
+  <view class="form-item__content" style="text-align: {{contentAlign}}">
+    <slot></slot>
+  </view>
+
+  <!-- 右侧箭头 -->
+  <view class="form-item__arrow" wx:if="{{!disabled}}">
+    <slot name="arrow">
+      <t-icon name="chevron-right" size="16" color="#c8c9cc" />
+    </slot>
+  </view>
+
+</view>
+
+<!-- 错误信息 -->
+<view wx:if="{{error}}" class="form-item__error">
+  <text class="error-text">{{error}}</text>
+</view>

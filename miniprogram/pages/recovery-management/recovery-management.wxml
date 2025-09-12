@@ -1,0 +1,205 @@
+<!-- recovery-management.wxml - 康复管理页面 -->
+<view class="page recovery-management-page">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="康复管理"
+    show-back="true"
+    bind:back="goBack"
+  />
+
+  <view class="page-container">
+    <!-- 康复统计卡片 -->
+    <view class="recovery-stats">
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-value">{{recoveryStats.totalRecords}}</text>
+          <text class="stat-label">康复记录</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{recoveryStats.recovering}}</text>
+          <text class="stat-label">康复中</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{recoveryStats.recovered}}</text>
+          <text class="stat-label">已康复</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{recoveryStats.averageDays}}</text>
+          <text class="stat-label">平均天数</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 搜索和筛选 -->
+    <view class="search-filter-bar">
+      <view class="search-box">
+        <t-input
+          value="{{searchText}}"
+          placeholder="搜索病例编号或疾病名称"
+          prefix-icon="search"
+          bind:input="onSearchInput"
+        />
+      </view>
+      <view class="filter-tabs">
+        <t-tabs value="{{filterStatus}}" bind:change="onFilterChange">
+          <t-tab-panel value="all" label="全部"></t-tab-panel>
+          <t-tab-panel value="recovering" label="康复中"></t-tab-panel>
+          <t-tab-panel value="recovered" label="已康复"></t-tab-panel>
+          <t-tab-panel value="relapsed" label="复发"></t-tab-panel>
+        </t-tabs>
+      </view>
+    </view>
+
+    <!-- 康复记录列表 -->
+    <view class="recovery-list" wx:if="{{!loading && recoveryRecords.length > 0}}">
+      <view 
+        class="recovery-item status-{{item.status}}"
+        wx:for="{{recoveryRecords}}"
+        wx:key="id"
+        bind:tap="viewRecoveryDetail"
+        data-record-id="{{item.id}}"
+      >
+        <view class="recovery-header">
+          <view class="recovery-info">
+            <text class="recovery-id">{{item.animalId}}</text>
+            <text class="recovery-disease">{{item.disease}}</text>
+          </view>
+          <view class="recovery-status">
+            <t-tag 
+              theme="{{item.status === 'recovered' ? 'success' : item.status === 'relapsed' ? 'danger' : 'warning'}}"
+              variant="light"
+              size="small"
+            >
+              {{item.status === 'recovered' ? '已康复' : item.status === 'relapsed' ? '复发' : '康复中'}}
+            </t-tag>
+          </view>
+        </view>
+        
+        <view class="recovery-details">
+          <view class="detail-row">
+            <text class="detail-label">治疗天数：</text>
+            <text class="detail-value">第{{item.currentDay}}天</text>
+          </view>
+          <view class="detail-row">
+            <text class="detail-label">主治医生：</text>
+            <text class="detail-value">{{item.veterinarian}}</text>
+          </view>
+          <view class="detail-row">
+            <text class="detail-label">下次检查：</text>
+            <text class="detail-value">{{item.nextCheckDate}}</text>
+          </view>
+        </view>
+        
+        <view class="recovery-actions" catchtap="">
+          <t-button 
+            size="small" 
+            theme="light"
+            bind:tap="recordCheck"
+            data-record-id="{{item.id}}"
+          >
+            记录检查
+          </t-button>
+          <t-button 
+            size="small" 
+            theme="primary"
+            bind:tap="updateProgress"
+            data-record-id="{{item.id}}"
+          >
+            更新进度
+          </t-button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && recoveryRecords.length === 0}}">
+      <t-icon name="heart" size="64" color="#c8c9cc" />
+      <text class="empty-text">暂无康复记录</text>
+      <text class="empty-desc">当前没有正在康复的病例</text>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <t-loading theme="circular" size="20px" text="加载中..." />
+    </view>
+  </view>
+
+  <!-- 康复详情弹窗 -->
+  <t-dialog
+    visible="{{showDetailModal}}"
+    title="康复详情"
+    confirm-btn="确定"
+    bind:confirm="closeDetailModal"
+    show-cancel="{{false}}"
+  >
+    <view class="recovery-detail-content" wx:if="{{selectedRecord}}">
+      <view class="detail-section">
+        <view class="section-title">基本信息</view>
+        <view class="info-grid">
+          <view class="info-item">
+            <text class="info-label">病例编号</text>
+            <text class="info-value">{{selectedRecord.animalId}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">疾病诊断</text>
+            <text class="info-value">{{selectedRecord.disease}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">开始时间</text>
+            <text class="info-value">{{selectedRecord.startDate}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">治疗天数</text>
+            <text class="info-value">第{{selectedRecord.currentDay}}天</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="detail-section">
+        <view class="section-title">用药情况</view>
+        <view class="medication-list" wx:if="{{selectedRecord.medications.length > 0}}">
+          <view 
+            class="medication-item"
+            wx:for="{{selectedRecord.medications}}"
+            wx:key="name"
+          >
+            <text class="medication-name">{{item.name}}</text>
+            <text class="medication-dosage">{{item.dosage}} · {{item.frequency}}</text>
+          </view>
+        </view>
+        <view class="empty-medications" wx:else>
+          <text>暂无用药记录</text>
+        </view>
+      </view>
+
+      <view class="detail-section">
+        <view class="section-title">康复进展</view>
+        <view class="progress-timeline" wx:if="{{selectedRecord.progress.length > 0}}">
+          <view 
+            class="progress-item"
+            wx:for="{{selectedRecord.progress}}"
+            wx:key="date"
+          >
+            <view class="progress-date">{{item.date}}</view>
+            <view class="progress-content">{{item.notes}}</view>
+          </view>
+        </view>
+        <view class="empty-progress" wx:else>
+          <text>暂无进展记录</text>
+        </view>
+      </view>
+
+      <view class="detail-actions">
+        <t-button 
+          theme="success" 
+          size="small"
+          bind:tap="markAsRecovered"
+          data-record-id="{{selectedRecord.id}}"
+          wx:if="{{selectedRecord.status !== 'recovered'}}"
+        >
+          标记为康复
+        </t-button>
+      </view>
+    </view>
+  </t-dialog>
+</view>

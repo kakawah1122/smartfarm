@@ -1,0 +1,341 @@
+<!-- breeding-todo.wxml - 养殖待办事项页面 -->
+<view class="page page-container mobile-container">
+  <!-- 现代化导航栏 -->
+  <navigation-bar 
+    title="养殖待办事项"
+    show-back="{{true}}"
+    bind:go-back="onGoBack"
+  />
+
+  <scroll-view class="scroll-container" scroll-y>
+    <!-- 任务概览卡片 -->
+    <view class="card task-overview-card">
+      <view class="card-content">
+        <view class="card-header">
+          <text class="card-title">全场任务概览</text>
+          <text class="batch-count-badge">{{activeBatchCount}}个批次</text>
+        </view>
+        
+        <view class="overview-stats">
+          <view class="stat-item primary-stat">
+            <view class="stat-content">
+              <text class="stat-number primary-text">{{allTasksCount}}</text>
+              <text class="stat-label">总任务</text>
+            </view>
+          </view>
+          <view class="stat-item success-stat">
+            <view class="stat-content">
+              <text class="stat-number success-text">{{allCompletedCount}}</text>
+              <text class="stat-label">已完成</text>
+            </view>
+          </view>
+          <view class="stat-item progress-stat">
+            <view class="stat-content">
+              <text class="stat-number info-text">{{allCompletionPercentage}}%</text>
+              <text class="stat-label">完成率</text>
+            </view>
+          </view>
+        </view>
+        
+        <view class="progress-bar">
+          <view class="progress-track">
+            <view class="progress-fill" style="width: {{allCompletionPercentage}}%"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Tab切换卡片 -->
+    <view class="card tabs-card">
+      <t-tabs value="{{activeTab}}" bind:change="onTabChange" class="modern-tabs">
+        <t-tab-panel label="进行中({{allTasksCount}})" value="today">
+          <!-- 任务重叠提醒 -->
+          <view wx:if="{{taskOverlaps.length > 0}}" class="overlap-alerts">
+            <view class="alert-header">
+              <text class="alert-title">任务提醒</text>
+            </view>
+            <view wx:for="{{taskOverlaps}}" wx:key="taskId" class="overlap-item">
+              <text>{{item.message}}</text>
+            </view>
+          </view>
+
+          <!-- 按批次分组的任务列表 -->
+          <view wx:if="{{todayTasksByBatch.length > 0}}" class="batch-task-groups">
+            <view wx:for="{{todayTasksByBatch}}" wx:key="batchId" class="batch-group">
+              <!-- 批次组头部 -->
+              <view class="batch-group-header">
+                <view class="batch-group-info">
+                  <text class="batch-group-title">{{item.batchNumber}}</text>
+                  <text class="batch-group-age">第{{item.dayAge}}日龄</text>
+                </view>
+                <view class="batch-task-count">{{item.tasks.length}}个任务</view>
+              </view>
+              
+              <!-- 该批次的任务列表 -->
+              <view class="batch-task-list">
+                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="modern-task-card priority-{{task.priority}} {{task.completed ? 'completed' : ''}}">
+                  <!-- 任务主体 -->
+                  <view class="task-main" bind:tap="viewTaskDetail" data-task="{{task}}">
+                    <view class="task-content">
+                      <view class="task-header-info">
+                        <text class="task-title {{task.completed ? 'completed' : ''}}">{{task.title}}</text>
+                        <view class="task-badges">
+                          <view class="priority-badge priority-{{task.priority}}">
+                            <text class="priority-text">{{getPriorityName(task.priority)}}</text>
+                          </view>
+                          <view class="type-badge type-{{task.type}}">
+                            <text class="type-text">{{getTypeName(task.type)}}</text>
+                          </view>
+                        </view>
+                      </view>
+                      
+                      <view class="task-description">{{task.description}}</view>
+                      
+                      <view class="task-meta-info">
+                        <view wx:if="{{task.estimatedTime}}" class="meta-item">
+                          <text class="meta-text">预计用时：{{task.estimatedTime}}分钟</text>
+                        </view>
+                        <view wx:if="{{task.duration}}" class="meta-item">
+                          <text class="meta-text">连续第{{task.dayInSeries}}/{{task.duration}}天</text>
+                        </view>
+                        <view wx:if="{{task.dosage}}" class="meta-item">
+                          <text class="meta-text">用量：{{task.dosage}}</text>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 无任务状态 -->
+          <view wx:else class="modern-empty-state">
+            <view class="empty-content">
+              <text class="empty-title">暂无进行中的任务</text>
+            </view>
+          </view>
+        </t-tab-panel>
+
+        <t-tab-panel label="即将到来" value="upcoming">
+          <!-- 即将到来的任务 -->
+          <view wx:if="{{upcomingTasks.length > 0}}" class="upcoming-tasks">
+            <view wx:for="{{upcomingTasks}}" wx:key="dayAge" class="upcoming-day-group">
+              <!-- 日期标题 -->
+              <view class="upcoming-day-header">
+                <view class="day-info">
+                  <text class="day-title">第{{item.dayAge}}日龄</text>
+                  <text class="day-date">{{calculateDate(item.dayAge)}}</text>
+                </view>
+                <view class="task-count-badge">
+                  <text class="count-number">{{item.tasks.length}}</text>
+                  <text class="count-label">个任务</text>
+                </view>
+              </view>
+
+              <!-- 该日任务列表 -->
+              <view class="upcoming-task-list">
+                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="upcoming-task-item priority-{{task.priority}}" bind:tap="viewTaskDetail" data-task="{{task}}">
+                  <view class="upcoming-task-left">
+                    <view class="task-priority-dot priority-{{task.priority}}"></view>
+                    <view class="task-info">
+                      <text class="task-title">{{task.title}}</text>
+                      <text class="task-batch-info">{{task.batchNumber}}</text>
+                      <view class="task-badges">
+                        <view class="type-badge type-{{task.type}}">
+                          <text>{{getTypeName(task.type)}}</text>
+                        </view>
+                        <view class="priority-badge priority-{{task.priority}}">
+                          <text>{{getPriorityName(task.priority)}}</text>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                  <view class="upcoming-task-right">
+                    <t-icon name="time" size="28rpx" color="var(--color-text-tertiary)" />
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 无即将到来的任务 -->
+          <view wx:else class="modern-empty-state">
+            <view class="empty-content">
+              <text class="empty-title">暂无即将到来的任务</text>
+            </view>
+          </view>
+        </t-tab-panel>
+
+        <t-tab-panel label="已完成" value="history">
+          <!-- 历史任务记录 -->
+          <view wx:if="{{historyTasks.length > 0}}" class="history-tasks">
+            <view wx:for="{{historyTasks}}" wx:key="id" class="history-task-item" bind:tap="viewTaskDetail" data-task="{{item}}">
+              <view class="history-task-main">
+                <view class="history-task-left">
+                  <view class="completion-icon">
+                    <t-icon name="check-circle-filled" size="32rpx" color="var(--color-success)" />
+                  </view>
+                  <view class="history-task-info">
+                    <text class="history-task-title">{{item.title}}</text>
+                    <view class="history-task-meta">
+                      <text class="completion-time">{{item.completedDate}}</text>
+                      <text class="day-age-info">第{{item.dayAge}}日龄</text>
+                      <text class="batch-info">{{item.batchNumber}}</text>
+                    </view>
+                  </view>
+                </view>
+                <view class="completed-badge">
+                  <text class="completed-text">已完成</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:else class="modern-empty-state">
+            <view class="empty-content">
+              <text class="empty-title">暂无已完成的任务</text>
+            </view>
+          </view>
+        </t-tab-panel>
+      </t-tabs>
+    </view>
+
+
+    <!-- 批次选择弹窗 -->
+    <t-overlay visible="{{showBatchDialog}}" bind:click="hideBatchPicker" class="modern-overlay">
+      <view class="modern-batch-dialog" catchtap="">
+        <view class="dialog-header">
+          <text class="dialog-title">选择批次</text>
+          <view class="close-btn" bind:tap="hideBatchPicker">
+            <t-icon name="close" size="32rpx" color="var(--color-text-secondary)" />
+          </view>
+        </view>
+        
+        <view class="batch-list">
+          <view 
+            wx:for="{{batchList}}" 
+            wx:key="id" 
+            class="modern-batch-item {{selectedBatch.id === item.id ? 'selected' : ''}}"
+            bind:tap="selectBatch"
+            data-batch="{{item}}"
+          >
+            <view class="batch-item-content">
+              <view class="batch-main-info">
+                <text class="batch-number">{{item.batchNumber}}</text>
+                <text class="batch-entry-date">入栏：{{item.entryDate}}</text>
+              </view>
+              <view class="batch-status-info">
+                <view class="status-item">
+                  <text class="status-value primary-text">{{calculateCurrentAge(item.entryDate)}}</text>
+                  <text class="status-label">日龄</text>
+                </view>
+                <view class="status-item">
+                  <text class="status-value">{{item.currentCount}}</text>
+                  <text class="status-label">只</text>
+                </view>
+              </view>
+            </view>
+            <view wx:if="{{selectedBatch.id === item.id}}" class="selected-indicator">
+              <t-icon name="check" size="24rpx" color="var(--primary-blue)" />
+            </view>
+          </view>
+        </view>
+      </view>
+    </t-overlay>
+
+
+  <!-- 任务详情弹窗 -->
+  <bottom-popup
+    visible="{{showTaskDetailPopup}}"
+    title="任务详情"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="{{selectedTask && (selectedTask.completed || !selectedTask.canComplete) ? '确定' : '完成任务'}}"
+    cancel-text="{{selectedTask && (selectedTask.completed || !selectedTask.canComplete) ? '' : '关闭'}}"
+    bind:close="closeTaskDetailPopup"
+    bind:confirm="{{selectedTask && (selectedTask.completed || !selectedTask.canComplete) ? 'closeTaskDetailPopup' : 'completeTaskFromPopup'}}"
+    bind:cancel="closeTaskDetailPopup"
+    bind:visiblechange="onTaskDetailPopupChange"
+  >
+    <view wx:if="{{selectedTask}}" class="record-detail-content">
+      <view class="info-card">
+        <view class="card-content">
+          <view class="info-row">
+            <text class="info-label">任务名称：</text>
+            <text class="info-value">{{selectedTask.title || '未命名任务'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">任务类型：</text>
+            <text class="info-value">{{selectedTask.typeName || '未分类'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">优先级：</text>
+            <view class="status-value">
+              <t-tag 
+                theme="{{selectedTask.priorityTheme || 'primary'}}" 
+                size="small"
+              >
+                {{selectedTask.priorityName || '普通'}}
+              </t-tag>
+            </view>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.estimatedTime}}">
+            <text class="info-label">预计用时：</text>
+            <text class="info-value">{{selectedTask.estimatedTime}}分钟</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.duration && selectedTask.dayInSeries}}">
+            <text class="info-label">连续任务：</text>
+            <text class="info-value">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.dosage}}">
+            <text class="info-label">用量：</text>
+            <text class="info-value">{{selectedTask.dosage}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
+            <text class="info-label">所需物料：</text>
+            <text class="info-value materials-text">{{selectedTask.materials.join('、')}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.batchNumber}}">
+            <text class="info-label">批次编号：</text>
+            <text class="info-value">{{selectedTask.batchNumber}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.dayAge}}">
+            <text class="info-label">日龄：</text>
+            <text class="info-value">第{{selectedTask.dayAge}}日龄</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">完成状态：</text>
+            <view class="status-value">
+              <t-tag theme="{{selectedTask.completed ? 'success' : 'primary'}}" size="small">
+                {{selectedTask.statusText || '待完成'}}
+              </t-tag>
+            </view>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.completedDate}}">
+            <text class="info-label">完成时间：</text>
+            <text class="info-value">{{selectedTask.completedDate}}</text>
+          </view>
+          <view class="info-row info-row-description" wx:if="{{selectedTask.description}}">
+            <text class="info-label">任务描述：</text>
+            <text class="info-value note-text">{{selectedTask.description}}</text>
+          </view>
+          <view class="info-row info-row-notes" wx:if="{{selectedTask.notes}}">
+            <text class="info-label">注意事项：</text>
+            <text class="info-value note-text important-text">{{selectedTask.notes}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="modern-loading">
+    <view class="loading-content">
+      <t-loading theme="spinner" size="60rpx" />
+      <text class="loading-text">正在加载...</text>
+    </view>
+  </view>
+  </scroll-view>
+</view>

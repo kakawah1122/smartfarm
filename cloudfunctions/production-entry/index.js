@@ -9,6 +9,73 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 导入养殖任务配置
+const { BREEDING_SCHEDULE, getTasksByAge, getAllTaskDays } = require('./breeding-schedule')
+
+// 创建批次待办事项
+async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
+  console.log(`开始为批次 ${batchNumber} 创建待办事项...`)
+  
+  const batchTodos = []
+  const now = new Date()
+  
+  // 获取所有有任务的日龄
+  const taskDays = getAllTaskDays()
+  
+  for (const dayAge of taskDays) {
+    const tasks = getTasksByAge(dayAge)
+    
+    // 计算该日龄对应的日期
+    const entryDateTime = new Date(entryDate + 'T00:00:00')
+    const taskDate = new Date(entryDateTime.getTime() + (dayAge - 1) * 24 * 60 * 60 * 1000)
+    
+    for (const task of tasks) {
+      batchTodos.push({
+        batchId,
+        batchNumber,
+        dayAge,
+        taskId: task.id,
+        type: task.type,
+        priority: task.priority,
+        title: task.title,
+        description: task.description,
+        category: task.category,
+        estimatedTime: task.estimatedTime || 0,
+        materials: task.materials || [],
+        dosage: task.dosage || '',
+        duration: task.duration || 1,
+        dayInSeries: task.dayInSeries || 1,
+        notes: task.notes || '',
+        scheduledDate: taskDate.toISOString().split('T')[0],
+        status: 'pending',
+        isCompleted: false,
+        userId,
+        createTime: now,
+        updateTime: now
+      })
+    }
+  }
+  
+  // 批量插入待办事项
+  if (batchTodos.length > 0) {
+    console.log(`准备创建 ${batchTodos.length} 个待办事项`)
+    
+    // 分批插入，避免单次插入数据过多
+    const batchSize = 20
+    for (let i = 0; i < batchTodos.length; i += batchSize) {
+      const batch = batchTodos.slice(i, i + batchSize)
+      await db.collection('batch_todos').add({
+        data: batch
+      })
+      console.log(`已插入第 ${Math.floor(i/batchSize) + 1} 批，共 ${batch.length} 个任务`)
+    }
+    
+    console.log(`批次 ${batchNumber} 的待办事项创建完成，共 ${batchTodos.length} 个任务`)
+  }
+  
+  return batchTodos.length
+}
+
 // 生成批次号
 function generateBatchNumber() {
   const now = new Date()
@@ -37,6 +104,8 @@ exports.main = async (event, context) => {
         return await getEntryStats(event, wxContext)
       case 'detail':
         return await getEntryDetail(event, wxContext)
+      case 'getActiveBatches':
+        return await getActiveBatches(event, wxContext)
       default:
         throw new Error('无效的操作类型')
     }
@@ -151,10 +220,11 @@ async function createEntryRecord(event, wxContext) {
     purchaseDate: recordData.purchaseDate || now.toISOString().split('T')[0],
     entryDate: recordData.entryDate || now.toISOString().split('T')[0],
     operator: userName, // 使用查询到的用户名而不是传入的operator
-    status: recordData.status || '待验收',
+    status: recordData.status || 'active',
     notes: recordData.notes || '',
     photos: recordData.photos || [],
     location: recordData.location || {},
+    isDeleted: false, // 明确设置未删除标志
     createTime: now,
     updateTime: now
   }
@@ -163,6 +233,23 @@ async function createEntryRecord(event, wxContext) {
     data: newRecord
   })
   
+  console.log(`入栏记录创建成功，批次ID: ${result._id}, 批次号: ${batchNumber}`)
+  
+  // 创建批次待办事项
+  try {
+    const todoCount = await createBatchTodos(
+      result._id,           // 批次ID
+      batchNumber,          // 批次号
+      newRecord.entryDate,  // 入栏日期
+      wxContext.OPENID      // 用户ID
+    )
+    console.log(`批次 ${batchNumber} 待办事项创建成功，共 ${todoCount} 个任务`)
+  } catch (todoError) {
+    console.error(`批次 ${batchNumber} 待办事项创建失败:`, todoError)
+    // 这里不抛出错误，因为入栏记录已经创建成功
+    // 可以考虑记录到错误日志中
+  }
+  
   return {
     success: true,
     data: {
@@ -170,7 +257,7 @@ async function createEntryRecord(event, wxContext) {
       batchNumber,
       ...newRecord
     },
-    message: '入栏记录创建成功'
+    message: '入栏记录创建成功，待办事项已自动生成'
   }
 }
 
@@ -383,6 +470,84 @@ async function getEntryDetail(event, wxContext) {
     data: {
       ...data,
       operator: resolvedOperator || data.operator || '未知'
+    }
+  }
+}
+
+// 获取活跃批次（没有出栏的批次）
+async function getActiveBatches(event, wxContext) {
+  console.log('获取活跃批次请求:', wxContext.OPENID)
+  
+  try {
+    // 先查询所有该用户的入栏记录，不加过多限制条件，便于调试
+    // 注意：入栏记录使用的是 userId 字段，不是 _openid
+    const allResult = await db.collection('entry_records')
+      .where({
+        userId: wxContext.OPENID  // 修正字段名
+      })
+      .orderBy('createTime', 'desc') // 按创建时间倒序
+      .limit(10)
+      .get()
+
+    console.log('用户入栏记录总数:', allResult.data.length)
+
+    // 筛选活跃批次
+    const activeRecords = allResult.data.filter(record => {      
+      // 只要不是已出栏状态，且未删除（考虑 isDeleted 可能为 undefined）
+      const isNotDeleted = record.isDeleted !== true
+      const isNotExited = record.status !== '已出栏' && record.status !== '出栏'
+      
+      return isNotDeleted && isNotExited
+    })
+
+    console.log('活跃批次数量:', activeRecords.length)
+
+    // 转换数据格式，增加批次信息
+    const activeBatches = activeRecords.map(record => {
+      // 计算当前日龄 - 只比较日期部分
+      const today = new Date()
+      const todayDateStr = today.toISOString().split('T')[0] // YYYY-MM-DD
+      const entryDateStr = record.entryDate.split('T')[0] // 移除可能的时间部分
+      
+      const todayDate = new Date(todayDateStr + 'T00:00:00')
+      const entryDate = new Date(entryDateStr + 'T00:00:00')
+      
+      const diffTime = todayDate.getTime() - entryDate.getTime()
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+      const dayAge = diffDays + 1 // 入栏当天为第1日龄
+
+      console.log(`批次${record.batchNumber}: 入栏${entryDateStr}, 日龄${dayAge}`)
+
+      return {
+        id: record._id,
+        batchNumber: record.batchNumber,
+        entryDate: record.entryDate,
+        currentCount: record.quantity, // 当前数量（后续可以从存栏记录计算）
+        entryCount: record.quantity, // 入栏数量
+        location: record.location,
+        breed: record.breed,
+        status: record.status,
+        dayAge: dayAge,
+        operatorId: record.userId,
+        operator: record.operator,
+        createTime: record.createTime
+      }
+    })
+
+    console.log('最终返回活跃批次:', activeBatches.length + '个')
+
+    return {
+      success: true,
+      data: activeBatches,
+      message: `找到 ${activeBatches.length} 个活跃批次`
+    }
+  } catch (error) {
+    console.error('获取活跃批次失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      data: [],
+      message: '获取活跃批次失败'
     }
   }
 }

@@ -12,6 +12,7 @@
     "pages/exit-records-list/exit-records-list",
     "pages/inventory-detail/inventory-detail",
     "pages/health/health",
+    "pages/breeding-todo/breeding-todo",
     "pages/ai-diagnosis/ai-diagnosis",
     "pages/diagnosis-history/diagnosis-history",
     "pages/profile/profile",
@@ -22,7 +23,16 @@
     "pages/invite-management/invite-management",
     "pages/user-approval/user-approval",
     "pages/role-management/role-management",
-    "pages/role-migration/role-migration"
+    "pages/role-migration/role-migration",
+    "pages/vaccine-record/vaccine-record",
+    "pages/disinfection-record/disinfection-record",
+    "pages/health-inspection/health-inspection",
+    "pages/health-care/health-care",
+    "pages/treatment-record/treatment-record",
+    "pages/recovery-management/recovery-management",
+    "pages/survival-analysis/survival-analysis",
+    "pages/cost-analysis/cost-analysis",
+    "pages/performance-analysis/performance-analysis"
   ],
   "tabBar": {
     "color": "#999",

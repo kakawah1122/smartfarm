@@ -87,6 +87,7 @@ page {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-base);
+  min-height: 60rpx; /* 确保有足够高度容纳按钮 */
 }
 
 .card-title {
@@ -566,12 +567,16 @@ page {
 }
 
 .view-all-btn {
-  margin-top: var(--spacing-base);
-  margin-bottom: 0;
+  margin: 0;
   color: var(--primary-blue) !important;
   background: transparent !important;
   border: 2rpx solid var(--color-border-light) !important;
   border-radius: var(--radius-md) !important;
+  flex-shrink: 0;
+  height: 56rpx;
+  line-height: 54rpx;
+  padding: 0 var(--spacing-md);
+  font-size: var(--font-size-sm);
 }
 
 
@@ -1069,4 +1074,102 @@ page {
   .advice-item {
     border: 2rpx solid var(--color-border-base) !important;
   }
+}
+
+/* ========== 任务详情弹窗样式 ========== */
+.record-detail-content {
+  padding: 0;
+  background: transparent;
+}
+
+.info-card {
+  background: white;
+  border-radius: var(--radius-base, 12rpx);
+  overflow: hidden;
+}
+
+.card-content {
+  padding: var(--spacing-base, 16rpx);
+}
+
+.record-detail-content .info-row {
+  margin-bottom: 20rpx !important;
+  padding: 0 8rpx;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 16rpx;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.record-detail-content .info-row:last-child {
+  margin-bottom: 0 !important;
+}
+
+.record-detail-content .info-label {
+  font-size: 22rpx !important;
+  color: #6c757d !important;
+  font-weight: 500 !important;
+  min-width: 120rpx !important;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.record-detail-content .info-value {
+  font-size: 24rpx !important;
+  color: #1a1a1a !important;
+  font-weight: 400 !important;
+  text-align: right;
+  flex: 1;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.5;
+}
+
+.record-detail-content .status-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.info-row-description .info-value,
+.info-row-notes .info-value {
+  text-align: left !important;
+}
+
+.record-detail-content .note-text {
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.record-detail-content .important-text {
+  color: var(--color-warning, #ed7b2f) !important;
+}
+
+.record-detail-content .materials-text {
+  word-break: break-all;
+  white-space: normal;
+}
+
+/* ========== 已完成任务样式 ========== */
+.todo-item.completed {
+  opacity: 0.6;
+  background: #f5f5f5;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.todo-item.completed .todo-dot {
+  background: #28a745 !important;
+}
+
+.todo-item.completed .todo-tag {
+  opacity: 0.7;
 }

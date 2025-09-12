@@ -1,0 +1,578 @@
+/* health-inspection.scss - 健康巡检页面样式 */
+
+.health-inspection-page {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  
+  .page-container {
+    padding: 32rpx 32rpx 0;
+  }
+}
+
+/* 表单基础样式 */
+.form-section {
+  background: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  
+  .section-title {
+    padding: 32rpx 32rpx 16rpx;
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1a1a1a;
+    border-bottom: 2rpx solid #f0f0f0;
+  }
+  
+  .form-item {
+    padding: 24rpx 32rpx;
+    border-bottom: 2rpx solid #f8f8f8;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &.half {
+      display: inline-block;
+      width: 48%;
+      vertical-align: top;
+      
+      &:first-child {
+        margin-right: 4%;
+      }
+    }
+    
+    .form-label {
+      font-size: 28rpx;
+      color: #1a1a1a;
+      margin-bottom: 16rpx;
+      display: flex;
+      align-items: center;
+      
+      &.required::after {
+        content: '*';
+        color: #e34d59;
+        margin-left: 8rpx;
+        font-size: 24rpx;
+      }
+    }
+    
+    .error-text {
+      font-size: 24rpx;
+      color: #e34d59;
+      margin-top: 8rpx;
+      line-height: 1.4;
+    }
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 24rpx;
+    
+    .form-item {
+      flex: 1;
+      border-bottom: none;
+    }
+  }
+}
+
+/* 巡检项目区域 */
+.inspection-section {
+  background: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32rpx 32rpx 16rpx;
+    border-bottom: 2rpx solid #f0f0f0;
+    
+    .section-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .quick-actions {
+      .t-button {
+        --td-button-light-color: #0052d9;
+        --td-button-light-border-color: #0052d9;
+        --td-button-light-bg-color: rgba(0, 82, 217, 0.1);
+      }
+    }
+  }
+}
+
+/* 类别选择器 */
+.category-tabs {
+  padding: 24rpx 0 0;
+  
+  .category-scroll {
+    width: 100%;
+    white-space: nowrap;
+  }
+  
+  .category-list {
+    display: flex;
+    padding: 0 32rpx 24rpx;
+    gap: 16rpx;
+  }
+  
+  .category-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16rpx 24rpx;
+    border: 2rpx solid transparent;
+    border-radius: 12rpx;
+    background: #f8f9fa;
+    min-width: 120rpx;
+    transition: all 0.3s ease;
+    
+    text {
+      font-size: 24rpx;
+      color: #666;
+      margin-top: 8rpx;
+      white-space: nowrap;
+    }
+    
+    &.active {
+      background: var(--category-color, #0052d9);
+      border-color: var(--category-color, #0052d9);
+      
+      text {
+        color: #fff;
+      }
+    }
+    
+    &:not(.active):hover {
+      background: #e9ecef;
+    }
+  }
+}
+
+/* 巡检项目列表 */
+.inspection-items {
+  padding: 24rpx 32rpx 32rpx;
+}
+
+.inspection-item {
+  border: 2rpx solid #e9ecef;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  transition: all 0.3s ease;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  &.checked {
+    border-color: #0052d9;
+    background: rgba(0, 82, 217, 0.02);
+  }
+  
+  &.unchecked {
+    opacity: 0.6;
+    
+    .item-actions {
+      display: none;
+    }
+  }
+  
+  &.result-normal {
+    border-color: #00a870;
+    background: rgba(0, 168, 112, 0.02);
+  }
+  
+  &.result-abnormal {
+    border-color: #e34d59;
+    background: rgba(227, 77, 89, 0.02);
+  }
+  
+  .item-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16rpx;
+    
+    .item-check {
+      margin-right: 16rpx;
+      cursor: pointer;
+    }
+    
+    .item-info {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      .item-name {
+        font-size: 28rpx;
+        color: #1a1a1a;
+        font-weight: 500;
+      }
+      
+      .item-status {
+        font-size: 24rpx;
+        
+        &.abnormal {
+          color: #e34d59;
+        }
+      }
+    }
+  }
+  
+  .item-actions {
+    display: flex;
+    gap: 16rpx;
+    
+    .t-button {
+      flex: 1;
+      
+      &.t-button--primary {
+        --td-button-primary-bg-color: #00a870;
+        --td-button-primary-border-color: #00a870;
+      }
+      
+      &.t-button--danger {
+        --td-button-primary-bg-color: #e34d59;
+        --td-button-primary-border-color: #e34d59;
+      }
+    }
+  }
+}
+
+/* 异常情况汇总 */
+.abnormal-summary {
+  background: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  
+  .section-title {
+    padding: 32rpx 32rpx 16rpx;
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #e34d59;
+    border-bottom: 2rpx solid #f0f0f0;
+    
+    &::before {
+      content: '⚠️ ';
+      margin-right: 8rpx;
+    }
+  }
+  
+  .abnormal-list {
+    padding: 24rpx 32rpx;
+  }
+  
+  .abnormal-item {
+    border-left: 6rpx solid #e34d59;
+    background: #fef7f7;
+    padding: 24rpx;
+    border-radius: 12rpx;
+    margin-bottom: 16rpx;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    &.severity-mild {
+      border-left-color: #ed7b2f;
+      background: #fef9f4;
+    }
+    
+    &.severity-moderate {
+      border-left-color: #e34d59;
+      background: #fef7f7;
+    }
+    
+    &.severity-severe {
+      border-left-color: #d32f2f;
+      background: #fef5f5;
+    }
+    
+    .abnormal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12rpx;
+      
+      .abnormal-title {
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+      
+      .abnormal-count {
+        font-size: 24rpx;
+        color: #e34d59;
+        font-weight: 500;
+      }
+      
+      .abnormal-delete {
+        padding: 8rpx;
+        cursor: pointer;
+      }
+    }
+    
+    .abnormal-description {
+      font-size: 26rpx;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 12rpx;
+    }
+    
+    .abnormal-severity {
+      font-size: 24rpx;
+      color: #999;
+      
+      .severity-text {
+        font-weight: 500;
+        
+        &.severity-mild {
+          color: #ed7b2f;
+        }
+        
+        &.severity-moderate {
+          color: #e34d59;
+        }
+        
+        &.severity-severe {
+          color: #d32f2f;
+        }
+      }
+    }
+  }
+  
+  .abnormal-stats {
+    padding: 24rpx 32rpx 32rpx;
+    border-top: 2rpx solid #f0f0f0;
+    display: flex;
+    justify-content: space-around;
+    
+    .stat-item {
+      text-align: center;
+      
+      .stat-label {
+        display: block;
+        font-size: 24rpx;
+        color: #999;
+        margin-bottom: 8rpx;
+      }
+      
+      .stat-value {
+        display: block;
+        font-size: 32rpx;
+        font-weight: 600;
+        color: #e34d59;
+      }
+    }
+  }
+}
+
+/* 异常记录对话框 */
+.abnormal-dialog-content {
+  .dialog-item {
+    margin-bottom: 32rpx;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .dialog-label {
+      font-size: 28rpx;
+      color: #1a1a1a;
+      margin-bottom: 16rpx;
+      
+      &.required::after {
+        content: '*';
+        color: #e34d59;
+        margin-left: 8rpx;
+        font-size: 24rpx;
+      }
+    }
+    
+    .dialog-value {
+      font-size: 28rpx;
+      color: #0052d9;
+      font-weight: 500;
+    }
+  }
+  
+  .severity-options {
+    display: flex;
+    gap: 16rpx;
+    
+    .severity-option {
+      flex: 1;
+      text-align: center;
+      padding: 16rpx 0;
+      border: 2rpx solid #e0e0e0;
+      border-radius: 8rpx;
+      font-size: 26rpx;
+      color: #666;
+      background: #fafafa;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &.active {
+        border-color: #0052d9;
+        background: #0052d9;
+        color: #fff;
+      }
+      
+      &:not(.active):hover {
+        border-color: #ccc;
+        background: #f0f0f0;
+      }
+    }
+  }
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 24rpx;
+  padding: 32rpx 0;
+  
+  .t-button {
+    flex: 1;
+    
+    &.t-button--light {
+      --td-button-light-color: #666;
+      --td-button-light-border-color: #d0d0d0;
+      --td-button-light-bg-color: #fff;
+    }
+    
+    &.t-button--primary {
+      --td-button-primary-bg-color: #0052d9;
+      --td-button-primary-border-color: #0052d9;
+    }
+  }
+}
+
+/* 响应式适配 */
+@media (max-width: 375px) {
+  .health-inspection-page {
+    .page-container {
+      padding: 24rpx 24rpx 0;
+    }
+    
+    .category-list {
+      padding: 0 24rpx 24rpx;
+      gap: 12rpx;
+      
+      .category-item {
+        min-width: 100rpx;
+        padding: 12rpx 16rpx;
+        
+        text {
+          font-size: 22rpx;
+        }
+      }
+    }
+    
+    .inspection-item {
+      padding: 20rpx;
+      margin-bottom: 12rpx;
+      
+      .item-header {
+        margin-bottom: 12rpx;
+        
+        .item-info .item-name {
+          font-size: 26rpx;
+        }
+      }
+    }
+    
+    .abnormal-item {
+      padding: 20rpx;
+    }
+  }
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .health-inspection-page {
+    background-color: #1a1a1a;
+    
+    .form-section,
+    .inspection-section,
+    .abnormal-summary {
+      background: #2a2a2a;
+      
+      .section-title {
+        color: #e0e0e0;
+        border-bottom-color: #404040;
+      }
+      
+      .form-item {
+        border-bottom-color: #404040;
+        
+        .form-label {
+          color: #e0e0e0;
+        }
+      }
+    }
+    
+    .category-item {
+      background: #3a3a3a;
+      
+      text {
+        color: #e0e0e0;
+      }
+      
+      &:not(.active):hover {
+        background: #404040;
+      }
+    }
+    
+    .inspection-item {
+      border-color: #505050;
+      
+      &.checked {
+        background: rgba(0, 82, 217, 0.1);
+      }
+      
+      &.result-normal {
+        background: rgba(0, 168, 112, 0.1);
+      }
+      
+      &.result-abnormal {
+        background: rgba(227, 77, 89, 0.1);
+      }
+      
+      .item-info .item-name {
+        color: #e0e0e0;
+      }
+    }
+    
+    .abnormal-item {
+      background: rgba(227, 77, 89, 0.1);
+      
+      &.severity-mild {
+        background: rgba(237, 123, 47, 0.1);
+      }
+      
+      &.severity-moderate {
+        background: rgba(227, 77, 89, 0.1);
+      }
+      
+      &.severity-severe {
+        background: rgba(211, 47, 47, 0.1);
+      }
+      
+      .abnormal-header .abnormal-title {
+        color: #e0e0e0;
+      }
+      
+      .abnormal-description {
+        color: #ccc;
+      }
+    }
+  }
+}

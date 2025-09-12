@@ -302,6 +302,10 @@ exports.main = async (event, context) => {
         return await getTreatmentStats(event, wxContext)
       case 'check_health_alerts':
         return await checkHealthAlerts(event, wxContext)
+      case 'get_diagnosis_result':
+        return await getDiagnosisResult(event, wxContext)
+      case 'update_health_record_status':
+        return await updateHealthRecordStatus(event, wxContext)
         
       default:
         throw new Error('无效的操作类型')
@@ -2616,33 +2620,99 @@ async function checkHealthAlerts(event, wxContext) {
   }
 }
 
-module.exports = {
-  // 原有导出的函数
-  getAbnormalStatistics,
-  aiDiagnosis,
-  getDiagnosisHistory,
-  getOverallHealthStats,
-  getCurrentAbnormalAnimals,
-  getTreatmentRecords,
-  
-  // 新增的函数导出
-  createPreventionRecord,
-  listPreventionRecords,
-  createTreatmentRecord,
-  listTreatmentRecords,
-  updateTreatmentRecord,
-  createVaccinePlan,
-  listVaccinePlans,
-  updateVaccinePlan,
-  listHealthAlerts,
-  updateHealthAlert,
-  getHealthOverview,
-  getPreventionStats,
-  getTreatmentStats,
-  checkHealthAlerts,
-  
-  // 工具函数导出
-  calculateHealthStats,
-  generateHealthAlert,
-  validateUserRole
+// 获取AI诊断结果
+async function getDiagnosisResult(event, wxContext) {
+  try {
+    const { diagnosisId } = event
+    
+    if (!diagnosisId) {
+      throw new Error('诊断ID不能为空')
+    }
+    
+    const result = await db.collection('ai_diagnosis_records')
+      .doc(diagnosisId)
+      .get()
+    
+    if (!result.data) {
+      throw new Error('诊断记录不存在')
+    }
+    
+    // 构造治疗建议数据
+    const diagnosisData = result.data.aiDiagnosis || {}
+    const treatmentRecommendation = {
+      primary: diagnosisData.treatment?.procedures?.join('；') || '',
+      secondary: diagnosisData.treatment?.monitoring || [],
+      medications: diagnosisData.treatment?.medications?.map(med => ({
+        name: med.name,
+        dosage: med.dosage,
+        route: 'oral',
+        frequency: med.frequency || '每日1次'
+      })) || [],
+      followUp: diagnosisData.prognosis?.expectedRecovery || '7天后复查'
+    }
+    
+    return {
+      success: true,
+      data: {
+        primaryDiagnosis: diagnosisData.diagnosis?.primaryDisease || '需要进一步检查',
+        confidence: diagnosisData.diagnosis?.confidence || 0,
+        differentialDiagnosis: diagnosisData.diagnosis?.differentialDiagnosis || [],
+        treatmentRecommendation,
+        healthRecordId: result.data.healthRecordId || null,
+        symptoms: result.data.symptoms || [],
+        environmentData: result.data.environmentData || {},
+        flockData: result.data.flockData || {}
+      }
+    }
+  } catch (error) {
+    console.error('获取AI诊断结果失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
 }
+
+// 更新健康记录状态
+async function updateHealthRecordStatus(event, wxContext) {
+  try {
+    const { recordId, status, treatment, diagnosisDisease } = event
+    
+    if (!recordId) {
+      throw new Error('记录ID不能为空')
+    }
+    
+    const updateData = {
+      updateTime: new Date().toISOString()
+    }
+    
+    if (status) {
+      updateData.status = status
+    }
+    if (treatment) {
+      updateData.treatment = treatment
+    }
+    if (diagnosisDisease) {
+      updateData.diagnosisDisease = diagnosisDisease
+    }
+    
+    await db.collection('health_records')
+      .doc(recordId)
+      .update({
+        data: updateData
+      })
+    
+    return {
+      success: true,
+      message: '健康记录状态更新成功'
+    }
+  } catch (error) {
+    console.error('更新健康记录状态失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 云函数不需要额外的 module.exports，exports.main 已足够

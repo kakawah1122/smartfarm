@@ -117,7 +117,7 @@
           <view class="advice-section">
             <text class="section-title">🎯 今日关键建议</text>
             <view class="advice-list">
-              <view wx:for="{{aiAdvice.result.keyAdvice}}" wx:key="index" class="advice-item {{item.priority}}">
+              <view wx:for="{{aiAdvice.result && aiAdvice.result.keyAdvice ? aiAdvice.result.keyAdvice : []}}" wx:key="index" class="advice-item {{item.priority}}">
                 <view class="advice-icon">{{item.icon}}</view>
                 <view class="advice-content">
                   <text class="advice-title">{{item.title}}</text>
@@ -132,7 +132,7 @@
           <view class="advice-section">
             <text class="section-title">🌤️ 环境管理</text>
             <view class="env-advice">
-              <view wx:for="{{aiAdvice.result.environmentAdvice}}" wx:key="category" class="env-category">
+              <view wx:for="{{aiAdvice.result && aiAdvice.result.environmentAdvice ? aiAdvice.result.environmentAdvice : []}}" wx:key="category" class="env-category">
                 <view class="env-header">
                   <text class="env-category-name">{{item.category}}</text>
                   <view class="env-status {{item.status}}">{{item.statusText}}</view>
@@ -166,23 +166,103 @@
     <view class="card todo-card">
       <view class="card-header">
         <text class="card-title">✅ 今日待办</text>
+        <t-button theme="light" size="small" bind:tap="viewAllTodos" class="view-all-btn light-button">
+          查看全部
+        </t-button>
       </view>
       <view class="todo-list">
-        <view class="todo-item" wx:for="{{todoList}}" wx:key="id">
+        <view class="todo-item {{item.completed ? 'completed' : ''}}" wx:for="{{todoList}}" wx:key="id" bind:tap="viewTaskDetail" data-task="{{item}}">
           <view class="todo-left">
             <view class="todo-dot {{item.priority}}"></view>
             <text class="todo-text">{{item.content}}</text>
           </view>
-          <t-tag theme="{{item.tagTheme || 'default'}}" size="small" class="todo-tag">{{item.priorityText || '普通'}}</t-tag>
+          <t-tag theme="{{item.completed ? 'success' : (item.tagTheme || 'default')}}" size="small" class="todo-tag">{{item.completed ? '已完成' : (item.priorityText || '普通')}}</t-tag>
         </view>
       </view>
-      <t-button theme="light" size="medium" block bind:tap="viewAllTodos" class="view-all-btn light-button">
-        查看全部
-      </t-button>
     </view>
 
 
 
 
   </scroll-view>
+
+  <!-- 任务详情弹窗 -->
+  <bottom-popup
+    visible="{{showTaskDetailPopup}}"
+    title="任务详情"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="{{selectedTask && selectedTask.completed ? '确定' : '完成任务'}}"
+    cancel-text="{{selectedTask && selectedTask.completed ? '' : '关闭'}}"
+    bind:close="closeTaskDetailPopup"
+    bind:confirm="{{selectedTask && selectedTask.completed ? 'closeTaskDetailPopup' : 'completeTaskFromPopup'}}"
+    bind:cancel="closeTaskDetailPopup"
+    bind:visiblechange="onTaskDetailPopupChange"
+  >
+    <view wx:if="{{selectedTask}}" class="record-detail-content">
+      <view class="info-card">
+        <view class="card-content">
+          <view class="info-row">
+            <text class="info-label">任务名称：</text>
+            <text class="info-value">{{selectedTask.title || '未命名任务'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">任务类型：</text>
+            <text class="info-value">{{selectedTask.typeName || '未分类'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">优先级：</text>
+            <view class="status-value">
+              <t-tag 
+                theme="{{selectedTask.priorityTheme || 'primary'}}" 
+                size="small"
+              >
+                {{selectedTask.priorityName || '普通'}}
+              </t-tag>
+            </view>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.estimatedTime}}">
+            <text class="info-label">预计用时：</text>
+            <text class="info-value">{{selectedTask.estimatedTime}}分钟</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.duration && selectedTask.dayInSeries}}">
+            <text class="info-label">连续任务：</text>
+            <text class="info-value">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.dosage}}">
+            <text class="info-label">用量：</text>
+            <text class="info-value">{{selectedTask.dosage}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
+            <text class="info-label">所需物料：</text>
+            <text class="info-value materials-text">{{selectedTask.materials.join('、')}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.batchNumber}}">
+            <text class="info-label">批次编号：</text>
+            <text class="info-value">{{selectedTask.batchNumber}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedTask.dayAge}}">
+            <text class="info-label">日龄：</text>
+            <text class="info-value">第{{selectedTask.dayAge}}日龄</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">完成状态：</text>
+            <view class="status-value">
+              <t-tag theme="{{selectedTask.completed ? 'success' : 'primary'}}" size="small">
+                {{selectedTask.statusText || '待完成'}}
+              </t-tag>
+            </view>
+          </view>
+          <view class="info-row info-row-description" wx:if="{{selectedTask.description}}">
+            <text class="info-label">任务描述：</text>
+            <text class="info-value note-text">{{selectedTask.description}}</text>
+          </view>
+          <view class="info-row info-row-notes" wx:if="{{selectedTask.notes}}">
+            <text class="info-label">注意事项：</text>
+            <text class="info-value note-text important-text">{{selectedTask.notes}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
 </view>

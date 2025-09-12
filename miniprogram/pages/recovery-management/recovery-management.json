@@ -1,0 +1,26 @@
+{
+  "navigationBarTitleText": "康复管理",
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+  },
+  "componentPlaceholder": {
+    "t-input": "view",
+    "t-button": "view",
+    "t-icon": "view",
+    "t-tag": "view",
+    "t-tabs": "view",
+    "t-tab-panel": "view",
+    "t-dialog": "view",
+    "t-loading": "view"
+  }
+}

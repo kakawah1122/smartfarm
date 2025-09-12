@@ -4,7 +4,9 @@
     "t-notice-bar": "tdesign-miniprogram/notice-bar/notice-bar",
     "t-tag": "tdesign-miniprogram/tag/tag",
     "t-button": "tdesign-miniprogram/button/button",
-    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "navigation-bar": "../../components/navigation-bar/navigation-bar",
+    "bottom-popup": "../../components/bottom-popup/bottom-popup"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

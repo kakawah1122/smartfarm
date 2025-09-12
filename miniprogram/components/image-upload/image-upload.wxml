@@ -1,0 +1,64 @@
+<!--image-upload.wxml - 图片上传组件模板-->
+<view class="image-upload">
+  
+  <view class="image-list">
+    
+    <!-- 已上传的图片 -->
+    <view 
+      class="image-item"
+      wx:for="{{value}}" 
+      wx:key="index"
+      bind:tap="previewImage"
+      data-index="{{index}}"
+    >
+      <image 
+        src="{{getImageUrl(item)}}" 
+        class="image-preview"
+        mode="aspectFill"
+      />
+      
+      <!-- 删除按钮 -->
+      <view 
+        wx:if="{{!readonly && !disabled}}" 
+        class="delete-button"
+        bind:tap="removeImage"
+        data-index="{{index}}"
+        catchtap="true"
+      >
+        <t-icon name="close" size="12" color="#fff" />
+      </view>
+    </view>
+
+    <!-- 上传中的占位 -->
+    <view 
+      class="image-item uploading-item"
+      wx:for="{{uploadingCount}}" 
+      wx:key="index"
+    >
+      <view class="uploading-content">
+        <t-loading theme="circular" size="24rpx" />
+        <text class="uploading-text">上传中</text>
+      </view>
+    </view>
+
+    <!-- 添加按钮 -->
+    <view 
+      wx:if="{{canAddMore()}}" 
+      class="image-item add-button"
+      bind:tap="chooseImage"
+    >
+      <t-icon name="add" size="24" color="#c8c9cc" />
+      <text class="add-text">{{uploadText}}</text>
+    </view>
+
+  </view>
+
+  <!-- 上传提示 -->
+  <view class="upload-tips">
+    <text class="tips-text">
+      {{value.length}}/{{max}} 
+      {{maxSize > 0 ? `，单张图片不超过${maxSize}MB` : ''}}
+    </text>
+  </view>
+
+</view>

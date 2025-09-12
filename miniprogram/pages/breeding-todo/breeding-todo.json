@@ -1,0 +1,22 @@
+{
+  "navigationBarTitleText": "养殖待办事项",
+  "navigationStyle": "custom",
+  "backgroundColor": "#f5f5f5",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "navigation-bar": "/components/navigation-bar/navigation-bar",
+    "bottom-popup": "/components/bottom-popup/bottom-popup",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs", 
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-badge": "tdesign-miniprogram/badge/badge",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-checkbox": "tdesign-miniprogram/checkbox/checkbox",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-overlay": "tdesign-miniprogram/overlay/overlay",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-divider": "tdesign-miniprogram/divider/divider"
+  }
+}

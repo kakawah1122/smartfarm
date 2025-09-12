@@ -1,5 +1,10 @@
 // index.ts - 清理版本，只使用和风天气地理编码
 import { checkPageAuth } from '../../utils/auth-guard'
+import { 
+  getTodayTasks, 
+  TASK_TYPES, 
+  PRIORITY_LEVELS 
+} from '../../utils/breeding-schedule'
 
 Page({
   data: {
@@ -40,34 +45,19 @@ Page({
     },
     
     // 待办事项
-    todoList: [
-      {
-        id: 1,
-        content: '3号鹅舍预计今日出栏',
-        priority: 'danger',
-        priorityText: '紧急',
-        tagTheme: 'danger'
-      },
-      {
-        id: 2,
-        content: '10只鹅需接种疫苗',
-        priority: 'warning',
-        priorityText: '重要',
-        tagTheme: 'warning'
-      },
-      {
-        id: 3,
-        content: '饲料库存不足提醒',
-        priority: 'primary',
-        priorityText: '普通',
-        tagTheme: 'primary'
-      }
-    ],
+    todoList: [],
+    
+    // 弹窗相关状态
+    showTaskDetailPopup: false,
+    selectedTask: null as any,
     
     // AI智能建议
     aiAdvice: {
       loading: false,
-      result: null as any,
+      result: {
+        keyAdvice: [],
+        environmentAdvice: []
+      } as any,
       error: null as string | null,
       lastUpdateTime: null as string | null
     }
@@ -81,13 +71,42 @@ Page({
     
     this.initStatusBar()
     this.loadData()
+    this.loadTodayBreedingTasks()
   },
 
   onShow() {
+    // 检查是否需要同步任务状态
+    this.checkAndSyncTaskStatus()
+    
     // 检查天气缓存是否过期，如果过期则自动刷新
     this.checkAndAutoRefreshWeather()
     // 只刷新价格数据，天气数据使用缓存
     this.refreshPriceData()
+    // 刷新今日养殖任务
+    this.loadTodayBreedingTasks()
+  },
+
+  // 检查并同步任务状态
+  checkAndSyncTaskStatus() {
+    try {
+      const globalData = getApp<any>().globalData || {}
+      
+      // 检查是否有需要同步的标识
+      if (globalData.needSyncHomepage && globalData.lastSyncTime) {
+        
+        // 立即同步全局状态中的任务更新
+        const taskStatusUpdates = globalData.taskStatusUpdates || {}
+        Object.keys(taskStatusUpdates).forEach(taskId => {
+          const updateInfo = taskStatusUpdates[taskId]
+          this.syncSingleTaskStatus(taskId, updateInfo.completed)
+        })
+        
+        // 清除同步标识
+        globalData.needSyncHomepage = false
+      }
+    } catch (error) {
+      console.error('❌ 检查同步状态失败:', error)
+    }
   },
 
   // 初始化状态栏
@@ -134,7 +153,6 @@ Page({
     return new Promise((resolve, reject) => {
       // 为了确保位置信息正确更新，先清除缓存
       if (forceRefresh) {
-        console.log('🗑️ 强制刷新，清除天气缓存')
         this.clearWeatherCache()
       }
       
@@ -142,7 +160,6 @@ Page({
       if (!forceRefresh) {
         const cachedData = this.getCachedWeatherData()
         if (cachedData) {
-          console.log('📦 使用缓存的天气数据')
           this.updateWeatherUI(cachedData)
           resolve(true)
           return
@@ -198,13 +215,10 @@ Page({
   // 获取位置和天气 - 修复Promise返回问题
   getLocationAndWeather() {
     return new Promise((resolve, reject) => {
-      console.log('🌍 === 首页开始获取真实地理位置 ===')
       
       // 先检查位置权限
       wx.getSetting({
         success: (settingsRes) => {
-          console.log('🌍 首页权限设置:', settingsRes.authSetting)
-          console.log('🌍 首页位置权限状态:', settingsRes.authSetting['scope.userLocation'])
           
           if (settingsRes.authSetting['scope.userLocation'] === false) {
             console.error('🌍 首页：用户已拒绝位置权限')
@@ -214,19 +228,11 @@ Page({
           }
           
           // 强制获取高精度位置
-          console.log('🌍 首页开始调用wx.getLocation...')
           wx.getLocation({
             type: 'gcj02',
             isHighAccuracy: true,
             success: (locationRes) => {
               const { latitude, longitude, accuracy, speed, altitude } = locationRes
-              console.log('🌍 === 首页位置获取成功 ===')
-              console.log(`🌍 首页纬度: ${latitude}`)
-              console.log(`🌍 首页经度: ${longitude}`)
-              console.log(`🌍 首页精度: ${accuracy}米`)
-              console.log(`🌍 首页速度: ${speed}`)
-              console.log(`🌍 首页海拔: ${altitude}`)
-              console.log('🌍 首页完整位置对象:', locationRes)
               
               // 验证坐标有效性
               if (!latitude || !longitude || latitude === 0 || longitude === 0) {
@@ -244,7 +250,6 @@ Page({
                 }
               })
 
-              console.log('🌍 首页开始调用天气云函数...')
               wx.cloud.callFunction({
                 name: 'weather',
                 data: {
@@ -253,9 +258,7 @@ Page({
                   lon: longitude
                 }
               }).then((result) => {
-                console.log('🌍 首页云函数调用成功:', result)
                 if (result.result && result.result.success) {
-                  console.log('✅ 首页天气数据获取成功')
                   resolve(result)
                 } else {
                   const errorMsg = result.result?.message || result.result?.error?.message || '天气数据获取失败'
@@ -294,7 +297,6 @@ Page({
   
   // 处理位置获取错误
   handleLocationError(error) {
-    console.log('位置获取错误详情:', error)
     
     if (error.errMsg) {
       if (error.errMsg.includes('auth')) {
@@ -330,7 +332,6 @@ Page({
         if (res.confirm) {
           wx.openSetting({
             success: (settingRes) => {
-              console.log('设置页面返回:', settingRes.authSetting)
               if (settingRes.authSetting['scope.userLocation']) {
                 // 用户开启了权限，重新获取天气
                 wx.showToast({
@@ -350,8 +351,6 @@ Page({
 
   // 更新天气 UI
   updateWeatherUI(weatherData) {
-    console.log('🎨 === 首页更新天气UI开始 ===')
-    console.log('🎨 接收到的原始数据:', JSON.stringify(weatherData, null, 2))
     
     // 适配新的云函数数据格式
     let actualWeatherData = weatherData
@@ -359,26 +358,12 @@ Page({
     // 如果是新格式的数据结构（带有data字段）
     if (weatherData.data) {
       actualWeatherData = weatherData.data
-      console.log('📦 检测到新格式数据结构')
-      console.log('📦 weatherData.data结构:', Object.keys(weatherData.data))
     }
-    
-    console.log('📦 处理后的数据结构:', JSON.stringify(actualWeatherData, null, 2))
     
     // 详细检查位置信息
     const locationInfo = actualWeatherData.locationInfo
-    console.log('📍 === 位置信息详细分析 ===')
-    console.log('📍 locationInfo存在:', !!locationInfo)
-    console.log('📍 locationInfo内容:', JSON.stringify(locationInfo, null, 2))
-    console.log('📍 locationInfo类型:', typeof locationInfo)
     
     if (locationInfo) {
-      console.log('✅ 找到位置信息，开始处理:')
-      console.log('  - province:', locationInfo.province)
-      console.log('  - city:', locationInfo.city) 
-      console.log('  - district:', locationInfo.district)
-      console.log('  - country:', locationInfo.country)
-      console.log('  - locationId:', locationInfo.locationId)
       
       // 立即更新位置信息
       this.setData({
@@ -388,8 +373,6 @@ Page({
           district: locationInfo.district || '周边区域'
         }
       })
-      
-      console.log('✅ 首页位置信息已更新')
     } else {
       console.error('❌ === 位置信息为空，开始详细分析 ===')
       console.error('❌ weatherData结构:', Object.keys(weatherData || {}))
@@ -516,13 +499,442 @@ Page({
     this.getGoosePriceData()
   },
 
+  // 从本地存储获取任务完成状态
+  getLocalTaskCompletions() {
+    try {
+      return wx.getStorageSync('completed_tasks') || {}
+    } catch (error) {
+      console.error('获取本地任务完成状态失败:', error)
+      return {}
+    }
+  },
+
+  // 保存任务完成状态到本地存储
+  saveTaskCompletionToLocal(taskId: string, completed: boolean) {
+    try {
+      const key = 'completed_tasks'
+      let completedTasks = wx.getStorageSync(key) || {}
+      
+      if (completed) {
+        completedTasks[taskId] = {
+          completed: true,
+          completedDate: new Date().toISOString(),
+          completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
+        }
+      } else {
+        delete completedTasks[taskId]
+      }
+      
+      wx.setStorageSync(key, completedTasks)
+    } catch (error) {
+      console.error('首页保存任务完成状态失败:', error)
+    }
+  },
+
+  // 更新全局任务状态
+  updateGlobalTaskStatus(taskId: string, completed: boolean) {
+    try {
+      getApp<any>().globalData = getApp<any>().globalData || {}
+      getApp<any>().globalData.taskStatusUpdates = getApp<any>().globalData.taskStatusUpdates || {}
+      getApp<any>().globalData.taskStatusUpdates[taskId] = {
+        completed,
+        timestamp: Date.now()
+      }
+    } catch (error) {
+      console.error('首页更新全局状态失败:', error)
+    }
+  },
+
+  // 同步单个任务状态（立即更新UI）
+  syncSingleTaskStatus(taskId: string, completed: boolean) {
+    try {
+      
+      // 立即更新首页待办列表中的任务状态
+      const updatedTodoList = this.data.todoList.map(task => {
+        if (task.id === taskId) {
+          return { 
+            ...task, 
+            completed: completed,
+            completedDate: completed ? new Date().toLocaleString() : ''
+          }
+        }
+        return task
+      })
+      
+      // 立即更新UI
+      this.setData({
+        todoList: updatedTodoList
+      })
+    } catch (error) {
+      console.error('❌ 同步单个任务状态失败:', error)
+    }
+  },
+
+  // 全局同步方法（供其他页面调用）
+  syncTaskStatusFromGlobal(taskId: string, completed: boolean) {
+    
+    // 保存到本地存储
+    this.saveTaskCompletionToLocal(taskId, completed)
+    
+    // 立即同步单个任务状态
+    this.syncSingleTaskStatus(taskId, completed)
+    
+    // 标记全局状态已同步
+    try {
+      const globalData = getApp<any>().globalData || {}
+      if (globalData.taskStatusUpdates && globalData.taskStatusUpdates[taskId]) {
+        globalData.taskStatusUpdates[taskId].synced = true
+      }
+    } catch (error) {
+      console.error('标记全局状态失败:', error)
+    }
+  },
+
+  // 通知待办页面任务状态更新（首页完成任务时）
+  notifyBreedingTodoPageUpdate(taskId: string, completed: boolean) {
+    try {
+      
+      // 1. 保存到全局状态（供待办页面使用）
+      getApp<any>().globalData = getApp<any>().globalData || {}
+      getApp<any>().globalData.taskStatusUpdates = getApp<any>().globalData.taskStatusUpdates || {}
+      getApp<any>().globalData.taskStatusUpdates[taskId] = {
+        completed,
+        timestamp: Date.now(),
+        source: 'homepage' // 标识更新来源
+      }
+      
+      // 2. 设置待办页面同步标识
+      getApp<any>().globalData.needSyncBreedingTodo = true
+      
+      // 3. 尝试直接调用待办页面的同步方法（如果存在）
+      try {
+        const pages = getCurrentPages()
+        const breedingTodoPage = pages.find((page: any) => page.route === 'pages/breeding-todo/breeding-todo')
+        if (breedingTodoPage && typeof (breedingTodoPage as any).syncTaskStatusFromHomepage === 'function') {
+          setTimeout(() => {
+            (breedingTodoPage as any).syncTaskStatusFromHomepage(taskId, completed)
+          }, 100) // 延迟100ms确保状态保存完成
+        }
+      } catch (error) {
+        // 直接调用待办页面方法失败（正常情况）
+      }
+    } catch (error) {
+      console.error('❌ 通知待办页面失败:', error)
+    }
+  },
+
+  // 加载今日养殖任务 - 参考详情页的分组逻辑获取所有活跃批次的任务
+  async loadTodayBreedingTasks() {
+    try {
+      // 获取本地完成状态
+      const localCompletions = this.getLocalTaskCompletions()
+      
+      // 检查全局状态更新
+      const globalUpdates = getApp<any>().globalData?.taskStatusUpdates || {}
+      
+      // 获取活跃批次
+      const batchResult = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
+
+      const activeBatches = batchResult.result?.data || []
+      
+      if (activeBatches.length === 0) {
+        this.setData({ todoList: [] })
+        return
+      }
+
+      // 参考详情页逻辑：为每个活跃批次获取今日任务
+      let allTodos: any[] = []
+      
+      for (const batch of activeBatches) {
+        
+        // 计算日龄
+        const dayAge = this.calculateCurrentAge(batch.entryDate)
+        
+        // 调用云函数获取该批次的今日任务
+        const result = await wx.cloud.callFunction({
+          name: 'breeding-todo',
+          data: {
+            action: 'getTodayTasks',
+            batchId: batch.id,
+            dayAge: dayAge
+          }
+        })
+        
+        if (result.result && result.result.success) {
+          const batchTasks = result.result.data?.tasks || result.result.tasks || []
+          
+          // 转换为首页显示格式
+          const todosFromBatch = batchTasks.map((task: any) => {
+            const taskId = task.id || task.taskId || (task as any)._id
+            
+            // 检查任务是否已完成（优先检查本地状态，然后检查全局状态）
+            let isCompleted = false
+            let completedDate = ''
+            
+            if (localCompletions[taskId]) {
+              // 使用本地状态
+              isCompleted = localCompletions[taskId].completed
+              completedDate = localCompletions[taskId].completedDate
+            } else if (globalUpdates[taskId]) {
+              // 使用全局状态更新
+              isCompleted = globalUpdates[taskId].completed
+            } else {
+              // 使用任务自身的完成状态
+              isCompleted = task.completed || false
+            }
+            
+            return {
+              id: taskId,
+              content: task.title,
+              title: task.title,
+              priority: this.mapPriorityToTheme(task.priority),
+              priorityText: PRIORITY_LEVELS[task.priority]?.name || '普通',
+              tagTheme: this.mapPriorityToTheme(task.priority),
+              type: task.type,
+              dayAge: dayAge,
+              description: task.description || '',
+              notes: task.notes || '',
+              estimatedTime: task.estimatedTime || '',
+              duration: task.duration || '',
+              dayInSeries: task.dayInSeries || '',
+              dosage: task.dosage || '',
+              materials: task.materials || [],
+              batchNumber: batch.batchNumber || batch.id || '',
+              completed: isCompleted,
+              completedDate: completedDate
+            }
+          })
+          
+          allTodos = allTodos.concat(todosFromBatch)
+        }
+      }
+
+      this.setData({ todoList: allTodos })
+    } catch (error) {
+      console.error('加载今日养殖任务失败:', error)
+      // 加载失败时设置空列表
+      this.setData({ todoList: [] })
+    }
+  },
+
+  // 优先级到主题颜色的映射
+  mapPriorityToTheme(priority: string): string {
+    const themeMap: Record<string, string> = {
+      critical: 'danger',
+      high: 'warning', 
+      medium: 'primary',
+      low: 'default'
+    }
+    return themeMap[priority] || 'primary'
+  },
+
   // 查看全部待办
   viewAllTodos() {
-    wx.showToast({
-      title: '跳转到待办页面',
-      icon: 'none',
-      duration: 1500
+    wx.navigateTo({
+      url: '/pages/breeding-todo/breeding-todo'
     })
+  },
+
+  /**
+   * 查看任务详情 - 使用弹窗展示
+   */
+  viewTaskDetail(event: any) {
+    const task = event.currentTarget.dataset.task
+    
+    // 从任务数据中构建详细信息
+    const enhancedTask = {
+      ...task,
+      
+      // 确保ID字段存在（支持多种ID字段名）
+      id: task.id || task.taskId || (task as any)._id || '',
+      
+      title: task.content || task.title || '未命名任务',
+      typeName: this.getTypeName(task.type || ''),
+      priorityName: this.getPriorityName(task.priority || 'medium'),
+      priorityTheme: this.getPriorityTheme(task.priority || 'medium'),
+      statusText: task.completed ? '已完成' : '待完成',
+      
+      // 确保其他字段存在
+      description: task.description || '',
+      notes: task.notes || '',
+      estimatedTime: task.estimatedTime || '',
+      duration: task.duration || '',
+      dayInSeries: task.dayInSeries || '',
+      dosage: task.dosage || '',
+      materials: Array.isArray(task.materials) ? task.materials : [],
+      batchNumber: task.batchNumber || '',
+      dayAge: task.dayAge || '',
+      
+      // 确保completed状态正确
+      completed: task.completed || false
+    }
+    
+    this.setData({
+      selectedTask: enhancedTask,
+      showTaskDetailPopup: true
+    })
+  },
+
+  /**
+   * 关闭任务详情弹窗
+   */
+  closeTaskDetailPopup() {
+    this.setData({
+      showTaskDetailPopup: false,
+      selectedTask: null
+    })
+  },
+
+  /**
+   * 从弹窗完成任务
+   */
+  async completeTaskFromPopup() {
+    const { selectedTask } = this.data
+    if (!selectedTask || selectedTask.completed) {
+      this.closeTaskDetailPopup()
+      return
+    }
+
+    // 检查任务ID是否存在
+    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as any)._id
+    if (!taskId) {
+      console.error('首页任务ID缺失，任务数据:', selectedTask)
+      wx.showToast({
+        title: '任务ID缺失，无法完成',
+        icon: 'error',
+        duration: 2000
+      })
+      this.closeTaskDetailPopup()
+      return
+    }
+
+    try {
+      wx.showLoading({
+        title: '正在完成任务...',
+        mask: true
+      })
+
+
+      // 调用云函数完成任务
+      const result = await wx.cloud.callFunction({
+        name: 'breeding-todo',
+        data: {
+          action: 'completeTask',
+          taskId: taskId,
+          batchId: selectedTask.batchNumber,
+          dayAge: selectedTask.dayAge,
+          completedAt: new Date().toISOString(),
+          completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
+        }
+      })
+
+      if (result.result && result.result.success) {
+        
+        // 保存完成状态到本地存储
+        this.saveTaskCompletionToLocal(taskId, true)
+        
+        // 更新全局状态
+        this.updateGlobalTaskStatus(taskId, true)
+        
+        // 通知待办页面状态更新
+        this.notifyBreedingTodoPageUpdate(taskId, true)
+        
+        // 更新首页待办列表中的任务状态（只更新匹配的任务）
+        const updatedTodoList = this.data.todoList.map(task => {
+          if (task.id && task.id === taskId) {
+            return { ...task, completed: true, completedDate: new Date().toLocaleString() }
+          }
+          return task
+        })
+        
+        this.setData({
+          todoList: updatedTodoList
+        })
+
+        // 关闭弹窗
+        this.closeTaskDetailPopup()
+
+        // 显示成功提示
+        wx.showToast({
+          title: '任务已完成',
+          icon: 'success',
+          duration: 2000
+        })
+
+        // 重新加载今日任务以确保数据同步
+        setTimeout(() => {
+          this.loadTodayBreedingTasks()
+        }, 1000)
+
+      } else {
+        throw new Error(result.result?.message || '完成任务失败')
+      }
+
+    } catch (error) {
+      console.error('完成任务失败:', error)
+      wx.showToast({
+        title: '完成失败，请重试',
+        icon: 'error',
+        duration: 2000
+      })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  /**
+   * 任务详情弹窗可见性变化
+   */
+  onTaskDetailPopupChange(event: any) {
+    if (!event.detail.visible) {
+      this.closeTaskDetailPopup()
+    }
+  },
+
+  /**
+   * 获取任务类型名称
+   */
+  getTypeName(type: string): string {
+    const typeMap: Record<string, string> = {
+      health: '健康检查',
+      feed: '饲料管理',
+      environment: '环境管理',
+      medicine: '药物投喂',
+      cleaning: '清洁消毒',
+      observation: '观察记录',
+      vaccination: '疫苗接种',
+      treatment: '治疗护理'
+    }
+    return typeMap[type] || '其他'
+  },
+
+  /**
+   * 获取优先级名称
+   */
+  getPriorityName(priority: string): string {
+    const priorityMap: Record<string, string> = {
+      critical: '紧急',
+      high: '重要',
+      medium: '普通',
+      low: '较低'
+    }
+    return priorityMap[priority] || '普通'
+  },
+
+  /**
+   * 获取优先级主题色
+   */
+  getPriorityTheme(priority: string): string {
+    const themeMap: Record<string, string> = {
+      critical: 'danger',
+      high: 'warning',
+      medium: 'primary',
+      low: 'default'
+    }
+    return themeMap[priority] || 'primary'
   },
 
   // 跳转到天气详情页
@@ -535,7 +947,6 @@ Page({
   // 手动刷新天气数据
   onWeatherRefresh(event: any) {
     // 在微信小程序中，使用catchtap来阻止事件冒泡，而不是stopPropagation()
-    console.log('手动刷新天气数据')
     
     wx.showLoading({
       title: '获取天气中...',
@@ -622,7 +1033,6 @@ Page({
       type: 'gcj02',
       isHighAccuracy: true,
       success: (locationRes) => {
-        console.log('🧪 测试用坐标:', locationRes)
         
         wx.cloud.callFunction({
           name: 'weather',
@@ -633,7 +1043,6 @@ Page({
           }
         }).then((result) => {
           wx.hideLoading()
-          console.log('🧪 API测试结果:', result)
           
           if (result.result && result.result.success) {
             const tests = result.result.data.tests
@@ -699,7 +1108,6 @@ Page({
       type: 'gcj02',
       isHighAccuracy: true,
       success: (locationRes) => {
-        console.log('🔍 诊断用坐标:', locationRes)
         
         wx.cloud.callFunction({
           name: 'weather',
@@ -710,7 +1118,6 @@ Page({
           }
         }).then((result) => {
           wx.hideLoading()
-          console.log('🔍 诊断结果:', result)
           
           if (result.result && result.result.success) {
             const diagnosis = result.result.data
@@ -811,7 +1218,6 @@ Page({
     try {
       const cacheData = wx.getStorageSync('weather_cache')
       if (!cacheData) {
-        console.log('没有天气缓存，不需要自动刷新')
         return
       }
 
@@ -821,11 +1227,9 @@ Page({
 
       // 检查缓存是否超过1小时
       if (now - cacheTime > oneHour) {
-        console.log('天气缓存已过期，自动刷新天气数据')
         
         // 静默刷新，不显示loading
         this.getWeatherData(true).then(() => {
-          console.log('天气数据自动刷新成功')
           // 可以显示一个轻量提示
           wx.showToast({
             title: '天气已更新',
@@ -838,7 +1242,6 @@ Page({
         })
       } else {
         const remainingTime = Math.floor((oneHour - (now - cacheTime)) / 1000 / 60)
-        console.log(`天气缓存还有 ${remainingTime} 分钟过期`)
       }
     } catch (error) {
       console.warn('检查天气缓存失败:', error)
@@ -874,7 +1277,6 @@ Page({
 
   // 生成养殖建议
   async generateFarmingAdvice() {
-    console.log('生成AI智能养殖建议')
     
     this.setData({
       'aiAdvice.loading': true,
@@ -889,8 +1291,6 @@ Page({
       
       // 构建AI分析提示词
       const prompt = this.buildFarmingAdvicePrompt(environmentData, productionData, healthData)
-      
-      console.log('调用AI多模型服务生成养殖建议')
       
       // 调用AI分析云函数
       const result = await wx.cloud.callFunction({
@@ -921,8 +1321,6 @@ Page({
           'aiAdvice.error': null,
           'aiAdvice.lastUpdateTime': new Date().toLocaleString()
         })
-        
-        wx.vibrateShort({ type: 'medium' })
         
         wx.showToast({
           title: 'AI分析完成',
@@ -1223,6 +1621,26 @@ Page({
       environmentAdvice
     }
   },
+
+  // 计算当前日龄（与详情页逻辑保持一致）
+  calculateCurrentAge(entryDate: string): number {
+    // 只比较日期部分，不考虑具体时间（与 utils/breeding-schedule.js 保持一致）
+    const today = new Date()
+    const todayDateStr = today.toISOString().split('T')[0] // YYYY-MM-DD
+    
+    // 确保入栏日期也是 YYYY-MM-DD 格式
+    const entryDateStr = entryDate.split('T')[0] // 移除可能的时间部分
+    
+    const todayDate = new Date(todayDateStr + 'T00:00:00')
+    const startDate = new Date(entryDateStr + 'T00:00:00')
+    
+    // 计算日期差异
+    const diffTime = todayDate.getTime() - startDate.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    const dayAge = diffDays + 1 // 入栏当天为第1日龄
+    
+    return dayAge
+  },
   
   // 获取当前季节
   getCurrentSeason(): string {
@@ -1293,8 +1711,6 @@ Page({
       icon: 'success',
       duration: 2000
     })
-    
-    wx.vibrateShort({ type: 'light' })
   },
   
   // 刷新AI建议（用于下拉刷新）

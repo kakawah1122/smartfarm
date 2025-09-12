@@ -11,8 +11,8 @@ fi
 
 # 要部署的云函数列表
 if [ $# -eq 0 ]; then
-    # 默认部署的云函数列表
-    functions=("employee-invite-management" "user-management" "login" "notification-management")
+    # 默认部署的云函数列表（包含健康管理模块）
+    functions=("employee-invite-management" "user-management" "login" "notification-management" "health-management" "ai-diagnosis" "setup-health-permissions")
 else
     # 使用命令行参数指定的云函数
     functions=("$@")
