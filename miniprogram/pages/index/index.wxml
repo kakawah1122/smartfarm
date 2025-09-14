@@ -205,6 +205,9 @@
           <t-button size="small" theme="primary" variant="outline" bind:tap="debugLoadTodos" class="debug-btn">
             刷新待办
           </t-button>
+          <t-button size="small" theme="warning" variant="outline" bind:tap="fixTaskSystem" class="debug-btn fix-btn">
+            🔧 修复系统
+          </t-button>
         </view>
       </view>
     </view>
@@ -219,11 +222,11 @@
     visible="{{showTaskDetailPopup}}"
     title="任务详情"
     show-close="{{true}}"
-    show-actions="{{true}}"
-    confirm-text="{{selectedTask && selectedTask.completed ? '确定' : (selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : '完成任务')}}"
-    cancel-text="{{selectedTask && selectedTask.completed ? '' : '关闭'}}"
+    show-actions="{{!selectedTask.completed}}"
+    confirm-text="{{selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : '完成任务'}}"
+    cancel-text="关闭"
     bind:close="closeTaskDetailPopup"
-    bind:confirm="{{selectedTask && selectedTask.completed ? 'closeTaskDetailPopup' : (selectedTask && selectedTask.isVaccineTask ? 'handleVaccineTask' : 'completeTaskFromPopup')}}"
+    bind:confirm="{{selectedTask && selectedTask.isVaccineTask ? 'handleVaccineTask' : 'completeTaskFromPopup'}}"
     bind:cancel="closeTaskDetailPopup"
     bind:visiblechange="onTaskDetailPopupChange"
   >

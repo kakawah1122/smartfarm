@@ -3,7 +3,8 @@ import { checkPageAuth } from '../../utils/auth-guard'
 import { 
   getTodayTasks, 
   TASK_TYPES, 
-  PRIORITY_LEVELS 
+  PRIORITY_LEVELS,
+  TYPE_NAMES
 } from '../../utils/breeding-schedule'
 import CloudApi from '../../utils/cloud-api'
 
@@ -130,23 +131,21 @@ Page({
 
   // 加载数据
   loadData() {
-    wx.showLoading({
-      title: '加载中...',
-      mask: true
-    })
+    this.setData({ todoLoading: true, 'weather.loading': true })
     
     Promise.all([
       this.getWeatherData(),
       this.getGoosePriceData(),
       this.getTodoListData()
     ]).then(() => {
-      wx.hideLoading()
+      // no-op
     }).catch(() => {
-      wx.hideLoading()
       wx.showToast({
         title: '加载失败',
         icon: 'error'
       })
+    }).finally(() => {
+      this.setData({ todoLoading: false, 'weather.loading': false })
     })
   },
 
@@ -730,12 +729,17 @@ Page({
         return (priorityOrder[a.priority] || 999) - (priorityOrder[b.priority] || 999)
       })
 
-      // 首页只显示前6条，与未完成的任务
-      const displayTodos = allTodos
-        .filter(todo => !todo.completed) // 只显示未完成的
-        .slice(0, 6)
+      // 首页显示逻辑：优先显示未完成的任务，然后显示最近完成的任务
+      const uncompletedTodos = allTodos.filter(todo => !todo.completed)
+      const recentlyCompletedTodos = allTodos
+        .filter(todo => todo.completed && todo.completedDate)
+        .sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime())
+        .slice(0, 2) // 最多显示2个最近完成的任务
       
-      console.log(`✅ 首页待办加载完成: 总任务${allTodos.length}个, 显示${displayTodos.length}个未完成任务`)
+      // 合并未完成和最近完成的任务，总共不超过6条
+      const displayTodos = [...uncompletedTodos, ...recentlyCompletedTodos].slice(0, 6)
+      
+      console.log(`✅ 首页待办加载完成: 总任务${allTodos.length}个, 显示${displayTodos.length}个任务(未完成${uncompletedTodos.length}个, 最近完成${recentlyCompletedTodos.length}个)`)
       
       this.setData({
         todoList: displayTodos,
@@ -794,6 +798,86 @@ Page({
     }
   },
 
+  // 修复批次任务
+  async fixAllBatchTasks() {
+    console.log('🔧 开始修复所有批次任务...')
+    
+    wx.showModal({
+      title: '修复任务',
+      content: '这将重新创建所有活跃批次的任务，是否继续？',
+      showCancel: true,
+      confirmText: '修复',
+      cancelText: '取消',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            wx.showLoading({
+              title: '修复任务中...',
+              mask: true
+            })
+
+            // 获取活跃批次
+            const batchResult = await wx.cloud.callFunction({
+              name: 'production-entry',
+              data: { action: 'getActiveBatches' }
+            })
+
+            const activeBatches = batchResult.result?.data || []
+            console.log('找到活跃批次:', activeBatches.length, '个')
+
+            if (activeBatches.length === 0) {
+              wx.hideLoading()
+              wx.showToast({
+                title: '没有找到活跃批次',
+                icon: 'none'
+              })
+              return
+            }
+
+            let totalFixed = 0
+            let successCount = 0
+
+            // 为每个批次修复任务
+            for (const batch of activeBatches) {
+              try {
+                const result = await CloudApi.fixBatchTasks(batch.id)
+                if (result.success) {
+                  totalFixed += result.data?.taskCount || 0
+                  successCount++
+                  console.log(`批次 ${batch.batchNumber} 修复成功，创建任务 ${result.data?.taskCount} 个`)
+                }
+              } catch (error) {
+                console.error(`批次 ${batch.batchNumber} 修复失败:`, error)
+              }
+            }
+
+            wx.hideLoading()
+
+            // 显示修复结果
+            wx.showModal({
+              title: '修复完成',
+              content: `成功修复 ${successCount}/${activeBatches.length} 个批次\n共创建任务 ${totalFixed} 个`,
+              showCancel: false,
+              confirmText: '确定',
+              success: () => {
+                // 重新加载待办列表
+                this.loadTodayBreedingTasks()
+              }
+            })
+
+          } catch (error) {
+            wx.hideLoading()
+            console.error('修复批次任务失败:', error)
+            wx.showToast({
+              title: '修复失败，请重试',
+              icon: 'error'
+            })
+          }
+        }
+      }
+    })
+  },
+
   // 优先级到主题颜色的映射
   mapPriorityToTheme(priority: string): string {
     const themeMap: Record<string, string> = {
@@ -849,6 +933,7 @@ Page({
     
     const task = event.currentTarget.dataset.task
     console.log('首页任务数据:', task)
+    console.log('🏷️ 任务类型映射:', `${task.type} -> ${this.getTypeName(task.type || '')}`)
     
     // 从任务数据中构建详细信息，所有任务都显示详情弹窗
     const enhancedTask = {
@@ -943,11 +1028,29 @@ Page({
       return
     }
 
+    // 使用页面级loading，避免全局show/hide未配对告警
+    this.setData({ todoLoading: true })
     try {
-      wx.showLoading({
-        title: '正在完成任务...',
-        mask: true
+
+      // 检查批次ID字段
+      const batchId = selectedTask.batchNumber || selectedTask.batchId
+      console.log('📋 首页准备调用云函数完成任务，参数:', {
+        taskId: taskId,
+        batchId: batchId,
+        dayAge: selectedTask.dayAge,
+        selectedTask: selectedTask
       })
+      
+      if (!batchId) {
+        console.error('❌ 首页batchId缺失，selectedTask:', selectedTask)
+        wx.showToast({
+          title: '批次ID缺失，无法完成任务',
+          icon: 'error',
+          duration: 2000
+        })
+        this.closeTaskDetailPopup()
+        return
+      }
 
       // 调用云函数完成任务
       const result = await wx.cloud.callFunction({
@@ -955,65 +1058,290 @@ Page({
         data: {
           action: 'completeTask',
           taskId: taskId,
-          batchId: selectedTask.batchNumber,
+          batchId: batchId,
           dayAge: selectedTask.dayAge,
           completedAt: new Date().toISOString(),
           completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
         }
       })
+      
+      console.log('☁️ 首页云函数返回结果:', result)
 
       if (result.result && result.result.success) {
         
-        // 保存完成状态到本地存储
-        this.saveTaskCompletionToLocal(taskId, true)
+        // 检查是否为重复完成
+        if (result.result.already_completed) {
+          console.log('ℹ️ 任务已经完成过了')
+          
+          // 立即更新UI状态显示划线效果
+          this.updateTaskCompletionStatusInUI(taskId, true)
+          
+          // 关闭弹窗
+          this.closeTaskDetailPopup()
+          
+          // 显示友好提示
+          wx.showToast({
+            title: '该任务已完成',
+            icon: 'success',
+            duration: 2000
+          })
+          
+          // 重新加载数据确保同步
+          setTimeout(() => {
+            this.loadTodayBreedingTasks()
+          }, 500)
+          
+          // 仅依赖 finally 统一隐藏，避免未配对告警
+          return
+        }
         
-        // 更新全局状态
-        this.updateGlobalTaskStatus(taskId, true)
+        // 🔥 全新简化版本：任务完成处理
+        console.log('🎯 新版任务完成处理')
         
-        // 通知待办页面状态更新
-        this.notifyBreedingTodoPageUpdate(taskId, true)
-        
-        // 更新首页待办列表中的任务状态（只更新匹配的任务）
-        const updatedTodoList = this.data.todoList.map(task => {
-          if (task.id && task.id === taskId) {
-            return { ...task, completed: true, completedDate: new Date().toLocaleString() }
-          }
-          return task
-        })
-        
-        this.setData({
-          todoList: updatedTodoList
-        })
+        // 立即更新UI状态显示划线效果
+        this.updateTaskCompletionStatusInUI(taskId, true)
 
         // 关闭弹窗
         this.closeTaskDetailPopup()
 
         // 显示成功提示
         wx.showToast({
-          title: '任务已完成',
+          title: '任务完成成功！',
           icon: 'success',
           duration: 2000
         })
 
-        // 重新加载今日任务以确保数据同步
+        // 重新加载数据以确保UI同步（数据库中的状态已经更新）
         setTimeout(() => {
+          console.log('🔄 重新加载任务数据...')
           this.loadTodayBreedingTasks()
-        }, 1000)
+        }, 500)
 
       } else {
-        throw new Error(result.result?.message || '完成任务失败')
+        console.error('❌ 首页云函数返回失败:', result.result)
+        throw new Error(result.result?.error || result.result?.message || '完成任务失败')
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('完成任务失败:', error)
       wx.showToast({
-        title: '完成失败，请重试',
-        icon: 'error',
+        title: error.message === '任务已经完成' ? '该任务已完成' : '完成失败，请重试',
+        icon: error.message === '任务已经完成' ? 'success' : 'error',
         duration: 2000
       })
     } finally {
-      wx.hideLoading()
+      this.setData({ todoLoading: false })
     }
+  },
+
+  /**
+   * 简化版本：立即更新首页UI中的任务完成状态
+   */
+  updateTaskCompletionStatusInUI(taskId: string, completed: boolean) {
+    console.log('🔄 首页强化更新UI任务状态:', { taskId, completed })
+    
+    let taskFound = false
+    
+    // 🔥 强化ID匹配逻辑
+    const matchTask = (task: any) => {
+      const possibleIds = [task._id, task.id, task.taskId].filter(Boolean)
+      return possibleIds.includes(taskId)
+    }
+    
+    // 更新首页待办列表中的任务状态
+    const updatedTodoList = this.data.todoList.map(task => {
+      if (matchTask(task)) {
+        taskFound = true
+        console.log('✅ 首页找到并更新任务:', task.content, '完成状态:', completed)
+        console.log('🔍 首页匹配ID信息:', {
+          传入taskId: taskId,
+          任务_id: task._id,
+          任务id: task.id,
+          任务taskId: task.taskId
+        })
+        return { 
+          ...task, 
+          completed, 
+          completedDate: completed ? new Date().toLocaleString() : ''
+        }
+      }
+      return task
+    })
+    
+    if (!taskFound) {
+      console.warn('⚠️ 首页未找到匹配的任务ID:', taskId)
+      console.log('📋 当前todoList详情:')
+      this.data.todoList.forEach((t, index) => {
+        console.log(`  [${index}] ID字段:`, {
+          _id: t._id,
+          id: t.id,
+          taskId: t.taskId,
+          content: t.content,
+          completed: t.completed
+        })
+      })
+    }
+    
+    // 强制数据更新
+    this.setData({
+      todoList: updatedTodoList
+    }, () => {
+      console.log('✅ 首页setData完成，任务找到:', taskFound)
+    })
+  },
+
+  /**
+   * 🔥 新增：一键修复任务系统
+   */
+  async fixTaskSystem() {
+    wx.showLoading({ title: '正在修复任务系统...' })
+    
+    try {
+      // 1. 检查迁移状态
+      console.log('🔍 检查任务系统状态...')
+      const checkResult = await wx.cloud.callFunction({
+        name: 'task-migration',
+        data: { action: 'checkMigrationStatus' }
+      })
+      
+      if (checkResult.result.success) {
+        const status = checkResult.result.data
+        console.log('📊 系统状态:', status)
+        
+        if (status.needsMigration > 0) {
+          // 2. 执行迁移
+          console.log(`🔧 需要迁移 ${status.needsMigration} 个任务...`)
+          
+          const migrateResult = await wx.cloud.callFunction({
+            name: 'task-migration',
+            data: { action: 'addCompletedField' }
+          })
+          
+          if (migrateResult.result.success) {
+            console.log('✅ 字段迁移完成')
+            
+            // 3. 同步已完成状态
+            const syncResult = await wx.cloud.callFunction({
+              name: 'task-migration',
+              data: { action: 'migrateCompletedTasks' }
+            })
+            
+            if (syncResult.result.success) {
+              console.log('✅ 状态同步完成')
+              
+              wx.hideLoading()
+              wx.showModal({
+                title: '修复完成',
+                content: `任务系统修复成功！\n迁移了 ${migrateResult.result.data.migratedCount} 个任务\n同步了 ${syncResult.result.data.syncedCount} 个完成状态`,
+                showCancel: false,
+                success: () => {
+                  this.loadTodayBreedingTasks()
+                }
+              })
+              return
+            }
+          }
+        } else {
+          wx.hideLoading()
+          wx.showToast({
+            title: '任务系统状态正常',
+            icon: 'success'
+          })
+          
+          // 重新加载数据
+          this.loadTodayBreedingTasks()
+          return
+        }
+      }
+      
+      throw new Error('修复过程中出现错误')
+      
+    } catch (error) {
+      console.error('❌ 修复失败:', error)
+      wx.hideLoading()
+      wx.showModal({
+        title: '修复失败',
+        content: `错误信息: ${error.message}`,
+        showCancel: false
+      })
+    }
+  },
+
+  /**
+   * 🔍 验证任务完成状态是否正确保存到数据库
+   */
+  async verifyTaskCompletionInDatabase(taskId: string, batchId: string) {
+    try {
+      console.log('🔍 验证数据库中的任务完成状态:', { taskId, batchId })
+      
+      // 直接调用云函数获取最新的任务状态
+      const result = await wx.cloud.callFunction({
+        name: 'breeding-todo',
+        data: {
+          action: 'getTodos',
+          batchId: batchId,
+          dayAge: selectedTask?.dayAge || this.calculateCurrentAge(new Date().toISOString().split('T')[0])
+        }
+      })
+      
+      if (result.result && result.result.success) {
+        const tasks = result.result.data || []
+        const targetTask = tasks.find((task: any) => 
+          task._id === taskId || task.taskId === taskId || task.id === taskId
+        )
+        
+        if (targetTask) {
+          console.log('🔍 数据库验证结果:', {
+            taskId: taskId,
+            title: targetTask.title,
+            completed: targetTask.completed,
+            云函数返回状态: targetTask.completed ? '✅ 已完成' : '❌ 未完成'
+          })
+          
+          if (targetTask.completed) {
+            console.log('✅ 数据库状态正确：任务已标记为完成')
+          } else {
+            console.error('❌ 数据库状态错误：任务未标记为完成，可能存在数据库权限或同步问题')
+            
+            // 尝试修复：强制重新调用完成接口
+            wx.showModal({
+              title: '检测到数据同步问题',
+              content: '任务完成状态未正确保存，是否尝试修复？',
+              success: async (res) => {
+                if (res.confirm) {
+                  console.log('🔧 尝试修复数据同步问题...')
+                  try {
+                    await CloudApi.completeTask(taskId, batchId, '修复同步')
+                    setTimeout(() => {
+                      this.loadTodayBreedingTasks()
+                    }, 1000)
+                  } catch (error) {
+                    console.error('修复失败:', error)
+                  }
+                }
+              }
+            })
+          }
+        } else {
+          console.error('❌ 未在云函数返回的任务列表中找到目标任务')
+        }
+      } else {
+        console.error('❌ 云函数调用失败:', result.result)
+      }
+    } catch (error) {
+      console.error('❌ 验证数据库状态失败:', error)
+    }
+  },
+
+  /**
+   * 计算当前日龄
+   */
+  calculateCurrentAge(entryDate: string): number {
+    const entry = new Date(entryDate)
+    const today = new Date()
+    const diffTime = today.getTime() - entry.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
   },
 
   /**
@@ -1026,20 +1354,10 @@ Page({
   },
 
   /**
-   * 获取任务类型名称
+   * 获取任务类型名称 - 使用统一的TYPE_NAMES映射
    */
   getTypeName(type: string): string {
-    const typeMap: Record<string, string> = {
-      health: '健康检查',
-      feed: '饲料管理',
-      environment: '环境管理',
-      medicine: '药物投喂',
-      cleaning: '清洁消毒',
-      observation: '观察记录',
-      vaccination: '疫苗接种',
-      treatment: '治疗护理'
-    }
-    return typeMap[type] || '其他'
+    return TYPE_NAMES[type as keyof typeof TYPE_NAMES] || '其他'
   },
 
   /**
@@ -1079,26 +1397,23 @@ Page({
   onWeatherRefresh(event: any) {
     // 在微信小程序中，使用catchtap来阻止事件冒泡，而不是stopPropagation()
     
-    wx.showLoading({
-      title: '获取天气中...',
-      mask: true
-    })
+    this.setData({ 'weather.loading': true })
     
     // 强制刷新
     this.getWeatherData(true).then(() => {
-      wx.hideLoading()
       wx.showToast({
         title: '天气更新成功',
         icon: 'success',
         duration: 1500
       })
     }).catch((error) => {
-      wx.hideLoading()
       wx.showToast({
         title: '刷新失败',
         icon: 'error',
         duration: 1500
       })
+    }).finally(() => {
+      this.setData({ 'weather.loading': false })
     })
   },
 
@@ -1132,32 +1447,32 @@ Page({
 
   // 强制获取天气
   forceGetWeather() {
-    wx.showLoading({ title: '强制获取天气...' })
+    this.setData({ 'weather.loading': true })
     
     // 清除缓存
     this.clearWeatherCache()
     
     // 强制获取天气
     this.getWeatherData(true).then(() => {
-      wx.hideLoading()
       wx.showToast({
         title: '获取成功',
         icon: 'success',
         duration: 2000
       })
     }).catch((error) => {
-      wx.hideLoading()
       wx.showModal({
         title: '获取失败',
         content: error.errMsg || error.message || '获取天气失败',
         showCancel: false
       })
+    }).finally(() => {
+      this.setData({ 'weather.loading': false })
     })
   },
 
   // 测试API连接
   testAPIConnections() {
-    wx.showLoading({ title: '测试API连接...' })
+    this.setData({ 'weather.loading': true })
     
     // 先获取位置
     wx.getLocation({
@@ -1173,7 +1488,6 @@ Page({
             lon: locationRes.longitude
           }
         }).then((result) => {
-          wx.hideLoading()
           
           if (result.result && result.result.success) {
             const tests = result.result.data.tests
@@ -1210,7 +1524,6 @@ Page({
             })
           }
         }).catch((error) => {
-          wx.hideLoading()
           console.error('🧪 API测试错误:', error)
           wx.showModal({
             title: 'API测试错误',
@@ -1220,19 +1533,20 @@ Page({
         })
       },
       fail: (error) => {
-        wx.hideLoading()
         wx.showModal({
           title: '位置获取失败',
           content: '无法获取位置进行API测试',
           showCancel: false
         })
       }
+    }).finally(() => {
+      this.setData({ 'weather.loading': false })
     })
   },
 
   // API问题诊断 - 基于官方文档的深度诊断
   diagnoseAPIIssues() {
-    wx.showLoading({ title: '正在诊断API问题...' })
+    this.setData({ 'weather.loading': true })
     
     // 先获取位置
     wx.getLocation({
@@ -1248,7 +1562,6 @@ Page({
             lon: locationRes.longitude
           }
         }).then((result) => {
-          wx.hideLoading()
           
           if (result.result && result.result.success) {
             const diagnosis = result.result.data
@@ -1288,7 +1601,6 @@ Page({
             })
           }
         }).catch((error) => {
-          wx.hideLoading()
           console.error('🔍 诊断错误:', error)
           wx.showModal({
             title: '诊断错误',
@@ -1298,13 +1610,14 @@ Page({
         })
       },
       fail: (error) => {
-        wx.hideLoading()
         wx.showModal({
           title: '位置获取失败',
           content: '无法获取位置进行诊断',
           showCancel: false
         })
       }
+    }).finally(() => {
+      this.setData({ 'weather.loading': false })
     })
   },
 

@@ -13,7 +13,13 @@
       <view class="card-content">
         <view class="card-header">
           <text class="card-title">全场任务概览</text>
-          <text class="batch-count-badge">{{activeBatchCount}}个批次</text>
+          <view class="header-actions">
+            <text class="batch-count-badge">{{activeBatchCount}}个批次</text>
+            <!-- 临时数据修复按钮 -->
+            <t-button theme="primary" variant="outline" size="extra-small" bind:tap="migrateTaskData" style="margin-left: 20rpx;">
+              🔧 修复
+            </t-button>
+          </view>
         </view>
         
         <view class="overview-stats">
@@ -73,12 +79,12 @@
               
               <!-- 该批次的任务列表 -->
               <view class="batch-task-list">
-                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="modern-task-card priority-{{task.priority}} {{task.completed ? 'completed' : ''}}">
+                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="_id" class="modern-task-card priority-{{task.priority}} {{task.completed ? 'completed' : ''}}">
                   <!-- 任务主体 -->
                   <view class="task-main" bind:tap="viewTaskDetail" data-task="{{task}}">
                     <view class="task-content">
                       <view class="task-header-info">
-                        <text class="task-title {{task.completed ? 'completed' : ''}}">{{task.title}}</text>
+                        <text class="task-title {{task.completed ? 'completed' : ''}}" data-completed="{{task.completed}}" data-task-id="{{task._id}}">{{task.title}}</text>
                         <view class="task-badges">
                           <view class="priority-badge priority-{{task.priority}}">
                             <text class="priority-text">{{getPriorityName(task.priority)}}</text>
@@ -251,11 +257,11 @@
     visible="{{showTaskDetailPopup}}"
     title="任务详情"
     show-close="{{true}}"
-    show-actions="{{true}}"
-    confirm-text="{{selectedTask && selectedTask.completed ? (selectedTask.isVaccineTask ? '查看接种记录' : '确定') : (selectedTask && !selectedTask.canComplete) ? '确定' : (selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : '完成任务')}}"
-    cancel-text="{{selectedTask && (selectedTask.completed || !selectedTask.canComplete) ? '' : '关闭'}}"
+    show-actions="{{!selectedTask.completed && selectedTask.canComplete}}"
+    confirm-text="{{selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : '完成任务'}}"
+    cancel-text="关闭"
     bind:close="closeTaskDetailPopup"
-    bind:confirm="{{selectedTask && selectedTask.completed && selectedTask.isVaccineTask ? 'viewVaccineRecord' : selectedTask && selectedTask.completed ? 'closeTaskDetailPopup' : selectedTask && !selectedTask.canComplete ? 'closeTaskDetailPopup' : (selectedTask && selectedTask.isVaccineTask ? 'openVaccineForm' : 'completeTaskFromPopup')}}"
+    bind:confirm="{{selectedTask && selectedTask.isVaccineTask ? 'openVaccineForm' : 'completeTaskFromPopup'}}"
     bind:cancel="closeTaskDetailPopup"
     bind:visiblechange="onTaskDetailPopupChange"
   >
@@ -310,6 +316,15 @@
             <view class="status-value">
               <t-tag theme="{{selectedTask.completed ? 'success' : 'primary'}}" size="small">
                 {{selectedTask.statusText || '待完成'}}
+              </t-tag>
+            </view>
+          </view>
+          <!-- 🔥 时间状态提示 -->
+          <view class="info-row" wx:if="{{selectedTask.dayAge && !selectedTask.canComplete}}">
+            <text class="info-label">时间状态：</text>
+            <view class="status-value">
+              <t-tag theme="warning" size="small">
+                时间未到，第{{selectedTask.dayAge}}日龄执行
               </t-tag>
             </view>
           </view>

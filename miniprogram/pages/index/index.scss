@@ -1155,23 +1155,36 @@ page {
   white-space: normal;
 }
 
-/* ========== 已完成任务样式 ========== */
+/* ========== 已完成任务样式（优化版） ========== */
 .todo-item.completed {
-  opacity: 0.6;
-  background: #f5f5f5;
+  opacity: 0.7 !important;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  border: 2rpx solid #dee2e6 !important;
+  transform: scale(0.98);
+  transition: all 0.3s ease;
 }
 
 .todo-item.completed .todo-text {
-  text-decoration: line-through;
-  color: #999;
+  text-decoration: line-through !important;
+  color: #6c757d !important;
+  font-style: italic;
 }
 
 .todo-item.completed .todo-dot {
   background: #28a745 !important;
+  box-shadow: 0 0 8rpx rgba(40, 167, 69, 0.3);
+}
+
+.todo-item.completed .todo-dot::before {
+  background-color: #28a745 !important;
+  opacity: 0.6;
 }
 
 .todo-item.completed .todo-tag {
-  opacity: 0.7;
+  opacity: 1 !important;
+  background: #d4edda !important;
+  color: #155724 !important;
+  border-color: #c3e6cb !important;
 }
 
 /* ========== 新增待办样式 ========== */
@@ -1299,9 +1312,16 @@ page {
   margin-top: var(--spacing-xl);
   display: flex;
   justify-content: center;
+  gap: var(--spacing-base);
   
   .debug-btn {
     font-size: var(--font-size-sm);
     padding: var(--spacing-sm) var(--spacing-lg);
+  }
+  
+  .fix-btn {
+    background: rgba(255, 193, 7, 0.1) !important;
+    border-color: #ffc107 !important;
+    color: #e65100 !important;
   }
 }

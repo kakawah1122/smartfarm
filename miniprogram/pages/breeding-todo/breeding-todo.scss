@@ -85,6 +85,12 @@ page {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-base, 16rpx);
+  
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+  }
 }
 
 .card-title {
@@ -559,10 +565,7 @@ page {
 
 /* 移除左侧竖线 */
 
-.modern-task-card.completed {
-  opacity: 0.7;
-  background: #f8f9fa;
-}
+/* 删除重复定义，使用底部的统一样式 */
 
 .modern-task-card:active {
   transform: scale(0.98);
@@ -591,10 +594,7 @@ page {
   flex: 1;
 }
 
-.task-title.completed {
-  text-decoration: line-through;
-  color: var(--color-text-tertiary);
-}
+/* 删除重复定义，使用底部的统一样式 */
 
 .task-badges {
   display: flex;
@@ -1180,27 +1180,72 @@ page {
   background: rgba(52, 196, 154, 0.04);
 }
 
-/* ========== 已完成任务的样式 ========== */
+/* ========== 已完成任务的样式（强制优先级） ========== */
 .modern-task-card.completed {
-  opacity: 0.7;
-  background: rgba(40, 167, 69, 0.05);
+  opacity: 0.75 !important;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, rgba(40, 167, 69, 0.05) 100%) !important;
+  border: 2rpx solid rgba(40, 167, 69, 0.2) !important;
+  transform: scale(0.98) !important;
+  transition: all 0.3s ease !important;
+  box-shadow: inset 0 0 10rpx rgba(40, 167, 69, 0.1) !important;
 }
 
 .modern-task-card.completed .task-title {
-  text-decoration: line-through;
-  color: #6c757d;
+  text-decoration: line-through !important;
+  color: #6c757d !important;
+  font-style: italic;
+  position: relative;
+}
+
+.modern-task-card.completed .task-title::after {
+  content: '✓';
+  position: absolute;
+  right: -20rpx;
+  top: 0;
+  color: #28a745;
+  font-weight: bold;
+  font-style: normal;
 }
 
 .modern-task-card.completed .task-description {
-  color: #999;
+  color: #999 !important;
+  opacity: 0.8;
 }
 
 .modern-task-card.completed::before {
-  background: rgba(40, 167, 69, 0.3) !important;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  opacity: 0.8;
 }
 
 .modern-task-card.completed:hover {
-  background: rgba(40, 167, 69, 0.08) !important;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.12) 0%, rgba(40, 167, 69, 0.08) 100%) !important;
+  transform: scale(0.99);
+}
+
+.modern-task-card.completed .task-badges .priority-badge {
+  background: #d4edda !important;
+  color: #155724 !important;
+  border-color: #c3e6cb !important;
+}
+
+/* 🔥 测试样式：确保completed类被正确应用 */
+.modern-task-card.completed {
+  border-left: 8rpx solid #28a745 !important;
+  position: relative;
+}
+
+.modern-task-card.completed::after {
+  content: '已完成';
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  background: #28a745;
+  color: white;
+  padding: 4rpx 8rpx;
+  border-radius: 4rpx;
+  font-size: 20rpx;
+  font-weight: bold;
+  z-index: 10;
 }
 
 /* ========== 空状态 ========== */

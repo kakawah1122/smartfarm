@@ -31,6 +31,13 @@ export const ROLES = {
   'user': '普通用户'
 }
 
+// 角色颜色配置
+export const ROLE_COLORS = {
+  'admin': '#f56c6c',    // 红色
+  'employee': '#409eff', // 蓝色
+  'user': '#67c23a'      // 绿色
+}
+
 // 角色默认权限
 export const ROLE_PERMISSIONS = {
   'admin': ['all'],
@@ -244,4 +251,18 @@ export const PermissionMixin = {
     const app = getApp()
     return PermissionManager.isEmployee(app.globalData.userInfo)
   }
+}
+
+// 兼容性函数，用于与旧代码保持一致
+export function getRoleName(role: string): string {
+  return ROLES[role as keyof typeof ROLES] || '未知角色'
+}
+
+export function getRoleColor(role: string): string {
+  return ROLE_COLORS[role as keyof typeof ROLE_COLORS] || '#909399'
+}
+
+export function formatRoleDisplay(role: string, isSuper?: boolean): string {
+  const roleName = getRoleName(role)
+  return isSuper ? `超级${roleName}` : roleName
 }

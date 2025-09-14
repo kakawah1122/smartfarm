@@ -169,6 +169,26 @@ class CloudApi {
     )
   }
 
+  /**
+   * 修复批次任务
+   */
+  static async fixBatchTasks(batchId: string): Promise<CloudApiResponse> {
+    return this.callFunction(
+      'breeding-todo',
+      {
+        action: 'fixBatchTasks',
+        batchId
+      },
+      {
+        loading: true,
+        loadingText: '修复任务中...',
+        showError: true,
+        showSuccess: true,
+        successText: '任务修复完成'
+      }
+    )
+  }
+
   // ============ 健康管理 API ============
 
   /**

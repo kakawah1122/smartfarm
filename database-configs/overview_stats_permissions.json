@@ -1,4 +1,0 @@
-{
-  "read": "auth.openid != null", 
-  "write": "get('database').collection('users').where({_openid: auth.openid}).get().data[0].role in ['super_admin', 'manager'] || auth.openid == resource._openid"
-}

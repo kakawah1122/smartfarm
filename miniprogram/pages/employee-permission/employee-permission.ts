@@ -350,60 +350,96 @@ const pageConfig = {
     }
 
     self.setData({ isSubmitting: true })
-    wx.showLoading({ title: '更新中...' })
+    
+    // 使用安全的 loading 管理
+    let loadingShown = false
+    try {
+      wx.showLoading({ 
+        title: '更新中...', 
+        mask: true 
+      })
+      loadingShown = true
 
-    wx.cloud.callFunction({
-      name: 'user-management',
-      data: {
-        action: 'update_user_role',
-        userId: selectedEmployee._id,
-        newRole: newRole,
-        reason: '管理员修改角色为' + self.getRoleDisplayName(newRole)
-      },
-      success: function(result) {
-        if (result.result && result.result.success) {
+      wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'update_user_role',
+          userId: selectedEmployee._id,
+          newRole: newRole,
+          reason: '管理员修改角色为' + self.getRoleDisplayName(newRole)
+        },
+        success: function(result) {
+          try {
+            if (result.result && result.result.success) {
+              wx.showToast({
+                title: '角色更新成功',
+                icon: 'success'
+              })
+
+              // 更新当前选中员工的角色信息
+              const updatedEmployee = Object.assign({}, selectedEmployee, {
+                role: newRole
+              })
+
+              // 重新计算角色显示名和权限列表
+              const roleDisplayName = self.getRoleDisplayName(newRole)
+              const permissions = self.getPermissionList(newRole)
+
+              self.setData({
+                selectedEmployee: updatedEmployee,
+                selectedEmployeeRoleDisplayName: roleDisplayName,
+                selectedEmployeePermissions: permissions,
+                permissionDetailMode: 'view'
+              })
+
+              // 刷新员工列表
+              self.loadEmployeeList()
+            } else {
+              wx.showToast({
+                title: result.result?.message || '更新失败',
+                icon: 'none',
+                duration: 3000
+              })
+            }
+          } catch (err) {
+            console.error('处理角色更新成功回调时出错:', err)
+          }
+        },
+        fail: function(error) {
+          console.error('更新角色失败:', error)
           wx.showToast({
-            title: '角色更新成功',
-            icon: 'success'
+            title: '更新失败',
+            icon: 'none',
+            duration: 3000
           })
-
-          // 更新当前选中员工的角色信息
-          const updatedEmployee = Object.assign({}, selectedEmployee, {
-            role: newRole
-          })
-
-          // 重新计算角色显示名和权限列表
-          const roleDisplayName = self.getRoleDisplayName(newRole)
-          const permissions = self.getPermissionList(newRole)
-
-          self.setData({
-            selectedEmployee: updatedEmployee,
-            selectedEmployeeRoleDisplayName: roleDisplayName,
-            selectedEmployeePermissions: permissions,
-            permissionDetailMode: 'view'
-          })
-
-          // 刷新员工列表
-          self.loadEmployeeList()
-        } else {
-          wx.showToast({
-            title: result.result?.message || '更新失败',
-            icon: 'none'
-          })
+        },
+        complete: function() {
+          try {
+            self.setData({ isSubmitting: false })
+            if (loadingShown) {
+              wx.hideLoading()
+              loadingShown = false
+            }
+          } catch (err) {
+            console.error('清理状态时出错:', err)
+            wx.hideLoading()
+          }
         }
-      },
-      fail: function(error) {
-        console.error('更新角色失败:', error)
-        wx.showToast({
-          title: '更新失败',
-          icon: 'none'
-        })
-      },
-      complete: function() {
-        self.setData({ isSubmitting: false })
+      })
+    } catch (error) {
+      console.error('调用角色更新云函数时出错:', error)
+      
+      self.setData({ isSubmitting: false })
+      if (loadingShown) {
         wx.hideLoading()
       }
-    })
+      
+      wx.showToast({
+        title: '更新失败，请重试',
+        icon: 'none',
+        duration: 3000
+      })
+    }
   },
 
 
@@ -539,58 +575,93 @@ const pageConfig = {
     }
     
     self.setData({ isSubmitting: true })
-    wx.showLoading({ title: '保存中...' })
     
-    wx.cloud.callFunction({
-      name: 'user-management',
-      data: {
-        action: 'update_profile',
-        targetUserId: selectedEmployee._id,
-        farmName: tempEmployee.farmName,
-        department: tempEmployee.department,
-        position: tempEmployee.position
-      },
-      success: function(result) {
-        if (result.result && result.result.success) {
+    // 使用安全的 loading 管理
+    let loadingShown = false
+    try {
+      wx.showLoading({ 
+        title: '保存中...', 
+        mask: true 
+      })
+      loadingShown = true
+    
+      wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'update_profile',
+          targetUserId: selectedEmployee._id,
+          farmName: tempEmployee.farmName,
+          department: tempEmployee.department,
+          position: tempEmployee.position
+        },
+        success: function(result) {
+          try {
+            if (result.result && result.result.success) {
+              wx.showToast({
+                title: '保存成功',
+                icon: 'success'
+              })
+              
+              // 更新当前选中员工的信息
+              const updatedEmployee = Object.assign({}, selectedEmployee, {
+                farmName: tempEmployee.farmName,
+                department: tempEmployee.department,
+                position: tempEmployee.position
+              })
+              
+              self.setData({
+                selectedEmployee: updatedEmployee,
+                editingInfo: false
+              })
+              
+              // 刷新员工列表
+              self.loadEmployeeList()
+            } else {
+              wx.showToast({
+                title: result.result?.message || result.result?.error || '保存失败',
+                icon: 'none',
+                duration: 3000
+              })
+            }
+          } catch (err) {
+            console.error('处理保存成功回调时出错:', err)
+          }
+        },
+        fail: function(error) {
+          console.error('保存基本信息失败:', error)
           wx.showToast({
-            title: '保存成功',
-            icon: 'success'
-          })
-          
-          // 更新当前选中员工的信息
-          const updatedEmployee = Object.assign({}, selectedEmployee, {
-            farmName: tempEmployee.farmName,
-            department: tempEmployee.department,
-            position: tempEmployee.position
-          })
-          
-          self.setData({
-            selectedEmployee: updatedEmployee,
-            editingInfo: false
-          })
-          
-          // 刷新员工列表
-          self.loadEmployeeList()
-        } else {
-          wx.showToast({
-            title: result.result?.message || result.result?.error || '保存失败',
+            title: '保存失败: ' + (error.errMsg || '网络错误'),
             icon: 'none',
             duration: 3000
           })
+        },
+        complete: function() {
+          try {
+            self.setData({ isSubmitting: false })
+            if (loadingShown) {
+              wx.hideLoading()
+              loadingShown = false
+            }
+          } catch (err) {
+            console.error('清理状态时出错:', err)
+            wx.hideLoading()
+          }
         }
-      },
-      fail: function(error) {
-        console.error('保存基本信息失败:', error)
-        wx.showToast({
-          title: '保存失败: ' + (error.errMsg || '网络错误'),
-          icon: 'none'
-        })
-      },
-      complete: function() {
-        self.setData({ isSubmitting: false })
+      })
+    } catch (error) {
+      console.error('调用保存云函数时出错:', error)
+      
+      self.setData({ isSubmitting: false })
+      if (loadingShown) {
         wx.hideLoading()
       }
-    })
+      
+      wx.showToast({
+        title: '保存失败，请重试',
+        icon: 'none',
+        duration: 3000
+      })
+    }
   },
 
   // 页面生命周期管理
@@ -930,71 +1001,113 @@ const pageConfig = {
   // 创建邀请码
   createInvite: function() {
     const self = this
-    const { role, expiryDays, remark, isSubmitting } = self.data.newInvite
+    const { role, expiryDays, remark } = self.data.newInvite
     
-    // 防重复提交
+    // 防重复提交 - 增强检查
     if (self.data.isSubmitting) {
+      console.warn('正在处理中，请勿重复点击')
       return
     }
 
+    // 立即设置提交状态并显示loading
     self.setData({ isSubmitting: true })
-    wx.showLoading({ title: '生成邀请码中...' })
+    
+    // 使用 try-catch 确保 loading 配对
+    let loadingShown = false
+    try {
+      wx.showLoading({ 
+        title: '生成邀请码中...', 
+        mask: true  // 防止用户再次点击
+      })
+      loadingShown = true
 
-    wx.cloud.callFunction({
-      name: 'user-management',
-      data: {
-        action: 'create_invite',
-        role: role,
-        expiryDays: expiryDays,
-        remark: remark.trim()
-      },
-      success: function(result) {
-        if (result.result && result.result.success) {
-          // 在同一个弹窗中显示生成的邀请码
-          self.setData({
-            generatedInviteCode: result.result.data.inviteCode,
-            isInviteGenerated: true
-          })
-          
-          wx.showToast({
-            title: '邀请码生成成功！',
-            icon: 'success',
-            duration: 2000
-          })
-          
-          // 更新列表和统计
-          self.loadInviteList()
-          self.loadInviteStats()
-        } else {
-          let errorMessage = '生成失败'
-          
-          if (result.result) {
-            if (result.result.error === 'PERMISSION_DENIED') {
-              errorMessage = '权限不足，仅管理员可创建邀请码'
+      wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'create_invite',
+          role: role,
+          expiryDays: expiryDays,
+          remark: remark.trim()
+        },
+        success: function(result) {
+          try {
+            if (result.result && result.result.success) {
+              // 在同一个弹窗中显示生成的邀请码
+              self.setData({
+                generatedInviteCode: result.result.data.inviteCode,
+                isInviteGenerated: true
+              })
+              
+              wx.showToast({
+                title: '邀请码生成成功！',
+                icon: 'success',
+                duration: 2000
+              })
+              
+              // 更新列表和统计
+              self.loadInviteList()
+              self.loadInviteStats()
             } else {
-              errorMessage = result.result.message || result.result.error || '生成失败'
+              let errorMessage = '生成失败'
+              
+              if (result.result) {
+                if (result.result.error === 'PERMISSION_DENIED') {
+                  errorMessage = '权限不足，仅管理员可创建邀请码'
+                } else {
+                  errorMessage = result.result.message || result.result.error || '生成失败'
+                }
+              }
+              
+              wx.showToast({
+                title: errorMessage,
+                icon: 'none',
+                duration: 3000
+              })
             }
+          } catch (err) {
+            console.error('处理成功回调时出错:', err)
           }
-          
+        },
+        fail: function(error) {
+          console.error('创建邀请失败:', error)
           wx.showToast({
-            title: errorMessage,
+            title: '生成失败，请重试',
             icon: 'none',
             duration: 3000
           })
+        },
+        complete: function() {
+          try {
+            // 重置提交状态
+            self.setData({ isSubmitting: false })
+            
+            // 确保 hideLoading 被调用
+            if (loadingShown) {
+              wx.hideLoading()
+              loadingShown = false
+            }
+          } catch (err) {
+            console.error('清理状态时出错:', err)
+            // 即使出错也要确保 hideLoading
+            wx.hideLoading()
+          }
         }
-      },
-      fail: function(error) {
-        console.error('创建邀请失败:', error)
-        wx.showToast({
-          title: '生成失败，请重试',
-          icon: 'none'
-        })
-      },
-      complete: function() {
-        self.setData({ isSubmitting: false })
+      })
+    } catch (error) {
+      console.error('调用云函数时出错:', error)
+      
+      // 确保在任何情况下都清理状态
+      self.setData({ isSubmitting: false })
+      if (loadingShown) {
         wx.hideLoading()
       }
-    })
+      
+      wx.showToast({
+        title: '生成失败，请重试',
+        icon: 'none',
+        duration: 3000
+      })
+    }
   },
 
   // 复制邀请码
@@ -1100,51 +1213,82 @@ const pageConfig = {
       return
     }
 
-    // 显示加载状态
-    wx.showLoading({
-      title: '撤销中...',
-      mask: true
-    })
+    // 使用安全的 loading 管理
+    let loadingShown = false
+    try {
+      wx.showLoading({
+        title: '撤销中...',
+        mask: true
+      })
+      loadingShown = true
 
-    wx.cloud.callFunction({
-      name: 'user-management',
-      data: {
-        action: 'revoke_invite',
-        inviteId: self.data.selectedInvite._id,
-        reason: '管理员撤销'
-      },
-      success: function(result) {
-        if (result.result && result.result.success) {
-          wx.showToast({
-            title: '邀请已撤销',
-            icon: 'success'
-          })
-          
-          // 关闭详情弹窗
-          self.closeInviteDetail()
-          
-          // 从列表中移除该邀请
-          self.removeInviteFromList(self.data.selectedInvite._id)
-          
-          // 刷新统计数据
-          self.loadInviteStats()
-        } else {
+      wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'revoke_invite',
+          inviteId: self.data.selectedInvite._id,
+          reason: '管理员撤销'
+        },
+        success: function(result) {
+          try {
+            if (result.result && result.result.success) {
+              wx.showToast({
+                title: '邀请已撤销',
+                icon: 'success'
+              })
+              
+              // 关闭详情弹窗
+              self.closeInviteDetail()
+              
+              // 从列表中移除该邀请
+              self.removeInviteFromList(self.data.selectedInvite._id)
+              
+              // 刷新统计数据
+              self.loadInviteStats()
+            } else {
+              wx.showToast({
+                title: '撤销失败',
+                icon: 'none',
+                duration: 3000
+              })
+            }
+          } catch (err) {
+            console.error('处理撤销成功回调时出错:', err)
+          }
+        },
+        fail: function(error) {
+          console.error('撤销邀请失败:', error)
           wx.showToast({
             title: '撤销失败',
-            icon: 'none'
+            icon: 'none',
+            duration: 3000
           })
+        },
+        complete: function() {
+          try {
+            if (loadingShown) {
+              wx.hideLoading()
+              loadingShown = false
+            }
+          } catch (err) {
+            console.error('清理 loading 状态时出错:', err)
+            wx.hideLoading()
+          }
         }
-      },
-      fail: function() {
-        wx.showToast({
-          title: '撤销失败',
-          icon: 'none'
-        })
-      },
-      complete: function() {
+      })
+    } catch (error) {
+      console.error('调用撤销云函数时出错:', error)
+      
+      if (loadingShown) {
         wx.hideLoading()
       }
-    })
+      
+      wx.showToast({
+        title: '撤销失败，请重试',
+        icon: 'none',
+        duration: 3000
+      })
+    }
   },
 
   // 从列表中移除指定邀请
@@ -1163,41 +1307,76 @@ const pageConfig = {
   resendInvite: function() {
     const self = this
     
-    wx.showLoading({ title: '处理中...' })
+    // 使用安全的 loading 管理
+    let loadingShown = false
+    try {
+      wx.showLoading({ 
+        title: '处理中...', 
+        mask: true 
+      })
+      loadingShown = true
 
-    wx.cloud.callFunction({
-      name: 'user-management',
-      data: {
-        action: 'resend_invite',
-        inviteId: self.data.selectedInvite._id,
-        expiryDays: 7
-      },
-      success: function(result) {
-        if (result.result && result.result.success) {
-          wx.showToast({
-            title: '邀请已重新发送',
-            icon: 'success'
-          })
-          
-          self.closeInviteDetail()
-          self.loadInviteList()
-        } else {
+      wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'resend_invite',
+          inviteId: self.data.selectedInvite._id,
+          expiryDays: 7
+        },
+        success: function(result) {
+          try {
+            if (result.result && result.result.success) {
+              wx.showToast({
+                title: '邀请已重新发送',
+                icon: 'success'
+              })
+              
+              self.closeInviteDetail()
+              self.loadInviteList()
+            } else {
+              wx.showToast({
+                title: '发送失败',
+                icon: 'none',
+                duration: 3000
+              })
+            }
+          } catch (err) {
+            console.error('处理重发成功回调时出错:', err)
+          }
+        },
+        fail: function(error) {
+          console.error('重新发送邀请失败:', error)
           wx.showToast({
             title: '发送失败',
-            icon: 'none'
+            icon: 'none',
+            duration: 3000
           })
+        },
+        complete: function() {
+          try {
+            if (loadingShown) {
+              wx.hideLoading()
+              loadingShown = false
+            }
+          } catch (err) {
+            console.error('清理 loading 状态时出错:', err)
+            wx.hideLoading()
+          }
         }
-      },
-      fail: function() {
-        wx.showToast({
-          title: '发送失败',
-          icon: 'none'
-        })
-      },
-      complete: function() {
+      })
+    } catch (error) {
+      console.error('调用重发云函数时出错:', error)
+      
+      if (loadingShown) {
         wx.hideLoading()
       }
-    })
+      
+      wx.showToast({
+        title: '发送失败，请重试',
+        icon: 'none',
+        duration: 3000
+      })
+    }
   },
 
   // 邀请数据标准化

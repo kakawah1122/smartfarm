@@ -1,7 +1,7 @@
 // profile.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 import { checkPageAuth } from '../../utils/auth-guard'
-import { ROLES, getRoleName, getRoleColor, formatRoleDisplay } from '../../utils/role-config.js'
+import { ROLES, getRoleName, getRoleColor, formatRoleDisplay } from '../../utils/permission'
 
 // 获取全局应用实例
 const app = getApp<IAppOption>()
