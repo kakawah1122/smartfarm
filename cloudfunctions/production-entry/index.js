@@ -64,7 +64,7 @@ async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
     const batchSize = 20
     for (let i = 0; i < batchTodos.length; i += batchSize) {
       const batch = batchTodos.slice(i, i + batchSize)
-      await db.collection('batch_todos').add({
+      await db.collection('task_batch_schedules').add({
         data: batch
       })
       console.log(`已插入第 ${Math.floor(i/batchSize) + 1} 批，共 ${batch.length} 个任务`)
@@ -84,6 +84,61 @@ function generateBatchNumber() {
   const day = now.getDate().toString().padStart(2, '0')
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
   return `E${year}${month}${day}${random}`
+}
+
+// 修复批次任务 - 为现有批次重新创建完整的任务
+async function fixBatchTasks(event, wxContext) {
+  const { batchId } = event
+  const openid = wxContext.OPENID
+  
+  try {
+    console.log(`开始修复批次 ${batchId} 的任务...`)
+    
+    // 获取批次信息
+    const batchResult = await db.collection('prod_batch_entries').doc(batchId).get()
+    if (!batchResult.data) {
+      throw new Error('批次不存在')
+    }
+    
+    const batch = batchResult.data
+    console.log(`找到批次: ${batch.batchNumber}`)
+    
+    // 删除现有的不完整任务
+    const deleteResult = await db.collection('task_batch_schedules').where({
+      batchId,
+      userId: openid
+    }).remove()
+    
+    console.log(`删除了 ${deleteResult.stats.removed} 个旧任务`)
+    
+    // 重新创建完整的任务
+    const todoCount = await createBatchTodos(
+      batchId,
+      batch.batchNumber,
+      batch.entryDate,
+      openid
+    )
+    
+    console.log(`为批次 ${batch.batchNumber} 重新创建了 ${todoCount} 个任务`)
+    
+    return {
+      success: true,
+      data: {
+        batchId,
+        batchNumber: batch.batchNumber,
+        oldTaskCount: deleteResult.stats.removed,
+        newTaskCount: todoCount
+      },
+      message: `批次 ${batch.batchNumber} 任务修复成功，共创建 ${todoCount} 个任务`
+    }
+  } catch (error) {
+    console.error('修复批次任务失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: `批次任务修复失败: ${error.message}`
+    }
+  }
 }
 
 exports.main = async (event, context) => {
@@ -106,6 +161,8 @@ exports.main = async (event, context) => {
         return await getEntryDetail(event, wxContext)
       case 'getActiveBatches':
         return await getActiveBatches(event, wxContext)
+      case 'fixBatchTasks':
+        return await fixBatchTasks(event, wxContext)
       default:
         throw new Error('无效的操作类型')
     }
@@ -128,7 +185,7 @@ async function listEntryRecords(event, wxContext) {
     breed = null 
   } = event
   
-  let query = db.collection('entry_records')
+  let query = db.collection('prod_batch_entries')
   
   // 构建查询条件
   const where = {}
@@ -196,7 +253,7 @@ async function createEntryRecord(event, wxContext) {
   // 获取用户信息
   let userName = '未知';
   try {
-    const userInfo = await db.collection('users').where({
+    const userInfo = await db.collection('wx_users').where({
       _openid: wxContext.OPENID
     }).get();
     
@@ -229,7 +286,7 @@ async function createEntryRecord(event, wxContext) {
     updateTime: now
   }
   
-  const result = await db.collection('entry_records').add({
+  const result = await db.collection('prod_batch_entries').add({
     data: newRecord
   })
   
@@ -270,7 +327,7 @@ async function updateEntryRecord(event, wxContext) {
   }
   
   // 检查记录是否存在且有权限修改
-  const existingRecord = await db.collection('entry_records').doc(recordId).get()
+  const existingRecord = await db.collection('prod_batch_entries').doc(recordId).get()
   
   if (!existingRecord.data.length) {
     throw new Error('记录不存在')
@@ -279,7 +336,7 @@ async function updateEntryRecord(event, wxContext) {
   // 如果要更新operator字段，获取用户信息
   if (updateData.operator !== undefined) {
     try {
-      const userInfo = await db.collection('users').where({
+      const userInfo = await db.collection('wx_users').where({
         _openid: wxContext.OPENID
       }).get();
       
@@ -317,7 +374,7 @@ async function updateEntryRecord(event, wxContext) {
     updateFields.totalAmount = quantity * unitPrice
   }
   
-  await db.collection('entry_records').doc(recordId).update({
+  await db.collection('prod_batch_entries').doc(recordId).update({
     data: updateFields
   })
   
@@ -336,13 +393,13 @@ async function deleteEntryRecord(event, wxContext) {
   }
   
   // 检查是否有权限删除（只能删除自己创建的记录）
-  const record = await db.collection('entry_records').doc(recordId).get()
+  const record = await db.collection('prod_batch_entries').doc(recordId).get()
   
   if (!record.data.length) {
     throw new Error('记录不存在')
   }
   
-  await db.collection('entry_records').doc(recordId).remove()
+  await db.collection('prod_batch_entries').doc(recordId).remove()
   
   return {
     success: true,
@@ -354,7 +411,7 @@ async function deleteEntryRecord(event, wxContext) {
 async function getEntryStats(event, wxContext) {
   const { dateRange } = event
   
-  let query = db.collection('entry_records')
+  let query = db.collection('prod_batch_entries')
   
   // 日期范围过滤
   if (dateRange && dateRange.start && dateRange.end) {
@@ -405,7 +462,7 @@ async function getRecentTrend(dateRange) {
   const endDate = new Date()
   const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000)
   
-  const records = await db.collection('entry_records')
+  const records = await db.collection('prod_batch_entries')
     .where({
       entryDate: _.gte(startDate.toISOString().split('T')[0])
                  .and(_.lte(endDate.toISOString().split('T')[0]))
@@ -433,7 +490,7 @@ async function getEntryDetail(event, wxContext) {
     throw new Error('缺少记录ID')
   }
   
-  const record = await db.collection('entry_records').doc(recordId).get()
+  const record = await db.collection('prod_batch_entries').doc(recordId).get()
   
   if (!record.data.length) {
     throw new Error('记录不存在')
@@ -445,7 +502,7 @@ async function getEntryDetail(event, wxContext) {
   // 如果操作员为空或为“未知”，尝试根据记录创建者补齐
   if (!resolvedOperator || resolvedOperator === '未知') {
     try {
-      const userRes = await db.collection('users').where({ _openid: data.userId }).get()
+      const userRes = await db.collection('wx_users').where({ _openid: data.userId }).get()
       if (userRes.data && userRes.data.length > 0) {
         const u = userRes.data[0]
         resolvedOperator = u.name || u.nickname || u.nickName || '未知'
@@ -453,7 +510,7 @@ async function getEntryDetail(event, wxContext) {
       
       // 如果成功解析出有效操作员，回写数据库，避免下次再计算
       if (resolvedOperator && resolvedOperator !== '未知') {
-        await db.collection('entry_records').doc(recordId).update({
+        await db.collection('prod_batch_entries').doc(recordId).update({
           data: {
             operator: resolvedOperator,
             updateTime: new Date()
@@ -481,7 +538,7 @@ async function getActiveBatches(event, wxContext) {
   try {
     // 先查询所有该用户的入栏记录，不加过多限制条件，便于调试
     // 注意：入栏记录使用的是 userId 字段，不是 _openid
-    const allResult = await db.collection('entry_records')
+    const allResult = await db.collection('prod_batch_entries')
       .where({
         userId: wxContext.OPENID  // 修正字段名
       })

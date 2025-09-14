@@ -1608,3 +1608,255 @@ page {
   --shadow-base: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
 }
+
+/* ========== 疫苗接种表单样式（优化版） ========== */
+
+.vaccine-form-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  
+  .form-section {
+    margin-bottom: 32rpx;
+    
+    .section-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      margin-bottom: 8rpx;
+      padding: 24rpx 32rpx 16rpx 32rpx;
+      background: rgba(0, 82, 217, 0.04);
+      border-left: 4rpx solid var(--td-brand-color, #0052d9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10rpx);
+      -webkit-backdrop-filter: blur(10rpx);
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    }
+    
+    // 表单行 - 类似任务详情的 info-row 样式
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 32rpx;
+      min-height: 88rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      // 标签样式 - 类似 info-label
+      .form-label {
+        flex-shrink: 0;
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+        margin-right: 24rpx;
+        
+        // 处理必填星号（通过JavaScript动态添加）
+        &.required::after {
+          content: " *";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+        }
+      }
+      
+      // 输入框样式 - 类似 info-value
+      .form-input, .form-textarea {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        background: #ffffff;
+        text-align: right;
+        min-height: 52rpx;
+        
+        &:focus {
+          border-color: var(--td-brand-color, #0052d9);
+          box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1);
+          outline: none;
+        }
+        
+        &::placeholder {
+          color: #cccccc;
+          text-align: right;
+          font-size: 28rpx;
+        }
+      }
+      
+      // 文本域特殊处理
+      .form-textarea {
+        min-height: 120rpx;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      // 选择器样式 - 类似 info-value
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        background: #ffffff;
+        min-height: 52rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        position: relative;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+      
+      // 只读字段样式 - 突出显示金额等重要信息
+      .readonly-input {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        background: rgba(0, 82, 217, 0.05);
+        color: var(--td-brand-color, #0052d9);
+        border-radius: 8rpx;
+        font-size: 32rpx;
+        font-weight: 600;
+        text-align: right;
+        line-height: 1.4;
+        border: 1rpx solid rgba(0, 82, 217, 0.2);
+      }
+      
+      // 描述和备注行特殊处理
+      &.textarea-row {
+        align-items: flex-start;
+        
+        .form-label {
+          margin-top: 16rpx;
+        }
+      }
+    }
+  }
+  
+  // 错误提示样式
+  .form-errors {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(227, 77, 89, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid var(--td-error-color, #e34d59);
+    
+    .error-text {
+      display: block;
+      color: var(--td-error-color, #e34d59);
+      font-size: 26rpx;
+      line-height: 1.5;
+      margin-bottom: 8rpx;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      &::before {
+        content: "• ";
+        color: var(--td-error-color, #e34d59);
+        font-weight: 600;
+        margin-right: 4rpx;
+      }
+    }
+  }
+}
+
+/* ========== 异常反应处理弹窗样式 ========== */
+
+.adverse-reaction-content {
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+  
+  .info-card {
+    margin: 0 var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
+    background: #f0f9ff;
+    border: 1rpx solid #b3d8ff;
+    border-radius: var(--radius-lg);
+    
+    .card-content {
+      padding: var(--spacing-lg);
+      
+      .info-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: var(--spacing-base);
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .info-label {
+          font-size: var(--font-size-base);
+          color: var(--color-text-secondary);
+          margin-right: var(--spacing-lg);
+        }
+        
+        .info-value {
+          font-size: var(--font-size-base);
+          color: var(--color-text-primary);
+          font-weight: var(--font-weight-medium);
+        }
+      }
+    }
+  }
+}
+
+/* ========== 响应式适配 ========== */
+
+// 响应式适配 - 小屏幕优化
+@media (max-width: 750rpx) {
+  .vaccine-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .readonly-input, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .form-textarea {
+          &::placeholder {
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+}

@@ -252,10 +252,10 @@
     title="任务详情"
     show-close="{{true}}"
     show-actions="{{true}}"
-    confirm-text="{{selectedTask && (selectedTask.completed || !selectedTask.canComplete) ? '确定' : '完成任务'}}"
+    confirm-text="{{selectedTask && selectedTask.completed ? (selectedTask.isVaccineTask ? '查看接种记录' : '确定') : (selectedTask && !selectedTask.canComplete) ? '确定' : (selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : '完成任务')}}"
     cancel-text="{{selectedTask && (selectedTask.completed || !selectedTask.canComplete) ? '' : '关闭'}}"
     bind:close="closeTaskDetailPopup"
-    bind:confirm="{{selectedTask && (selectedTask.completed || !selectedTask.canComplete) ? 'closeTaskDetailPopup' : 'completeTaskFromPopup'}}"
+    bind:confirm="{{selectedTask && selectedTask.completed && selectedTask.isVaccineTask ? 'viewVaccineRecord' : selectedTask && selectedTask.completed ? 'closeTaskDetailPopup' : selectedTask && !selectedTask.canComplete ? 'closeTaskDetailPopup' : (selectedTask && selectedTask.isVaccineTask ? 'openVaccineForm' : 'completeTaskFromPopup')}}"
     bind:cancel="closeTaskDetailPopup"
     bind:visiblechange="onTaskDetailPopupChange"
   >
@@ -325,6 +325,218 @@
             <text class="info-label">注意事项：</text>
             <text class="info-value note-text important-text">{{selectedTask.notes}}</text>
           </view>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 疫苗接种表单弹窗 -->
+  <bottom-popup
+    visible="{{showVaccineFormPopup}}"
+    title="疫苗接种信息"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="完成接种"
+    cancel-text="取消"
+    bind:close="closeVaccineFormPopup"
+    bind:confirm="submitVaccineForm"
+    bind:cancel="closeVaccineFormPopup"
+  >
+    <view class="vaccine-form-content">
+      <!-- 兽医信息 -->
+      <view class="form-section">
+        <view class="section-title">兽医信息</view>
+        <view class="form-row">
+          <text class="form-label required">执行兽医</text>
+          <input class="form-input" 
+                 placeholder="请输入兽医姓名"
+                 value=""
+                 data-field="veterinarianName"
+                 bindinput="onVaccineFormInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">联系电话</text>
+          <input class="form-input" 
+                 placeholder="请输入联系电话"
+                 value=""
+                 data-field="veterinarianPhone"
+                 bindinput="onVaccineFormInput" />
+        </view>
+      </view>
+
+      <!-- 疫苗信息 -->
+      <view class="form-section">
+        <view class="section-title">疫苗信息</view>
+        <view class="form-row">
+          <text class="form-label required">疫苗名称</text>
+          <input class="form-input" 
+                 placeholder="请输入疫苗名称"
+                 value=""
+                 data-field="vaccineName"
+                 bindinput="onVaccineFormInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">生产厂家</text>
+          <input class="form-input" 
+                 placeholder="请输入生产厂家"
+                 value=""
+                 data-field="manufacturer"
+                 bindinput="onVaccineFormInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">批次号</text>
+          <input class="form-input" 
+                 placeholder="请输入疫苗批次号"
+                 value=""
+                 data-field="batchNumber"
+                 bindinput="onVaccineFormInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label required">接种剂量</text>
+          <input class="form-input" 
+                 placeholder="请输入接种剂量"
+                 value=""
+                 data-field="dosage"
+                 bindinput="onVaccineFormInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label required">接种数量</text>
+          <input class="form-input" 
+                 type="number"
+                 placeholder="请输入接种数量"
+                 value=""
+                 data-field="vaccineCount"
+                 bindinput="onVaccineNumberInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">接种方式</text>
+          <picker mode="selector" 
+                  range="{{vaccineRouteOptions}}"
+                  range-key="label"
+                  value="0"
+                  bindchange="onVaccineRouteChange">
+            <view class="form-input picker-input">
+              {{vaccineRouteOptions[vaccineFormData.routeIndex].label}}
+            </view>
+          </picker>
+        </view>
+      </view>
+
+      <!-- 费用信息 -->
+      <view class="form-section">
+        <view class="section-title">费用信息</view>
+        <view class="form-row">
+          <text class="form-label required">疫苗费用</text>
+          <input class="form-input" 
+                 type="digit"
+                 placeholder="请输入疫苗费用"
+                 value=""
+                 data-field="vaccineCost"
+                 bindinput="onVaccineNumberInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">兽医费用</text>
+          <input class="form-input" 
+                 type="digit"
+                 placeholder="请输入兽医费用"
+                 value=""
+                 data-field="veterinaryCost"
+                 bindinput="onVaccineNumberInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">其他费用</text>
+          <input class="form-input" 
+                 type="digit"
+                 placeholder="请输入其他费用"
+                 value=""
+                 data-field="otherCost"
+                 bindinput="onVaccineNumberInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">总费用</text>
+          <view class="form-input readonly-input">{{vaccineFormData.totalCostFormatted}}</view>
+        </view>
+      </view>
+
+      <!-- 备注和异常记录 -->
+      <view class="form-section">
+        <view class="section-title">备注信息</view>
+        <view class="form-row textarea-row">
+          <textarea class="form-textarea" 
+                    placeholder="请输入接种备注信息"
+                    value=""
+                    data-field="notes"
+                    bindinput="onVaccineFormInput"
+                    maxlength="200" />
+        </view>
+      </view>
+
+      <!-- 表单验证错误提示 -->
+      <view wx:if="{{vaccineFormErrors && Object.keys(vaccineFormErrors).length > 0}}" class="form-errors">
+        <view wx:for="{{Object.keys(vaccineFormErrors)}}" wx:key="*this" class="error-item">
+          <text class="error-text">{{vaccineFormErrors[item]}}</text>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 异常反应处理弹窗 -->
+  <bottom-popup
+    visible="{{showAdverseReactionPopup}}"
+    title="异常反应处理"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="记录异常"
+    cancel-text="取消"
+    bind:close="closeAdverseReactionPopup"
+    bind:confirm="submitAdverseReactionRecord"
+    bind:cancel="closeAdverseReactionPopup"
+  >
+    <view class="adverse-reaction-content">
+      <view class="info-card">
+        <view class="card-content">
+          <view class="info-row">
+            <text class="info-label">异常数量：</text>
+            <text class="info-value">{{adverseReactionData.count}}只</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">异常症状：</text>
+            <text class="info-value">{{adverseReactionData.symptoms}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="form-section">
+        <view class="section-title">补充信息</view>
+        <view class="form-row">
+          <text class="form-label">症状等级</text>
+          <picker mode="selector" 
+                  range="{{severityOptions}}"
+                  range-key="label"
+                  value="{{adverseReactionData.severityIndex}}"
+                  bindchange="onSeverityChange">
+            <view class="form-input picker-input">
+              {{severityOptions[adverseReactionData.severityIndex].label}}
+            </view>
+          </picker>
+        </view>
+        <view class="form-row">
+          <text class="form-label">处理措施</text>
+          <textarea class="form-textarea" 
+                    placeholder="请输入已采取的处理措施"
+                    value="{{adverseReactionData.treatment}}"
+                    data-field="treatment"
+                    bindinput="onAdverseReactionInput"
+                    maxlength="200" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">后续观察</text>
+          <textarea class="form-textarea" 
+                    placeholder="请输入后续观察要点"
+                    value="{{adverseReactionData.followUp}}"
+                    data-field="followUp"
+                    bindinput="onAdverseReactionInput"
+                    maxlength="200" />
         </view>
       </view>
     </view>

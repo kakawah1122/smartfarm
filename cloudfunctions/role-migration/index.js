@@ -64,7 +64,7 @@ async function verifyAdminPermission(openid) {
   try {
     if (!openid) return false
 
-    const userResult = await db.collection('users').where({
+    const userResult = await db.collection('wx_users').where({
       _openid: openid
     }).get()
 
@@ -81,7 +81,7 @@ async function verifyAdminPermission(openid) {
 async function analyzeRoles(event, wxContext) {
   try {
     // 获取所有用户的角色分布
-    const usersResult = await db.collection('users').get()
+    const usersResult = await db.collection('wx_users').get()
     const users = usersResult.data
     
     const roleStats = {}
@@ -145,7 +145,7 @@ async function migrateRoles(event, wxContext) {
   
   try {
     // 获取所有需要迁移的用户
-    const usersResult = await db.collection('users').get()
+    const usersResult = await db.collection('wx_users').get()
     const users = usersResult.data
     
     const migrationResults = []
@@ -160,7 +160,7 @@ async function migrateRoles(event, wxContext) {
         try {
           if (!dryRun) {
             // 实际执行更新
-            await db.collection('users').doc(user._id).update({
+            await db.collection('wx_users').doc(user._id).update({
               data: {
                 role: newRole,
                 oldRole: currentRole, // 保留旧角色记录
@@ -239,7 +239,7 @@ async function migrateRoles(event, wxContext) {
 async function verifyMigration(event, wxContext) {
   try {
     // 获取所有用户的角色分布
-    const usersResult = await db.collection('users').get()
+    const usersResult = await db.collection('wx_users').get()
     const users = usersResult.data
     
     const newRoleStats = {}

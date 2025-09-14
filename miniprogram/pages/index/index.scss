@@ -1173,3 +1173,135 @@ page {
 .todo-item.completed .todo-tag {
   opacity: 0.7;
 }
+
+/* ========== 新增待办样式 ========== */
+
+/* 任务计数徽章 */
+.todo-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-full);
+  margin: 0 var(--spacing-base);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 加载状态 */
+.todo-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4xl) var(--spacing-xl);
+  gap: var(--spacing-lg);
+  
+  .loading-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
+}
+
+/* 空状态 */
+.todo-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4xl) var(--spacing-xl);
+  text-align: center;
+  
+  .empty-icon {
+    font-size: 80rpx;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.6;
+  }
+  
+  .empty-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .empty-desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-base);
+  }
+}
+
+/* 改进的任务内容布局 */
+.todo-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 4rpx;
+}
+
+.todo-batch {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: 1.2;
+  font-weight: var(--font-weight-regular);
+}
+
+/* 优化卡片头部布局 */
+.todo-card .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+  
+  .card-title {
+    flex: 1;
+    margin-right: var(--spacing-base);
+  }
+  
+  .todo-count {
+    order: 2;
+  }
+  
+  .view-all-btn {
+    order: 3;
+    flex-shrink: 0;
+  }
+}
+
+/* 响应式优化 */
+@media screen and (max-width: 480px) {
+  .todo-card .card-header {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    
+    .todo-count {
+      order: 1;
+      margin: 0;
+    }
+    
+    .view-all-btn {
+      order: 2;
+    }
+  }
+  
+  .todo-content {
+    gap: 2rpx;
+  }
+  
+  .todo-batch {
+    font-size: 22rpx;
+  }
+}
+
+/* 调试功能样式 */
+.debug-actions {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  justify-content: center;
+  
+  .debug-btn {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+  }
+}

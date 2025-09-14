@@ -120,7 +120,7 @@ async function getUserRoles(openid) {
 
 // 获取角色权限
 async function getRolePermissions(roleCode) {
-  const result = await db.collection('roles')
+  const result = await db.collection('sys_roles')
     .where({
       roleCode,
       isActive: true
@@ -215,7 +215,7 @@ async function getResourceBatch(resourceId, collection) {
 // 获取用户部门
 async function getUserDepartment(openid) {
   try {
-    const result = await db.collection('users')
+    const result = await db.collection('wx_users')
       .where({ openid })
       .field({ department: true })
       .get()

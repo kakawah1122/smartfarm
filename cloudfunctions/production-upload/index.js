@@ -97,7 +97,7 @@ async function saveFileInfo(event, wxContext) {
     updateTime: now
   }
   
-  const result = await db.collection('file_records').add({
+  const result = await db.collection('file_static_records').add({
     data: fileRecord
   })
   
@@ -120,7 +120,7 @@ async function deleteFile(event, wxContext) {
   }
   
   // 获取文件记录
-  const fileRecord = await db.collection('file_records').doc(fileId).get()
+  const fileRecord = await db.collection('file_static_records').doc(fileId).get()
   
   if (!fileRecord.data.length) {
     throw new Error('文件记录不存在')
@@ -135,7 +135,7 @@ async function deleteFile(event, wxContext) {
     })
     
     // 删除数据库记录
-    await db.collection('file_records').doc(fileId).remove()
+    await db.collection('file_static_records').doc(fileId).remove()
     
     return {
       success: true,
@@ -143,7 +143,7 @@ async function deleteFile(event, wxContext) {
     }
   } catch (error) {
     // 如果云存储删除失败，至少要软删除数据库记录
-    await db.collection('file_records').doc(fileId).update({
+    await db.collection('file_static_records').doc(fileId).update({
       data: {
         isActive: false,
         updateTime: new Date()
@@ -168,7 +168,7 @@ async function getFileList(event, wxContext) {
     keyword = null 
   } = event
   
-  let query = db.collection('file_records').where({ isActive: true })
+  let query = db.collection('file_static_records').where({ isActive: true })
   
   // 构建查询条件
   const where = { isActive: true }

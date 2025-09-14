@@ -21,7 +21,7 @@ exports.main = async (event, context) => {
       try {
         console.log('检查用户是否存在，OPENID:', OPENID)
         
-        const userQuery = await db.collection('users').where({
+        const userQuery = await db.collection('wx_users').where({
           _openid: OPENID
         }).get()
         
@@ -83,7 +83,7 @@ exports.main = async (event, context) => {
     // 检查是否已有用户存在，如果没有则第一个用户自动成为超级管理员
     let isFirstUser = false
     try {
-      const allUsersQuery = await db.collection('users').count()
+      const allUsersQuery = await db.collection('wx_users').count()
       isFirstUser = allUsersQuery.total === 0
       console.log('用户总数检查:', { total: allUsersQuery.total, isFirstUser })
     } catch (countError) {
@@ -160,7 +160,7 @@ exports.main = async (event, context) => {
       let userQuery = null
       
       try {
-        userQuery = await db.collection('users').where({
+        userQuery = await db.collection('wx_users').where({
           _openid: OPENID
         }).get()
       } catch (queryError) {
@@ -176,7 +176,7 @@ exports.main = async (event, context) => {
         // 用户不存在，创建新用户记录
         
         try {
-          const createResult = await db.collection('users').add({
+          const createResult = await db.collection('wx_users').add({
             data: userInfo
           })
           
@@ -199,7 +199,7 @@ exports.main = async (event, context) => {
         user = userQuery.data[0]
         
         try {
-          await db.collection('users').doc(user._id).update({
+          await db.collection('wx_users').doc(user._id).update({
             data: {
               lastLoginTime: new Date(),
               loginCount: db.command.inc(1)

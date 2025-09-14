@@ -19,7 +19,7 @@ function generateFinanceId(prefix) {
 // 验证用户财务权限
 async function validateFinancePermission(openid, action) {
   try {
-    const user = await db.collection('users').where({ _openid: openid }).get()
+    const user = await db.collection('wx_users').where({ _openid: openid }).get()
     if (user.data.length === 0) return false
     
     const userRole = user.data[0].role || 'employee'
@@ -40,7 +40,7 @@ async function validateFinancePermission(openid, action) {
 // 计算成本统计
 async function calculateCostStats(dateRange) {
   try {
-    let query = db.collection('cost_records').where({ isDeleted: false })
+    let query = db.collection('finance_cost_records').where({ isDeleted: false })
     
     if (dateRange && dateRange.start && dateRange.end) {
       query = query.where({
@@ -94,7 +94,7 @@ async function calculateCostStats(dateRange) {
 async function calculateRevenueStats(dateRange) {
   try {
     // 从出栏记录获取销售收入
-    let exitQuery = db.collection('exit_records')
+    let exitQuery = db.collection('prod_batch_exits')
       .where({ 
         isDeleted: false,
         exitReason: 'sale'
@@ -113,7 +113,7 @@ async function calculateRevenueStats(dateRange) {
     }, 0)
     
     // 从收入记录获取其他收入
-    let revenueQuery = db.collection('revenue_records').where({ isDeleted: false })
+    let revenueQuery = db.collection('finance_revenue_records').where({ isDeleted: false })
     
     if (dateRange && dateRange.start && dateRange.end) {
       revenueQuery = revenueQuery.where({
@@ -252,7 +252,7 @@ async function createCostRecord(event, wxContext) {
     isDeleted: false
   }
 
-  await db.collection('cost_records').add({ data: record })
+  await db.collection('finance_cost_records').add({ data: record })
 
   return {
     success: true,
@@ -298,7 +298,7 @@ async function createRevenueRecord(event, wxContext) {
     isDeleted: false
   }
 
-  await db.collection('revenue_records').add({ data: record })
+  await db.collection('finance_revenue_records').add({ data: record })
 
   return {
     success: true,
@@ -416,13 +416,13 @@ async function generateFinancialReport(event, wxContext) {
   
   // 获取详细的成本和收入记录
   const [costRecords, revenueRecords] = await Promise.all([
-    db.collection('cost_records').where({ 
+    db.collection('finance_cost_records').where({ 
       isDeleted: false,
       ...(dateRange && dateRange.start && dateRange.end ? {
         createTime: _.gte(dateRange.start).and(_.lte(dateRange.end))
       } : {})
     }).get(),
-    db.collection('revenue_records').where({ 
+    db.collection('finance_revenue_records').where({ 
       isDeleted: false,
       ...(dateRange && dateRange.start && dateRange.end ? {
         createTime: _.gte(dateRange.start).and(_.lte(dateRange.end))
@@ -444,7 +444,7 @@ async function generateFinancialReport(event, wxContext) {
   }
 
   // 保存报表记录
-  await db.collection('financial_reports').add({ data: report })
+  await db.collection('finance_reports').add({ data: report })
 
   return {
     success: true,
@@ -462,7 +462,7 @@ async function getCostBreakdown(event, wxContext) {
     throw new Error('无权限查看财务数据')
   }
 
-  let query = db.collection('cost_records').where({ isDeleted: false })
+  let query = db.collection('finance_cost_records').where({ isDeleted: false })
   
   if (dateRange && dateRange.start && dateRange.end) {
     query = query.where({
@@ -518,7 +518,7 @@ async function listCostRecords(event, wxContext) {
     throw new Error('无权限查看财务数据')
   }
 
-  let query = db.collection('cost_records').where({ isDeleted: false })
+  let query = db.collection('finance_cost_records').where({ isDeleted: false })
   
   if (costType) query = query.where({ costType })
   if (dateRange && dateRange.start && dateRange.end) {
@@ -551,7 +551,7 @@ async function listRevenueRecords(event, wxContext) {
     throw new Error('无权限查看财务数据')
   }
 
-  let query = db.collection('revenue_records').where({ isDeleted: false })
+  let query = db.collection('finance_revenue_records').where({ isDeleted: false })
   
   if (revenueType) query = query.where({ revenueType })
   if (dateRange && dateRange.start && dateRange.end) {

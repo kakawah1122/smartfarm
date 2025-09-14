@@ -108,8 +108,8 @@ const COST_CONTROL = {
 class AIModelManager {
   constructor() {
     this.db = cloud.database()
-    this.usageCollection = this.db.collection('ai_usage')
-    this.cacheCollection = this.db.collection('ai_cache')
+    this.usageCollection = this.db.collection('sys_ai_usage')
+    this.cacheCollection = this.db.collection('sys_ai_cache')
   }
 
   // 智能模型选择

@@ -76,14 +76,14 @@ async function createNotification(event, wxContext) {
     let recipients = []
     if (targetUsers === 'all') {
       // 发送给所有用户
-      const allUsers = await db.collection('users')
+      const allUsers = await db.collection('wx_users')
         .where({ isActive: true })
         .field({ _openid: true })
         .get()
       recipients = allUsers.data.map(user => user._openid)
     } else if (targetUsers === 'admins') {
       // 发送给管理员
-      const adminUsers = await db.collection('users')
+      const adminUsers = await db.collection('wx_users')
         .where({ 
           isActive: true,
           role: _.in(['admin', 'manager', 'operator'])
@@ -122,7 +122,7 @@ async function createNotification(event, wxContext) {
     }
     
     // 保存通知
-    await db.collection('notifications').add({
+    await db.collection('sys_notifications').add({
       data: notification
     })
     
@@ -204,7 +204,7 @@ async function getUserNotifications(event, wxContext) {
     }
     
     // 获取通知详情
-    let notificationsQuery = db.collection('notifications')
+    let notificationsQuery = db.collection('sys_notifications')
       .where({ 
         _id: _.in(notificationIds),
         isActive: true,
@@ -287,7 +287,7 @@ async function markAsRead(event, wxContext) {
       })
     
     // 同时更新通知表的已读用户列表
-    await db.collection('notifications')
+    await db.collection('sys_notifications')
       .doc(notificationId)
       .update({
         data: {
@@ -427,14 +427,14 @@ async function cleanOldNotifications(event, wxContext) {
     const now = new Date()
     
     // 删除过期通知
-    await db.collection('notifications')
+    await db.collection('sys_notifications')
       .where({
         expireTime: _.lt(now)
       })
       .remove()
     
     // 删除对应的用户通知关联
-    const expiredNotifications = await db.collection('notifications')
+    const expiredNotifications = await db.collection('sys_notifications')
       .where({
         expireTime: _.lt(now)
       })

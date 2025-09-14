@@ -32,7 +32,7 @@ Component({
       wx.navigateBack({
         delta: 1,
         success: () => {
-          console.log('返回上一页成功')
+          // 返回上一页成功
         },
         fail: (error) => {
           console.log('返回上一页失败，尝试跳转到首页:', error)
@@ -40,7 +40,7 @@ Component({
           wx.switchTab({
             url: '/pages/index/index',
             success: () => {
-              console.log('跳转到首页成功')
+              // 跳转到首页成功
             },
             fail: (tabError) => {
               console.error('跳转到首页也失败:', tabError)

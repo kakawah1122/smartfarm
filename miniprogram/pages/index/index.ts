@@ -5,6 +5,7 @@ import {
   TASK_TYPES, 
   PRIORITY_LEVELS 
 } from '../../utils/breeding-schedule'
+import CloudApi from '../../utils/cloud-api'
 
 Page({
   data: {
@@ -46,6 +47,7 @@ Page({
     
     // 待办事项
     todoList: [],
+    todoLoading: false,
     
     // 弹窗相关状态
     showTaskDetailPopup: false,
@@ -480,13 +482,16 @@ Page({
     })
   },
 
-  // 获取待办事项
-  getTodoListData() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true)
-      }, 200)
-    })
+  // 获取待办事项 - 直接调用真实数据加载
+  async getTodoListData() {
+    console.log('🔄 首页getTodoListData开始')
+    try {
+      await this.loadTodayBreedingTasks()
+      return true
+    } catch (error) {
+      console.error('❌ 首页获取待办事项失败:', error)
+      return false
+    }
   },
 
   // 刷新天气数据
@@ -623,15 +628,13 @@ Page({
     }
   },
 
-  // 加载今日养殖任务 - 参考详情页的分组逻辑获取所有活跃批次的任务
+  // 加载今日养殖任务 - 与breeding-todo页面保持一致的逻辑
   async loadTodayBreedingTasks() {
+    console.log('🔄 首页加载今日待办任务...')
+    
+    this.setData({ todoLoading: true })
+
     try {
-      // 获取本地完成状态
-      const localCompletions = this.getLocalTaskCompletions()
-      
-      // 检查全局状态更新
-      const globalUpdates = getApp<any>().globalData?.taskStatusUpdates || {}
-      
       // 获取活跃批次
       const batchResult = await wx.cloud.callFunction({
         name: 'production-entry',
@@ -639,84 +642,155 @@ Page({
       })
 
       const activeBatches = batchResult.result?.data || []
+      console.log('📊 找到活跃批次:', activeBatches.length, '个')
       
       if (activeBatches.length === 0) {
-        this.setData({ todoList: [] })
+        this.setData({ 
+          todoList: [],
+          todoLoading: false
+        })
         return
       }
 
-      // 参考详情页逻辑：为每个活跃批次获取今日任务
+      // 获取所有批次的今日任务
       let allTodos: any[] = []
       
       for (const batch of activeBatches) {
-        
-        // 计算日龄
-        const dayAge = this.calculateCurrentAge(batch.entryDate)
-        
-        // 调用云函数获取该批次的今日任务
-        const result = await wx.cloud.callFunction({
-          name: 'breeding-todo',
-          data: {
-            action: 'getTodayTasks',
-            batchId: batch.id,
-            dayAge: dayAge
+        try {
+          const dayAge = this.calculateCurrentAge(batch.entryDate)
+          console.log(`📅 批次 ${batch.batchNumber || batch.id} 当前日龄: ${dayAge}`)
+          
+          // 使用与breeding-todo页面相同的CloudApi方法
+          const result = await CloudApi.getTodos(batch.id, dayAge)
+          
+          if (result.success && result.data) {
+            const tasks = result.data
+            console.log(`✅ 批次 ${batch.batchNumber || batch.id} 获取到任务: ${tasks.length} 个`)
+            
+            // 转换为首页显示格式 
+            const formattedTasks = tasks.map((task: any) => {
+              const taskId = task._id || task.id || task.taskId
+              
+              // 检查本地和全局的完成状态
+              const localCompletions = this.getLocalTaskCompletions()
+              const globalUpdates = getApp<any>().globalData?.taskStatusUpdates || {}
+              
+              let isCompleted = false
+              let completedDate = ''
+              
+              if (localCompletions[taskId]) {
+                isCompleted = localCompletions[taskId].completed
+                completedDate = localCompletions[taskId].completedDate
+              } else if (globalUpdates[taskId]) {
+                isCompleted = globalUpdates[taskId].completed
+              } else {
+                isCompleted = task.completed || false
+                completedDate = task.completedDate || ''
+              }
+              
+              return {
+                id: taskId,
+                content: task.title,
+                title: task.title,
+                priority: this.mapPriorityToTheme(task.priority),
+                priorityText: PRIORITY_LEVELS[task.priority]?.name || '普通',
+                tagTheme: this.mapPriorityToTheme(task.priority),
+                type: task.type,
+                dayAge: dayAge,
+                description: task.description || '',
+                notes: task.notes || '',
+                estimatedTime: task.estimatedDuration || '',
+                duration: task.duration || '',
+                dayInSeries: task.dayInSeries || '',
+                dosage: task.dosage || '',
+                materials: task.materials || [],
+                batchNumber: batch.batchNumber || batch.id,
+                completed: isCompleted,
+                completedDate: completedDate
+              }
+            })
+            
+            allTodos = allTodos.concat(formattedTasks)
+          } else {
+            console.warn(`⚠️ 批次 ${batch.batchNumber || batch.id} 任务获取失败:`, result.message)
           }
-        })
-        
-        if (result.result && result.result.success) {
-          const batchTasks = result.result.data?.tasks || result.result.tasks || []
-          
-          // 转换为首页显示格式
-          const todosFromBatch = batchTasks.map((task: any) => {
-            const taskId = task.id || task.taskId || (task as any)._id
-            
-            // 检查任务是否已完成（优先检查本地状态，然后检查全局状态）
-            let isCompleted = false
-            let completedDate = ''
-            
-            if (localCompletions[taskId]) {
-              // 使用本地状态
-              isCompleted = localCompletions[taskId].completed
-              completedDate = localCompletions[taskId].completedDate
-            } else if (globalUpdates[taskId]) {
-              // 使用全局状态更新
-              isCompleted = globalUpdates[taskId].completed
-            } else {
-              // 使用任务自身的完成状态
-              isCompleted = task.completed || false
-            }
-            
-            return {
-              id: taskId,
-              content: task.title,
-              title: task.title,
-              priority: this.mapPriorityToTheme(task.priority),
-              priorityText: PRIORITY_LEVELS[task.priority]?.name || '普通',
-              tagTheme: this.mapPriorityToTheme(task.priority),
-              type: task.type,
-              dayAge: dayAge,
-              description: task.description || '',
-              notes: task.notes || '',
-              estimatedTime: task.estimatedTime || '',
-              duration: task.duration || '',
-              dayInSeries: task.dayInSeries || '',
-              dosage: task.dosage || '',
-              materials: task.materials || [],
-              batchNumber: batch.batchNumber || batch.id || '',
-              completed: isCompleted,
-              completedDate: completedDate
-            }
-          })
-          
-          allTodos = allTodos.concat(todosFromBatch)
+        } catch (batchError) {
+          console.error(`❌ 批次 ${batch.batchNumber || batch.id} 处理失败:`, batchError)
         }
       }
 
-      this.setData({ todoList: allTodos })
+      // 按优先级排序
+      allTodos.sort((a, b) => {
+        const priorityOrder: Record<string, number> = {
+          'danger': 1,
+          'warning': 2,
+          'primary': 3,
+          'default': 4
+        }
+        return (priorityOrder[a.priority] || 999) - (priorityOrder[b.priority] || 999)
+      })
+
+      // 首页只显示前6条，与未完成的任务
+      const displayTodos = allTodos
+        .filter(todo => !todo.completed) // 只显示未完成的
+        .slice(0, 6)
+      
+      console.log(`✅ 首页待办加载完成: 总任务${allTodos.length}个, 显示${displayTodos.length}个未完成任务`)
+      
+      this.setData({
+        todoList: displayTodos,
+        todoLoading: false
+      })
+      
     } catch (error) {
-      console.error('加载今日养殖任务失败:', error)
-      // 加载失败时设置空列表
-      this.setData({ todoList: [] })
+      console.error('❌ 首页加载今日养殖任务失败:', error)
+      this.setData({
+        todoList: [],
+        todoLoading: false
+      })
+      
+      wx.showToast({
+        title: '加载待办失败',
+        icon: 'error',
+        duration: 2000
+      })
+    }
+  },
+
+  // 辅助方法：获取优先级文本
+  getPriorityText(priority: string): string {
+    const priorityMap: Record<string, string> = {
+      critical: '紧急',
+      high: '重要',  
+      medium: '普通',
+      low: '较低'
+    }
+    return priorityMap[priority] || '普通'
+  },
+
+  // 调试方法：手动重新加载待办
+  async debugLoadTodos() {
+    console.log('🔧 用户点击调试按钮，重新加载待办')
+    wx.showToast({
+      title: '开始重新加载...',
+      icon: 'loading',
+      duration: 1500
+    })
+    
+    // 重置状态
+    this.setData({
+      todoLoading: true,
+      todoList: []
+    })
+    
+    try {
+      await this.loadTodayBreedingTasks()
+    } catch (error) {
+      console.error('调试加载失败:', error)
+      wx.showToast({
+        title: '加载失败，请查看控制台',
+        icon: 'error'
+      })
     }
   },
 
@@ -731,20 +805,52 @@ Page({
     return themeMap[priority] || 'primary'
   },
 
-  // 查看全部待办
-  viewAllTodos() {
-    wx.navigateTo({
-      url: '/pages/breeding-todo/breeding-todo'
-    })
+  // 查看全部待办 - 直接进入全批次今日待办页面
+  async viewAllTodos() {
+    try {
+      // 直接跳转到breeding-todo页面，显示所有批次的今日待办
+      wx.navigateTo({
+        url: `/pages/breeding-todo/breeding-todo?showAllBatches=true`
+      })
+    } catch (error) {
+      console.error('跳转到待办页面失败:', error)
+      wx.showToast({
+        title: '跳转失败',
+        icon: 'error'
+      })
+    }
+  },
+
+  /**
+   * 判断是否为疫苗接种任务
+   */
+  isVaccineTask(task: any): boolean {
+    return task.type === 'vaccine' ||
+           task.title?.includes('疫苗') || 
+           task.title?.includes('接种') ||
+           task.title?.includes('免疫') ||
+           task.title?.includes('注射') ||
+           task.title?.includes('血清') ||
+           task.title?.includes('抗体') ||
+           task.title?.includes('一针') ||
+           task.title?.includes('二针') ||
+           task.title?.includes('三针') ||
+           task.description?.includes('注射') ||
+           task.description?.includes('接种') ||
+           task.description?.includes('疫苗') ||
+           task.description?.includes('血清')
   },
 
   /**
    * 查看任务详情 - 使用弹窗展示
    */
   viewTaskDetail(event: any) {
-    const task = event.currentTarget.dataset.task
+    console.log('🔥 首页 viewTaskDetail 被调用')
     
-    // 从任务数据中构建详细信息
+    const task = event.currentTarget.dataset.task
+    console.log('首页任务数据:', task)
+    
+    // 从任务数据中构建详细信息，所有任务都显示详情弹窗
     const enhancedTask = {
       ...task,
       
@@ -756,6 +862,9 @@ Page({
       priorityName: this.getPriorityName(task.priority || 'medium'),
       priorityTheme: this.getPriorityTheme(task.priority || 'medium'),
       statusText: task.completed ? '已完成' : '待完成',
+      
+      // 标记是否为疫苗任务，用于弹窗中的按钮显示
+      isVaccineTask: this.isVaccineTask(task),
       
       // 确保其他字段存在
       description: task.description || '',
@@ -772,6 +881,8 @@ Page({
       completed: task.completed || false
     }
     
+    console.log('📋 显示任务详情弹窗:', enhancedTask.title)
+    
     this.setData({
       selectedTask: enhancedTask,
       showTaskDetailPopup: true
@@ -785,6 +896,27 @@ Page({
     this.setData({
       showTaskDetailPopup: false,
       selectedTask: null
+    })
+  },
+
+  /**
+   * 处理疫苗任务 - 跳转到详情页填写接种信息
+   */
+  handleVaccineTask() {
+    const { selectedTask } = this.data
+    if (!selectedTask) {
+      this.closeTaskDetailPopup()
+      return
+    }
+
+    console.log('🔄 处理疫苗任务:', selectedTask.title)
+    
+    // 关闭弹窗
+    this.closeTaskDetailPopup()
+    
+    // 跳转到养殖待办页面并传递任务信息
+    wx.navigateTo({
+      url: `/pages/breeding-todo/breeding-todo?taskId=${selectedTask.id}&openVaccineForm=true`
     })
   },
 
@@ -816,7 +948,6 @@ Page({
         title: '正在完成任务...',
         mask: true
       })
-
 
       // 调用云函数完成任务
       const result = await wx.cloud.callFunction({
@@ -1721,3 +1852,4 @@ Page({
     }
   }
 })
+

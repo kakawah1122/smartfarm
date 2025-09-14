@@ -1,479 +1,388 @@
-// breeding-todo/index.js - 养殖待办事项管理云函数
-
+// breeding-todo/index.js - 任务管理云函数（优化版）
 const cloud = require('wx-server-sdk')
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const DatabaseManager = require('./database-manager')
+const { COLLECTIONS } = require('./collections')
+
+cloud.init({
+  env: cloud.DYNAMIC_CURRENT_ENV
+})
 
 const db = cloud.database()
 const _ = db.command
+const dbManager = new DatabaseManager(db)
 
-/**
- * 云函数入口函数
- */
-exports.main = async (event, context) => {
-  const { action } = event
-  const wxContext = cloud.getWXContext()
+// 生成任务记录ID
+function generateTaskRecordId() {
+  const now = new Date()
+  const timestamp = now.getTime().toString().slice(-8)
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  return `TASK${timestamp}${random}`
+}
 
-  console.log('breeding-todo云函数调用:', { action, event })
+// 完成任务（通用方法）
+async function completeTask(taskId, openid, batchId, notes = '') {
+  try {
+    // 检查是否已经完成
+    const existing = await db.collection(COLLECTIONS.TASK_COMPLETIONS).where({
+      _openid: openid,
+      batchId,
+      taskId
+    }).get()
+
+    if (existing.data.length > 0) {
+      throw new Error('任务已经完成')
+    }
+
+    // 创建完成记录
+    const result = await db.collection(COLLECTIONS.TASK_COMPLETIONS).add({
+      data: {
+        _openid: openid,
+        batchId,
+        taskId,
+        completedAt: new Date(),
+        notes: notes || '',
+        isActive: true
+      }
+    })
+
+    return result
+  } catch (error) {
+    console.error('完成任务失败:', error)
+    throw error
+  }
+}
+
+// 疫苗接种任务完成处理（优化版）
+async function completeVaccineTask(event, wxContext) {
+  const { taskId, batchId, vaccineRecord } = event
+  const openid = wxContext.OPENID
 
   try {
-    switch (action) {
-      case 'completeTask':
-        return await completeTask(event, wxContext)
-      case 'uncompleteTask':
-        return await uncompleteTask(event, wxContext)
-      case 'getCompletedTaskIds':
-        return await getCompletedTaskIds(event, wxContext)
-      case 'getCompletedTasks':
-        return await getCompletedTasks(event, wxContext)
-      case 'addTaskRecord':
-        return await addTaskRecord(event, wxContext)
-      case 'getTaskStatistics':
-        return await getTaskStatistics(event, wxContext)
-      case 'getBatchProgress':
-        return await getBatchProgress(event, wxContext)
-      case 'getBatchTasks':
-        return await getBatchTasks(event, wxContext)
-      case 'getTodayTasks':
-        return await getTodayTasks(event, wxContext)
-      case 'getUpcomingTasks':
-        return await getUpcomingTasks(event, wxContext)
-      default:
-        throw new Error(`未知操作: ${action}`)
+    console.log('开始处理疫苗接种任务:', { taskId, batchId })
+
+    // 1. 完成任务
+    await completeTask(taskId, openid, batchId, vaccineRecord.notes)
+
+    // 2. 创建预防记录（使用标准化集合）
+    const preventionData = {
+      batchId,
+      preventionType: 'vaccine',
+      preventionDate: new Date().toISOString().split('T')[0],
+      vaccineInfo: {
+        name: vaccineRecord.vaccine.name,
+        manufacturer: vaccineRecord.vaccine.manufacturer || '',
+        batchNumber: vaccineRecord.vaccine.batchNumber || '',
+        dosage: vaccineRecord.vaccine.dosage || '',
+        route: vaccineRecord.vaccination.route,
+        count: vaccineRecord.vaccination.count
+      },
+      veterinarianInfo: {
+        name: vaccineRecord.veterinarian.name,
+        contact: vaccineRecord.veterinarian.contact || ''
+      },
+      costInfo: {
+        vaccineCost: vaccineRecord.cost.vaccine || 0,
+        laborCost: vaccineRecord.cost.veterinary || 0,
+        otherCost: vaccineRecord.cost.other || 0,
+        totalCost: vaccineRecord.cost.total || 0
+      },
+      effectiveness: 'pending',
+      notes: vaccineRecord.notes || '',
+      operator: openid
     }
+
+    const preventionResult = await dbManager.createPreventionRecord(preventionData)
+    console.log('预防记录创建成功:', preventionResult._id)
+
+    // 3. 创建成本记录（正确的财务流向）
+    if (vaccineRecord.cost && vaccineRecord.cost.total > 0) {
+      const costData = {
+        costType: 'medical',
+        subCategory: 'vaccine',
+        title: `疫苗接种费用 - ${vaccineRecord.vaccine.name}`,
+        description: `批次：${batchId}，接种数量：${vaccineRecord.vaccination.count}只`,
+        amount: vaccineRecord.cost.total,
+        batchId,
+        relatedRecords: [{
+          type: 'prevention',
+          recordId: preventionResult._id
+        }],
+        costBreakdown: {
+          vaccine: vaccineRecord.cost.vaccine || 0,
+          labor: vaccineRecord.cost.veterinary || 0,
+          other: vaccineRecord.cost.other || 0
+        },
+        costDate: new Date().toISOString().split('T')[0],
+        createdBy: openid
+      }
+
+      await dbManager.createCostRecord(costData)
+      console.log('成本记录创建成功')
+    }
+
+    // 4. 更新概览统计
+    try {
+      await dbManager.updateOverviewStats(batchId, 'prevention')
+      console.log('概览统计更新成功')
+    } catch (error) {
+      console.error('更新概览统计失败:', error)
+      // 不影响主流程，继续执行
+    }
+
+    // 5. 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'complete_vaccine_task',
+      'health_prevention_records',
+      preventionResult._id,
+      {
+        batchId,
+        taskId,
+        vaccineName: vaccineRecord.vaccine.name,
+        cost: vaccineRecord.cost.total,
+        result: 'success'
+      }
+    )
+
+    return {
+      success: true,
+      message: '疫苗接种任务完成成功',
+      data: {
+        taskCompleted: true,
+        preventionRecordId: preventionResult._id,
+        hasAdverseReactions: false
+      }
+    }
+
   } catch (error) {
-    console.error('breeding-todo云函数执行失败:', error)
+    console.error('完成疫苗接种任务失败:', error)
+    
+    // 记录错误日志
+    await dbManager.createAuditLog(
+      openid,
+      'complete_vaccine_task',
+      'health_prevention_records',
+      null,
+      {
+        batchId,
+        taskId,
+        error: error.message,
+        result: 'failure'
+      }
+    )
+
     return {
       success: false,
-      error: error.message || '操作失败',
+      error: error.message || '疫苗接种任务完成失败',
       data: null
     }
   }
 }
 
-/**
- * 完成任务
- */
-async function completeTask(event, wxContext) {
-  const { batchId, dayAge, taskId, completedTime } = event
-  const openid = wxContext.OPENID
-
-  // 检查是否已经完成过
-  const existing = await db.collection('task_completions').where({
-    _openid: openid,
-    batchId,
-    dayAge,
-    taskId
-  }).get()
-
-  if (existing.data.length > 0) {
-    return {
-      success: true,
-      message: '任务已完成',
-      data: existing.data[0]
-    }
-  }
-
-  // 创建完成记录
-  const result = await db.collection('task_completions').add({
-    data: {
-      _openid: openid,
-      batchId,
-      dayAge,
-      taskId,
-      completedTime: completedTime || new Date().toISOString(),
-      createTime: new Date(),
-      isDeleted: false
-    }
-  })
-
-  return {
-    success: true,
-    message: '任务完成成功',
-    data: { _id: result._id }
-  }
-}
-
-/**
- * 取消完成任务
- */
-async function uncompleteTask(event, wxContext) {
-  const { batchId, dayAge, taskId } = event
-  const openid = wxContext.OPENID
-
-  // 删除完成记录
-  await db.collection('task_completions').where({
-    _openid: openid,
-    batchId,
-    dayAge,
-    taskId
-  }).update({
-    data: {
-      isDeleted: true,
-      updateTime: new Date()
-    }
-  })
-
-  return {
-    success: true,
-    message: '已取消任务完成状态'
-  }
-}
-
-/**
- * 获取已完成任务ID列表
- */
-async function getCompletedTaskIds(event, wxContext) {
+// 获取任务列表（优化版）
+async function getTodos(event, wxContext) {
   const { batchId, dayAge } = event
   const openid = wxContext.OPENID
 
-  const result = await db.collection('task_completions').where({
-    _openid: openid,
-    batchId,
-    dayAge,
-    isDeleted: false
-  }).field({
-    taskId: true
-  }).get()
-
-  const taskIds = result.data.map(item => item.taskId)
-
-  return {
-    success: true,
-    data: taskIds
-  }
-}
-
-/**
- * 获取已完成任务详细信息
- */
-async function getCompletedTasks(event, wxContext) {
-  const { batchId, limit = 50 } = event
-  const openid = wxContext.OPENID
-
-  const result = await db.collection('task_completions').where({
-    _openid: openid,
-    batchId,
-    isDeleted: false
-  }).orderBy('completedTime', 'desc').limit(limit).get()
-
-  // 整合任务信息
-  const tasksWithDetails = await Promise.all(result.data.map(async (completion) => {
-    // 这里可以从任务配置中获取任务详情
-    // 由于任务配置在前端，这里返回基础信息
-    return {
-      id: completion.taskId,
-      taskId: completion.taskId,
-      dayAge: completion.dayAge,
-      completedDate: formatDate(completion.completedTime),
-      completedTime: completion.completedTime
-    }
-  }))
-
-  return {
-    success: true,
-    data: tasksWithDetails
-  }
-}
-
-/**
- * 添加任务记录
- */
-async function addTaskRecord(event, wxContext) {
-  const { batchId, taskId, dayAge, recordType, recordData } = event
-  const openid = wxContext.OPENID
-
-  const record = {
-    _openid: openid,
-    batchId,
-    taskId,
-    dayAge,
-    recordType, // 记录类型：vaccine, medication, inspection等
-    recordData,
-    createTime: new Date(),
-    isDeleted: false
-  }
-
-  const result = await db.collection('task_records').add({
-    data: record
-  })
-
-  return {
-    success: true,
-    message: '任务记录添加成功',
-    data: { _id: result._id }
-  }
-}
-
-/**
- * 获取任务统计信息
- */
-async function getTaskStatistics(event, wxContext) {
-  const { batchId } = event
-  const openid = wxContext.OPENID
-
-  // 获取完成统计
-  const completedTasks = await db.collection('task_completions').where({
-    _openid: openid,
-    batchId,
-    isDeleted: false
-  }).get()
-
-  // 统计每日完成情况
-  const dailyStats = {}
-  completedTasks.data.forEach(task => {
-    const dayAge = task.dayAge
-    if (!dailyStats[dayAge]) {
-      dailyStats[dayAge] = {
-        dayAge,
-        completedCount: 0,
-        tasks: []
-      }
-    }
-    dailyStats[dayAge].completedCount++
-    dailyStats[dayAge].tasks.push(task.taskId)
-  })
-
-  // 统计任务类型完成情况
-  const typeStats = {}
-  const priorityStats = {}
-
-  // 这里需要根据实际任务配置来统计
-  // 由于任务配置在前端，这里返回基础统计
-
-  return {
-    success: true,
-    data: {
-      totalCompleted: completedTasks.data.length,
-      dailyStats: Object.values(dailyStats),
-      typeStats,
-      priorityStats,
-      lastUpdateTime: new Date().toISOString()
-    }
-  }
-}
-
-/**
- * 获取批次进度
- */
-async function getBatchProgress(event, wxContext) {
-  const { batchId } = event
-  const openid = wxContext.OPENID
-
   try {
-    // 获取批次信息
-    const batchResult = await db.collection('entry_records').doc(batchId).get()
+    // 验证批次存在性
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
     if (!batchResult.data) {
       throw new Error('批次不存在')
     }
 
-    const batch = batchResult.data
-    const entryDate = new Date(batch.entryDate)
-    const currentDate = new Date()
-    const dayAge = Math.ceil((currentDate - entryDate) / (1000 * 60 * 60 * 24)) + 1
-
-    // 获取已完成任务
-    const completedResult = await db.collection('task_completions').where({
-      _openid: openid,
-      batchId,
-      isDeleted: false
-    }).get()
-
-    const completedByDay = {}
-    completedResult.data.forEach(task => {
-      if (!completedByDay[task.dayAge]) {
-        completedByDay[task.dayAge] = []
-      }
-      completedByDay[task.dayAge].push(task.taskId)
-    })
-
-    // 计算进度
-    const progress = {
-      batchId,
-      batchNumber: batch.batchNumber,
-      entryDate: batch.entryDate,
-      currentDayAge: dayAge,
-      totalCompleted: completedResult.data.length,
-      dailyProgress: completedByDay,
-      lastUpdateTime: new Date().toISOString()
-    }
-
-    return {
-      success: true,
-      data: progress
-    }
-  } catch (error) {
-    console.error('获取批次进度失败:', error)
-    throw error
-  }
-}
-
-/**
- * 获取批次任务列表
- */
-async function getBatchTasks(event, wxContext) {
-  const { batchId } = event
-  const openid = wxContext.OPENID
-
-  try {
-    const result = await db.collection('batch_todos').where({
-      batchId,
-      userId: openid
-    }).orderBy('dayAge', 'asc').get()
-
-    return {
-      success: true,
-      data: result.data
-    }
-  } catch (error) {
-    console.error('获取批次任务失败:', error)
-    throw error
-  }
-}
-
-/**
- * 获取今日任务
- */
-async function getTodayTasks(event, wxContext) {
-  const { batchId } = event
-  const openid = wxContext.OPENID
-
-  try {
-    // 获取批次信息
-    const batchResult = await db.collection('entry_records').doc(batchId).get()
-    if (!batchResult.data) {
-      throw new Error('批次不存在')
-    }
-
-    const batch = batchResult.data
-    const entryDate = new Date(batch.entryDate)
-    const currentDate = new Date()
-    
-    // 计算当前日龄 - 只比较日期部分
-    const todayDateStr = currentDate.toISOString().split('T')[0]
-    const entryDateStr = batch.entryDate.split('T')[0]
-    
-    const todayDate = new Date(todayDateStr + 'T00:00:00')
-    const entryDateTime = new Date(entryDateStr + 'T00:00:00')
-    
-    const diffTime = todayDate.getTime() - entryDateTime.getTime()
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    const dayAge = diffDays + 1
-
-    console.log(`今日任务查询: 批次${batch.batchNumber}, 入栏${entryDateStr}, 今日${todayDateStr}, 日龄${dayAge}`)
-
-    // 从batch_todos获取今日任务
-    const tasksResult = await db.collection('batch_todos').where({
+    // 获取当前日龄的任务
+    const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
       batchId,
       dayAge,
       userId: openid
     }).get()
 
-    const todayTasks = tasksResult.data || []
-
-    // 获取已完成状态
-    const completedResult = await db.collection('task_completions').where({
+    // 获取已完成的任务
+    const completedResult = await db.collection(COLLECTIONS.TASK_COMPLETIONS).where({
       _openid: openid,
       batchId,
-      dayAge,
-      isDeleted: false
+      dayAge
     }).get()
 
     const completedTaskIds = completedResult.data.map(item => item.taskId)
 
-    // 合并完成状态
-    const tasksWithStatus = todayTasks.map(task => ({
+    // 标记任务完成状态
+    const todos = tasksResult.data.map(task => ({
       ...task,
-      completed: completedTaskIds.includes(task.taskId)
+      completed: completedTaskIds.includes(task._id),
+      isVaccineTask: isVaccineTask(task)
     }))
 
     return {
       success: true,
-      data: {
-        dayAge,
-        tasks: tasksWithStatus
-      }
+      data: todos
     }
+
   } catch (error) {
-    console.error('获取今日任务失败:', error)
-    throw error
+    console.error('获取待办任务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
   }
 }
 
-/**
- * 获取即将到来的任务
- */
-async function getUpcomingTasks(event, wxContext) {
-  const { batchId, days = 7 } = event
+// 获取一周任务（优化版）
+async function getWeeklyTodos(event, wxContext) {
+  const { batchId, currentDayAge } = event
   const openid = wxContext.OPENID
+  const endDayAge = currentDayAge + 7
 
   try {
-    // 获取批次信息
-    const batchResult = await db.collection('entry_records').doc(batchId).get()
+    // 验证批次存在性
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
     if (!batchResult.data) {
       throw new Error('批次不存在')
     }
 
-    const batch = batchResult.data
-    
-    // 计算日龄范围
-    const today = new Date()
-    const todayDateStr = today.toISOString().split('T')[0]
-    const entryDateStr = batch.entryDate.split('T')[0]
-    
-    const todayDate = new Date(todayDateStr + 'T00:00:00')
-    const entryDateTime = new Date(entryDateStr + 'T00:00:00')
-    
-    const diffTime = todayDate.getTime() - entryDateTime.getTime()
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    const currentDayAge = diffDays + 1
-
-    const endDayAge = currentDayAge + days - 1
-
-    // 获取即将到来的任务
-    const tasksResult = await db.collection('batch_todos').where({
+    // 获取一周内的任务
+    const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
       batchId,
       dayAge: _.gte(currentDayAge).and(_.lte(endDayAge)),
       userId: openid
-    }).orderBy('dayAge', 'asc').get()
+    }).get()
 
-    // 按日龄分组
-    const tasksByDay = {}
+    // 获取已完成的任务
+    const completedResult = await db.collection(COLLECTIONS.TASK_COMPLETIONS).where({
+      _openid: openid,
+      batchId,
+      dayAge: _.gte(currentDayAge).and(_.lte(endDayAge))
+    }).get()
+
+    const completedTaskIds = completedResult.data.map(item => item.taskId)
+
+    // 按日龄分组任务
+    const todosByDay = {}
     tasksResult.data.forEach(task => {
-      if (!tasksByDay[task.dayAge]) {
-        tasksByDay[task.dayAge] = []
+      const day = task.dayAge
+      if (!todosByDay[day]) {
+        todosByDay[day] = []
       }
-      tasksByDay[task.dayAge].push(task)
+      todosByDay[day].push({
+        ...task,
+        completed: completedTaskIds.includes(task._id),
+        isVaccineTask: isVaccineTask(task)
+      })
     })
-
-    const upcomingTasks = []
-    for (let age = currentDayAge; age <= endDayAge; age++) {
-      if (tasksByDay[age]) {
-        upcomingTasks.push({
-          dayAge: age,
-          tasks: tasksByDay[age]
-        })
-      }
-    }
 
     return {
       success: true,
-      data: upcomingTasks
+      data: todosByDay
+    }
+
+  } catch (error) {
+    console.error('获取周任务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 识别疫苗任务（优化版）
+function isVaccineTask(task) {
+  if (!task) return false
+  
+  // 检查任务类型
+  if (task.type === 'vaccine') return true
+  
+  // 检查任务标题和描述中的关键词
+  const vaccineKeywords = [
+    '疫苗', '接种', '免疫', '注射', '血清', '抗体',
+    '一针', '二针', '三针', '新城疫', '禽流感',
+    'vaccine', 'vaccination', 'immunization'
+  ]
+  
+  const title = task.title || ''
+  const description = task.description || ''
+  const taskName = task.taskName || ''
+  
+  return vaccineKeywords.some(keyword => 
+    title.includes(keyword) || 
+    description.includes(keyword) || 
+    taskName.includes(keyword)
+  )
+}
+
+// 清除已完成任务
+async function clearCompletedTasks(event, wxContext) {
+  const { batchId } = event
+  const openid = wxContext.OPENID
+
+  try {
+    const result = await db.collection(COLLECTIONS.TASK_COMPLETIONS).where({
+      _openid: openid,
+      batchId
+    }).remove()
+
+    return {
+      success: true,
+      data: result
     }
   } catch (error) {
-    console.error('获取即将到来的任务失败:', error)
+    console.error('清除已完成任务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 创建任务记录
+async function createTaskRecord(record) {
+  try {
+    const result = await db.collection(COLLECTIONS.TASK_RECORDS).add({
+      data: record
+    })
+
+    return result
+  } catch (error) {
+    console.error('创建任务记录失败:', error)
     throw error
   }
 }
 
-/**
- * 格式化日期
- */
-function formatDate(dateString) {
-  const date = new Date(dateString)
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const hours = date.getHours()
-  const minutes = date.getMinutes()
-  
-  return `${month}月${day}日 ${hours}:${minutes.toString().padStart(2, '0')}`
+// 主函数
+exports.main = async (event, context) => {
+  const wxContext = cloud.getWXContext()
+  const { action } = event
+
+  try {
+    switch (action) {
+      case 'completeVaccineTask':
+        return await completeVaccineTask(event, wxContext)
+      
+      case 'getTodos':
+        return await getTodos(event, wxContext)
+      
+      case 'getTodayTasks':
+        return await getTodos(event, wxContext)
+      
+      case 'getWeeklyTodos':
+        return await getWeeklyTodos(event, wxContext)
+      
+      case 'clearCompletedTasks':
+        return await clearCompletedTasks(event, wxContext)
+      
+      case 'completeTask':
+        const { taskId, batchId, notes } = event
+        await completeTask(taskId, wxContext.OPENID, batchId, notes)
+        return { success: true, message: '任务完成成功' }
+      
+      default:
+        throw new Error(`未知操作: ${action}`)
+    }
+  } catch (error) {
+    console.error('云函数执行失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
 }

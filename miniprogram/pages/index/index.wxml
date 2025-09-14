@@ -166,17 +166,45 @@
     <view class="card todo-card">
       <view class="card-header">
         <text class="card-title">✅ 今日待办</text>
+        <text wx:if="{{todoList.length > 0}}" class="todo-count">{{todoList.length}}项任务</text>
         <t-button theme="light" size="small" bind:tap="viewAllTodos" class="view-all-btn light-button">
           查看全部
         </t-button>
       </view>
-      <view class="todo-list">
+      
+      <!-- 加载状态 -->
+      <view wx:if="{{todoLoading}}" class="todo-loading">
+        <t-loading theme="spinner" size="40rpx" />
+        <text class="loading-text">正在加载今日待办...</text>
+      </view>
+      
+      <!-- 待办列表 -->
+      <view wx:elif="{{todoList.length > 0}}" class="todo-list">
         <view class="todo-item {{item.completed ? 'completed' : ''}}" wx:for="{{todoList}}" wx:key="id" bind:tap="viewTaskDetail" data-task="{{item}}">
           <view class="todo-left">
             <view class="todo-dot {{item.priority}}"></view>
-            <text class="todo-text">{{item.content}}</text>
+            <view class="todo-content">
+              <text class="todo-text">{{item.content}}</text>
+              <text class="todo-batch">{{item.batchNumber}} · 第{{item.dayAge}}日龄</text>
+            </view>
           </view>
-          <t-tag theme="{{item.completed ? 'success' : (item.tagTheme || 'default')}}" size="small" class="todo-tag">{{item.completed ? '已完成' : (item.priorityText || '普通')}}</t-tag>
+          <t-tag theme="{{item.completed ? 'success' : (item.tagTheme || 'default')}}" size="small" class="todo-tag">
+            {{item.completed ? '已完成' : (item.priorityText || '普通')}}
+          </t-tag>
+        </view>
+      </view>
+      
+      <!-- 空状态 -->
+      <view wx:else class="todo-empty">
+        <view class="empty-icon">📋</view>
+        <text class="empty-title">今日无待办任务</text>
+        <text class="empty-desc">所有任务已完成或暂无安排</text>
+        
+        <!-- 快速操作 -->
+        <view class="debug-actions">
+          <t-button size="small" theme="primary" variant="outline" bind:tap="debugLoadTodos" class="debug-btn">
+            刷新待办
+          </t-button>
         </view>
       </view>
     </view>
@@ -192,10 +220,10 @@
     title="任务详情"
     show-close="{{true}}"
     show-actions="{{true}}"
-    confirm-text="{{selectedTask && selectedTask.completed ? '确定' : '完成任务'}}"
+    confirm-text="{{selectedTask && selectedTask.completed ? '确定' : (selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : '完成任务')}}"
     cancel-text="{{selectedTask && selectedTask.completed ? '' : '关闭'}}"
     bind:close="closeTaskDetailPopup"
-    bind:confirm="{{selectedTask && selectedTask.completed ? 'closeTaskDetailPopup' : 'completeTaskFromPopup'}}"
+    bind:confirm="{{selectedTask && selectedTask.completed ? 'closeTaskDetailPopup' : (selectedTask && selectedTask.isVaccineTask ? 'handleVaccineTask' : 'completeTaskFromPopup')}}"
     bind:cancel="closeTaskDetailPopup"
     bind:visiblechange="onTaskDetailPopupChange"
   >
