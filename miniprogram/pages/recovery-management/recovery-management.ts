@@ -92,7 +92,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载康复数据失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载数据失败',
         icon: 'none'
@@ -267,7 +267,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         throw new Error(result.result?.message || '更新失败')
       }
     } catch (error: any) {
-      console.error('更新康复进度失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: error.message || '更新失败',
         icon: 'none'

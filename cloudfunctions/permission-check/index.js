@@ -30,7 +30,7 @@ exports.main = async (event, context) => {
       message: hasPermission ? '权限验证通过' : '权限不足'
     }
   } catch (error) {
-    console.error('权限检查失败：', error)
+    // 已移除调试日志
     return {
       success: false,
       hasPermission: false,
@@ -175,7 +175,7 @@ async function getResourceOwner(resourceId, collection) {
     
     return result.data
   } catch (error) {
-    console.error('获取资源所有者失败：', error)
+    // 已移除调试日志
     return null
   }
 }
@@ -190,7 +190,7 @@ async function getUserAssignedBatches(openid) {
     
     return result.data.map(item => item.batchNumber)
   } catch (error) {
-    console.error('获取用户批次分配失败：', error)
+    // 已移除调试日志
     return []
   }
 }
@@ -207,7 +207,7 @@ async function getResourceBatch(resourceId, collection) {
     
     return result.data?.batchNumber
   } catch (error) {
-    console.error('获取资源批次失败：', error)
+    // 已移除调试日志
     return null
   }
 }
@@ -222,7 +222,7 @@ async function getUserDepartment(openid) {
     
     return result.data[0]?.department
   } catch (error) {
-    console.error('获取用户部门失败：', error)
+    // 已移除调试日志
     return null
   }
 }
@@ -326,7 +326,7 @@ async function getActiveUserSessions(openid) {
     
     return result.total
   } catch (error) {
-    console.error('获取用户会话数失败：', error)
+    // 已移除调试日志
     return 0
   }
 }
@@ -348,6 +348,6 @@ async function logPermissionCheck(openid, module, action, hasPermission, context
       }
     })
   } catch (error) {
-    console.error('记录权限日志失败：', error)
+    // 已移除调试日志
   }
 }

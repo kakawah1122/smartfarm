@@ -125,7 +125,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.loadTabData(this.data.activeTab)
       ])
     } catch (error) {
-      console.error('初始化健康管理中心失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载失败，请重试',
         icon: 'none'
@@ -152,7 +152,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         duration: 1500
       })
     } catch (error) {
-      console.error('刷新数据失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '刷新失败',
         icon: 'none'
@@ -188,7 +188,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载健康概览失败:', error)
+      // 已移除调试日志
       // 设置默认数据
       this.setData({
         healthOverview: {
@@ -221,7 +221,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载活跃预警失败:', error)
+      // 已移除调试日志
       this.setData({ activeAlerts: [] })
     }
   },
@@ -271,7 +271,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
       this.setData({ preventionData })
     } catch (error) {
-      console.error('加载预防管理数据失败:', error)
+      // 已移除调试日志
         this.setData({
         preventionData: {
           stats: { vaccinationRate: 96.8, disinfectionCount: 12, inspectionRate: 100, preventionCost: 2850 },
@@ -307,7 +307,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载健康监控数据失败:', error)
+      // 已移除调试日志
       this.setData({
         monitoringData: {
           realTimeStatus: { totalAnimals: 2340, healthyCount: 2337, abnormalCount: 3, isolatedCount: 0 },
@@ -350,7 +350,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
       })
     } catch (error) {
-      console.error('加载诊疗管理数据失败:', error)
+      // 已移除调试日志
       this.setData({
         treatmentData: {
           stats: { pendingDiagnosis: 2, ongoingTreatment: 3, recovering: 1, cureRate: 92.3 },
@@ -397,7 +397,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载效果分析数据失败:', error)
+      // 已移除调试日志
       this.setDefaultAnalysisData()
     }
   },
@@ -587,7 +587,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         icon: 'success'
       })
     }).catch(error => {
-      console.error('处理预警失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '操作失败',
         icon: 'none'
@@ -691,7 +691,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 兼容性方法保留（用于现有代码兼容）
   setTestData() {
-    console.log('健康管理中心已升级为新版本')
+    // 已移除调试日志
   },
 
   // 兼容老版本的方法

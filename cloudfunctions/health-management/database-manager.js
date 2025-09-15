@@ -202,9 +202,9 @@ class DatabaseManager {
           .add({ data: summaryData })
       }
 
-      console.log(`财务汇总更新成功: ${month}`)
+      // 已移除调试日志
     } catch (error) {
-      console.error('更新财务汇总失败:', error)
+      // 已移除调试日志
     }
   }
 
@@ -318,9 +318,9 @@ class DatabaseManager {
           })
       }
 
-      console.log('概览统计更新成功:', batchId)
+      // 已移除调试日志
     } catch (error) {
-      console.error('更新概览统计失败:', error)
+      // 已移除调试日志
       throw error
     }
   }

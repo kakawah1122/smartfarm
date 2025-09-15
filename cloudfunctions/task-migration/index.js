@@ -13,8 +13,7 @@ exports.main = async (event, context) => {
   
   try {
     if (action === 'addCompletedField') {
-      console.log('🔄 开始为现有任务添加completed字段...')
-      
+      // 已移除调试日志
       // 查询所有没有completed字段的任务
       const tasksResult = await db.collection('task_batch_schedules')
         .where({
@@ -22,8 +21,7 @@ exports.main = async (event, context) => {
         })
         .get()
       
-      console.log(`📋 找到需要迁移的任务数量: ${tasksResult.data.length}`)
-      
+      // 已移除调试日志
       if (tasksResult.data.length === 0) {
         return {
           success: true,
@@ -53,11 +51,10 @@ exports.main = async (event, context) => {
         await Promise.all(promises)
         migratedCount += batch.length
         
-        console.log(`✅ 已迁移 ${migratedCount}/${tasksResult.data.length} 个任务`)
+        // 已移除调试日志
       }
       
-      console.log(`🎉 任务迁移完成，共迁移 ${migratedCount} 个任务`)
-      
+      // 已移除调试日志
       return {
         success: true,
         message: `任务迁移完成，共迁移 ${migratedCount} 个任务`,
@@ -66,12 +63,10 @@ exports.main = async (event, context) => {
     }
     
     else if (action === 'migrateCompletedTasks') {
-      console.log('🔄 开始从task_completions迁移已完成状态...')
-      
+      // 已移除调试日志
       // 获取所有完成记录
       const completionsResult = await db.collection('task_completions').get()
-      console.log(`📝 找到完成记录数量: ${completionsResult.data.length}`)
-      
+      // 已移除调试日志
       let syncedCount = 0
       
       for (const completion of completionsResult.data) {
@@ -91,16 +86,15 @@ exports.main = async (event, context) => {
           
           if (updateResult.stats.updated > 0) {
             syncedCount++
-            console.log(`✅ 同步任务完成状态: ${completion.taskId}`)
+            // 已移除调试日志
           }
           
         } catch (error) {
-          console.warn(`⚠️ 同步任务失败 ${completion.taskId}:`, error.message)
+          // 已移除调试日志
         }
       }
       
-      console.log(`🎉 完成状态同步完成，共同步 ${syncedCount} 个任务`)
-      
+      // 已移除调试日志
       return {
         success: true,
         message: `完成状态同步完成，共同步 ${syncedCount} 个任务`,
@@ -140,7 +134,7 @@ exports.main = async (event, context) => {
     }
     
   } catch (error) {
-    console.error('❌ 迁移失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message

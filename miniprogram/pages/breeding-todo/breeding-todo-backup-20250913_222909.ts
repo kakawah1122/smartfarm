@@ -182,8 +182,7 @@ Page({
   },
 
   onLoad(options: any) {
-    console.log('breeding-todo页面加载，参数:', options)
-    
+    // 已移除调试日志
     // 检查是否需要直接打开疫苗表单
     if (options?.openVaccineForm === 'true' && options?.taskId) {
       // 延迟执行，等页面完全加载后再打开表单
@@ -226,7 +225,7 @@ Page({
         globalData.needSyncBreedingTodo = false
       }
     } catch (error) {
-      console.error('❌ 检查首页同步状态失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -253,7 +252,7 @@ Page({
         this.loadAllHistoryTasks() // "已完成" - 所有批次历史任务
       ])
     } catch (error) {
-      console.error('❌ 初始化页面失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载失败',
         icon: 'error'
@@ -276,7 +275,7 @@ Page({
         this.loadAllHistoryTasks()
       ])
     } catch (error) {
-      console.error('刷新数据失败:', error)
+      // 已移除调试日志
     } finally {
       this.setData({ loading: false })
     }
@@ -300,7 +299,7 @@ Page({
       
       // 输出每个批次的详细信息
     } catch (error) {
-      console.error('❌ 加载批次列表失败:', error)
+      // 已移除调试日志
       throw error
     }
   },
@@ -343,7 +342,7 @@ Page({
       
       return { localResult, expectedLogic }
     } catch (error) {
-      console.error('❌ 日龄计算验证失败:', error)
+      // 已移除调试日志
       return { localResult: -1, expectedLogic: '验证失败' }
     }
   },
@@ -466,7 +465,7 @@ Page({
       // 任务数据设置完成
       
     } catch (error) {
-      console.error('加载所有批次任务失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载任务失败',
         icon: 'error'
@@ -538,7 +537,7 @@ Page({
         this.updateTaskStatistics()
       }
     } catch (error) {
-      console.error('加载今日任务失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载任务失败',
         icon: 'error'
@@ -566,7 +565,7 @@ Page({
         this.setData({ upcomingTasks: result.result.data || [] })
       }
     } catch (error) {
-      console.error('加载即将到来的任务失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -586,7 +585,7 @@ Page({
       const historyTasks = result?.result?.data || []
       this.setData({ historyTasks })
     } catch (error) {
-      console.error('加载历史任务失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -606,7 +605,7 @@ Page({
 
       return result?.result?.data || []
     } catch (error) {
-      console.error('获取已完成任务失败:', error)
+      // 已移除调试日志
       return []
     }
   },
@@ -692,7 +691,7 @@ Page({
         })
       }
     } catch (error) {
-      console.error('更新任务状态失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '操作失败',
         icon: 'error'
@@ -809,24 +808,21 @@ Page({
    * 查看任务详情 - 使用弹窗展示
    */
   viewTaskDetail(event: any) {
-    console.log('🔥 breeding-todo页面 viewTaskDetail 被调用')
-    
+    // 已移除调试日志
     const task = event.currentTarget.dataset.task
     
     // 调试：打印任务数据以检查类型字段
-    console.log('查看任务详情，任务数据:', task)
-    console.log('任务类型字段:', task?.type)
+    // 已移除调试日志
+    // 已移除调试日志
     console.log('任务类型名称:', this.getTypeName(task?.type || ''))
-    console.log('任务标题:', task?.title)
-    console.log('任务描述:', task?.description)
-    
+    // 已移除调试日志
+    // 已移除调试日志
     // 检查是否是疫苗接种任务
     const isVaccineTaskResult = this.isVaccineTask(task)
 
-    console.log('疫苗任务识别结果:', isVaccineTaskResult)
-    console.log('任务完成状态:', task.completed)
-    console.log('任务canComplete:', task.canComplete)
-    
+    // 已移除调试日志
+    // 已移除调试日志
+    // 已移除调试日志
     // 预处理任务数据，添加显示用的字段
     const enhancedTask = {
       ...task,
@@ -864,9 +860,8 @@ Page({
       canComplete: this.data.activeTab !== 'upcoming'
     }
     
-    console.log('最终处理的任务数据:', enhancedTask)
-    console.log('isVaccineTask字段值:', enhancedTask.isVaccineTask)
-    
+    // 已移除调试日志
+    // 已移除调试日志
     this.setData({
       selectedTask: enhancedTask,
       showTaskDetailPopup: true
@@ -896,7 +891,7 @@ Page({
     // 检查任务ID是否存在
     const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as any)._id
     if (!taskId) {
-      console.error('任务ID缺失，任务数据:', selectedTask)
+      // 已移除调试日志
       wx.showToast({
         title: '任务ID缺失，无法完成',
         icon: 'error',
@@ -960,7 +955,7 @@ Page({
       }
 
     } catch (error) {
-      console.error('完成任务失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '完成失败，请重试',
         icon: 'error',
@@ -1012,7 +1007,7 @@ Page({
       
       wx.setStorageSync(key, completedTasks)
     } catch (error) {
-      console.error('保存任务完成状态失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -1023,7 +1018,7 @@ Page({
     try {
       return wx.getStorageSync('completed_tasks') || {}
     } catch (error) {
-      console.error('获取本地任务完成状态失败:', error)
+      // 已移除调试日志
       return {}
     }
   },
@@ -1084,7 +1079,7 @@ Page({
         // 直接调用首页方法失败（正常情况）
       }
     } catch (error) {
-      console.error('❌ 通知首页失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -1107,7 +1102,7 @@ Page({
         globalData.taskStatusUpdates[taskId].syncedToBreedingTodo = true
       }
     } catch (error) {
-      console.error('标记全局状态失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -1117,7 +1112,7 @@ Page({
   updateLocalTaskStatus(taskId: string, completed: boolean) {
     
     if (!taskId) {
-      console.error('任务ID为空，无法更新状态')
+      // 已移除调试日志
       return
     }
 
@@ -1318,7 +1313,7 @@ Page({
 
       this.setData({ upcomingTasks: sortedUpcomingTasks })
     } catch (error) {
-      console.error('加载所有批次即将到来任务失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -1371,7 +1366,7 @@ Page({
 
       this.setData({ historyTasks: allHistoryTasks })
     } catch (error) {
-      console.error('加载所有批次历史任务失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -1381,12 +1376,11 @@ Page({
    * 判断是否为疫苗接种任务
    */
   isVaccineTask(task: Task): boolean {
-    console.log('=== 疫苗任务识别详细过程 ===')
-    console.log('任务数据:', task)
-    console.log('task.type:', task.type)
-    console.log('task.title:', task.title)
-    console.log('task.description:', task.description)
-    
+    // 已移除调试日志
+    // 已移除调试日志
+    // 已移除调试日志
+    // 已移除调试日志
+    // 已移除调试日志
     const checks = [
       { name: 'type === vaccine', result: task.type === 'vaccine' },
       { name: 'title包含疫苗', result: task.title?.includes('疫苗') || false },
@@ -1405,15 +1399,14 @@ Page({
       { name: 'typeName为疫苗接种', result: this.getTypeName(task.type || '') === '疫苗接种' }
     ]
     
-    console.log('各项检查结果:')
+    // 已移除调试日志
     checks.forEach(check => {
-      console.log(`  ${check.name}: ${check.result}`)
+      // 已移除调试日志
     })
     
     const isVaccine = checks.some(check => check.result)
-    console.log('最终识别结果:', isVaccine)
-    console.log('=== 疫苗任务识别结束 ===')
-    
+    // 已移除调试日志
+    // 已移除调试日志
     return isVaccine
   },
 
@@ -1430,9 +1423,8 @@ Page({
       return
     }
 
-    console.log('打开疫苗表单，任务类型:', selectedTask.type)
-    console.log('任务标题:', selectedTask.title)
-
+    // 已移除调试日志
+    // 已移除调试日志
     // 检查是否是疫苗接种任务
     if (!this.isVaccineTask(selectedTask)) {
       wx.showToast({
@@ -1551,9 +1543,8 @@ Page({
     
     const totalCostFormatted = `¥${totalCost.toFixed(2)}`
     
-    console.log('计算总费用:', { vaccineCost, veterinaryCost, otherCost, totalCost, totalCostFormatted })
-    console.log('更新前的vaccineFormData:', this.data.vaccineFormData)
-    
+    // 已移除调试日志
+    // 已移除调试日志
     // 更新整个vaccineFormData对象
     this.setData({
       vaccineFormData: {
@@ -1562,9 +1553,9 @@ Page({
         totalCostFormatted: totalCostFormatted
       }
     }, () => {
-      console.log('更新后的vaccineFormData:', this.data.vaccineFormData)
-      console.log('totalCost值:', this.data.vaccineFormData.totalCost)
-      console.log('totalCostFormatted值:', this.data.vaccineFormData.totalCostFormatted)
+      // 已移除调试日志
+      // 已移除调试日志
+      // 已移除调试日志
     })
   },
 
@@ -1719,14 +1710,7 @@ Page({
       }
 
       // 调用云函数完成任务并创建预防记录
-      console.log('准备调用云函数，参数:', {
-        action: 'completeVaccineTask',
-        taskId: currentVaccineTask.id || currentVaccineTask.taskId,
-        batchId: currentBatch.id,
-        dayAge: currentVaccineTask.dayAge || this.data.currentDayAge || 0,
-        vaccineRecord: vaccineRecord
-      })
-      
+      // 已移除调试日志
       const result = await wx.cloud.callFunction({
         name: 'breeding-todo',
         data: {
@@ -1738,10 +1722,9 @@ Page({
         }
       })
 
-      console.log('云函数返回结果:', result)
-      console.log('result.result:', result.result)
-      console.log('result.result.success:', result.result?.success)
-
+      // 已移除调试日志
+      // 已移除调试日志
+      // 已移除调试日志
       if (result.result && result.result.success) {
         // 获取任务ID
         const taskId = currentVaccineTask.id || currentVaccineTask.taskId || ''
@@ -1770,13 +1753,13 @@ Page({
 
 
       } else {
-        console.error('云函数执行失败:', result.result)
+        // 已移除调试日志
         const errorMessage = result.result?.error || result.result?.message || '保存失败'
         throw new Error(errorMessage)
       }
 
     } catch (error: any) {
-      console.error('提交疫苗接种记录失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: error.message || '保存失败，请重试',
         icon: 'none'
@@ -1899,7 +1882,7 @@ Page({
       })
 
     } catch (error: any) {
-      console.error('提交异常反应记录失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: error.message || '记录失败，请重试',
         icon: 'none'
@@ -1914,8 +1897,7 @@ Page({
     const { selectedTask } = this.data
     if (!selectedTask) return
 
-    console.log('查看疫苗记录，任务类型:', selectedTask.type)
-
+    // 已移除调试日志
     // 检查是否是疫苗接种任务
     if (!this.isVaccineTask(selectedTask)) {
       wx.showToast({
@@ -1971,8 +1953,7 @@ Page({
 
     } catch (error: any) {
       wx.hideLoading()
-      console.error('查询疫苗记录失败:', error)
-      
+      // 已移除调试日志
       // 查询失败，提供重新填写选项
       wx.showModal({
         title: '查询失败',
@@ -2028,8 +2009,7 @@ ${record.vaccination?.notes ? `备注：${record.vaccination.notes}` : ''}`
    */
   async openVaccineFormWithTaskId(taskId: string) {
     try {
-      console.log('尝试根据任务ID打开疫苗表单:', taskId)
-      
+      // 已移除调试日志
       // 先确保数据已加载
       if (this.data.todayTasksByBatch.length === 0) {
         await this.loadAllBatchTasks()
@@ -2048,8 +2028,7 @@ ${record.vaccination?.notes ? `备注：${record.vaccination.notes}` : ''}`
       }
       
       if (targetTask) {
-        console.log('找到目标任务:', targetTask)
-        
+        // 已移除调试日志
         // 检查是否是疫苗任务
         if (this.isVaccineTask(targetTask)) {
           // 设置选中的任务并打开疫苗表单
@@ -2080,14 +2059,14 @@ ${record.vaccination?.notes ? `备注：${record.vaccination.notes}` : ''}`
           })
         }
       } else {
-        console.log('未找到对应的任务，任务ID:', taskId)
+        // 已移除调试日志
         wx.showToast({
           title: '未找到对应的任务',
           icon: 'none'
         })
       }
     } catch (error) {
-      console.error('根据任务ID打开疫苗表单失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '打开表单失败',
         icon: 'none'

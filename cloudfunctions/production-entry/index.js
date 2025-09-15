@@ -14,8 +14,7 @@ const { BREEDING_SCHEDULE, getTasksByAge, getAllTaskDays } = require('./breeding
 
 // 创建批次待办事项
 async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
-  console.log(`开始为批次 ${batchNumber} 创建待办事项...`)
-  
+  // 已移除调试日志
   const batchTodos = []
   const now = new Date()
   
@@ -58,8 +57,7 @@ async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
   
   // 批量插入待办事项
   if (batchTodos.length > 0) {
-    console.log(`准备创建 ${batchTodos.length} 个待办事项`)
-    
+    // 已移除调试日志
     // 分批插入，避免单次插入数据过多
     const batchSize = 20
     for (let i = 0; i < batchTodos.length; i += batchSize) {
@@ -70,7 +68,7 @@ async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
       console.log(`已插入第 ${Math.floor(i/batchSize) + 1} 批，共 ${batch.length} 个任务`)
     }
     
-    console.log(`批次 ${batchNumber} 的待办事项创建完成，共 ${batchTodos.length} 个任务`)
+    // 已移除调试日志
   }
   
   return batchTodos.length
@@ -92,8 +90,7 @@ async function fixBatchTasks(event, wxContext) {
   const openid = wxContext.OPENID
   
   try {
-    console.log(`开始修复批次 ${batchId} 的任务...`)
-    
+    // 已移除调试日志
     // 获取批次信息
     const batchResult = await db.collection('prod_batch_entries').doc(batchId).get()
     if (!batchResult.data) {
@@ -101,16 +98,14 @@ async function fixBatchTasks(event, wxContext) {
     }
     
     const batch = batchResult.data
-    console.log(`找到批次: ${batch.batchNumber}`)
-    
+    // 已移除调试日志
     // 删除现有的不完整任务
     const deleteResult = await db.collection('task_batch_schedules').where({
       batchId,
       userId: openid
     }).remove()
     
-    console.log(`删除了 ${deleteResult.stats.removed} 个旧任务`)
-    
+    // 已移除调试日志
     // 重新创建完整的任务
     const todoCount = await createBatchTodos(
       batchId,
@@ -119,8 +114,7 @@ async function fixBatchTasks(event, wxContext) {
       openid
     )
     
-    console.log(`为批次 ${batch.batchNumber} 重新创建了 ${todoCount} 个任务`)
-    
+    // 已移除调试日志
     return {
       success: true,
       data: {
@@ -132,7 +126,7 @@ async function fixBatchTasks(event, wxContext) {
       message: `批次 ${batch.batchNumber} 任务修复成功，共创建 ${todoCount} 个任务`
     }
   } catch (error) {
-    console.error('修复批次任务失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -262,7 +256,7 @@ async function createEntryRecord(event, wxContext) {
       userName = u.name || u.nickname || u.nickName || '未知';
     }
   } catch (error) {
-    console.error('获取用户信息失败:', error);
+    // 已移除调试日志
   }
 
   const newRecord = {
@@ -290,8 +284,7 @@ async function createEntryRecord(event, wxContext) {
     data: newRecord
   })
   
-  console.log(`入栏记录创建成功，批次ID: ${result._id}, 批次号: ${batchNumber}`)
-  
+  // 已移除调试日志
   // 创建批次待办事项
   try {
     const todoCount = await createBatchTodos(
@@ -300,9 +293,9 @@ async function createEntryRecord(event, wxContext) {
       newRecord.entryDate,  // 入栏日期
       wxContext.OPENID      // 用户ID
     )
-    console.log(`批次 ${batchNumber} 待办事项创建成功，共 ${todoCount} 个任务`)
+    // 已移除调试日志
   } catch (todoError) {
-    console.error(`批次 ${batchNumber} 待办事项创建失败:`, todoError)
+    // 已移除调试日志
     // 这里不抛出错误，因为入栏记录已经创建成功
     // 可以考虑记录到错误日志中
   }
@@ -344,7 +337,7 @@ async function updateEntryRecord(event, wxContext) {
         updateData.operator = userInfo.data[0].name || userInfo.data[0].nickName || '未知';
       }
     } catch (error) {
-      console.error('获取用户信息失败:', error);
+      // 已移除调试日志
     }
   }
   
@@ -518,7 +511,7 @@ async function getEntryDetail(event, wxContext) {
         })
       }
     } catch (err) {
-      console.error('补齐操作员失败:', err)
+      // 已移除调试日志
     }
   }
   
@@ -533,8 +526,7 @@ async function getEntryDetail(event, wxContext) {
 
 // 获取活跃批次（没有出栏的批次）
 async function getActiveBatches(event, wxContext) {
-  console.log('获取活跃批次请求:', wxContext.OPENID)
-  
+  // 已移除调试日志
   try {
     // 先查询所有该用户的入栏记录，不加过多限制条件，便于调试
     // 注意：入栏记录使用的是 userId 字段，不是 _openid
@@ -546,8 +538,7 @@ async function getActiveBatches(event, wxContext) {
       .limit(10)
       .get()
 
-    console.log('用户入栏记录总数:', allResult.data.length)
-
+    // 已移除调试日志
     // 筛选活跃批次
     const activeRecords = allResult.data.filter(record => {      
       // 只要不是已出栏状态，且未删除（考虑 isDeleted 可能为 undefined）
@@ -557,8 +548,7 @@ async function getActiveBatches(event, wxContext) {
       return isNotDeleted && isNotExited
     })
 
-    console.log('活跃批次数量:', activeRecords.length)
-
+    // 已移除调试日志
     // 转换数据格式，增加批次信息
     const activeBatches = activeRecords.map(record => {
       // 计算当前日龄 - 只比较日期部分
@@ -573,8 +563,7 @@ async function getActiveBatches(event, wxContext) {
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
       const dayAge = diffDays + 1 // 入栏当天为第1日龄
 
-      console.log(`批次${record.batchNumber}: 入栏${entryDateStr}, 日龄${dayAge}`)
-
+      // 已移除调试日志
       return {
         id: record._id,
         batchNumber: record.batchNumber,
@@ -591,15 +580,14 @@ async function getActiveBatches(event, wxContext) {
       }
     })
 
-    console.log('最终返回活跃批次:', activeBatches.length + '个')
-
+    // 已移除调试日志
     return {
       success: true,
       data: activeBatches,
       message: `找到 ${activeBatches.length} 个活跃批次`
     }
   } catch (error) {
-    console.error('获取活跃批次失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,

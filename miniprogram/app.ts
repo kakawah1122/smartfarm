@@ -29,7 +29,7 @@ App<AppOption>({
   onLaunch() {
     // 初始化云开发
     if (!wx.cloud) {
-      console.error('请使用 2.2.3 或以上的基础库以使用云能力');
+      // 请使用 2.2.3 或以上的基础库以使用云能力
     } else {
       wx.cloud.init({
         env: 'cloud1-3gdruqkn67e1cbe2', // 您提供的环境ID
@@ -50,7 +50,6 @@ App<AppOption>({
     
     // 如果未登录，直接跳转到登录页
     if (!this.globalData.isLoggedIn) {
-      console.log('用户未登录，启动时直接跳转到登录页')
       wx.reLaunch({
         url: '/pages/login/login'
       })
@@ -68,7 +67,6 @@ App<AppOption>({
       const currentRoute = `/${currentPage.route}`
       
       if (!this.globalData.isLoggedIn && !currentRoute.startsWith('/pages/login/login')) {
-        console.log('用户未登录且不在登录页，跳转到登录页')
         wx.reLaunch({
           url: '/pages/login/login'
         })
@@ -123,10 +121,8 @@ App<AppOption>({
       this.globalData.openid = openid
       this.globalData.userInfo = userInfo
       this.globalData.isLoggedIn = true
-      console.log('用户已登录:', openid)
     } else {
       this.globalData.isLoggedIn = false
-      console.log('用户未登录')
     }
   },
 
@@ -149,7 +145,6 @@ App<AppOption>({
         
       }
     } catch (error) {
-      console.error('登录失败', error)
       throw error
     }
   },

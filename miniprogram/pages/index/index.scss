@@ -480,19 +480,30 @@ page {
   transform: scale(0.98);
 }
 
-.todo-item:nth-child(1) {
-  background: linear-gradient(135deg, var(--color-danger-lighter), rgba(254, 202, 202, 0.8));
-  border: var(--td-border-level-1-color, 2rpx solid rgba(239, 68, 68, 0.1));
+/* 批次颜色样式 - 同一批次使用相同背景色 */
+.todo-item.batch-color-1 {
+  background: linear-gradient(135deg, rgba(204, 251, 241, 0.9), rgba(153, 246, 228, 0.8)) !important;
+  border: 2rpx solid rgba(20, 184, 166, 0.15) !important;
 }
 
-.todo-item:nth-child(2) {
-  background: linear-gradient(135deg, var(--color-warning-lighter), rgba(254, 243, 199, 0.8));
-  border: var(--td-border-level-1-color, 2rpx solid rgba(245, 158, 11, 0.1));
+.todo-item.batch-color-2 {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.9), rgba(251, 191, 36, 0.8)) !important;
+  border: 2rpx solid rgba(245, 158, 11, 0.15) !important;
 }
 
-.todo-item:nth-child(3) {
-  background: linear-gradient(135deg, var(--color-info-lighter), rgba(191, 219, 254, 0.8));
-  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
+.todo-item.batch-color-3 {
+  background: linear-gradient(135deg, rgba(191, 219, 254, 0.9), rgba(147, 197, 253, 0.8)) !important;
+  border: 2rpx solid rgba(59, 130, 246, 0.15) !important;
+}
+
+.todo-item.batch-color-4 {
+  background: linear-gradient(135deg, rgba(196, 181, 253, 0.9), rgba(167, 139, 250, 0.8)) !important;
+  border: 2rpx solid rgba(124, 58, 237, 0.15) !important;
+}
+
+.todo-item.batch-color-5 {
+  background: linear-gradient(135deg, rgba(187, 247, 208, 0.9), rgba(134, 239, 172, 0.8)) !important;
+  border: 2rpx solid rgba(34, 197, 94, 0.15) !important;
 }
 
 .todo-left {
@@ -734,6 +745,77 @@ page {
   }
 }
 
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
 // AI加载状态
 .ai-loading {
   display: flex;
@@ -819,6 +901,77 @@ page {
       background: linear-gradient(135deg, var(--color-danger) 0%, #dc2626 100%);
     }
   }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
 
 // 建议内容区域
@@ -907,6 +1060,77 @@ page {
   }
 }
 
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
 // 环境建议
 .env-advice {
   .env-category {
@@ -957,6 +1181,77 @@ page {
       line-height: var(--line-height-base);
     }
   }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
 
 // 快速操作
@@ -1164,6 +1459,16 @@ page {
   transition: all 0.3s ease;
 }
 
+/* 确保已完成样式覆盖批次颜色 */
+.todo-item.completed.batch-color-1,
+.todo-item.completed.batch-color-2,
+.todo-item.completed.batch-color-3,
+.todo-item.completed.batch-color-4,
+.todo-item.completed.batch-color-5 {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  border: 2rpx solid #dee2e6 !important;
+}
+
 .todo-item.completed .todo-text {
   text-decoration: line-through !important;
   color: #6c757d !important;
@@ -1323,5 +1628,898 @@ page {
     background: rgba(255, 193, 7, 0.1) !important;
     border-color: #ffc107 !important;
     color: #e65100 !important;
+  }
+}
+
+/* ========== 疫苗接种表单样式 ========== */
+.vaccine-form-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  
+  .form-section {
+    margin-bottom: 32rpx;
+    
+    .section-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      margin-bottom: 8rpx;
+      padding: 24rpx 32rpx 16rpx 32rpx;
+      background: rgba(0, 82, 217, 0.04);
+      border-left: 4rpx solid var(--td-brand-color, #0052d9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10rpx);
+      -webkit-backdrop-filter: blur(10rpx);
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 32rpx;
+      min-height: 88rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .form-label {
+        flex-shrink: 0;
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+        margin-right: 24rpx;
+        width: 180rpx;
+        
+        &.required::after {
+          content: " *";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+        }
+      }
+      
+      .form-input, .form-textarea {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        background: #ffffff;
+        text-align: right;
+        min-height: 52rpx;
+        
+        &:focus {
+          border-color: var(--td-brand-color, #0052d9);
+          box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1);
+          outline: none;
+        }
+        
+        &::placeholder {
+          color: #cccccc;
+          text-align: right;
+          font-size: 28rpx;
+        }
+      }
+      
+      .form-textarea {
+        min-height: 120rpx;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        background: #ffffff;
+        min-height: 52rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        position: relative;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+      
+      &.total-cost {
+        background: rgba(0, 82, 217, 0.03);
+        
+        .form-label {
+          font-weight: 600;
+          color: var(--td-brand-color, #0052d9);
+        }
+        
+        .cost-value {
+          flex: 1;
+          text-align: right;
+          font-size: 32rpx;
+          font-weight: 600;
+          color: var(--td-brand-color, #0052d9);
+        }
+      }
+    }
+  }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+/* 响应式适配 - 小屏幕优化 */
+@media (max-width: 750rpx) {
+  .vaccine-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .form-textarea {
+          &::placeholder {
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}/* 用药管理表单样式 - 添加到首页样式文件末尾 */
+
+/* ========== 用药管理表单样式（优化版 - 参照接种信息表单） ========== */
+
+.medication-form-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  /* GPU加速优化 */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  
+  .form-section {
+    margin-bottom: 32rpx;
+    
+    .section-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      margin-bottom: 8rpx;
+      padding: 24rpx 32rpx 16rpx 32rpx;
+      background: rgba(22, 163, 74, 0.04);
+      border-left: 4rpx solid #16a34a;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10rpx);
+      -webkit-backdrop-filter: blur(10rpx);
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 32rpx;
+      min-height: 88rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .form-label {
+        flex-shrink: 0;
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+        margin-right: 24rpx;
+        width: 180rpx;
+        
+        &.required::after {
+          content: " *";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+        }
+      }
+      
+      .form-input, .form-textarea {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        background: #ffffff;
+        text-align: right;
+        min-height: 52rpx;
+        
+        &:focus {
+          border-color: #16a34a;
+          box-shadow: 0 0 0 2rpx rgba(22, 163, 74, 0.1);
+          outline: none;
+        }
+        
+        &::placeholder {
+          color: #cccccc;
+          text-align: right;
+          font-size: 28rpx;
+        }
+      }
+      
+      .form-textarea {
+        min-height: 120rpx;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        background: #ffffff;
+        min-height: 52rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        position: relative;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+      
+      .unit-text {
+        position: absolute;
+        right: 24rpx;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24rpx;
+        color: var(--color-text-tertiary);
+        pointer-events: none;
+      }
+      
+      .error-text {
+        display: block;
+        font-size: 24rpx;
+        color: var(--td-error-color, #e34d59);
+        margin-top: 8rpx;
+        line-height: 1.4;
+      }
+      
+      &.textarea-row {
+        align-items: flex-start;
+        
+        .form-label {
+          margin-top: 16rpx;
+        }
+      }
+    }
+  }
+  
+  .medicine-info {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(22, 163, 74, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid #16a34a;
+    
+    .info-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8rpx 0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .info-label {
+        font-size: 26rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+      }
+      
+      .info-value {
+        font-size: 28rpx;
+        color: var(--td-text-color-primary, #000000);
+        font-weight: 600;
+        text-align: right;
+      }
+    }
+  }
+  
+  .form-errors {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(227, 77, 89, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid var(--td-error-color, #e34d59);
+    
+    .error-item {
+      margin-bottom: 8rpx;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .error-text {
+        display: block;
+        color: var(--td-error-color, #e34d59);
+        font-size: 26rpx;
+        line-height: 1.5;
+        margin: 0;
+        
+        &::before {
+          content: "• ";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+          margin-right: 4rpx;
+        }
+      }
+    }
+  }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+/* ========== 营养管理表单样式（优化版 - 参照接种信息表单） ========== */
+
+.nutrition-form-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  /* GPU加速优化 */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  
+  .form-section {
+    margin-bottom: 32rpx;
+    
+    .section-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      margin-bottom: 8rpx;
+      padding: 24rpx 32rpx 16rpx 32rpx;
+      background: rgba(16, 185, 129, 0.04);
+      border-left: 4rpx solid #10b981;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10rpx);
+      -webkit-backdrop-filter: blur(10rpx);
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 32rpx;
+      min-height: 88rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .form-label {
+        flex-shrink: 0;
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+        margin-right: 24rpx;
+        width: 180rpx;
+        
+        &.required::after {
+          content: " *";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+        }
+      }
+      
+      .form-input, .form-textarea {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        background: #ffffff;
+        text-align: right;
+        min-height: 52rpx;
+        
+        &:focus {
+          border-color: #10b981;
+          box-shadow: 0 0 0 2rpx rgba(16, 185, 129, 0.1);
+          outline: none;
+        }
+        
+        &::placeholder {
+          color: #cccccc;
+          text-align: right;
+          font-size: 28rpx;
+        }
+      }
+      
+      .form-textarea {
+        min-height: 120rpx;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        background: #ffffff;
+        min-height: 52rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        position: relative;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+      
+      .unit-text {
+        position: absolute;
+        right: 24rpx;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24rpx;
+        color: var(--color-text-tertiary);
+        pointer-events: none;
+      }
+      
+      .error-text {
+        display: block;
+        font-size: 24rpx;
+        color: var(--td-error-color, #e34d59);
+        margin-top: 8rpx;
+        line-height: 1.4;
+      }
+      
+      &.textarea-row {
+        align-items: flex-start;
+        
+        .form-label {
+          margin-top: 16rpx;
+        }
+      }
+    }
+  }
+  
+  .nutrition-info {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(16, 185, 129, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid #10b981;
+    
+    .info-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8rpx 0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .info-label {
+        font-size: 26rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+      }
+      
+      .info-value {
+        font-size: 28rpx;
+        color: var(--td-text-color-primary, #000000);
+        font-weight: 600;
+        text-align: right;
+      }
+    }
+  }
+  
+  .form-errors {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(227, 77, 89, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid var(--td-error-color, #e34d59);
+    
+    .error-item {
+      margin-bottom: 8rpx;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .error-text {
+        display: block;
+        color: var(--td-error-color, #e34d59);
+        font-size: 26rpx;
+        line-height: 1.5;
+        margin: 0;
+        
+        &::before {
+          content: "• ";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+          margin-right: 4rpx;
+        }
+      }
+    }
+  }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+
+// 只读输入框样式
+.readonly-input {
+  background-color: #f5f5f5 !important;
+  color: #666 !important;
+  cursor: not-allowed;
+  position: relative;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.02);
+    pointer-events: none;
   }
 }

@@ -15,10 +15,6 @@
           <text class="card-title">全场任务概览</text>
           <view class="header-actions">
             <text class="batch-count-badge">{{activeBatchCount}}个批次</text>
-            <!-- 临时数据修复按钮 -->
-            <t-button theme="primary" variant="outline" size="extra-small" bind:tap="migrateTaskData" style="margin-left: 20rpx;">
-              🔧 修复
-            </t-button>
           </view>
         </view>
         
@@ -79,16 +75,13 @@
               
               <!-- 该批次的任务列表 -->
               <view class="batch-task-list">
-                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="_id" class="modern-task-card priority-{{task.priority}} {{task.completed ? 'completed' : ''}}">
+                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="_id" class="modern-task-card {{task.completed ? 'completed' : ''}}">
                   <!-- 任务主体 -->
                   <view class="task-main" bind:tap="viewTaskDetail" data-task="{{task}}">
                     <view class="task-content">
                       <view class="task-header-info">
                         <text class="task-title {{task.completed ? 'completed' : ''}}" data-completed="{{task.completed}}" data-task-id="{{task._id}}">{{task.title}}</text>
                         <view class="task-badges">
-                          <view class="priority-badge priority-{{task.priority}}">
-                            <text class="priority-text">{{getPriorityName(task.priority)}}</text>
-                          </view>
                           <view class="type-badge type-{{task.type}}">
                             <text class="type-text">{{getTypeName(task.type)}}</text>
                           </view>
@@ -142,18 +135,14 @@
 
               <!-- 该日任务列表 -->
               <view class="upcoming-task-list">
-                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="upcoming-task-item priority-{{task.priority}}" bind:tap="viewTaskDetail" data-task="{{task}}">
+                <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="upcoming-task-item" bind:tap="viewTaskDetail" data-task="{{task}}">
                   <view class="upcoming-task-left">
-                    <view class="task-priority-dot priority-{{task.priority}}"></view>
                     <view class="task-info">
                       <text class="task-title">{{task.title}}</text>
                       <text class="task-batch-info">{{task.batchNumber}}</text>
                       <view class="task-badges">
                         <view class="type-badge type-{{task.type}}">
                           <text>{{getTypeName(task.type)}}</text>
-                        </view>
-                        <view class="priority-badge priority-{{task.priority}}">
-                          <text>{{getPriorityName(task.priority)}}</text>
                         </view>
                       </view>
                     </view>
@@ -257,11 +246,11 @@
     visible="{{showTaskDetailPopup}}"
     title="任务详情"
     show-close="{{true}}"
-    show-actions="{{!selectedTask.completed && selectedTask.canComplete}}"
-    confirm-text="{{selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : '完成任务'}}"
+    show-actions="{{selectedTask && !selectedTask.completed && selectedTask.canComplete}}"
+    confirm-text="{{selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : (selectedTask && selectedTask.isMedicationTask ? '领取药品' : (selectedTask && selectedTask.isNutritionTask ? '领取营养品' : '完成任务'))}}"
     cancel-text="关闭"
     bind:close="closeTaskDetailPopup"
-    bind:confirm="{{selectedTask && selectedTask.isVaccineTask ? 'openVaccineForm' : 'completeTaskFromPopup'}}"
+    bind:confirm="onTaskConfirm"
     bind:cancel="closeTaskDetailPopup"
     bind:visiblechange="onTaskDetailPopupChange"
   >
@@ -275,17 +264,6 @@
           <view class="info-row">
             <text class="info-label">任务类型：</text>
             <text class="info-value">{{selectedTask.typeName || '未分类'}}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">优先级：</text>
-            <view class="status-value">
-              <t-tag 
-                theme="{{selectedTask.priorityTheme || 'primary'}}" 
-                size="small"
-              >
-                {{selectedTask.priorityName || '普通'}}
-              </t-tag>
-            </view>
           </view>
           <view class="info-row" wx:if="{{selectedTask.estimatedTime}}">
             <text class="info-label">预计用时：</text>
@@ -301,7 +279,11 @@
           </view>
           <view class="info-row" wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
             <text class="info-label">所需物料：</text>
-            <text class="info-value materials-text">{{selectedTask.materials.join('、')}}</text>
+            <text class="info-value materials-text">
+              <block wx:for="{{selectedTask.materials}}" wx:key="index">
+                {{item}}{{index < selectedTask.materials.length - 1 ? '、' : ''}}
+              </block>
+            </text>
           </view>
           <view class="info-row" wx:if="{{selectedTask.batchNumber}}">
             <text class="info-label">批次编号：</text>
@@ -318,19 +300,6 @@
                 {{selectedTask.statusText || '待完成'}}
               </t-tag>
             </view>
-          </view>
-          <!-- 🔥 时间状态提示 -->
-          <view class="info-row" wx:if="{{selectedTask.dayAge && !selectedTask.canComplete}}">
-            <text class="info-label">时间状态：</text>
-            <view class="status-value">
-              <t-tag theme="warning" size="small">
-                时间未到，第{{selectedTask.dayAge}}日龄执行
-              </t-tag>
-            </view>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.completedDate}}">
-            <text class="info-label">完成时间：</text>
-            <text class="info-value">{{selectedTask.completedDate}}</text>
           </view>
           <view class="info-row info-row-description" wx:if="{{selectedTask.description}}">
             <text class="info-label">任务描述：</text>
@@ -487,9 +456,9 @@
       </view>
 
       <!-- 表单验证错误提示 -->
-      <view wx:if="{{vaccineFormErrors && Object.keys(vaccineFormErrors).length > 0}}" class="form-errors">
-        <view wx:for="{{Object.keys(vaccineFormErrors)}}" wx:key="*this" class="error-item">
-          <text class="error-text">{{vaccineFormErrors[item]}}</text>
+      <view wx:if="{{vaccineFormErrorList && vaccineFormErrorList.length > 0}}" class="form-errors">
+        <view wx:for="{{vaccineFormErrorList}}" wx:key="index" class="error-item">
+          <text class="error-text">{{item}}</text>
         </view>
       </view>
     </view>
@@ -552,6 +521,202 @@
                     data-field="followUp"
                     bindinput="onAdverseReactionInput"
                     maxlength="200" />
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 用药管理表单弹窗 -->
+  <bottom-popup
+    visible="{{showMedicationFormPopup}}"
+    title="用药管理"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="确认领用"
+    cancel-text="取消"
+    bind:close="closeMedicationFormPopup"
+    bind:confirm="submitMedicationForm"
+    bind:cancel="closeMedicationFormPopup"
+  >
+    <view class="medication-form-content">
+      <!-- 药品选择 -->
+      <view class="form-section">
+        <view class="section-title">药品选择</view>
+        <view class="form-row">
+          <text class="form-label required">选择药品</text>
+          <picker mode="selector" 
+                  range="{{availableMedicines}}"
+                  range-key="name"
+                  bindchange="onMedicineSelect">
+            <view class="form-input picker-input">
+              {{selectedMedicine ? selectedMedicine.name : '请选择药品'}}
+            </view>
+          </picker>
+          <text wx:if="{{medicationFormErrors.medicineId}}" class="error-text">{{medicationFormErrors.medicineId}}</text>
+        </view>
+        
+        <view wx:if="{{selectedMedicine}}" class="medicine-info">
+          <view class="info-item">
+            <text class="info-label">当前库存：</text>
+            <text class="info-value">{{selectedMedicine.stock}}{{selectedMedicine.unit}}</text>
+          </view>
+          <view class="info-item" wx:if="{{selectedMedicine.description}}">
+            <text class="info-label">药品说明：</text>
+            <text class="info-value">{{selectedMedicine.description}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 用药信息 -->
+      <view class="form-section">
+        <view class="section-title">用药信息</view>
+        <view class="form-row">
+          <text class="form-label required">用药数量</text>
+          <input class="form-input" 
+                 type="number"
+                 placeholder="请输入用药数量"
+                 value="{{medicationFormData.quantity > 0 ? medicationFormData.quantity : ''}}"
+                 bindinput="onMedicationQuantityInput" />
+          <text wx:if="{{medicationFormErrors.quantity}}" class="error-text">{{medicationFormErrors.quantity}}</text>
+        </view>
+        <view class="form-row">
+          <text class="form-label required">用药用途</text>
+          <input class="form-input" 
+                 placeholder="请输入用药用途"
+                 value="{{medicationFormData.purpose}}"
+                 data-field="purpose"
+                 bindinput="onMedicationFormInput" />
+          <text wx:if="{{medicationFormErrors.purpose}}" class="error-text">{{medicationFormErrors.purpose}}</text>
+        </view>
+        <view class="form-row">
+          <text class="form-label">用药剂量</text>
+          <input class="form-input" 
+                 placeholder="请输入用药剂量"
+                 value="{{medicationFormData.dosage}}"
+                 data-field="dosage"
+                 bindinput="onMedicationFormInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">操作员</text>
+          <view class="form-input readonly-input">{{medicationFormData.operator}}</view>
+        </view>
+      </view>
+
+      <!-- 备注信息 -->
+      <view class="form-section">
+        <view class="section-title">备注信息</view>
+        <view class="form-row textarea-row">
+          <textarea class="form-textarea" 
+                    placeholder="请输入用药备注信息"
+                    value="{{medicationFormData.notes}}"
+                    data-field="notes"
+                    bindinput="onMedicationFormInput"
+                    maxlength="200" />
+        </view>
+      </view>
+
+      <!-- 表单验证错误提示 -->
+      <view wx:if="{{medicationFormErrorList && medicationFormErrorList.length > 0}}" class="form-errors">
+        <view wx:for="{{medicationFormErrorList}}" wx:key="index" class="error-item">
+          <text class="error-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
+  <!-- 营养管理表单弹窗 -->
+  <bottom-popup
+    visible="{{showNutritionFormPopup}}"
+    title="营养管理"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="确认领取"
+    cancel-text="取消"
+    bind:close="closeNutritionFormPopup"
+    bind:confirm="submitNutritionForm"
+    bind:cancel="closeNutritionFormPopup"
+  >
+    <view class="nutrition-form-content">
+      <!-- 营养品选择 -->
+      <view class="form-section">
+        <view class="section-title">营养品选择</view>
+        <view class="form-row">
+          <text class="form-label required">选择营养品</text>
+          <picker mode="selector" 
+                  range="{{availableNutrition}}"
+                  range-key="name"
+                  bindchange="onNutritionSelect">
+            <view class="form-input picker-input">
+              {{selectedNutrition ? selectedNutrition.name : '请选择营养品'}}
+            </view>
+          </picker>
+          <text wx:if="{{nutritionFormErrors.nutritionId}}" class="error-text">{{nutritionFormErrors.nutritionId}}</text>
+        </view>
+        
+        <view wx:if="{{selectedNutrition}}" class="nutrition-info">
+          <view class="info-item">
+            <text class="info-label">当前库存：</text>
+            <text class="info-value">{{selectedNutrition.stock}}{{selectedNutrition.unit}}</text>
+          </view>
+          <view class="info-item" wx:if="{{selectedNutrition.description}}">
+            <text class="info-label">营养品说明：</text>
+            <text class="info-value">{{selectedNutrition.description}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用信息 -->
+      <view class="form-section">
+        <view class="section-title">使用信息</view>
+        <view class="form-row">
+          <text class="form-label required">使用数量</text>
+          <input class="form-input" 
+                 type="number"
+                 placeholder="请输入使用数量"
+                 value="{{nutritionFormData.quantity > 0 ? nutritionFormData.quantity : ''}}"
+                 bindinput="onNutritionQuantityInput" />
+          <text wx:if="{{nutritionFormErrors.quantity}}" class="error-text">{{nutritionFormErrors.quantity}}</text>
+        </view>
+        <view class="form-row">
+          <text class="form-label required">使用用途</text>
+          <input class="form-input" 
+                 placeholder="请输入使用用途"
+                 value="{{nutritionFormData.purpose}}"
+                 data-field="purpose"
+                 bindinput="onNutritionFormInput" />
+          <text wx:if="{{nutritionFormErrors.purpose}}" class="error-text">{{nutritionFormErrors.purpose}}</text>
+        </view>
+        <view class="form-row">
+          <text class="form-label">使用剂量</text>
+          <input class="form-input" 
+                 placeholder="请输入使用剂量"
+                 value="{{nutritionFormData.dosage}}"
+                 data-field="dosage"
+                 bindinput="onNutritionFormInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">操作员</text>
+          <view class="form-input readonly-input">{{nutritionFormData.operator}}</view>
+        </view>
+      </view>
+
+      <!-- 备注信息 -->
+      <view class="form-section">
+        <view class="section-title">备注信息</view>
+        <view class="form-row textarea-row">
+          <textarea class="form-textarea" 
+                    placeholder="请输入营养品使用备注信息"
+                    value="{{nutritionFormData.notes}}"
+                    data-field="notes"
+                    bindinput="onNutritionFormInput"
+                    maxlength="200" />
+        </view>
+      </view>
+
+      <!-- 表单验证错误提示 -->
+      <view wx:if="{{nutritionFormErrorList && nutritionFormErrorList.length > 0}}" class="form-errors">
+        <view wx:for="{{nutritionFormErrorList}}" wx:key="index" class="error-item">
+          <text class="error-text">{{item}}</text>
         </view>
       </view>
     </view>

@@ -250,7 +250,7 @@ const pageConfig = {
       }
     }).catch(error => {
       wx.hideLoading()
-      console.error('加载财务数据失败:', error)
+      // 已移除调试日志
     })
   },
   
@@ -310,8 +310,7 @@ const pageConfig = {
       }
       
     } catch (error) {
-      console.error('财务AI分析失败:', error)
-      
+      // 已移除调试日志
       // 提供备用分析结果
       const fallbackResult = this.generateFallbackAnalysis()
       
@@ -465,7 +464,7 @@ ${Object.entries(financialData.expenseCategories).map(([category, amount]: [stri
         }
       }
     } catch (error) {
-      console.error('解析AI分析结果失败:', error)
+      // 已移除调试日志
     }
     
     // 解析失败时返回备用结果

@@ -105,20 +105,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       {
         category: '疫苗采购',
         suggestion: '考虑批量采购以降低单价',
-        potentialSaving: 800,
-        priority: 'high'
+        potentialSaving: 800
       },
       {
         category: '治疗成本',
         suggestion: '加强预防减少治疗需求',
-        potentialSaving: 1200,
-        priority: 'high'
+        potentialSaving: 1200
       },
       {
         category: '检测优化',
         suggestion: '定期检测与快速检测结合',
-        potentialSaving: 400,
-        priority: 'medium'
+        potentialSaving: 400
       }
     ]
   },
@@ -151,7 +148,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载成本分析数据失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载数据失败',
         icon: 'none'
@@ -185,7 +182,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const { suggestion } = e.currentTarget.dataset
     wx.showModal({
       title: '优化建议详情',
-      content: `类别: ${suggestion.category}\n建议: ${suggestion.suggestion}\n预计节省: ¥${suggestion.potentialSaving}\n优先级: ${suggestion.priority === 'high' ? '高' : suggestion.priority === 'medium' ? '中' : '低'}`,
+      content: `类别: ${suggestion.category}\n建议: ${suggestion.suggestion}\n预计节省: ¥${suggestion.potentialSaving}`,
       showCancel: false
     })
   },
@@ -219,7 +216,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       }
     } catch (error) {
       wx.hideLoading()
-      console.error('导出报告失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '导出失败',
         icon: 'none'

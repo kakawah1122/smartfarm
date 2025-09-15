@@ -80,7 +80,7 @@ Component({
           })
         }
       } catch (error) {
-        console.error('加载动物列表失败:', error)
+        // 已移除调试日志
         wx.showToast({
           title: '加载失败',
           icon: 'none'
@@ -112,7 +112,7 @@ Component({
           })
         }
       } catch (error) {
-        console.error('加载选中动物失败:', error)
+        // 已移除调试日志
       }
     },
 

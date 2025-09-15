@@ -110,8 +110,7 @@ Page<PageData>({
    * 页面加载
    */
   onLoad(options: any) {
-    console.log('页面加载参数:', options)
-    
+    // 已移除调试日志
     this.setData({
       currentBatchId: options.batchId || '',
       currentDayAge: parseInt(options.dayAge) || 0
@@ -177,7 +176,7 @@ Page<PageData>({
         })
       }
     } catch (error: any) {
-      console.error('加载任务失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载任务失败',
         icon: 'error'
@@ -192,8 +191,7 @@ Page<PageData>({
    */
   viewTaskDetail(e: any) {
     const task = e.currentTarget.dataset.task as Task
-    console.log('查看任务详情:', task)
-
+    // 已移除调试日志
     this.setData({
       selectedTask: task,
       showTaskDetail: true
@@ -236,7 +234,7 @@ Page<PageData>({
         this.loadTodos() // 刷新任务列表
       }
     } catch (error: any) {
-      console.error('完成任务失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -365,8 +363,7 @@ Page<PageData>({
     
     const totalCostFormatted = `¥${totalCost.toFixed(2)}`
     
-    console.log('计算总费用:', { vaccineCost, veterinaryCost, otherCost, totalCost, totalCostFormatted })
-    
+    // 已移除调试日志
     this.setData({
       vaccineFormData: {
         ...this.data.vaccineFormData,
@@ -485,7 +482,7 @@ Page<PageData>({
       }
 
     } catch (error: any) {
-      console.error('提交疫苗接种记录失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '提交失败，请重试',
         icon: 'error'

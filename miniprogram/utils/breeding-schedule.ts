@@ -13,29 +13,6 @@ export const TASK_TYPES = {
   observation: '观察'
 } as const
 
-// 优先级定义
-export const PRIORITY_LEVELS = {
-  critical: {
-    name: '紧急',
-    theme: 'danger',
-    priority: 1
-  },
-  high: {
-    name: '重要', 
-    theme: 'warning',
-    priority: 2
-  },
-  medium: {
-    name: '普通',
-    theme: 'primary', 
-    priority: 3
-  },
-  low: {
-    name: '较低',
-    theme: 'default',
-    priority: 4
-  }
-} as const
 
 // 任务分类定义
 export const TASK_CATEGORIES = {
@@ -86,24 +63,6 @@ export function getTodayTasks(batchId: string, dayAge: number) {
   return Promise.resolve([])
 }
 
-/**
- * 根据任务类型获取优先级
- * @param type 任务类型
- * @returns 优先级字符串
- */
-export function getTaskPriority(type: string): keyof typeof PRIORITY_LEVELS {
-  const priorityMap: Record<string, keyof typeof PRIORITY_LEVELS> = {
-    'vaccine': 'critical',
-    'medication': 'high',
-    'inspection': 'high',
-    'nutrition': 'medium',
-    'care': 'medium',
-    'feeding': 'medium',
-    'observation': 'low'
-  }
-  
-  return priorityMap[type] || 'medium'
-}
 
 /**
  * 计算日龄
@@ -149,13 +108,51 @@ export function formatTaskDescription(task: any): string {
  * @returns 是否为疫苗任务
  */
 export function isVaccineTask(task: any): boolean {
-  return task.type === 'vaccine' ||
-         task.title?.includes('疫苗') || 
-         task.title?.includes('接种') ||
-         task.title?.includes('免疫') ||
-         task.title?.includes('注射') ||
-         task.title?.includes('血清') ||
-         task.title?.includes('抗体')
+  // 首先排除用药管理任务
+  if (task.type === 'medication' || task.type === 'medicine') {
+    return false
+  }
+  
+  // 直接根据类型判断
+  if (task.type === 'vaccine') {
+    return true
+  }
+  
+  // 通过类型名称判断
+  const typeName = TYPE_NAMES[task.type as keyof typeof TYPE_NAMES]
+  return typeName === '疫苗管理'
+}
+
+/**
+ * 检查任务是否为用药管理任务
+ * @param task 任务对象
+ * @returns 是否为用药管理任务
+ */
+export function isMedicationTask(task: any): boolean {
+  // 直接根据任务类型判断，不需要根据标题内容判断
+  if (task.type === 'medication' || task.type === 'medicine') {
+    return true
+  }
+  
+  // 如果type字段不匹配，通过类型名称反向判断
+  const typeName = TYPE_NAMES[task.type as keyof typeof TYPE_NAMES]
+  return typeName === '用药管理'
+}
+
+/**
+ * 检查任务是否为营养管理任务
+ * @param task 任务对象
+ * @returns 是否为营养管理任务
+ */
+export function isNutritionTask(task: any): boolean {
+  // 直接根据任务类型判断
+  if (task.type === 'nutrition') {
+    return true
+  }
+  
+  // 如果type字段不匹配，通过类型名称反向判断
+  const typeName = TYPE_NAMES[task.type as keyof typeof TYPE_NAMES]
+  return typeName === '营养管理'
 }
 
 /**
@@ -169,12 +166,12 @@ export function getTaskTypeName(type: string): string {
 
 export default {
   TASK_TYPES,
-  PRIORITY_LEVELS, 
   TASK_CATEGORIES,
   getTodayTasks,
-  getTaskPriority,
   calculateDayAge,
   formatTaskDescription,
   isVaccineTask,
+  isMedicationTask,
+  isNutritionTask,
   getTaskTypeName
 }

@@ -149,7 +149,7 @@ const pageConfig = {
       
       // 初始化所有数据
       self.loadEmployeeList().catch(function(error) {
-        console.error('页面初始化失败:', error)
+        // 已移除调试日志
         self.setData({ loading: false })
         wx.showToast({
           title: '页面加载失败',
@@ -172,7 +172,7 @@ const pageConfig = {
         self.loadInviteStats()
         self.loadInviteList()
       }).catch(function(error) {
-        console.error('页面初始化失败:', error)
+        // 已移除调试日志
         self.setData({ loading: false, inviteLoading: false })
         wx.showToast({
           title: '页面加载失败',
@@ -224,7 +224,7 @@ const pageConfig = {
         })
         resolve(true)
       } catch (error) {
-        console.error('检查用户权限异常：', error)
+        // 已移除调试日志
         resolve(false)
       }
     })
@@ -300,7 +300,7 @@ const pageConfig = {
             }
           },
           fail: function(error) {
-            console.error('加载员工列表失败:', error)
+            // 已移除调试日志
             self.setData({
               loading: false,
               loadingMore: false,
@@ -315,7 +315,7 @@ const pageConfig = {
           }
         })
       } catch (error) {
-        console.error('加载员工列表异常:', error)
+        // 已移除调试日志
         self.setData({
           loading: false,
           loadingMore: false,
@@ -402,11 +402,11 @@ const pageConfig = {
               })
             }
           } catch (err) {
-            console.error('处理角色更新成功回调时出错:', err)
+            // 已移除调试日志
           }
         },
         fail: function(error) {
-          console.error('更新角色失败:', error)
+          // 已移除调试日志
           wx.showToast({
             title: '更新失败',
             icon: 'none',
@@ -421,14 +421,13 @@ const pageConfig = {
               loadingShown = false
             }
           } catch (err) {
-            console.error('清理状态时出错:', err)
+            // 已移除调试日志
             wx.hideLoading()
           }
         }
       })
     } catch (error) {
-      console.error('调用角色更新云函数时出错:', error)
-      
+      // 已移除调试日志
       self.setData({ isSubmitting: false })
       if (loadingShown) {
         wx.hideLoading()
@@ -624,11 +623,11 @@ const pageConfig = {
               })
             }
           } catch (err) {
-            console.error('处理保存成功回调时出错:', err)
+            // 已移除调试日志
           }
         },
         fail: function(error) {
-          console.error('保存基本信息失败:', error)
+          // 已移除调试日志
           wx.showToast({
             title: '保存失败: ' + (error.errMsg || '网络错误'),
             icon: 'none',
@@ -643,14 +642,13 @@ const pageConfig = {
               loadingShown = false
             }
           } catch (err) {
-            console.error('清理状态时出错:', err)
+            // 已移除调试日志
             wx.hideLoading()
           }
         }
       })
     } catch (error) {
-      console.error('调用保存云函数时出错:', error)
-      
+      // 已移除调试日志
       self.setData({ isSubmitting: false })
       if (loadingShown) {
         wx.hideLoading()
@@ -713,7 +711,7 @@ const pageConfig = {
           })
         }
       } catch (error) {
-        console.warn('日期格式化失败:', employee.registerTime, error)
+        // 已移除调试日志
       }
     }
 
@@ -850,7 +848,7 @@ const pageConfig = {
         }
       },
       fail: function(error) {
-        console.error('加载邀请统计失败:', error)
+        // 已移除调试日志
       }
     })
   },
@@ -912,7 +910,7 @@ const pageConfig = {
             inviteLoadingMore: false
           })
           
-          console.error('加载邀请列表失败:', error)
+          // 已移除调试日志
         }
       })
     } catch (error) {
@@ -920,7 +918,7 @@ const pageConfig = {
         inviteLoading: false,
         inviteLoadingMore: false
       })
-      console.error('加载邀请列表异常:', error)
+      // 已移除调试日志
     }
   },
 
@@ -1005,7 +1003,7 @@ const pageConfig = {
     
     // 防重复提交 - 增强检查
     if (self.data.isSubmitting) {
-      console.warn('正在处理中，请勿重复点击')
+      // 已移除调试日志
       return
     }
 
@@ -1065,11 +1063,11 @@ const pageConfig = {
               })
             }
           } catch (err) {
-            console.error('处理成功回调时出错:', err)
+            // 已移除调试日志
           }
         },
         fail: function(error) {
-          console.error('创建邀请失败:', error)
+          // 已移除调试日志
           wx.showToast({
             title: '生成失败，请重试',
             icon: 'none',
@@ -1087,15 +1085,14 @@ const pageConfig = {
               loadingShown = false
             }
           } catch (err) {
-            console.error('清理状态时出错:', err)
+            // 已移除调试日志
             // 即使出错也要确保 hideLoading
             wx.hideLoading()
           }
         }
       })
     } catch (error) {
-      console.error('调用云函数时出错:', error)
-      
+      // 已移除调试日志
       // 确保在任何情况下都清理状态
       self.setData({ isSubmitting: false })
       if (loadingShown) {
@@ -1253,11 +1250,11 @@ const pageConfig = {
               })
             }
           } catch (err) {
-            console.error('处理撤销成功回调时出错:', err)
+            // 已移除调试日志
           }
         },
         fail: function(error) {
-          console.error('撤销邀请失败:', error)
+          // 已移除调试日志
           wx.showToast({
             title: '撤销失败',
             icon: 'none',
@@ -1271,14 +1268,13 @@ const pageConfig = {
               loadingShown = false
             }
           } catch (err) {
-            console.error('清理 loading 状态时出错:', err)
+            // 已移除调试日志
             wx.hideLoading()
           }
         }
       })
     } catch (error) {
-      console.error('调用撤销云函数时出错:', error)
-      
+      // 已移除调试日志
       if (loadingShown) {
         wx.hideLoading()
       }
@@ -1341,11 +1337,11 @@ const pageConfig = {
               })
             }
           } catch (err) {
-            console.error('处理重发成功回调时出错:', err)
+            // 已移除调试日志
           }
         },
         fail: function(error) {
-          console.error('重新发送邀请失败:', error)
+          // 已移除调试日志
           wx.showToast({
             title: '发送失败',
             icon: 'none',
@@ -1359,14 +1355,13 @@ const pageConfig = {
               loadingShown = false
             }
           } catch (err) {
-            console.error('清理 loading 状态时出错:', err)
+            // 已移除调试日志
             wx.hideLoading()
           }
         }
       })
     } catch (error) {
-      console.error('调用重发云函数时出错:', error)
-      
+      // 已移除调试日志
       if (loadingShown) {
         wx.hideLoading()
       }

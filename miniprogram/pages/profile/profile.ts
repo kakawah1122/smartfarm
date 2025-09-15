@@ -167,9 +167,8 @@ const pageConfig = {
         }
         originalSetData(data, callback)
       } catch (error) {
-        console.error('setData 出现错误:', error)
-        console.error('导致错误的数据:', data)
-        
+        // 已移除调试日志
+        // 已移除调试日志
         // 尝试修复数组字段
         this.ensureArrayFieldsInitialized()
         
@@ -179,7 +178,7 @@ const pageConfig = {
           // 移除可能导致问题的字段
           Object.keys(safeData).forEach(key => {
             if (safeData[key] === undefined) {
-              console.warn(`移除 undefined 字段: ${key}`)
+              // 已移除调试日志
               delete safeData[key]
             }
           })
@@ -199,7 +198,7 @@ const pageConfig = {
     
     // 检查并修复可能为 undefined 的数组字段
     if (!Array.isArray(currentData.menuItems)) {
-      console.warn('menuItems 不是数组，重置为默认值')
+      // 已移除调试日志
       updates.menuItems = [
         {
           id: 1,
@@ -233,12 +232,12 @@ const pageConfig = {
     }
     
     if (!Array.isArray(currentData.pendingItems)) {
-      console.warn('pendingItems 不是数组，重置为默认值')
+      // 已移除调试日志
       updates.pendingItems = []
     }
     
     if (!Array.isArray(currentData.notifications)) {
-      console.warn('notifications 不是数组，重置为默认值')
+      // 已移除调试日志
       updates.notifications = []
     }
     
@@ -256,23 +255,23 @@ const pageConfig = {
       if (data) {
         // 如果尝试直接设置整个 data 对象，保护数组字段
         if (data.hasOwnProperty('menuItems') && !Array.isArray(data.menuItems)) {
-          console.warn('尝试将 menuItems 设置为非数组值，已忽略')
+          // 已移除调试日志
           delete data.menuItems
         }
         if (data.hasOwnProperty('pendingItems') && !Array.isArray(data.pendingItems)) {
-          console.warn('尝试将 pendingItems 设置为非数组值，已忽略')
+          // 已移除调试日志
           delete data.pendingItems
         }
         if (data.hasOwnProperty('notifications') && !Array.isArray(data.notifications)) {
-          console.warn('尝试将 notifications 设置为非数组值，已忽略')
+          // 已移除调试日志
           delete data.notifications
         }
       }
       
       this.setData(data, callback)
     } catch (error) {
-      console.error('setData 调用失败:', error)
-      console.error('尝试设置的数据:', data)
+      // 已移除调试日志
+      // 已移除调试日志
       // 尝试恢复数组字段
       this.ensureArrayFieldsInitialized()
       throw error
@@ -297,13 +296,7 @@ const pageConfig = {
                       farmName !== '智慧养殖场' &&
                       farmName !== '未设置'
     
-    console.log('信息完整性检查结果:', {
-      nickname,
-      phone,
-      farmName,
-      isComplete
-    })
-    
+    // 已移除调试日志
     return isComplete
   },
 
@@ -316,8 +309,7 @@ const pageConfig = {
       })
       return result
     } catch (error) {
-      console.error(`云函数 ${functionName} 调用失败:`, error)
-      
+      // 已移除调试日志
       // 处理同步错误
       if (error && (error.message || '').includes('sync-0')) {
         console.warn('检测到云开发同步错误 (sync-0)，这通常是网络或配置问题')
@@ -333,17 +325,17 @@ const pageConfig = {
     // 页面显示时也确保数组字段正确
     this.ensureArrayFieldsInitialized()
     // 页面显示时刷新数据
-    console.log('个人中心页面显示，开始检查登录状态')
+    // 已移除调试日志
     await this.checkLoginStatus()
     if (this.data.isLoggedIn) {
-      console.log('用户已登录，加载云端用户信息')
+      // 已移除调试日志
       await this.loadCloudUserInfo()
       
       // 检查是否需要显示完善信息提示
       // 注意：这个检查会优先检查永久标记，避免重复弹出
       this.checkProfileSetupNeeded()
     } else {
-      console.log('用户未登录')
+      // 已移除调试日志
     }
   },
 
@@ -359,7 +351,7 @@ const pageConfig = {
       const storedUserInfo = wx.getStorageSync('userInfo')
       
       if (storedOpenid && storedUserInfo) {
-        console.log('个人中心: 从本地存储恢复登录状态')
+        // 已移除调试日志
         app.globalData.openid = storedOpenid
         app.globalData.isLoggedIn = true
         app.globalData.userInfo = storedUserInfo
@@ -386,14 +378,13 @@ const pageConfig = {
       isLoggedIn: isLoggedIn
     })
 
-    console.log('个人中心登录状态检查:', { isLoggedIn, hasOpenid: !!openid })
+    // 已移除调试日志
   },
 
   // 从云开发加载用户信息
   async loadCloudUserInfo() {
     try {
-      console.log('加载用户信息...')
-      
+      // 已移除调试日志
       // 优先使用云函数获取用户信息（更稳定）
       const result = await wx.cloud.callFunction({
         name: 'user-management',
@@ -415,14 +406,7 @@ const pageConfig = {
         const displayFarm = cloudUserInfo.farmName || cloudUserInfo.department || '智慧养殖场'
         const displayAvatar = cloudUserInfo.avatarUrl || '/assets/icons/profile.png'
         
-        console.log('云端用户信息加载完成:', { 
-          nickname: cloudUserInfo.nickname, 
-          nickName: cloudUserInfo.nickName,
-          farmName: cloudUserInfo.farmName,
-          department: cloudUserInfo.department,
-          avatarUrl: cloudUserInfo.avatarUrl 
-        })
-        
+        // 已移除调试日志
         this.setData({
           cloudUserInfo: cloudUserInfo,
           userInfo: {
@@ -436,17 +420,15 @@ const pageConfig = {
           }
         })
         
-        console.log('界面用户信息已更新:', { name: displayName, farm: displayFarm, avatar: displayAvatar })
-        
-        console.log('用户信息加载成功')
+        // 已移除调试日志
+        // 已移除调试日志
         return
       }
     } catch (error) {
-      console.error('云函数获取用户信息失败:', error)
-      
+      // 已移除调试日志
       // 处理特定的同步错误
       if (error && (error.message || '').includes('sync-0')) {
-        console.warn('检测到云开发同步错误，这通常是网络或配置问题')
+        // 已移除调试日志
         wx.showToast({
           title: '网络连接不稳定，使用本地数据',
           icon: 'none',
@@ -454,8 +436,7 @@ const pageConfig = {
         })
       }
       
-      console.warn('使用本地存储的信息作为备选')
-      
+      // 已移除调试日志
       // 使用本地存储的用户信息作为备选
       const storedUserInfo = wx.getStorageSync('userInfo')
       if (storedUserInfo) {
@@ -464,14 +445,7 @@ const pageConfig = {
         const displayFarm = storedUserInfo.farmName || storedUserInfo.department || '智慧养殖场'
         const displayAvatar = storedUserInfo.avatarUrl || '/assets/icons/profile.png'
         
-        console.log('从本地存储恢复用户信息:', { 
-          nickname: storedUserInfo.nickname, 
-          nickName: storedUserInfo.nickName,
-          farmName: storedUserInfo.farmName,
-          department: storedUserInfo.department,
-          avatarUrl: storedUserInfo.avatarUrl 
-        })
-        
+        // 已移除调试日志
         this.setData({
           cloudUserInfo: storedUserInfo,
           userInfo: {
@@ -485,10 +459,10 @@ const pageConfig = {
           }
         })
         
-        console.log('界面用户信息已恢复:', { name: displayName, farm: displayFarm, avatar: displayAvatar })
-        console.log('使用本地存储的用户信息')
+        // 已移除调试日志
+        // 已移除调试日志
       } else {
-        console.log('未找到用户信息，保持默认状态')
+        // 已移除调试日志
       }
     }
   },
@@ -574,8 +548,7 @@ const pageConfig = {
         icon: 'success'
       })
     } catch (error) {
-      console.error('登录失败:', error)
-      
+      // 已移除调试日志
       if (loadingShown) {
         wx.hideLoading()
         loadingShown = false
@@ -745,12 +718,12 @@ const pageConfig = {
 
   // 获取微信头像授权
   async onChooseAvatar(e: any) {
-    console.log('头像选择事件触发:', e.detail)
+    // 已移除调试日志
     const { avatarUrl } = e.detail
     
     // 检查头像URL是否有效
     if (!avatarUrl || avatarUrl === '') {
-      console.warn('头像URL无效:', avatarUrl)
+      // 已移除调试日志
       wx.showModal({
         title: '提示',
         content: '头像获取失败，请确保已授权微信头像获取权限，或在真机上测试此功能。',
@@ -760,8 +733,7 @@ const pageConfig = {
       return
     }
     
-    console.log('获取到有效头像URL:', avatarUrl)
-    
+    // 已移除调试日志
     // 立即显示新头像，提升用户体验
     this.setData({
       'userInfo.avatarUrl': avatarUrl
@@ -799,8 +771,7 @@ const pageConfig = {
           avatarUrl: avatarUrl
         }
         
-        console.log('头像更新成功，返回数据:', updatedUserInfo)
-        
+        // 已移除调试日志
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
@@ -820,14 +791,13 @@ const pageConfig = {
         throw new Error(result.result?.message || '云端更新失败')
       }
     } catch (error) {
-      console.error('更新头像失败:', error)
-      
+      // 已移除调试日志
       // 如果是文件路径错误（开发者工具常见问题），给出友好提示
       let errorMessage = '头像更新失败'
       if (error.message && error.message.includes('ENOENT')) {
         errorMessage = '开发环境头像路径错误，请在真机上测试'
         // 在开发环境中，头像仍然显示（已经设置），只是云端同步失败
-        console.warn('开发者工具头像路径问题，真机环境正常')
+        // 已移除调试日志
       } else {
         // 其他错误，恢复原头像
         const app = getApp<App.AppOption>()
@@ -980,8 +950,7 @@ const pageConfig = {
         const app = getApp<App.AppOption>()
         const updatedUserInfo = result.result.data.user
         
-        console.log('云函数返回的用户信息:', updatedUserInfo)
-        
+        // 已移除调试日志
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
@@ -997,8 +966,7 @@ const pageConfig = {
           showEditProfilePopup: false
         })
         
-        console.log('界面数据已更新:', { name: displayName, farm: displayFarm })
-        
+        // 已移除调试日志
         // 先隐藏loading再显示toast
         if (loadingShown) {
           wx.hideLoading()
@@ -1027,7 +995,7 @@ const pageConfig = {
             showProfileSetupTip: false
           })
           
-          console.log('用户信息已完善，设置永久标记')
+          // 已移除调试日志
           console.log('永久标记已设置:', {
             profileCompleted: wx.getStorageSync('profileCompleted'),
             profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
@@ -1042,14 +1010,13 @@ const pageConfig = {
             })
           }, 500)
         } else {
-          console.log('用户信息仍不完整，不设置永久标记')
+          // 已移除调试日志
         }
       } else {
         throw new Error(result.result?.message || '保存失败')
       }
     } catch (error) {
-      console.error('保存个人信息失败:', error)
-      
+      // 已移除调试日志
       if (loadingShown) {
         wx.hideLoading()
         loadingShown = false
@@ -1059,7 +1026,7 @@ const pageConfig = {
       let errorMessage = error.message || '保存失败'
       if (error && (error.message || '').includes('sync-0')) {
         errorMessage = '网络连接不稳定，请稍后重试'
-        console.warn('检测到云开发同步错误，建议检查网络连接和云开发配置')
+        // 已移除调试日志
       }
       
       wx.showToast({
@@ -1072,8 +1039,7 @@ const pageConfig = {
 
   // 检查是否需要显示完善信息提示
   checkProfileSetupNeeded() {
-    console.log('=== 开始检查是否需要显示完善信息提示 ===')
-    
+    // 已移除调试日志
     // 首先检查是否已经有永久完善标记 - 优先检查永久标记
     const profileCompleted = wx.getStorageSync('profileCompleted') || false
     const profileCompletedTime = wx.getStorageSync('profileCompletedTime')
@@ -1084,7 +1050,7 @@ const pageConfig = {
     })
     
     if (profileCompleted) {
-      console.log('用户已有永久完善标记，不显示完善提示')
+      // 已移除调试日志
       this.setData({
         showProfileSetupTip: false
       })
@@ -1093,18 +1059,11 @@ const pageConfig = {
     
     // 检查当前用户信息是否已经完整 - 使用统一的检查逻辑
     const cloudUserInfo = this.data.cloudUserInfo
-    console.log('云端用户信息:', cloudUserInfo)
-    
+    // 已移除调试日志
     if (cloudUserInfo) {
       const isInfoComplete = this.checkUserInfoCompleteness(cloudUserInfo)
       
-      console.log('信息完整性检查结果:', { 
-        isInfoComplete,
-        nickname: cloudUserInfo.nickname || cloudUserInfo.nickName,
-        phone: cloudUserInfo.phone,
-        farmName: cloudUserInfo.farmName || cloudUserInfo.department
-      })
-      
+      // 已移除调试日志
       if (isInfoComplete) {
         // 信息已经完整，设置永久标记并清除临时标记
         wx.setStorageSync('profileCompleted', true)
@@ -1119,11 +1078,11 @@ const pageConfig = {
           showProfileSetupTip: false
         })
         
-        console.log('检测到信息已完整，设置永久标记')
+        // 已移除调试日志
         return // 直接返回，不执行后续逻辑
       }
     } else {
-      console.log('云端用户信息为空，无法检查完整性')
+      // 已移除调试日志
     }
     
     // 信息不完整且没有永久标记时才检查是否需要提示
@@ -1131,18 +1090,17 @@ const pageConfig = {
     const hasSkipped = wx.getStorageSync('hasSkippedProfileSetup')
     const skipUntil = wx.getStorageSync('skipProfileSetupUntil')
     
-    console.log('临时标记检查:', { needSetup, hasSkipped, skipUntil })
-    
+    // 已移除调试日志
     // 检查跳过状态是否过期
     if (skipUntil && Date.now() > skipUntil) {
-      console.log('跳过状态已过期，清除相关标记')
+      // 已移除调试日志
       wx.removeStorageSync('hasSkippedProfileSetup')
       wx.removeStorageSync('skipProfileSetupUntil')
     }
     
     // 只有在需要完善且用户没有跳过的情况下才显示提示
     if (needSetup && !hasSkipped) {
-      console.log('需要显示完善信息提示')
+      // 已移除调试日志
       this.setData({
         showProfileSetupTip: true
       })
@@ -1152,13 +1110,13 @@ const pageConfig = {
         this.editProfile()
       }, 500)
     } else {
-      console.log('不需要显示完善信息提示')
+      // 已移除调试日志
       this.setData({
         showProfileSetupTip: false
       })
     }
     
-    console.log('=== 完善信息提示检查完成 ===')
+    // 已移除调试日志
   },
 
   // 关闭完善信息提示
@@ -1216,7 +1174,7 @@ const pageConfig = {
                   wx.removeStorageSync('skipProfileSetupUntil')
                   this.setData({ showProfileSetupTip: false })
                   wx.showToast({ title: '完善状态已重置', icon: 'success' })
-                  console.log('完善状态已重置，下次登录时会重新判断')
+                  // 已移除调试日志
                 }
               }
             })
@@ -1227,7 +1185,7 @@ const pageConfig = {
             const userInfo = this.data.userInfo
             const isComplete = this.checkUserInfoCompleteness(cloudUserInfo)
             
-            console.log('调试信息:', { cloudUserInfo, userInfo, isComplete })
+            // 已移除调试日志
             wx.showModal({
               title: '调试信息',
               content: `界面显示: ${userInfo.name} | ${userInfo.farm}\n云端数据: ${cloudUserInfo?.nickname || cloudUserInfo?.nickName || '无'} | ${cloudUserInfo?.farmName || cloudUserInfo?.department || '无'}\n信息完整: ${isComplete ? '是' : '否'}`,
@@ -1348,8 +1306,7 @@ const pageConfig = {
           nickName: newNickname
         }
         
-        console.log('昵称更新成功，返回数据:', updatedUserInfo)
-        
+        // 已移除调试日志
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
@@ -1360,8 +1317,7 @@ const pageConfig = {
           cloudUserInfo: updatedUserInfo
         })
         
-        console.log('界面昵称已更新为:', displayName)
-        
+        // 已移除调试日志
         wx.showToast({
           title: '昵称更新成功',
           icon: 'success'
@@ -1371,19 +1327,19 @@ const pageConfig = {
         if (this.checkUserInfoCompleteness(updatedUserInfo)) {
           wx.setStorageSync('profileCompleted', true)
           wx.setStorageSync('profileCompletedTime', Date.now())
-          console.log('昵称更新后信息已完整，设置永久标记')
+          // 已移除调试日志
           console.log('永久标记已设置:', {
             profileCompleted: wx.getStorageSync('profileCompleted'),
             profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
           })
         } else {
-          console.log('昵称更新后信息仍不完整')
+          // 已移除调试日志
         }
       } else {
         throw new Error(result.result?.message || '更新失败')
       }
     } catch (error) {
-      console.error('更新昵称失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '更新失败',
         icon: 'none'
@@ -1416,8 +1372,7 @@ const pageConfig = {
           department: newFarmName
         }
         
-        console.log('养殖场名称更新成功，返回数据:', updatedUserInfo)
-        
+        // 已移除调试日志
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
@@ -1428,8 +1383,7 @@ const pageConfig = {
           cloudUserInfo: updatedUserInfo
         })
         
-        console.log('界面养殖场名称已更新为:', displayFarm)
-        
+        // 已移除调试日志
         wx.showToast({
           title: '养殖场名称更新成功',
           icon: 'success'
@@ -1439,19 +1393,19 @@ const pageConfig = {
         if (this.checkUserInfoCompleteness(updatedUserInfo)) {
           wx.setStorageSync('profileCompleted', true)
           wx.setStorageSync('profileCompletedTime', Date.now())
-          console.log('养殖场名称更新后信息已完整，设置永久标记')
+          // 已移除调试日志
           console.log('永久标记已设置:', {
             profileCompleted: wx.getStorageSync('profileCompleted'),
             profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
           })
         } else {
-          console.log('养殖场名称更新后信息仍不完整')
+          // 已移除调试日志
         }
       } else {
         throw new Error(result.result?.message || '更新失败')
       }
     } catch (error) {
-      console.error('更新养殖场名称失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '更新失败',
         icon: 'none'
@@ -1608,8 +1562,7 @@ const pageConfig = {
     
     // 但是我们需要保留一个永久标记表示用户已经完善过信息
     // 这样下次登录时就不会再弹出完善弹窗了
-    console.log('已清除登录相关本地存储，保留完善信息状态')
-
+    // 已移除调试日志
     // 重置页面数据
     this.setData({
       isLoggedIn: false,
@@ -1632,7 +1585,7 @@ const pageConfig = {
       icon: 'success'
     })
 
-    console.log('已退出登录，状态已重置')
+    // 已移除调试日志
   },
   
   // 关闭退出确认弹窗

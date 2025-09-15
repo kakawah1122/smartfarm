@@ -76,7 +76,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载存活率分析数据失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载数据失败',
         icon: 'none'
@@ -131,7 +131,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       }
     } catch (error) {
       wx.hideLoading()
-      console.error('导出报告失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '导出失败',
         icon: 'none'

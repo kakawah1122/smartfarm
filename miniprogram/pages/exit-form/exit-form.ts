@@ -109,7 +109,7 @@ const pageConfig = {
       })
       
     } catch (error) {
-      console.error('处理AI参数失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '处理AI数据失败',
         icon: 'none'

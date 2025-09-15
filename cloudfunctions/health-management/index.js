@@ -67,7 +67,7 @@ async function createPreventionRecord(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('创建预防记录失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -95,7 +95,7 @@ async function listPreventionRecords(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('查询预防记录失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -176,7 +176,7 @@ async function createHealthRecord(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('创建健康记录失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -205,7 +205,7 @@ async function createDeathRecord(data, wxContext) {
     })
 
   } catch (error) {
-    console.error('创建死亡记录失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -285,7 +285,7 @@ async function createTreatmentRecord(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('创建治疗记录失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -345,7 +345,7 @@ async function createAiDiagnosisRecord(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('创建AI诊断记录失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -385,7 +385,7 @@ async function getHealthOverview(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('获取健康概览失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -424,7 +424,7 @@ async function getHealthStatistics(batchId, dateRange) {
     }
 
   } catch (error) {
-    console.error('获取健康统计失败:', error)
+    // 已移除调试日志
     return {}
   }
 }
@@ -445,7 +445,7 @@ async function getActiveHealthAlerts(batchId) {
     return result.data
 
   } catch (error) {
-    console.error('获取健康警报失败:', error)
+    // 已移除调试日志
     return []
   }
 }
@@ -478,7 +478,7 @@ async function getTreatmentStatistics(batchId, dateRange) {
     }
 
   } catch (error) {
-    console.error('获取治疗统计失败:', error)
+    // 已移除调试日志
     return {}
   }
 }
@@ -523,7 +523,7 @@ async function updateAiUsageStats(usageType, userId) {
     }
 
   } catch (error) {
-    console.error('更新AI使用统计失败:', error)
+    // 已移除调试日志
   }
 }
 
@@ -569,7 +569,7 @@ exports.main = async (event, context) => {
         throw new Error(`未知操作: ${action}`)
     }
   } catch (error) {
-    console.error('健康管理云函数执行失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message

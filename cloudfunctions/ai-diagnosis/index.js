@@ -137,15 +137,14 @@ ${images && images.length > 0 ? `症状图片：${images.length}张（已上传�
         }
       } catch (parseError) {
         // 如果JSON解析失败，返回原始文本
-        console.warn('AI响应JSON解析失败，使用文本解析:', parseError)
+        // 已移除调试日志
         return parseTextResponse(aiResponse, aiResult.result)
       }
     } else {
       throw new Error(aiResult.result?.error || 'AI服务调用失败')
     }
   } catch (error) {
-    console.error('调用AI模型失败:', error)
-    
+    // 已移除调试日志
     // 返回兜底诊断建议
     return getFallbackDiagnosis(inputData)
   }
@@ -370,7 +369,7 @@ async function saveAIDiagnosisRecord(inputData, aiResult, openid) {
       message: 'AI诊断记录保存成功'
     }
   } catch (error) {
-    console.error('保存AI诊断记录失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -403,7 +402,7 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('AI诊断云函数执行失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -470,7 +469,7 @@ async function performAIDiagnosis(event, openid) {
       message: 'AI诊断完成'
     }
   } catch (error) {
-    console.error('执行AI诊断失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -533,7 +532,7 @@ async function getDiagnosisHistory(event, openid) {
       }
     }
   } catch (error) {
-    console.error('获取诊断历史失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -569,7 +568,7 @@ async function updateDiagnosisReview(event, openid) {
       message: '诊断审查更新成功'
     }
   } catch (error) {
-    console.error('更新诊断审查失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -601,7 +600,7 @@ async function adoptDiagnosis(event, openid) {
       message: '诊断建议已采用'
     }
   } catch (error) {
-    console.error('采用诊断建议失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -637,7 +636,7 @@ async function feedbackDiagnosis(event, openid) {
       message: '诊断反馈提交成功'
     }
   } catch (error) {
-    console.error('提交诊断反馈失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -707,7 +706,7 @@ async function getDiagnosisStats(event, openid) {
       data: stats
     }
   } catch (error) {
-    console.error('获取诊断统计失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message

@@ -22,8 +22,7 @@ function generateTaskRecordId() {
 // 完成任务（全新简化版本）
 async function completeTask(taskId, openid, batchId, notes = '') {
   try {
-    console.log('🔧 新版completeTask:', { taskId, openid, batchId, notes })
-    
+    // 已移除调试日志
     // 检查参数
     if (!taskId || !openid || !batchId) {
       throw new Error(`参数缺失: taskId=${taskId}, openid=${openid}, batchId=${batchId}`)
@@ -35,16 +34,7 @@ async function completeTask(taskId, openid, batchId, notes = '') {
       const taskResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).doc(taskId).get()
       task = taskResult.data
       
-      console.log('🔍 查询到的任务数据:', {
-        taskId: taskId,
-        taskExists: !!task,
-        taskUserId: task?.userId,
-        currentOpenid: openid,
-        taskBatchId: task?.batchId,
-        requestBatchId: batchId,
-        taskTitle: task?.title
-      })
-      
+      // 已移除调试日志
       if (!task) {
         throw new Error('任务不存在')
       }
@@ -52,30 +42,24 @@ async function completeTask(taskId, openid, batchId, notes = '') {
       // 🔥 临时放宽权限验证 - 只验证任务存在
       // 很多任务可能没有userId字段，暂时跳过此验证
       if (task.userId && task.userId !== openid) {
-        console.warn('⚠️ 用户权限验证失败，但继续执行:', {
-          taskUserId: task.userId,
-          currentUser: openid
-        })
+        // 已移除调试日志
         // throw new Error('无权限访问此任务')
       }
       
       // 批次ID验证也放宽 - 允许部分匹配
       if (task.batchId && batchId && task.batchId !== batchId) {
-        console.warn('⚠️ 批次ID不完全匹配，但继续执行:', {
-          taskBatchId: task.batchId,
-          requestBatchId: batchId
-        })
+        // 已移除调试日志
         // throw new Error('批次ID不匹配')
       }
       
     } catch (error) {
-      console.error('❌ 查询任务失败:', error)
+      // 已移除调试日志
       throw new Error('任务不存在或无权限访问: ' + error.message)
     }
     
     // 检查是否已经完成
     if (task.completed === true) {
-      console.log('⚠️ 任务已经完成:', task.title)
+      // 已移除调试日志
       return { 
         success: true,
         already_completed: true, 
@@ -94,8 +78,7 @@ async function completeTask(taskId, openid, batchId, notes = '') {
       }
     })
 
-    console.log('✅ 任务状态更新成功:', updateResult)
-    
+    // 已移除调试日志
     // 同时保留历史记录（可选）
     try {
       await db.collection(COLLECTIONS.TASK_COMPLETIONS).add({
@@ -109,9 +92,9 @@ async function completeTask(taskId, openid, batchId, notes = '') {
           isActive: true
         }
       })
-      console.log('📝 历史记录已保存')
+      // 已移除调试日志
     } catch (historyError) {
-      console.warn('⚠️ 历史记录保存失败（不影响主流程）:', historyError)
+      // 已移除调试日志
     }
     
     return {
@@ -121,7 +104,7 @@ async function completeTask(taskId, openid, batchId, notes = '') {
       batchId: batchId
     }
   } catch (error) {
-    console.error('❌ 完成任务失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -132,8 +115,7 @@ async function completeVaccineTask(event, wxContext) {
   const openid = wxContext.OPENID
 
   try {
-    console.log('开始处理疫苗接种任务:', { taskId, batchId })
-
+    // 已移除调试日志
     // 1. 完成任务
     await completeTask(taskId, openid, batchId, vaccineRecord.notes)
 
@@ -166,8 +148,7 @@ async function completeVaccineTask(event, wxContext) {
     }
 
     const preventionResult = await dbManager.createPreventionRecord(preventionData)
-    console.log('预防记录创建成功:', preventionResult._id)
-
+    // 已移除调试日志
     // 3. 创建成本记录（正确的财务流向）
     if (vaccineRecord.cost && vaccineRecord.cost.total > 0) {
       const costData = {
@@ -191,15 +172,15 @@ async function completeVaccineTask(event, wxContext) {
       }
 
       await dbManager.createCostRecord(costData)
-      console.log('成本记录创建成功')
+      // 已移除调试日志
     }
 
     // 4. 更新概览统计
     try {
       await dbManager.updateOverviewStats(batchId, 'prevention')
-      console.log('概览统计更新成功')
+      // 已移除调试日志
     } catch (error) {
-      console.error('更新概览统计失败:', error)
+      // 已移除调试日志
       // 不影响主流程，继续执行
     }
 
@@ -229,8 +210,7 @@ async function completeVaccineTask(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('完成疫苗接种任务失败:', error)
-    
+    // 已移除调试日志
     // 记录错误日志
     await dbManager.createAuditLog(
       openid,
@@ -259,8 +239,7 @@ async function getTodos(event, wxContext) {
   const openid = wxContext.OPENID
 
   try {
-    console.log(`🔄 新版getTodos - 批次: ${batchId}, 日龄: ${dayAge}, 用户: ${openid}`)
-    
+    // 已移除调试日志
     // 验证批次存在性
     const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
     if (!batchResult.data) {
@@ -274,12 +253,10 @@ async function getTodos(event, wxContext) {
       userId: openid
     }).get()
 
-    console.log(`📋 找到任务数量: ${tasksResult.data.length}`)
-
+    // 已移除调试日志
     // 如果没有任务，尝试为该批次创建任务
     if (tasksResult.data.length === 0) {
-      console.log(`📝 批次 ${batchId} 日龄 ${dayAge} 没有任务，尝试创建任务...`)
-      
+      // 已移除调试日志
       try {
         await createMissingTasks(batchId, openid)
         
@@ -290,8 +267,7 @@ async function getTodos(event, wxContext) {
           userId: openid
         }).get()
         
-        console.log(`📋 重新创建后找到任务数量: ${retryTasksResult.data.length}`)
-        
+        // 已移除调试日志
         // 使用重新查询的结果
         const todos = retryTasksResult.data.map(task => ({
           ...task,
@@ -299,7 +275,7 @@ async function getTodos(event, wxContext) {
           isVaccineTask: isVaccineTask(task)
         }))
 
-        console.log(`✅ 返回任务数量: ${todos.length}, 其中完成: ${todos.filter(t => t.completed).length}`)
+        // 已移除调试日志
         
         return {
           success: true,
@@ -307,7 +283,7 @@ async function getTodos(event, wxContext) {
         }
         
       } catch (createError) {
-        console.error('❌ 创建缺失任务失败:', createError)
+        // 已移除调试日志
         return {
           success: true,
           data: []
@@ -319,8 +295,7 @@ async function getTodos(event, wxContext) {
     const todos = tasksResult.data.map(task => {
       const isCompleted = task.completed === true
       
-      console.log(`📄 任务状态 [${task.title}]: ${isCompleted ? '✅已完成' : '⏳待完成'}`)
-      
+      // 已移除调试日志
       return {
         ...task,
         completed: isCompleted,
@@ -329,18 +304,18 @@ async function getTodos(event, wxContext) {
     })
 
     const completedCount = todos.filter(t => t.completed).length
-    console.log(`✅ 返回任务数量: ${todos.length}, 其中完成: ${completedCount}`)
-
+    // 已移除调试日志
     return {
       success: true,
       data: todos
     }
 
   } catch (error) {
-    console.error('❌ 获取待办任务失败:', error)
+    // 已移除调试日志
     return {
       success: false,
-      error: error.message
+      error: error.message,
+      data: []
     }
   }
 }
@@ -394,7 +369,7 @@ async function getWeeklyTodos(event, wxContext) {
     }
 
   } catch (error) {
-    console.error('获取周任务失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -405,8 +380,7 @@ async function getWeeklyTodos(event, wxContext) {
 // 创建缺失的任务
 async function createMissingTasks(batchId, userId) {
   try {
-    console.log(`开始为批次 ${batchId} 创建缺失的任务...`)
-    
+    // 已移除调试日志
     // 获取批次信息
     const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
     if (!batchResult.data) {
@@ -478,12 +452,12 @@ async function createMissingTasks(batchId, userId) {
         })
       }
       
-      console.log(`成功为批次 ${batchId} 创建 ${batchTodos.length} 个任务`)
+      // 已移除调试日志
     }
     
     return batchTodos.length
   } catch (error) {
-    console.error('创建缺失任务失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -529,7 +503,7 @@ async function clearCompletedTasks(event, wxContext) {
       data: result
     }
   } catch (error) {
-    console.error('清除已完成任务失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message
@@ -546,7 +520,7 @@ async function createTaskRecord(record) {
 
     return result
   } catch (error) {
-    console.error('创建任务记录失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -575,8 +549,7 @@ exports.main = async (event, context) => {
       
       case 'completeTask':
         const { taskId, batchId, notes } = event
-        console.log('☁️ completeTask 接收到参数:', { taskId, batchId, notes, openid: wxContext.OPENID })
-        
+        // 已移除调试日志
         if (!taskId) {
           throw new Error('taskId 参数缺失')
         }
@@ -585,8 +558,7 @@ exports.main = async (event, context) => {
         }
         
         const result = await completeTask(taskId, wxContext.OPENID, batchId, notes || '')
-        console.log('☁️ completeTask 执行结果:', result)
-        
+        // 已移除调试日志
         // 如果任务已经完成，直接返回结果
         if (result.already_completed) {
           return result
@@ -607,7 +579,7 @@ exports.main = async (event, context) => {
         throw new Error(`未知操作: ${action}`)
     }
   } catch (error) {
-    console.error('云函数执行失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message

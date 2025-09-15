@@ -142,7 +142,7 @@ const pageConfig = {
         throw new Error(result.result?.message || '加载失败')
       }
     } catch (error: any) {
-      console.error('加载诊断历史失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -229,7 +229,7 @@ const pageConfig = {
         icon: 'success'
       })
     } catch (error) {
-      console.error('更新状态失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '更新失败',
         icon: 'none'
@@ -294,7 +294,7 @@ const pageConfig = {
         icon: 'success'
       })
     } catch (error) {
-      console.error('删除记录失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '删除失败',
         icon: 'none'

@@ -192,8 +192,7 @@ Page<PageData>({
    * 页面加载
    */
   onLoad(options: any) {
-    console.log('健康管理页面加载:', options)
-    
+    // 已移除调试日志
     this.setData({
       currentBatchId: options.batchId || this.getCurrentBatchId()
     })
@@ -251,8 +250,7 @@ Page<PageData>({
    */
   switchTab(e: any) {
     const { tab } = e.currentTarget.dataset
-    console.log('切换选项卡:', tab)
-    
+    // 已移除调试日志
     this.setData({ activeTab: tab })
     
     // 根据选项卡加载对应数据
@@ -264,8 +262,7 @@ Page<PageData>({
    */
   onTabChange(e: any) {
     const { value } = e.detail
-    console.log('Tab切换到:', value)
-    
+    // 已移除调试日志
     this.setData({ activeTab: value })
     
     // 根据选项卡加载对应数据
@@ -317,7 +314,7 @@ Page<PageData>({
         this.loadTreatmentData()
       ])
     } catch (error: any) {
-      console.error('加载健康数据失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载数据失败',
         icon: 'error'
@@ -355,7 +352,7 @@ Page<PageData>({
         })
       }
     } catch (error: any) {
-      console.error('加载健康概览失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -382,7 +379,7 @@ Page<PageData>({
         })
       }
     } catch (error: any) {
-      console.error('加载预防数据失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -391,7 +388,7 @@ Page<PageData>({
    */
   async loadMonitoringData() {
     // 实现健康监控数据加载
-    console.log('加载监控数据')
+    // 已移除调试日志
     // TODO: 实现具体的监控数据加载逻辑
   },
 
@@ -400,7 +397,7 @@ Page<PageData>({
    */
   async loadTreatmentData() {
     // 治疗数据在 loadHealthOverview 中已经加载
-    console.log('治疗数据已在概览中加载')
+    // 已移除调试日志
   },
 
   /**
@@ -408,7 +405,7 @@ Page<PageData>({
    */
   async loadAnalysisData() {
     // 实现健康分析数据加载
-    console.log('加载分析数据')
+    // 已移除调试日志
     // TODO: 实现具体的分析数据加载逻辑
   },
 
@@ -434,8 +431,7 @@ Page<PageData>({
    */
   viewPreventionRecord(e: any) {
     const { recordId } = e.currentTarget.dataset
-    console.log('查看预防记录:', recordId)
-    
+    // 已移除调试日志
     wx.navigateTo({
       url: `/pages/vaccine-record/vaccine-record?id=${recordId}`
     })
@@ -446,8 +442,7 @@ Page<PageData>({
    */
   viewHealthAlert(e: any) {
     const { alertId } = e.currentTarget.dataset
-    console.log('查看健康警报:', alertId)
-    
+    // 已移除调试日志
     wx.navigateTo({
       url: `/pages/health-care/health-care?alertId=${alertId}`
     })
@@ -537,7 +532,7 @@ Page<PageData>({
    */
   showCustomDatePicker() {
     // 实现自定义时间选择器
-    console.log('显示自定义时间选择器')
+    // 已移除调试日志
     // TODO: 实现自定义时间范围选择逻辑
   },
 
@@ -612,7 +607,7 @@ Page<PageData>({
     wx.showActionSheet({
       itemList: ['导出报告', '数据统计', '设置提醒'],
       success: (res) => {
-        console.log('菜单选择:', res.tapIndex)
+        // 已移除调试日志
         // TODO: 实现菜单功能
       }
     })
@@ -623,7 +618,7 @@ Page<PageData>({
    */
   onAlertAction(e: any) {
     const { alertId, action } = e.currentTarget.dataset
-    console.log('预警操作:', { alertId, action })
+    // 已移除调试日志
     // TODO: 实现预警处理逻辑
   },
 
@@ -632,8 +627,7 @@ Page<PageData>({
    */
   onPreventionAction(e: any) {
     const { action } = e.currentTarget.dataset
-    console.log('预防操作:', action)
-    
+    // 已移除调试日志
     switch (action) {
       case 'add_vaccine':
         this.createPreventionRecord()
@@ -659,8 +653,7 @@ Page<PageData>({
    */
   onMonitoringAction(e: any) {
     const { action } = e.currentTarget.dataset
-    console.log('监控操作:', action)
-    
+    // 已移除调试日志
     switch (action) {
       case 'batch_check':
         this.createHealthRecord()
@@ -682,8 +675,7 @@ Page<PageData>({
    */
   onTreatmentAction(e: any) {
     const { action } = e.currentTarget.dataset
-    console.log('治疗操作:', action)
-    
+    // 已移除调试日志
     switch (action) {
       case 'start_diagnosis':
         this.openAiDiagnosis()
@@ -708,8 +700,7 @@ Page<PageData>({
    */
   onAnalysisAction(e: any) {
     const { action } = e.currentTarget.dataset
-    console.log('分析操作:', action)
-    
+    // 已移除调试日志
     switch (action) {
       case 'export_report':
         this.exportHealthReport()

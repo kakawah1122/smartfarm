@@ -32,7 +32,7 @@ async function validateFinancePermission(openid, action) {
     
     return financeRoles.includes(userRole)
   } catch (error) {
-    console.error('财务权限验证失败:', error)
+    // 已移除调试日志
     return false
   }
 }
@@ -82,7 +82,7 @@ async function calculateCostStats(dateRange) {
     
     return stats
   } catch (error) {
-    console.error('成本统计计算失败:', error)
+    // 已移除调试日志
     return {
       feedCost: 0, healthCost: 0, laborCost: 0, 
       facilityCost: 0, otherCost: 0, totalCost: 0
@@ -133,7 +133,7 @@ async function calculateRevenueStats(dateRange) {
       totalRevenue: salesRevenue + otherRevenue
     }
   } catch (error) {
-    console.error('收入统计计算失败:', error)
+    // 已移除调试日志
     return {
       salesRevenue: 0,
       otherRevenue: 0,
@@ -202,7 +202,7 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('财务管理操作失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,

@@ -56,8 +56,7 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
   const { action } = event;
   
-  console.log('动态文件管理请求:', { action, openid: wxContext.OPENID });
-  
+  // 已移除调试日志
   try {
     switch (action) {
       case 'record_upload':
@@ -78,7 +77,7 @@ exports.main = async (event, context) => {
         throw new Error(`不支持的操作: ${action}`);
     }
   } catch (error) {
-    console.error('云函数执行失败:', error);
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -179,8 +178,7 @@ async function recordUpload(event, wxContext) {
     // 更新存储统计
     await updateStorageStats(category, subCategory, fileSize, 'upload');
     
-    console.log('文件记录创建成功:', result._id);
-    
+    // 已移除调试日志
     return {
       success: true,
       recordId: result._id,
@@ -189,7 +187,7 @@ async function recordUpload(event, wxContext) {
     };
     
   } catch (dbError) {
-    console.error('数据库写入失败:', dbError);
+    // 已移除调试日志
     throw new Error('文件信息记录失败，请重试');
   }
 }
@@ -286,7 +284,7 @@ async function queryByTimeRange(event, wxContext) {
     };
     
   } catch (error) {
-    console.error('查询失败:', error);
+    // 已移除调试日志
     throw new Error('文件查询失败，请重试');
   }
 }
@@ -325,7 +323,7 @@ async function deleteFile(event, wxContext) {
           fileList: [fileID]
         });
       } catch (storageError) {
-        console.warn('云存储文件删除失败:', storageError);
+        // 已移除调试日志
         // 继续执行，软删除数据库记录
       }
       
@@ -356,7 +354,7 @@ async function deleteFile(event, wxContext) {
     };
     
   } catch (error) {
-    console.error('删除失败:', error);
+    // 已移除调试日志
     throw new Error(error.message || '文件删除失败');
   }
 }
@@ -367,8 +365,7 @@ async function deleteFile(event, wxContext) {
  */
 async function getStorageStats(event, wxContext) {
   try {
-    console.log('开始获取存储统计, 用户:', wxContext.OPENID);
-    
+    // 已移除调试日志
     // 首先检查集合是否存在数据
     const fileCount = await db.collection(DB_CONFIG.collections.dynamicFiles)
       .where({
@@ -377,8 +374,7 @@ async function getStorageStats(event, wxContext) {
       })
       .count();
       
-    console.log('用户文件总数:', fileCount.total);
-    
+    // 已移除调试日志
     if (fileCount.total === 0) {
       // 没有数据时返回空统计
       return {
@@ -426,8 +422,7 @@ async function getStorageStats(event, wxContext) {
       .pipeline(pipeline)
       .end();
     
-    console.log('聚合查询结果:', aggregateResult.list.length);
-    
+    // 已移除调试日志
     // 处理统计结果
     const categoryStats = aggregateResult.list.map(item => ({
       category: item._id.category,
@@ -462,9 +457,8 @@ async function getStorageStats(event, wxContext) {
     };
     
   } catch (error) {
-    console.error('统计查询失败详细错误:', error);
-    console.error('错误堆栈:', error.stack);
-    
+    // 已移除调试日志
+    // 已移除调试日志
     return {
       success: false,
       error: `统计查询失败: ${error.message}`,
@@ -547,7 +541,7 @@ async function cleanupExpiredFiles(event, wxContext) {
           });
           
         } catch (error) {
-          console.error('清理文件失败:', file.fileID, error);
+          // 已移除调试日志
           results.push({
             fileID: file.fileID,
             cloudPath: file.cloudPath,
@@ -587,7 +581,7 @@ async function cleanupExpiredFiles(event, wxContext) {
     };
     
   } catch (error) {
-    console.error('清理操作失败:', error);
+    // 已移除调试日志
     throw new Error('文件清理失败');
   }
 }
@@ -703,7 +697,7 @@ async function updateStorageStats(category, subCategory, sizeChange, operation) 
         }
       });
   } catch (error) {
-    console.warn('统计更新失败:', error);
+    // 已移除调试日志
   }
 }
 

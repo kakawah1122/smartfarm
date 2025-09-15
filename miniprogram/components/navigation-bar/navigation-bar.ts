@@ -35,7 +35,7 @@ Component({
           // 返回上一页成功
         },
         fail: (error) => {
-          console.log('返回上一页失败，尝试跳转到首页:', error)
+          // 已移除调试日志
           // 如果返回失败（比如这是第一个页面），则跳转到首页
           wx.switchTab({
             url: '/pages/index/index',
@@ -43,7 +43,7 @@ Component({
               // 跳转到首页成功
             },
             fail: (tabError) => {
-              console.error('跳转到首页也失败:', tabError)
+              // 已移除调试日志
               // 最后尝试重定向到首页
               wx.redirectTo({
                 url: '/pages/index/index'

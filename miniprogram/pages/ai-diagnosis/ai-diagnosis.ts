@@ -131,7 +131,7 @@ const pageConfig = {
         })
       },
       fail: (error) => {
-        console.error('选择图片失败:', error)
+        // 已移除调试日志
         wx.showToast({
           title: '图片选择失败',
           icon: 'none'
@@ -227,7 +227,7 @@ const pageConfig = {
         throw new Error(result.result?.message || 'AI诊断失败')
       }
     } catch (error: any) {
-      console.error('AI诊断失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: error.message || 'AI诊断失败，请重试',
         icon: 'none'
@@ -267,7 +267,7 @@ const pageConfig = {
         })
       }, 1500)
     } catch (error) {
-      console.error('采纳建议失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '操作失败',
         icon: 'none'
@@ -290,7 +290,7 @@ const pageConfig = {
         wx.navigateBack()
       }, 1500)
     } catch (error) {
-      console.error('保存记录失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '保存失败',
         icon: 'none'

@@ -19,23 +19,12 @@ exports.main = async (event, context) => {
     // 如果只是检查用户是否存在
     if (checkOnly) {
       try {
-        console.log('检查用户是否存在，OPENID:', OPENID)
-        
+        // 已移除调试日志
         const userQuery = await db.collection('wx_users').where({
           _openid: OPENID
         }).get()
         
-        console.log('查询结果:', {
-          total: userQuery.data.length,
-          exists: userQuery.data.length > 0,
-          firstUser: userQuery.data[0] ? {
-            _id: userQuery.data[0]._id,
-            _openid: userQuery.data[0]._openid,
-            nickname: userQuery.data[0].nickname,
-            role: userQuery.data[0].role
-          } : null
-        })
-        
+        // 已移除调试日志
         const exists = userQuery.data.length > 0
         
         return {
@@ -48,8 +37,7 @@ exports.main = async (event, context) => {
           }
         }
       } catch (error) {
-        console.error('checkOnly 查询用户失败:', error)
-        
+        // 已移除调试日志
         // 如果是集合不存在的错误，用户确实不存在
         if (error.errCode === -502005 || error.message?.includes('collection not exists')) {
           return {
@@ -85,10 +73,10 @@ exports.main = async (event, context) => {
     try {
       const allUsersQuery = await db.collection('wx_users').count()
       isFirstUser = allUsersQuery.total === 0
-      console.log('用户总数检查:', { total: allUsersQuery.total, isFirstUser })
+      // 已移除调试日志
     } catch (countError) {
       // 如果集合不存在，说明是第一个用户
-      console.log('数据库集合不存在，这是第一个用户')
+      // 已移除调试日志
       isFirstUser = true
     }
     
@@ -143,13 +131,7 @@ exports.main = async (event, context) => {
     
     // 第一个用户特殊处理日志
     if (isFirstUser) {
-      console.log('正在创建第一个用户（超级管理员）:', {
-        openid: OPENID,
-        role: userInfo.role,
-        permissions: userInfo.permissions,
-        department: userInfo.department,
-        position: userInfo.position
-      })
+      // 已移除调试日志
     }
     
     let user = null

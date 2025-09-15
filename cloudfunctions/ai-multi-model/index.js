@@ -157,7 +157,7 @@ class AIModelManager {
       
       return todayUsage < config.maxRequestsPerDay
     } catch (error) {
-      console.error('检查模型可用性失败:', error)
+      // 已移除调试日志
       return false
     }
   }
@@ -190,7 +190,7 @@ class AIModelManager {
       
       return response
     } catch (error) {
-      console.error(`调用${modelId}失败:`, error)
+      // 已移除调试日志
       throw error
     }
   }
@@ -317,7 +317,7 @@ class AIModelManager {
         })
       }
     } catch (error) {
-      console.error('记录使用量失败:', error)
+      // 已移除调试日志
     }
   }
 
@@ -333,7 +333,7 @@ class AIModelManager {
       
       return result.data[0]?.value || null
     } catch (error) {
-      console.error('缓存检查失败:', error)
+      // 已移除调试日志
       return null
     }
   }
@@ -350,7 +350,7 @@ class AIModelManager {
         }
       })
     } catch (error) {
-      console.error('设置缓存失败:', error)
+      // 已移除调试日志
     }
   }
 }
@@ -378,7 +378,7 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('AI服务调用失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -440,8 +440,7 @@ async function handleImageRecognition(event, manager) {
   } = event
   
   try {
-    console.log('开始AI鹅群盘点识别...')
-    
+    // 已移除调试日志
     // 选择视觉模型
     const modelId = await manager.selectModel(taskType)
     
@@ -461,8 +460,7 @@ async function handleImageRecognition(event, manager) {
     // 增强结果数据
     const enhancedResult = await enhanceRecognitionResult(result, location, timestamp)
     
-    console.log('AI鹅群盘点完成:', enhancedResult)
-    
+    // 已移除调试日志
     return {
       success: true,
       data: enhancedResult,
@@ -470,8 +468,7 @@ async function handleImageRecognition(event, manager) {
       processTime: Date.now() - timestamp
     }
   } catch (error) {
-    console.error('图像识别失败:', error)
-    
+    // 已移除调试日志
     // 提供智能降级方案
     const fallbackResult = await generateIntelligentEstimate(imageData, location, expectedRange)
     
@@ -529,7 +526,7 @@ async function callGooseCountingVision(imageData, config, location, expectedRang
       suggestions: generateCountingSuggestions(estimatedCount, expectedRange, location)
     }
   } catch (error) {
-    console.error('百度视觉API调用失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -540,12 +537,11 @@ async function callTencentGooseVision(imageData, config, location, expectedRange
     // 腾讯云API需要复杂的签名算法，这里提供基础框架
     // 实际部署时需要完整实现签名算法
     
-    console.log('腾讯视觉API调用 - 当前仅为框架实现')
-    
+    // 已移除调试日志
     // 使用智能估算作为备选方案
     return await generateIntelligentEstimate(imageData, location, expectedRange)
   } catch (error) {
-    console.error('腾讯视觉API调用失败:', error)
+    // 已移除调试日志
     // 降级到智能估算
     return await generateIntelligentEstimate(imageData, location, expectedRange)
   }
@@ -553,8 +549,7 @@ async function callTencentGooseVision(imageData, config, location, expectedRange
 
 // 智能估算算法 - 基于图像特征和经验数据
 async function generateIntelligentEstimate(imageData, location, expectedRange) {
-  console.log('使用智能估算算法...')
-  
+  // 已移除调试日志
   try {
     // 基于图像数据大小和预期范围的智能估算
     const imageSize = imageData.length
@@ -595,8 +590,7 @@ async function generateIntelligentEstimate(imageData, location, expectedRange) {
       estimationMethod: 'intelligent-algorithm'
     }
   } catch (error) {
-    console.error('智能估算失败:', error)
-    
+    // 已移除调试日志
     // 最后的保底方案
     const fallbackCount = Math.floor((expectedRange.min + expectedRange.max) / 2)
     return {

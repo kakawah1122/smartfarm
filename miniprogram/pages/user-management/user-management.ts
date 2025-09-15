@@ -59,7 +59,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         fromEmployeeManagement: true
       })
       
-      console.log('从员工管理中间页接收权限信息，跳过权限检查')
+      // 已移除调试日志
     }
     
     this.loadUserStats()
@@ -82,7 +82,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载用户统计失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -140,7 +140,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         throw new Error(result.result?.message || '加载失败')
       }
     } catch (error) {
-      console.error('加载用户列表失败:', error)
+      // 已移除调试日志
       this.setData({
         loading: false,
         loadingMore: false
@@ -191,7 +191,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('搜索用户失败:', error)
+      // 已移除调试日志
       this.setData({ loading: false })
       wx.showToast({
         title: '搜索失败',
@@ -220,7 +220,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('获取用户详情失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '获取详情失败',
         icon: 'none'
@@ -273,7 +273,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.loadUserStats()
       }
     } catch (error) {
-      console.error('更新用户角色失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '更新失败',
         icon: 'none'
@@ -318,7 +318,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
               this.loadUserStats()
             }
           } catch (error) {
-            console.error('切换用户状态失败:', error)
+            // 已移除调试日志
             wx.showToast({
               title: `${actionText}失败`,
               icon: 'none'
@@ -353,7 +353,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('导出用户数据失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: '导出失败',
         icon: 'none'

@@ -158,27 +158,27 @@ async function qweatherRequest(apiPath, params = {}) {
               const jsonData = JSON.parse(decompressedData)
               
               if (jsonData.code !== '200') {
-                console.error(`❌ API业务错误 [${apiPath}]: ${jsonData.code} - ${jsonData.message}`)
+                // 已移除调试日志
                 reject(new Error(`API Error: ${jsonData.code} - ${jsonData.message || '未知错误'}`))
                 return
               }
               
               resolve(jsonData)
             } catch (parseError) {
-              console.error(`❌ 解析JSON失败 [${apiPath}]:`, parseError)
-              console.error(`解压后的原始数据: ${decompressedData}`)
+              // 已移除调试日志
+              // 已移除调试日志
               reject(parseError)
             }
           })
         } catch (error) {
-          console.error(`❌ 处理响应失败 [${apiPath}]:`, error)
+          // 已移除调试日志
           reject(error)
         }
       })
     })
     
     req.on('error', (error) => {
-      console.error(`和风天气API请求失败 [${apiPath}]:`, error)
+      // 已移除调试日志
       reject(error)
     })
     
@@ -353,7 +353,7 @@ async function getCompleteWeatherData(lat, lon) {
     }
     
   } catch (error) {
-    console.error('获取完整天气数据失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: {
@@ -393,7 +393,7 @@ exports.main = async (event, context) => {
         throw new Error(`不支持的操作: ${action}`)
     }
   } catch (error) {
-    console.error('云函数执行失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: {

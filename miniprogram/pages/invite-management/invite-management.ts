@@ -81,7 +81,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         fromEmployeeManagement: true
       })
       
-      console.log('从员工管理中间页接收权限信息，跳过权限检查')
+      // 已移除调试日志
     } else {
       this.checkUserPermission()
     }
@@ -95,15 +95,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     try {
       const app = getApp()
       const userInfo = app.globalData.userInfo
-      console.log('当前用户信息：', userInfo)
-      
+      // 已移除调试日志
       if (!userInfo) {
-        console.warn('用户未登录')
+        // 已移除调试日志
         return
       }
       
-      console.log('用户角色：', userInfo.role, '是否超级管理员：', userInfo.isSuper)
-      
+      // 已移除调试日志
       // 更新页面数据
       this.setData({
         userInfo: userInfo
@@ -111,34 +109,33 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       // 如果用户是 admin 但不是超级管理员，提示设置为超级管理员
       if (userInfo.role === 'admin' && !userInfo.isSuper) {
-        console.log('检测到管理员用户但未设置为超级管理员，建议设置')
-        console.log('准备显示设置超级管理员弹窗')
-        
+        // 已移除调试日志
+        // 已移除调试日志
         // 延迟一下显示弹窗，确保页面完全加载
         setTimeout(() => {
-          console.log('开始显示超级管理员设置弹窗')
+          // 已移除调试日志
           wx.showModal({
             title: '权限提示',
             content: '检测到您是管理员但未设置为超级管理员，是否要设置为超级管理员以获得完整权限？',
             confirmText: '确认设置',
             cancelText: '取消',
             success: (res) => {
-              console.log('弹窗回调，用户选择：', res)
+              // 已移除调试日志
               if (res.confirm) {
-                console.log('用户确认设置超级管理员')
+                // 已移除调试日志
                 this.setSuperAdmin()
               } else {
-                console.log('用户取消设置超级管理员')
+                // 已移除调试日志
               }
             },
             fail: (error) => {
-              console.error('显示弹窗失败：', error)
+              // 已移除调试日志
             }
           })
         }, 1000)
       }
     } catch (error) {
-      console.error('检查用户权限异常：', error)
+      // 已移除调试日志
     }
   },
 
@@ -154,8 +151,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
       })
       
-      console.log('设置超级管理员结果：', result)
-      
+      // 已移除调试日志
       if (result.result && result.result.success) {
         // 更新本地用户信息
         const app = getApp()
@@ -177,12 +173,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           icon: 'success'
         })
         
-        console.log('已更新为超级管理员')
+        // 已移除调试日志
       } else {
         throw new Error(result.result?.message || '设置失败')
       }
     } catch (error) {
-      console.error('设置超级管理员失败：', error)
+      // 已移除调试日志
       wx.showToast({
         title: '设置失败：' + (error.message || '未知错误'),
         icon: 'none'
@@ -288,17 +284,15 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   async createInvite() {
     const { role, expiryDays, remark } = this.data.newInvite
 
-    console.log('开始创建邀请码，参数：', { role, expiryDays, remark })
-
+    // 已移除调试日志
     try {
       wx.showLoading({ title: '生成邀请码中...' })
 
       // 获取当前用户信息用于调试
       const app = getApp()
       const userInfo = app.globalData.userInfo
-      console.log('当前用户信息（创建邀请码）：', userInfo)
-
-      console.log('调用云函数：user-management')
+      // 已移除调试日志
+      // 已移除调试日志
       const result = await wx.cloud.callFunction({
         name: 'user-management',
         data: {
@@ -312,8 +306,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       console.log('云函数调用完整结果：', JSON.stringify(result, null, 2))
 
       if (result.result && result.result.success) {
-        console.log('邀请码生成成功：', result.result.data.inviteCode)
-        
+        // 已移除调试日志
         // 在同一个弹窗中显示生成的邀请码
         this.setData({
           generatedInviteCode: result.result.data.inviteCode,
@@ -331,8 +324,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.loadInviteList()
         this.loadInviteStats()
       } else {
-        console.error('云函数返回失败：', result)
-        
+        // 已移除调试日志
         let errorMessage = '生成失败'
         let debugInfo = ''
         
@@ -344,7 +336,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             errorMessage = result.result.message || result.result.error || '生成失败'
             debugInfo = `\n错误代码：${result.result.error || '未知'}`
             if (result.result.errorStack) {
-              console.error('云函数错误堆栈：', result.result.errorStack)
+              // 已移除调试日志
             }
           }
         } else if (result.errMsg) {
@@ -361,7 +353,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           success: (res) => {
             if (res.cancel) {
               // 显示详细的调试信息
-              console.log('显示详细调试信息')
+              // 已移除调试日志
               wx.showModal({
                 title: '调试信息',
                 content: `完整结果：${JSON.stringify(result, null, 2)}`,
@@ -372,8 +364,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error: any) {
-      console.error('创建邀请码异常：', error)
-      
+      // 已移除调试日志
       let errorMessage = '生成失败，请重试'
       
       if (error.errCode) {
@@ -553,7 +544,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const inviteCode = this.data.generatedInviteCode
     if (!inviteCode) return
     
-    console.log('复制邀请码：', inviteCode)
+    // 已移除调试日志
     wx.setClipboardData({
       data: inviteCode,
       success: () => {
@@ -564,7 +555,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       },
       fail: (err) => {
-        console.error('复制失败：', err)
+        // 已移除调试日志
         wx.showToast({
           title: '复制失败，请手动复制',
           icon: 'none'
@@ -732,7 +723,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 手动设置超级管理员（临时调试用）
   async manualSetSuperAdmin() {
-    console.log('手动触发设置超级管理员')
+    // 已移除调试日志
     const app = getApp()
     const userInfo = app.globalData.userInfo
     

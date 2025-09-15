@@ -60,7 +60,7 @@ Page({
         canMigrate: true
       })
     } catch (error) {
-      console.error('权限检查失败：', error)
+      // 已移除调试日志
     }
   },
 
@@ -92,7 +92,7 @@ Page({
         throw new Error(result.result.message)
       }
     } catch (error) {
-      console.error('角色分析失败：', error)
+      // 已移除调试日志
       wx.showToast({
         title: '分析失败',
         icon: 'error'
@@ -131,7 +131,7 @@ Page({
         throw new Error(result.result.message)
       }
     } catch (error) {
-      console.error('迁移预览失败：', error)
+      // 已移除调试日志
       wx.showToast({
         title: '预览失败',
         icon: 'error'
@@ -181,7 +181,7 @@ Page({
         throw new Error(result.result.message)
       }
     } catch (error) {
-      console.error('迁移验证失败：', error)
+      // 已移除调试日志
       wx.showToast({
         title: '验证失败',
         icon: 'error'
@@ -238,7 +238,7 @@ Page({
         throw new Error(result.result.message)
       }
     } catch (error) {
-      console.error('执行迁移失败：', error)
+      // 已移除调试日志
       wx.showModal({
         title: '迁移失败',
         content: error.message || '执行迁移时发生错误，请检查日志',

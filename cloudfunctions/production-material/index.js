@@ -410,8 +410,8 @@ async function createMaterialRecord(event, wxContext) {
     // 首先尝试通过ID直接查找
     material = await db.collection('prod_materials').doc(recordData.materialId).get()
     
-    if (material.data && material.data.length > 0) {
-      materialInfo = material.data[0]
+    if (material.data) {
+      materialInfo = material.data
     }
   } catch (error) {
     // ID查找失败时忽略错误
@@ -470,7 +470,7 @@ async function createMaterialRecord(event, wxContext) {
     }
     
     // 添加记录
-    const recordResult = await transaction.collection('material_records').add({
+    const recordResult = await transaction.collection('prod_material_records').add({
       data: newRecord
     })
     
@@ -478,7 +478,7 @@ async function createMaterialRecord(event, wxContext) {
     const stockChange = recordData.type === 'purchase' ? recordData.quantity : -recordData.quantity
     const newStock = materialInfo.currentStock + stockChange
     
-    await transaction.collection('materials').doc(recordData.materialId).update({
+    await transaction.collection('prod_materials').doc(recordData.materialId).update({
       data: {
         currentStock: newStock,
         updateTime: now
@@ -497,7 +497,7 @@ async function createMaterialRecord(event, wxContext) {
       operationTime: now
     }
     
-    await transaction.collection('inventory_logs').add({
+    await transaction.collection('prod_inventory_logs').add({
       data: inventoryLog
     })
     
@@ -1059,7 +1059,7 @@ async function getQuickStats(event, wxContext) {
       data: stats
     }
   } catch (error) {
-    console.error('获取快速统计失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -1221,7 +1221,7 @@ async function getFinancialStats(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取财务统计失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,

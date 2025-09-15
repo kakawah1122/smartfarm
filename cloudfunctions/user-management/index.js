@@ -118,7 +118,7 @@ async function validateAdminPermission(openid) {
     const userRole = user.data[0].role || 'employee'
     return ['super_admin', 'manager'].includes(userRole)
   } catch (error) {
-    console.error('管理员权限验证失败:', error)
+    // 已移除调试日志
     return false
   }
 }
@@ -174,33 +174,30 @@ function getStatusText(status) {
 // 清理旧的邀请记录，只保留最新的5个
 async function cleanupOldInvites() {
   try {
-    console.log('开始清理旧邀请记录')
-    
+    // 已移除调试日志
     // 获取所有邀请记录，按创建时间倒序排列
     const allInvites = await db.collection('wx_user_invites')
       .orderBy('createTime', 'desc')
       .get()
 
-    console.log(`当前总共有 ${allInvites.data.length} 个邀请记录`)
-
+    // 已移除调试日志
     // 如果总数超过5个，删除多余的记录
     if (allInvites.data.length > 5) {
       // 保留前5个最新的，删除其余的
       const invitesToDelete = allInvites.data.slice(5)
-      console.log(`需要删除 ${invitesToDelete.length} 个旧记录`)
-
+      // 已移除调试日志
       // 批量删除
       for (const invite of invitesToDelete) {
         await db.collection('wx_user_invites').doc(invite._id).remove()
         console.log(`已删除邀请记录：${invite.inviteCode} (${invite.status})`)
       }
 
-      console.log(`清理完成，保留了最新的5个邀请记录`)
+      // 已移除调试日志
     } else {
-      console.log('邀请记录数量未超过5个，无需清理')
+      // 已移除调试日志
     }
   } catch (error) {
-    console.error('清理旧邀请记录失败:', error)
+    // 已移除调试日志
     // 清理失败不影响主流程，只记录错误
   }
 }
@@ -258,7 +255,7 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('用户管理操作失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -324,7 +321,7 @@ async function getUserInfo(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取用户信息失败:', error)
+    // 已移除调试日志
     throw new Error('获取用户信息失败')
   }
 }
@@ -465,8 +462,7 @@ async function createInvite(event, wxContext) {
     expiryDays = 7
   } = event
 
-  console.log('创建邀请码参数:', { role, remark, expiryDays })
-
+  // 已移除调试日志
   try {
     const openid = wxContext.OPENID
     
@@ -483,25 +479,22 @@ async function createInvite(event, wxContext) {
       .where({ _openid: openid })
       .get()
 
-    console.log('邀请人查询结果:', inviterResult.data)
-
+    // 已移除调试日志
     if (inviterResult.data.length === 0) {
-      console.error('邀请人信息不存在')
+      // 已移除调试日志
       throw new Error('邀请人信息不存在')
     }
 
     const inviter = inviterResult.data[0]
     
     // 生成唯一邀请码
-    console.log('开始生成唯一邀请码')
+    // 已移除调试日志
     const inviteCode = await generateUniqueInviteCode()
-    console.log('生成的邀请码:', inviteCode)
-    
+    // 已移除调试日志
     // 计算过期时间
     const now = new Date()
     const expiryTime = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000)
-    console.log('邀请码过期时间:', expiryTime)
-
+    // 已移除调试日志
     // 创建邀请记录
     const inviteData = {
       inviteCode: inviteCode,
@@ -523,14 +516,12 @@ async function createInvite(event, wxContext) {
       remark: remark
     }
 
-    console.log('准备保存邀请数据:', inviteData)
-    
+    // 已移除调试日志
     const result = await db.collection('wx_user_invites').add({
       data: inviteData
     })
 
-    console.log('数据库保存结果:', result)
-
+    // 已移除调试日志
     // 清理旧记录，只保留最新的5个邀请码
     await cleanupOldInvites()
 
@@ -546,10 +537,10 @@ async function createInvite(event, wxContext) {
       message: '邀请码生成成功'
     }
     
-    console.log('返回成功响应:', responseData)
+    // 已移除调试日志
     return responseData
   } catch (error) {
-    console.error('创建邀请失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -624,7 +615,7 @@ async function useInvite(event, wxContext) {
       message: '邀请码使用成功，账户已激活'
     }
   } catch (error) {
-    console.error('使用邀请码失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -652,7 +643,7 @@ async function checkUserPermission(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('权限检查失败:', error)
+    // 已移除调试日志
     return { success: true, data: { hasPermission: false } }
   }
 }
@@ -690,7 +681,7 @@ async function logOperation(event, wxContext) {
       message: '操作日志记录成功'
     }
   } catch (error) {
-    console.error('操作日志记录失败:', error)
+    // 已移除调试日志
     // 日志记录失败不应影响业务操作
     return {
       success: false,
@@ -813,7 +804,7 @@ async function listInvites(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取邀请列表失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -857,7 +848,7 @@ async function revokeInvite(event, wxContext) {
       message: '邀请已撤销'
     }
   } catch (error) {
-    console.error('撤销邀请失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -934,7 +925,7 @@ async function getUserRoles(event, wxContext) {
       message: '获取用户角色成功'
     }
   } catch (error) {
-    console.error('获取用户角色失败：', error)
+    // 已移除调试日志
     return {
       success: false,
       message: '获取用户角色失败',
@@ -1019,7 +1010,7 @@ async function validateInvite(event, wxContext) {
       message: '邀请码有效'
     }
   } catch (error) {
-    console.error('验证邀请码失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -1069,7 +1060,7 @@ async function getInviteStats(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('获取邀请统计失败:', error)
+    // 已移除调试日志
     throw error
   }
 }
@@ -1116,7 +1107,7 @@ async function resendInvite(event, wxContext) {
       }
     }
   } catch (error) {
-    console.error('重新发送邀请失败:', error)
+    // 已移除调试日志
     throw error
   }
 }

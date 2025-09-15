@@ -23,7 +23,7 @@ export function checkPageAuth() {
   const isWhitelisted = LOGIN_WHITELIST.some(path => currentRoute.startsWith(path))
   
   if (!isWhitelisted && !app.globalData.isLoggedIn) {
-    console.log(`页面 ${currentRoute} 需要登录，但用户未登录，直接跳转`)
+    // 页面需要登录，但用户未登录，直接跳转
     
     // 直接跳转，不显示弹窗
     wx.reLaunch({

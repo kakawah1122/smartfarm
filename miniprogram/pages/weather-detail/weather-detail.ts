@@ -59,20 +59,18 @@ Page({
   },
 
   onLoad(options: any) {
-    console.log('天气详情页加载，参数:', options)
-    
+    // 已移除调试日志
     // 添加调试信息
-    console.log('=== 天气详情页调试信息 ===')
+    // 已移除调试日志
     console.log('当前时间:', new Date().toISOString())
-    console.log('页面参数:', options)
-    
+    // 已移除调试日志
     this.loadWeatherData()
   },
 
   // 安全显示 Loading
   showLoadingSafe(title = '加载中...') {
     if (!this.data.loadingVisible) {
-      console.log('显示 Loading:', title)
+      // 已移除调试日志
       wx.showLoading({ title })
       this.setData({ loadingVisible: true })
     }
@@ -81,17 +79,17 @@ Page({
   // 安全隐藏 Loading
   hideLoadingSafe() {
     if (this.data.loadingVisible) {
-      console.log('隐藏 Loading')
+      // 已移除调试日志
       wx.hideLoading()
       this.setData({ loadingVisible: false })
     } else {
-      console.log('⚠️ 尝试隐藏 Loading 但状态为未显示，跳过操作')
+      // 已移除调试日志
     }
   },
 
   // 强制清理 Loading 状态（用于异常情况）
   forceHideLoading() {
-    console.log('强制清理 Loading 状态')
+    // 已移除调试日志
     try {
       wx.hideLoading()
     } catch (e) {
@@ -102,8 +100,7 @@ Page({
 
   // 统一异常处理
   handleError(error: any, context = '操作') {
-    console.error(`${context}失败:`, error)
-    
+    // 已移除调试日志
     // 确保 Loading 状态被清理
     this.forceHideLoading()
     
@@ -125,7 +122,7 @@ Page({
   onShow() {
     // 重置 Loading 状态，防止页面切换导致的状态不一致
     if (this.data.loadingVisible && !this.data.isLoading) {
-      console.log('检测到 Loading 状态不一致，重置状态')
+      // 已移除调试日志
       this.setData({ loadingVisible: false })
     }
     
@@ -135,7 +132,7 @@ Page({
 
   onUnload() {
     // 页面卸载时强制清理 Loading 状态
-    console.log('天气详情页卸载，清理 Loading 状态')
+    // 已移除调试日志
     this.forceHideLoading()
   },
 
@@ -150,10 +147,10 @@ Page({
   async loadWeatherData() {
     const cachedData = this.getCachedWeatherData()
     if (cachedData) {
-      console.log('使用缓存的天气数据')
+      // 已移除调试日志
       this.updateCompleteWeatherData(cachedData)
     } else {
-      console.log('没有缓存数据，获取新的天气数据')
+      // 已移除调试日志
       await this.getWeatherData()
     }
   },
@@ -162,7 +159,7 @@ Page({
   async getWeatherData(showLoading = true) {
     // 防止重复调用
     if (this.data.isLoading) {
-      console.log('正在获取天气数据中，跳过重复请求')
+      // 已移除调试日志
       return
     }
 
@@ -192,7 +189,7 @@ Page({
       } else {
         // 增强错误处理，显示云函数返回的具体错误信息
         const errorMessage = weatherRes.result?.error?.message || weatherRes.result?.message || '天气数据获取失败，请稍后重试'
-        console.error('天气数据获取失败，云函数返回:', weatherRes.result)
+        // 已移除调试日志
         throw new Error(errorMessage)
       }
     } catch (error: any) {
@@ -209,12 +206,11 @@ Page({
   // 获取位置 - 彻底重写，确保获取真实位置
   getLocation(retryCount = 0): Promise<any> {
     return new Promise((resolve, reject) => {
-      console.log('🌍 === 天气详情页开始获取真实地理位置 ===')
-      console.log('🌍 当前重试次数:', retryCount)
-      
+      // 已移除调试日志
+      // 已移除调试日志
       // 防止无限递归重试
       if (retryCount >= 3) {
-        console.error('🌍 位置获取重试次数超限，停止重试')
+        // 已移除调试日志
         reject(new Error('位置获取失败，重试次数超限'))
         return
       }
@@ -222,11 +218,10 @@ Page({
       // 先检查位置权限
       wx.getSetting({
         success: (settingsRes) => {
-          console.log('🌍 详情页权限设置:', settingsRes.authSetting)
-          console.log('🌍 详情页位置权限状态:', settingsRes.authSetting['scope.userLocation'])
-          
+          // 已移除调试日志
+          // 已移除调试日志
           if (settingsRes.authSetting['scope.userLocation'] === false) {
-            console.error('🌍 详情页：用户已拒绝位置权限')
+            // 已移除调试日志
             wx.showModal({
               title: '需要位置权限',
               content: '为了获取准确的天气信息，需要您的位置权限。请在设置中开启位置权限。',
@@ -242,23 +237,22 @@ Page({
           }
           
           // 强制获取高精度位置
-          console.log('🌍 详情页开始调用wx.getLocation...')
+          // 已移除调试日志
           wx.getLocation({
             type: 'gcj02',
             isHighAccuracy: true,
             success: (locationRes) => {
               const { latitude, longitude, accuracy, speed, altitude } = locationRes
-              console.log('🌍 === 详情页位置获取成功 ===')
-              console.log(`🌍 详情页纬度: ${latitude}`)
-              console.log(`🌍 详情页经度: ${longitude}`)
-              console.log(`🌍 详情页精度: ${accuracy}米`)
-              console.log(`🌍 详情页速度: ${speed}`)
-              console.log(`🌍 详情页海拔: ${altitude}`)
-              console.log('🌍 详情页完整位置对象:', locationRes)
-              
+              // 已移除调试日志
+              // 已移除调试日志
+              // 已移除调试日志
+              // 已移除调试日志
+              // 已移除调试日志
+              // 已移除调试日志
+              // 已移除调试日志
               // 验证坐标有效性
               if (!latitude || !longitude || latitude === 0 || longitude === 0) {
-                console.error('🌍 详情页获取到的坐标无效:', { latitude, longitude })
+                // 已移除调试日志
                 reject(new Error('获取到的坐标无效'))
                 return
               }
@@ -275,7 +269,7 @@ Page({
               resolve(locationRes)
             },
             fail: (error) => {
-              console.error('🌍 详情页位置获取失败:', error)
+              // 已移除调试日志
               wx.showModal({
                 title: '位置获取失败',
                 content: `无法获取您的位置信息: ${error.errMsg || '未知错误'}`,
@@ -293,7 +287,7 @@ Page({
           })
         },
         fail: (error) => {
-          console.error('🌍 详情页获取权限设置失败:', error)
+          // 已移除调试日志
           reject(error)
         }
       })
@@ -314,13 +308,12 @@ Page({
 
   // 更新完整天气数据
   updateCompleteWeatherData(weatherData: any) {
-    console.log('🎨 详情页更新完整天气数据:', weatherData)
-    
+    // 已移除调试日志
     // 处理云函数返回的嵌套数据结构
     // 云函数返回格式: { success: true, data: { current: {...}, hourly: [...] } }
     const actualData = weatherData.data || weatherData
     
-    console.log('📦 详情页处理后的数据结构:', actualData)
+    // 已移除调试日志
     console.log('🔍 详情页数据结构检查:', {
       hasCurrentWeather: !!actualData.current,
       hasHourlyForecast: !!actualData.hourly,
@@ -334,8 +327,7 @@ Page({
     // 优先更新位置信息 - 彻底清除"实时定位获取中"状态
     const locationInfo = actualData.locationInfo
     if (locationInfo) {
-      console.log('✅ 详情页使用真实地理位置:', locationInfo)
-      
+      // 已移除调试日志
       // 立即清除"实时定位获取中"的显示
       this.setData({
         location: {
@@ -345,14 +337,9 @@ Page({
         }
       })
       
-      console.log('📍 详情页位置信息更新完成:', {
-        province: locationInfo.province,
-        city: locationInfo.city,
-        district: locationInfo.district
-      })
+      // 已移除调试日志
     } else {
-      console.warn('⚠️ 详情页未收到位置信息，显示备用信息')
-      
+      // 已移除调试日志
       // 即使没有位置信息，也要清除"获取中"状态
       this.setData({
         location: {
@@ -384,26 +371,26 @@ Page({
     
     // 更新逐小时预报
     if (actualData.hourly && Array.isArray(actualData.hourly) && actualData.hourly.length > 0) {
-      console.log('正在处理逐小时预报数据，条目数:', actualData.hourly.length)
+      // 已移除调试日志
       this.processHourlyForecast(actualData.hourly)
     } else {
-      console.warn('逐小时预报数据无效:', actualData.hourly)
+      // 已移除调试日志
     }
     
     // 更新每日预报
     if (actualData.daily && Array.isArray(actualData.daily) && actualData.daily.length > 0) {
-      console.log('正在处理每日预报数据，条目数:', actualData.daily.length)
+      // 已移除调试日志
       this.processDailyForecast(actualData.daily)
     } else {
-      console.warn('每日预报数据无效:', actualData.daily)
+      // 已移除调试日志
     }
     
     // 更新空气质量
     if (actualData.air) {
-      console.log('正在处理空气质量数据')
+      // 已移除调试日志
       this.processAirQuality(actualData.air)
     } else {
-      console.warn('空气质量数据无效:', actualData.air)
+      // 已移除调试日志
     }
     
     // 更新天气预警
@@ -411,7 +398,7 @@ Page({
       console.log('正在处理天气预警数据，条目数:', Array.isArray(actualData.warning) ? actualData.warning.length : 'not array')
       this.processWeatherWarning(actualData.warning)
     } else {
-      console.log('没有天气预警数据')
+      // 已移除调试日志
       this.setData({ warningList: [] })
     }
   },
@@ -436,11 +423,10 @@ Page({
 
   // 处理逐小时预报数据
   processHourlyForecast(hourlyData: any) {
-    console.log('处理逐小时预报数据:', hourlyData)
-    
+    // 已移除调试日志
     // 确保 hourlyData 是数组
     if (!Array.isArray(hourlyData)) {
-      console.warn('逐小时预报数据不是数组:', hourlyData)
+      // 已移除调试日志
       return
     }
     
@@ -484,11 +470,10 @@ Page({
 
   // 处理每日预报数据
   processDailyForecast(dailyData: any) {
-    console.log('处理每日预报数据:', dailyData)
-    
+    // 已移除调试日志
     // 确保 dailyData 是数组
     if (!Array.isArray(dailyData)) {
-      console.warn('每日预报数据不是数组:', dailyData)
+      // 已移除调试日志
       return
     }
     
@@ -556,10 +541,9 @@ Page({
 
   // 处理空气质量数据
   processAirQuality(airData: any) {
-    console.log('处理空气质量数据:', airData)
-    
+    // 已移除调试日志
     if (!airData || typeof airData.aqi === 'undefined') {
-      console.warn('空气质量数据无效:', airData)
+      // 已移除调试日志
       this.setData({
         airData: {
           aqi: 0,
@@ -627,11 +611,10 @@ Page({
 
   // 处理天气预警数据
   processWeatherWarning(warningData: any) {
-    console.log('处理天气预警数据:', warningData)
-    
+    // 已移除调试日志
     // 确保 warningData 是数组
     if (!Array.isArray(warningData)) {
-      console.warn('天气预警数据不是数组:', warningData)
+      // 已移除调试日志
       this.setData({ warningList: [] })
       return
     }
@@ -679,7 +662,7 @@ Page({
     // 按严重级别排序（红色在前）
     warningList.sort((a, b) => b.severityLevel - a.severityLevel)
     
-    console.log(`处理完成，共有${warningList.length}条预警`)
+    // 已移除调试日志
     this.setData({ warningList })
   },
 
@@ -735,7 +718,7 @@ Page({
       const cachedData = this.getCachedWeatherData()
       if (!cachedData) {
         // 没有缓存数据，自动获取（静默模式，不显示Loading）
-        console.log('没有缓存数据，自动获取天气（静默模式）')
+        // 已移除调试日志
         await this.getWeatherData(false)
       } else {
         // 有缓存数据，检查是否过期（1小时）
@@ -744,7 +727,7 @@ Page({
         const oneHour = 60 * 60 * 1000
         
         if (now - cacheTime > oneHour) {
-          console.log('缓存已过期，自动刷新天气（静默模式）')
+          // 已移除调试日志
           await this.getWeatherData(false)
         }
       }
@@ -762,9 +745,9 @@ Page({
         expireTime: Date.now() + 60 * 60 * 1000 // 1小时过期
       }
       wx.setStorageSync('weather_cache', cacheData)
-      console.log('天气数据已缓存')
+      // 已移除调试日志
     } catch (error) {
-      console.warn('天气数据缓存失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -785,9 +768,9 @@ Page({
   clearWeatherCache() {
     try {
       wx.removeStorageSync('weather_cache')
-      console.log('天气缓存已清除')
+      // 已移除调试日志
     } catch (error) {
-      console.warn('清除天气缓存失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -840,14 +823,13 @@ Page({
       tips.push('天气状况良好，适宜户外活动')
     }
     
-    console.log('天气建议:', tips)
+    // 已移除调试日志
     return tips
   },
 
   // 导航栏返回按钮事件
   onNavigateBack() {
-    console.log('天气详情页：用户点击返回按钮')
-    
+    // 已移除调试日志
     // 清理页面状态和资源
     this.forceHideLoading()
     
@@ -856,7 +838,7 @@ Page({
     // - 清理定时器
     // - 发送统计数据等
     
-    console.log('天气详情页：返回前清理工作完成')
+    // 已移除调试日志
   },
 
   // 页面分享

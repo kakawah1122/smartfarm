@@ -134,7 +134,7 @@ async function listExitRecords(event, wxContext) {
           }
         }
       } catch (error) {
-        console.error('获取入栏信息失败:', error)
+        // 已移除调试日志
         return {
           ...record,
           breed: '未知品种',
@@ -209,7 +209,7 @@ async function createExitRecord(event, wxContext) {
       operatorName = u.name || u.nickname || u.nickName || '未知'
     }
   } catch (e) {
-    console.error('获取用户信息失败:', e)
+    // 已移除调试日志
   }
   const newRecord = {
     userId: wxContext.OPENID,
@@ -272,7 +272,7 @@ async function updateExitRecord(event, wxContext) {
         updateData.operator = u.name || u.nickname || u.nickName || '未知'
       }
     } catch (e) {
-      console.error('获取用户信息失败:', e)
+      // 已移除调试日志
     }
   }
 
@@ -483,7 +483,7 @@ async function getExitDetail(event, wxContext) {
         })
       }
     } catch (e) {
-      console.error('补齐出栏记录操作员失败:', e)
+      // 已移除调试日志
     }
   }
   

@@ -45,7 +45,7 @@ async function validateUserPermission(openid, action) {
     
     return permissions[userRole]?.includes(action) || false
   } catch (error) {
-    console.error('权限验证失败:', error)
+    // 已移除调试日志
     return false
   }
 }
@@ -88,7 +88,7 @@ async function calculateInventoryStats() {
       survivalRate: parseFloat(survivalRate)
     }
   } catch (error) {
-    console.error('库存统计计算失败:', error)
+    // 已移除调试日志
     return {
       totalEntry: 0,
       totalExit: 0,
@@ -129,7 +129,7 @@ async function generateInventoryAlerts() {
     
     return alerts
   } catch (error) {
-    console.error('库存预警生成失败:', error)
+    // 已移除调试日志
     return []
   }
 }
@@ -186,7 +186,7 @@ exports.main = async (event, context) => {
         throw new Error('无效的操作类型')
     }
   } catch (error) {
-    console.error('生产管理操作失败:', error)
+    // 已移除调试日志
     return {
       success: false,
       error: error.message,

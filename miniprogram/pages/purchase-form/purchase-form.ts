@@ -124,7 +124,7 @@ const pageConfig = {
       'formData.category': category,  // 存储中文值到数据库
       categoryIndex: index
     })
-    console.log('分类选择:', { index, category })
+    // 已移除调试日志
   },
 
   // 表单字段变化

@@ -82,14 +82,13 @@ Page({
     try {
       // 确保云开发已初始化
       if (!wx.cloud) {
-        console.log('云开发未初始化，正在初始化...')
         wx.cloud.init({
           env: 'your-env-id', // 这里需要替换为你的云开发环境ID
           traceUser: true
         })
       }
     } catch (error) {
-      console.error('云开发初始化失败:', error)
+      // 云开发初始化失败处理
     }
   },
 
@@ -110,7 +109,6 @@ Page({
       const storedUserInfo = wx.getStorageSync('userInfo')
       
       if (storedOpenid && storedUserInfo) {
-        console.log('从本地存储恢复登录状态')
         app.globalData.openid = storedOpenid
         app.globalData.isLoggedIn = true
         app.globalData.userInfo = storedUserInfo
@@ -163,10 +161,9 @@ Page({
         // 持久化到本地存储
         wx.setStorageSync('userInfo', userInfo)
         
-        console.log('用户信息已更新:', userInfo)
       }
     } catch (error) {
-      console.error('获取用户信息失败:', error)
+      // 获取用户信息失败处理
     }
   },
 
@@ -192,8 +189,6 @@ Page({
         mask: true
       })
 
-      console.log('检查用户是否已注册...')
-
           // 首先检查用户是否存在
           const checkResult = await wx.cloud.callFunction({
             name: 'login',
@@ -201,9 +196,6 @@ Page({
               checkOnly: true
             }
           })
-
-          console.log('checkOnly 云函数返回结果:', checkResult)
-          console.log('checkResult.result:', checkResult.result)
 
           if (!checkResult.result?.success) {
             // 如果云函数调用失败
@@ -261,7 +253,7 @@ Page({
             return
           }
         } catch (createError) {
-          console.log('不是第一个用户，需要邀请码注册')
+          // 不是第一个用户，需要邀请码注册
         }
         
         // 不是第一个用户，需要邀请码注册
@@ -284,16 +276,12 @@ Page({
         mask: true
       })
 
-      console.log('用户已注册，开始登录...')
-
       // 用户存在，执行登录
       const result = await wx.cloud.callFunction({
         name: 'login',
         data: {}
       })
 
-      console.log('云函数调用结果:', result)
-      console.log('云函数返回的result对象:', JSON.stringify(result.result, null, 2))
       wx.hideLoading()
 
       if (result.result && result.result.success) {
@@ -307,8 +295,6 @@ Page({
         // 保存到本地存储
         wx.setStorageSync('openid', result.result.openid)
         wx.setStorageSync('userInfo', result.result.user)
-
-        console.log('登录成功，用户信息:', result.result.user)
 
         // 特殊处理第一个用户（超级管理员）
         if (result.result.isFirstAdmin) {
@@ -333,13 +319,7 @@ Page({
             const farmName = userInfo.farmName || userInfo.department || ''
             const phone = userInfo.phone || ''
             
-            console.log('登录时检查信息完整性:', { 
-              nickname, 
-              phone, 
-              farmName,
-              rawUserInfo: userInfo
-            })
-            
+            // 检查信息完整性
             const isInfoComplete = nickname && 
                                   nickname.trim() !== '' && 
                                   nickname !== '未设置' &&
@@ -356,13 +336,7 @@ Page({
             // 检查用户是否已经跳过完善信息
             const hasSkippedInfo = wx.getStorageSync('hasSkippedProfileSetup') || false
             
-            console.log('登录时完善信息状态检查:', {
-              isInfoComplete,
-              profileCompleted,
-              hasSkippedInfo,
-              shouldShowPrompt: !isInfoComplete && !profileCompleted && !hasSkippedInfo
-            })
-            
+            // 完善信息状态检查
             // 只有在信息不完整、没有永久完善标记、且用户没有跳过的情况下才提示
             if (!isInfoComplete && !profileCompleted && !hasSkippedInfo) {
               // 信息不完整且用户未跳过，提示用户完善
@@ -409,11 +383,6 @@ Page({
           }
         }
       } else {
-        console.error('云函数返回失败:', result)
-        console.error('完整的result结构:', JSON.stringify(result, null, 2))
-        console.error('result.result的类型:', typeof result.result)
-        console.error('result.result是否为null:', result.result === null)
-        console.error('result.result是否为undefined:', result.result === undefined)
         
         wx.showToast({
           title: result.result?.message || '登录失败',
@@ -421,7 +390,6 @@ Page({
         })
       }
     } catch (error: any) {
-      console.error('登录失败详细错误:', error)
       wx.hideLoading()
       
       // 根据不同错误类型提供具体的错误信息
@@ -464,8 +432,6 @@ Page({
         mask: true
       })
 
-      console.log('开始测试云开发环境...')
-      
       // 测试云开发环境是否正常
       const testResult = await wx.cloud.callFunction({
         name: 'login',
@@ -481,10 +447,8 @@ Page({
         confirmText: '确定'
       })
       
-      console.log('云环境测试成功:', testResult)
     } catch (error: any) {
       wx.hideLoading()
-      console.error('云环境测试失败:', error)
       
       wx.showModal({
         title: '云环境测试失败',
@@ -627,7 +591,6 @@ Page({
         })
       }
     } catch (error) {
-      console.error('保存用户信息失败:', error)
       wx.hideLoading()
       wx.showToast({
         title: '保存失败，请重试',
@@ -690,7 +653,6 @@ Page({
 
   // 显示邀请码注册弹窗
   showInviteRegister() {
-    console.log('显示邀请码注册弹窗')
     this.setData({
       showInviteDialog: true,
       inviteCode: '',
@@ -698,7 +660,6 @@ Page({
       invitePhone: '',
       inviteCodeFocus: true
     })
-    console.log('弹窗状态已设置:', this.data.showInviteDialog)
   },
 
   // 关闭邀请码注册弹窗
@@ -714,7 +675,7 @@ Page({
 
   // 输入框聚焦处理
   onInputFocus() {
-    console.log('输入框获得焦点')
+    // 输入框获得焦点处理
   },
 
   // 邀请码输入
@@ -845,7 +806,6 @@ Page({
 
     } catch (error) {
       wx.hideLoading()
-      console.error('邀请码注册失败:', error)
       
       let errorMessage = '注册失败，请重试'
       if (error.message) {

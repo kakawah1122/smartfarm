@@ -75,7 +75,7 @@ Page({
         await this.loadUserCounts()
       }
     } catch (error) {
-      console.error('页面初始化失败：', error)
+      // 已移除调试日志
       wx.showToast({
         title: '页面加载失败',
         icon: 'error'
@@ -151,7 +151,7 @@ Page({
         throw new Error(result.result.message)
       }
     } catch (error) {
-      console.error('加载用户列表失败：', error)
+      // 已移除调试日志
       wx.showToast({
         title: '加载用户失败',
         icon: 'error'
@@ -182,7 +182,7 @@ Page({
         this.setData({ roleList: updatedRoleList })
       }
     } catch (error) {
-      console.error('加载角色统计失败：', error)
+      // 已移除调试日志
     }
   },
 
@@ -284,7 +284,7 @@ Page({
       }
     } catch (error) {
       wx.hideLoading()
-      console.error('角色分配失败：', error)
+      // 已移除调试日志
       wx.showToast({
         title: '角色分配失败',
         icon: 'error'

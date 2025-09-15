@@ -141,7 +141,7 @@ Component({
           })
         }
       } catch (error) {
-        console.error('上传图片失败:', error)
+        // 已移除调试日志
         wx.showToast({
           title: '上传失败',
           icon: 'none'
@@ -167,7 +167,7 @@ Component({
           uploadTime: new Date().toISOString()
         }
       } catch (error) {
-        console.error('单个图片上传失败:', error)
+        // 已移除调试日志
         return {
           success: false,
           error: error

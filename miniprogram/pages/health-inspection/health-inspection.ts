@@ -184,7 +184,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('加载活跃批次失败:', error)
+      // 已移除调试日志
     }
   },
 
@@ -552,7 +552,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         throw new Error(result.result?.message || '保存失败')
       }
     } catch (error: any) {
-      console.error('提交健康巡检记录失败:', error)
+      // 已移除调试日志
       wx.showToast({
         title: error.message || '保存失败，请重试',
         icon: 'none'

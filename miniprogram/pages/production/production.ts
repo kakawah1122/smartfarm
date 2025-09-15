@@ -478,7 +478,7 @@ const pageConfig = {
     wx.navigateTo({
       url: '/pages/material-records-list/material-records-list',
       fail: (error) => {
-        console.error('跳转失败:', error)
+        // 已移除调试日志
         wx.showToast({
           title: '页面跳转失败',
           icon: 'none',
@@ -493,7 +493,7 @@ const pageConfig = {
     wx.navigateTo({
       url: '/pages/entry-records-list/entry-records-list',
       fail: (error) => {
-        console.error('跳转失败:', error)
+        // 已移除调试日志
         wx.showToast({
           title: '页面跳转失败',
           icon: 'none',
@@ -508,7 +508,7 @@ const pageConfig = {
     wx.navigateTo({
       url: '/pages/exit-records-list/exit-records-list',
       fail: (error) => {
-        console.error('跳转失败:', error)
+        // 已移除调试日志
         wx.showToast({
           title: '页面跳转失败',
           icon: 'none',
@@ -530,7 +530,7 @@ const pageConfig = {
   
   // 启动AI盘点功能
   startAICount() {
-    console.log('启动AI智能盘点')
+    // 已移除调试日志
     this.setData({
       'aiCount.active': true,
       'aiCount.imageUrl': '',
@@ -551,8 +551,7 @@ const pageConfig = {
   
   // 拍照功能
   takePhoto() {
-    console.log('开始拍照')
-    
+    // 已移除调试日志
     wx.chooseMedia({
       count: 1,
       mediaType: ['image'],
@@ -560,8 +559,7 @@ const pageConfig = {
       camera: 'back', // 使用后置摄像头
       success: (res) => {
         const tempFilePath = res.tempFiles[0].tempFilePath
-        console.log('拍照成功，临时路径:', tempFilePath)
-        
+        // 已移除调试日志
         this.setData({
           'aiCount.imageUrl': tempFilePath
         })
@@ -573,8 +571,7 @@ const pageConfig = {
         })
       },
       fail: (error) => {
-        console.error('拍照失败:', error)
-        
+        // 已移除调试日志
         if (error.errMsg.includes('cancel')) {
           // 用户取消拍照，不显示错误信息
           return
@@ -612,8 +609,7 @@ const pageConfig = {
       return
     }
     
-    console.log('开始AI图像分析')
-    
+    // 已移除调试日志
     // 显示加载状态
     this.setData({
       'aiCount.loading': true,
@@ -630,8 +626,7 @@ const pageConfig = {
       // 将图片转换为base64
       const base64Data = await this.convertImageToBase64(imageUrl)
       
-      console.log('调用AI图像识别服务')
-      
+      // 已移除调试日志
       // 调用AI图像识别云函数
       const result = await wx.cloud.callFunction({
         name: 'ai-multi-model',
@@ -647,8 +642,7 @@ const pageConfig = {
         }
       })
       
-      console.log('AI图像识别结果:', result)
-      
+      // 已移除调试日志
       if (result.result.success) {
         const recognitionData = result.result.data
         
@@ -708,8 +702,7 @@ const pageConfig = {
       }
       
     } catch (error) {
-      console.error('AI图像分析失败:', error)
-      
+      // 已移除调试日志
       this.setData({
         'aiCount.loading': false,
         'aiCount.error': error.message || '分析失败',
@@ -737,7 +730,7 @@ const pageConfig = {
         fileID: result.fileID
       }
     } catch (error) {
-      console.error('图片上传失败:', error)
+      // 已移除调试日志
       return {
         success: false,
         error: error.errMsg || '上传失败'
@@ -755,7 +748,7 @@ const pageConfig = {
           resolve(`data:image/jpeg;base64,${res.data}`)
         },
         fail: (error) => {
-          console.error('图片转base64失败:', error)
+          // 已移除调试日志
           reject(new Error('图片处理失败'))
         }
       })
@@ -813,7 +806,7 @@ const pageConfig = {
         this.closeAICount()
       },
       fail: (error) => {
-        console.error('导航到出栏表单失败:', error)
+        // 已移除调试日志
         wx.showToast({
           title: '跳转失败，请重试',
           icon: 'none'
@@ -833,8 +826,7 @@ const pageConfig = {
       return
     }
     
-    console.log('保存出栏盘点记录')
-    
+    // 已移除调试日志
     try {
       wx.showLoading({
         title: '保存中...',
@@ -881,8 +873,7 @@ const pageConfig = {
       this.refreshData()
       
     } catch (error) {
-      console.error('保存盘点记录失败:', error)
-      
+      // 已移除调试日志
       wx.hideLoading()
       
       wx.showToast({

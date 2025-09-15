@@ -131,7 +131,7 @@ export class DynamicStorageManager {
    */
   static setDevelopmentMode(enabled: boolean) {
     this.isDevelopmentMode = enabled;
-    console.log(`🔧 动态存储${enabled ? '已启用' : '已关闭'}开发模式`);
+    // 动态存储开发模式切换
   }
   
   /**
@@ -176,7 +176,7 @@ export class DynamicStorageManager {
       });
       
       if (!recordResult.success) {
-        console.warn('文件信息记录失败:', recordResult.error);
+        // 文件信息记录失败
       }
       
       return {
@@ -188,7 +188,7 @@ export class DynamicStorageManager {
       };
       
     } catch (error) {
-      console.error('动态上传失败:', error);
+      // 动态上传失败
       return {
         success: false,
         error: error.message || '上传失败，请检查网络连接'
@@ -271,13 +271,13 @@ export class DynamicStorageManager {
     
     // 路径长度检查
     if (fullPath.length > WECHAT_STORAGE_CONFIG.fileNaming.maxLength) {
-      console.warn('路径长度超限，进行截断处理');
+      // 路径长度超限，进行截断处理
       fullPath = this.truncatePath(fullPath);
     }
     
     // 字符合规性检查
     if (!WECHAT_STORAGE_CONFIG.fileNaming.allowedChars.test(fullPath)) {
-      console.warn('路径包含不规范字符，进行清理');
+      // 路径包含不规范字符，进行清理
       fullPath = this.sanitizePath(fullPath);
     }
     
