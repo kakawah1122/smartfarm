@@ -843,7 +843,7 @@ Page<PageData>({
         }
       }
     } catch (error: any) {
-      console.error('加载批次列表失败:', error)
+      // 加载批次列表失败，静默处理
     }
   },
 

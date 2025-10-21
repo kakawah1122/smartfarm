@@ -105,7 +105,6 @@ async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
       await db.collection('task_batch_schedules').add({
         data: batch
       })
-      console.log(`已插入第 ${Math.floor(i/batchSize) + 1} 批，共 ${batch.length} 个任务`)
     }
     
     // 已移除调试日志
