@@ -125,39 +125,8 @@
             <text class="stat-label">疫苗接种率</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">{{preventionData.stats.disinfectionCount}}</text>
-            <text class="stat-label">消毒次数</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{preventionData.stats.inspectionRate}}%</text>
-            <text class="stat-label">巡检覆盖率</text>
-          </view>
-          <view class="stat-item">
             <text class="stat-value">¥{{preventionData.stats.preventionCost}}</text>
             <text class="stat-label">预防成本</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 快速操作 -->
-      <view class="quick-actions">
-        <text class="section-title">快速操作</text>
-        <view class="action-grid">
-          <view class="action-item" bind:tap="onPreventionAction" data-action="add_vaccine">
-            <t-icon name="protection" size="20" color="#0052D9" />
-            <text>疫苗接种</text>
-          </view>
-          <view class="action-item" bind:tap="onPreventionAction" data-action="add_disinfection">
-            <t-icon name="cleaning" size="20" color="#0052D9" />
-            <text>环境消毒</text>
-          </view>
-          <view class="action-item" bind:tap="onPreventionAction" data-action="health_inspection">
-            <t-icon name="search" size="20" color="#0052D9" />
-            <text>健康巡检</text>
-          </view>
-          <view class="action-item" bind:tap="onPreventionAction" data-action="add_healthcare">
-            <t-icon name="heart" size="20" color="#0052D9" />
-            <text>保健管理</text>
           </view>
         </view>
       </view>
@@ -186,28 +155,6 @@
         </view>
       </view>
 
-      <!-- 即将到来的任务 -->
-      <view class="upcoming-tasks">
-        <text class="section-title">即将到来的任务</text>
-        <view class="task-list">
-          <view 
-            class="task-item priority-{{item.priority}}"
-            wx:for="{{preventionData.upcomingTasks}}"
-            wx:key="id"
-          >
-            <view class="task-icon">
-              <t-icon name="{{item.type === 'vaccine' ? 'protection' : 'cleaning'}}" size="18" />
-            </view>
-            <view class="task-info">
-              <text class="task-name">{{item.name}}</text>
-              <text class="task-location">{{item.location}}</text>
-            </view>
-            <view class="task-meta">
-              <text class="task-date">{{item.scheduledDate}}</text>
-            </view>
-          </view>
-        </view>
-      </view>
     </view>
 
     <!-- 健康监控 Tab -->
@@ -228,24 +175,6 @@
             <text class="status-count">{{monitoringData.realTimeStatus.isolatedCount}}</text>
             <text class="status-label">隔离</text>
           </view>
-        </view>
-      </view>
-
-      <!-- 监控操作 -->
-      <view class="monitoring-actions">
-        <view class="action-row">
-          <t-button 
-            theme="primary" 
-            size="small" 
-            bind:tap="onMonitoringAction"
-            data-action="batch_check"
-          >批量体检</t-button>
-          <t-button 
-            theme="light" 
-            size="small" 
-            bind:tap="onMonitoringAction"
-            data-action="isolation_manage"
-          >隔离管理</t-button>
         </view>
       </view>
 
@@ -314,25 +243,6 @@
           <view class="stat-item">
             <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
             <text class="stat-label">治愈率</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 诊疗快速操作 -->
-      <view class="treatment-actions">
-        <text class="section-title">快速操作</text>
-        <view class="action-grid">
-          <view class="action-item" bind:tap="onTreatmentAction" data-action="start_diagnosis">
-            <t-icon name="scan" size="20" color="#0052D9" />
-            <text>AI诊断</text>
-          </view>
-          <view class="action-item" bind:tap="onTreatmentAction" data-action="add_treatment">
-            <t-icon name="service" size="20" color="#0052D9" />
-            <text>添加治疗</text>
-          </view>
-          <view class="action-item" bind:tap="onTreatmentAction" data-action="recovery_manage">
-            <t-icon name="heart" size="20" color="#0052D9" />
-            <text>康复管理</text>
           </view>
         </view>
       </view>

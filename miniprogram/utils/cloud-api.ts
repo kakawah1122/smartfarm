@@ -113,7 +113,7 @@ class CloudApi {
   /**
    * 获取任务列表
    */
-  static async getTodos(batchId: string, dayAge: number): Promise<CloudApiResponse> {
+  static async getTodos(batchId: string, dayAge: number, options?: { showError?: boolean }): Promise<CloudApiResponse> {
     return this.callFunction(
       'breeding-todo',
       {
@@ -123,7 +123,7 @@ class CloudApi {
       },
       {
         loading: false,
-        showError: true
+        showError: options?.showError !== false // 默认显示错误，除非明确设置为false
       }
     )
   }
@@ -344,6 +344,39 @@ class CloudApi {
       {
         loading: true,
         loadingText: '加载健康数据...',
+        showError: true
+      }
+    )
+  }
+
+  /**
+   * 获取所有批次健康汇总
+   */
+  static async getAllBatchesHealthSummary(): Promise<CloudApiResponse> {
+    return this.callFunction(
+      'health-management',
+      {
+        action: 'get_all_batches_health_summary'
+      },
+      {
+        loading: true,
+        loadingText: '加载批次健康数据...',
+        showError: true
+      }
+    )
+  }
+
+  /**
+   * 获取首页健康概览
+   */
+  static async getHomepageHealthOverview(): Promise<CloudApiResponse> {
+    return this.callFunction(
+      'health-management',
+      {
+        action: 'get_homepage_health_overview'
+      },
+      {
+        loading: false,
         showError: true
       }
     )

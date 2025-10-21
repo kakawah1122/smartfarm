@@ -76,6 +76,16 @@ Page({
     todoList: [] as any[],
     todoLoading: false,
     
+    // 健康概览数据
+    healthOverview: {
+      overallHealthRate: 0,
+      totalBatches: 0,
+      alertBatches: 0,
+      pendingHealthTasks: 0,
+      criticalIssues: [] as string[],
+      loading: false
+    },
+    
     // 弹窗相关状态
     showTaskDetailPopup: false,
     selectedTask: null as any,
@@ -163,6 +173,7 @@ Page({
     this.initStatusBar()
     this.loadData()
     this.loadTodayBreedingTasks()
+    this.loadHealthOverview()
   },
 
   onShow() {
@@ -714,9 +725,9 @@ Page({
       })
 
       const activeBatches = batchResult.result?.data || []
-      // 找到活跃批次
       
-      if (activeBatches.length === 0) {
+      // 如果没有批次，静默处理，不显示错误
+      if (!activeBatches || activeBatches.length === 0) {
         this.setData({ 
           todoList: [],
           todoLoading: false
@@ -732,8 +743,8 @@ Page({
           const dayAge = this.calculateCurrentAge(batch.entryDate)
           // 批次当前日龄
           
-          // 使用与breeding-todo页面相同的CloudApi方法
-          const result = await CloudApi.getTodos(batch.id, dayAge)
+          // 使用与breeding-todo页面相同的CloudApi方法，但不显示错误（首页静默加载）
+          const result = await CloudApi.getTodos(batch.id, dayAge, { showError: false })
           
           if (result.success && result.data) {
             const tasks = result.data
@@ -856,6 +867,44 @@ Page({
     }
   },
 
+  // 加载健康概览数据
+  async loadHealthOverview() {
+    this.setData({
+      'healthOverview.loading': true
+    })
+
+    try {
+      const result = await CloudApi.getHomepageHealthOverview()
+
+      if (result.success && result.data) {
+        this.setData({
+          healthOverview: {
+            overallHealthRate: result.data.overallHealthRate || 0,
+            totalBatches: result.data.totalBatches || 0,
+            alertBatches: result.data.alertBatches || 0,
+            pendingHealthTasks: result.data.pendingHealthTasks || 0,
+            criticalIssues: result.data.criticalIssues || [],
+            loading: false
+          }
+        })
+      } else {
+        this.setData({
+          'healthOverview.loading': false
+        })
+      }
+    } catch (error: any) {
+      this.setData({
+        'healthOverview.loading': false
+      })
+    }
+  },
+
+  // 跳转到健康管理页面
+  navigateToHealthPage() {
+    wx.navigateTo({
+      url: '/pages/health/health'
+    })
+  },
 
   // 调试方法：手动重新加载待办
   async debugLoadTodos() {

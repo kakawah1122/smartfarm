@@ -484,7 +484,7 @@
     color: var(--td-text-color-secondary);
   }
   
-  .quick-actions {
+  .prevention-records {
     background: white;
     border-radius: 16rpx;
     padding: 24rpx;
@@ -492,54 +492,13 @@
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   }
   
-  .action-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16rpx;
-    margin-top: 16rpx;
-  }
-  
-  .action-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24rpx;
-    background: var(--td-bg-color-container);
-    border-radius: 12rpx;
-    border: 2rpx solid transparent;
-    transition: all 0.3s ease;
-    
-    &:active {
-      transform: scale(0.95);
-      background: var(--td-bg-color-container-hover);
-    }
-    
-    text {
-      margin-top: 12rpx;
-      font-size: 24rpx;
-      color: var(--td-text-color-primary);
-    }
-  }
-  
-  .prevention-records,
-  .upcoming-tasks {
-    background: white;
-    border-radius: 16rpx;
-    padding: 24rpx;
-    margin-bottom: 24rpx;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  }
-  
-  .record-list,
-  .task-list {
+  .record-list {
     display: flex;
     flex-direction: column;
     gap: 12rpx;
   }
   
-  .record-item,
-  .task-item {
+  .record-item {
     display: flex;
     align-items: center;
     padding: 16rpx;
@@ -547,56 +506,32 @@
     border-radius: 12rpx;
   }
   
-  .record-info,
-  .task-info {
+  .record-info {
     flex: 1;
     margin-left: 12rpx;
   }
   
-  .record-title,
-  .task-name {
+  .record-title {
     font-size: 28rpx;
     color: var(--td-text-color-primary);
     display: block;
     margin-bottom: 4rpx;
   }
   
-  .record-desc,
-  .task-location {
+  .record-desc {
     font-size: 24rpx;
     color: var(--td-text-color-secondary);
   }
   
-  .record-meta,
-  .task-meta {
+  .record-meta {
     text-align: right;
   }
   
-  .record-date,
-  .task-date {
+  .record-date {
     font-size: 24rpx;
     color: var(--td-text-color-secondary);
     display: block;
     margin-bottom: 8rpx;
-  }
-  
-  .task-icon {
-    width: 40rpx;
-    height: 40rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--td-brand-color);
-    border-radius: 50%;
-    color: white;
-  }
-  
-  .priority-high {
-    border-left: 4rpx solid #e34d59;
-  }
-  
-  .priority-medium {
-    border-left: 4rpx solid #ed7b2f;
   }
 }
 
@@ -647,19 +582,6 @@
   
   .status-label {
     font-size: 24rpx;
-  }
-  
-  .monitoring-actions {
-    background: white;
-    border-radius: 16rpx;
-    padding: 24rpx;
-    margin-bottom: 24rpx;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  }
-  
-  .action-row {
-    display: flex;
-    gap: 16rpx;
   }
   
   .abnormal-list {
@@ -786,14 +708,6 @@
 /* 诊疗管理Tab样式 */
 .treatment-content {
   .treatment-stats {
-    background: white;
-    border-radius: 16rpx;
-    padding: 24rpx;
-    margin-bottom: 24rpx;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  }
-  
-  .treatment-actions {
     background: white;
     border-radius: 16rpx;
     padding: 24rpx;

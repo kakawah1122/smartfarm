@@ -149,12 +149,9 @@ Page<PageData>({
     preventionData: {
       stats: {
         vaccinationRate: 0,
-        disinfectionCount: 0,
-        inspectionRate: 0,
         preventionCost: 0
       },
-      recentRecords: [],
-      upcomingTasks: []
+      recentRecords: []
     },
     monitoringData: {
       realTimeStatus: {
@@ -398,12 +395,9 @@ Page<PageData>({
           recentPreventionRecords: records.slice(0, 10), // 只显示最近10条
           'preventionData.stats': {
             vaccinationRate: preventionStats.vaccineCount > 0 ? ((preventionStats.vaccineCount / (this.data.healthStats.totalChecks || 1)) * 100).toFixed(1) : 0,
-            disinfectionCount: preventionStats.disinfectionCount,
-            inspectionRate: 0, // TODO: 从实际数据计算
             preventionCost: preventionStats.totalCost
           },
-          'preventionData.recentRecords': records.slice(0, 10),
-          'preventionData.upcomingTasks': [] // TODO: 加载即将到来的任务
+          'preventionData.recentRecords': records.slice(0, 10)
         })
       }
     } catch (error: any) {
