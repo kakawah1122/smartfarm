@@ -65,6 +65,11 @@ interface PageData {
   loading: boolean
   refreshing: boolean
   currentBatchId: string
+  currentBatchNumber: string
+  
+  // 批次数据
+  showBatchDropdown: boolean
+  availableBatches: any[]
   
   // 弹窗相关
   showDetailPopup: boolean
@@ -88,7 +93,7 @@ interface PageData {
 Page<PageData>({
   data: {
     // 选项卡
-    activeTab: 'overview', // overview|prevention|monitoring|treatment|analysis
+    activeTab: 'prevention', // prevention|monitoring|treatment|analysis
     
     // 健康统计数据
     healthStats: {
@@ -125,6 +130,11 @@ Page<PageData>({
     loading: false,
     refreshing: false,
     currentBatchId: '',
+    currentBatchNumber: '',
+    
+    // 批次数据
+    showBatchDropdown: false,
+    availableBatches: [],
     
     // 弹窗相关
     showDetailPopup: false,
@@ -191,14 +201,22 @@ Page<PageData>({
   /**
    * 页面加载
    */
-  onLoad(options: any) {
-    // 已移除调试日志
-    this.setData({
-      currentBatchId: options.batchId || this.getCurrentBatchId()
-    })
-
+  async onLoad(options: any) {
+    const batchId = options.batchId
+    
     this.initDateRange()
-    this.loadHealthData()
+    
+    // 总是使用详情视图
+    this.setData({
+      viewMode: 'detail',
+      currentBatchId: batchId || this.getCurrentBatchId()
+    })
+    
+    this.loadAvailableBatches()
+    await this.loadHealthData()
+    
+    // 默认加载第一个Tab的数据
+    this.loadTabData(this.data.activeTab)
   },
 
   /**
@@ -215,6 +233,7 @@ Page<PageData>({
    */
   onPullDownRefresh() {
     this.setData({ refreshing: true })
+    
     this.loadHealthData().finally(() => {
       this.setData({ refreshing: false })
       wx.stopPullDownRefresh()
@@ -373,9 +392,18 @@ Page<PageData>({
         // 计算预防统计
         const preventionStats = this.calculatePreventionStats(records)
         
+        // 设置到 preventionData 对象中
         this.setData({
           preventionStats,
-          recentPreventionRecords: records.slice(0, 10) // 只显示最近10条
+          recentPreventionRecords: records.slice(0, 10), // 只显示最近10条
+          'preventionData.stats': {
+            vaccinationRate: preventionStats.vaccineCount > 0 ? ((preventionStats.vaccineCount / (this.data.healthStats.totalChecks || 1)) * 100).toFixed(1) : 0,
+            disinfectionCount: preventionStats.disinfectionCount,
+            inspectionRate: 0, // TODO: 从实际数据计算
+            preventionCost: preventionStats.totalCost
+          },
+          'preventionData.recentRecords': records.slice(0, 10),
+          'preventionData.upcomingTasks': [] // TODO: 加载即将到来的任务
         })
       }
     } catch (error: any) {
@@ -766,5 +794,115 @@ Page<PageData>({
       path: '/pages/health/health',
       imageUrl: '/assets/share-health.png'
     }
+  },
+
+  // ========== 批次筛选相关方法 ==========
+
+  /**
+   * 加载可用批次列表
+   */
+  async loadAvailableBatches() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: {
+          action: 'getActiveBatches'
+        }
+      })
+
+      if (result.result && result.result.success) {
+        const batches = result.result.data || []
+        
+        // 计算日龄
+        const batchesWithDayAge = batches.map((batch: any) => {
+          const entryDate = new Date(batch.entryDate)
+          const today = new Date()
+          const dayAge = Math.floor((today.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+          
+          return {
+            ...batch,
+            dayAge
+          }
+        })
+        
+        this.setData({
+          availableBatches: batchesWithDayAge
+        })
+        
+        // 设置当前批次号
+        if (this.data.currentBatchId) {
+          const currentBatch = batchesWithDayAge.find((b: any) => b._id === this.data.currentBatchId)
+          if (currentBatch) {
+            this.setData({
+              currentBatchNumber: currentBatch.batchNumber
+            })
+          }
+        } else if (batchesWithDayAge.length > 0) {
+          // 如果没有当前批次，默认选择第一个
+          const firstBatch = batchesWithDayAge[0]
+          if (firstBatch && firstBatch._id) {
+            this.setData({
+              currentBatchId: firstBatch._id,
+              currentBatchNumber: firstBatch.batchNumber
+            })
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('加载批次列表失败:', error)
+    }
+  },
+
+  /**
+   * 切换下拉菜单显示状态
+   */
+  toggleBatchDropdown() {
+    this.setData({
+      showBatchDropdown: !this.data.showBatchDropdown
+    })
+  },
+
+  /**
+   * 关闭下拉菜单
+   */
+  closeBatchDropdown() {
+    this.setData({
+      showBatchDropdown: false
+    })
+  },
+
+  /**
+   * 从下拉菜单选择批次（在详情视图下切换批次）
+   */
+  selectBatchFromDropdown(e: any) {
+    const index = e.currentTarget.dataset.index
+    const batches = this.data.availableBatches
+    
+    if (index >= 0 && index < batches.length) {
+      const selectedBatch = batches[index]
+      
+      this.setData({
+        viewMode: 'detail',
+        currentBatchId: selectedBatch._id,
+        currentBatchNumber: selectedBatch.batchNumber,
+        showBatchDropdown: false
+      })
+
+      // 重新加载健康数据
+      this.loadHealthData()
+      
+      wx.showToast({
+        title: `已切换到 ${selectedBatch.batchNumber}`,
+        icon: 'success',
+        duration: 1500
+      })
+    }
+  },
+
+  /**
+   * 阻止触摸移动事件冒泡
+   */
+  preventTouchMove() {
+    return false
   }
 })

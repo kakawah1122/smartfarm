@@ -10,25 +10,71 @@
     bind:menu="onMenuTap"
   />
 
-  <!-- 健康概览 -->
-  <view class="health-overview">
-    <view class="overview-grid">
-      <view class="overview-card primary">
-        <view class="overview-value">{{healthOverview.survivalRate}}%</view>
-        <view class="overview-label">存活率</view>
-      </view>
-      <view class="overview-card warning">
-        <view class="overview-value">{{healthOverview.abnormalCount}}</view>
-        <view class="overview-label">异常个体</view>
-      </view>
-      <view class="overview-card success">
-        <view class="overview-value">{{healthOverview.preventionScore}}</view>
-        <view class="overview-label">预防效果</view>
+  <!-- 详情视图 -->
+  <view class="detail-view">
+
+    <!-- 健康数据概览 -->
+    <view class="health-stats-section">
+      <view class="stats-grid">
+        <view class="stat-card stat-primary">
+          <text class="stat-value">{{healthStats.healthyRate}}</text>
+          <text class="stat-label">健康率</text>
+        </view>
+        <view class="stat-card stat-warning">
+          <text class="stat-value">{{healthStats.sickCount}}</text>
+          <text class="stat-label">患病数</text>
+        </view>
+        <view class="stat-card stat-danger">
+          <text class="stat-value">{{healthStats.deadCount}}</text>
+          <text class="stat-label">死亡数</text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 活跃预警 -->
+    <!-- 批次筛选栏 -->
+    <view class="batch-filter-section">
+      <view class="filter-header">
+        <view class="current-batch">
+          <text class="label">当前批次</text>
+          <text class="value">{{currentBatchNumber || '请选择批次'}}</text>
+        </view>
+        <view class="filter-action" bind:tap="toggleBatchDropdown">
+          <text class="action-text">筛选</text>
+          <text class="action-icon {{showBatchDropdown ? 'rotate' : ''}}">▾</text>
+        </view>
+      </view>
+      
+      <!-- 下拉菜单 -->
+      <view class="batch-dropdown {{showBatchDropdown ? 'show' : ''}}" wx:if="{{showBatchDropdown}}">
+        <view 
+          class="dropdown-item {{item._id === currentBatchId ? 'active' : ''}}"
+          wx:for="{{availableBatches}}"
+          wx:key="_id"
+          bind:tap="selectBatchFromDropdown"
+          data-index="{{index}}"
+        >
+          <view class="item-content">
+            <text class="item-title">{{item.batchNumber}}</text>
+            <text class="item-subtitle">{{item.breed}} · {{item.dayAge}}日龄 · {{item.quantity}}只</text>
+          </view>
+          <text class="check-mark" wx:if="{{item._id === currentBatchId}}">✓</text>
+        </view>
+        
+        <view class="dropdown-empty" wx:if="{{availableBatches.length === 0}}">
+          <text>暂无存栏批次</text>
+        </view>
+      </view>
+    </view>
+  
+    <!-- 遮罩层 -->
+    <view 
+      class="dropdown-mask {{showBatchDropdown ? 'show' : ''}}" 
+      wx:if="{{showBatchDropdown}}"
+      bind:tap="closeBatchDropdown"
+      catchtouchmove="preventTouchMove"
+    ></view>
+
+    <!-- 活跃预警 -->
   <view class="active-alerts" wx:if="{{activeAlerts.length > 0}}">
     <view class="alert-header">
       <text class="alert-title">活跃预警</text>
@@ -451,5 +497,8 @@
       </view>
     </view>
   </bottom-popup>
+
+  </view>
+  <!-- detail-view 结束 -->
 
 </view>

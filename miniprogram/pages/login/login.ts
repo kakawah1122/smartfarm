@@ -189,92 +189,101 @@ Page({
         mask: true
       })
 
-          // 首先检查用户是否存在
-          const checkResult = await wx.cloud.callFunction({
-            name: 'login',
-            data: {
-              checkOnly: true
-            }
-          })
-
-          if (!checkResult.result?.success) {
-            // 如果云函数调用失败
-            wx.hideLoading()
-            this.setData({ isLoading: false })
-            
-            wx.showModal({
-              title: '登录检查失败',
-              content: `云函数调用出错：${checkResult.result?.error || '未知错误'}\n\n调试信息：${JSON.stringify(checkResult.result?.debug, null, 2)}`,
-              showCancel: false,
-              confirmText: '确定'
-            })
-            return
-          }
-
-          if (!checkResult.result?.exists) {
-        // 用户不存在，检查是否是第一个用户
-        wx.hideLoading()
-        this.setData({ isLoading: false })
-        
-        // 检查数据库中是否还没有任何用户（第一个用户）
-        try {
-          const result = await wx.cloud.callFunction({
-            name: 'login',
-            data: {} // 直接尝试创建用户
-          })
-          
-          if (result.result && result.result.success) {
-            const app = getApp()
-            app.globalData.openid = result.result.openid
-            app.globalData.isLoggedIn = true
-            app.globalData.userInfo = result.result.user
-            
-            wx.setStorageSync('openid', result.result.openid)
-            wx.setStorageSync('userInfo', result.result.user)
-            
-            // 如果是第一个管理员，显示特殊欢迎信息
-            if (result.result.isFirstAdmin) {
-              wx.showModal({
-                title: '🎉 超级管理员',
-                content: result.result.message + '\n\n您现在拥有系统的所有管理权限！',
-                showCancel: false,
-                confirmText: '开始使用',
-                success: () => {
-                  wx.reLaunch({
-                    url: '/pages/index/index'
-                  })
-                }
-              })
-            } else {
-              wx.reLaunch({
-                url: '/pages/index/index'
-              })
-            }
-            return
-          }
-        } catch (createError) {
-          // 不是第一个用户，需要邀请码注册
-        }
-        
-        // 不是第一个用户，需要邀请码注册
-        wx.showModal({
-          title: '用户未注册',
-          content: '检测到您尚未注册，请使用邀请码进行注册',
-          confirmText: '去注册',
-          cancelText: '取消',
-          success: (res) => {
-            if (res.confirm) {
-              this.showInviteRegister()
-            }
+      try {
+        // 首先检查用户是否存在
+        const checkResult = await wx.cloud.callFunction({
+          name: 'login',
+          data: {
+            checkOnly: true
           }
         })
-        return
-      }
 
-      wx.showLoading({
-        title: '登录中...',
-        mask: true
-      })
+        if (!checkResult.result?.success) {
+          // 如果云函数调用失败
+          wx.hideLoading()
+          this.setData({ isLoading: false })
+          
+          wx.showModal({
+            title: '登录检查失败',
+            content: `云函数调用出错：${checkResult.result?.error || '未知错误'}\n\n调试信息：${JSON.stringify(checkResult.result?.debug, null, 2)}`,
+            showCancel: false,
+            confirmText: '确定'
+          })
+          return
+        }
+
+        if (!checkResult.result?.exists) {
+          // 用户不存在，检查是否是第一个用户
+          wx.hideLoading()
+          this.setData({ isLoading: false })
+          
+          // 检查数据库中是否还没有任何用户（第一个用户）
+          try {
+            const result = await wx.cloud.callFunction({
+              name: 'login',
+              data: {} // 直接尝试创建用户
+            })
+            
+            if (result.result && result.result.success) {
+              const app = getApp()
+              app.globalData.openid = result.result.openid
+              app.globalData.isLoggedIn = true
+              app.globalData.userInfo = result.result.user
+              
+              wx.setStorageSync('openid', result.result.openid)
+              wx.setStorageSync('userInfo', result.result.user)
+              
+              // 如果是第一个管理员，显示特殊欢迎信息
+              if (result.result.isFirstAdmin) {
+                wx.showModal({
+                  title: '🎉 超级管理员',
+                  content: result.result.message + '\n\n您现在拥有系统的所有管理权限！',
+                  showCancel: false,
+                  confirmText: '开始使用',
+                  success: () => {
+                    wx.reLaunch({
+                      url: '/pages/index/index'
+                    })
+                  }
+                })
+              } else {
+                wx.reLaunch({
+                  url: '/pages/index/index'
+                })
+              }
+              return
+            }
+          } catch (createError) {
+            // 不是第一个用户，需要邀请码注册
+          }
+          
+          // 不是第一个用户，需要邀请码注册
+          wx.showModal({
+            title: '用户未注册',
+            content: '检测到您尚未注册，请使用邀请码进行注册',
+            confirmText: '去注册',
+            cancelText: '取消',
+            success: (res) => {
+              if (res.confirm) {
+                this.showInviteRegister()
+              }
+            }
+          })
+          return
+        }
+
+        // 用户存在，隐藏第一个loading，显示登录loading
+        wx.hideLoading()
+        wx.showLoading({
+          title: '登录中...',
+          mask: true
+        })
+      } catch (error) {
+        // 检查用户状态失败
+        wx.hideLoading()
+        this.setData({ isLoading: false })
+        throw error
+      }
 
       // 用户存在，执行登录
       const result = await wx.cloud.callFunction({
