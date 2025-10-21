@@ -189,7 +189,7 @@ async function cleanupOldInvites() {
       // 批量删除
       for (const invite of invitesToDelete) {
         await db.collection('wx_user_invites').doc(invite._id).remove()
-        console.log(`已删除邀请记录：${invite.inviteCode} (${invite.status})`)
+        // 已移除调试日志
       }
 
       // 已移除调试日志

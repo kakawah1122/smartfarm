@@ -12,6 +12,46 @@ const _ = db.command
 // 导入养殖任务配置
 const { BREEDING_SCHEDULE, getTasksByAge, getAllTaskDays } = require('./breeding-schedule')
 
+// 创建初始健康检查记录
+async function createInitialHealthCheck(batchId, batchNumber, quantity, operatorName, userId) {
+  try {
+    const healthRecord = {
+      batchId,
+      recordType: 'initial_check',
+      checkDate: new Date().toISOString().split('T')[0],
+      inspector: userId,
+      inspectorName: operatorName,
+      totalCount: quantity,
+      healthyCount: quantity,  // 初始默认全部健康
+      sickCount: 0,
+      deadCount: 0,
+      symptoms: [],
+      diagnosis: '入栏初检：外观正常，无明显异常',
+      treatment: '',
+      notes: '系统自动创建的入栏初始健康检查记录',
+      severity: 'low',
+      followUpRequired: false,
+      followUpDate: null,
+      relatedTaskId: null,
+      autoCreated: true,
+      creationSource: 'entry',
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    const result = await db.collection('health_records').add({
+      data: healthRecord
+    })
+    
+    // 已移除调试日志
+    return result._id
+  } catch (error) {
+    // 已移除调试日志
+    throw error
+  }
+}
+
 // 创建批次待办事项
 async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
   // 已移除调试日志
@@ -300,14 +340,31 @@ async function createEntryRecord(event, wxContext) {
     // 可以考虑记录到错误日志中
   }
   
+  // 自动创建初始健康检查记录
+  let healthRecordId = null
+  try {
+    healthRecordId = await createInitialHealthCheck(
+      result._id,
+      batchNumber,
+      newRecord.quantity,
+      userName,
+      wxContext.OPENID
+    )
+    // 已移除调试日志
+  } catch (healthError) {
+    // 已移除调试日志
+    // 不影响入栏记录创建，继续执行
+  }
+  
   return {
     success: true,
     data: {
       _id: result._id,
       batchNumber,
+      healthRecordId,
       ...newRecord
     },
-    message: '入栏记录创建成功，待办事项已自动生成'
+    message: '入栏记录创建成功，待办事项和初始健康检查已自动生成'
   }
 }
 
@@ -528,24 +585,37 @@ async function getEntryDetail(event, wxContext) {
 async function getActiveBatches(event, wxContext) {
   // 已移除调试日志
   try {
-    // 先查询所有该用户的入栏记录，不加过多限制条件，便于调试
-    // 注意：入栏记录使用的是 userId 字段，不是 _openid
+    // 查询该用户的所有入栏记录
     const allResult = await db.collection('prod_batch_entries')
       .where({
-        userId: wxContext.OPENID  // 修正字段名
+        userId: wxContext.OPENID
       })
-      .orderBy('createTime', 'desc') // 按创建时间倒序
-      .limit(10)
+      .orderBy('createTime', 'desc')
       .get()
 
-    // 已移除调试日志
-    // 筛选活跃批次
-    const activeRecords = allResult.data.filter(record => {      
-      // 只要不是已出栏状态，且未删除（考虑 isDeleted 可能为 undefined）
+    // 获取所有出栏记录
+    const exitRecordsResult = await db.collection('prod_batch_exits')
+      .where({
+        userId: wxContext.OPENID
+      })
+      .get()
+    
+    // 统计每个批次的出栏数量
+    const exitQuantityMap = {}
+    exitRecordsResult.data.forEach(exitRecord => {
+      const batchNumber = exitRecord.batchNumber
+      if (!exitQuantityMap[batchNumber]) {
+        exitQuantityMap[batchNumber] = 0
+      }
+      exitQuantityMap[batchNumber] += exitRecord.quantity || 0
+    })
+
+    // 筛选存栏批次（排除完全出栏和已删除的）
+    const activeRecords = allResult.data.filter(record => {
       const isNotDeleted = record.isDeleted !== true
-      const isNotExited = record.status !== '已出栏' && record.status !== '出栏'
-      
-      return isNotDeleted && isNotExited
+      const totalExited = exitQuantityMap[record.batchNumber] || 0
+      const isNotFullyExited = totalExited < (record.quantity || 0)
+      return isNotDeleted && isNotFullyExited
     })
 
     // 已移除调试日志
@@ -565,11 +635,12 @@ async function getActiveBatches(event, wxContext) {
 
       // 已移除调试日志
       return {
-        id: record._id,
+        _id: record._id,  // 使用标准的 _id 字段
         batchNumber: record.batchNumber,
         entryDate: record.entryDate,
         currentCount: record.quantity, // 当前数量（后续可以从存栏记录计算）
         entryCount: record.quantity, // 入栏数量
+        quantity: record.quantity,    // 添加 quantity 字段，方便前端使用
         location: record.location,
         breed: record.breed,
         status: record.status,

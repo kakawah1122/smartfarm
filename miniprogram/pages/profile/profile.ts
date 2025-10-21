@@ -162,9 +162,7 @@ const pageConfig = {
     this.setData = function(data: any, callback?: () => void) {
       try {
         // 在设置数据前进行安全检查
-        if (data) {
-          console.log('setData 调用:', Object.keys(data))
-        }
+        // 已移除调试日志
         originalSetData(data, callback)
       } catch (error) {
         // 已移除调试日志
@@ -243,7 +241,7 @@ const pageConfig = {
     
     // 如果有需要更新的字段，执行 setData
     if (Object.keys(updates).length > 0) {
-      console.log('修复数组字段:', Object.keys(updates))
+      // 已移除调试日志
       this.setData(updates)
     }
   },
@@ -312,7 +310,7 @@ const pageConfig = {
       // 已移除调试日志
       // 处理同步错误
       if (error && (error.message || '').includes('sync-0')) {
-        console.warn('检测到云开发同步错误 (sync-0)，这通常是网络或配置问题')
+        // 已移除调试日志
         throw new Error('网络连接不稳定，请稍后重试')
       }
       
@@ -996,10 +994,7 @@ const pageConfig = {
           })
           
           // 已移除调试日志
-          console.log('永久标记已设置:', {
-            profileCompleted: wx.getStorageSync('profileCompleted'),
-            profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
-          })
+          // 已移除调试日志
           
           // 显示完善成功提示
           setTimeout(() => {
@@ -1044,10 +1039,7 @@ const pageConfig = {
     const profileCompleted = wx.getStorageSync('profileCompleted') || false
     const profileCompletedTime = wx.getStorageSync('profileCompletedTime')
     
-    console.log('永久完善标记检查:', { 
-      profileCompleted, 
-      profileCompletedTime: profileCompletedTime ? new Date(profileCompletedTime).toLocaleString() : '无'
-    })
+    // 已移除调试日志
     
     if (profileCompleted) {
       // 已移除调试日志
@@ -1328,10 +1320,7 @@ const pageConfig = {
           wx.setStorageSync('profileCompleted', true)
           wx.setStorageSync('profileCompletedTime', Date.now())
           // 已移除调试日志
-          console.log('永久标记已设置:', {
-            profileCompleted: wx.getStorageSync('profileCompleted'),
-            profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
-          })
+          // 已移除调试日志
         } else {
           // 已移除调试日志
         }
@@ -1394,10 +1383,7 @@ const pageConfig = {
           wx.setStorageSync('profileCompleted', true)
           wx.setStorageSync('profileCompletedTime', Date.now())
           // 已移除调试日志
-          console.log('永久标记已设置:', {
-            profileCompleted: wx.getStorageSync('profileCompleted'),
-            profileCompletedTime: new Date(wx.getStorageSync('profileCompletedTime')).toLocaleString()
-          })
+          // 已移除调试日志
         } else {
           // 已移除调试日志
         }

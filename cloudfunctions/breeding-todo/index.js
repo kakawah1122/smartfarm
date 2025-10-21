@@ -192,9 +192,9 @@ async function completeVaccineTask(event, wxContext) {
       }
       
       await db.collection(COLLECTIONS.HEALTH_RECORDS).add({ data: healthRecordData })
-      console.log(`疫苗接种健康记录已创建，关联任务: ${taskId}`)
+      // 已移除调试日志
     } catch (healthError) {
-      console.error('创建疫苗接种健康记录失败:', healthError)
+      // 已移除调试日志
       // 不影响主流程
     }
     

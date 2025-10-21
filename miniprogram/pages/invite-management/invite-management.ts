@@ -303,7 +303,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
       })
 
-      console.log('云函数调用完整结果：', JSON.stringify(result, null, 2))
+      // 已移除调试日志
 
       if (result.result && result.result.success) {
         // 已移除调试日志

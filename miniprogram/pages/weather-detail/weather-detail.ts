@@ -62,7 +62,6 @@ Page({
     // 已移除调试日志
     // 添加调试信息
     // 已移除调试日志
-    console.log('当前时间:', new Date().toISOString())
     // 已移除调试日志
     this.loadWeatherData()
   },
@@ -314,15 +313,7 @@ Page({
     const actualData = weatherData.data || weatherData
     
     // 已移除调试日志
-    console.log('🔍 详情页数据结构检查:', {
-      hasCurrentWeather: !!actualData.current,
-      hasHourlyForecast: !!actualData.hourly,
-      hasDailyForecast: !!actualData.daily,
-      hasAirQuality: !!actualData.air,
-      hasWeatherWarning: !!actualData.warning,
-      hourlyLength: Array.isArray(actualData.hourly) ? actualData.hourly.length : 'not array',
-      dailyLength: Array.isArray(actualData.daily) ? actualData.daily.length : 'not array'
-    })
+    // 已移除调试日志
     
     // 优先更新位置信息 - 彻底清除"实时定位获取中"状态
     const locationInfo = actualData.locationInfo
@@ -395,7 +386,7 @@ Page({
     
     // 更新天气预警
     if (actualData.warning) {
-      console.log('正在处理天气预警数据，条目数:', Array.isArray(actualData.warning) ? actualData.warning.length : 'not array')
+      // 已移除调试日志
       this.processWeatherWarning(actualData.warning)
     } else {
       // 已移除调试日志

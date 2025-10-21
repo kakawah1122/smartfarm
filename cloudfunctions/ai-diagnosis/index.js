@@ -382,7 +382,7 @@ exports.main = async (event, context) => {
   const { action } = event
   const openid = cloud.getWXContext().OPENID
   
-  console.log('AI诊断云函数调用:', { action, openid, eventKeys: Object.keys(event) })
+  // 已移除调试日志
 
   try {
     switch (action) {
