@@ -19,13 +19,26 @@ function generateTaskRecordId() {
   return `TASK${timestamp}${random}`
 }
 
+// 计算跟进日期（N天后）
+function getFollowUpDate(daysAfter) {
+  const date = new Date()
+  date.setDate(date.getDate() + daysAfter)
+  return date.toISOString().split('T')[0]
+}
+
 // 完成任务（全新简化版本）
 async function completeTask(taskId, openid, batchId, notes = '') {
   try {
     // 已移除调试日志
     // 检查参数
-    if (!taskId || !openid || !batchId) {
-      throw new Error(`参数缺失: taskId=${taskId}, openid=${openid}, batchId=${batchId}`)
+    if (!taskId || taskId.trim() === '') {
+      throw new Error('任务ID不能为空')
+    }
+    if (!openid || openid.trim() === '') {
+      throw new Error('用户ID不能为空')
+    }
+    if (!batchId || batchId.trim() === '') {
+      throw new Error('批次ID不能为空')
     }
     
     // 🔥 修复：直接使用doc()查询单个文档
@@ -144,12 +157,49 @@ async function completeVaccineTask(event, wxContext) {
       },
       effectiveness: 'pending',
       notes: vaccineRecord.notes || '',
-      operator: openid
+      operator: openid,
+      relatedTaskId: taskId,
+      autoCreated: true,
+      creationSource: 'task'
     }
 
     const preventionResult = await dbManager.createPreventionRecord(preventionData)
+    
+    // 3. 同时创建健康记录用于追踪疫苗接种对健康的影响
+    try {
+      const healthRecordData = {
+        batchId,
+        recordType: 'vaccine_record',
+        checkDate: new Date().toISOString().split('T')[0],
+        inspector: openid,
+        totalCount: vaccineRecord.vaccination.count || 0,
+        healthyCount: vaccineRecord.vaccination.count || 0,
+        sickCount: 0,
+        deadCount: 0,
+        symptoms: [],
+        diagnosis: `疫苗接种：${vaccineRecord.vaccine.name}`,
+        treatment: `接种方式：${vaccineRecord.vaccination.route}，剂量：${vaccineRecord.vaccine.dosage}`,
+        notes: `${vaccineRecord.notes || ''}。兽医：${vaccineRecord.veterinarian.name}`,
+        severity: 'low',
+        followUpRequired: true,
+        followUpDate: getFollowUpDate(7), // 7天后跟进
+        relatedTaskId: taskId,
+        autoCreated: true,
+        creationSource: 'task',
+        isDeleted: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      await db.collection(COLLECTIONS.HEALTH_RECORDS).add({ data: healthRecordData })
+      console.log(`疫苗接种健康记录已创建，关联任务: ${taskId}`)
+    } catch (healthError) {
+      console.error('创建疫苗接种健康记录失败:', healthError)
+      // 不影响主流程
+    }
+    
     // 已移除调试日志
-    // 3. 创建成本记录（正确的财务流向）
+    // 4. 创建成本记录（正确的财务流向）
     if (vaccineRecord.cost && vaccineRecord.cost.total > 0) {
       const costData = {
         costType: 'medical',
@@ -239,6 +289,15 @@ async function getTodos(event, wxContext) {
   const openid = wxContext.OPENID
 
   try {
+    // 参数验证
+    if (!batchId || batchId.trim() === '') {
+      return {
+        success: false,
+        error: '批次ID不能为空',
+        message: '请先选择一个批次'
+      }
+    }
+    
     // 已移除调试日志
     // 验证批次存在性
     const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()

@@ -172,8 +172,12 @@ Page({
       // 加载所有批次的今日待办
       this.loadAllBatchesTodayTasks()
     } else if (!this.data.currentBatchId) {
-      // 如果没有批次ID，尝试获取默认批次
-      this.getDefaultBatch()
+      // 如果没有批次ID，尝试获取默认批次，然后加载任务
+      this.getDefaultBatch().then(() => {
+        if (this.data.currentBatchId) {
+          this.loadTodos()
+        }
+      })
     } else {
       // 检查是否需要直接打开疫苗表单
       if (options.openVaccineForm === 'true' && options.taskId) {
@@ -263,7 +267,7 @@ Page({
       // 保存到缓存
       wx.setStorageSync('currentBatchId', defaultBatch.id)
       
-      this.loadTodos()
+      // 不在这里调用loadTodos，由调用者决定是否加载
     } catch (error) {
       wx.showToast({
         title: '获取批次信息失败',
@@ -286,12 +290,18 @@ Page({
    * 加载任务列表
    */
   async loadTodos() {
-    if (!this.data.currentBatchId) {
-      wx.showToast({
-        title: '批次信息缺失',
-        icon: 'error'
-      })
-      return
+    // 如果没有批次ID，先获取默认批次
+    if (!this.data.currentBatchId || this.data.currentBatchId.trim() === '') {
+      await this.getDefaultBatch()
+      
+      // 如果还是没有批次ID，说明没有存栏批次
+      if (!this.data.currentBatchId) {
+        wx.showToast({
+          title: '暂无存栏批次',
+          icon: 'none'
+        })
+        return
+      }
     }
 
     this.setData({ loading: true })
