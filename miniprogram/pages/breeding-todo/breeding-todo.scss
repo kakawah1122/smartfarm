@@ -84,7 +84,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-base, 16rpx);
+  margin-bottom: var(--spacing-xl, 32rpx);
   
   .header-actions {
     display: flex;
@@ -173,7 +173,7 @@ page {
   display: flex;
   justify-content: space-between;
   gap: var(--spacing-base, 16rpx);
-  margin: var(--spacing-sm, 12rpx) 0 var(--spacing-xs, 8rpx) 0;
+  margin: 0 0 var(--spacing-xs, 8rpx) 0;
 }
 
 .stat-item {
