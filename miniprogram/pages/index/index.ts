@@ -76,16 +76,6 @@ Page({
     todoList: [] as any[],
     todoLoading: false,
     
-    // 健康概览数据
-    healthOverview: {
-      overallHealthRate: 0,
-      totalBatches: 0,
-      alertBatches: 0,
-      pendingHealthTasks: 0,
-      criticalIssues: [] as string[],
-      loading: false
-    },
-    
     // 弹窗相关状态
     showTaskDetailPopup: false,
     selectedTask: null as any,
@@ -173,7 +163,6 @@ Page({
     this.initStatusBar()
     this.loadData()
     this.loadTodayBreedingTasks()
-    this.loadHealthOverview()
   },
 
   onShow() {
@@ -865,45 +854,6 @@ Page({
         duration: 2000
       })
     }
-  },
-
-  // 加载健康概览数据
-  async loadHealthOverview() {
-    this.setData({
-      'healthOverview.loading': true
-    })
-
-    try {
-      const result = await CloudApi.getHomepageHealthOverview()
-
-      if (result.success && result.data) {
-        this.setData({
-          healthOverview: {
-            overallHealthRate: result.data.overallHealthRate || 0,
-            totalBatches: result.data.totalBatches || 0,
-            alertBatches: result.data.alertBatches || 0,
-            pendingHealthTasks: result.data.pendingHealthTasks || 0,
-            criticalIssues: result.data.criticalIssues || [],
-            loading: false
-          }
-        })
-      } else {
-        this.setData({
-          'healthOverview.loading': false
-        })
-      }
-    } catch (error: any) {
-      this.setData({
-        'healthOverview.loading': false
-      })
-    }
-  },
-
-  // 跳转到健康管理页面
-  navigateToHealthPage() {
-    wx.navigateTo({
-      url: '/pages/health/health'
-    })
   },
 
   // 调试方法：手动重新加载待办
