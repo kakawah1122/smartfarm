@@ -733,7 +733,7 @@ Page({
           // 批次当前日龄
           
           // 使用与breeding-todo页面相同的CloudApi方法，但不显示错误（首页静默加载）
-          const result = await CloudApi.getTodos(batch.id, dayAge, { showError: false })
+          const result = await CloudApi.getTodos(batch._id, dayAge, { showError: false })
           
           if (result.success && result.data) {
             const tasks = result.data
@@ -773,7 +773,7 @@ Page({
                 dayInSeries: task.dayInSeries || '',
                 dosage: task.dosage || '',
                 materials: task.materials || [],
-                batchNumber: batch.batchNumber || batch.id,
+                batchNumber: batch.batchNumber || batch._id,
                 completed: isCompleted,
                 completedDate: completedDate
               }
@@ -921,7 +921,7 @@ Page({
             // 为每个批次修复任务
             for (const batch of activeBatches) {
               try {
-                const result = await CloudApi.fixBatchTasks(batch.id)
+                const result = await CloudApi.fixBatchTasks(batch._id)
                 if (result.success) {
                   totalFixed += result.data?.taskCount || 0
                   successCount++

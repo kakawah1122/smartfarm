@@ -260,12 +260,12 @@ Page({
       const dayAge = this.calculateCurrentAge(defaultBatch.entryDate)
       
       this.setData({
-        currentBatchId: defaultBatch.id,
+        currentBatchId: defaultBatch._id,
         currentDayAge: dayAge
       })
 
       // 保存到缓存
-      wx.setStorageSync('currentBatchId', defaultBatch.id)
+      wx.setStorageSync('currentBatchId', defaultBatch._id)
       
       // 不在这里调用loadTodos，由调用者决定是否加载
     } catch (error) {
@@ -374,7 +374,7 @@ Page({
         try {
           const dayAge = this.calculateCurrentAge(batch.entryDate)
           
-          const result = await CloudApi.getTodos(batch.id, dayAge)
+          const result = await CloudApi.getTodos(batch._id, dayAge)
           
           if (result.success && result.data) {
             // 🔍 详细日志 - 检查任务完成状态
@@ -385,27 +385,27 @@ Page({
             })
             
             return {
-              batchId: batch.id,
-              batchNumber: batch.batchNumber || batch.id,
+              batchId: batch._id,
+              batchNumber: batch.batchNumber || batch._id,
               dayAge: dayAge,
               tasks: result.data.map((task: any) => ({
                 ...task,
-                batchNumber: batch.batchNumber || batch.id,
+                batchNumber: batch.batchNumber || batch._id,
                 dayAge: dayAge
               }))
             }
           } else {
             return {
-              batchId: batch.id,
-              batchNumber: batch.batchNumber || batch.id,
+              batchId: batch._id,
+              batchNumber: batch.batchNumber || batch._id,
               dayAge: dayAge,
               tasks: []
             }
           }
         } catch (error) {
           return {
-            batchId: batch.id,
-            batchNumber: batch.batchNumber || batch.id,
+            batchId: batch._id,
+            batchNumber: batch.batchNumber || batch._id,
             dayAge: this.calculateCurrentAge(batch.entryDate),
             tasks: []
           }
@@ -1063,7 +1063,7 @@ Page({
       const upcomingTasksPromises = activeBatches.map(async (batch: any): Promise<any[]> => {
         try {
           const currentDayAge = this.calculateCurrentAge(batch.entryDate)
-          const result = await CloudApi.getWeeklyTodos(batch.id, currentDayAge + 1)
+          const result = await CloudApi.getWeeklyTodos(batch._id, currentDayAge + 1)
           
           if (result.success && result.data) {
             return Object.keys(result.data)
@@ -1073,7 +1073,7 @@ Page({
                 dayAge: dayAge,
                 tasks: result.data[dayAge.toString()].map((task: any) => ({
                   ...task,
-                  batchNumber: batch.batchNumber || batch.id,
+                  batchNumber: batch.batchNumber || batch._id,
                   isVaccineTask: this.isVaccineTask(task)
                 }))
               }))
@@ -1134,7 +1134,7 @@ Page({
         for (const batch of activeBatches) {
           try {
             const dayAge = this.calculateCurrentAge(batch.entryDate)
-            const result = await CloudApi.getTodos(batch.id, dayAge)
+            const result = await CloudApi.getTodos(batch._id, dayAge)
             
             if (result.success && result.data) {
               const completedTasks = result.data.filter((task: any) => task.completed === true)
@@ -1143,7 +1143,7 @@ Page({
                 title: task.title,
                 completedDate: task.completedAt ? new Date(task.completedAt).toLocaleString() : '',
                 completedBy: task.completedBy || '用户',
-                batchNumber: batch.batchNumber || batch.id,
+                batchNumber: batch.batchNumber || batch._id,
                 dayAge: dayAge,
                 completed: true
               }))
@@ -1167,7 +1167,7 @@ Page({
           return
         }
         
-        const batch = this.data.batchList.find(b => b.id === this.data.currentBatchId)
+        const batch = this.data.batchList.find(b => b._id === this.data.currentBatchId)
         if (!batch) {
           this.setData({ historyTasks: [] })
           return
@@ -1183,7 +1183,7 @@ Page({
             title: task.title,
             completedDate: task.completedAt ? new Date(task.completedAt).toLocaleString() : '',
             completedBy: task.completedBy || '用户',
-            batchNumber: batch.batchNumber || batch.id,
+            batchNumber: batch.batchNumber || batch._id,
             dayAge: dayAge,
             completed: true
           }))
