@@ -24,10 +24,9 @@ async function callAIModel(inputData) {
   try {
     const { symptoms, symptomsText, animalInfo, environmentInfo, images } = inputData
 
-    // 构建AI诊断请求
+    // 构建AI诊断请求 - 使用正确的ai-multi-model格式
     const aiRequest = {
-      action: 'health_diagnosis',
-      model: 'ERNIE-Bot-4.0', // 使用文心一言4.0
+      action: 'chat_completion',   // ✨ 重要：ai-multi-model 期望这个action
       messages: [
         {
           role: 'system',
@@ -77,14 +76,7 @@ async function callAIModel(inputData) {
         },
         {
           role: 'user',
-          content: `请诊断以下情况：
-
-动物信息：
-- 物种：${animalInfo.species || '鹅'}
-- 品种：${animalInfo.breed || '未知'}
-- 日龄：${animalInfo.ageInDays || '未知'}日龄
-- 数量：${animalInfo.count || 1}只
-- 体重：${animalInfo.weight || '未知'}
+          content: `请诊断以下鹅群情况：
 
 症状描述：
 ${symptomsText}
@@ -92,26 +84,30 @@ ${symptomsText}
 具体症状：
 ${symptoms.join(', ')}
 
+动物信息：
+- 日龄：${animalInfo.dayAge || '未知'}天
+- 数量：${animalInfo.count || 1}只
+- 种类：${animalInfo.species || '狮头鹅'}
+
 环境信息：
 - 温度：${environmentInfo.temperature || '未知'}°C
 - 湿度：${environmentInfo.humidity || '未知'}%
-- 通风情况：${environmentInfo.ventilation || '未知'}
-- 饲养密度：${environmentInfo.density || '未知'}
-- 季节：${environmentInfo.season || '未知'}
 
 ${images && images.length > 0 ? `症状图片：${images.length}张（已上传）` : ''}
 
 请进行专业诊断并提供治疗建议。`
         }
       ],
-      temperature: 0.7,
-      max_tokens: 2000
+      taskType: 'health_diagnosis',  // ✨ ai-multi-model 根据此选择模型
+      priority: 'free_only'           // ✨ 优先使用免费模型
     }
 
     // 调用AI多模型服务
+    // ⚠️ 重要：微信云函数默认超时3秒，需要手动改为30秒以上
     const aiResult = await cloud.callFunction({
       name: 'ai-multi-model',
-      data: aiRequest
+      data: aiRequest,
+      timeout: 30000  // ✨ 添加超时配置（30秒）
     })
 
     if (aiResult.result && aiResult.result.success) {
@@ -126,25 +122,22 @@ ${images && images.length > 0 ? `症状图片：${images.length}张（已上传�
           data: {
             ...diagnosisResult,
             modelInfo: {
-              modelName: 'ERNIE-Bot-4.0',
-              modelVersion: '4.0',
-              provider: 'BaiduQianfan',
-              responseTime: aiResult.result.responseTime || 0,
-              tokens: aiResult.result.tokens || { input: 0, output: 0, total: 0 },
-              cost: aiResult.result.cost || 0
+              modelName: aiResult.result.data.model,
+              provider: aiResult.result.data.provider,
+              responseTime: aiResult.result.data.responseTime || 0,
+              tokens: aiResult.result.data.tokens || { input: 0, output: 0, total: 0 },
+              cost: aiResult.result.data.cost || 0
             }
           }
         }
       } catch (parseError) {
         // 如果JSON解析失败，返回原始文本
-        // 已移除调试日志
         return parseTextResponse(aiResponse, aiResult.result)
       }
     } else {
       throw new Error(aiResult.result?.error || 'AI服务调用失败')
     }
   } catch (error) {
-    // 已移除调试日志
     // 返回兜底诊断建议
     return getFallbackDiagnosis(inputData)
   }
@@ -359,7 +352,7 @@ async function saveAIDiagnosisRecord(inputData, aiResult, openid) {
       isDeleted: false
     }
     
-    await db.collection('ai_diagnosis_history').add({
+    await db.collection('health_ai_diagnosis').add({
       data: diagnosisRecord
     })
     
@@ -411,17 +404,16 @@ exports.main = async (event, context) => {
   }
 }
 
-// 执行AI诊断
+// 执行AI诊断 - 改为异步版本
 async function performAIDiagnosis(event, openid) {
   try {
     const {
       symptoms,
       symptomsText,
-      animalInfo,
-      environmentInfo,
-      images,
-      healthRecordId,
       batchId,
+      affectedCount,
+      dayAge,
+      images,
       saveRecord = true
     } = event
 
@@ -433,43 +425,56 @@ async function performAIDiagnosis(event, openid) {
       throw new Error('症状描述不能为空')
     }
 
-    const inputData = {
-      symptoms,
-      symptomsText,
-      animalInfo: animalInfo || {},
-      environmentInfo: environmentInfo || {},
+    // ✨ 改为异步：快速保存任务到数据库 (< 1秒)
+    const taskData = {
+      // 不指定_id，让微信自动生成
+      _openid: openid,  // ✨ 使用 _openid 以符合微信权限系统
+      openid: openid,    // 保留 openid 用于业务查询
+      symptoms: symptoms,
+      symptomsText: symptomsText,
+      batchId: batchId,
+      affectedCount: affectedCount || 0,
+      dayAge: dayAge || 0,
       images: images || [],
-      healthRecordId,
-      batchId
+      status: 'processing',  // processing | completed | failed
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
 
-    // 调用AI模型进行诊断
-    const aiResult = await callAIModel(inputData)
-    
-    if (!aiResult.success) {
-      throw new Error(aiResult.error || 'AI诊断失败')
-    }
+    // 保存到数据库
+    const addResult = await db.collection('health_ai_diagnosis').add({
+      data: taskData
+    })
 
-    let savedRecord = null
-    if (saveRecord) {
-      // 保存诊断记录
-      const saveResult = await saveAIDiagnosisRecord(inputData, aiResult, openid)
-      if (saveResult.success) {
-        savedRecord = saveResult.data
-      }
-    }
+    // 使用微信自动生成的_id
+    const diagnosisId = addResult._id
 
+    console.log(`诊断任务已创建: ${diagnosisId}，状态: processing`)
+
+    // ✨ 触发后台处理任务（异步）
+    // ⚠️ 注意：即使触发超时，任务仍在数据库中，会自动重试或在控制台配置超时
+    cloud.callFunction({
+      name: 'process-ai-diagnosis',
+      data: { diagnosisId: diagnosisId }
+    }).then(() => {
+      console.log(`✅ 后台处理任务已触发: ${diagnosisId}`)
+    }).catch((error) => {
+      // ⚠️ 触发可能超时，但不标记任务失败
+      // 任务状态由 process-ai-diagnosis 自己维护
+      console.error(`⚠️ 触发信号超时（任务继续执行）: ${diagnosisId}`, error.message)
+    })
+
+    // ✨ 立即返回诊断ID给前端 (< 2秒总耗时)
     return {
       success: true,
       data: {
-        diagnosis: aiResult.data,
-        savedRecord: savedRecord,
-        timestamp: new Date().toISOString()
+        diagnosisId: diagnosisId,
+        status: 'processing',
+        message: '诊断已提交，请稍候...'
       },
-      message: 'AI诊断完成'
+      message: 'AI诊断任务已创建'
     }
   } catch (error) {
-    // 已移除调试日志
     return {
       success: false,
       error: error.message,
@@ -490,7 +495,7 @@ async function getDiagnosisHistory(event, openid) {
       dateRange 
     } = event
 
-    let query = db.collection('ai_diagnosis_history')
+    let query = db.collection('health_ai_diagnosis')
       .where({
         _openid: openid,
         isDeleted: _.neq(true)
@@ -557,7 +562,7 @@ async function updateDiagnosisReview(event, openid) {
       updateTime: new Date().toISOString()
     }
 
-    await db.collection('ai_diagnosis_history')
+    await db.collection('health_ai_diagnosis')
       .doc(recordId)
       .update({
         data: updateData
@@ -589,7 +594,7 @@ async function adoptDiagnosis(event, openid) {
       updateTime: new Date().toISOString()
     }
 
-    await db.collection('ai_diagnosis_history')
+    await db.collection('health_ai_diagnosis')
       .doc(recordId)
       .update({
         data: updateData
@@ -625,7 +630,7 @@ async function feedbackDiagnosis(event, openid) {
       updateTime: new Date().toISOString()
     }
 
-    await db.collection('ai_diagnosis_history')
+    await db.collection('health_ai_diagnosis')
       .doc(recordId)
       .update({
         data: updateData
@@ -649,7 +654,7 @@ async function getDiagnosisStats(event, openid) {
   try {
     const { dateRange } = event
 
-    let query = db.collection('ai_diagnosis_history')
+    let query = db.collection('health_ai_diagnosis')
       .where({
         _openid: openid,
         isDeleted: _.neq(true)

@@ -1,6 +1,7 @@
 /**app.scss**/
 @import "./miniprogram_npm/tdesign-miniprogram/common/style/index.wxss";
 @import "./styles/font-override.wxss";
+@import "./styles/navbar-fix.wxss";
 
 /* 修复 TDesign 字体加载问题 - 彻底覆盖外部字体定义 */
 @font-face {
@@ -44,10 +45,10 @@ page {
   --safe-area-inset-left: env(safe-area-inset-left);
   --safe-area-inset-right: env(safe-area-inset-right);
   
-  /* 状态栏高度适配 - 更精确的计算 */
-  --status-bar-height: max(var(--safe-area-inset-top, 44rpx), 44rpx);
-  --navbar-height: calc(88rpx + max(var(--safe-area-inset-top, 0rpx), 44rpx));
-  --total-header-height: calc(160rpx + max(var(--safe-area-inset-top, 0rpx), 44rpx));
+  /* 状态栏高度适配 - 固定值避免calc错误 */
+  --status-bar-height: 44rpx;
+  --navbar-height: 132rpx;
+  --total-header-height: 204rpx;
   
   /* === TDesign 主题色系统 - 现代化蓝色设计 === */
   /* 核心品牌色 - 现代蓝色渐变系统 */
@@ -617,16 +618,114 @@ page {
 }
 
 .t-textarea {
-  border-radius: var(--radius-sm) !important;
-  --td-textarea-border-color: var(--td-border-level-1-color, var(--color-border-base));
-  --td-textarea-border-color-focus: var(--td-brand-color);
-  --td-textarea-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
-  --td-textarea-text-color: var(--td-text-color-primary, var(--color-text-primary));
+  border-radius: 8rpx !important;
+  --td-textarea-border-color: #e8eaed;
+  --td-textarea-border-color-focus: #0052d9;
+  --td-textarea-bg-color: #fafbfc;
+  --td-textarea-text-color: #1a1a1a;
+  --td-textarea-font-size: 30rpx;
+  --td-textarea-padding: 12rpx 16rpx;
+  font-size: 30rpx !important;
+  line-height: 1.6 !important;
+  border-width: 2rpx !important;
+}
+
+.t-textarea__wrapper {
+  min-height: 120rpx !important;
 }
 
 .t-dropdown-menu {
-  --td-dropdown-menu-color: var(--td-text-color-primary, var(--color-text-primary));
-  --td-dropdown-menu-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
+  --td-dropdown-menu-color: #1a1a1a;
+  --td-dropdown-menu-bg-color: #fafbfc;
+  border: none !important;
+  font-size: 30rpx !important;
+}
+
+/* TDesign Button 全局样式 - 极致紧凑 */
+.t-button {
+  border-radius: 12rpx !important;
+  font-size: 32rpx !important;
+  font-weight: 600 !important;
+  height: 80rpx !important;
+  letter-spacing: 1rpx;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.t-button--theme-primary {
+  background: linear-gradient(135deg, #0052d9 0%, #2b6def 100%) !important;
+  box-shadow: 0 8rpx 20rpx rgba(0, 82, 217, 0.3) !important;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.2) !important;
+  }
+}
+
+.t-dropdown-item {
+  border: none !important;
+  padding: 12rpx 16rpx !important;
+  min-height: 64rpx !important;
+  font-size: 30rpx !important;
+  line-height: 1.5 !important;
+  color: #1a1a1a !important;
+  display: flex !important;
+  align-items: center !important;
+  word-break: break-all !important;
+  white-space: normal !important;
+}
+
+/* 下拉菜单选项内容 */
+.t-dropdown-item__content {
+  flex: 1 !important;
+  min-width: 0 !important;
+  word-break: break-all !important;
+  white-space: normal !important;
+}
+
+/* 下拉菜单弹出层 */
+.t-dropdown-menu__content {
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+  z-index: 99999 !important;
+}
+
+/* 下拉菜单遮罩层 */
+.t-dropdown-menu__mask {
+  z-index: 99998 !important;
+}
+
+/* TDesign Input 全局样式 - 极致紧凑 */
+.t-input {
+  --td-input-height: 44rpx;
+  --td-input-font-size: 30rpx;
+  --td-input-vertical-padding: 0;
+  --td-input-horizontal-padding: 16rpx;
+}
+
+.t-input__content {
+  height: 44rpx !important;
+  min-height: 44rpx !important;
+  font-size: 30rpx !important;
+  line-height: 44rpx !important;
+  color: #1a1a1a !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* TDesign Cell 全局样式 - 极致紧凑 */
+.t-cell {
+  --td-cell-height: 44rpx;
+  --td-cell-font-size: 30rpx;
+  --td-cell-vertical-padding: 0;
+  --td-cell-horizontal-padding: 16rpx;
+}
+
+.t-cell__title {
+  font-size: 30rpx !important;
+  line-height: 44rpx !important;
+  color: #1a1a1a !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .t-notice-bar {
@@ -687,12 +786,12 @@ page {
   /* 刘海屏特殊适配 */
   .gradient-header,
   .custom-navbar {
-    padding-top: max(var(--safe-area-inset-top, 44rpx), 44rpx);
+    padding-top: 44rpx;
   }
   
   .status-bar {
-    height: max(var(--safe-area-inset-top, 44rpx), 40rpx);
-    padding-top: max(var(--safe-area-inset-top, 0), 4rpx);
+    height: 44rpx;
+    padding-top: 4rpx;
   }
 }
 
@@ -703,12 +802,12 @@ page {
   /* 动态岛适配 */
   .gradient-header,
   .custom-navbar {
-    padding-top: max(var(--safe-area-inset-top, 54rpx), 54rpx);
+    padding-top: 54rpx;
   }
   
   .status-bar {
-    height: max(var(--safe-area-inset-top, 54rpx), 50rpx);
-    padding-top: max(var(--safe-area-inset-top, 0), 4rpx);
+    height: 54rpx;
+    padding-top: 4rpx;
   }
 }
 
@@ -744,6 +843,6 @@ page {
   }
   
   .scroll-container {
-    padding-top: calc(var(--navbar-height) + var(--spacing-base));
+    padding-top: 156rpx;
   }
 }

@@ -53,10 +53,31 @@ Component({
   },
 
   data: {
-    uploadingCount: 0
+    uploadingCount: 0,
+    canAddMore: true // 是否可以添加更多图片
+  },
+
+  observers: {
+    'value, max, disabled, readonly, uploadingCount': function(value, max, disabled, readonly, uploadingCount) {
+      const canAdd = !disabled && !readonly && (value.length + uploadingCount) < max
+      this.setData({ canAddMore: canAdd })
+    }
+  },
+
+  lifetimes: {
+    attached() {
+      // 初始化时计算 canAddMore
+      this.updateCanAddMore()
+    }
   },
 
   methods: {
+    // 更新是否可以添加更多图片的状态
+    updateCanAddMore() {
+      const { value, max, disabled, readonly, uploadingCount } = this.data
+      const canAdd = !disabled && !readonly && (value.length + uploadingCount) < max
+      this.setData({ canAddMore: canAdd })
+    },
     // 选择图片
     async chooseImage() {
       if (this.data.disabled || this.data.readonly) return
@@ -216,12 +237,6 @@ Component({
         return item
       }
       return item.fileID || item.tempFilePath || item.url || ''
-    },
-
-    // 检查是否可以添加更多图片
-    canAddMore() {
-      const { value, max, disabled, readonly, uploadingCount } = this.data
-      return !disabled && !readonly && (value.length + uploadingCount) < max
     }
   }
 })

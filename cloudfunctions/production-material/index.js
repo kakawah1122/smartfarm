@@ -592,14 +592,14 @@ async function deleteMaterialRecord(event, wxContext) {
   // 开始事务处理
   return await db.runTransaction(async transaction => {
     // 删除记录
-    await transaction.collection('material_records').doc(recordId).remove()
+    await transaction.collection('prod_material_records').doc(recordId).remove()
     
     // 恢复库存
     const materialInfo = material.data[0]
     const stockChange = recordData.type === 'purchase' ? -recordData.quantity : recordData.quantity
     const newStock = materialInfo.currentStock + stockChange
     
-    await transaction.collection('materials').doc(recordData.materialId).update({
+    await transaction.collection('prod_materials').doc(recordData.materialId).update({
       data: {
         currentStock: Math.max(0, newStock),  // 确保库存不为负
         updateTime: new Date()
@@ -607,12 +607,12 @@ async function deleteMaterialRecord(event, wxContext) {
     })
     
     // 删除相关库存流水
-    const logs = await transaction.collection('inventory_logs')
+    const logs = await transaction.collection('prod_inventory_logs')
       .where({ recordId })
       .get()
     
     for (const log of logs.data) {
-      await transaction.collection('inventory_logs').doc(log._id).remove()
+      await transaction.collection('prod_inventory_logs').doc(log._id).remove()
     }
     
     return {
@@ -891,7 +891,7 @@ async function purchaseInbound(event, wxContext) {
       let material = null
       
       // 1. 查找现有物料
-      const existingMaterials = await transaction.collection('materials')
+      const existingMaterials = await transaction.collection('prod_materials')
         .where({ 
           name: materialData.name,
           category: materialData.category,
@@ -923,7 +923,7 @@ async function purchaseInbound(event, wxContext) {
           updateTime: now
         }
         
-        const materialResult = await transaction.collection('materials').add({
+        const materialResult = await transaction.collection('prod_materials').add({
           data: newMaterial
         })
         
@@ -956,13 +956,13 @@ async function purchaseInbound(event, wxContext) {
         updateTime: now
       }
       
-      const recordResult = await transaction.collection('material_records').add({
+      const recordResult = await transaction.collection('prod_material_records').add({
         data: newRecord
       })
       
       // 4. 更新库存
       const newStock = material.currentStock + quantity
-      await transaction.collection('materials').doc(materialId).update({
+      await transaction.collection('prod_materials').doc(materialId).update({
         data: {
           currentStock: newStock,
           unitPrice: unitPrice, // 更新最新单价
@@ -983,7 +983,7 @@ async function purchaseInbound(event, wxContext) {
         operationTime: now
       }
       
-      await transaction.collection('inventory_logs').add({
+      await transaction.collection('prod_inventory_logs').add({
         data: inventoryLog
       })
       

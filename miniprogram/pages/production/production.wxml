@@ -3,11 +3,8 @@
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="生产管理"
-    show-back="true"
-    show-menu="true"
-    show-record="false"
+    show-back="{{true}}"
     bind:back="goBack"
-    bind:menu="onMenuTap"
   />
 
   <!-- 主内容区域 -->

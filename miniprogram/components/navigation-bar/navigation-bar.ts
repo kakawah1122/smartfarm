@@ -7,44 +7,56 @@ Component({
     showBack: {
       type: Boolean,
       value: false
-    },
-    statusBarHeight: {
-      type: Number,
-      value: 44
     }
+  },
+
+  data: {
+    statusBarHeight: 44,
+    navBarHeight: 44,
+    capsuleWidth: 87
   },
 
   attached() {
-    // 获取系统状态栏高度
-    try {
-      const systemInfo = wx.getSystemInfoSync()
-      this.setData({
-        statusBarHeight: systemInfo.statusBarHeight || 44
-      })
-    } catch (error) {
-      // 获取系统信息失败，使用默认值
-    }
+    this.setNavigationBarInfo()
   },
 
   methods: {
+    // 设置导航栏信息
+    setNavigationBarInfo() {
+      try {
+        // 获取系统信息
+        const windowInfo = wx.getWindowInfo()
+        const statusBarHeight = windowInfo.statusBarHeight || 44
+        
+        // 获取胶囊按钮信息
+        const menuButtonInfo = wx.getMenuButtonBoundingClientRect()
+        
+        // 计算导航栏高度 = 胶囊按钮底部 - 状态栏高度
+        const navBarHeight = (menuButtonInfo.top - statusBarHeight) * 2 + menuButtonInfo.height
+        
+        // 胶囊按钮宽度（用于右侧预留空间）
+        const capsuleWidth = menuButtonInfo.width
+        
+        this.setData({
+          statusBarHeight,
+          navBarHeight,
+          capsuleWidth
+        })
+      } catch (error) {
+        // 获取失败，使用默认值
+        console.warn('获取导航栏信息失败，使用默认值')
+      }
+    },
+
     goBack() {
-      // 首先尝试返回上一页
+      // 返回上一页
       wx.navigateBack({
         delta: 1,
-        success: () => {
-          // 返回上一页成功
-        },
-        fail: (error) => {
-          // 已移除调试日志
-          // 如果返回失败（比如这是第一个页面），则跳转到首页
+        fail: () => {
+          // 返回失败，跳转到首页
           wx.switchTab({
             url: '/pages/index/index',
-            success: () => {
-              // 跳转到首页成功
-            },
-            fail: (tabError) => {
-              // 已移除调试日志
-              // 最后尝试重定向到首页
+            fail: () => {
               wx.redirectTo({
                 url: '/pages/index/index'
               })
@@ -53,7 +65,7 @@ Component({
         }
       })
       
-      // 同时触发页面的返回事件，让页面可以执行额外的清理工作
+      // 触发返回事件
       this.triggerEvent('back')
     }
   }

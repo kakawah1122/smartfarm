@@ -1,0 +1,31 @@
+# 排除所有 markdown 文档
+*.md
+
+# 排除测试文件
+test-*.js
+*test*.js
+查看诊断失败原因.js
+
+# 排除云函数目录
+cloudfunctions/
+
+# 排除构建工具
+node_modules/
+
+# 排除版本控制
+.git/
+.gitignore
+
+# 排除 IDE 配置
+.vscode/
+.idea/
+
+# 排除临时文件
+*.log
+*.tmp
+.DS_Store
+
+# 排除文档和说明
+deploy-functions.md
+README.md
+

@@ -674,7 +674,7 @@ async function logOperation(event, wxContext) {
       createTime: new Date().toISOString()
     }
     
-    await db.collection('audit_logs').add({ data: log })
+    await db.collection('sys_audit_logs').add({ data: log })
     
     return {
       success: true,
@@ -699,7 +699,7 @@ async function getAuditLogs(event, wxContext) {
     throw new Error('无权限查看审计日志')
   }
   
-  let query = db.collection('audit_logs')
+  let query = db.collection('sys_audit_logs')
   
   if (action) query = query.where({ action })
   if (targetType) query = query.where({ targetType })

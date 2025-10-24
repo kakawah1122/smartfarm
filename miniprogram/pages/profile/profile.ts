@@ -64,14 +64,14 @@ const pageConfig = {
         title: '财务管理',
         description: '收支记录、AI建议、报表分析',
         icon: 'money-circle',
-        page: '/pages/finance/finance'
+        page: '/packageFinance/finance/finance'
       },
       {
         id: 2,
         title: '员工管理',
         description: '邀请码管理、员工权限设置',
         icon: 'user-group',
-        page: '/pages/employee-permission/employee-permission',
+        page: '/packageUser/employee-permission/employee-permission',
         requiredPermission: 'employee.view'
       },
       {
@@ -203,14 +203,14 @@ const pageConfig = {
           title: '财务管理',
           description: '收支记录、AI建议、报表分析',
           icon: 'money-circle',
-          page: '/pages/finance/finance'
+          page: '/packageFinance/finance/finance'
         },
         {
           id: 2,
           title: '员工管理',
           description: '邀请码管理、员工权限设置',
           icon: 'user-group',
-          page: '/pages/employee-permission/employee-permission',
+          page: '/packageUser/employee-permission/employee-permission',
           requiredPermission: 'employee.view'
         },
         {
@@ -511,7 +511,7 @@ const pageConfig = {
   // 登录
   goToLogin() {
     wx.navigateTo({
-      url: '/pages/login/login'
+      url: '/packageUser/login/login'
     })
   },
 
@@ -587,7 +587,7 @@ const pageConfig = {
   // 查看财务详情
   viewFinanceDetail() {
     wx.navigateTo({
-      url: '/pages/finance/finance',
+      url: '/packageFinance/finance/finance',
       fail: () => {
         wx.showToast({
           title: '功能开发中',
@@ -1530,48 +1530,64 @@ const pageConfig = {
   
   // 确认退出登录
   confirmLogout() {
-    // 清除全局登录状态
-    const app = getApp<App.AppOption>()
-    app.globalData.openid = undefined
-    app.globalData.isLoggedIn = false
-    app.globalData.userInfo = undefined
+    try {
+      // 清除全局登录状态
+      const app = getApp<App.AppOption>()
+      app.globalData.openid = undefined
+      app.globalData.isLoggedIn = false
+      app.globalData.userInfo = undefined
 
-    // 清除本地存储
-    wx.removeStorageSync('openid')
-    wx.removeStorageSync('userInfo')
-    
-    // 注意：不清除完善信息的永久状态标记
-    // 用户完善过的信息状态应该永久保持，避免重复弹出完善弹窗
-    // wx.removeStorageSync('needProfileSetup')  // 这个可以清除，因为是临时提示标记
-    // wx.removeStorageSync('hasSkippedProfileSetup')  // 这个也可以清除
-    // wx.removeStorageSync('skipProfileSetupUntil')   // 这个也可以清除
-    
-    // 但是我们需要保留一个永久标记表示用户已经完善过信息
-    // 这样下次登录时就不会再弹出完善弹窗了
-    // 已移除调试日志
-    // 重置页面数据
-    this.setData({
-      isLoggedIn: false,
-      cloudUserInfo: null,
-      showLogoutConfirmPopup: false,
-      showProfileSetupTip: false, // 确保完善信息提示也被隐藏
-      userInfo: {
-        name: '游客',
-        role: '用户',
-        farm: '示范养殖场',
-        experience: '0',
-        currentStock: '0',
-        healthRate: '0',
-        avatarUrl: '/assets/icons/profile.png'
-      }
-    })
-    
-    wx.showToast({
-      title: '已退出登录',
-      icon: 'success'
-    })
-
-    // 已移除调试日志
+      // 清除本地存储
+      wx.removeStorageSync('openid')
+      wx.removeStorageSync('userInfo')
+      
+      // 注意：不清除完善信息的永久状态标记
+      // 用户完善过的信息状态应该永久保持，避免重复弹出完善弹窗
+      // wx.removeStorageSync('needProfileSetup')  // 这个可以清除，因为是临时提示标记
+      // wx.removeStorageSync('hasSkippedProfileSetup')  // 这个也可以清除
+      // wx.removeStorageSync('skipProfileSetupUntil')   // 这个也可以清除
+      
+      // 但是我们需要保留一个永久标记表示用户已经完善过信息
+      // 这样下次登录时就不会再弹出完善弹窗了
+      // 已移除调试日志
+      
+      // 重置页面数据
+      this.setData({
+        isLoggedIn: false,
+        cloudUserInfo: null,
+        showLogoutConfirmPopup: false,
+        showProfileSetupTip: false, // 确保完善信息提示也被隐藏
+        userInfo: {
+          name: '游客',
+          role: '用户',
+          farm: '示范养殖场',
+          experience: '0',
+          currentStock: '0',
+          healthRate: '0',
+          avatarUrl: '/assets/icons/profile.png'
+        }
+      })
+      
+      wx.showToast({
+        title: '已退出登录',
+        icon: 'success'
+      })
+      
+    } catch (error) {
+      // 捕获可能的异常（如微信开发者工具的内部错误）
+      console.warn('退出登录过程中出现警告（已忽略）:', error)
+      
+      // 即使出错，也确保UI更新
+      this.setData({
+        isLoggedIn: false,
+        showLogoutConfirmPopup: false
+      })
+      
+      wx.showToast({
+        title: '已退出登录',
+        icon: 'success'
+      })
+    }
   },
   
   // 关闭退出确认弹窗

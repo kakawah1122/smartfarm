@@ -1,39 +1,87 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/weather-detail/weather-detail",
     "pages/production/production",
-    "pages/entry-form/entry-form",
-    "pages/exit-form/exit-form",
-    "pages/purchase-form/purchase-form", 
-    "pages/material-use-form/material-use-form",
-    "pages/material-records-list/material-records-list",
-    "pages/entry-records-list/entry-records-list",
-    "pages/exit-records-list/exit-records-list",
-    "pages/inventory-detail/inventory-detail",
     "pages/health/health",
-    "pages/breeding-todo/breeding-todo",
-    "pages/ai-diagnosis/ai-diagnosis",
-    "pages/diagnosis-history/diagnosis-history",
     "pages/profile/profile",
-    "pages/finance/finance",
-    "pages/login/login",
-    "pages/user-management/user-management",
-    "pages/employee-permission/employee-permission",
-    "pages/invite-management/invite-management",
-    "pages/user-approval/user-approval",
-    "pages/role-management/role-management",
-    "pages/role-migration/role-migration",
-    "pages/vaccine-record/vaccine-record",
-    "pages/disinfection-record/disinfection-record",
-    "pages/health-inspection/health-inspection",
-    "pages/health-care/health-care",
-    "pages/treatment-record/treatment-record",
-    "pages/recovery-management/recovery-management",
-    "pages/survival-analysis/survival-analysis",
-    "pages/cost-analysis/cost-analysis",
-    "pages/performance-analysis/performance-analysis"
+    "pages/knowledge/knowledge"
   ],
+  "subpackages": [
+    {
+      "root": "packageProduction",
+      "name": "production",
+      "pages": [
+        "entry-form/entry-form",
+        "exit-form/exit-form",
+        "purchase-form/purchase-form",
+        "material-use-form/material-use-form",
+        "material-records-list/material-records-list",
+        "entry-records-list/entry-records-list",
+        "exit-records-list/exit-records-list",
+        "inventory-detail/inventory-detail"
+      ]
+    },
+    {
+      "root": "packageHealth",
+      "name": "health",
+      "pages": [
+        "vaccine-record/vaccine-record",
+        "disinfection-record/disinfection-record",
+        "health-inspection/health-inspection",
+        "health-care/health-care",
+        "treatment-record/treatment-record",
+        "death-record/death-record",
+        "recovery-management/recovery-management",
+        "survival-analysis/survival-analysis",
+        "breeding-todo/breeding-todo"
+      ]
+    },
+    {
+      "root": "packageUser",
+      "name": "user",
+      "pages": [
+        "login/login",
+        "user-management/user-management",
+        "employee-permission/employee-permission",
+        "invite-management/invite-management",
+        "user-approval/user-approval",
+        "role-management/role-management",
+        "role-migration/role-migration"
+      ]
+    },
+    {
+      "root": "packageFinance",
+      "name": "finance",
+      "pages": [
+        "finance/finance",
+        "cost-analysis/cost-analysis",
+        "performance-analysis/performance-analysis"
+      ]
+    },
+    {
+      "root": "packageAI",
+      "name": "ai",
+      "pages": [
+        "ai-diagnosis/ai-diagnosis",
+        "diagnosis-history/diagnosis-history",
+        "weather-detail/weather-detail"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["production", "health", "ai"]
+    },
+    "pages/production/production": {
+      "network": "all",
+      "packages": ["production"]
+    },
+    "pages/health/health": {
+      "network": "all",
+      "packages": ["health"]
+    }
+  },
   "tabBar": {
     "color": "#999",
     "selectedColor": "#0052d9",

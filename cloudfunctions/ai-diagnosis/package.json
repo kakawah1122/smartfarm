@@ -11,5 +11,8 @@
   },
   "keywords": ["health", "ai", "diagnosis", "wechat", "miniprogram"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "cloudbaseConfig": {
+    "timeout": 20
+  }
 }

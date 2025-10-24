@@ -13,9 +13,9 @@
       "outputPath": ""
     },
     "coverView": false,
-    "postcss": false,
-    "minified": false,
-    "enhance": false,
+    "postcss": true,
+    "minified": true,
+    "enhance": true,
     "showShadowRootInWxmlPanel": false,
     "packNpmManually": true,
     "packNpmRelationList": [
@@ -30,7 +30,7 @@
     "es6": true,
     "compileWorklet": false,
     "uglifyFileName": false,
-    "uploadWithSourceMap": true,
+    "uploadWithSourceMap": false,
     "minifyWXSS": true,
     "minifyWXML": true,
     "localPlugins": false,
@@ -48,9 +48,34 @@
     "tabIndent": "insertSpaces",
     "tabSize": 2
   },
-  "libVersion": "2.32.3",
+  "libVersion": "3.10.3",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "value": "*.md",
+        "type": "file"
+      },
+      {
+        "value": "test-gemini-config.js",
+        "type": "file"
+      },
+      {
+        "value": "查看诊断失败原因.js",
+        "type": "file"
+      },
+      {
+        "value": "cloudfunctions",
+        "type": "folder"
+      },
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
+        "value": ".git",
+        "type": "folder"
+      }
+    ],
     "include": []
   },
   "appid": "wx68a4d75dd80665ec",

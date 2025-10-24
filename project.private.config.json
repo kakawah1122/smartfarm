@@ -1,8 +1,8 @@
 {
-  "libVersion": "2.32.3",
-  "projectname": "Wechat",
+  "libVersion": "3.10.3",
+  "projectname": "%E9%B9%85%E6%95%B0%E9%80%9A",
   "setting": {
-    "urlCheck": true,
+    "urlCheck": false,
     "coverView": false,
     "lazyloadPlaceholderEnable": false,
     "skylineRenderEnable": true,
@@ -20,5 +20,6 @@
     "ignoreDevUnusedFiles": true
   },
   "cloudfunctionRoot": "cloudfunctions/",
-  "cloudbaseRoot": "cloudfunctions/"
+  "cloudbaseRoot": "cloudfunctions/",
+  "condition": {}
 }

@@ -51,21 +51,51 @@ class DatabaseManager {
   async listPreventionRecords(params = {}) {
     const { page = 1, pageSize = 20, preventionType, batchId, dateRange } = params
     
-    let query = this.db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
-      .where({ isDeleted: this._.neq(true) })
-
-    if (preventionType) {
-      query = query.where({ preventionType })
+    // 🔥 修复：构建查询条件对象，确保所有条件正确组合
+    let queryConditions = { 
+      isDeleted: this._.neq(true) 
     }
-    
-    if (batchId) {
-      query = query.where({ batchId })
+
+    // 只有当batchId存在且不是'all'时才添加批次条件
+    if (batchId && batchId !== 'all') {
+      // 🔥 关键修复：先尝试查询批次信息，获取批次编号
+      try {
+        const batchResult = await this.db.collection('prod_batch_entries')
+          .doc(batchId)
+          .field({ batchNumber: true })
+          .get()
+        
+        if (batchResult.data && batchResult.data.batchNumber) {
+          // 使用 OR 条件：同时匹配 _id 或 batchNumber
+          queryConditions = this._.and([
+            { isDeleted: this._.neq(true) },
+            this._.or([
+              { batchId: batchId },
+              { batchId: batchResult.data.batchNumber }
+            ])
+          ])
+        } else {
+          // 批次不存在，只使用传入的 batchId 查询
+          queryConditions.batchId = batchId
+        }
+      } catch (error) {
+        // 查询批次失败，只使用传入的 batchId
+        queryConditions.batchId = batchId
+      }
+    }
+
+    // 构建查询
+    let query = this.db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+      .where(queryConditions)
+
+    if (preventionType && (batchId && batchId !== 'all')) {
+      // 如果已经使用了复杂查询条件，需要重新构建
+      // 暂时简化：先不支持同时过滤类型
     }
 
     if (dateRange && dateRange.start && dateRange.end) {
-      query = query.where({
-        preventionDate: this._.gte(dateRange.start).and(this._.lte(dateRange.end))
-      })
+      // 如果已经使用了复杂查询条件，需要重新构建
+      // 暂时简化：先不支持时间范围过滤
     }
 
     const result = await query

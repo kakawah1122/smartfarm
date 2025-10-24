@@ -11,6 +11,12 @@ page {
   padding-bottom: var(--safe-area-inset-bottom, 0);
 }
 
+/* 主内容区域 - 避免被导航栏遮挡 */
+.main-content {
+  margin-top: calc(44px + 44px); /* 状态栏 + 导航栏高度 */
+  flex: 1;
+}
+
 /* 生产概览卡片 */
 .production-overview {
   padding: 24rpx;

@@ -14,6 +14,7 @@
   background-color: var(--td-bg-color-page);
   display: flex;
   flex-direction: column;
+  padding-top: calc(44px + 44px); /* 状态栏 + 导航栏高度 */
 }
 
 /* 批次筛选区域 */
@@ -78,7 +79,7 @@
   }
 }
 
-/* 健康数据概览 */
+/* 健康数据概览（整合实时状态） */
 .health-stats-section {
   padding: 24rpx;
   background: white;
@@ -88,6 +89,12 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16rpx;
+
+    // 四列布局（整合实时状态后）
+    &.stats-grid-four {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12rpx;
+    }
 
     .stat-card {
       display: flex;
@@ -150,6 +157,31 @@
           color: #dc2626;
         }
       }
+
+      &.stat-info {
+        background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+        
+        .stat-value {
+          color: #8b5cf6;
+        }
+        
+        .stat-label {
+          color: #7c3aed;
+        }
+      }
+    }
+  }
+
+  // 四列布局时调整卡片样式
+  .stats-grid-four .stat-card {
+    padding: 20rpx 12rpx;
+
+    .stat-value {
+      font-size: 36rpx;
+    }
+
+    .stat-label {
+      font-size: 20rpx;
     }
   }
 }
@@ -220,6 +252,12 @@
       color: #0052d9;
       margin-left: 16rpx;
     }
+  }
+
+  .dropdown-divider {
+    height: 1rpx;
+    background: #e5e5e5;
+    margin: 16rpx 0;
   }
 
   .dropdown-empty {
@@ -430,7 +468,7 @@
   color: var(--td-brand-color);
 }
 
-/* 预防管理Tab样式 */
+/* 预防管理Tab样式 (合并了健康监控) */
 .prevention-content {
   .prevention-stats {
     background: white;
@@ -511,11 +549,17 @@
     margin-left: 12rpx;
   }
   
+  .record-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    margin-bottom: 4rpx;
+  }
+  
   .record-title {
     font-size: 28rpx;
     color: var(--td-text-color-primary);
-    display: block;
-    margin-bottom: 4rpx;
+    flex: 1;
   }
   
   .record-desc {
@@ -533,56 +577,27 @@
     display: block;
     margin-bottom: 8rpx;
   }
-}
-
-/* 健康监控Tab样式 */
-.monitoring-content {
-  .real-time-status {
-    background: white;
-    border-radius: 16rpx;
-    padding: 24rpx;
-    margin-bottom: 24rpx;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  }
   
-  .status-overview {
-    display: flex;
-    gap: 16rpx;
-    margin-top: 16rpx;
-  }
-  
-  .status-item {
-    flex: 1;
+  .record-empty {
+    padding: 60rpx 32rpx;
     text-align: center;
-    padding: 20rpx;
-    border-radius: 12rpx;
     
-    &.healthy {
-      background: #f0f9ff;
-      color: #00a870;
+    .empty-text {
+      display: block;
+      font-size: 28rpx;
+      color: var(--td-text-color-secondary);
+      margin-bottom: 12rpx;
     }
     
-    &.warning {
-      background: #fff7e6;
-      color: #ed7b2f;
-    }
-    
-    &.danger {
-      background: #fef0f0;
-      color: #e34d59;
+    .empty-hint {
+      display: block;
+      font-size: 24rpx;
+      color: var(--td-text-color-placeholder);
+      line-height: 1.5;
     }
   }
-  
-  .status-count {
-    font-size: 40rpx;
-    font-weight: 600;
-    display: block;
-    margin-bottom: 8rpx;
-  }
-  
-  .status-label {
-    font-size: 24rpx;
-  }
+
+  /* 健康监控部分样式 - 实时健康状态已整合到顶部 */
   
   .abnormal-list {
     background: white;
@@ -705,6 +720,8 @@
   }
 }
 
+/* 健康监控Tab样式 - 已移除，监控内容已整合到预防管理Tab */
+
 /* 诊疗管理Tab样式 */
 .treatment-content {
   .treatment-stats {
@@ -713,6 +730,329 @@
     padding: 24rpx;
     margin-bottom: 24rpx;
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+    
+    .stats-grid-two {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16rpx;
+    }
+    
+    .stat-card {
+      display: flex;
+      align-items: center;
+      padding: 24rpx 20rpx;
+      border-radius: 16rpx;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      
+      // 悬浮动效
+      &:active {
+        transform: scale(0.97);
+      }
+      
+      // 背景装饰
+      &::before {
+        content: '';
+        position: absolute;
+        right: -20rpx;
+        bottom: -20rpx;
+        width: 120rpx;
+        height: 120rpx;
+        border-radius: 50%;
+        opacity: 0.1;
+        transition: all 0.3s;
+      }
+      
+      .stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80rpx;
+        height: 80rpx;
+        border-radius: 16rpx;
+        margin-right: 16rpx;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+      }
+      
+      // CSS绘制的图标样式
+      
+      // 文件图标（待诊断）
+      .css-icon-file {
+        position: relative;
+        width: 32rpx;
+        height: 40rpx;
+        background: #ED7B2F;
+        border-radius: 4rpx;
+        
+        // 折角
+        &::before {
+          content: '';
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: 0;
+          height: 0;
+          border-style: solid;
+          border-width: 0 10rpx 10rpx 0;
+          border-color: transparent #FFF7E6 transparent transparent;
+        }
+        
+        // 文件线条
+        &::after {
+          content: '';
+          position: absolute;
+          left: 8rpx;
+          top: 16rpx;
+          width: 16rpx;
+          height: 3rpx;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 2rpx;
+          box-shadow: 0 6rpx 0 rgba(255, 255, 255, 0.8), 0 12rpx 0 rgba(255, 255, 255, 0.8);
+        }
+      }
+      
+      // 药瓶图标（治疗中）
+      .css-icon-medicine {
+        position: relative;
+        width: 24rpx;
+        height: 40rpx;
+        
+        // 瓶口
+        &::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 0;
+          transform: translateX(-50%);
+          width: 12rpx;
+          height: 8rpx;
+          background: #0052D9;
+          border-radius: 2rpx 2rpx 0 0;
+        }
+        
+        // 瓶身
+        &::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 8rpx;
+          width: 24rpx;
+          height: 32rpx;
+          background: #0052D9;
+          border-radius: 4rpx;
+          box-shadow: inset 0 -12rpx 0 rgba(255, 255, 255, 0.3);
+        }
+      }
+      
+      // 金钱图标（治疗成本）
+      .css-icon-money {
+        position: relative;
+        width: 32rpx;
+        height: 40rpx;
+        
+        // 人民币符号 ¥
+        &::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 12rpx;
+          transform: translateX(-50%);
+          width: 16rpx;
+          height: 3rpx;
+          background: #0284C7;
+          border-radius: 2rpx;
+          box-shadow: 
+            0 -6rpx 0 #0284C7,
+            0 6rpx 0 #0284C7;
+        }
+        
+        // Y 的上部
+        &::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 6rpx;
+          transform: translateX(-50%);
+          width: 3rpx;
+          height: 12rpx;
+          background: #0284C7;
+          border-radius: 2rpx;
+          clip-path: polygon(
+            50% 0%, 
+            100% 50%, 
+            60% 50%, 
+            60% 100%, 
+            40% 100%, 
+            40% 50%, 
+            0% 50%
+          );
+        }
+      }
+      
+      // 盾牌图标（治愈率）
+      .css-icon-shield {
+        position: relative;
+        width: 32rpx;
+        height: 40rpx;
+        background: #00A870;
+        border-radius: 4rpx 4rpx 0 0;
+        clip-path: polygon(50% 100%, 0 70%, 0 0, 100% 0, 100% 70%);
+        
+        // 对勾
+        &::before {
+          content: '';
+          position: absolute;
+          left: 9rpx;
+          top: 14rpx;
+          width: 6rpx;
+          height: 3rpx;
+          border-left: 3rpx solid white;
+          border-bottom: 3rpx solid white;
+          transform: rotate(-45deg);
+        }
+        
+        &::after {
+          content: '';
+          position: absolute;
+          left: 13rpx;
+          top: 10rpx;
+          width: 12rpx;
+          height: 6rpx;
+          border-left: 3rpx solid white;
+          border-bottom: 3rpx solid white;
+          transform: rotate(-45deg);
+        }
+      }
+      
+      // 图标容器的背景色
+      .stat-icon-pending {
+        background: rgba(237, 123, 47, 0.15);
+      }
+      
+      .stat-icon-treating {
+        background: rgba(0, 82, 217, 0.15);
+      }
+      
+      .stat-icon-recovering {
+        background: rgba(2, 132, 199, 0.15);
+      }
+      
+      .stat-icon-cured {
+        background: rgba(0, 168, 112, 0.15);
+      }
+      
+      .stat-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4rpx;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .stat-value {
+        font-size: 44rpx;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+      }
+      
+      .stat-label {
+        font-size: 24rpx;
+        line-height: 1.2;
+        opacity: 0.85;
+        font-weight: 500;
+      }
+      
+      // 待诊断样式
+      &.stat-card-pending {
+        background: linear-gradient(135deg, #FFF7E6 0%, #FFE7BA 100%);
+        
+        &::before {
+          background: #ED7B2F;
+        }
+        
+        .stat-icon {
+          background: rgba(237, 123, 47, 0.15);
+        }
+        
+        .stat-value {
+          color: #D97706;
+        }
+        
+        .stat-label {
+          color: #B45309;
+        }
+      }
+      
+      // 治疗中样式
+      &.stat-card-treating {
+        background: linear-gradient(135deg, #E6F3FF 0%, #CCE5FF 100%);
+        
+        &::before {
+          background: #0052D9;
+        }
+        
+        .stat-icon {
+          background: rgba(0, 82, 217, 0.15);
+        }
+        
+        .stat-value {
+          color: #0052D9;
+        }
+        
+        .stat-label {
+          color: #003CAB;
+        }
+      }
+      
+      // 治疗成本样式
+      &.stat-card-cost {
+        background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+        
+        &::before {
+          background: #0284C7;
+        }
+        
+        .stat-icon {
+          background: rgba(2, 132, 199, 0.15);
+        }
+        
+        .stat-value {
+          color: #0284C7;
+          font-size: 32rpx;
+        }
+        
+        .stat-label {
+          color: #0369A1;
+        }
+      }
+      
+      // 治愈率样式
+      &.stat-card-cured {
+        background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+        
+        &::before {
+          background: #00A870;
+        }
+        
+        .stat-icon {
+          background: rgba(0, 168, 112, 0.15);
+        }
+        
+        .stat-value {
+          color: #059669;
+        }
+        
+        .stat-label {
+          color: #047857;
+        }
+      }
+    }
   }
   
   .current-treatments,
@@ -1008,5 +1348,203 @@
   .action-row {
     flex-direction: column;
     gap: 12rpx;
+  }
+  
+  // 治疗统计卡片在小屏设备上的优化
+  .treatment-content {
+    .treatment-stats {
+      padding: 16rpx;
+      
+      .stats-grid-two {
+        gap: 12rpx;
+      }
+      
+      .stat-card {
+        padding: 20rpx 16rpx;
+        
+        .stat-icon {
+          width: 64rpx;
+          height: 64rpx;
+          margin-right: 12rpx;
+        }
+        
+        .stat-value {
+          font-size: 36rpx;
+        }
+        
+        .stat-label {
+          font-size: 22rpx;
+        }
+        
+        // CSS图标缩小
+        .css-icon-file {
+          width: 26rpx;
+          height: 32rpx;
+          
+          &::before {
+            border-width: 0 8rpx 8rpx 0;
+          }
+          
+          &::after {
+            left: 6rpx;
+            top: 12rpx;
+            width: 14rpx;
+            height: 2rpx;
+            box-shadow: 0 5rpx 0 rgba(255, 255, 255, 0.8), 0 10rpx 0 rgba(255, 255, 255, 0.8);
+          }
+        }
+        
+        .css-icon-medicine {
+          width: 20rpx;
+          height: 32rpx;
+          
+          &::before {
+            width: 10rpx;
+            height: 6rpx;
+          }
+          
+          &::after {
+            width: 20rpx;
+            height: 26rpx;
+            box-shadow: inset 0 -10rpx 0 rgba(255, 255, 255, 0.3);
+          }
+        }
+        
+        .css-icon-money {
+          width: 28rpx;
+          height: 36rpx;
+          
+          &::before {
+            width: 14rpx;
+            height: 3rpx;
+            top: 10rpx;
+            box-shadow: 
+              0 -5rpx 0 #0284C7,
+              0 5rpx 0 #0284C7;
+          }
+          
+          &::after {
+            width: 3rpx;
+            height: 10rpx;
+            top: 5rpx;
+          }
+        }
+        
+        .css-icon-shield {
+          width: 26rpx;
+          height: 32rpx;
+          
+          &::before {
+            width: 10rpx;
+            height: 5rpx;
+            border-width: 3rpx;
+            left: 6rpx;
+            top: 16rpx;
+          }
+          
+          &::after {
+            width: 20rpx;
+            height: 10rpx;
+            border-width: 3rpx;
+            left: 13rpx;
+            top: 10rpx;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 超小屏设备优化（iPhone SE等）
+@media (max-width: 320px) {
+  .treatment-content {
+    .treatment-stats {
+      .stats-grid-two {
+        grid-template-columns: 1fr;
+        gap: 12rpx;
+      }
+      
+      .stat-card {
+        .stat-icon {
+          width: 56rpx;
+          height: 56rpx;
+        }
+        
+        // CSS图标进一步缩小
+        .css-icon-file {
+          width: 22rpx;
+          height: 28rpx;
+          
+          &::before {
+            border-width: 0 7rpx 7rpx 0;
+          }
+          
+          &::after {
+            left: 5rpx;
+            top: 10rpx;
+            width: 12rpx;
+            height: 2rpx;
+            box-shadow: 0 4rpx 0 rgba(255, 255, 255, 0.8), 0 8rpx 0 rgba(255, 255, 255, 0.8);
+          }
+        }
+        
+        .css-icon-medicine {
+          width: 18rpx;
+          height: 28rpx;
+          
+          &::before {
+            width: 9rpx;
+            height: 5rpx;
+          }
+          
+          &::after {
+            width: 18rpx;
+            height: 23rpx;
+            box-shadow: inset 0 -9rpx 0 rgba(255, 255, 255, 0.3);
+          }
+        }
+        
+        .css-icon-money {
+          width: 24rpx;
+          height: 32rpx;
+          
+          &::before {
+            width: 12rpx;
+            height: 2rpx;
+            top: 9rpx;
+            box-shadow: 
+              0 -4rpx 0 #0284C7,
+              0 4rpx 0 #0284C7;
+          }
+          
+          &::after {
+            width: 2rpx;
+            height: 8rpx;
+            top: 4rpx;
+          }
+        }
+        
+        .css-icon-shield {
+          width: 22rpx;
+          height: 28rpx;
+          
+          &::before {
+            width: 8rpx;
+            height: 4rpx;
+            border-width: 2rpx;
+            left: 5rpx;
+            top: 14rpx;
+          }
+          
+          &::after {
+            width: 18rpx;
+            height: 8rpx;
+            border-width: 2rpx;
+            left: 11rpx;
+            top: 9rpx;
+          }
+        }
+      }
+    }
   }
 }

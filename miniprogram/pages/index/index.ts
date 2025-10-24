@@ -134,7 +134,6 @@ Page({
       nutritionName: '',
       quantity: 0,
       unit: '',
-      purpose: '',
       dosage: '',
       notes: '',
       operator: ''
@@ -203,8 +202,8 @@ Page({
   // 初始化状态栏
   initStatusBar() {
     try {
-      const systemInfo = wx.getSystemInfoSync()
-      const statusBarHeight = systemInfo.statusBarHeight || 44
+      const windowInfo = wx.getWindowInfo()
+      const statusBarHeight = windowInfo.statusBarHeight || 44
       const now = new Date()
       const timeStr = now.toTimeString().slice(0, 5)
       
@@ -856,115 +855,12 @@ Page({
     }
   },
 
-  // 调试方法：手动重新加载待办
-  async debugLoadTodos() {
-    wx.showToast({
-      title: '开始重新加载...',
-      icon: 'loading',
-      duration: 1500
-    })
-    
-    // 重置状态
-    this.setData({
-      todoLoading: true,
-      todoList: []
-    })
-    
-    try {
-      await this.loadTodayBreedingTasks()
-    } catch (error: any) {
-      wx.showToast({
-        title: '加载失败，请查看控制台',
-        icon: 'error'
-      })
-    }
-  },
-
-  // 修复批次任务
-  async fixAllBatchTasks() {
-    
-    wx.showModal({
-      title: '修复任务',
-      content: '这将重新创建所有活跃批次的任务，是否继续？',
-      showCancel: true,
-      confirmText: '修复',
-      cancelText: '取消',
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            wx.showLoading({
-              title: '修复任务中...',
-              mask: true
-            })
-
-            // 获取活跃批次
-            const batchResult = await wx.cloud.callFunction({
-              name: 'production-entry',
-              data: { action: 'getActiveBatches' }
-            })
-
-            const activeBatches = batchResult.result?.data || []
-            // 找到活跃批次
-
-            if (activeBatches.length === 0) {
-              wx.hideLoading()
-              wx.showToast({
-                title: '没有找到活跃批次',
-                icon: 'none'
-              })
-              return
-            }
-
-            let totalFixed = 0
-            let successCount = 0
-
-            // 为每个批次修复任务
-            for (const batch of activeBatches) {
-              try {
-                const result = await CloudApi.fixBatchTasks(batch._id)
-                if (result.success) {
-                  totalFixed += result.data?.taskCount || 0
-                  successCount++
-                  // 批次修复成功
-                }
-              } catch (error: any) {
-                // 批次修复失败
-              }
-            }
-
-            wx.hideLoading()
-
-            // 显示修复结果
-            wx.showModal({
-              title: '修复完成',
-              content: `成功修复 ${successCount}/${activeBatches.length} 个批次\n共创建任务 ${totalFixed} 个`,
-              showCancel: false,
-              confirmText: '确定',
-              success: () => {
-                // 重新加载待办列表
-                this.loadTodayBreedingTasks()
-              }
-            })
-
-          } catch (error: any) {
-            wx.hideLoading()
-            wx.showToast({
-              title: '修复失败，请重试',
-              icon: 'error'
-            })
-          }
-        }
-      }
-    })
-  },
-
-
   // 查看全部待办 - 直接进入全批次今日待办页面
   async viewAllTodos() {
     try {
       // 直接跳转到breeding-todo页面，显示所有批次的今日待办
       wx.navigateTo({
-        url: `/pages/breeding-todo/breeding-todo?showAllBatches=true`
+        url: `/packageHealth/breeding-todo/breeding-todo?showAllBatches=true`
       })
     } catch (error: any) {
       wx.showToast({
@@ -1252,54 +1148,59 @@ Page({
       return
     }
 
-    wx.showLoading({
-      title: '提交中...',
-      mask: true
+    // 获取任务ID和批次ID（多种字段名兼容）
+    const taskId = selectedTask.id || selectedTask.taskId || selectedTask._id
+    const batchId = selectedTask.batchNumber || selectedTask.batchId
+    
+    if (!taskId || !batchId) {
+      wx.showToast({
+        title: '任务或批次信息缺失',
+        icon: 'error'
+      })
+      return
+    }
+
+    // 构建疫苗记录数据（与待办页面保持一致的格式）
+    const vaccineRecord = {
+      vaccine: {
+        name: vaccineFormData.vaccineName,
+        manufacturer: vaccineFormData.manufacturer,
+        batchNumber: vaccineFormData.batchNumber,
+        dosage: vaccineFormData.dosage
+      },
+      veterinarian: {
+        name: vaccineFormData.veterinarianName,
+        contact: vaccineFormData.veterinarianContact
+      },
+      vaccination: {
+        route: vaccineRouteOptions[vaccineFormData.routeIndex].label,
+        count: vaccineFormData.vaccinationCount,
+        location: vaccineFormData.location
+      },
+      cost: {
+        vaccine: parseFloat(vaccineFormData.vaccineCost || '0'),
+        veterinary: parseFloat(vaccineFormData.veterinaryCost || '0'),
+        other: parseFloat(vaccineFormData.otherCost || '0'),
+        total: vaccineFormData.totalCost
+      },
+      notes: vaccineFormData.notes
+    }
+
+    // 调用优化后的API（已内置 loading 和 error 处理）
+    const result = await CloudApi.completeVaccineTask({
+      taskId: taskId,
+      batchId: batchId,
+      vaccineRecord
     })
 
-    try {
-      // 构建提交数据
-      const vaccineRecord = {
-        ...vaccineFormData,
-        routeName: vaccineRouteOptions[vaccineFormData.routeIndex].label,
-        completedDate: new Date().toISOString()
-      }
-
-      const submitData = {
-        taskId: selectedTask.id || selectedTask.taskId || selectedTask._id,
-        batchId: selectedTask.batchNumber || selectedTask.batchId,
-        vaccineRecord: vaccineRecord
-      }
-
-      // 调用云函数
-      const result = await CloudApi.completeVaccineTask(submitData)
+    if (result.success) {
+      // 关闭表单
+      this.closeVaccineFormPopup()
       
-      if (result.success) {
-        wx.hideLoading()
-        wx.showToast({
-          title: '接种记录已提交',
-          icon: 'success',
-          duration: 2000
-        })
-
-        // 关闭表单
-        this.closeVaccineFormPopup()
-        
-        // 刷新待办列表
-        this.getTodoListData()
-        
-      } else {
-        throw new Error(result.error || '提交失败')
-      }
-
-    } catch (error: any) {
-      wx.hideLoading()
-      wx.showToast({
-        title: error.message || '提交失败，请重试',
-        icon: 'error',
-        duration: 3000
-      })
+      // 刷新待办列表
+      this.getTodoListData()
     }
+    // CloudApi 已经处理了错误提示和 loading，不需要额外的 try-catch
   },
 
   /**
@@ -1497,137 +1398,6 @@ Page({
   },
 
   /**
-   * 🔥 新增：一键修复任务系统
-   */
-  async fixTaskSystem() {
-    wx.showLoading({ title: '正在修复任务系统...' })
-    
-    try {
-      // 1. 检查迁移状态
-      const checkResult = await wx.cloud.callFunction({
-        name: 'task-migration',
-        data: { action: 'checkMigrationStatus' }
-      })
-      
-      if (checkResult.result.success) {
-        const status = checkResult.result.data
-        // 已移除调试日志
-        if (status.needsMigration > 0) {
-          // 2. 执行迁移
-          // 已移除调试日志
-          const migrateResult = await wx.cloud.callFunction({
-            name: 'task-migration',
-            data: { action: 'addCompletedField' }
-          })
-          
-          if (migrateResult.result.success) {
-            // 已移除调试日志
-            // 3. 同步已完成状态
-            const syncResult = await wx.cloud.callFunction({
-              name: 'task-migration',
-              data: { action: 'migrateCompletedTasks' }
-            })
-            
-            if (syncResult.result.success) {
-              // 已移除调试日志
-              wx.hideLoading()
-              wx.showModal({
-                title: '修复完成',
-                content: `任务系统修复成功！\n迁移了 ${migrateResult.result.data.migratedCount} 个任务\n同步了 ${syncResult.result.data.syncedCount} 个完成状态`,
-                showCancel: false,
-                success: () => {
-                  this.loadTodayBreedingTasks()
-                }
-              })
-              return
-            }
-          }
-        } else {
-          wx.hideLoading()
-          wx.showToast({
-            title: '任务系统状态正常',
-            icon: 'success'
-          })
-          
-          // 重新加载数据
-          this.loadTodayBreedingTasks()
-          return
-        }
-      }
-      
-      throw new Error('修复过程中出现错误')
-      
-    } catch (error: any) {
-      // 已移除调试日志
-      wx.hideLoading()
-      wx.showModal({
-        title: '修复失败',
-        content: `错误信息: ${error.message}`,
-        showCancel: false
-      })
-    }
-  },
-
-  /**
-   * 🔍 验证任务完成状态是否正确保存到数据库
-   */
-  async verifyTaskCompletionInDatabase(taskId: string, batchId: string) {
-    try {
-      // 已移除调试日志
-      // 直接调用云函数获取最新的任务状态
-      const result = await wx.cloud.callFunction({
-        name: 'breeding-todo',
-        data: {
-          action: 'getTodos',
-          batchId: batchId,
-          dayAge: this.data.selectedTask?.dayAge || this.calculateCurrentAge(new Date().toISOString().split('T')[0])
-        }
-      })
-      
-      if (result.result && result.result.success) {
-        const tasks = result.result.data || []
-        const targetTask = tasks.find((task: any) => 
-          task._id === taskId || task.taskId === taskId || task.id === taskId
-        )
-        
-        if (targetTask) {
-          // 已移除调试日志
-          if (targetTask.completed) {
-            // 已移除调试日志
-          } else {
-            // 已移除调试日志
-            // 尝试修复：强制重新调用完成接口
-            wx.showModal({
-              title: '检测到数据同步问题',
-              content: '任务完成状态未正确保存，是否尝试修复？',
-              success: async (res) => {
-                if (res.confirm) {
-                  // 已移除调试日志
-                  try {
-                    await CloudApi.completeTask(taskId, batchId, '修复同步')
-                    setTimeout(() => {
-                      this.loadTodayBreedingTasks()
-                    }, 1000)
-                  } catch (error: any) {
-                    // 已移除调试日志
-                  }
-                }
-              }
-            })
-          }
-        } else {
-          // 已移除调试日志
-        }
-      } else {
-        // 已移除调试日志
-      }
-    } catch (error: any) {
-      // 已移除调试日志
-    }
-  },
-
-
-  /**
    * 任务详情弹窗可见性变化
    */
   onTaskDetailPopupChange(event: any) {
@@ -1647,7 +1417,7 @@ Page({
   // 跳转到天气详情页
   navigateToWeatherDetail() {
     wx.navigateTo({
-      url: '/pages/weather-detail/weather-detail'
+      url: '/packageAI/weather-detail/weather-detail'
     })
   },
 
@@ -2465,7 +2235,6 @@ Page({
         nutritionName: '',
         quantity: 0,
         unit: '',
-        purpose: '',
         dosage: '',
         notes: '',
         operator: userInfo?.nickName || userInfo?.name || '用户'
@@ -2782,7 +2551,6 @@ Page({
         nutritionName: '',
         quantity: 0,
         unit: '',
-        purpose: '',
         dosage: '',
         notes: '',
         operator: ''
@@ -2862,11 +2630,6 @@ Page({
       // 已移除调试日志
     } else if (selectedNutrition && nutritionFormData.quantity > selectedNutrition.stock) {
       errors.quantity = `库存不足，当前库存${selectedNutrition.stock}${selectedNutrition.unit}`
-      // 已移除调试日志
-    }
-
-    if (!nutritionFormData.purpose) {
-      errors.purpose = '请填写使用用途'
       // 已移除调试日志
     }
 
@@ -3079,10 +2842,10 @@ Page({
         materialId: nutritionFormData.nutritionId,
         type: 'use',
         quantity: Number(nutritionFormData.quantity),
-        targetLocation: nutritionFormData.purpose,
+        targetLocation: selectedTask.title, // 使用任务标题作为用途
         operator: nutritionFormData.operator || '用户',
         status: '已完成',
-        notes: `用途：${nutritionFormData.purpose}${nutritionFormData.dosage ? '，剂量：' + nutritionFormData.dosage : ''}${nutritionFormData.notes ? '，备注：' + nutritionFormData.notes : ''}，任务：${selectedTask.title}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
+        notes: `任务：${selectedTask.title}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}${nutritionFormData.dosage ? '，剂量：' + nutritionFormData.dosage : ''}${nutritionFormData.notes ? '，备注：' + nutritionFormData.notes : ''}`,
         recordDate: new Date().toISOString().split('T')[0]
       }
 
@@ -3158,8 +2921,10 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'breeding-todo', 
         data: {
-          action: 'complete_task',
-          taskId: task.id || task.taskId || task._id
+          action: 'completeTask',
+          taskId: task.id || task.taskId || task._id,
+          batchId: task.batchId || task.batchNumber || '',
+          notes: '营养品领用完成'
         }
       })
 

@@ -32,7 +32,7 @@ page {
 .scroll-container {
   flex: 1;
   background-color: #f9fafb !important;
-  margin-top: -var(--spacing-lg, 24rpx);
+  margin-top: 90px; /* 状态栏 + 导航栏高度 + 小间距 */
   padding-top: var(--spacing-base, 16rpx);
   padding-bottom: 0;
   border-radius: var(--spacing-xl, 32rpx) var(--spacing-xl, 32rpx) 0 0;
@@ -432,18 +432,14 @@ page {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
 }
 
 .trend-up {
   color: var(--color-success);
-  background: var(--color-success-lighter);
 }
 
 .trend-down {
   color: var(--color-danger);
-  background: var(--color-danger-lighter);
 }
 
 /* 待办事项 - 现代化设计 */
@@ -1529,12 +1525,6 @@ page {
   padding: var(--spacing-4xl) var(--spacing-xl);
   text-align: center;
   
-  .empty-icon {
-    font-size: 80rpx;
-    margin-bottom: var(--spacing-lg);
-    opacity: 0.6;
-  }
-  
   .empty-title {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-medium);
@@ -1608,25 +1598,6 @@ page {
   
   .todo-batch {
     font-size: 22rpx;
-  }
-}
-
-/* 调试功能样式 */
-.debug-actions {
-  margin-top: var(--spacing-xl);
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-base);
-  
-  .debug-btn {
-    font-size: var(--font-size-sm);
-    padding: var(--spacing-sm) var(--spacing-lg);
-  }
-  
-  .fix-btn {
-    background: rgba(255, 193, 7, 0.1) !important;
-    border-color: #ffc107 !important;
-    color: #e65100 !important;
   }
 }
 

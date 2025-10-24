@@ -333,7 +333,7 @@ class CloudApi {
   /**
    * 获取健康概览
    */
-  static async getHealthOverview(batchId: string, dateRange?: any): Promise<CloudApiResponse> {
+  static async getHealthOverview(batchId: string, dateRange?: any, options?: CloudApiOptions): Promise<CloudApiResponse> {
     return this.callFunction(
       'health-management',
       {
@@ -342,9 +342,9 @@ class CloudApi {
         dateRange
       },
       {
-        loading: true,
-        loadingText: '加载健康数据...',
-        showError: true
+        loading: false, // 由调用方控制 loading 状态
+        showError: true,
+        ...options
       }
     )
   }
@@ -522,6 +522,46 @@ class CloudApi {
       })
       return []
     }
+  }
+
+  // ============ 死亡记录 API ============
+
+  /**
+   * 创建死亡记录
+   */
+  static async createDeathRecord(data: any): Promise<CloudApiResponse> {
+    return this.callFunction(
+      'health-management', 
+      { action: 'createDeathRecord', ...data },
+      { 
+        loading: true,
+        loadingText: '提交死亡记录...',
+        showSuccess: true,
+        successText: '记录提交成功'
+      }
+    )
+  }
+
+  /**
+   * 查询死亡记录列表
+   */
+  static async listDeathRecords(params: any): Promise<CloudApiResponse> {
+    return this.callFunction(
+      'health-management',
+      { action: 'listDeathRecords', ...params },
+      { loading: true, loadingText: '加载记录...' }
+    )
+  }
+
+  /**
+   * 获取死亡统计
+   */
+  static async getDeathStats(batchId: string): Promise<CloudApiResponse> {
+    return this.callFunction(
+      'health-management',
+      { action: 'getDeathStats', batchId },
+      { loading: true, loadingText: '加载统计数据...' }
+    )
   }
 
   /**

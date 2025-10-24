@@ -3,7 +3,7 @@
 
 // 登录白名单页面
 const LOGIN_WHITELIST = [
-  '/pages/login/login',
+  '/packageUser/login/login',
 ]
 
 /**
@@ -27,7 +27,7 @@ export function checkPageAuth() {
     
     // 直接跳转，不显示弹窗
     wx.reLaunch({
-      url: '/pages/login/login'
+      url: '/packageUser/login/login'
     })
     
     return false

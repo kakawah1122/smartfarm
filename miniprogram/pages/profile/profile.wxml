@@ -3,11 +3,8 @@
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="个人中心"
-    show-back="true"
-    show-menu="true"
-    show-record="false"
+    show-back="{{true}}"
     bind:back="goBack"
-    bind:menu="onSettingsTap"
   />
   
   <scroll-view class="profile-content" scroll-y>

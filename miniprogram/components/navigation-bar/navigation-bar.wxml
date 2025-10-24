@@ -1,11 +1,17 @@
-<!-- 新式导航栏组件 - 参照BOSS直聘设计 -->
+<!-- 导航栏组件 - 符合微信小程序官方规范 -->
 <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
-  <view class="navbar-content">
+  <view class="navbar-content" style="height: {{navBarHeight}}px;">
+    <!-- 左侧返回按钮 -->
     <view class="navbar-left" wx:if="{{showBack}}" bind:tap="goBack">
-      <view class="navbar-action-btn">
-        <text class="navbar-action-icon">←</text>
-      </view>
+      <text class="back-icon">←</text>
     </view>
-    <text class="navbar-title">{{title}}</text>
+    
+    <!-- 中间标题 -->
+    <view class="navbar-center">
+      <text class="navbar-title">{{title}}</text>
+    </view>
+    
+    <!-- 右侧预留空间，与系统胶囊按钮宽度一致 -->
+    <view class="navbar-right" style="width: {{capsuleWidth}}px;"></view>
   </view>
 </view>

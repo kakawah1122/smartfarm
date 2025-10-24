@@ -1,11 +1,9 @@
 <view class="page page-container mobile-container">
-  <!-- 新式导航栏 -->
+  <!-- 自定义导航栏 -->
   <navigation-bar 
     title="智慧养鹅"
     show-back="{{false}}"
   />
-
-
 
   <scroll-view class="scroll-container" scroll-y>
     <!-- 天气模块 -->
@@ -67,14 +65,14 @@
         <view class="price-item success-bg">
           <text class="price-label">成鹅价格</text>
           <text class="price-value success-text">¥{{goosePrice.adult}}<text class="price-unit">/斤</text></text>
-          <text class="price-trend {{goosePrice.adultTrend > 0 ? 'trend-up' : 'trend-down'}}">
+          <text class="price-trend {{goosePrice.adultTrend > 0 ? 'trend-down' : 'trend-up'}}">
             {{goosePrice.adultTrend > 0 ? '↑' : '↓'}} {{goosePrice.adultChange}}
           </text>
         </view>
         <view class="price-item primary-bg">
           <text class="price-label">鹅苗价格</text>
           <text class="price-value primary-text">¥{{goosePrice.gosling}}<text class="price-unit">/羽</text></text>
-          <text class="price-trend {{goosePrice.goslingTrend > 0 ? 'trend-up' : 'trend-down'}}">
+          <text class="price-trend {{goosePrice.goslingTrend > 0 ? 'trend-down' : 'trend-up'}}">
             {{goosePrice.goslingTrend > 0 ? '↑' : '↓'}} {{goosePrice.goslingChange}}
           </text>
         </view>
@@ -115,19 +113,8 @@
       
       <!-- 空状态 -->
       <view wx:else class="todo-empty">
-        <view class="empty-icon">📋</view>
         <text class="empty-title">今日无待办任务</text>
         <text class="empty-desc">所有任务已完成或暂无安排</text>
-        
-        <!-- 快速操作 -->
-        <view class="debug-actions">
-          <t-button size="small" theme="primary" variant="outline" bind:tap="debugLoadTodos" class="debug-btn">
-            刷新待办
-          </t-button>
-          <t-button size="small" theme="warning" variant="outline" bind:tap="fixTaskSystem" class="debug-btn fix-btn">
-            🔧 修复系统
-          </t-button>
-        </view>
       </view>
     </view>
 
@@ -581,15 +568,6 @@
                  value="{{nutritionFormData.quantity > 0 ? nutritionFormData.quantity : ''}}"
                  bindinput="onNutritionQuantityInput" />
           <text wx:if="{{nutritionFormErrors.quantity}}" class="error-text">{{nutritionFormErrors.quantity}}</text>
-        </view>
-        <view class="form-row">
-          <text class="form-label required">使用用途</text>
-          <input class="form-input" 
-                 placeholder="请输入使用用途"
-                 value="{{nutritionFormData.purpose}}"
-                 data-field="purpose"
-                 bindinput="onNutritionFormInput" />
-          <text wx:if="{{nutritionFormErrors.purpose}}" class="error-text">{{nutritionFormErrors.purpose}}</text>
         </view>
         <view class="form-row">
           <text class="form-label">使用剂量</text>

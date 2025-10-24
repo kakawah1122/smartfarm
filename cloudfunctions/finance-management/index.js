@@ -192,6 +192,16 @@ exports.main = async (event, context) => {
       case 'get_financial_summary':
         return await getFinancialSummary(event, wxContext)
       
+      // 死亡损失记录
+      case 'createDeathLoss':
+        return await createDeathLoss(event, wxContext)
+      case 'createDeathLossRecord':
+        return await createDeathLossRecord(event, wxContext)
+      
+      // 治疗成本记录
+      case 'createTreatmentCostRecord':
+        return await createTreatmentCostRecord(event, wxContext)
+      
       // 报表生成
       case 'generate_financial_report':
         return await generateFinancialReport(event, wxContext)
@@ -572,6 +582,240 @@ async function listRevenueRecords(event, wxContext) {
     data: {
       records: records.data,
       pagination: { page, pageSize, total: total.total, totalPages: Math.ceil(total.total / pageSize) }
+    }
+  }
+}
+
+// ============ 死亡损失记录管理 ============
+
+/**
+ * 创建死亡损失记录
+ */
+async function createDeathLoss(event, wxContext) {
+  try {
+    const openid = wxContext.OPENID
+    
+    // 验证权限（只读权限即可，因为是系统自动创建）
+    // 实际应用中可能需要更严格的权限控制
+    
+    const {
+      batchId,
+      batchNumber,
+      deathRecordId,
+      deathCount,
+      unitCost,
+      totalLoss,
+      deathCause,
+      recordDate,
+      operator
+    } = event
+    
+    // 验证必填项
+    if (!batchId) throw new Error('批次ID不能为空')
+    if (!deathRecordId) throw new Error('死亡记录ID不能为空')
+    if (!deathCount || deathCount <= 0) throw new Error('死亡数量必须大于0')
+    if (!totalLoss || totalLoss <= 0) throw new Error('损失金额必须大于0')
+    
+    // 生成财务记录ID
+    const financeId = generateFinanceId('DL')
+    
+    // 创建成本记录
+    const costRecord = {
+      recordId: financeId,
+      costType: 'death_loss', // 死亡损失类型
+      category: 'loss', // 分类为损失
+      batchId,
+      batchNumber: batchNumber || '',
+      amount: parseFloat(totalLoss),
+      description: `死亡损失 - ${deathCause} (${deathCount}只)`,
+      details: {
+        deathRecordId,
+        deathCount,
+        unitCost: parseFloat(unitCost),
+        deathCause,
+        causeDescription: `批次${batchNumber || batchId}发生${deathCause}，导致${deathCount}只死亡`
+      },
+      recordDate: recordDate || new Date().toISOString().split('T')[0],
+      operator: operator || openid,
+      isDeleted: false,
+      createTime: new Date(),
+      updateTime: new Date()
+    }
+    
+    // 插入财务记录
+    const result = await db.collection('finance_cost_records').add({
+      data: costRecord
+    })
+    
+    // 记录审计日志
+    await db.collection('sys_audit_logs').add({
+      data: {
+        userId: operator || openid,
+        action: 'create_death_loss',
+        collection: 'finance_cost_records',
+        recordId: result._id,
+        details: {
+          batchId,
+          deathCount,
+          totalLoss,
+          deathCause,
+          result: 'success'
+        },
+        timestamp: new Date()
+      }
+    })
+    
+    return {
+      success: true,
+      data: { 
+        financeRecordId: result._id,
+        recordId: financeId,
+        amount: totalLoss
+      },
+      message: '财务损失记录创建成功'
+    }
+    
+  } catch (error) {
+    console.error('创建死亡损失记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '创建财务损失记录失败'
+    }
+  }
+}
+
+/**
+ * 创建死亡损失记录（新版，从治疗流程调用）
+ */
+async function createDeathLossRecord(event, wxContext) {
+  try {
+    const openid = wxContext.OPENID
+    const {
+      deathRecordId,
+      batchId,
+      deathCount,
+      totalLoss,
+      treatmentCost = 0,
+      description
+    } = event
+    
+    // 验证必填项
+    if (!deathRecordId) throw new Error('死亡记录ID不能为空')
+    if (!batchId) throw new Error('批次ID不能为空')
+    if (!deathCount || deathCount <= 0) throw new Error('死亡数量必须大于0')
+    if (!totalLoss || totalLoss <= 0) throw new Error('损失金额必须大于0')
+    
+    const financeId = generateFinanceId('LOSS')
+    
+    // 创建财务成本记录
+    const costRecord = {
+      recordId: financeId,
+      costType: 'loss',
+      costCategory: 'death_loss',
+      sourceType: 'death',
+      sourceRecordId: deathRecordId,
+      batchId,
+      amount: parseFloat(totalLoss),
+      description: description || `死亡损失 - ${deathCount}只`,
+      details: {
+        deathRecordId,
+        deathCount,
+        treatmentCost: parseFloat(treatmentCost),
+        animalCost: parseFloat(totalLoss) - parseFloat(treatmentCost)
+      },
+      status: 'confirmed',
+      createTime: new Date().toISOString(),
+      updateTime: new Date().toISOString(),
+      isDeleted: false,
+      _openid: openid
+    }
+    
+    const result = await db.collection('finance_cost_records').add({
+      data: costRecord
+    })
+    
+    return {
+      success: true,
+      data: {
+        financeRecordId: result._id,
+        recordId: financeId,
+        amount: totalLoss
+      },
+      message: '死亡损失记录创建成功'
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '创建死亡损失记录失败'
+    }
+  }
+}
+
+/**
+ * 创建治疗成本记录
+ */
+async function createTreatmentCostRecord(event, wxContext) {
+  try {
+    const openid = wxContext.OPENID
+    const {
+      treatmentId,
+      batchId,
+      totalCost,
+      diagnosis,
+      description
+    } = event
+    
+    // 验证必填项
+    if (!treatmentId) throw new Error('治疗记录ID不能为空')
+    if (!batchId) throw new Error('批次ID不能为空')
+    if (!totalCost || totalCost <= 0) throw new Error('治疗成本必须大于0')
+    
+    const financeId = generateFinanceId('TRT')
+    
+    // 创建财务成本记录
+    const costRecord = {
+      recordId: financeId,
+      costType: 'health',
+      costCategory: 'treatment',
+      sourceType: 'treatment',
+      sourceRecordId: treatmentId,
+      batchId,
+      amount: parseFloat(totalCost),
+      description: description || `治疗成本 - ${diagnosis}`,
+      details: {
+        treatmentId,
+        diagnosis,
+        treatmentType: 'medication_and_care'
+      },
+      status: 'confirmed',
+      createTime: new Date().toISOString(),
+      updateTime: new Date().toISOString(),
+      isDeleted: false,
+      _openid: openid
+    }
+    
+    const result = await db.collection('finance_cost_records').add({
+      data: costRecord
+    })
+    
+    return {
+      success: true,
+      data: {
+        financeRecordId: result._id,
+        recordId: financeId,
+        amount: totalCost
+      },
+      message: '治疗成本记录创建成功'
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '创建治疗成本记录失败'
     }
   }
 }

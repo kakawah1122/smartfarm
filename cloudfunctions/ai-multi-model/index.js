@@ -16,6 +16,24 @@ const MODEL_CONFIGS = {
     costPerKToken: 0, // 免费额度
     maxRequestsPerDay: 1000
   },
+  'siliconflow-qwen': {
+    provider: 'SiliconFlow',
+    baseURL: 'https://api.siliconflow.cn/v1/',
+    model: 'Qwen/Qwen2.5-72B-Instruct',
+    apiKey: process.env.siliconflow_API_KEY,
+    maxTokens: 4096,
+    costPerKToken: 0, // 完全免费
+    maxRequestsPerDay: 5000
+  },
+  'siliconflow-deepseek': {
+    provider: 'SiliconFlow',
+    baseURL: 'https://api.siliconflow.cn/v1/',
+    model: 'deepseek-ai/DeepSeek-V2.5',
+    apiKey: process.env.siliconflow_API_KEY,
+    maxTokens: 4096,
+    costPerKToken: 0, // 完全免费
+    maxRequestsPerDay: 5000
+  },
   'deepseek-chat': {
     provider: 'DeepSeek',
     baseURL: 'https://api.deepseek.com/v1/',
@@ -43,6 +61,31 @@ const MODEL_CONFIGS = {
     costPerKToken: 0, // 免费
     maxRequestsPerDay: 14400
   },
+  // ✨ 多模态视觉模型
+  'glm-4v-flash': {
+    provider: '智谱AI',
+    baseURL: 'https://open.bigmodel.cn/api/paas/v4/',
+    model: 'glm-4v-flash',  // ✅ 永久免费版本
+    apiKey: process.env.GLM4_API_KEY,
+    maxTokens: 4096,
+    costPerKToken: 0, // 永久免费
+    maxRequestsPerDay: 2000,  // 免费版限额更高
+    supportVision: true,
+    maxImages: 4
+  },
+  // 'qwen-vl': {
+  //   provider: 'SiliconFlow',
+  //   baseURL: 'https://api.siliconflow.cn/v1/',
+  //   model: 'Qwen/Qwen2.5-VL-7B-Instruct',
+  //   apiKey: process.env.siliconflow_API_KEY,
+  //   maxTokens: 4096,
+  //   costPerKToken: 0, // 完全免费
+  //   maxRequestsPerDay: 5000,
+  //   supportVision: true,
+  //   maxImages: 4
+  // },
+  // ⚠️ 上述模型在SiliconFlow上不可用，已暂时禁用
+  
   'baidu-vision': {
     provider: '百度AI',
     baseURL: 'https://aip.baidubce.com/rest/2.0/',
@@ -62,19 +105,30 @@ const MODEL_CONFIGS = {
 // 任务-模型映射策略
 const TASK_MODEL_MAPPING = {
   'urgent_diagnosis': {
-    primary: 'groq-fast',
+    primary: 'siliconflow-qwen',
     fallback: ['glm-4-free', 'deepseek-chat'],
     timeout: 3000
   },
   'detailed_analysis': {
-    primary: 'moonshot-free',
-    fallback: ['deepseek-chat', 'glm-4-free'],
+    primary: 'siliconflow-deepseek',
+    fallback: ['glm-4-free'],
     timeout: 10000
   },
   'general_chat': {
-    primary: 'glm-4-free',
-    fallback: ['deepseek-chat'],
+    primary: 'siliconflow-qwen',
+    fallback: ['glm-4-free'],
     timeout: 5000
+  },
+  'health_diagnosis': {
+    primary: 'siliconflow-qwen',
+    fallback: ['glm-4-free', 'deepseek-chat'],
+    timeout: 15000
+  },
+  // ✨ 带图片的健康诊断 - 使用视觉模型
+  'health_diagnosis_vision': {
+    primary: 'glm-4v-flash',  // ✅ 使用智谱AI多模态模型（永久免费）
+    fallback: ['siliconflow-qwen', 'glm-4-free'],  // ✅ 备选：降级为纯文本诊断
+    timeout: 30000  // 30秒超时
   },
   'image_recognition': {
     primary: 'baidu-vision',
@@ -82,13 +136,13 @@ const TASK_MODEL_MAPPING = {
     timeout: 5000
   },
   'financial_analysis': {
-    primary: 'deepseek-chat',
+    primary: 'siliconflow-deepseek',
     fallback: ['glm-4-free'],
     timeout: 8000
   },
   'farming_advice': {
-    primary: 'glm-4-free',
-    fallback: ['deepseek-chat'],
+    primary: 'siliconflow-deepseek',
+    fallback: ['glm-4-free'],
     timeout: 6000
   }
 }
@@ -110,6 +164,188 @@ class AIModelManager {
     this.db = cloud.database()
     this.usageCollection = this.db.collection('sys_ai_usage')
     this.cacheCollection = this.db.collection('sys_ai_cache')
+  }
+
+  // ✨ 下载云存储图片并转换为base64
+  async downloadImageToBase64(fileID) {
+    try {
+      console.log('正在下载图片:', fileID)
+      
+      // 方法1: 直接下载文件内容
+      try {
+        const result = await cloud.downloadFile({
+          fileID: fileID
+        })
+        
+        console.log('下载结果:', {
+          有内容: !!result.fileContent,
+          内容类型: typeof result.fileContent,
+          内容长度: result.fileContent?.length
+        })
+        
+        if (result.fileContent) {
+          // 转换为base64
+          const base64 = result.fileContent.toString('base64')
+          
+          // 获取文件扩展名
+          const ext = fileID.split('.').pop().toLowerCase()
+          const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg'
+          
+          const dataUrl = `data:${mimeType};base64,${base64}`
+          
+          console.log('图片转换成功 (方法1):', {
+            fileID,
+            base64长度: base64.length,
+            mimeType
+          })
+          
+          return dataUrl
+        }
+      } catch (directError) {
+        console.warn('方法1下载失败，尝试方法2:', directError.message)
+      }
+      
+      // 方法2: 使用临时链接下载
+      console.log('尝试方法2: 获取临时链接')
+      const tempResult = await cloud.getTempFileURL({
+        fileList: [fileID]
+      })
+      
+      if (tempResult.fileList && tempResult.fileList.length > 0) {
+        const fileInfo = tempResult.fileList[0]
+        const tempURL = fileInfo.tempFileURL
+        console.log('获得临时链接:', tempURL)
+        
+        // 检查URL是否有效
+        if (!tempURL) {
+          throw new Error(`获取临时链接失败: ${fileInfo.errmsg || '未知错误'}`)
+        }
+        
+        // 使用axios下载
+        const response = await axios.get(tempURL, {
+          responseType: 'arraybuffer',
+          timeout: 10000
+        })
+        
+        // 转换为base64
+        const base64 = Buffer.from(response.data).toString('base64')
+        
+        // 获取文件扩展名
+        const ext = fileID.split('.').pop().toLowerCase()
+        const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg'
+        
+        const dataUrl = `data:${mimeType};base64,${base64}`
+        
+        console.log('图片转换成功 (方法2):', {
+          fileID,
+          base64长度: base64.length,
+          mimeType
+        })
+        
+        return dataUrl
+      }
+      
+      throw new Error('两种方法都无法下载图片')
+    } catch (error) {
+      console.error('====== 下载图片失败 ======')
+      console.error('FileID:', fileID)
+      console.error('错误:', error.message)
+      console.error('错误栈:', error.stack)
+      throw new Error(`无法下载图片 ${fileID}: ${error.message}`)
+    }
+  }
+
+  // ✨ 处理包含图片的消息
+  // ✅ 智能方案：智谱AI使用Base64，其他API使用URL
+  async processMessagesWithImages(messages, imageFileIDs = [], modelId = '') {
+    if (!imageFileIDs || imageFileIDs.length === 0) {
+      return messages
+    }
+
+    console.log(`====== 开始处理图片 ======`)
+    console.log(`图片数量: ${imageFileIDs.length}`)
+    console.log(`目标模型: ${modelId}`)
+    
+    const modelConfig = MODEL_CONFIGS[modelId]
+    // 智谱AI使用Base64格式
+    const useBase64 = (modelConfig?.provider === '智谱AI')
+    
+    console.log(`图片格式策略: ${useBase64 ? 'Base64 Data URI（智谱AI要求）' : 'HTTPS URL'}`)
+
+    let imageData = []
+    
+    if (useBase64) {
+      // 智谱AI：下载并转换为Base64
+      console.log(`开始下载并转换图片为Base64...`)
+      
+      // 智谱AI最多2张图片
+      const maxImages = 2
+      const imagesToProcess = Math.min(imageFileIDs.length, maxImages)
+      
+      for (let i = 0; i < imagesToProcess; i++) {
+        try {
+          const dataUrl = await this.downloadImageToBase64(imageFileIDs[i])
+          imageData.push(dataUrl)
+          console.log(`✅ 图片${i + 1} 转换成功，大小: ${(dataUrl.length / 1024).toFixed(1)}KB`)
+        } catch (error) {
+          console.error(`❌ 图片${i + 1} 转换失败:`, error.message)
+        }
+      }
+      
+      if (imageFileIDs.length > maxImages) {
+        console.warn(`⚠️ 为控制请求大小，仅处理前${maxImages}张图片（共${imageFileIDs.length}张）`)
+      }
+    } else {
+      // 其他API：获取HTTPS临时URL
+      console.log(`正在获取临时URL...`)
+      const tempResult = await cloud.getTempFileURL({
+        fileList: imageFileIDs
+      })
+      
+      tempResult.fileList.forEach((item, index) => {
+        if (item.status === 0) {
+          imageData.push(item.tempFileURL)
+          console.log(`✅ 图片${index + 1} URL获取成功`)
+        } else {
+          console.error(`❌ 图片${index + 1} 失败:`, item.errmsg)
+        }
+      })
+    }
+    
+    if (imageData.length === 0) {
+      console.warn('所有图片处理失败，使用纯文本诊断')
+      return messages
+    }
+
+    console.log(`✅ 成功处理${imageData.length}张图片`)
+
+    // 修改用户消息，添加图片
+    const processedMessages = messages.map((msg, index) => {
+      if (msg.role === 'user' && index === messages.length - 1) {
+        return {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: typeof msg.content === 'string' ? msg.content : msg.content[0]?.text || ''
+            },
+            ...imageData.map(url => ({
+              type: 'image_url',
+              image_url: {
+                url: url  // Base64 Data URI 或 HTTPS URL
+              }
+            }))
+          ]
+        }
+      }
+      return msg
+    })
+
+    console.log(`====== 消息处理完成 ======`)
+    const estimatedSize = (JSON.stringify(processedMessages).length / 1024).toFixed(2)
+    console.log(`请求体大小: 约${estimatedSize}KB`)
+
+    return processedMessages
   }
 
   // 智能模型选择
@@ -162,7 +398,7 @@ class AIModelManager {
     }
   }
 
-  // 调用AI模型
+  // 调用AI模型（带重试）
   async callModel(modelId, messages, options = {}) {
     const config = MODEL_CONFIGS[modelId]
     if (!config) {
@@ -181,6 +417,8 @@ class AIModelManager {
         response = await this.callMoonshot(config, messages, options)
       } else if (config.provider === 'Groq') {
         response = await this.callGroq(config, messages, options)
+      } else if (config.provider === 'SiliconFlow') {
+        response = await this.callSiliconFlow(config, messages, options)
       } else {
         throw new Error(`不支持的AI供应商: ${config.provider}`)
       }
@@ -190,30 +428,110 @@ class AIModelManager {
       
       return response
     } catch (error) {
-      // 已移除调试日志
+      // 如果是429错误（速率限制），添加特殊标记
+      if (error.response?.status === 429) {
+        error.isRateLimited = true
+        error.retryAfter = error.response?.headers?.['retry-after'] || 60
+      }
       throw error
     }
   }
 
   // 调用智谱AI
   async callZhipuAI(config, messages, options) {
-    const response = await axios.post(`${config.baseURL}chat/completions`, {
-      model: config.model,
-      messages,
-      max_tokens: options.maxTokens || config.maxTokens,
-      temperature: options.temperature || 0.7
-    }, {
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: options.timeout || 10000
-    })
+    // 检查消息中是否有图片（提前定义，catch块也能用）
+    const hasImages = messages.some(msg => 
+      Array.isArray(msg.content) && 
+      msg.content.some(item => item.type === 'image_url')
+    )
+    
+    try {
+      console.log('====== 调用智谱AI ======')
+      console.log('模型:', config.model)
+      console.log('API Key前6位:', config.apiKey?.substring(0, 6))
+      console.log('包含图片:', hasImages)
+      
+      if (hasImages && config.model === 'glm-4-flash') {
+        console.warn('警告: glm-4-flash不支持视觉，应使用glm-4v')
+      }
+      
+      const requestData = {
+        model: config.model,
+        messages,
+        max_tokens: options.maxTokens || config.maxTokens,
+        temperature: options.temperature || 0.7
+      }
+      
+      console.log('请求配置:', {
+        model: requestData.model,
+        url: `${config.baseURL}chat/completions`,
+        消息数量: messages.length,
+        消息结构: messages.map(m => ({
+          role: m.role,
+          内容类型: Array.isArray(m.content) ? 'multipart' : 'text',
+          内容项: Array.isArray(m.content) ? m.content.map(item => {
+            if (item.type === 'image_url') {
+              return {
+                type: 'image_url',
+                url前缀: item.image_url?.url?.substring(0, 50) + '...'  // 只显示前50个字符
+              }
+            }
+            return item.type
+          }) : 'text'
+        }))
+      })
+      
+      // 如果有图片,打印完整的消息结构（用于调试）
+      if (hasImages) {
+        console.log('完整消息结构（含图片）:', JSON.stringify(messages, null, 2).substring(0, 2000))
+      }
 
-    return {
-      content: response.data.choices[0].message.content,
-      usage: response.data.usage,
-      model: config.model
+      const response = await axios.post(`${config.baseURL}chat/completions`, requestData, {
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: options.timeout || 30000
+      })
+
+      console.log('智谱AI调用成功!')
+      console.log('返回内容长度:', response.data.choices[0].message.content.length)
+
+      return {
+        content: response.data.choices[0].message.content,
+        usage: response.data.usage,
+        model: config.model
+      }
+    } catch (error) {
+      console.error('====== 智谱AI调用失败 ======')
+      console.error('错误状态:', error.response?.status)
+      console.error('错误数据:', JSON.stringify(error.response?.data, null, 2))
+      console.error('错误headers:', JSON.stringify(error.response?.headers, null, 2))
+      console.error('完整错误:', error.message)
+      console.error('错误栈:', error.stack)
+      
+      if (error.response?.status === 400) {
+        console.error('====== HTTP 400 详细分析 ======')
+        console.error('1. 智谱AI返回的错误:', error.response?.data)
+        console.error('2. 请求的模型:', config.model)
+        console.error('3. 请求的消息数量:', messages.length)
+        console.error('4. 是否包含图片:', hasImages)
+        
+        // 打印第一个图片URL的前100个字符
+        if (hasImages) {
+          const firstImageUrl = messages.find(m => 
+            Array.isArray(m.content) && 
+            m.content.some(item => item.type === 'image_url')
+          )?.content?.find(item => item.type === 'image_url')?.image_url?.url
+          
+          if (firstImageUrl) {
+            console.error('5. 第一张图片URL前100字符:', firstImageUrl.substring(0, 100))
+            console.error('6. 图片URL长度:', firstImageUrl.length)
+          }
+        }
+      }
+      
+      throw error
     }
   }
 
@@ -282,6 +600,89 @@ class AIModelManager {
       model: config.model
     }
   }
+
+  // 调用SiliconFlow
+  async callSiliconFlow(config, messages, options) {
+    try {
+      console.log('====== 调用 SiliconFlow API ======')
+      console.log('模型:', config.model)
+      console.log('消息数量:', messages.length)
+      
+      // 检查消息中是否有图片
+      const hasImages = messages.some(msg => 
+        Array.isArray(msg.content) && 
+        msg.content.some(item => item.type === 'image_url')
+      )
+      console.log('包含图片:', hasImages)
+      
+      if (hasImages) {
+        // 统计图片信息
+        let imageCount = 0
+        let totalImageSize = 0
+        messages.forEach(msg => {
+          if (Array.isArray(msg.content)) {
+            msg.content.forEach(item => {
+              if (item.type === 'image_url' && item.image_url?.url) {
+                imageCount++
+                // 估算base64大小
+                const base64Data = item.image_url.url.split(',')[1] || ''
+                totalImageSize += base64Data.length
+              }
+            })
+          }
+        })
+        console.log(`图片统计: ${imageCount}张, 总大小: ${Math.round(totalImageSize / 1024)}KB`)
+      }
+      
+      const requestData = {
+        model: config.model,
+        messages,
+        max_tokens: options.maxTokens || config.maxTokens,
+        temperature: options.temperature || 0.7
+      }
+      
+      console.log('请求配置:', {
+        model: requestData.model,
+        max_tokens: requestData.max_tokens,
+        temperature: requestData.temperature,
+        消息结构: messages.map(m => ({
+          role: m.role,
+          内容类型: Array.isArray(m.content) ? 'multipart' : 'text'
+        }))
+      })
+
+      const response = await axios.post(`${config.baseURL}chat/completions`, requestData, {
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: options.timeout || 30000  // 增加到30秒
+      })
+
+      console.log('API调用成功!')
+      console.log('返回内容长度:', response.data.choices[0].message.content.length)
+
+      return {
+        content: response.data.choices[0].message.content,
+        usage: response.data.usage,
+        model: config.model
+      }
+    } catch (error) {
+      console.error('====== SiliconFlow API 调用失败 ======')
+      console.error('错误状态:', error.response?.status)
+      console.error('错误信息:', error.response?.data)
+      console.error('完整错误:', error.message)
+      
+      // 如果是400错误，可能是图片格式问题
+      if (error.response?.status === 400) {
+        console.error('HTTP 400 - 请求参数错误')
+        console.error('可能原因: 1.图片太大 2.格式不支持 3.模型不支持视觉')
+      }
+      
+      throw error
+    }
+  }
+
 
   // 记录使用量
   async recordUsage(modelId, response) {
@@ -389,10 +790,22 @@ exports.main = async (event, context) => {
 
 // 处理对话完成
 async function handleChatCompletion(event, manager) {
-  const { messages, taskType = 'general_chat', priority = 'balanced', options = {} } = event
+  const { 
+    messages, 
+    taskType = 'general_chat', 
+    priority = 'balanced', 
+    options = {},
+    images = []  // ✨ 新增: 图片URL数组
+  } = event
+  
+  // ✨ 如果有图片且任务类型是健康诊断，自动切换到视觉任务
+  let actualTaskType = taskType
+  if (images && images.length > 0 && taskType === 'health_diagnosis') {
+    actualTaskType = 'health_diagnosis_vision'
+  }
   
   // 生成缓存键
-  const cacheKey = `chat_${JSON.stringify({ messages, taskType })}`
+  const cacheKey = `chat_${JSON.stringify({ messages, actualTaskType, images })}`
   
   // 检查缓存
   const cached = await manager.checkCache(cacheKey)
@@ -405,21 +818,121 @@ async function handleChatCompletion(event, manager) {
   }
 
   try {
-    // 选择模型
-    const modelId = await manager.selectModel(taskType, priority)
-    
-    // 调用模型
-    const result = await manager.callModel(modelId, messages, options)
-    
-    // 设置缓存
-    await manager.setCache(cacheKey, result, 3600)
-    
-    return {
-      success: true,
-      data: result,
-      modelId,
-      fromCache: false
+    // 获取模型配置
+    const modelMapping = TASK_MODEL_MAPPING[actualTaskType]
+    if (!modelMapping) {
+      throw new Error(`未找到任务类型 ${actualTaskType} 的模型配置`)
     }
+
+    // 准备尝试的模型列表
+    const modelsToTry = [modelMapping.primary]
+    if (modelMapping.fallback) {
+      modelsToTry.push(modelMapping.fallback)
+    }
+
+    // ✨ 处理图片（如果有）
+    let processedMessages = messages
+    let usedVision = false
+    
+    if (images && images.length > 0) {
+      console.log(`开始处理${images.length}张图片...`)
+      try {
+        // 传入第一个要尝试的模型ID，以便选择正确的图片格式
+        processedMessages = await manager.processMessagesWithImages(messages, images, modelsToTry[0])
+        
+        // 检查是否真的包含了图片
+        const hasImageContent = processedMessages.some(msg => 
+          Array.isArray(msg.content) && 
+          msg.content.some(item => item.type === 'image_url')
+        )
+        
+        if (hasImageContent) {
+          usedVision = true
+          console.log('图片处理完成，已加入消息')
+        } else {
+          console.warn('⚠️ 图片处理失败，降级为纯文本诊断')
+          // 如果是视觉任务但图片失败，切换回纯文本任务
+          if (actualTaskType === 'health_diagnosis_vision') {
+            actualTaskType = 'health_diagnosis'
+            console.log(`切换任务类型: health_diagnosis_vision → health_diagnosis`)
+            
+            // 重新获取纯文本模型配置
+            const textModelMapping = TASK_MODEL_MAPPING[actualTaskType]
+            modelsToTry.length = 0  // 清空
+            modelsToTry.push(textModelMapping.primary)
+            if (textModelMapping.fallback) {
+              modelsToTry.push(...textModelMapping.fallback)
+            }
+            console.log(`使用纯文本模型: ${modelsToTry.join(', ')}`)
+          }
+        }
+      } catch (error) {
+        console.error('图片处理异常:', error.message)
+        console.warn('⚠️ 图片处理失败，降级为纯文本诊断')
+        // 降级处理同上
+        if (actualTaskType === 'health_diagnosis_vision') {
+          actualTaskType = 'health_diagnosis'
+          const textModelMapping = TASK_MODEL_MAPPING[actualTaskType]
+          modelsToTry.length = 0
+          modelsToTry.push(textModelMapping.primary)
+          if (textModelMapping.fallback) {
+            modelsToTry.push(...textModelMapping.fallback)
+          }
+          console.log(`使用纯文本模型: ${modelsToTry.join(', ')}`)
+        }
+      }
+    }
+
+    // 依次尝试每个模型
+    let lastError = null
+    for (let i = 0; i < modelsToTry.length; i++) {
+      const modelId = modelsToTry[i]
+      const modelConfig = MODEL_CONFIGS[modelId]
+      
+      console.log(`尝试模型 ${i + 1}/${modelsToTry.length}: ${modelId} (${modelConfig.name})`)
+      
+      try {
+        // 调用模型
+        const result = await manager.callModel(modelId, processedMessages, options)
+        
+        console.log(`✅ 模型 ${modelId} 调用成功`)
+        
+        // 设置缓存（图片诊断不缓存或缓存时间更短）
+        const cacheDuration = images.length > 0 ? 600 : 3600
+        await manager.setCache(cacheKey, result, cacheDuration)
+        
+        // 返回成功结果
+        return {
+          success: true,
+          data: result,
+          modelUsed: modelId,
+          usedVision,
+          fromCache: false
+        }
+      } catch (error) {
+        lastError = error
+        console.error(`❌ 模型 ${modelId} 失败:`, error.message)
+        
+        // 如果是速率限制且还有其他模型可尝试，继续下一个
+        if (error.isRateLimited && i < modelsToTry.length - 1) {
+          console.log(`⚠️ 速率限制，等待2秒后尝试下一个模型...`)
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          continue
+        }
+        
+        // 如果还有其他模型可尝试，继续
+        if (i < modelsToTry.length - 1) {
+          console.log(`尝试下一个备用模型...`)
+          continue
+        }
+        
+        // 所有模型都失败了，抛出最后一个错误
+        throw error
+      }
+    }
+    
+    // 理论上不会到这里，但以防万一
+    throw lastError || new Error('所有模型调用均失败')
   } catch (error) {
     return {
       success: false,

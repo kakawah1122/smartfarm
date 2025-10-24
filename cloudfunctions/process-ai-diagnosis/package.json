@@ -1,0 +1,12 @@
+{
+  "name": "process-ai-diagnosis",
+  "version": "1.0.0",
+  "description": "后台异步处理AI诊断云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  },
+  "cloudbaseConfig": {
+    "timeout": 20
+  }
+}

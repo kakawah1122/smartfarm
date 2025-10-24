@@ -17,5 +17,8 @@
     "dynamic"
   ],
   "author": "Smart Goose Management System",
-  "license": "MIT"
+  "license": "MIT",
+  "cloudbaseConfig": {
+    "timeout": 5
+  }
 }

@@ -18,7 +18,7 @@ interface AppOption {
 
 // 登录白名单页面（不需要登录就能访问的页面）
 const LOGIN_WHITELIST = [
-  '/pages/login/login',
+  '/packageUser/login/login',
 ]
 
 App<AppOption>({
@@ -29,7 +29,7 @@ App<AppOption>({
   onLaunch() {
     // 初始化云开发
     if (!wx.cloud) {
-      // 请使用 2.2.3 或以上的基础库以使用云能力
+      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
     } else {
       wx.cloud.init({
         env: 'cloud1-3gdruqkn67e1cbe2', // 您提供的环境ID
@@ -48,30 +48,34 @@ App<AppOption>({
     // 检查用户登录状态
     this.checkLoginStatus()
     
-    // 如果未登录，直接跳转到登录页
-    if (!this.globalData.isLoggedIn) {
-      wx.reLaunch({
-        url: '/pages/login/login'
-      })
-    }
+    // 延迟跳转，避免onShow中的重复跳转
+    setTimeout(() => {
+      if (!this.globalData.isLoggedIn) {
+        wx.reLaunch({
+          url: '/packageUser/login/login'
+        })
+      }
+    }, 100)
   },
 
   onShow() {
     // 每次小程序显示时都检查登录状态
     this.checkLoginStatus()
     
-    // 如果用户在非登录页面但未登录，跳转到登录页
-    const pages = getCurrentPages()
-    if (pages.length > 0) {
-      const currentPage = pages[pages.length - 1]
-      const currentRoute = `/${currentPage.route}`
-      
-      if (!this.globalData.isLoggedIn && !currentRoute.startsWith('/pages/login/login')) {
-        wx.reLaunch({
-          url: '/pages/login/login'
-        })
+    // 避免重复跳转 - 只在非登录页且未登录时跳转
+    setTimeout(() => {
+      const pages = getCurrentPages()
+      if (pages.length > 0) {
+        const currentPage = pages[pages.length - 1]
+        const currentRoute = `/${currentPage.route}`
+        
+        if (!this.globalData.isLoggedIn && !currentRoute.startsWith('/packageUser/login/login')) {
+          wx.reLaunch({
+            url: '/packageUser/login/login'
+          })
+        }
       }
-    }
+    }, 100)
   },
   
 
@@ -79,8 +83,8 @@ App<AppOption>({
   // 设置状态栏高度
   setStatusBarHeight() {
     try {
-      const systemInfo = wx.getSystemInfoSync()
-      const statusBarHeight = systemInfo.statusBarHeight || 44
+      const windowInfo = wx.getWindowInfo()
+      const statusBarHeight = windowInfo.statusBarHeight || 44
       const navBarHeight = 88 // rpx单位导航栏高度
       
       // 设置全局变量

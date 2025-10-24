@@ -15,8 +15,8 @@ export interface NavbarSizes {
  */
 export function getSystemNavBarSizes(): NavbarSizes {
   try {
-    const systemInfo = wx.getSystemInfoSync();
-    const statusBarHeight = systemInfo.statusBarHeight || 44; // px
+    const windowInfo = wx.getWindowInfo();
+    const statusBarHeight = windowInfo.statusBarHeight || 44; // px
     const navBarHeight = 88; // rpx，固定导航栏高度
     const statusBarHeightRpx = statusBarHeight * 2; // px转rpx
     

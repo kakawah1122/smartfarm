@@ -420,63 +420,63 @@ const pageConfig = {
   // 新增入栏记录
   addEntry() {
     wx.navigateTo({
-      url: '/pages/entry-form/entry-form'
+      url: '/packageProduction/entry-form/entry-form'
     })
   },
 
   // 新增出栏记录
   addExit() {
     wx.navigateTo({
-      url: '/pages/exit-form/exit-form'
+      url: '/packageProduction/exit-form/exit-form'
     })
   },
 
   // 查看库存详情
   viewInventoryDetail() {
     wx.navigateTo({
-      url: '/pages/inventory-detail/inventory-detail'
+      url: '/packageProduction/inventory-detail/inventory-detail'
     })
   },
 
   // 查看饲料库存详情
   viewFeedInventory() {
     wx.navigateTo({
-      url: '/pages/inventory-detail/inventory-detail?category=饲料'
+      url: '/packageProduction/inventory-detail/inventory-detail?category=饲料'
     })
   },
 
   // 查看药品库存详情
   viewMedicineInventory() {
     wx.navigateTo({
-      url: '/pages/inventory-detail/inventory-detail?category=药品'
+      url: '/packageProduction/inventory-detail/inventory-detail?category=药品'
     })
   },
 
   // 查看设备物料详情
   viewEquipmentInventory() {
     wx.navigateTo({
-      url: '/pages/inventory-detail/inventory-detail?category=设备'
+      url: '/packageProduction/inventory-detail/inventory-detail?category=设备'
     })
   },
 
   // 采购物料
   purchaseMaterial() {
     wx.navigateTo({
-      url: '/pages/purchase-form/purchase-form'
+      url: '/packageProduction/purchase-form/purchase-form'
     })
   },
 
   // 领用物料
   useMaterial() {
     wx.navigateTo({
-      url: '/pages/material-use-form/material-use-form'
+      url: '/packageProduction/material-use-form/material-use-form'
     })
   },
 
   // 查看全部物料记录
   viewAllMaterialRecords() {
     wx.navigateTo({
-      url: '/pages/material-records-list/material-records-list',
+      url: '/packageProduction/material-records-list/material-records-list',
       fail: (error) => {
         // 已移除调试日志
         wx.showToast({
@@ -491,7 +491,7 @@ const pageConfig = {
   // 查看全部入栏记录
   viewAllEntryRecords() {
     wx.navigateTo({
-      url: '/pages/entry-records-list/entry-records-list',
+      url: '/packageProduction/entry-records-list/entry-records-list',
       fail: (error) => {
         // 已移除调试日志
         wx.showToast({
@@ -506,7 +506,7 @@ const pageConfig = {
   // 查看全部出栏记录
   viewAllExitRecords() {
     wx.navigateTo({
-      url: '/pages/exit-records-list/exit-records-list',
+      url: '/packageProduction/exit-records-list/exit-records-list',
       fail: (error) => {
         // 已移除调试日志
         wx.showToast({
@@ -800,7 +800,7 @@ const pageConfig = {
       .join('&')
     
     wx.navigateTo({
-      url: `/pages/exit-form/exit-form?${urlParams}`,
+      url: `/packageProduction/exit-form/exit-form?${urlParams}`,
       success: () => {
         // 导航成功后关闭AI盘点界面
         this.closeAICount()

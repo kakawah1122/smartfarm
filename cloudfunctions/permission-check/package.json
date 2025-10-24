@@ -17,5 +17,8 @@
     "rbac"
   ],
   "author": "WeChat Cloud Development",
-  "license": "ISC"
+  "license": "ISC",
+  "cloudbaseConfig": {
+    "timeout": 5
+  }
 }

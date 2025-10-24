@@ -3,26 +3,27 @@
   <!-- 导航栏 -->
   <navigation-bar 
     title="健康管理中心"
-    show-back="true"
-    show-menu="true"
-    show-record="false"
+    show-back="{{true}}"
     bind:back="goBack"
-    bind:menu="onMenuTap"
   />
 
   <!-- 详情视图 -->
   <view class="detail-view">
 
-    <!-- 健康数据概览 -->
+    <!-- 健康数据概览（整合实时状态） -->
     <view class="health-stats-section">
-      <view class="stats-grid">
+      <view class="stats-grid stats-grid-four">
         <view class="stat-card stat-primary">
           <text class="stat-value">{{healthStats.healthyRate}}</text>
           <text class="stat-label">健康率</text>
         </view>
         <view class="stat-card stat-warning">
-          <text class="stat-value">{{healthStats.sickCount}}</text>
-          <text class="stat-label">患病数</text>
+          <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.sickCount}}</text>
+          <text class="stat-label">异常</text>
+        </view>
+        <view class="stat-card stat-info">
+          <text class="stat-value">{{monitoringData.realTimeStatus.isolatedCount || 0}}</text>
+          <text class="stat-label">隔离</text>
         </view>
         <view class="stat-card stat-danger">
           <text class="stat-value">{{healthStats.deadCount}}</text>
@@ -46,6 +47,22 @@
       
       <!-- 下拉菜单 -->
       <view class="batch-dropdown {{showBatchDropdown ? 'show' : ''}}" wx:if="{{showBatchDropdown}}">
+        <!-- 全部批次选项 -->
+        <view 
+          class="dropdown-item {{'all' === currentBatchId ? 'active' : ''}}"
+          bind:tap="selectAllBatches"
+        >
+          <view class="item-content">
+            <text class="item-title">全部批次</text>
+            <text class="item-subtitle">查看所有批次的健康数据汇总</text>
+          </view>
+          <text class="check-mark" wx:if="{{'all' === currentBatchId}}">✓</text>
+        </view>
+        
+        <!-- 分隔线 -->
+        <view class="dropdown-divider" wx:if="{{availableBatches.length > 0}}"></view>
+        
+        <!-- 具体批次列表 -->
         <view 
           class="dropdown-item {{item._id === currentBatchId ? 'active' : ''}}"
           wx:for="{{availableBatches}}"
@@ -103,7 +120,6 @@
   <!-- 主要Tab切换 -->
   <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" class="health-main-tabs">
     <t-tab-panel value="prevention" label="预防管理"></t-tab-panel>
-    <t-tab-panel value="monitoring" label="健康监控"></t-tab-panel>
     <t-tab-panel value="treatment" label="诊疗管理"></t-tab-panel>
     <t-tab-panel value="analysis" label="效果分析"></t-tab-panel>
   </t-tabs>
@@ -111,7 +127,7 @@
   <!-- Tab内容区域 -->
   <view class="tab-content-container">
     
-    <!-- 预防管理 Tab -->
+    <!-- 预防管理 Tab (合并了健康监控) -->
     <view class="tab-content prevention-content" wx:if="{{activeTab === 'prevention'}}">
       <!-- 预防统计 -->
       <view class="prevention-stats">
@@ -137,14 +153,17 @@
           <text class="section-title">近期预防记录</text>
           <text class="more-link">查看更多 ></text>
         </view>
-        <view class="record-list">
+        <view class="record-list" wx:if="{{preventionData.recentRecords && preventionData.recentRecords.length > 0}}">
           <view 
             class="record-item"
             wx:for="{{preventionData.recentRecords}}"
             wx:key="_id"
           >
             <view class="record-info">
-              <text class="record-title">{{item.preventionType}}</text>
+              <view class="record-title-row">
+                <text class="record-title">{{item.preventionType}}</text>
+                <t-tag wx:if="{{item.isFromTask}}" variant="light" theme="primary" size="small">来自待办</t-tag>
+              </view>
               <text class="record-desc">{{item.location}} · {{item.targetAnimals}}只</text>
             </view>
             <view class="record-meta">
@@ -153,30 +172,12 @@
             </view>
           </view>
         </view>
-      </view>
-
-    </view>
-
-    <!-- 健康监控 Tab -->
-    <view class="tab-content monitoring-content" wx:if="{{activeTab === 'monitoring'}}">
-      <!-- 实时状态 -->
-      <view class="real-time-status">
-        <text class="section-title">实时健康状态</text>
-        <view class="status-overview">
-          <view class="status-item healthy">
-            <text class="status-count">{{monitoringData.realTimeStatus.healthyCount}}</text>
-            <text class="status-label">健康</text>
-          </view>
-          <view class="status-item warning">
-            <text class="status-count">{{monitoringData.realTimeStatus.abnormalCount}}</text>
-            <text class="status-label">异常</text>
-          </view>
-          <view class="status-item danger">
-            <text class="status-count">{{monitoringData.realTimeStatus.isolatedCount}}</text>
-            <text class="status-label">隔离</text>
-          </view>
+        <view wx:else class="record-empty">
+          <text class="empty-text">暂无预防记录</text>
+          <text class="empty-hint">完成待办中的疫苗接种任务后，记录会自动关联到这里</text>
         </view>
       </view>
+
 
       <!-- 异常个体列表 -->
       <view class="abnormal-list" wx:if="{{monitoringData.abnormalList.length > 0}}">
@@ -221,28 +222,57 @@
           </view>
         </view>
       </view>
+
     </view>
+
 
     <!-- 诊疗管理 Tab -->
     <view class="tab-content treatment-content" wx:if="{{activeTab === 'treatment'}}">
       <!-- 诊疗统计 -->
       <view class="treatment-stats">
-        <view class="stats-grid">
-          <view class="stat-item">
-            <text class="stat-value">{{treatmentData.stats.pendingDiagnosis}}</text>
-            <text class="stat-label">待诊断</text>
+        <view class="stats-grid stats-grid-two">
+          <!-- 待诊断 -->
+          <view class="stat-card stat-card-pending" bindtap="onPendingDiagnosisClick">
+            <view class="stat-icon stat-icon-pending">
+              <view class="css-icon-file"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{treatmentData.stats.pendingDiagnosis}}</text>
+              <text class="stat-label">待诊断</text>
+            </view>
           </view>
-          <view class="stat-item">
-            <text class="stat-value">{{treatmentData.stats.ongoingTreatment}}</text>
-            <text class="stat-label">治疗中</text>
+          
+          <!-- 治疗中 -->
+          <view class="stat-card stat-card-treating" bindtap="onOngoingTreatmentClick">
+            <view class="stat-icon stat-icon-treating">
+              <view class="css-icon-medicine"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{treatmentData.stats.ongoingTreatment}}</text>
+              <text class="stat-label">治疗中</text>
+            </view>
           </view>
-          <view class="stat-item">
-            <text class="stat-value">{{treatmentData.stats.recovering}}</text>
-            <text class="stat-label">恢复中</text>
+          
+          <!-- 治疗成本 -->
+          <view class="stat-card stat-card-cost" bindtap="onTreatmentCostClick">
+            <view class="stat-icon stat-icon-cost">
+              <view class="css-icon-money"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">¥{{treatmentData.stats.totalTreatmentCost || 0}}</text>
+              <text class="stat-label">治疗成本</text>
+            </view>
           </view>
-          <view class="stat-item">
-            <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
-            <text class="stat-label">治愈率</text>
+          
+          <!-- 治愈率 -->
+          <view class="stat-card stat-card-cured" bindtap="onCureRateClick">
+            <view class="stat-icon stat-icon-cured">
+              <view class="css-icon-shield"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
+              <text class="stat-label">治愈率</text>
+            </view>
           </view>
         </view>
       </view>
