@@ -10,23 +10,6 @@
   <!-- 页面内容 -->
   <view class="page-content">
     
-    <!-- ✨ 轮询进度显示 -->
-    <view class="polling-container" wx:if="{{showPolling && diagnosisStatus === 'processing'}}">
-      <view class="polling-header">
-        <text class="polling-title">诊断处理中</text>
-        <text class="polling-subtitle">AI正在分析您的诊断信息...</text>
-      </view>
-      <view class="polling-progress">
-        <view class="spinner"></view>
-        <text class="progress-text">已轮询 {{pollRetries}} 次</text>
-      </view>
-      <view class="polling-tips">
-        <text class="tip-text">✓ 系统已收到您的诊断请求</text>
-        <text class="tip-text">✓ 正在调用AI大模型进行分析</text>
-        <text class="tip-text">✓ 预计需要 5-10 秒，请耐心等待</text>
-      </view>
-    </view>
-
     <!-- 诊断结果展示 - 全新设计 -->
     <view class="diagnosis-result" wx:if="{{diagnosisResult && diagnosisStatus === 'completed'}}">
       
@@ -41,22 +24,22 @@
         </view>
       </view>
 
-      <!-- 主要诊断卡片 -->
+      <!-- 主要诊断/死因卡片 -->
       <view class="diagnosis-card primary-card">
         <view class="card-header">
-          <view class="card-title">主要诊断</view>
+          <view class="card-title">{{diagnosisType === 'autopsy_analysis' ? '主要死因' : '主要诊断'}}</view>
           <view class="confidence-badge">
-            <text class="confidence-number">{{diagnosisResult.primaryDiagnosis.confidence}}</text>
+            <text class="confidence-number">{{diagnosisType === 'autopsy_analysis' ? (diagnosisResult.primaryCause.confidence || diagnosisResult.primaryDiagnosis.confidence) : diagnosisResult.primaryDiagnosis.confidence}}</text>
             <text class="confidence-unit">%</text>
           </view>
         </view>
         <view class="card-body">
-          <view class="diagnosis-name">{{diagnosisResult.primaryDiagnosis.disease}}</view>
-          <view class="diagnosis-reasoning">{{diagnosisResult.primaryDiagnosis.reasoning}}</view>
+          <view class="diagnosis-name">{{diagnosisType === 'autopsy_analysis' ? (diagnosisResult.primaryCause.disease || diagnosisResult.primaryDiagnosis.disease) : diagnosisResult.primaryDiagnosis.disease}}</view>
+          <view class="diagnosis-reasoning">{{diagnosisType === 'autopsy_analysis' ? (diagnosisResult.primaryCause.reasoning || diagnosisResult.primaryDiagnosis.reasoning) : diagnosisResult.primaryDiagnosis.reasoning}}</view>
         </view>
         
-        <!-- 严重程度和紧急程度 -->
-        <view class="status-row">
+        <!-- 病鹅诊断：严重程度和紧急程度 -->
+        <view class="status-row" wx:if="{{diagnosisType === 'live_diagnosis'}}">
           <view class="status-item">
             <text class="status-label">严重程度</text>
             <t-tag 
@@ -76,19 +59,32 @@
             </t-tag>
           </view>
         </view>
+        
+        <!-- 死因剖析：流行病学风险 -->
+        <view class="status-row" wx:if="{{diagnosisType === 'autopsy_analysis' && diagnosisResult.epidemiologyRisk}}">
+          <view class="status-item">
+            <text class="status-label">传播风险</text>
+            <t-tag 
+              theme="{{diagnosisResult.epidemiologyRisk === 'high' ? 'danger' : diagnosisResult.epidemiologyRisk === 'medium' ? 'warning' : 'success'}}"
+              size="medium"
+            >
+              {{diagnosisResult.epidemiologyRisk === 'high' ? '高风险' : diagnosisResult.epidemiologyRisk === 'medium' ? '中等' : '低风险'}}
+            </t-tag>
+          </view>
+        </view>
       </view>
 
-      <!-- 鉴别诊断卡片 -->
-      <view class="diagnosis-card" wx:if="{{diagnosisResult.differentialDiagnosis && diagnosisResult.differentialDiagnosis.length > 0}}">
+      <!-- 鉴别诊断/可能死因卡片 -->
+      <view class="diagnosis-card" wx:if="{{(diagnosisResult.differentialDiagnosis && diagnosisResult.differentialDiagnosis.length > 0) || (diagnosisResult.differentialCauses && diagnosisResult.differentialCauses.length > 0)}}">
         <view class="card-header">
-          <view class="card-title">鉴别诊断</view>
-          <view class="card-subtitle">其他可能的疾病</view>
+          <view class="card-title">{{diagnosisType === 'autopsy_analysis' ? '可能死因' : '鉴别诊断'}}</view>
+          <view class="card-subtitle">其他可能的{{diagnosisType === 'autopsy_analysis' ? '死因' : '疾病'}}</view>
         </view>
         <view class="card-body">
           <view class="differential-list">
             <view 
               class="differential-item"
-              wx:for="{{diagnosisResult.differentialDiagnosis}}" 
+              wx:for="{{diagnosisType === 'autopsy_analysis' ? (diagnosisResult.differentialCauses || diagnosisResult.differentialDiagnosis) : diagnosisResult.differentialDiagnosis}}" 
               wx:key="index"
             >
               <view class="diff-name">{{item.disease}}</view>
@@ -98,8 +94,8 @@
         </view>
       </view>
 
-      <!-- 立即措施卡片 -->
-      <view class="diagnosis-card action-card" wx:if="{{diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.immediate}}">
+      <!-- 病鹅诊断：立即措施卡片 -->
+      <view class="diagnosis-card action-card" wx:if="{{diagnosisType === 'live_diagnosis' && diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.immediate}}">
         <view class="card-header">
           <t-icon name="notification" size="20" color="#e34d59" />
           <view class="card-title">立即措施</view>
@@ -118,8 +114,8 @@
         </view>
       </view>
 
-      <!-- 药物治疗卡片 -->
-      <view class="diagnosis-card medication-card" wx:if="{{diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.medication}}">
+      <!-- 病鹅诊断：药物治疗卡片 -->
+      <view class="diagnosis-card medication-card" wx:if="{{diagnosisType === 'live_diagnosis' && diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.medication}}">
         <view class="card-header">
           <t-icon name="edit" size="20" color="#0052d9" />
           <view class="card-title">药物治疗方案</view>
@@ -156,8 +152,8 @@
         </view>
       </view>
 
-      <!-- 支持性治疗卡片 -->
-      <view class="diagnosis-card" wx:if="{{diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.supportive}}">
+      <!-- 病鹅诊断：支持性治疗卡片 -->
+      <view class="diagnosis-card" wx:if="{{diagnosisType === 'live_diagnosis' && diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.supportive}}">
         <view class="card-header">
           <t-icon name="heart" size="20" color="#ed7b2f" />
           <view class="card-title">支持性治疗</view>
@@ -176,8 +172,8 @@
         </view>
       </view>
 
-      <!-- 预防建议卡片 -->
-      <view class="diagnosis-card" wx:if="{{diagnosisResult.preventionAdvice}}">
+      <!-- 预防建议卡片（两种类型都显示） -->
+      <view class="diagnosis-card" wx:if="{{diagnosisResult.preventionAdvice || diagnosisResult.preventionMeasures}}">
         <view class="card-header">
           <t-icon name="secured" size="20" color="#00a870" />
           <view class="card-title">预防建议</view>
@@ -186,10 +182,30 @@
           <view class="simple-list">
             <view 
               class="simple-list-item"
-              wx:for="{{diagnosisResult.preventionAdvice}}" 
+              wx:for="{{diagnosisResult.preventionAdvice || diagnosisResult.preventionMeasures}}" 
               wx:key="index"
             >
               <view class="list-dot prevention-dot"></view>
+              <text class="list-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 死因剖析：生物安全建议 -->
+      <view class="diagnosis-card" wx:if="{{diagnosisType === 'autopsy_analysis' && diagnosisResult.biosecurityAdvice}}">
+        <view class="card-header">
+          <t-icon name="error-circle" size="20" color="#e34d59" />
+          <view class="card-title">生物安全建议</view>
+        </view>
+        <view class="card-body">
+          <view class="simple-list">
+            <view 
+              class="simple-list-item"
+              wx:for="{{diagnosisResult.biosecurityAdvice}}" 
+              wx:key="index"
+            >
+              <view class="list-dot" style="background: #e34d59;"></view>
               <text class="list-text">{{item}}</text>
             </view>
           </view>
@@ -202,35 +218,11 @@
           theme="primary" 
           size="large" 
           block
-          bind:tap="adoptAdvice"
+          bind:tap="saveRecord"
           class="primary-action-btn"
         >
-          <t-icon name="add" size="20" />
-          采纳建议并创建治疗方案
+          {{diagnosisType === 'autopsy_analysis' ? '记录死亡报告' : '保存诊断记录'}}
         </t-button>
-        
-        <view class="secondary-actions">
-          <t-button 
-            theme="light" 
-            size="medium" 
-            bind:tap="saveRecord"
-            icon="file-add"
-          >保存记录</t-button>
-          
-          <t-button 
-            theme="light" 
-            size="medium" 
-            bind:tap="resetDiagnosis"
-            icon="refresh"
-          >重新诊断</t-button>
-          
-          <t-button 
-            theme="light" 
-            size="medium" 
-            bind:tap="contactVet"
-            icon="call"
-          >联系兽医</t-button>
-        </view>
       </view>
     </view>
 
@@ -248,6 +240,23 @@
       <!-- 基本信息 -->
       <view class="form-section">
         <text class="section-title">基本信息</text>
+        
+        <!-- 诊断类型选择 -->
+        <view class="form-row">
+          <text class="form-label">诊断类型</text>
+          <picker 
+            class="form-picker"
+            mode="selector"
+            range="{{diagnosisTypeOptions}}"
+            range-key="label"
+            value="{{diagnosisTypePickerIndex}}"
+            bindchange="onDiagnosisTypeChange"
+          >
+            <view class="picker-value">
+              {{diagnosisTypeOptions[diagnosisTypePickerIndex].label}}
+            </view>
+          </picker>
+        </view>
         
         <!-- 批次选择 -->
         <view class="form-row">
@@ -274,21 +283,35 @@
           </view>
         </view>
         
-        <view class="form-row">
-          <text class="form-label">受影响数量</text>
+        <!-- 病鹅诊断：受影响数量 -->
+        <view class="form-row" wx:if="{{diagnosisType === 'live_diagnosis'}}">
+          <text class="form-label">受影响数量<text class="required-mark">*</text></text>
           <input 
             class="form-input"
             type="number"
-            placeholder=""
+            placeholder="请输入数量"
             value="{{affectedCount}}"
             bindinput="onAffectedCountInput"
           />
           <text class="form-unit">只</text>
         </view>
+        
+        <!-- 死因剖析：死亡数量 -->
+        <view class="form-row" wx:if="{{diagnosisType === 'autopsy_analysis'}}">
+          <text class="form-label">死亡数量<text class="required-mark">*</text></text>
+          <input 
+            class="form-input"
+            type="number"
+            placeholder="请输入死亡数量"
+            value="{{deathCount}}"
+            bindinput="onDeathCountInput"
+          />
+          <text class="form-unit">只</text>
+        </view>
       </view>
 
-      <!-- 症状描述 -->
-      <view class="form-section">
+      <!-- 症状描述（仅病鹅诊断显示） -->
+      <view class="form-section" wx:if="{{diagnosisType !== 'autopsy_analysis'}}">
         <text class="section-title">症状描述</text>
         
         <!-- 常见症状标签（点击填充） -->
@@ -317,19 +340,44 @@
         
         <view class="char-count">{{symptoms.length}}/500</view>
       </view>
-
-      <!-- 图片上传 - ✨ 增强版 -->
-      <view class="form-section">
-        <view class="section-header-with-tip">
-          <text class="section-title">上传症状图片（可选）</text>
-          <view class="image-benefit-badge">
-            <t-icon name="tips" size="16" color="#0052d9" />
-            <text class="benefit-text">图片诊断准确率提升15%</text>
+      
+      <!-- 死因剖析专用：剖检所见 -->
+      <view class="form-section" wx:if="{{diagnosisType === 'autopsy_analysis'}}">
+        <text class="section-title">看到的异常（可选）</text>
+        
+        <!-- 常见异常标签（点击选择） -->
+        <view class="symptom-tags-inline">
+          <view 
+            wx:for="{{autopsyAbnormalities}}" 
+            wx:key="id"
+            class="symptom-tag-inline {{item.checked ? 'tag-checked' : ''}}"
+            bind:tap="onAbnormalityChange"
+            data-index="{{index}}"
+          >
+            <text class="tag-icon">+</text>
+            <text class="tag-name">{{item.name}}</text>
           </view>
         </view>
         
+        <!-- 详细描述输入框 -->
+        <textarea 
+          placeholder="请描述看到的情况，如：肠子里面全是血、肝脏有很多白点等..."
+          value="{{autopsyDescription}}"
+          bindinput="onAutopsyDescriptionInput"
+          maxlength="300"
+          auto-height="{{true}}"
+          class="symptoms-textarea"
+        />
+        
+        <view class="char-count">{{autopsyDescription.length}}/300</view>
+      </view>
+
+      <!-- 图片上传 - ✨ 增强版 -->
+      <view class="form-section">
+        <text class="section-title">{{diagnosisType === 'autopsy_analysis' ? '剖检照片（强烈建议）' : '上传症状图片（可选）'}}</text>
+        
         <!-- ✨ 拍摄建议 -->
-        <view class="photo-tips-card">
+        <view class="photo-tips-card" wx:if="{{diagnosisType === 'live_diagnosis'}}">
           <view class="tips-title">
             <t-icon name="lightbulb" size="18" color="#ed7b2f" />
             <text class="tips-title-text">拍摄建议（可提高诊断准确性）</text>
@@ -350,6 +398,32 @@
             <view class="tip-item">
               <text class="tip-number">4</text>
               <text class="tip-text">避免模糊：请勿抖动，确保对焦清晰</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 死因剖析拍摄建议 -->
+        <view class="photo-tips-card autopsy-tips-card" wx:if="{{diagnosisType === 'autopsy_analysis'}}">
+          <view class="tips-title">
+            <t-icon name="lightbulb" size="18" color="#e34d59" />
+            <text class="tips-title-text">剖检拍照要点（重要）</text>
+          </view>
+          <view class="tips-list">
+            <view class="tip-item">
+              <text class="tip-number">1</text>
+              <text class="tip-text">打开腹腔后整体拍摄，能看到肝脏、肠道、心脏等主要器官</text>
+            </view>
+            <view class="tip-item">
+              <text class="tip-number">2</text>
+              <text class="tip-text">发现异常的器官单独特写（如肝脏有白点、肠道出血等）</text>
+            </view>
+            <view class="tip-item">
+              <text class="tip-number">3</text>
+              <text class="tip-text">光线充足、对焦清晰，能看清器官颜色和病变</text>
+            </view>
+            <view class="tip-item">
+              <text class="tip-number">4</text>
+              <text class="tip-text">建议拍摄2-4张不同角度的照片</text>
             </view>
           </view>
         </view>
@@ -382,21 +456,20 @@
           <!-- 上传按钮 -->
           <view 
             class="upload-placeholder {{images.length === 0 ? 'first-upload' : ''}}"
-            wx:if="{{images.length < 9}}"
+            wx:if="{{images.length < (diagnosisType === 'autopsy_analysis' ? 4 : 2)}}"
             bind:tap="onChooseImage"
           >
-            <t-icon name="add" size="{{images.length === 0 ? 56 : 48}}" color="{{images.length === 0 ? '#0052d9' : '#c8c9cc'}}" />
             <text class="upload-text {{images.length === 0 ? 'upload-text-primary' : ''}}">
-              {{images.length === 0 ? '拍摄症状照片' : '继续添加'}}
+              {{images.length === 0 ? (diagnosisType === 'autopsy_analysis' ? '拍摄剖检照片' : '拍摄症状照片') : '继续添加'}}
             </text>
-            <text class="upload-hint" wx:if="{{images.length === 0}}">可提升诊断准确率</text>
+            <text class="upload-hint" wx:if="{{images.length === 0}}">{{diagnosisType === 'autopsy_analysis' ? '帮助AI准确分析死因' : '可提升诊断准确率'}}</text>
           </view>
         </view>
         
         <!-- 已上传提示 -->
         <view class="upload-status" wx:if="{{images.length > 0}}">
           <t-icon name="check-circle" size="16" color="#00a870" />
-          <text class="status-text">已上传 {{images.length}} 张图片，AI将结合图片进行综合诊断</text>
+          <text class="status-text">已上传 {{images.length}} 张{{diagnosisType === 'autopsy_analysis' ? '剖检' : ''}}图片，AI将结合图片进行综合{{diagnosisType === 'autopsy_analysis' ? '分析' : '诊断'}}</text>
         </view>
       </view>
 
@@ -411,8 +484,13 @@
           bind:tap="startDiagnosis"
           class="submit-btn"
         >
-          {{submitting ? 'AI诊断中...' : '开始AI智能诊断'}}
+          {{submitting ? (diagnosisType === 'autopsy_analysis' ? 'AI分析中...' : 'AI诊断中...') : (diagnosisType === 'autopsy_analysis' ? '开始AI死因分析' : '开始AI智能诊断')}}
         </t-button>
+        
+        <!-- 预计等待时间提示 -->
+        <view class="submit-hint" wx:if="{{submitting}}">
+          <text class="hint-text">⏱️ 预计需要 20-30 秒，AI正在深度分析中...</text>
+        </view>
       </view>
 
       <!-- 底部链接 -->

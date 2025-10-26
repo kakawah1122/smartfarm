@@ -1,6 +1,6 @@
 {
   "usingComponents": {
-    "bottom-popup": "../../components/bottom-popup/bottom-popup",
+    "bottom-popup": "/components/bottom-popup/bottom-popup",
     "t-cell": "tdesign-miniprogram/cell/cell",
     "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
     "t-button": "tdesign-miniprogram/button/button",
@@ -16,7 +16,7 @@
     "t-picker": "tdesign-miniprogram/picker/picker",
     "t-radio": "tdesign-miniprogram/radio/radio",
     "t-radio-group": "tdesign-miniprogram/radio-group/radio-group",
-    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
   },
   "navigationStyle": "custom"
 }

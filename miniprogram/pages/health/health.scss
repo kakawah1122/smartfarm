@@ -731,6 +731,72 @@
     margin-bottom: 24rpx;
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
     
+    // AI诊断卡片（单独一行）
+    .ai-diagnosis-card {
+      display: flex;
+      align-items: center;
+      padding: 32rpx 24rpx;
+      margin-bottom: 16rpx;
+      border-radius: 16rpx;
+      background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      
+      // 背景装饰
+      &::before {
+        content: '';
+        position: absolute;
+        right: -40rpx;
+        top: -40rpx;
+        width: 160rpx;
+        height: 160rpx;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+      }
+      
+      &:active {
+        transform: scale(0.98);
+        background: linear-gradient(135deg, #DDD6FE 0%, #C4B5FD 100%);
+      }
+      
+      .ai-card-icon {
+        font-size: 56rpx;
+        margin-right: 20rpx;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .ai-card-content {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+        
+        .ai-card-title {
+          display: block;
+          font-size: 32rpx;
+          font-weight: 600;
+          color: #7C3AED;
+          margin-bottom: 8rpx;
+        }
+        
+        .ai-card-desc {
+          display: block;
+          font-size: 24rpx;
+          color: #6B21A8;
+          opacity: 0.8;
+        }
+      }
+      
+      .ai-card-arrow {
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+      }
+    }
+    
     .stats-grid-two {
       display: grid;
       grid-template-columns: repeat(2, 1fr);

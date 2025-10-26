@@ -1,12 +1,68 @@
 // ai-diagnosis.ts - AI智能诊断页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+type CloudResponseSuccess<T> = {
+  success: true
+  data?: T
+  message?: string
+  error?: string
+}
+
+type CloudResponseFailure = {
+  success: false
+  data?: never
+  message?: string
+  error?: string
+}
+
+type CloudResponse<T> = CloudResponseSuccess<T> | CloudResponseFailure
+
+function normalizeCloudResult<T = WechatMiniprogram.AnyObject>(
+  result: WechatMiniprogram.Cloud.CallFunctionResult
+): CloudResponse<T> | null {
+  const payload = result?.result
+
+  if (!payload) {
+    return null
+  }
+
+  if (typeof payload === 'string') {
+    const trimmed = payload.trim()
+
+    if (!trimmed) {
+      return null
+    }
+
+    try {
+      return JSON.parse(trimmed) as CloudResponse<T>
+    } catch (e) {
+      console.error('云函数返回的字符串结果无法解析为JSON', e)
+      return null
+    }
+  }
+
+  if (typeof payload === 'object') {
+    return payload as CloudResponse<T>
+  }
+
+  return null
+}
+
 // 页面配置对象
 const pageConfig = {
   data: {
+    // 诊断类型
+    diagnosisType: 'live_diagnosis' as 'live_diagnosis' | 'autopsy_analysis',
+    diagnosisTypeOptions: [
+      { label: '病鹅诊断', value: 'live_diagnosis' },
+      { label: '死因剖析', value: 'autopsy_analysis' }
+    ],
+    diagnosisTypePickerIndex: 0,
+    
     // 输入数据
     symptoms: '',
-    affectedCount: '',  // 改为空字符串，使用占位符
+    affectedCount: '',  // 病鹅诊断使用
+    deathCount: '',     // 死因剖析使用
     dayAge: 0,
     images: [] as string[],
     
@@ -29,8 +85,23 @@ const pageConfig = {
       { id: 'lameness', name: '跛行' }
     ],
     
+    // 死因剖析专用：常见异常快捷选择
+    autopsyAbnormalities: [
+      { id: 'liver_black', name: '肝脏颜色发黑', checked: false },
+      { id: 'liver_yellow', name: '肝脏颜色发黄', checked: false },
+      { id: 'liver_spots', name: '肝脏有白点', checked: false },
+      { id: 'intestine_red', name: '肠道发红', checked: false },
+      { id: 'intestine_blood', name: '肠道有血', checked: false },
+      { id: 'intestine_smell', name: '肠道很臭', checked: false },
+      { id: 'lung_water', name: '肺部有水', checked: false },
+      { id: 'lung_black', name: '肺部发黑', checked: false },
+      { id: 'heart_spots', name: '心脏有白点', checked: false },
+      { id: 'heart_fluid', name: '心脏积液', checked: false }
+    ],
+    autopsyDescription: '', // 自由描述剖检所见
+    
     // AI诊断结果
-    diagnosisResult: null as any,
+    diagnosisResult: null as AnyObject | null,
     
     // 页面状态
     loading: false,
@@ -71,7 +142,7 @@ const pageConfig = {
     try {
       wx.showLoading({ title: '加载批次...' })
       
-      const result = await wx.cloud.callFunction({
+      const rawResult = await wx.cloud.callFunction({
         name: 'production-entry',
         data: {
           action: 'getActiveBatches'  // ✅ 使用正确的 action
@@ -80,21 +151,11 @@ const pageConfig = {
 
       wx.hideLoading()
 
-      if (result.result && result.result.success) {
+      const result = normalizeCloudResult<{ _id: string; batchNumber: string; dayAge?: number }[]>(rawResult)
+
+      if (result?.success) {
         // ✅ getActiveBatches 直接返回批次数组在 data 中
-        const activeBatches = result.result.data || []
-        
-        
-        if (activeBatches.length > 0) {
-          activeBatches.forEach((batch: any) => {
-              _id: batch._id,
-              日龄: batch.dayAge,
-              数量: batch.currentCount || batch.quantity,
-              入栏日期: batch.entryDate
-            })
-          })
-        }
-        
+        const activeBatches = result.data || []
 
         if (activeBatches.length === 0) {
           wx.showModal({
@@ -137,12 +198,8 @@ const pageConfig = {
         
         // 触发选择事件，填充批次信息
         this.onBatchPickerChange({ detail: { value: selectedIndex } })
-        
-          存栏批次数: activeBatches.length,
-          已选择: activeBatches[selectedIndex]?.batchNumber
-        })
       } else {
-        throw new Error(result.result?.message || '加载批次失败')
+        throw new Error(result?.message || result?.error || '加载批次失败')
       }
     } catch (error: any) {
       wx.hideLoading()
@@ -164,17 +221,32 @@ const pageConfig = {
     }
   },
 
+  // 诊断类型选择器变化
+  onDiagnosisTypeChange(e: any) {
+    const index = parseInt(e.detail.value)
+    const selectedType = this.data.diagnosisTypeOptions[index]
+    
+    this.setData({
+      diagnosisTypePickerIndex: index,
+      diagnosisType: selectedType.value as 'live_diagnosis' | 'autopsy_analysis',
+      // 切换类型时清空相关字段
+      affectedCount: '',
+      deathCount: '',
+      symptoms: '',
+      images: [],
+      autopsyDescription: '',
+      autopsyAbnormalities: this.data.autopsyAbnormalities.map(item => ({ ...item, checked: false }))
+    }, () => {
+      this.validateForm()
+    })
+  },
+
   // 批次选择器变化
   onBatchPickerChange(e: any) {
     const index = parseInt(e.detail.value)
     const selectedBatch = this.data.availableBatches[index]
     
     if (selectedBatch) {
-        批次号: selectedBatch.batchNumber,
-        日龄: selectedBatch.dayAge,
-        批次ID: selectedBatch._id
-      })
-      
       this.setData({
         batchPickerIndex: index,
         selectedBatchId: selectedBatch._id,
@@ -213,6 +285,44 @@ const pageConfig = {
     })
   },
 
+  // 死亡数量输入（死因剖析专用）
+  onDeathCountInput(e: any) {
+    const value = e.detail.value
+    this.setData({ 
+      deathCount: value 
+    }, () => {
+      this.validateForm()
+    })
+  },
+
+  // 异常勾选（死因剖析专用）
+  onAbnormalityChange(e: any) {
+    const { index } = e.currentTarget.dataset
+    const abnormalities = [...this.data.autopsyAbnormalities]
+    abnormalities[index].checked = !abnormalities[index].checked
+    
+    // 收集所有选中的异常名称
+    const selectedAbnormalities = abnormalities
+      .filter(item => item.checked)
+      .map(item => item.name)
+    
+    // 拼接成文本（用顿号分隔）
+    const abnormalitiesText = selectedAbnormalities.join('、')
+    
+    this.setData({ 
+      autopsyAbnormalities: abnormalities,
+      autopsyDescription: abnormalitiesText // 填充到文本框
+    })
+  },
+
+  // 剖检描述输入（死因剖析专用）
+  onAutopsyDescriptionInput(e: any) {
+    const value = e.detail.value
+    this.setData({ 
+      autopsyDescription: value 
+    })
+  },
+
   // 点击症状标签填充到输入框
   onSymptomTagTap(e: any) {
     const { name } = e.currentTarget.dataset
@@ -241,7 +351,21 @@ const pageConfig = {
 
   // 选择图片
   onChooseImage() {
-    const remainingCount = 9 - this.data.images.length
+    // ✨ 根据诊断类型限制图片数量
+    const diagnosisType = this.data.diagnosisType
+    const maxImages = diagnosisType === 'autopsy_analysis' ? 4 : 2
+    const currentCount = this.data.images.length
+    
+    if (currentCount >= maxImages) {
+      wx.showToast({
+        title: `${diagnosisType === 'autopsy_analysis' ? '剖检照片' : 'AI诊断'}最多支持${maxImages}张图片`,
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+    
+    const remainingCount = Math.min(maxImages - currentCount, maxImages)
     
     wx.chooseMedia({
       count: remainingCount,
@@ -254,14 +378,17 @@ const pageConfig = {
         try {
           // ✨ 压缩并上传所有图片到云存储
           const uploadPromises = res.tempFiles.map(async (file) => {
-            // ✅ 压缩图片（减小文件大小，加快上传和AI处理速度）
+            // ✅ 更激进的压缩（减小文件大小，避免API限制）
             let finalPath = file.tempFilePath
             try {
               const compressResult = await wx.compressImage({
                 src: file.tempFilePath,
-                quality: 70  // 压缩质量70%，平衡清晰度和文件大小
+                quality: 50,  // ✨ 降低到50%质量（AI识别足够）
+                compressedWidth: 1024,  // ✨ 限制最大宽度1024px
+                compressedHeight: 1024   // ✨ 限制最大高度1024px
               })
               finalPath = compressResult.tempFilePath
+              console.log('图片压缩成功')
             } catch (compressError) {
               console.warn('图片压缩失败，使用原图:', compressError)
               // 压缩失败则使用原图
@@ -282,11 +409,12 @@ const pageConfig = {
           
           const uploadedFileIDs = await Promise.all(uploadPromises)
           const allImages = [...this.data.images, ...uploadedFileIDs]
+          const maxImages = this.data.diagnosisType === 'autopsy_analysis' ? 4 : 2
           
           wx.hideLoading()
           
           this.setData({
-            images: allImages.slice(0, 9) // 最多9张图片
+            images: allImages.slice(0, maxImages)
           }, () => {
             this.validateForm()
           })
@@ -338,17 +466,21 @@ const pageConfig = {
 
   // 表单验证
   validateForm() {
-    const { symptoms, selectedBatchId } = this.data
-    const hasSymptoms = symptoms.trim().length > 0
+    const { diagnosisType, symptoms, selectedBatchId, affectedCount, deathCount } = this.data
     const hasBatch = selectedBatchId.length > 0
     
-    const isValid = hasBatch && hasSymptoms
+    let isValid = false
     
-      批次已选择: hasBatch,
-      症状描述: symptoms,
-      症状描述有效: hasSymptoms,
-      表单有效: isValid
-    })
+    if (diagnosisType === 'live_diagnosis') {
+      // 病鹅诊断：必须有批次、症状、受影响数量
+      const hasSymptoms = symptoms.trim().length > 0
+      const hasValidCount = affectedCount !== '' && parseInt(affectedCount) > 0
+      isValid = hasBatch && hasSymptoms && hasValidCount
+    } else {
+      // 死因剖析：必须有批次、死亡数量即可（症状和剖检信息可选）
+      const hasValidDeathCount = deathCount !== '' && parseInt(deathCount) > 0
+      isValid = hasBatch && hasValidDeathCount
+    }
     
     this.setData({
       formValid: isValid
@@ -361,67 +493,175 @@ const pageConfig = {
       wx.showToast({ title: '请先选择批次', icon: 'none' })
       return
     }
+    
+    const diagnosisType = this.data.diagnosisType
+    
+    // 根据诊断类型验证必填项
+    if (diagnosisType === 'live_diagnosis') {
+      const affectedCount = parseInt(this.data.affectedCount) || 0
+      if (affectedCount <= 0) {
+        wx.showToast({ title: '请输入受影响数量', icon: 'none' })
+        return
+      }
+      if (!this.data.symptoms || this.data.symptoms.trim() === '') {
+        wx.showToast({ title: '请输入症状描述', icon: 'none' })
+        return
+      }
+    } else {
+      const deathCount = parseInt(this.data.deathCount) || 0
+      if (deathCount <= 0) {
+        wx.showToast({ title: '请输入死亡数量', icon: 'none' })
+        return
+      }
+    }
+    
     if (!this.data.formValid) {
-      wx.showToast({ title: '请输入症状描述', icon: 'none' })
+      wx.showToast({ title: '请完善表单信息', icon: 'none' })
       return
     }
 
     this.setData({ submitting: true })
 
     try {
-      const allSymptoms = this.data.symptoms.trim()
-      const affectedCount = parseInt(this.data.affectedCount) || 0
-
-      if (!allSymptoms || allSymptoms === '') {
-        wx.showToast({ title: '症状不能为空', icon: 'none' })
-        this.setData({ submitting: false })
-        return
+      // 准备诊断数据
+      const diagnosisData: any = {
+        action: 'ai_diagnosis',
+        diagnosisType: diagnosisType,
+        selectedBatchId: this.data.selectedBatchId,
+        batchId: this.data.selectedBatchId,
+        dayAge: this.data.dayAge,
+        images: this.data.images,
+        healthRecordId: this.data.sourceRecordId || null
       }
 
-      const symptomsList = allSymptoms
-        .split(/[、，,；;]/)
-        .map((s: string) => s.trim())
-        .filter((s: string) => s.length > 0)
+      if (diagnosisType === 'live_diagnosis') {
+        // 病鹅诊断数据
+        const allSymptoms = this.data.symptoms.trim()
+        const affectedCount = parseInt(this.data.affectedCount) || 0
+        
+        const symptomsList = allSymptoms
+          .split(/[、，,；;]/)
+          .map((s: string) => s.trim())
+          .filter((s: string) => s.length > 0)
+        
+        diagnosisData.symptoms = symptomsList
+        diagnosisData.symptomsText = allSymptoms
+        diagnosisData.affectedCount = affectedCount
+      } else {
+        // 死因剖析数据
+        const deathCount = parseInt(this.data.deathCount) || 0
+        const symptoms = this.data.symptoms.trim()
+        
+        // 收集勾选的异常
+        const selectedAbnormalities = this.data.autopsyAbnormalities
+          .filter(item => item.checked)
+          .map(item => item.name)
+        
+        diagnosisData.deathCount = deathCount
+        diagnosisData.symptoms = symptoms ? symptoms.split(/[、，,；;]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0) : []
+        diagnosisData.symptomsText = symptoms || '无明显生前症状'
+        diagnosisData.autopsyFindings = {
+          abnormalities: selectedAbnormalities,
+          description: this.data.autopsyDescription
+        }
+      }
+
+      // ✅ 如果有图片，提示用户图片仅作参考
+      if (this.data.images.length > 0) {
+        console.log(`提示：已上传${this.data.images.length}张图片，将基于文字描述进行AI诊断`)
+      }
 
       // ✨ 改为异步：提交诊断任务
-      const result = await wx.cloud.callFunction({
+      // 诊断前获取批次综合数据，用于动态生成Prompt
+      let batchPromptData: any = null
+      if (this.data.selectedBatchId) {
+        try {
+          const promptDataRawResult = await wx.cloud.callFunction({
+            name: 'health-management',
+            data: {
+              action: 'get_batch_prompt_data',
+              batchId: this.data.selectedBatchId
+            }
+          })
+          const promptDataResult = normalizeCloudResult<any>(promptDataRawResult)
+          if (promptDataResult?.success) {
+            batchPromptData = promptDataResult.data
+          } else {
+            console.warn('获取批次提示词数据失败:', promptDataResult?.error || promptDataResult?.message)
+          }
+        } catch (promptError) {
+          console.warn('获取批次提示词数据异常:', promptError)
+        }
+      }
+
+      const rawResult = await wx.cloud.callFunction({
         name: 'ai-diagnosis',
         data: {
-          action: 'ai_diagnosis',
-          selectedBatchId: this.data.selectedBatchId,
-          symptoms: symptomsList,
-          symptomsText: allSymptoms,
-          affectedCount: affectedCount,
-          dayAge: this.data.dayAge,
-          images: this.data.images,
-          batchId: this.data.selectedBatchId,
-          healthRecordId: this.data.sourceRecordId || null
-        }
+          ...diagnosisData,
+          batchPromptData // 传递批次综合数据
+        },
+        timeout: 10000  // ✅ 设置10秒超时（ai-diagnosis 应该<2秒就返回）
       })
 
+      console.log('====== ai-diagnosis 返回结果 ======')
+      console.log('完整返回:', JSON.stringify(rawResult))
 
-      if (result.result && result.result.success) {
-        const { diagnosisId } = result.result.data
+      const result = normalizeCloudResult<{ diagnosisId: string; status: string }>(rawResult)
+
+      if (result?.success && result.data) {
+        const { diagnosisId, status } = result.data
         
-        // ✨ 保存诊断ID并开始轮询
+        console.log(`✅ 诊断任务已创建: ${diagnosisId}，状态: ${status}`)
+        
+        // ✨ 保存诊断ID并开始轮询（不显示轮询UI）
         this.setData({
           diagnosisId: diagnosisId,
           diagnosisStatus: 'processing',
           pollRetries: 0,
-          showPolling: true
+          showPolling: false // 不显示轮询进度UI
         })
-
-        wx.showToast({ title: '诊断已提交，处理中...', icon: 'success', duration: 1500 })
         
-        // 开始轮询获取结果
+        // 静默处理，不显示toast提示
+        
+        // 开始轮询获取结果（不要在这里停止 submitting，让轮询完成后再停止）
         this.pollDiagnosisResult(diagnosisId)
       } else {
-        throw new Error(result.result?.error || '诊断提交失败')
+        const errorMsg = result?.message || result?.error || '诊断提交失败'
+        console.error('====== ai-diagnosis 返回错误 ======')
+        console.error('错误信息:', errorMsg)
+        throw new Error(errorMsg)
       }
     } catch (error: any) {
-      wx.showToast({ title: error.message || '诊断失败，请重试', icon: 'none' })
-    } finally {
+      console.error('====== 诊断提交失败 ======')
+      console.error('错误类型:', error.errCode)
+      console.error('错误信息:', error.errMsg || error.message)
+      console.error('完整错误:', error)
+      
+      // 提交失败时才停止加载
       this.setData({ submitting: false })
+      
+      // ✅ 特别处理超时错误
+      if (error.errMsg && error.errMsg.includes('TIMEOUT')) {
+        wx.showModal({
+          title: '诊断提交超时',
+          content: '网络连接超时，请检查网络后重试。如果问题持续，可能是服务器繁忙。',
+          showCancel: false,
+          confirmText: '我知道了'
+        })
+      } else if (error.errMsg && error.errMsg.includes('ESOCKETTIMEDOUT')) {
+        wx.showModal({
+          title: '连接超时',
+          content: '服务器响应超时，请稍后重试。提示：诊断任务可能仍在后台处理。',
+          showCancel: false,
+          confirmText: '我知道了'
+        })
+      } else {
+        wx.showToast({ 
+          title: error.message || error.errMsg || '诊断失败，请重试', 
+          icon: 'none',
+          duration: 3000
+        })
+      }
     }
   },
 
@@ -438,7 +678,7 @@ const pageConfig = {
       try {
         // 从数据库查询诊断状态
         const db = wx.cloud.database()
-        const result = await db.collection('ai_diagnosis_tasks')
+        const result = await db.collection('health_ai_diagnosis')
           .doc(diagnosisId)
           .get()
 
@@ -447,12 +687,32 @@ const pageConfig = {
 
         if (task.status === 'completed') {
           // ✨ 诊断完成
+          console.log('====== 诊断任务完成 ======')
+          console.log('任务ID:', diagnosisId)
+          console.log('结果类型:', typeof task.result)
+          console.log('结果内容:', JSON.stringify(task.result).substring(0, 200))
+          
+          // ✅ 确保 result 是对象，不是字符串
+          let diagnosisResult = task.result
+          if (typeof task.result === 'string') {
+            try {
+              diagnosisResult = JSON.parse(task.result)
+              console.log('✅ JSON解析成功')
+            } catch (e) {
+              console.error('❌ JSON解析失败:', e)
+              throw new Error('诊断结果格式错误')
+            }
+          }
+          
           this.setData({
             diagnosisStatus: 'completed',
-            diagnosisResult: task.result,
-            showPolling: false
+            diagnosisResult: diagnosisResult,
+            showPolling: false,
+            submitting: false // 完成后停止按钮加载
           })
-          wx.showToast({ title: '诊断完成', icon: 'success' })
+          
+          // 不显示toast，直接显示结果页面
+          // wx.showToast({ title: '诊断完成', icon: 'success' })
         } else if (task.status === 'failed') {
           // ✨ 诊断失败
           console.error('====== 诊断失败详情 ======')
@@ -463,15 +723,37 @@ const pageConfig = {
           this.setData({
             diagnosisStatus: 'failed',
             diagnosisError: task.error,
-            showPolling: false
+            showPolling: false,
+            submitting: false // 失败后停止按钮加载
           })
           
-          // 显示详细错误信息
+          // ✅ 提供更友好的错误提示和解决方案
+          const errorMsg = task.error || '未知错误'
+          const isImageError = errorMsg.includes('图片') || errorMsg.includes('过大') || errorMsg.includes('image')
+          
           wx.showModal({
-            title: '诊断失败',
-            content: `错误详情: ${task.error || '未知错误'}\n\n请截图此信息并联系技术支持`,
-            showCancel: false,
-            confirmText: '我知道了'
+            title: isImageError ? '图片诊断失败' : '诊断失败',
+            content: isImageError 
+              ? `${errorMsg}\n\n💡 解决方案：\n1. 删除图片，使用纯文字描述症状\n2. 重新拍摄更清晰、更小的图片\n3. 联系技术支持获取帮助`
+              : `${errorMsg}\n\n建议：检查网络连接后重试，或联系技术支持`,
+            showCancel: isImageError,
+            cancelText: '重新诊断',
+            confirmText: '我知道了',
+            success: (res) => {
+              if (res.cancel && isImageError) {
+                // 用户选择重新诊断，清除图片
+                this.setData({
+                  images: [],
+                  diagnosisResult: null,
+                  diagnosisStatus: 'idle'
+                })
+                wx.showToast({
+                  title: '已清除图片，请重新描述症状',
+                  icon: 'none',
+                  duration: 2000
+                })
+              }
+            }
           })
         } else {
           // 还在处理中，继续轮询
@@ -483,7 +765,8 @@ const pageConfig = {
             // 超时
             this.setData({
               diagnosisStatus: 'timeout',
-              showPolling: false
+              showPolling: false,
+              submitting: false // 超时后停止按钮加载
             })
             wx.showToast({ title: '诊断超时，请重试', icon: 'error' })
           }
@@ -496,6 +779,7 @@ const pageConfig = {
           this.setData({ pollRetries: retries })
           setTimeout(() => poll(), pollInterval)
         } else {
+          this.setData({ submitting: false }) // 超时后停止按钮加载
           wx.showToast({ title: '诊断超时，请重试', icon: 'error' })
         }
       }
@@ -510,28 +794,33 @@ const pageConfig = {
     if (!this.data.diagnosisResult) return
 
     try {
+      const diagnosisType = this.data.diagnosisType
       const diagnosis = this.data.diagnosisResult
-      const severity = diagnosis.severity || diagnosis.primaryDiagnosis?.severity || 'moderate'
       
-      // 根据严重程度判断处理方式
-      if (severity === 'fatal' || severity === 'critical') {
-        // 病情严重，提示用户选择处理方式
-        wx.showModal({
-          title: '诊断结果',
-          content: `诊断显示病情${severity === 'fatal' ? '极为严重' : '严重'}，建议立即处理`,
-          confirmText: '开始治疗',
-          cancelText: '记录死亡',
-          success: (res) => {
-            if (res.confirm) {
-              this.startTreatment(diagnosis)
-            } else if (res.cancel) {
-              this.recordDeath(diagnosis)
-            }
-          }
-        })
+      if (diagnosisType === 'autopsy_analysis') {
+        // 死因剖析：创建死亡记录并关联财务
+        this.createDeathRecordWithFinance(diagnosis)
       } else {
-        // 病情不严重，直接进入治疗流程
-        this.startTreatment(diagnosis)
+        // 病鹅诊断：根据严重程度判断处理方式
+        const severity = diagnosis.severity || diagnosis.primaryDiagnosis?.severity || 'moderate'
+        
+        if (severity === 'fatal' || severity === 'critical') {
+          wx.showModal({
+            title: '诊断结果',
+            content: `诊断显示病情${severity === 'fatal' ? '极为严重' : '严重'}，建议立即处理`,
+            confirmText: '开始治疗',
+            cancelText: '记录死亡',
+            success: (res) => {
+              if (res.confirm) {
+                this.startTreatment(diagnosis)
+              } else if (res.cancel) {
+                this.recordDeath(diagnosis)
+              }
+            }
+          })
+        } else {
+          this.startTreatment(diagnosis)
+        }
       }
     } catch (error) {
       console.error('采纳AI建议失败:', error)
@@ -550,22 +839,44 @@ const pageConfig = {
       // 转换受影响数量为数字
       const affectedCount = parseInt(this.data.affectedCount) || 0
       
+      // 获取诊断ID
+      const diagnosisId = this.data.diagnosisId
+      
+      console.log('======= 前端创建治疗记录参数 =======')
+      console.log('diagnosisId:', diagnosisId)
+      console.log('batchId:', this.data.selectedBatchId)
+      console.log('affectedCount:', affectedCount)
+      console.log('diagnosis:', diagnosis)
+      
+      // 验证必填参数
+      if (!diagnosisId) {
+        throw new Error('诊断ID不存在，请重新诊断')
+      }
+      if (!this.data.selectedBatchId) {
+        throw new Error('批次ID不存在')
+      }
+      if (affectedCount <= 0) {
+        throw new Error('受影响数量必须大于0')
+      }
+      
       // 创建治疗记录
-      const result = await wx.cloud.callFunction({
+      const rawResult = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
           action: 'create_treatment_from_diagnosis',
-          diagnosisId: diagnosis._id,
+          diagnosisId: diagnosisId,
           batchId: this.data.selectedBatchId,
           affectedCount: affectedCount,
           diagnosis: diagnosis.primaryDiagnosis?.disease || '待确定',
-          recommendations: diagnosis.recommendations
+          recommendations: diagnosis.treatmentRecommendation || diagnosis.recommendations
         }
       })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
+      const result = normalizeCloudResult<{ treatmentId: string }>(rawResult)
+
+      if (result?.success && result.data) {
         wx.showToast({
           title: '治疗记录已创建',
           icon: 'success'
@@ -574,22 +885,80 @@ const pageConfig = {
         // 跳转到治疗记录页面
         setTimeout(() => {
           wx.navigateTo({
-            url: `/packageHealth/treatment-record/treatment-record?treatmentId=${result.result.data.treatmentId}`
+            url: `/packageHealth/treatment-record/treatment-record?treatmentId=${result.data.treatmentId}`
           })
         }, 1500)
       } else {
-        throw new Error(result.result?.message || '创建治疗记录失败')
+        throw new Error(result?.error || result?.message || '创建治疗记录失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('创建治疗记录失败:', error)
+      
+      // 显示详细错误信息
+      const errorMsg = error.message || error.errMsg || '创建治疗记录失败'
+      wx.showModal({
+        title: '创建治疗记录失败',
+        content: errorMsg,
+        showCancel: false,
+        confirmText: '我知道了'
+      })
+    }
+  },
+
+  // 创建死亡记录并关联财务（死因剖析专用）
+  async createDeathRecordWithFinance(diagnosis: any) {
+    try {
+      const deathCount = parseInt(this.data.deathCount) || 0
+      const deathCause = diagnosis.primaryCause?.disease || diagnosis.primaryDiagnosis?.disease || '待确定'
+      
+      wx.showLoading({ title: '创建死亡记录...' })
+      
+      const rawResult = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'create_death_record_with_finance',
+          diagnosisId: this.data.diagnosisId,
+          batchId: this.data.selectedBatchId,
+          deathCount: deathCount,
+          deathCause: deathCause,
+          deathCategory: 'disease',
+          autopsyFindings: this.data.autopsyDescription,
+          diagnosisResult: diagnosis,
+          images: this.data.images || [] // 传递剖检图片
+        }
+      })
+      
+      wx.hideLoading()
+      
+      const result = normalizeCloudResult<{ deathRecordId: string }>(rawResult)
+
+      if (result?.success && result.data) {
+        wx.showToast({
+          title: '记录成功',
+          icon: 'success',
+          duration: 1500
+        })
+        
+        // 静默跳转到死亡记录详情页面（使用 redirectTo 替换当前页面）
+        setTimeout(() => {
+          wx.redirectTo({
+            url: `/packageHealth/death-record-detail/death-record-detail?id=${result.data.deathRecordId}`
+          })
+        }, 1500)
+      } else {
+        throw new Error(result?.message || result?.error || '创建死亡记录失败')
       }
     } catch (error: any) {
       wx.hideLoading()
       wx.showToast({
-        title: error.message || '创建治疗记录失败',
+        title: error.message || '创建失败',
         icon: 'none'
       })
     }
   },
 
-  // 记录死亡
+  // 记录死亡（病鹅诊断用）
   async recordDeath(diagnosis: any) {
     const affectedCount = parseInt(this.data.affectedCount) || 0
     
@@ -612,19 +981,58 @@ const pageConfig = {
     if (!this.data.diagnosisResult) return
 
     try {
-      wx.showToast({
-        title: '记录已保存',
-        icon: 'success'
+      wx.showLoading({ title: '保存中...' })
+      
+      const diagnosis = this.data.diagnosisResult
+      const affectedCount = parseInt(this.data.affectedCount) || 0
+      
+      // 准备异常记录数据
+      const recordData = {
+        action: 'create_abnormal_record',
+        diagnosisId: this.data.diagnosisId,
+        batchId: this.data.selectedBatchId,
+        batchNumber: this.data.selectedBatchNumber,
+        affectedCount: affectedCount,
+        symptoms: this.data.symptoms,
+        diagnosis: diagnosis.primaryDiagnosis?.disease || '待确定',
+        diagnosisConfidence: diagnosis.primaryDiagnosis?.confidence || 0,
+        diagnosisDetails: diagnosis.primaryDiagnosis || null, // 保存完整的诊断详情
+        severity: diagnosis.severity || 'unknown',
+        urgency: diagnosis.urgency || 'unknown',
+        aiRecommendation: diagnosis.treatmentRecommendation || diagnosis.recommendations,
+        images: this.data.images || []
+      }
+      
+      console.log('💾 保存异常记录:', recordData.diagnosis)
+      
+      // 创建异常记录
+      const rawResult = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: recordData
       })
       
-      // 返回健康管理页面
-      setTimeout(() => {
-        wx.navigateBack()
-      }, 1500)
-    } catch (error) {
-      // 已移除调试日志
+      wx.hideLoading()
+      
+      const result = normalizeCloudResult<{ abnormalRecordId?: string }>(rawResult)
+
+      if (result?.success) {
+        wx.showToast({
+          title: '异常记录已保存',
+          icon: 'success',
+          duration: 2000
+        })
+        
+        // 返回健康管理页面，用户可以从异常记录列表查看
+        setTimeout(() => {
+          wx.navigateBack()
+        }, 1500)
+      } else {
+        throw new Error(result?.message || result?.error || '保存失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
       wx.showToast({
-        title: '保存失败',
+        title: error.message || '保存失败',
         icon: 'none'
       })
     }

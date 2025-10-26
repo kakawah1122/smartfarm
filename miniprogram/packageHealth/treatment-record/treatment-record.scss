@@ -4,8 +4,10 @@
   background-color: #f5f5f5;
   min-height: 100vh;
   
-  .page-container {
-    padding: 32rpx 32rpx 0;
+  .page-content {
+    padding: 32rpx;
+    padding-top: 200rpx; /* 为固定定位的导航栏预留空间 (状态栏 + 导航栏高度 + 间距) */
+    padding-bottom: 120rpx; /* 为底部按钮预留空间 */
   }
 }
 
@@ -420,8 +422,10 @@
 /* 响应式适配 */
 @media (max-width: 375px) {
   .treatment-record-page {
-    .page-container {
-      padding: 24rpx 24rpx 0;
+    .page-content {
+      padding: 24rpx;
+      padding-top: 200rpx;
+      padding-bottom: 120rpx;
     }
     
     .treatment-type-grid {

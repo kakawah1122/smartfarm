@@ -1,0 +1,89 @@
+<!-- miniprogram/packageHealth/abnormal-records-list/abnormal-records-list.wxml -->
+<view class="abnormal-records-page">
+  <!-- 自定义导航栏 -->
+  <navigation-bar title="异常记录" />
+
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-container" wx:if="{{!loading && records.length === 0}}">
+    <t-empty icon="info-circle" description="暂无异常记录" />
+  </view>
+
+  <!-- 记录列表 -->
+  <view class="records-list" wx:if="{{!loading && records.length > 0}}">
+    <view 
+      class="record-card"
+      wx:for="{{records}}"
+      wx:key="_id"
+      bind:tap="onRecordTap"
+      data-id="{{item._id}}"
+    >
+      <!-- 头部信息 -->
+      <view class="card-header">
+        <view class="batch-info">
+          <t-tag theme="primary" size="small" class="batch-tag">{{item.batchNumber}}</t-tag>
+          <text class="check-date">{{item.checkDate}}</text>
+        </view>
+        <t-tag 
+          theme="{{item.status === 'abnormal' ? 'warning' : (item.status === 'treating' ? 'primary' : 'success')}}" 
+          size="small"
+        >
+          {{item.status === 'abnormal' ? '待处理' : (item.status === 'treating' ? '治疗中' : '已隔离')}}
+        </t-tag>
+      </view>
+
+      <!-- 主要内容 -->
+      <view class="card-main">
+        <!-- 诊断和数量 -->
+        <view class="diagnosis-section">
+          <text class="diagnosis-name">{{item.diagnosis}}</text>
+          <view class="count-row">
+            <text class="affected-count">受影响 {{item.affectedCount || item.sickCount || 0}} 只</text>
+            <t-tag 
+              theme="{{item.severity === 'severe' ? 'danger' : (item.severity === 'moderate' ? 'warning' : 'primary')}}" 
+              size="small"
+            >
+              {{item.severity === 'severe' ? '严重' : (item.severity === 'moderate' ? '中度' : '轻度')}}
+            </t-tag>
+          </view>
+        </view>
+
+        <!-- 症状 -->
+        <view class="symptoms-section" wx:if="{{item.symptoms}}">
+          <text class="symptoms-label">症状：</text>
+          <text class="symptoms-text">{{item.symptoms}}</text>
+        </view>
+      </view>
+
+      <!-- 底部标签 -->
+      <view class="card-footer">
+        <view class="tags-group">
+          <t-tag 
+            theme="{{item.urgency === 'high' ? 'danger' : (item.urgency === 'medium' ? 'warning' : 'primary')}}" 
+            size="small"
+          >
+            {{item.urgency === 'high' ? '危急' : (item.urgency === 'medium' ? '紧急' : '一般')}}
+          </t-tag>
+          <t-tag theme="success" size="small" wx:if="{{item.diagnosisConfidence}}">
+            置信度 {{item.diagnosisConfidence}}%
+          </t-tag>
+        </view>
+      </view>
+
+      <!-- 图片标识 -->
+      <view class="has-images" wx:if="{{item.images && item.images.length > 0}}">
+        <t-icon name="image" size="24rpx" color="#0052d9" />
+        <text class="images-count">{{item.images.length}}张照片</text>
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 底部安全区域 -->
+  <view class="safe-area-bottom"></view>
+
+</view>

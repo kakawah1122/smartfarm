@@ -3,8 +3,7 @@
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="用户登录"
-    show-back="true"
-    bind:back="goBack"
+    show-back="{{false}}"
   />
   
   <!-- 未登录状态 -->

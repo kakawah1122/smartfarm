@@ -1,15 +1,15 @@
 {
   "usingComponents": {
-    "navigation-bar": "../../components/navigation-bar/navigation-bar",
-    "t-search": "../../miniprogram_npm/tdesign-miniprogram/search/search",
-    "t-tabs": "../../miniprogram_npm/tdesign-miniprogram/tabs/tabs",
-    "t-tab-panel": "../../miniprogram_npm/tdesign-miniprogram/tab-panel/tab-panel",
-    "t-loading": "../../miniprogram_npm/tdesign-miniprogram/loading/loading",
-    "t-empty": "../../miniprogram_npm/tdesign-miniprogram/empty/empty",
-    "t-button": "../../miniprogram_npm/tdesign-miniprogram/button/button",
-    "t-dialog": "../../miniprogram_npm/tdesign-miniprogram/dialog/dialog",
-    "t-popup": "../../miniprogram_npm/tdesign-miniprogram/popup/popup",
-    "t-icon": "../../miniprogram_npm/tdesign-miniprogram/icon/icon"
+    "navigation-bar": "/components/navigation-bar/navigation-bar",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-popup": "tdesign-miniprogram/popup/popup",
+    "t-icon": "tdesign-miniprogram/icon/icon"
   },
   "navigationStyle": "custom",
   "backgroundColor": "#f5f6fa",

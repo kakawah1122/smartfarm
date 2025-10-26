@@ -185,6 +185,636 @@ async function createHealthRecord(event, wxContext) {
   }
 }
 
+// 创建异常记录（从AI诊断保存）
+async function createAbnormalRecord(event, wxContext) {
+  try {
+    const {
+      diagnosisId,
+      batchId,
+      batchNumber,
+      affectedCount,
+      symptoms,
+      diagnosis,
+      diagnosisConfidence,
+      diagnosisDetails,  // 新增：完整的诊断详情
+      severity,
+      urgency,
+      aiRecommendation,
+      images
+    } = event
+    const openid = wxContext.OPENID
+
+    console.log('📥 创建异常记录:', diagnosis, '- 批次:', batchNumber)
+
+    const recordData = {
+      batchId,
+      batchNumber,
+      diagnosisId,  // 关联AI诊断记录
+      recordType: 'ai_diagnosis',
+      checkDate: new Date().toISOString().split('T')[0],
+      reporter: openid,
+      status: 'abnormal',  // 异常状态，等待制定治疗方案
+      affectedCount: affectedCount || 0,
+      symptoms: symptoms || '',
+      diagnosis: diagnosis || '',
+      diagnosisConfidence: diagnosisConfidence || 0,
+      diagnosisDetails: diagnosisDetails || null,  // 保存完整的诊断详情
+      severity: severity || 'unknown',
+      urgency: urgency || 'unknown',
+      aiRecommendation: aiRecommendation || null,
+      images: images || [],
+      isDeleted: false,  // 添加isDeleted字段
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    console.log('💾 准备保存到数据库的数据:', recordData)
+
+    // 使用health_records collection，但状态为abnormal
+    const db = cloud.database()
+    const result = await db.collection(COLLECTIONS.HEALTH_RECORDS).add({
+      data: recordData
+    })
+    
+    console.log('✅ 异常记录已保存, ID:', result._id)
+
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'create_abnormal_record',
+      COLLECTIONS.HEALTH_RECORDS,
+      result._id,
+      {
+        batchId,
+        diagnosisId,
+        affectedCount,
+        diagnosis,
+        severity,
+        result: 'success'
+      }
+    )
+
+    return {
+      success: true,
+      data: { recordId: result._id },
+      message: '异常记录创建成功'
+    }
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '创建异常记录失败'
+    }
+  }
+}
+
+// 获取异常记录详情
+async function getAbnormalRecordDetail(event, wxContext) {
+  try {
+    const { recordId } = event
+    const db = cloud.database()
+    
+    const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .doc(recordId)
+      .get()
+    
+    if (!result.data) {
+      throw new Error('记录不存在')
+    }
+    
+    return {
+      success: true,
+      data: result.data,
+      message: '获取成功'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '获取异常记录详情失败'
+    }
+  }
+}
+
+// 从异常记录创建治疗记录
+async function createTreatmentFromAbnormal(event, wxContext) {
+  try {
+    const {
+      abnormalRecordId,
+      batchId,
+      affectedCount,
+      diagnosis,
+      aiRecommendation
+    } = event
+    const openid = wxContext.OPENID
+    const db = cloud.database()
+    
+    // 创建治疗记录
+    const treatmentData = {
+      batchId,
+      abnormalRecordId,  // 关联异常记录
+      animalIds: [],
+      treatmentDate: new Date().toISOString().split('T')[0],
+      treatmentType: 'medication',
+      diagnosis: {
+        preliminary: diagnosis,
+        confirmed: diagnosis,
+        confidence: 0,
+        diagnosisMethod: 'ai'
+      },
+      treatmentPlan: {
+        primary: aiRecommendation?.primary || '',
+        followUpSchedule: []
+      },
+      medications: [],
+      progress: [],
+      outcome: {
+        status: 'ongoing',
+        curedCount: 0,
+        improvedCount: 0,
+        deathCount: 0,
+        totalTreated: affectedCount || 0
+      },
+      cost: {
+        medication: 0,
+        veterinary: 0,
+        supportive: 0,
+        total: 0
+      },
+      notes: '',
+      createdBy: openid,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS).add({
+      data: treatmentData
+    })
+    
+    // 更新异常记录状态为treating（治疗中）
+    await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .doc(abnormalRecordId)
+      .update({
+        data: {
+          status: 'treating',
+          treatmentRecordId: treatmentResult._id,
+          updatedAt: new Date()
+        }
+      })
+    
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'create_treatment_from_abnormal',
+      COLLECTIONS.HEALTH_TREATMENT_RECORDS,
+      treatmentResult._id,
+      {
+        abnormalRecordId,
+        batchId,
+        affectedCount,
+        result: 'success'
+      }
+    )
+    
+    return {
+      success: true,
+      data: { treatmentId: treatmentResult._id },
+      message: '治疗记录创建成功'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '创建治疗记录失败'
+    }
+  }
+}
+
+// 从异常记录创建隔离记录
+async function createIsolationFromAbnormal(event, wxContext) {
+  try {
+    const {
+      abnormalRecordId,
+      batchId,
+      affectedCount,
+      diagnosis
+    } = event
+    const openid = wxContext.OPENID
+    const db = cloud.database()
+    
+    // 创建隔离记录
+    const isolationData = {
+      batchId,
+      abnormalRecordId,  // 关联异常记录
+      isolationDate: new Date().toISOString().split('T')[0],
+      isolatedCount: affectedCount || 0,
+      diagnosis: diagnosis || '',
+      isolationLocation: '',  // 隔离位置
+      isolationReason: diagnosis || '',
+      status: 'ongoing',  // ongoing | completed
+      dailyRecords: [],  // 每日观察记录
+      outcome: {
+        recoveredCount: 0,
+        diedCount: 0,
+        stillIsolatedCount: affectedCount || 0
+      },
+      notes: '',
+      createdBy: openid,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    const isolationResult = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS).add({
+      data: isolationData
+    })
+    
+    // 更新异常记录状态为isolated（隔离中）
+    await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .doc(abnormalRecordId)
+      .update({
+        data: {
+          status: 'isolated',
+          isolationRecordId: isolationResult._id,
+          updatedAt: new Date()
+        }
+      })
+    
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'create_isolation_from_abnormal',
+      COLLECTIONS.HEALTH_ISOLATION_RECORDS,
+      isolationResult._id,
+      {
+        abnormalRecordId,
+        batchId,
+        affectedCount,
+        result: 'success'
+      }
+    )
+    
+    return {
+      success: true,
+      data: { isolationId: isolationResult._id },
+      message: '隔离记录创建成功'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '创建隔离记录失败'
+    }
+  }
+}
+
+// 获取异常记录列表
+async function getAbnormalRecords(event, wxContext) {
+  try {
+    const { batchId } = event
+    const db = cloud.database()
+    
+    console.log('🔍 查询异常记录 - 参数:', { batchId })
+    
+    // 只查询从AI诊断创建的异常记录（recordType: 'ai_diagnosis' 且 status: 'abnormal'）
+    let whereCondition = {
+      recordType: 'ai_diagnosis',
+      status: 'abnormal',
+      isDeleted: _.neq(true)
+    }
+    
+    if (batchId && batchId !== 'all') {
+      whereCondition.batchId = batchId
+    }
+    
+    const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .where(whereCondition)
+      .orderBy('checkDate', 'desc')
+      .get()
+    
+    console.log('📋 查询到异常记录数量:', result.data.length)
+    if (result.data.length > 0) {
+      console.log('📄 第一条记录示例:', result.data[0])
+    }
+    
+    return {
+      success: true,
+      data: result.data,
+      message: '获取成功'
+    }
+  } catch (error) {
+    console.error('❌ 查询异常记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '获取异常记录失败'
+    }
+  }
+}
+
+// 列出异常记录（分页）
+async function listAbnormalRecords(event, wxContext) {
+  try {
+    const { batchId, page = 1, pageSize = 20 } = event
+    const db = cloud.database()
+    
+    // 只查询从AI诊断创建的异常记录
+    let whereCondition = {
+      recordType: 'ai_diagnosis',
+      status: 'abnormal',
+      isDeleted: _.neq(true)
+    }
+    
+    if (batchId && batchId !== 'all') {
+      whereCondition.batchId = batchId
+    }
+    
+    let query = db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .where(whereCondition)
+    
+    const countResult = await query.count()
+    const total = countResult.total
+    
+    const result = await query
+      .orderBy('checkDate', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .get()
+    
+    return {
+      success: true,
+      data: {
+        records: result.data,
+        total: total,
+        page: page,
+        pageSize: pageSize,
+        totalPages: Math.ceil(total / pageSize)
+      },
+      message: '获取成功'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '获取异常记录列表失败'
+    }
+  }
+}
+
+// 获取批次AI诊断提示词所需数据
+async function getBatchPromptData(event, wxContext) {
+  try {
+    const { batchId } = event
+
+    if (!batchId) {
+      throw new Error('批次ID不能为空')
+    }
+
+    // 1. 批次基础信息
+    const batchResult = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+      .doc(batchId)
+      .get()
+
+    if (!batchResult.data) {
+      throw new Error('批次不存在或已删除')
+    }
+
+    const batch = batchResult.data
+    const today = new Date()
+    const entryDate = new Date(batch.entryDate || batch.createTime || today)
+    const dayAge = Math.max(1, Math.floor((today - entryDate) / (24 * 60 * 60 * 1000)) + 1)
+
+    const batchInfo = {
+      batchId,
+      batchNumber: batch.batchNumber || '未知批次',
+      breed: batch.breed || '狮头鹅',
+      entryDate: batch.entryDate || (batch.createTime ? new Date(batch.createTime).toISOString().split('T')[0] : ''),
+      dayAge,
+      initialQuantity: batch.quantity || 0,
+      location: batch.location || '',
+      supplier: batch.supplier || '',
+      feedType: batch.feedType || '',
+      notes: batch.notes || ''
+    }
+
+    // 2. 当前群体统计
+    const summaryResult = await getHealthStatistics(batchId)
+
+    const currentStats = {
+      totalAnimals: summaryResult.totalAnimals,
+      healthyCount: summaryResult.healthyCount,
+      sickCount: summaryResult.sickCount,
+      deadCount: summaryResult.deadCount,
+      abnormalCount: summaryResult.abnormalCount,
+      treatingCount: summaryResult.treatingCount,
+      isolatedCount: summaryResult.isolatedCount,
+      mortalityRate: summaryResult.mortalityRate
+    }
+
+    // 3. 最近异常/诊断记录
+    const recentAbnormalRecords = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .where({
+        batchId,
+        recordType: 'ai_diagnosis',
+        isDeleted: _.neq(true)
+      })
+      .orderBy('checkDate', 'desc')
+      .limit(5)
+      .get()
+
+    const diagnosisTrend = recentAbnormalRecords.data.map(record => ({
+      recordId: record._id,
+      checkDate: record.checkDate,
+      diagnosis: record.diagnosis,
+      symptoms: record.symptoms || [],
+      sickCount: record.sickCount || 0,
+      severity: record.severity || '',
+      urgency: record.urgency || '',
+      aiRecommendation: record.aiRecommendation
+    }))
+
+    // 4. 最近治疗与隔离记录
+    const recentTreatmentRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where({ batchId, isDeleted: _.neq(true) })
+      .orderBy('treatmentDate', 'desc')
+      .limit(3)
+      .get()
+
+    const treatmentHistory = recentTreatmentRecords.data.map(record => ({
+      recordId: record._id,
+      treatmentDate: record.treatmentDate,
+      diagnosis: record.diagnosis,
+      treatmentPlan: record.treatmentPlan,
+      medications: record.medications,
+      outcome: record.outcome,
+      notes: record.notes
+    }))
+
+    const recentIsolationRecords = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
+      .where({ batchId, isDeleted: _.neq(true) })
+      .orderBy('startDate', 'desc')
+      .limit(3)
+      .get()
+
+    const isolationHistory = recentIsolationRecords.data.map(record => ({
+      recordId: record._id,
+      startDate: record.startDate,
+      endDate: record.endDate,
+      reason: record.reason,
+      status: record.status,
+      notes: record.notes
+    }))
+
+    // 5. 最近死亡记录
+    const recentDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+      .where({ batchId, isDeleted: _.neq(true) })
+      .orderBy('deathDate', 'desc')
+      .limit(5)
+      .get()
+
+    const deathHistory = recentDeathRecords.data.map(record => ({
+      recordId: record._id,
+      deathDate: record.deathDate,
+      deathCount: record.deathCount,
+      aiDiagnosis: record.deathCause,
+      correctedDiagnosis: record.correctedCause,
+      correctionReason: record.correctionReason,
+      aiAccuracyRating: record.aiAccuracyRating
+    }))
+
+    // 6. 最近AI准确率/修正数据
+    const recentCorrections = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .where({
+        batchId,
+        recordType: 'ai_diagnosis',
+        isCorrected: true,
+        isDeleted: _.neq(true)
+      })
+      .orderBy('correctedAt', 'desc')
+      .limit(10)
+      .get()
+
+    const correctionFeedback = recentCorrections.data.map(record => ({
+      recordId: record._id,
+      correctedDiagnosis: record.correctedDiagnosis,
+      correctionReason: record.correctionReason,
+      aiAccuracyRating: record.aiAccuracyRating,
+      correctedAt: record.correctedAt
+    }))
+
+    // 7. 构建Prompt-ready结构
+    return {
+      success: true,
+      data: {
+        batch: batchInfo,
+        stats: currentStats,
+        diagnosisTrend,
+        treatmentHistory,
+        isolationHistory,
+        deathHistory,
+        correctionFeedback
+      }
+    }
+
+  } catch (error) {
+    console.error('获取批次诊断数据失败:', error)
+    return {
+      success: false,
+      error: error.message || '获取批次数据失败'
+    }
+  }
+}
+
+// 修正异常诊断
+async function correctAbnormalDiagnosis(event, wxContext) {
+  try {
+    const {
+      recordId,
+      correctedDiagnosis,
+      veterinarianDiagnosis,
+      aiAccuracyRating
+    } = event
+    const openid = wxContext.OPENID
+    
+    // 验证必填参数
+    if (!recordId) {
+      throw new Error('记录ID不能为空')
+    }
+    if (!correctedDiagnosis) {
+      throw new Error('修正后的诊断不能为空')
+    }
+    if (!veterinarianDiagnosis) {
+      throw new Error('兽医诊断依据不能为空')
+    }
+    if (!aiAccuracyRating || aiAccuracyRating < 1 || aiAccuracyRating > 5) {
+      throw new Error('AI准确性评分必须在1-5之间')
+    }
+    
+    const db = cloud.database()
+    
+    // 获取当前记录
+    const recordResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .doc(recordId)
+      .get()
+    
+    if (!recordResult.data) {
+      throw new Error('记录不存在')
+    }
+    
+    // 获取用户信息
+    const userResult = await db.collection('users')
+      .where({ _openid: openid })
+      .limit(1)
+      .get()
+    
+    const userName = userResult.data && userResult.data.length > 0 
+      ? userResult.data[0].name || '未知用户' 
+      : '未知用户'
+    
+    // 更新记录
+    await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .doc(recordId)
+      .update({
+        data: {
+          isCorrected: true,
+          correctedDiagnosis: correctedDiagnosis,
+          correctionReason: veterinarianDiagnosis,
+          aiAccuracyRating: aiAccuracyRating,
+          correctedBy: openid,
+          correctedByName: userName,
+          correctedAt: new Date().toISOString().split('T')[0],
+          updatedAt: new Date()
+        }
+      })
+    
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'correct_abnormal_diagnosis',
+      COLLECTIONS.HEALTH_RECORDS,
+      recordId,
+      {
+        originalDiagnosis: recordResult.data.diagnosis,
+        correctedDiagnosis,
+        aiAccuracyRating,
+        result: 'success'
+      }
+    )
+    
+    return {
+      success: true,
+      message: '修正提交成功'
+    }
+  } catch (error) {
+    console.error('修正异常诊断失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '修正提交失败'
+    }
+  }
+}
+
 // 创建死亡记录
 async function createDeathRecord(data, wxContext) {
   try {
@@ -428,6 +1058,37 @@ async function getHealthStatistics(batchId, dateRange) {
     let healthyRate = 0
     let mortalityRate = 0
     
+    // 统计异常记录（只统计从AI诊断创建的异常记录）
+    const abnormalRecords = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .where({
+        batchId,
+        recordType: 'ai_diagnosis',
+        status: 'abnormal',
+        isDeleted: _.neq(true)
+      })
+      .count()
+    const abnormalCount = abnormalRecords.total || 0
+    
+    // 统计治疗中记录（status='treating' 或 treatment_records中status='ongoing'）
+    const treatingRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where({
+        batchId,
+        'outcome.status': 'ongoing',
+        isDeleted: _.neq(true)
+      })
+      .count()
+    const treatingCount = treatingRecords.total || 0
+    
+    // 统计隔离中记录（status='isolated' 或 isolation_records中status='ongoing'）
+    const isolatedRecords = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
+      .where({
+        batchId,
+        status: 'ongoing',
+        isDeleted: _.neq(true)
+      })
+      .count()
+    const isolatedCount = isolatedRecords.total || 0
+    
     if (records.data.length > 0) {
       // 有健康记录，使用最新的记录
       const latestRecord = records.data[0]
@@ -454,7 +1115,10 @@ async function getHealthStatistics(batchId, dateRange) {
       sickCount,
       deadCount,
       healthyRate,
-      mortalityRate
+      mortalityRate,
+      abnormalCount,
+      treatingCount,
+      isolatedCount
     }
 
   } catch (error) {
@@ -657,10 +1321,37 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         
         // 计算健康指标
         let originalQuantity = batch.quantity || 0  // 原始入栏数
-        let totalCount = originalQuantity           // 当前存栏数
+        
+        // ✅ 实时统计死亡数（从死亡记录表查询）
+        const deathRecordsResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+          .where({
+            batchId: batch._id,
+            isDeleted: false
+          })
+          .get()
+        
+        let deadCount = 0
+        deathRecordsResult.data.forEach(record => {
+          deadCount += record.deathCount || 0
+        })
+        
+        console.log(`📊 批次 ${batch.batchNumber} 死亡统计:`, {
+          批次ID: batch._id,
+          死亡记录数: deathRecordsResult.data.length,
+          累计死亡数: deadCount,
+          死亡记录详情: deathRecordsResult.data.map(r => ({
+            日期: r.deathDate,
+            数量: r.deathCount,
+            原因: r.deathCause
+          }))
+        })
+        
+        // ✅ 当前存栏数 = 原始数量 - 实时死亡数 - 出栏数
+        const exitedCount = exitQuantityMap[batch.batchNumber] || 0
+        let totalCount = originalQuantity - deadCount - exitedCount
+        
         let healthyCount = 0
         let sickCount = 0
-        let deadCount = 0
         let healthyRate = 100
         let lastCheckDate = null
         let recentIssues = []
@@ -670,8 +1361,12 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           const latestRecord = healthRecords[0]
           healthyCount = latestRecord.healthyCount || 0
           sickCount = latestRecord.sickCount || 0
-          deadCount = latestRecord.deadCount || 0
-          totalCount = latestRecord.totalCount || totalCount
+          // ❌ 不再从健康记录获取死亡数，因为那是单次检查的数据
+          
+          // 如果健康记录的存栏数不同，使用健康记录的
+          if (latestRecord.totalCount && latestRecord.totalCount !== totalCount) {
+            totalCount = latestRecord.totalCount
+          }
           
           // 计算健康率（基于存栏数）
           healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 0
@@ -688,10 +1383,10 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           })
           recentIssues = [...new Set(recentIssues)].slice(0, 3)
         } else {
-          // 没有健康记录，默认都是健康的
-          healthyCount = totalCount    // 假设所有存栏都是健康的
+          // 没有健康记录，默认都是健康的（存栏数 - 死亡数）
+          healthyCount = totalCount > 0 ? totalCount : 0
           sickCount = 0
-          deadCount = 0
+          // deadCount 已经从批次表获取
           healthyRate = 100            // 健康率100%
         }
         
@@ -846,6 +1541,18 @@ exports.main = async (event, context) => {
       case 'create_health_record':
         return await createHealthRecord(event, wxContext)
       
+      case 'create_abnormal_record':
+        return await createAbnormalRecord(event, wxContext)
+      
+      case 'get_abnormal_record_detail':
+        return await getAbnormalRecordDetail(event, wxContext)
+      
+      case 'create_treatment_from_abnormal':
+        return await createTreatmentFromAbnormal(event, wxContext)
+      
+      case 'create_isolation_from_abnormal':
+        return await createIsolationFromAbnormal(event, wxContext)
+      
       case 'create_treatment_record':
         return await createTreatmentRecord(event, wxContext)
       
@@ -895,6 +1602,30 @@ exports.main = async (event, context) => {
             healthRate: await calculateHealthRate(event.batchId)
           }
         }
+      
+      case 'create_death_record_with_finance':
+        return await createDeathRecordWithFinance(event, wxContext)
+      
+      case 'get_death_records_list':
+        return await getDeathRecordsList(event, wxContext)
+      
+      case 'get_death_record_detail':
+        return await getDeathRecordDetail(event, wxContext)
+      
+      case 'correct_death_diagnosis':
+        return await correctDeathDiagnosis(event, wxContext)
+      
+      case 'get_abnormal_records':
+        return await getAbnormalRecords(event, wxContext)
+      
+      case 'list_abnormal_records':
+        return await listAbnormalRecords(event, wxContext)
+      
+      case 'correct_abnormal_diagnosis':
+        return await correctAbnormalDiagnosis(event, wxContext)
+      
+      case 'get_batch_prompt_data':
+        return await getBatchPromptData(event, wxContext)
       
       default:
         throw new Error(`未知操作: ${action}`)
@@ -1301,12 +2032,31 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
     const { diagnosisId, batchId, affectedCount, diagnosis, recommendations } = event
     const openid = wxContext.OPENID
     
+    console.log('======= 创建治疗记录参数 =======')
+    console.log('diagnosisId:', diagnosisId)
+    console.log('batchId:', batchId)
+    console.log('affectedCount:', affectedCount)
+    console.log('diagnosis:', diagnosis)
+    
+    // 验证必填参数
+    if (!diagnosisId) {
+      throw new Error('诊断ID不能为空')
+    }
+    if (!batchId) {
+      throw new Error('批次ID不能为空')
+    }
+    if (!affectedCount || affectedCount <= 0) {
+      throw new Error('受影响数量必须大于0')
+    }
+    
     // 获取AI诊断记录
     const diagnosisRecord = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .doc(diagnosisId).get()
     
+    console.log('诊断记录查询结果:', diagnosisRecord.data ? '找到记录' : '未找到记录')
+    
     if (!diagnosisRecord.data) {
-      throw new Error('诊断记录不存在')
+      throw new Error(`诊断记录不存在 (ID: ${diagnosisId})`)
     }
     
     // 创建治疗记录
@@ -1335,6 +2085,53 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
     const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS).add({
       data: treatmentData
     })
+    
+    // ✨ 创建健康记录，记录病鹅数量到"异常"统计
+    try {
+      // 获取批次当前存栏数
+      const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .doc(batchId)
+        .get()
+      
+      if (batchResult.data) {
+        const batch = batchResult.data
+        const currentCount = batch.currentCount || batch.quantity || 0
+        const healthyCount = Math.max(0, currentCount - affectedCount)
+        
+        // 创建健康记录
+        const healthRecordData = {
+          batchId,
+          recordType: 'ai_diagnosis',
+          checkDate: new Date().toISOString().split('T')[0],
+          inspector: openid,
+          totalCount: currentCount,
+          healthyCount: healthyCount,
+          sickCount: affectedCount,
+          deadCount: 0,
+          symptoms: diagnosisRecord.data.symptoms || [],
+          diagnosis: diagnosis || diagnosisRecord.data.primaryDiagnosis?.disease || '待确定',
+          treatment: treatmentData.treatmentPlan?.primary || '',
+          notes: `AI诊断：${diagnosis}，置信度${diagnosisRecord.data.primaryDiagnosis?.confidence || 0}%`,
+          followUpRequired: true,
+          followUpDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          severity: diagnosisRecord.data.severity || 'moderate',
+          relatedTreatmentId: result._id,
+          relatedDiagnosisId: diagnosisId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isDeleted: false
+        }
+        
+        await db.collection(COLLECTIONS.HEALTH_RECORDS).add({
+          data: healthRecordData
+        })
+        
+        console.log('✅ 健康记录已创建，病鹅数量:', affectedCount)
+      }
+    } catch (healthRecordError) {
+      console.error('创建健康记录失败（不影响治疗记录）:', healthRecordError)
+      // 不影响主流程
+    }
     
     // 更新AI诊断记录，关联治疗记录
     await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS).doc(diagnosisId).update({
@@ -1768,6 +2565,388 @@ async function calculateTreatmentCost(event, wxContext) {
       success: false,
       error: error.message,
       message: '计算治疗成本失败'
+    }
+  }
+}
+
+/**
+ * 创建死亡记录并关联财务（死因剖析专用）
+ */
+async function createDeathRecordWithFinance(event, wxContext) {
+  try {
+    const {
+      diagnosisId,
+      batchId,
+      deathCount,
+      deathCause,
+      deathCategory = 'disease',
+      autopsyFindings,
+      diagnosisResult,
+      images = []
+    } = event
+    
+    const openid = wxContext.OPENID
+    
+    // 验证必填参数
+    if (!batchId || !deathCount || deathCount <= 0) {
+      throw new Error('批次ID和死亡数量不能为空')
+    }
+    
+    // 1. 获取批次信息，计算单位成本
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .doc(batchId)
+      .get()
+    
+    if (!batchResult.data) {
+      throw new Error('批次不存在')
+    }
+    
+    const batch = batchResult.data
+    
+    // 计算单位成本（使用 calculateBatchCost 函数获取综合成本）
+    let unitCost = 0
+    try {
+      const costResult = await calculateBatchCost({ batchId }, wxContext)
+      console.log('📊 成本计算结果:', JSON.stringify(costResult))
+      if (costResult.success && costResult.data.avgCost) {
+        unitCost = parseFloat(costResult.data.avgCost)
+        console.log('✅ 使用计算的平均成本:', unitCost)
+      }
+    } catch (costError) {
+      console.error('⚠️ 计算成本失败，将使用入栏单价:', costError.message)
+    }
+    
+    // 如果计算失败或为0，使用入栏单价
+    if (unitCost === 0 || isNaN(unitCost)) {
+      const batchUnitCost = batch.unitCost || 0
+      const defaultCost = 50 // 最低保底成本
+      
+      // 优先使用批次入栏单价，如果为0则使用默认值
+      unitCost = batchUnitCost > 0 ? batchUnitCost : defaultCost
+      
+      console.log(`📝 批次入栏单价: ${batchUnitCost}元, 最终使用成本: ${unitCost}元`)
+    }
+    
+    const financeLoss = unitCost * deathCount
+    console.log(`💰 财务损失计算: ${unitCost}元/只 × ${deathCount}只 = ${financeLoss}元`)
+    
+    // 2. 创建死亡记录
+    const deathRecordData = {
+      _openid: openid,
+      openid: openid,
+      batchId: batchId,
+      batchNumber: batch.batchNumber || '',
+      deathDate: new Date().toISOString().split('T')[0],
+      deathCount: deathCount,
+      deathCause: deathCause || '待确定',
+      deathCategory: deathCategory,
+      disposalMethod: 'burial', // 默认深埋
+      autopsyFindings: autopsyFindings || '',
+      photos: images || [], // 保存剖检图片
+      aiDiagnosisId: diagnosisId || null,
+      diagnosisResult: diagnosisResult || null,
+      financeLoss: parseFloat(financeLoss.toFixed(2)),
+      unitCost: parseFloat(unitCost.toFixed(2)),
+      operator: openid,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false
+    }
+    
+    const deathRecordResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).add({
+      data: deathRecordData
+    })
+    
+    const deathRecordId = deathRecordResult._id
+    
+    // 3. 调用财务管理云函数创建成本记录
+    try {
+      await cloud.callFunction({
+        name: 'finance-management',
+        data: {
+          action: 'createDeathLossRecord',
+          batchId: batchId,
+          relatedRecordId: deathRecordId,
+          relatedDiagnosisId: diagnosisId,
+          deathCount: deathCount,
+          unitCost: unitCost,
+          totalLoss: financeLoss,
+          deathCause: deathCause,
+          description: `死因剖析：${deathCause}，损失${deathCount}只，单位成本${unitCost.toFixed(2)}元`
+        }
+      })
+    } catch (financeError) {
+      console.error('创建财务记录失败:', financeError)
+      // 即使财务记录失败，死亡记录也已创建，继续返回成功
+    }
+    
+    // 4. 更新批次存栏量
+    try {
+      await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .doc(batchId)
+        .update({
+          data: {
+            currentCount: _.inc(-deathCount),
+            deadCount: _.inc(deathCount),
+            updatedAt: new Date()
+          }
+        })
+    } catch (updateError) {
+      console.error('更新批次信息失败:', updateError)
+    }
+    
+    return {
+      success: true,
+      data: {
+        deathRecordId: deathRecordId,
+        financeLoss: financeLoss,
+        unitCost: unitCost
+      },
+      message: '死亡记录创建成功，已关联财务损失'
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '创建死亡记录失败'
+    }
+  }
+}
+
+/**
+ * 获取死亡记录列表
+ */
+async function getDeathRecordsList(event, wxContext) {
+  try {
+    const openid = wxContext.OPENID
+    
+    // 查询用户的所有死亡记录，按日期倒序
+    const result = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+      .where({
+        _openid: openid,
+        isDeleted: false
+      })
+      .orderBy('deathDate', 'desc')
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .get()
+    
+    return {
+      success: true,
+      data: result.data || [],
+      message: '获取死亡记录列表成功'
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '获取死亡记录列表失败'
+    }
+  }
+}
+
+/**
+ * 获取死亡记录详情
+ */
+async function getDeathRecordDetail(event, wxContext) {
+  try {
+    const { recordId } = event
+    const openid = wxContext.OPENID
+    
+    if (!recordId) {
+      throw new Error('记录ID不能为空')
+    }
+    
+    // 查询记录详情
+    const result = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+      .doc(recordId)
+      .get()
+    
+    if (!result.data) {
+      throw new Error('记录不存在')
+    }
+    
+    const record = result.data
+    
+    // 验证权限
+    if (record._openid !== openid) {
+      throw new Error('无权访问此记录')
+    }
+    
+    // 字段映射：photos -> autopsyImages（前端期望的字段名）
+    if (record.photos && record.photos.length > 0) {
+      record.autopsyImages = record.photos
+    }
+    
+    // 如果有AI诊断ID，获取完整的诊断信息
+    if (record.aiDiagnosisId) {
+      try {
+        const diagnosisResult = await db.collection('health_ai_diagnosis')
+          .doc(record.aiDiagnosisId)
+          .get()
+        
+        if (diagnosisResult.data && diagnosisResult.data.result) {
+          // 将诊断结果合并到record中
+          record.diagnosisResult = diagnosisResult.data.result
+        }
+      } catch (diagnosisError) {
+        console.error('获取AI诊断详情失败:', diagnosisError)
+        // 不影响主流程
+      }
+    }
+    
+    // 格式化修正时间
+    if (record.correctedAt) {
+      const date = new Date(record.correctedAt)
+      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+    }
+    
+    return {
+      success: true,
+      data: record,
+      message: '获取死亡记录详情成功'
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '获取死亡记录详情失败'
+    }
+  }
+}
+
+/**
+ * 修正死亡诊断
+ */
+async function correctDeathDiagnosis(event, wxContext) {
+  try {
+    const {
+      recordId,
+      correctedCause,
+      correctionReason, // 兽医诊断（前端的veterinarianDiagnosis字段）
+      aiAccuracyRating,
+      isConfirmed = false
+    } = event
+    
+    const openid = wxContext.OPENID
+    
+    // 验证必填参数
+    if (!recordId) {
+      throw new Error('记录ID不能为空')
+    }
+    if (!correctedCause) {
+      throw new Error('修正后的死因不能为空')
+    }
+    if (!correctionReason) {
+      throw new Error('修正依据不能为空')
+    }
+    if (!aiAccuracyRating || aiAccuracyRating < 1 || aiAccuracyRating > 5) {
+      throw new Error('AI准确性评分必须在1-5之间')
+    }
+    
+    // 获取当前记录
+    const recordResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+      .doc(recordId)
+      .get()
+    
+    if (!recordResult.data) {
+      throw new Error('记录不存在')
+    }
+    
+    const record = recordResult.data
+    
+    // 验证权限
+    if (record._openid !== openid) {
+      throw new Error('无权修改此记录')
+    }
+    
+    // 获取用户信息（用于记录修正人姓名）
+    let userName = '未知用户'
+    try {
+      const userResult = await db.collection('wx_users')
+        .where({ _openid: openid })
+        .limit(1)
+        .get()
+      
+      if (userResult.data && userResult.data.length > 0) {
+        // 优先使用用户昵称，其次养殖场名称，最后职位
+        const user = userResult.data[0]
+        userName = user.nickName || user.nickname || user.farmName || user.position || '未知用户'
+      }
+    } catch (userError) {
+      console.error('获取用户信息失败:', userError)
+    }
+    
+    // 确定修正类型
+    let correctionType = 'partial_error'
+    if (isConfirmed) {
+      correctionType = 'confirmed'
+    } else if (correctedCause === record.deathCause) {
+      correctionType = 'supplement'
+    } else if (aiAccuracyRating <= 2) {
+      correctionType = 'complete_error'
+    }
+    
+    // 更新死亡记录
+    const updateData = {
+      isCorrected: true,
+      originalAiCause: record.originalAiCause || record.deathCause, // 保留原始AI诊断
+      correctedCause: correctedCause,
+      correctionReason: correctionReason, // 兽医诊断内容
+      correctionType: correctionType,
+      aiAccuracyRating: aiAccuracyRating,
+      correctedBy: openid,
+      correctedByName: userName,
+      correctedAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+      .doc(recordId)
+      .update({
+        data: updateData
+      })
+    
+    // 如果有AI诊断ID，更新AI诊断记录的反馈信息
+    if (record.aiDiagnosisId) {
+      try {
+        await db.collection('health_ai_diagnosis')
+          .doc(record.aiDiagnosisId)
+          .update({
+            data: {
+              feedback: {
+                isCorrected: true,
+                correctedCause: correctedCause,
+                correctionReason: correctionReason,
+                aiAccuracyRating: aiAccuracyRating,
+                correctedAt: new Date()
+              },
+              updatedAt: new Date()
+            }
+          })
+      } catch (feedbackError) {
+        console.error('更新AI诊断反馈失败:', feedbackError)
+        // 不影响主流程
+      }
+    }
+    
+    return {
+      success: true,
+      data: {
+        recordId: recordId,
+        correctionType: correctionType
+      },
+      message: isConfirmed ? '诊断确认成功' : '诊断修正成功'
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '修正诊断失败'
     }
   }
 }

@@ -16,24 +16,18 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 表单数据
     formData: {
-      healthRecordId: '', // 关联的健康记录ID
       batchId: '',
       animalIds: [] as string[],
       treatmentDate: '',
-      treatmentType: 'medication', // medication|surgery|isolation|supportive
+      treatmentType: 'medication', // medication|isolation|supportive
       diagnosis: '',
       diagnosisConfidence: 0,
-      veterinarianId: '',
-      veterinarianName: '',
-      treatmentDuration: 7,
-      expectedRecoveryTime: '',
       notes: ''
     },
     
     // 治疗方案
     treatmentPlan: {
       primary: '',
-      secondary: [] as string[],
       followUpSchedule: [] as string[]
     },
     
@@ -55,7 +49,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 治疗类型选项
     treatmentTypeOptions: [
       { label: '药物治疗', value: 'medication', icon: 'service', desc: '使用药物进行治疗' },
-      { label: '手术治疗', value: 'surgery', icon: 'precise-monitor', desc: '外科手术治疗' },
       { label: '隔离观察', value: 'isolation', icon: 'location', desc: '隔离观察治疗' },
       { label: '支持疗法', value: 'supportive', icon: 'heart', desc: '营养支持等辅助治疗' }
     ],
@@ -78,9 +71,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       { label: '优秀', value: 'excellent', color: '#00a870' }
     ],
     
-    // 活跃批次和健康记录
+    // 活跃批次
     activeBatches: [] as any[],
-    healthRecords: [] as any[],
     
     // 页面状态
     loading: false,
@@ -102,7 +94,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   onLoad(options: any) {
-    const { sourceType, sourceId, diagnosisId, healthRecordId, batchId, treatmentId } = options || {}
+    const { sourceType, sourceId, diagnosisId, batchId, treatmentId } = options || {}
     
     this.setData({
       sourceType: sourceType || 'normal',
@@ -110,12 +102,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       diagnosisId: diagnosisId || '',
       treatmentId: treatmentId || ''
     })
-    
-    if (healthRecordId) {
-      this.setData({
-        'formData.healthRecordId': healthRecordId
-      })
-    }
     
     if (batchId) {
       this.setData({
@@ -132,10 +118,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   async onShow() {
-    await Promise.all([
-      this.loadActiveBatches(),
-      this.loadHealthRecords()
-    ])
+    await this.loadActiveBatches()
   },
 
   // 初始化表单
@@ -143,14 +126,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const now = new Date()
     const today = now.toISOString().split('T')[0]
     
-    // 计算预期康复时间（默认7天后）
-    const expectedDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-    const expectedRecoveryTime = expectedDate.toISOString().split('T')[0]
-    
     this.setData({
-      'formData.treatmentDate': today,
-      'formData.expectedRecoveryTime': expectedRecoveryTime,
-      'formData.veterinarianName': '当前兽医'
+      'formData.treatmentDate': today
     })
   },
 
@@ -171,8 +148,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         // 填充诊断信息
         this.setData({
           'formData.diagnosis': aiResult.primaryDiagnosis || '',
-          'formData.diagnosisConfidence': aiResult.confidence || 0,
-          'formData.healthRecordId': aiResult.healthRecordId || ''
+          'formData.diagnosisConfidence': aiResult.confidence || 0
         })
         
         // 如果有治疗建议，填充治疗方案
@@ -180,7 +156,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           const recommendation = aiResult.treatmentRecommendation
           this.setData({
             'treatmentPlan.primary': recommendation.primary || '',
-            'treatmentPlan.secondary': recommendation.secondary || [],
             'treatmentPlan.followUpSchedule': recommendation.followUp ? [recommendation.followUp] : []
           })
           
@@ -229,28 +204,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
-  // 加载健康记录
-  async loadHealthRecords() {
-    try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: { 
-          action: 'list_health_records',
-          result: 'ongoing',
-          pageSize: 50
-        }
-      })
-      
-      if (result.result && result.result.success) {
-        this.setData({
-          healthRecords: result.result.data.records || []
-        })
-      }
-    } catch (error) {
-      // 已移除调试日志
-    }
-  },
-
   // 表单输入处理
   onFormInput(e: any) {
     const { field } = e.currentTarget.dataset
@@ -280,17 +233,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
-    if (field === 'secondary') {
-      // 分号分隔的辅助方案
-      const secondaryArray = value.split('；').filter((item: string) => item.trim())
-      this.setData({
-        'treatmentPlan.secondary': secondaryArray
-      })
-    } else {
-      this.setData({
-        [`treatmentPlan.${field}`]: value
-      })
-    }
+    this.setData({
+      [`treatmentPlan.${field}`]: value
+    })
   },
 
   // 药物日期选择
@@ -355,34 +300,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  // 显示健康记录选择器
-  showHealthRecordSelector() {
-    if (this.data.healthRecords.length === 0) {
-      wx.showToast({
-        title: '暂无待治疗记录',
-        icon: 'none'
-      })
-      return
-    }
-    
-    const itemList = this.data.healthRecords.map(record => 
-      `${record.batchNumber} - ${record.symptoms} (${record.affectedCount}只)`
-    )
-    
-    wx.showActionSheet({
-      itemList,
-      success: (res) => {
-        const selectedRecord = this.data.healthRecords[res.tapIndex]
-        this.setData({
-          'formData.healthRecordId': selectedRecord._id,
-          'formData.batchId': selectedRecord.batchNumber,
-          'formData.diagnosis': selectedRecord.diagnosisDisease || ''
-        })
-        this.validateField('healthRecordId', selectedRecord._id)
-      }
-    })
-  },
-
   // 治疗类型选择器
   showTreatmentTypeSelector() {
     this.setData({ showTreatmentTypePicker: true })
@@ -414,7 +331,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       const updatedMedications = this.data.medications.map(med => ({
         ...med,
         startDate: e.detail.value,
-        endDate: this.calculateEndDate(e.detail.value, this.data.formData.treatmentDuration)
+        endDate: this.calculateEndDate(e.detail.value, 7)
       }))
       this.setData({ medications: updatedMedications })
     }
@@ -431,7 +348,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         route: 'oral',
         frequency: '',
         startDate: this.data.formData.treatmentDate,
-        endDate: this.calculateEndDate(this.data.formData.treatmentDate, this.data.formData.treatmentDuration),
+        endDate: this.calculateEndDate(this.data.formData.treatmentDate, 7),
         status: 'ongoing'
       },
       showMedicationDialog: true
@@ -599,13 +516,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           delete errors[field]
         }
         break
-      case 'veterinarianName':
-        if (!value || value.trim().length === 0) {
-          errors[field] = '请输入主治兽医'
-        } else {
-          delete errors[field]
-        }
-        break
     }
     
     this.setData({ formErrors: errors })
@@ -620,7 +530,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     if (!formData.batchId) errors.batchId = '请选择治疗批次'
     if (!formData.diagnosis) errors.diagnosis = '请输入诊断结果'
     if (!formData.treatmentDate) errors.treatmentDate = '请选择治疗日期'
-    if (!formData.veterinarianName) errors.veterinarianName = '请输入主治兽医'
     
     // 至少需要一个治疗方案
     if (!this.data.treatmentPlan.primary && this.data.medications.length === 0) {
@@ -648,7 +557,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       // 构建治疗记录数据
       const treatmentRecord = {
-        healthRecordId: formData.healthRecordId,
         batchId: formData.batchId,
         animalIds: formData.animalIds,
         treatmentDate: formData.treatmentDate,
@@ -657,15 +565,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           preliminary: formData.diagnosis,
           confirmed: formData.diagnosis,
           confidence: formData.diagnosisConfidence,
-          diagnosisMethod: this.data.sourceType === 'from_ai_diagnosis' ? 'ai' : 'manual',
-          veterinarianId: formData.veterinarianId
+          diagnosisMethod: this.data.sourceType === 'from_ai_diagnosis' ? 'ai' : 'manual'
         },
-        veterinarianId: formData.veterinarianId,
-        veterinarianName: formData.veterinarianName,
         treatmentPlan: {
           primary: treatmentPlan.primary,
-          secondary: treatmentPlan.secondary,
-          duration: formData.treatmentDuration,
           followUpSchedule: treatmentPlan.followUpSchedule
         },
         medications,
@@ -683,7 +586,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           supportive: 0,
           total: 0
         },
-        expectedRecoveryTime: formData.expectedRecoveryTime,
         notes: formData.notes
       }
       
@@ -705,11 +607,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           icon: 'success'
         })
         
-        // 如果关联了健康记录，更新其状态
-        if (formData.healthRecordId) {
-          await this.updateHealthRecordStatus(formData.healthRecordId)
-        }
-        
         // 返回上一页
         setTimeout(() => {
           wx.navigateBack()
@@ -728,26 +625,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
-  // 更新健康记录状态
-  async updateHealthRecordStatus(healthRecordId: string) {
-    try {
-      await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'update_health_record',
-          recordId: healthRecordId,
-          updateData: {
-            status: 'treating',
-            diagnosisDisease: this.data.formData.diagnosis,
-            treatment: this.data.treatmentPlan.primary
-          }
-        }
-      })
-    } catch (error) {
-      // 已移除调试日志
-    }
-  },
-
   // 重置表单
   resetForm() {
     wx.showModal({
@@ -759,19 +636,15 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           this.setData({
             formData: {
               ...this.data.formData,
-              healthRecordId: '',
               batchId: '',
               animalIds: [],
               treatmentType: 'medication',
               diagnosis: '',
               diagnosisConfidence: 0,
-              veterinarianId: '',
-              treatmentDuration: 7,
               notes: ''
             },
             treatmentPlan: {
               primary: '',
-              secondary: [],
               followUpSchedule: []
             },
             medications: [],

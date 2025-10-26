@@ -9,7 +9,7 @@
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-dialog": "tdesign-miniprogram/dialog/dialog",
     "t-toast": "tdesign-miniprogram/toast/toast",
-    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
   },
   "componentPlaceholder": {
     "t-input": "view",

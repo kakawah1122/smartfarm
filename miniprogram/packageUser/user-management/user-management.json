@@ -1,6 +1,6 @@
 {
   "usingComponents": {
-    "bottom-popup": "../../components/bottom-popup/bottom-popup",
+    "bottom-popup": "/components/bottom-popup/bottom-popup",
     "t-cell": "tdesign-miniprogram/cell/cell",
     "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
     "t-button": "tdesign-miniprogram/button/button",
@@ -13,7 +13,7 @@
     "t-dialog": "tdesign-miniprogram/dialog/dialog",
     "t-picker": "tdesign-miniprogram/picker/picker",
     "t-input": "tdesign-miniprogram/input/input",
-    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
   },
   "navigationStyle": "custom"
 }

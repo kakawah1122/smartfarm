@@ -31,6 +31,10 @@
         "health-care/health-care",
         "treatment-record/treatment-record",
         "death-record/death-record",
+        "death-records-list/death-records-list",
+        "death-record-detail/death-record-detail",
+        "abnormal-records-list/abnormal-records-list",
+        "abnormal-record-detail/abnormal-record-detail",
         "recovery-management/recovery-management",
         "survival-analysis/survival-analysis",
         "breeding-todo/breeding-todo"

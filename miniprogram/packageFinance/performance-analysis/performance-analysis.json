@@ -6,6 +6,6 @@
     "t-radio": "tdesign-miniprogram/radio/radio",
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon",
-    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
   }
 }

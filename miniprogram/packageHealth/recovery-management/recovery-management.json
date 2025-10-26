@@ -11,7 +11,7 @@
     "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
     "t-dialog": "tdesign-miniprogram/dialog/dialog",
     "t-loading": "tdesign-miniprogram/loading/loading",
-    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
   },
   "componentPlaceholder": {
     "t-input": "view",

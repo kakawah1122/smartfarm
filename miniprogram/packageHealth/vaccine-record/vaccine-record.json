@@ -10,7 +10,7 @@
     "t-picker-item": "tdesign-miniprogram/picker-item/picker-item",
     "t-toast": "tdesign-miniprogram/toast/toast",
     "t-dialog": "tdesign-miniprogram/dialog/dialog",
-    "navigation-bar": "../../components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
   },
   "componentPlaceholder": {
     "t-input": "view",

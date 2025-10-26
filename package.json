@@ -7,7 +7,6 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "request-promise-native": "^1.0.9",
     "tdesign-miniprogram": "^1.10.1"
   },
   "devDependencies": {

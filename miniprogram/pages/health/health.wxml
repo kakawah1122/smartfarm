@@ -17,7 +17,7 @@
           <text class="stat-value">{{healthStats.healthyRate}}</text>
           <text class="stat-label">健康率</text>
         </view>
-        <view class="stat-card stat-warning">
+        <view class="stat-card stat-warning" bind:tap="onAbnormalCountTap">
           <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.sickCount}}</text>
           <text class="stat-label">异常</text>
         </view>
@@ -25,7 +25,7 @@
           <text class="stat-value">{{monitoringData.realTimeStatus.isolatedCount || 0}}</text>
           <text class="stat-label">隔离</text>
         </view>
-        <view class="stat-card stat-danger">
+        <view class="stat-card stat-danger" bind:tap="onDeathCountTap">
           <text class="stat-value">{{healthStats.deadCount}}</text>
           <text class="stat-label">死亡数</text>
         </view>
@@ -230,18 +230,20 @@
     <view class="tab-content treatment-content" wx:if="{{activeTab === 'treatment'}}">
       <!-- 诊疗统计 -->
       <view class="treatment-stats">
-        <view class="stats-grid stats-grid-two">
-          <!-- 待诊断 -->
-          <view class="stat-card stat-card-pending" bindtap="onPendingDiagnosisClick">
-            <view class="stat-icon stat-icon-pending">
-              <view class="css-icon-file"></view>
-            </view>
-            <view class="stat-content">
-              <text class="stat-value">{{treatmentData.stats.pendingDiagnosis}}</text>
-              <text class="stat-label">待诊断</text>
-            </view>
+        <!-- AI诊断卡片（单独一行） -->
+        <view class="ai-diagnosis-card" bind:tap="onTreatmentAction" data-action="start_diagnosis">
+          <view class="ai-card-icon">⚡</view>
+          <view class="ai-card-content">
+            <text class="ai-card-title">AI智能诊断</text>
+            <text class="ai-card-desc">快速识别疾病，智能推荐治疗方案</text>
           </view>
-          
+          <view class="ai-card-arrow">
+            <t-icon name="chevron-right" size="24" color="#7C3AED" />
+          </view>
+        </view>
+        
+        <!-- 统计卡片（两列） -->
+        <view class="stats-grid stats-grid-two">
           <!-- 治疗中 -->
           <view class="stat-card stat-card-treating" bindtap="onOngoingTreatmentClick">
             <view class="stat-icon stat-icon-treating">
@@ -250,17 +252,6 @@
             <view class="stat-content">
               <text class="stat-value">{{treatmentData.stats.ongoingTreatment}}</text>
               <text class="stat-label">治疗中</text>
-            </view>
-          </view>
-          
-          <!-- 治疗成本 -->
-          <view class="stat-card stat-card-cost" bindtap="onTreatmentCostClick">
-            <view class="stat-icon stat-icon-cost">
-              <view class="css-icon-money"></view>
-            </view>
-            <view class="stat-content">
-              <text class="stat-value">¥{{treatmentData.stats.totalTreatmentCost || 0}}</text>
-              <text class="stat-label">治疗成本</text>
             </view>
           </view>
           

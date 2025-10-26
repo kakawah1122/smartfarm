@@ -7,21 +7,11 @@
     bind:back="goBack"
   />
 
-  <view class="page-container">
+  <view class="page-content">
     <!-- 基本信息 -->
     <view class="form-section">
       <view class="section-title">基本信息</view>
       
-      <!-- 关联健康记录 -->
-      <view class="form-item">
-        <view class="form-label">关联病例</view>
-        <t-cell 
-          title="{{formData.healthRecordId ? '已选择病例' : '请选择病例记录（可选）'}}"
-          arrow
-          bind:click="showHealthRecordSelector"
-        />
-      </view>
-
       <!-- 治疗批次 -->
       <view class="form-item">
         <view class="form-label required">治疗批次</view>
@@ -74,19 +64,6 @@
         </view>
       </view>
 
-      <!-- 主治兽医 -->
-      <view class="form-item">
-        <view class="form-label required">主治兽医</view>
-        <t-input
-          value="{{formData.veterinarianName}}"
-          placeholder="请输入主治兽医姓名"
-          data-field="veterinarianName"
-          bind:change="onFormInput"
-          status="{{formErrors.veterinarianName ? 'error' : ''}}"
-        />
-        <view class="error-text" wx:if="{{formErrors.veterinarianName}}">{{formErrors.veterinarianName}}</view>
-      </view>
-
       <!-- 治疗日期 -->
       <view class="form-item">
         <view class="form-label required">治疗日期</view>
@@ -112,60 +89,15 @@
     <view class="form-section">
       <view class="section-title">治疗方案</view>
       
-      <!-- 主要治疗方案 -->
       <view class="form-item">
-        <view class="form-label">主要方案</view>
         <t-textarea
           value="{{treatmentPlan.primary}}"
-          placeholder="请输入主要治疗方案"
+          placeholder="请输入治疗方案"
           maxlength="200"
           data-field="primary"
           bind:change="onTreatmentPlanInput"
         />
         <view class="error-text" wx:if="{{formErrors.treatmentPlan}}">{{formErrors.treatmentPlan}}</view>
-      </view>
-
-      <!-- 辅助治疗方案 -->
-      <view class="form-item">
-        <view class="form-label">辅助方案</view>
-        <t-textarea
-          value="{{treatmentPlan.secondary.join('；')}}"
-          placeholder="请输入辅助治疗方案（可选，用分号分隔）"
-          maxlength="200"
-          data-field="secondary"
-          bind:change="onTreatmentPlanInput"
-        />
-      </view>
-
-      <!-- 预计疗程 -->
-      <view class="form-item">
-        <view class="form-label">预计疗程</view>
-        <t-input
-          value="{{formData.treatmentDuration}}"
-          placeholder="请输入预计治疗天数"
-          type="number"
-          data-field="treatmentDuration"
-          bind:input="onNumberInput"
-          suffix="天"
-        />
-      </view>
-
-      <!-- 预期康复时间 -->
-      <view class="form-item">
-        <view class="form-label">预期康复</view>
-        <picker 
-          mode="date" 
-          value="{{formData.expectedRecoveryTime}}"
-          data-field="expectedRecoveryTime"
-          bind:change="onDateChange"
-        >
-          <t-input
-            value="{{formData.expectedRecoveryTime}}"
-            placeholder="请选择预期康复时间"
-            readonly
-            suffix-icon="calendar"
-          />
-        </picker>
       </view>
     </view>
 
@@ -297,15 +229,12 @@
         保存记录
       </t-button>
     </view>
-
-    <!-- 底部安全区域 -->
-    <view style="height: 120rpx;"></view>
   </view>
 
   <!-- 治疗类型选择器 -->
   <t-picker
     visible="{{showTreatmentTypePicker}}"
-    value="{{[formData.treatmentType === 'medication' ? 0 : formData.treatmentType === 'surgery' ? 1 : formData.treatmentType === 'isolation' ? 2 : formData.treatmentType === 'supportive' ? 3 : 0]}}"
+    value="{{[formData.treatmentType === 'medication' ? 0 : formData.treatmentType === 'isolation' ? 1 : formData.treatmentType === 'supportive' ? 2 : 0]}}"
     data-source="{{treatmentTypeOptions}}"
     bind:change="onTreatmentTypePickerChange"
     bind:cancel="onTreatmentTypePickerCancel"

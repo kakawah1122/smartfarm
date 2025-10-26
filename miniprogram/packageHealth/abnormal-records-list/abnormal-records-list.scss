@@ -1,0 +1,877 @@
+// miniprogram/packageHealth/abnormal-records-list/abnormal-records-list.scss
+
+.abnormal-records-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-top: 200rpx; /* 为导航栏预留空间 (状态栏 + 导航栏 ≈ 176rpx，保险起见设置200rpx) */
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+}
+
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+}
+
+.records-list {
+  padding: 24rpx;
+}
+
+.record-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+
+  .date-text {
+    font-size: 28rpx;
+    color: #666;
+  }
+}
+
+.status-badge {
+  /* TDesign tag component */
+}
+
+// 核心信息区域
+.card-main {
+  margin-bottom: 24rpx;
+}
+
+.count-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.affected-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+
+  .count-number {
+    font-size: 52rpx;
+    font-weight: bold;
+    color: #ed7b2f;
+  }
+
+  .count-unit {
+    font-size: 28rpx;
+    color: #999;
+  }
+}
+
+.confidence-badge {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+
+  .confidence-label {
+    font-size: 24rpx;
+    color: #999;
+  }
+
+  .confidence-value {
+    font-size: 28rpx;
+    font-weight: 600;
+
+    &.high {
+      color: #00a870;
+    }
+
+    &.medium {
+      color: #0052d9;
+    }
+
+    &.low {
+      color: #ed7b2f;
+    }
+  }
+}
+
+.diagnosis-section {
+  margin-bottom: 20rpx;
+}
+
+.diagnosis-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+}
+
+.diagnosis-label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.diagnosis-value {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.symptoms-section {
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.symptoms-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+}
+
+.symptoms-label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.symptoms-value {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 底部信息栏
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20rpx;
+  margin-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.tags-group {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.batch-tag {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  background: #f8f9fa;
+  border-radius: 8rpx;
+
+  .batch-text {
+    font-size: 24rpx;
+    color: #666;
+  }
+}
+
+.has-images {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 16rpx;
+
+  .images-count {
+    font-size: 24rpx;
+    color: #0052d9;
+  }
+}
+
+
+.safe-area-bottom {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+}
+
+// 详情弹窗样式
+.detail-dialog-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dialog-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.detail-popup {
+  position: relative;
+  width: 100%;
+  max-height: 85vh;
+  background: white;
+  border-radius: 32rpx 32rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1001;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(100%); 
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1;
+  }
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 32rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.popup-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.popup-close {
+  padding: 8rpx;
+  cursor: pointer;
+}
+
+.popup-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.info-section {
+  margin-bottom: 40rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+
+  .title-text {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+  }
+}
+
+.info-rows {
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  
+  &:not(:last-child) {
+    border-bottom: 1rpx solid #e8e8e8;
+  }
+
+  .info-label {
+    font-size: 28rpx;
+    color: #666;
+  }
+
+  .info-value {
+    font-size: 28rpx;
+    color: #333;
+    font-weight: 500;
+    max-width: 400rpx;
+    text-align: right;
+
+    &.highlight {
+      color: #ed7b2f;
+      font-weight: 600;
+    }
+  }
+}
+
+.diagnosis-content {
+  background: linear-gradient(135deg, #f8f9ff 0%, #fff8f0 100%);
+  border-radius: 16rpx;
+  padding: 32rpx;
+  border: 1rpx solid #e8e8ff;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.diagnosis-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #e8e8ff;
+  flex-wrap: wrap;
+}
+
+.diagnosis-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0; // 允许文本换行
+}
+
+.severity-urgency {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+// 诊断详情项
+.diagnosis-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 16rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12rpx;
+  border: 1rpx solid #f0f0f0;
+
+  .detail-label {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+
+    .label-text {
+      font-size: 24rpx;
+      color: #666;
+      font-weight: 600;
+    }
+  }
+
+  .detail-value {
+    font-size: 26rpx;
+    color: #333;
+    line-height: 1.6;
+    padding-left: 32rpx;
+  }
+}
+
+.symptoms-content {
+  background: #fff8f0;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  border: 1rpx solid #ffe8d0;
+  box-sizing: border-box;
+}
+
+.symptoms-text {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+}
+
+.recommendation-content {
+  background: #f0f9ff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  border: 1rpx solid #d0e8ff;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+// 每个建议板块
+.recommendation-section {
+  background: white;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.08);
+}
+
+.section-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #e8e8e8;
+
+  .subtitle-icon {
+    font-size: 32rpx;
+  }
+
+  .subtitle-text {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+// 措施列表（立即措施、支持性措施）
+.measure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.measure-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+
+  .measure-dot {
+    font-size: 24rpx;
+    color: #0052d9;
+    margin-top: 4rpx;
+    flex-shrink: 0;
+  }
+
+  .measure-text {
+    flex: 1;
+    font-size: 26rpx;
+    color: #666;
+    line-height: 1.6;
+  }
+}
+
+// 用药方案
+.medication-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.medication-card {
+  background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  border: 1rpx solid #ffe8d0;
+}
+
+.medication-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #ed7b2f;
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx dashed #ffe8d0;
+}
+
+.medication-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+
+  .detail-label {
+    font-size: 24rpx;
+    color: #999;
+    min-width: 100rpx;
+  }
+
+  .detail-value {
+    flex: 1;
+    font-size: 26rpx;
+    color: #666;
+  }
+}
+
+// 跟进观察
+.followup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.followup-timeline {
+  background: #f0f9ff;
+  border-left: 4rpx solid #0052d9;
+  padding: 16rpx 20rpx;
+  border-radius: 0 8rpx 8rpx 0;
+
+  .timeline-text {
+    font-size: 26rpx;
+    color: #0052d9;
+    font-weight: 500;
+  }
+}
+
+.followup-indicators {
+  .indicators-title {
+    font-size: 26rpx;
+    color: #666;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 12rpx;
+  }
+}
+
+.images-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.image-item {
+  border-radius: 12rpx;
+  overflow: hidden;
+  border: 1rpx solid #e8e8e8;
+}
+
+.popup-footer {
+  flex-shrink: 0;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid #f0f0f0;
+  background: white;
+  box-sizing: border-box;
+}
+
+.footer-buttons {
+  display: flex;
+  gap: 20rpx;
+}
+
+.btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s;
+  
+  &.btn-primary {
+    background: linear-gradient(135deg, #0052d9 0%, #0040b3 100%);
+    color: white;
+  }
+
+  &.btn-secondary {
+    background: white;
+    color: #0052d9;
+    border: 2rpx solid #0052d9;
+  }
+  
+  &:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+// 治疗方案选择样式
+.treatment-options {
+  padding: 32rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.treatment-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 16rpx;
+  background: #f8f9fa;
+  transition: all 0.3s;
+
+  &.active {
+    border-color: #0052d9;
+    background: #f0f9ff;
+  }
+
+  .option-name {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    margin-top: 16rpx;
+  }
+
+  .option-desc {
+    font-size: 24rpx;
+    color: #999;
+    margin-top: 8rpx;
+    text-align: center;
+  }
+}
+
+// 修正诊断弹窗样式
+.correction-dialog-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.correction-popup {
+  position: relative;
+  width: 100%;
+  max-height: 85vh;
+  background: white;
+  border-radius: 32rpx 32rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2001;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.correction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+
+  .required {
+    color: #e34d59;
+    margin-left: 4rpx;
+  }
+}
+
+.form-input {
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 1rpx solid #e8e8e8;
+  font-size: 28rpx;
+  color: #333;
+  transition: all 0.3s;
+
+  &:focus {
+    background: white;
+    border-color: #0052d9;
+  }
+}
+
+.form-textarea {
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 1rpx solid #e8e8e8;
+  font-size: 28rpx;
+  color: #333;
+  min-height: 160rpx;
+  line-height: 1.6;
+  transition: all 0.3s;
+
+  &:focus {
+    background: white;
+    border-color: #0052d9;
+  }
+}
+
+.rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 0;
+}
+
+.star {
+  font-size: 56rpx;
+  color: #d0d0d0;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+
+  &.active {
+    color: #ffc107;
+  }
+
+  &:active {
+    transform: scale(1.2);
+  }
+}
+
+.rating-hint {
+  font-size: 24rpx;
+  color: #666;
+  margin-top: 8rpx;
+}
+
+.form-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx;
+  background: #f0f9ff;
+  border-radius: 12rpx;
+  border: 1rpx solid #d0e8ff;
+
+  .tip-text {
+    flex: 1;
+    font-size: 24rpx;
+    color: #0052d9;
+    line-height: 1.6;
+  }
+}
+
+// 修正记录卡片样式
+.correction-card {
+  background: #f0fdf4 !important;
+  border: 2rpx solid #86efac !important;
+
+  .section-title {
+    border-bottom: 2rpx solid #86efac;
+  }
+
+  .correction-info {
+    padding: 24rpx 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24rpx;
+
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12rpx;
+
+      .info-label {
+        font-size: 24rpx;
+        color: #666;
+      }
+
+      .info-value {
+        font-size: 28rpx;
+        color: #333;
+        line-height: 1.6;
+
+        &.corrected {
+          color: #00a870;
+          font-weight: 600;
+          font-size: 32rpx;
+        }
+
+        &.reason {
+          color: #666;
+        }
+      }
+
+      .rating-display {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+
+        .star-display {
+          font-size: 40rpx;
+          color: #d0d0d0;
+
+          &.active {
+            color: #ffc107;
+          }
+        }
+
+        .rating-text {
+          margin-left: 12rpx;
+          font-size: 24rpx;
+          color: #666;
+        }
+      }
+    }
+  }
+}
+

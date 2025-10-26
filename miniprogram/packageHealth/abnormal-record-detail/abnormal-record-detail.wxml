@@ -1,0 +1,423 @@
+<!-- miniprogram/packageHealth/abnormal-record-detail/abnormal-record-detail.wxml -->
+<view class="abnormal-record-detail-page">
+  <!-- 自定义导航栏 -->
+  <navigation-bar title="异常记录详情" />
+
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
+
+  <!-- 内容区域 -->
+  <view class="page-content" wx:if="{{!loading && record}}">
+    
+    <!-- 基本信息 -->
+    <view class="info-section">
+      <view class="section-title">
+        <t-icon name="folder" size="32rpx" color="#0052d9" />
+        <text class="title-text">基本信息</text>
+      </view>
+      <view class="info-rows">
+        <view class="info-row">
+          <text class="info-label">批次号</text>
+          <text class="info-value" user-select="true">{{record.batchNumber}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">受影响数量</text>
+          <text class="info-value highlight" user-select="true">{{record.affectedCount}} 只</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">记录日期</text>
+          <text class="info-value" user-select="true">{{record.checkDate}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">状态</text>
+          <t-tag 
+            theme="{{record.status === 'abnormal' ? 'warning' : (record.status === 'treating' ? 'primary' : 'success')}}" 
+            size="small"
+          >
+            {{record.status === 'abnormal' ? '待处理' : (record.status === 'treating' ? '治疗中' : '已隔离')}}
+          </t-tag>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI诊断 -->
+    <view class="info-section">
+      <view class="section-title">
+        <t-icon name="chart-bubble" size="32rpx" color="#00a870" />
+        <text class="title-text">AI诊断</text>
+        <t-tag theme="success" size="small">置信度 {{record.diagnosisConfidence}}%</t-tag>
+      </view>
+      <view class="diagnosis-content">
+        <view class="diagnosis-name-row">
+          <text class="diagnosis-name" user-select="true">{{record.diagnosis}}</text>
+          <t-tag 
+            theme="{{record.severity === 'severe' ? 'danger' : (record.severity === 'moderate' ? 'warning' : 'primary')}}" 
+            size="small"
+          >
+            {{record.severity === 'severe' ? '严重' : (record.severity === 'moderate' ? '中度' : '轻度')}}
+          </t-tag>
+          <t-tag 
+            theme="{{record.urgency === 'high' ? 'danger' : (record.urgency === 'medium' ? 'warning' : 'primary')}}" 
+            size="small"
+          >
+            {{record.urgency === 'high' ? '危急' : (record.urgency === 'medium' ? '紧急' : '一般')}}
+          </t-tag>
+        </view>
+
+        <!-- 诊断详情 -->
+        <view class="diagnosis-details" wx:if="{{record.diagnosisDetails}}">
+          <!-- 诊断依据 -->
+          <view class="detail-item" wx:if="{{record.diagnosisDetails.reasoning}}">
+            <view class="detail-label">
+              <t-icon name="check-circle" size="24rpx" color="#0052d9" />
+              <text class="label-text">诊断依据</text>
+            </view>
+            <text class="detail-value" user-select="true">{{record.diagnosisDetails.reasoning}}</text>
+          </view>
+
+          <!-- 病原体 -->
+          <view class="detail-item" wx:if="{{record.diagnosisDetails.pathogen}}">
+            <view class="detail-label">
+              <t-icon name="info-circle" size="24rpx" color="#ed7b2f" />
+              <text class="label-text">病原体</text>
+            </view>
+            <text class="detail-value" user-select="true">{{record.diagnosisDetails.pathogen}}</text>
+          </view>
+
+          <!-- 传播途径 -->
+          <view class="detail-item" wx:if="{{record.diagnosisDetails.transmission}}">
+            <view class="detail-label">
+              <t-icon name="arrow-triangle-down" size="24rpx" color="#00a870" />
+              <text class="label-text">传播途径</text>
+            </view>
+            <text class="detail-value" user-select="true">{{record.diagnosisDetails.transmission}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 症状描述 -->
+    <view class="info-section" wx:if="{{record.symptoms}}">
+      <view class="section-title">
+        <t-icon name="file-icon" size="32rpx" color="#ed7b2f" />
+        <text class="title-text">症状描述</text>
+      </view>
+      <view class="symptoms-content">
+        <text class="symptoms-text" user-select="true">{{record.symptoms}}</text>
+      </view>
+    </view>
+
+    <!-- AI建议 -->
+    <view class="info-section" wx:if="{{record.aiRecommendation}}">
+      <view class="section-title">
+        <t-icon name="lightbulb" size="32rpx" color="#0052d9" />
+        <text class="title-text">AI治疗建议</text>
+      </view>
+      <view class="recommendation-content">
+        
+        <!-- 立即措施 -->
+        <view class="recommendation-section" wx:if="{{record.aiRecommendation.immediate}}">
+          <view class="section-subtitle">
+            <text class="subtitle-icon">🚨</text>
+            <text class="subtitle-text">立即措施</text>
+          </view>
+          <view class="measure-list">
+            <view class="measure-item" wx:for="{{record.aiRecommendation.immediate}}" wx:key="index">
+              <text class="measure-dot">•</text>
+              <text class="measure-text" user-select="true">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 用药方案 -->
+        <view class="recommendation-section" wx:if="{{record.aiRecommendation.medication}}">
+          <view class="section-subtitle">
+            <text class="subtitle-icon">💊</text>
+            <text class="subtitle-text">用药方案</text>
+          </view>
+          <view class="medication-list">
+            <view class="medication-card" wx:for="{{record.aiRecommendation.medication}}" wx:key="index">
+              <view class="medication-name" user-select="true">{{item.name}}</view>
+              <view class="medication-details">
+                <view class="detail-row">
+                  <text class="detail-label">用量：</text>
+                  <text class="detail-value" user-select="true">{{item.dosage}}</text>
+                </view>
+                <view class="detail-row">
+                  <text class="detail-label">频次：</text>
+                  <text class="detail-value" user-select="true">{{item.frequency}}</text>
+                </view>
+                <view class="detail-row">
+                  <text class="detail-label">疗程：</text>
+                  <text class="detail-value" user-select="true">{{item.duration}}</text>
+                </view>
+                <view class="detail-row">
+                  <text class="detail-label">途径：</text>
+                  <text class="detail-value" user-select="true">{{item.route}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 支持性措施 -->
+        <view class="recommendation-section" wx:if="{{record.aiRecommendation.supportive}}">
+          <view class="section-subtitle">
+            <text class="subtitle-icon">🩹</text>
+            <text class="subtitle-text">支持性措施</text>
+          </view>
+          <view class="measure-list">
+            <view class="measure-item" wx:for="{{record.aiRecommendation.supportive}}" wx:key="index">
+              <text class="measure-dot">•</text>
+              <text class="measure-text" user-select="true">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 跟进观察 -->
+        <view class="recommendation-section" wx:if="{{record.aiRecommendation.followUp}}">
+          <view class="section-subtitle">
+            <text class="subtitle-icon">📋</text>
+            <text class="subtitle-text">跟进观察</text>
+          </view>
+          <view class="followup-content">
+            <view class="followup-timeline" wx:if="{{record.aiRecommendation.followUp.timeline}}">
+              <text class="timeline-text" user-select="true">{{record.aiRecommendation.followUp.timeline}}</text>
+            </view>
+            <view class="followup-indicators" wx:if="{{record.aiRecommendation.followUp.indicators}}">
+              <text class="indicators-title">观察指标：</text>
+              <view class="measure-list">
+                <view class="measure-item" wx:for="{{record.aiRecommendation.followUp.indicators}}" wx:key="index">
+                  <text class="measure-dot">✓</text>
+                  <text class="measure-text" user-select="true">{{item}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+      </view>
+    </view>
+
+    <!-- 修正记录卡片 -->
+    <view class="info-section correction-card" wx:if="{{record.isCorrected}}">
+      <view class="section-title">
+        <t-icon name="check-circle" size="32rpx" color="#00a870" />
+        <text class="title-text">诊断修正记录</text>
+        <t-tag theme="success" size="small">已确认</t-tag>
+      </view>
+      
+      <view class="correction-info">
+        <view class="info-row">
+          <text class="info-label">修正后诊断</text>
+          <text class="info-value corrected" user-select="true">{{record.correctedDiagnosis}}</text>
+        </view>
+        <view class="info-row" wx:if="{{record.aiAccuracyRating}}">
+          <text class="info-label">AI准确性评分</text>
+          <view class="rating-display">
+            <text 
+              class="star-display {{record.aiAccuracyRating >= item ? 'active' : ''}}"
+              wx:for="{{[1,2,3,4,5]}}" 
+              wx:key="index"
+            >{{record.aiAccuracyRating >= item ? '★' : '☆'}}</text>
+            <text class="rating-text">{{ratingHints[record.aiAccuracyRating - 1] || ''}}</text>
+          </view>
+        </view>
+        <view class="info-row" wx:if="{{record.correctionReason}}">
+          <text class="info-label">兽医诊断依据</text>
+          <text class="info-value reason" user-select="true">{{record.correctionReason}}</text>
+        </view>
+        <view class="info-row" wx:if="{{record.correctedByName}}">
+          <text class="info-label">修正人</text>
+          <text class="info-value">{{record.correctedByName}}</text>
+        </view>
+        <view class="info-row" wx:if="{{record.correctedAt}}">
+          <text class="info-label">修正时间</text>
+          <text class="info-value">{{record.correctedAt}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 图片 -->
+    <view class="info-section" wx:if="{{record.images && record.images.length > 0}}">
+      <view class="section-title">
+        <t-icon name="image" size="32rpx" color="#0052d9" />
+        <text class="title-text">相关图片</text>
+      </view>
+      <view class="images-grid">
+        <view 
+          class="image-item"
+          wx:for="{{record.images}}"
+          wx:key="index"
+          bind:tap="previewImage"
+          data-url="{{item}}"
+        >
+          <t-image 
+            src="{{item}}"
+            mode="aspectFill"
+            width="200rpx"
+            height="200rpx"
+          />
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部操作按钮 -->
+    <view class="action-buttons" wx:if="{{record.status === 'abnormal'}}">
+      <view class="buttons-row">
+        <!-- 未修正时显示修正按钮 -->
+        <t-button 
+          theme="light" 
+          size="large" 
+          bind:tap="correctDiagnosis" 
+          wx:if="{{!record.isCorrected}}"
+          block
+        >
+          修正结果
+        </t-button>
+        <!-- 已修正时显示重新修正按钮 -->
+        <t-button 
+          theme="light" 
+          size="large" 
+          bind:tap="correctDiagnosis" 
+          wx:if="{{record.isCorrected}}"
+          block
+        >
+          重新修正
+        </t-button>
+        <t-button 
+          theme="primary" 
+          size="large" 
+          bind:tap="showTreatmentPlanDialog"
+          block
+        >
+          制定治疗方案
+        </t-button>
+      </view>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view class="safe-area-bottom"></view>
+
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-container" wx:if="{{!loading && !record}}">
+    <t-empty icon="error-circle" description="记录不存在" />
+  </view>
+
+  <!-- 治疗方案选择对话框 -->
+  <t-dialog
+    visible="{{showTreatmentDialog}}"
+    title="选择治疗方式"
+    confirm-btn="确定"
+    cancel-btn="取消"
+    bind:confirm="confirmTreatmentPlan"
+    bind:cancel="cancelTreatmentPlan"
+  >
+    <view class="treatment-options">
+      <view
+        class="treatment-option {{selectedTreatmentType === 'medication' ? 'active' : ''}}"
+        bind:tap="selectTreatmentType"
+        data-type="medication"
+      >
+        <t-icon name="service" size="32" color="{{selectedTreatmentType === 'medication' ? '#0052d9' : '#666'}}" />
+        <text class="option-name">药物治疗</text>
+        <text class="option-desc">创建治疗记录，跟踪用药进展</text>
+      </view>
+      
+      <view
+        class="treatment-option {{selectedTreatmentType === 'isolation' ? 'active' : ''}}"
+        bind:tap="selectTreatmentType"
+        data-type="isolation"
+      >
+        <t-icon name="location" size="32" color="{{selectedTreatmentType === 'isolation' ? '#0052d9' : '#666'}}" />
+        <text class="option-name">隔离观察</text>
+        <text class="option-desc">隔离患病个体，密切观察</text>
+      </view>
+    </view>
+  </t-dialog>
+
+  <!-- 修正诊断弹窗 -->
+  <view class="correction-dialog-wrapper" wx:if="{{showCorrectionDialog}}">
+    <!-- 遮罩层 -->
+    <view class="dialog-mask" catchtap="onCancelCorrection"></view>
+    
+    <!-- 弹窗内容 -->
+    <view class="correction-popup" catchtouchmove="preventMove">
+      <!-- 标题栏 -->
+      <view class="popup-header">
+        <view class="popup-title">修正诊断</view>
+        <view class="popup-close" bind:tap="onCancelCorrection">
+          <t-icon name="close" size="40rpx" color="#999" />
+        </view>
+      </view>
+
+      <!-- 表单内容 -->
+      <scroll-view scroll-y class="popup-content">
+        <view class="correction-form">
+          
+          <!-- 修正后的诊断 -->
+          <view class="form-item">
+            <text class="form-label">修正后的诊断<text class="required">*</text></text>
+            <input 
+              class="form-input"
+              placeholder="{{originalDiagnosis || '请输入正确的诊断'}}"
+              value="{{correctionForm.correctedDiagnosis}}"
+              bindinput="onCorrectedDiagnosisChange"
+            />
+          </view>
+
+          <!-- 兽医诊断依据 -->
+          <view class="form-item">
+            <text class="form-label">兽医诊断依据<text class="required">*</text></text>
+            <textarea
+              class="form-textarea"
+              placeholder="请输入您的专业诊断依据和理由"
+              value="{{correctionForm.veterinarianDiagnosis}}"
+              bindinput="onVeterinarianDiagnosisChange"
+              maxlength="500"
+              auto-height
+            />
+          </view>
+
+          <!-- AI准确性评分 -->
+          <view class="form-item">
+            <text class="form-label">AI准确性评分<text class="required">*</text></text>
+            <view class="rating-stars">
+              <view 
+                class="star {{correctionForm.aiAccuracyRating >= item ? 'active' : ''}}"
+                wx:for="{{[1,2,3,4,5]}}" 
+                wx:key="index"
+                bind:tap="onRatingChange"
+                data-rating="{{item}}"
+              >
+                {{correctionForm.aiAccuracyRating >= item ? '★' : '☆'}}
+              </view>
+            </view>
+            <text class="rating-hint" wx:if="{{correctionForm.aiAccuracyRating > 0}}">
+              {{ratingHints[correctionForm.aiAccuracyRating - 1]}}
+            </text>
+          </view>
+
+          <view class="form-tip">
+            <t-icon name="info-circle" size="28rpx" color="#0052d9" />
+            <text class="tip-text">您的修正将帮助AI系统学习和改进诊断能力</text>
+          </view>
+
+        </view>
+      </scroll-view>
+
+      <!-- 底部操作按钮 -->
+      <view class="popup-footer">
+        <view class="footer-buttons">
+          <button class="btn btn-secondary" bind:tap="onCancelCorrection">取消</button>
+          <button class="btn btn-primary" bind:tap="onSubmitCorrection">提交修正</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+</view>

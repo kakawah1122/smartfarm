@@ -50,6 +50,14 @@ interface HealthAlert {
   createdAt: string
 }
 
+// Page 实例属性（不在 data 中）
+interface PageInstance {
+  data: PageData
+  healthRecordsWatcher: any
+  deathRecordsWatcher: any
+  refreshTimer: any
+}
+
 interface PageData {
   // 选项卡状态
   activeTab: string
@@ -104,7 +112,10 @@ Page<PageData>({
       sickCount: 0,
       deadCount: 0,
       healthyRate: '0%',
-      mortalityRate: '0%'
+      mortalityRate: '0%',
+      abnormalCount: 0,
+      treatingCount: 0,
+      isolatedCount: 0
     },
     
     // 预防统计数据
@@ -201,6 +212,11 @@ Page<PageData>({
       end: ''
     }
   },
+  
+  // Page 实例属性（不在 data 中）
+  healthRecordsWatcher: null as any,
+  deathRecordsWatcher: null as any,
+  refreshTimer: null as any,
 
   /**
    * 页面加载
@@ -226,11 +242,120 @@ Page<PageData>({
   },
 
   /**
-   * 页面显示时刷新数据
+   * 页面显示时刷新数据并启动实时监听
    */
   onShow() {
+    // 启动实时数据监听（只在页面可见时监听，节省资源）
+    this.startDataWatcher()
+    
+    // 刷新数据
     if (this.data.currentBatchId) {
       this.loadHealthData()
+    }
+  },
+  
+  /**
+   * 页面隐藏时停止监听
+   */
+  onHide() {
+    this.stopDataWatcher()
+  },
+  
+  /**
+   * 页面卸载时停止监听
+   */
+  onUnload() {
+    this.stopDataWatcher()
+  },
+  
+  /**
+   * 启动数据监听
+   */
+  startDataWatcher() {
+    const db = wx.cloud.database()
+    
+    console.log('🔍 启动数据监听器...')
+    
+    // 监听健康记录变化
+    if (!this.healthRecordsWatcher) {
+      try {
+        this.healthRecordsWatcher = db.collection('health_records')
+          .where({
+            isDeleted: false
+          })
+          .watch({
+            onChange: (snapshot) => {
+              console.log('✅ 健康记录数据变化，准备刷新')
+              // 延迟刷新，避免频繁更新
+              if (this.refreshTimer) {
+                clearTimeout(this.refreshTimer)
+              }
+              this.refreshTimer = setTimeout(() => {
+                console.log('🔄 执行数据刷新...')
+                this.loadHealthData()
+              }, 1000)
+            },
+            onError: (err) => {
+              console.error('❌ 健康记录监听错误:', err)
+            }
+          })
+        console.log('✅ 健康记录监听器已启动')
+      } catch (error) {
+        console.error('❌ 启动健康记录监听器失败:', error)
+      }
+    }
+    
+    // 监听死亡记录变化
+    if (!this.deathRecordsWatcher) {
+      try {
+        this.deathRecordsWatcher = db.collection('health_death_records')
+          .where({
+            isDeleted: false
+          })
+          .watch({
+            onChange: (snapshot) => {
+              console.log('✅ 死亡记录数据变化，准备刷新')
+              // 延迟刷新，避免频繁更新
+              if (this.refreshTimer) {
+                clearTimeout(this.refreshTimer)
+              }
+              this.refreshTimer = setTimeout(() => {
+                console.log('🔄 执行数据刷新...')
+                this.loadHealthData()
+              }, 1000)
+            },
+            onError: (err) => {
+              console.error('❌ 死亡记录监听错误:', err)
+            }
+          })
+        console.log('✅ 死亡记录监听器已启动')
+      } catch (error) {
+        console.error('❌ 启动死亡记录监听器失败:', error)
+      }
+    }
+  },
+  
+  /**
+   * 停止数据监听
+   */
+  stopDataWatcher() {
+    console.log('⏹️ 停止数据监听器...')
+    
+    if (this.healthRecordsWatcher) {
+      this.healthRecordsWatcher.close()
+      this.healthRecordsWatcher = null
+      console.log('✅ 健康记录监听器已停止')
+    }
+    
+    if (this.deathRecordsWatcher) {
+      this.deathRecordsWatcher.close()
+      this.deathRecordsWatcher = null
+      console.log('✅ 死亡记录监听器已停止')
+    }
+    
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer)
+      this.refreshTimer = null
     }
   },
 
@@ -483,11 +608,12 @@ Page<PageData>({
         }
         
         // 设置监控数据（实时健康状态）
+        // 注意：全部批次视图使用简化统计，sickCount作为异常数
         const monitoringData = {
           realTimeStatus: {
             healthyCount: healthyCount,
-            abnormalCount: sickCount,
-            isolatedCount: 0  // 暂无隔离数据
+            abnormalCount: sickCount,  // 全部批次视图使用sickCount作为异常数
+            isolatedCount: 0  // 全部批次视图暂不统计隔离数
           },
           abnormalList: [],
           diseaseDistribution: []
@@ -500,7 +626,10 @@ Page<PageData>({
             sickCount: sickCount,
             deadCount: deadCount,
             healthyRate: healthyRate + '%',
-            mortalityRate: mortalityRate + '%'
+            mortalityRate: mortalityRate + '%',
+            abnormalCount: sickCount,  // 全部批次视图使用sickCount
+            treatingCount: 0,
+            isolatedCount: 0
           },
           preventionStats,
           'preventionData.stats': {
@@ -539,7 +668,10 @@ Page<PageData>({
           healthStats: {
             ...healthStats,
             healthyRate: healthStats.healthyRate + '%',
-            mortalityRate: healthStats.mortalityRate + '%'
+            mortalityRate: healthStats.mortalityRate + '%',
+            abnormalCount: healthStats.abnormalCount || 0,
+            treatingCount: healthStats.treatingCount || 0,
+            isolatedCount: healthStats.isolatedCount || 0
           },
           recentPreventionRecords: recentPrevention || [],
           activeHealthAlerts: activeAlerts || [],
@@ -642,8 +774,8 @@ Page<PageData>({
         this.setData({
           'monitoringData.realTimeStatus': {
             healthyCount: this.data.healthStats.healthyCount || 0,
-            abnormalCount: this.data.healthStats.sickCount || 0,
-            isolatedCount: 0
+            abnormalCount: this.data.healthStats.abnormalCount || 0,
+            isolatedCount: this.data.healthStats.isolatedCount || 0
           },
           'monitoringData.abnormalList': [],
           'monitoringData.diseaseDistribution': []
@@ -1343,6 +1475,24 @@ Page<PageData>({
       // 重新加载健康数据
       this.loadHealthData()
     }
+  },
+
+  /**
+   * 点击死亡数卡片，跳转到死亡记录列表
+   */
+  onDeathCountTap() {
+    wx.navigateTo({
+      url: '/packageHealth/death-records-list/death-records-list'
+    })
+  },
+
+  /**
+   * 异常数量卡片点击 - 跳转到异常记录列表
+   */
+  onAbnormalCountTap() {
+    wx.navigateTo({
+      url: '/packageHealth/abnormal-records-list/abnormal-records-list'
+    })
   },
 
   /**

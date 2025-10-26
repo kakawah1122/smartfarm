@@ -13,6 +13,6 @@
   "author": "",
   "license": "MIT",
   "cloudbaseConfig": {
-    "timeout": 20
+    "timeout": 5
   }
 }
