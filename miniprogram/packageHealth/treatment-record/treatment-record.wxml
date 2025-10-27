@@ -8,6 +8,128 @@
   />
 
   <view class="page-content">
+    
+    <!-- ========== ✅ 查看模式（治疗进展跟进） ========== -->
+    <block wx:if="{{viewMode}}">
+      <!-- 治疗基本信息（只读） -->
+      <view class="view-section">
+        <view class="section-title">基本信息</view>
+        <view class="info-card">
+          <view class="info-row">
+            <text class="info-label">治疗批次</text>
+            <text class="info-value">{{formData.batchId}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">诊断结果</text>
+            <text class="info-value">{{formData.diagnosis}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">治疗类型</text>
+            <text class="info-value">{{formData.treatmentType === 'medication' ? '药物治疗' : '隔离观察'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">治疗日期</text>
+            <text class="info-value">{{formData.treatmentDate}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治疗方案（只读） -->
+      <view class="view-section">
+        <view class="section-title">治疗方案</view>
+        <view class="plan-card">
+          <text class="plan-text">{{treatmentPlan.primary || '暂无治疗方案'}}</text>
+        </view>
+      </view>
+
+      <!-- 用药情况（只读） -->
+      <view class="view-section" wx:if="{{medications.length > 0}}">
+        <view class="section-title">用药情况</view>
+        <view class="medications-list">
+          <view class="medication-item" wx:for="{{medications}}" wx:key="index">
+            <view class="med-name">{{item.name}}</view>
+            <view class="med-detail">
+              <text wx:if="{{item.quantity}}">数量：{{item.quantity}}{{item.unit}}</text>
+              <text wx:if="{{item.dosage}}">　用法：{{item.dosage}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治疗进展跟进 -->
+      <view class="view-section progress-section">
+        <view class="section-title">治疗进展</view>
+        
+        <view class="progress-card">
+          <!-- 治疗天数 -->
+          <view class="progress-header">
+            <text class="treatment-days">已治疗 {{treatmentProgress.treatmentDays}} 天</text>
+            <t-tag theme="primary" size="small">进行中</t-tag>
+          </view>
+
+          <!-- 进度统计 -->
+          <view class="progress-stats">
+            <view class="stat-item">
+              <text class="stat-label">治疗总数</text>
+              <text class="stat-value total">{{treatmentProgress.totalTreated}} 只</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-label">已治愈</text>
+              <text class="stat-value cured">{{treatmentProgress.curedCount}} 只</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-label">死亡</text>
+              <text class="stat-value died">{{treatmentProgress.deathCount}} 只</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-label">继续治疗</text>
+              <text class="stat-value remaining">{{treatmentProgress.remainingCount}} 只</text>
+            </view>
+          </view>
+
+          <!-- 进度条 -->
+          <view class="progress-bar">
+            <view class="bar-cured" style="width: {{treatmentProgress.cureRate}}%"></view>
+            <view class="bar-died" style="width: {{treatmentProgress.mortalityRate}}%"></view>
+          </view>
+
+          <!-- 操作按钮 -->
+          <view class="progress-actions">
+            <t-button 
+              theme="success" 
+              size="large" 
+              bind:tap="showProgressDialog"
+              data-type="cured"
+              disabled="{{treatmentProgress.remainingCount <= 0}}"
+              block
+            >
+              记录治愈
+            </t-button>
+            <t-button 
+              theme="danger" 
+              size="large" 
+              bind:tap="showProgressDialog"
+              data-type="died"
+              disabled="{{treatmentProgress.remainingCount <= 0}}"
+              block
+            >
+              记录死亡
+            </t-button>
+          </view>
+        </view>
+      </view>
+
+      <!-- 备注 -->
+      <view class="view-section" wx:if="{{formData.notes}}">
+        <view class="section-title">备注信息</view>
+        <view class="notes-card">
+          <text class="notes-text">{{formData.notes}}</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- ========== 编辑/创建模式 ========== -->
+    <block wx:else>
     <!-- 基本信息 -->
     <view class="form-section">
       <view class="section-title">基本信息</view>
@@ -188,6 +310,64 @@
         {{isDraft ? '提交治疗方案' : (isEditMode ? '保存修改' : '保存记录')}}
       </t-button>
     </view>
+    </block>
+    <!-- ========== 编辑/创建模式结束 ========== -->
   </view>
+
+  <!-- ========== ✅ 治疗进展对话框 ========== -->
+  <t-dialog
+    visible="{{showProgressDialog}}"
+    title="{{progressDialogType === 'cured' ? '记录治愈' : '记录死亡'}}"
+    confirm-btn="确认"
+    cancel-btn="取消"
+    bind:confirm="submitProgress"
+    bind:cancel="closeProgressDialog"
+  >
+    <view class="progress-dialog-content">
+      <!-- 剩余数量提示 -->
+      <view class="dialog-hint">
+        <text class="hint-text">当前剩余治疗数：</text>
+        <text class="hint-value">{{treatmentProgress.remainingCount}} 只</text>
+      </view>
+
+      <!-- 数量输入 -->
+      <view class="dialog-field">
+        <view class="field-label required">
+          {{progressDialogType === 'cured' ? '治愈数量' : '死亡数量'}}
+        </view>
+        <t-input
+          value="{{progressForm.count}}"
+          placeholder="请输入数量"
+          type="digit"
+          data-field="count"
+          bind:change="onProgressFormInput"
+        />
+      </view>
+
+      <!-- 死亡原因（仅死亡时显示） -->
+      <view class="dialog-field" wx:if="{{progressDialogType === 'died'}}">
+        <view class="field-label required">死亡原因</view>
+        <t-textarea
+          value="{{progressForm.deathCause}}"
+          placeholder="请填写死亡原因"
+          maxlength="200"
+          data-field="deathCause"
+          bind:change="onProgressFormInput"
+        />
+      </view>
+
+      <!-- 备注（可选） -->
+      <view class="dialog-field">
+        <view class="field-label">备注</view>
+        <t-textarea
+          value="{{progressForm.notes}}"
+          placeholder="补充说明（可选）"
+          maxlength="200"
+          data-field="notes"
+          bind:change="onProgressFormInput"
+        />
+      </view>
+    </view>
+  </t-dialog>
 
 </view>

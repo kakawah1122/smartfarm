@@ -83,19 +83,51 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     treatmentId: '', // 治疗记录ID（用于完成治疗或从异常记录创建）
     abnormalRecordId: '', // 关联的异常记录ID
     isDraft: false, // 是否为草稿状态（从异常记录创建的治疗记录）
-    isEditMode: false // 是否为编辑模式
+    isEditMode: false, // 是否为编辑模式
+    viewMode: false, // ✅ 是否为查看模式（查看+跟进治疗进展）
+    
+    // ✅ 治疗进展数据（仅查看模式使用）
+    treatmentProgress: {
+      treatmentDays: 0,
+      totalTreated: 0,
+      curedCount: 0,
+      improvedCount: 0,
+      deathCount: 0,
+      remainingCount: 0,
+      cureRate: '0',
+      mortalityRate: '0'
+    },
+    
+    // ✅ 进展跟进对话框
+    showProgressDialog: false,
+    progressDialogType: '', // 'cured' | 'died'
+    progressForm: {
+      count: '',
+      notes: '',
+      deathCause: ''
+    }
   },
 
   onLoad(options: any) {
-    const { sourceType, sourceId, diagnosisId, batchId, batchNumber, treatmentId, id, abnormalRecordId, diagnosis } = options || {}
+    const { sourceType, sourceId, diagnosisId, batchId, batchNumber, treatmentId, id, abnormalRecordId, diagnosis, mode } = options || {}
+    
+    // ✅ 判断是否为查看模式
+    const isViewMode = mode === 'view'
     
     this.setData({
       sourceType: sourceType || 'normal',
       sourceId: sourceId || '',
       diagnosisId: diagnosisId || '',
       treatmentId: treatmentId || id || '',
-      abnormalRecordId: abnormalRecordId || ''
+      abnormalRecordId: abnormalRecordId || '',
+      viewMode: isViewMode  // ✅ 设置查看模式标记
     })
+    
+    // ✅ 查看模式：加载治疗详情+进展数据
+    if (isViewMode && (treatmentId || id)) {
+      this.loadTreatmentDetail(treatmentId || id)
+      return
+    }
     
     // 如果来自异常记录，设置相关数据（优先使用批次编号）
     if (abnormalRecordId) {
@@ -1056,6 +1088,179 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
       }
     })
+  },
+
+  // ========== ✅ 查看模式相关方法 ==========
+  
+  /**
+   * 加载治疗记录详情（查看模式）
+   */
+  loadTreatmentDetail: async function(treatmentId: string) {
+    try {
+      wx.showLoading({ title: '加载中...' })
+      
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'get_treatment_detail',
+          treatmentId: treatmentId
+        }
+      })
+      
+      wx.hideLoading()
+      
+      if (result.result && result.result.success) {
+        const { treatment, progress } = result.result.data
+        
+        console.log('📝 治疗详情:', treatment)
+        console.log('📊 治疗进展:', progress)
+        
+        // 填充治疗基本信息（只读）
+        this.setData({
+          'formData.batchId': treatment.batchId,
+          'formData.treatmentDate': treatment.treatmentDate,
+          'formData.treatmentType': treatment.treatmentType,
+          'formData.diagnosis': treatment.diagnosis?.confirmed || treatment.diagnosis?.preliminary || '',
+          'formData.diagnosisConfidence': treatment.diagnosis?.confidence || 0,
+          'formData.notes': treatment.notes || '',
+          'treatmentPlan.primary': treatment.treatmentPlan?.primary || '',
+          medications: treatment.medications || [],
+          treatmentProgress: progress
+        })
+      } else {
+        throw new Error(result.result?.error || '加载失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('❌ 加载治疗详情失败:', error)
+      wx.showToast({
+        title: error.message || '加载失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  /**
+   * 显示进展对话框
+   */
+  showProgressDialog(e: any) {
+    const { type } = e.currentTarget.dataset
+    
+    // 检查剩余数量
+    if (this.data.treatmentProgress.remainingCount <= 0) {
+      wx.showToast({
+        title: '治疗已完成，无需继续记录',
+        icon: 'none'
+      })
+      return
+    }
+    
+    this.setData({
+      showProgressDialog: true,
+      progressDialogType: type,
+      'progressForm.count': '',
+      'progressForm.notes': '',
+      'progressForm.deathCause': ''
+    })
+  },
+
+  /**
+   * 关闭进展对话框
+   */
+  closeProgressDialog() {
+    this.setData({
+      showProgressDialog: false,
+      progressDialogType: '',
+      'progressForm.count': '',
+      'progressForm.notes': '',
+      'progressForm.deathCause': ''
+    })
+  },
+
+  /**
+   * 进展表单输入
+   */
+  onProgressFormInput(e: any) {
+    const { field } = e.currentTarget.dataset
+    this.setData({
+      [`progressForm.${field}`]: e.detail.value
+    })
+  },
+
+  /**
+   * 提交治疗进展
+   */
+  submitProgress: async function() {
+    try {
+      const { progressDialogType, progressForm, treatmentProgress, treatmentId } = this.data
+      
+      // 验证数量
+      const count = parseInt(progressForm.count)
+      if (!count || count <= 0) {
+        wx.showToast({
+          title: '请输入正确的数量',
+          icon: 'none'
+        })
+        return
+      }
+      
+      if (count > treatmentProgress.remainingCount) {
+        wx.showToast({
+          title: `数量不能超过${treatmentProgress.remainingCount}`,
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 死亡必须填写原因
+      if (progressDialogType === 'died' && !progressForm.deathCause) {
+        wx.showToast({
+          title: '请填写死亡原因',
+          icon: 'none'
+        })
+        return
+      }
+      
+      wx.showLoading({ title: '提交中...' })
+      
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'update_treatment_progress',
+          treatmentId: treatmentId,
+          progressType: progressDialogType,
+          count: count,
+          notes: progressForm.notes,
+          deathCause: progressForm.deathCause
+        }
+      })
+      
+      wx.hideLoading()
+      
+      if (result.result && result.result.success) {
+        wx.showToast({
+          title: result.result.message || '记录成功',
+          icon: 'success'
+        })
+        
+        // 关闭对话框
+        this.closeProgressDialog()
+        
+        // 重新加载治疗详情
+        setTimeout(() => {
+          this.loadTreatmentDetail(treatmentId)
+        }, 1000)
+      } else {
+        throw new Error(result.result?.error || '提交失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('❌ 提交治疗进展失败:', error)
+      wx.showToast({
+        title: error.message || '提交失败',
+        icon: 'none'
+      })
+    }
   }
 }
 

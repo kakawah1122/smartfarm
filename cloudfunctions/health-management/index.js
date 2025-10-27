@@ -1946,6 +1946,12 @@ exports.main = async (event, context) => {
       case 'calculate_treatment_cost':
         return await calculateTreatmentCost(event, wxContext)
       
+      case 'update_treatment_progress':
+        return await updateTreatmentProgress(event, wxContext)
+      
+      case 'get_treatment_detail':
+        return await getTreatmentDetail(event.treatmentId, wxContext)
+      
       case 'calculate_health_rate':
         return {
           success: true,
@@ -2924,6 +2930,222 @@ async function calculateTreatmentCost(event, wxContext) {
       success: false,
       error: error.message,
       message: '计算治疗成本失败'
+    }
+  }
+}
+
+/**
+ * 获取治疗记录详情（用于治疗进展跟进）
+ */
+async function getTreatmentDetail(treatmentId, wxContext) {
+  try {
+    if (!treatmentId) {
+      throw new Error('缺少治疗记录ID')
+    }
+    
+    // 获取治疗记录
+    const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .get()
+    
+    if (!treatmentResult.data) {
+      throw new Error('治疗记录不存在')
+    }
+    
+    const treatment = treatmentResult.data
+    
+    // 计算治疗天数
+    const startDate = new Date(treatment.treatmentDate)
+    const today = new Date()
+    const treatmentDays = Math.ceil((today - startDate) / (1000 * 60 * 60 * 24))
+    
+    // 计算剩余未处理数量
+    const totalTreated = treatment.outcome?.totalTreated || 0
+    const curedCount = treatment.outcome?.curedCount || 0
+    const improvedCount = treatment.outcome?.improvedCount || 0
+    const deathCount = treatment.outcome?.deathCount || 0
+    const remainingCount = totalTreated - curedCount - deathCount
+    
+    return {
+      success: true,
+      data: {
+        treatment,
+        progress: {
+          treatmentDays,
+          totalTreated,
+          curedCount,
+          improvedCount,
+          deathCount,
+          remainingCount,
+          cureRate: totalTreated > 0 ? ((curedCount / totalTreated) * 100).toFixed(1) : 0,
+          mortalityRate: totalTreated > 0 ? ((deathCount / totalTreated) * 100).toFixed(1) : 0
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ 获取治疗详情失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '获取治疗详情失败'
+    }
+  }
+}
+
+/**
+ * 更新治疗进展（记录治愈/死亡）
+ */
+async function updateTreatmentProgress(event, wxContext) {
+  try {
+    const {
+      treatmentId,
+      progressType,  // 'cured' | 'died'
+      count,
+      notes,
+      deathCause  // 死亡原因（progressType=died时必填）
+    } = event
+    
+    const openid = wxContext.OPENID
+    
+    // 参数验证
+    if (!treatmentId || !progressType || !count || count <= 0) {
+      throw new Error('参数错误：治疗记录ID、进展类型、数量不能为空')
+    }
+    
+    if (progressType === 'died' && !deathCause) {
+      throw new Error('记录死亡时必须填写死亡原因')
+    }
+    
+    // 获取治疗记录
+    const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .get()
+    
+    if (!treatmentResult.data) {
+      throw new Error('治疗记录不存在')
+    }
+    
+    const treatment = treatmentResult.data
+    
+    // 检查治疗状态
+    if (treatment.outcome?.status !== 'ongoing') {
+      throw new Error('该治疗记录已完成，无法继续记录进展')
+    }
+    
+    // 计算剩余数量
+    const totalTreated = treatment.outcome?.totalTreated || 0
+    const curedCount = treatment.outcome?.curedCount || 0
+    const deathCount = treatment.outcome?.deathCount || 0
+    const remainingCount = totalTreated - curedCount - deathCount
+    
+    // 验证数量
+    if (count > remainingCount) {
+      throw new Error(`数量超出范围，当前剩余治疗数：${remainingCount}`)
+    }
+    
+    // 更新数据
+    const updateData = {
+      updatedAt: new Date()
+    }
+    
+    if (progressType === 'cured') {
+      updateData['outcome.curedCount'] = curedCount + count
+    } else if (progressType === 'died') {
+      updateData['outcome.deathCount'] = deathCount + count
+    }
+    
+    // 计算新的剩余数量和状态
+    const newCuredCount = progressType === 'cured' ? curedCount + count : curedCount
+    const newDeathCount = progressType === 'died' ? deathCount + count : deathCount
+    const newRemainingCount = totalTreated - newCuredCount - newDeathCount
+    
+    // 自动判断治疗状态
+    if (newRemainingCount === 0) {
+      if (newDeathCount === 0) {
+        updateData['outcome.status'] = 'cured'  // 全部治愈
+      } else if (newCuredCount === 0) {
+        updateData['outcome.status'] = 'died'  // 全部死亡
+      } else {
+        updateData['outcome.status'] = 'completed'  // 部分治愈+部分死亡
+      }
+    }
+    
+    // 更新治疗记录
+    await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .update({
+        data: updateData
+      })
+    
+    // 如果是记录死亡，创建死亡记录
+    if (progressType === 'died') {
+      const deathRecordData = {
+        batchId: treatment.batchId,
+        treatmentRecordId: treatmentId,
+        deathDate: new Date().toISOString().split('T')[0],
+        deathCount: count,
+        deathCause: deathCause,
+        deathCategory: 'disease',
+        costPerAnimal: 0,
+        totalCost: 0,
+        notes: notes || '',
+        isDeleted: false,
+        createdBy: openid,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).add({
+        data: deathRecordData
+      })
+    }
+    
+    // 如果治疗记录关联了异常记录，更新异常记录状态
+    if (treatment.abnormalRecordId && newRemainingCount === 0) {
+      const newAbnormalStatus = updateData['outcome.status'] === 'cured' ? 'resolved' : 'completed'
+      await db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .doc(treatment.abnormalRecordId)
+        .update({
+          data: {
+            status: newAbnormalStatus,
+            updatedAt: new Date()
+          }
+        })
+    }
+    
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'update_treatment_progress',
+      COLLECTIONS.HEALTH_TREATMENT_RECORDS,
+      treatmentId,
+      {
+        progressType,
+        count,
+        newStatus: updateData['outcome.status'],
+        result: 'success'
+      }
+    )
+    
+    console.log(`✅ 治疗进展更新成功: ${progressType} ${count}只, 剩余${newRemainingCount}只`)
+    
+    return {
+      success: true,
+      data: {
+        remainingCount: newRemainingCount,
+        newStatus: updateData['outcome.status'] || 'ongoing',
+        curedCount: newCuredCount,
+        deathCount: newDeathCount
+      },
+      message: progressType === 'cured' ? '治愈记录成功' : '死亡记录成功'
+    }
+    
+  } catch (error) {
+    console.error('❌ 更新治疗进展失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '更新治疗进展失败'
     }
   }
 }

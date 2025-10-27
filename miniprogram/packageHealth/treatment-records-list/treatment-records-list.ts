@@ -98,7 +98,7 @@ Page({
   },
 
   /**
-   * 点击记录卡片，跳转到详情页面
+   * 点击记录卡片，跳转到详情页面（查看+跟进模式）
    */
   onRecordTap(e: any) {
     const { id } = e.currentTarget.dataset

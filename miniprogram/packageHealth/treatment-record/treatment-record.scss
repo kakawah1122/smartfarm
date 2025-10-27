@@ -794,3 +794,250 @@
     }
   }
 }
+
+// ========== ✅ 查看模式样式 ==========
+
+.view-section {
+  margin-bottom: 32rpx;
+  
+  .section-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24rpx;
+    padding-left: 20rpx;
+    border-left: 6rpx solid #0052d9;
+  }
+}
+
+// 信息卡片
+.info-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20rpx 0;
+    
+    &:not(:last-child) {
+      border-bottom: 1rpx solid #f0f0f0;
+    }
+    
+    .info-label {
+      font-size: 28rpx;
+      color: #666;
+    }
+    
+    .info-value {
+      font-size: 28rpx;
+      color: #333;
+      font-weight: 500;
+    }
+  }
+}
+
+// 治疗方案卡片
+.plan-card {
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  border: 1rpx solid #e8e8e8;
+  
+  .plan-text {
+    font-size: 28rpx;
+    color: #333;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+// 用药列表
+.medications-list {
+  .medication-item {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx 32rpx;
+    margin-bottom: 16rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+    
+    .med-name {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12rpx;
+    }
+    
+    .med-detail {
+      font-size: 26rpx;
+      color: #666;
+      line-height: 1.6;
+    }
+  }
+}
+
+// 治疗进展卡片
+.progress-section {
+  .progress-card {
+    background: white;
+    border-radius: 16rpx;
+    padding: 32rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  }
+  
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32rpx;
+    padding-bottom: 24rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+    
+    .treatment-days {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #0052d9;
+    }
+  }
+  
+  .progress-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24rpx;
+    margin-bottom: 32rpx;
+    
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24rpx;
+      background: #f8f9fa;
+      border-radius: 12rpx;
+      
+      .stat-label {
+        font-size: 24rpx;
+        color: #999;
+        margin-bottom: 12rpx;
+      }
+      
+      .stat-value {
+        font-size: 36rpx;
+        font-weight: 600;
+        
+        &.total {
+          color: #0052d9;
+        }
+        
+        &.cured {
+          color: #00a870;
+        }
+        
+        &.died {
+          color: #e34d59;
+        }
+        
+        &.remaining {
+          color: #ed7b2f;
+        }
+      }
+    }
+  }
+  
+  .progress-bar {
+    height: 12rpx;
+    background: #f0f0f0;
+    border-radius: 6rpx;
+    overflow: hidden;
+    display: flex;
+    margin-bottom: 32rpx;
+    
+    .bar-cured {
+      background: linear-gradient(90deg, #00a870 0%, #00c48c 100%);
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    
+    .bar-died {
+      background: linear-gradient(90deg, #e34d59 0%, #ff6b7a 100%);
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+  }
+  
+  .progress-actions {
+    display: flex;
+    gap: 20rpx;
+    
+    t-button {
+      flex: 1;
+    }
+  }
+}
+
+// 备注卡片
+.notes-card {
+  background: #fff8f0;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  border: 1rpx solid #ffe8d0;
+  
+  .notes-text {
+    font-size: 28rpx;
+    color: #666;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+// 治疗进展对话框
+.progress-dialog-content {
+  padding: 32rpx 24rpx;
+  
+  .dialog-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12rpx;
+    padding: 24rpx;
+    background: #f0f9ff;
+    border-radius: 12rpx;
+    margin-bottom: 32rpx;
+    
+    .hint-text {
+      font-size: 28rpx;
+      color: #666;
+    }
+    
+    .hint-value {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #0052d9;
+    }
+  }
+  
+  .dialog-field {
+    margin-bottom: 32rpx;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .field-label {
+      font-size: 28rpx;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 16rpx;
+      
+      &.required::after {
+        content: '*';
+        color: #e34d59;
+        margin-left: 4rpx;
+      }
+    }
+  }
+}
