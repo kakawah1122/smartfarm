@@ -1867,6 +1867,273 @@ async function getHomepageHealthOverview(event, wxContext) {
   }
 }
 
+/**
+ * 添加治疗笔记
+ */
+async function addTreatmentNote(event, wxContext) {
+  try {
+    const { treatmentId, note } = event
+    const openid = wxContext.OPENID
+    
+    if (!treatmentId) {
+      throw new Error('治疗记录ID不能为空')
+    }
+    if (!note || note.trim().length === 0) {
+      throw new Error('治疗笔记不能为空')
+    }
+    
+    // 获取治疗记录
+    const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .get()
+    
+    if (!treatmentResult.data) {
+      throw new Error('治疗记录不存在')
+    }
+    
+    const treatment = treatmentResult.data
+    
+    // 权限验证
+    if (treatment._openid !== openid) {
+      throw new Error('无权操作此治疗记录')
+    }
+    
+    // 创建笔记记录
+    const noteRecord = {
+      type: 'note',
+      content: note,
+      createdAt: new Date().toISOString(),
+      createdBy: openid
+    }
+    
+    // 更新治疗记录，添加笔记到历史中
+    await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .update({
+        data: {
+          treatmentHistory: _.push(noteRecord),
+          updateTime: db.serverDate()
+        }
+      })
+    
+    return {
+      success: true,
+      message: '治疗笔记保存成功'
+    }
+  } catch (error) {
+    console.error('❌ 添加治疗笔记失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '添加治疗笔记失败'
+    }
+  }
+}
+
+/**
+ * 追加用药（扣减库存）
+ */
+async function addTreatmentMedication(event, wxContext) {
+  try {
+    const { treatmentId, medication } = event
+    const openid = wxContext.OPENID
+    
+    if (!treatmentId) {
+      throw new Error('治疗记录ID不能为空')
+    }
+    if (!medication || !medication.materialId) {
+      throw new Error('药品信息不完整')
+    }
+    
+    const quantity = parseInt(medication.quantity)
+    if (!quantity || quantity <= 0) {
+      throw new Error('数量必须大于0')
+    }
+    
+    // 获取治疗记录
+    const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .get()
+    
+    if (!treatmentResult.data) {
+      throw new Error('治疗记录不存在')
+    }
+    
+    const treatment = treatmentResult.data
+    
+    // 权限验证
+    if (treatment._openid !== openid) {
+      throw new Error('无权操作此治疗记录')
+    }
+    
+    // 检查库存
+    const materialResult = await db.collection('prod_materials')
+      .doc(medication.materialId)
+      .get()
+    
+    if (!materialResult.data) {
+      throw new Error('药品不存在')
+    }
+    
+    const material = materialResult.data
+    if (material.currentStock < quantity) {
+      throw new Error(`库存不足，当前库存：${material.currentStock}${material.unit}`)
+    }
+    
+    // 开始事务
+    const transaction = await db.startTransaction()
+    
+    try {
+      // 1. 扣减库存
+      await transaction.collection('prod_materials')
+        .doc(medication.materialId)
+        .update({
+          data: {
+            currentStock: _.inc(-quantity),
+            updateTime: db.serverDate()
+          }
+        })
+      
+      // 2. 创建库存日志
+      await transaction.collection('prod_inventory_logs').add({
+        data: {
+          materialId: medication.materialId,
+          materialCode: medication.materialCode,
+          materialName: medication.name,
+          category: medication.category,
+          operationType: '治疗领用',
+          quantity: -quantity,
+          unit: medication.unit,
+          beforeStock: material.currentStock,
+          afterStock: material.currentStock - quantity,
+          relatedModule: 'health_treatment',
+          relatedId: treatmentId,
+          notes: `追加用药：${medication.name}，用法：${medication.dosage || '无'}`,
+          operator: openid,
+          createTime: db.serverDate()
+        }
+      })
+      
+      // 3. 添加用药记录到治疗记录
+      const medicationRecord = {
+        type: 'medication_added',
+        medication: {
+          materialId: medication.materialId,
+          name: medication.name,
+          quantity: quantity,
+          unit: medication.unit,
+          dosage: medication.dosage || '',
+          category: medication.category
+        },
+        createdAt: new Date().toISOString(),
+        createdBy: openid
+      }
+      
+      await transaction.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+        .doc(treatmentId)
+        .update({
+          data: {
+            medications: _.push({
+              materialId: medication.materialId,
+              name: medication.name,
+              quantity: quantity,
+              unit: medication.unit,
+              dosage: medication.dosage || '',
+              category: medication.category
+            }),
+            treatmentHistory: _.push(medicationRecord),
+            updateTime: db.serverDate()
+          }
+        })
+      
+      // 提交事务
+      await transaction.commit()
+      
+      return {
+        success: true,
+        message: '用药追加成功，库存已扣减'
+      }
+    } catch (error) {
+      // 回滚事务
+      await transaction.rollback()
+      throw error
+    }
+  } catch (error) {
+    console.error('❌ 追加用药失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '追加用药失败'
+    }
+  }
+}
+
+/**
+ * 调整治疗方案
+ */
+async function updateTreatmentPlan(event, wxContext) {
+  try {
+    const { treatmentId, treatmentPlan, adjustReason } = event
+    const openid = wxContext.OPENID
+    
+    if (!treatmentId) {
+      throw new Error('治疗记录ID不能为空')
+    }
+    if (!treatmentPlan || treatmentPlan.trim().length === 0) {
+      throw new Error('治疗方案不能为空')
+    }
+    
+    // 获取治疗记录
+    const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .get()
+    
+    if (!treatmentResult.data) {
+      throw new Error('治疗记录不存在')
+    }
+    
+    const treatment = treatmentResult.data
+    
+    // 权限验证
+    if (treatment._openid !== openid) {
+      throw new Error('无权操作此治疗记录')
+    }
+    
+    // 记录方案调整历史
+    const adjustmentRecord = {
+      type: 'plan_adjusted',
+      oldPlan: treatment.treatmentPlan?.primary || '',
+      newPlan: treatmentPlan,
+      reason: adjustReason || '无',
+      createdAt: new Date().toISOString(),
+      createdBy: openid
+    }
+    
+    // 更新治疗记录
+    await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .update({
+        data: {
+          'treatmentPlan.primary': treatmentPlan,
+          treatmentHistory: _.push(adjustmentRecord),
+          updateTime: db.serverDate()
+        }
+      })
+    
+    return {
+      success: true,
+      message: '治疗方案调整成功'
+    }
+  } catch (error) {
+    console.error('❌ 调整治疗方案失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '调整治疗方案失败'
+    }
+  }
+}
+
 // 主函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
@@ -1951,6 +2218,15 @@ exports.main = async (event, context) => {
       
       case 'get_treatment_detail':
         return await getTreatmentDetail(event.treatmentId, wxContext)
+      
+      case 'add_treatment_note':
+        return await addTreatmentNote(event, wxContext)
+      
+      case 'add_treatment_medication':
+        return await addTreatmentMedication(event, wxContext)
+      
+      case 'update_treatment_plan':
+        return await updateTreatmentPlan(event, wxContext)
       
       case 'calculate_health_rate':
         return {

@@ -113,6 +113,15 @@
           <!-- 操作按钮 -->
           <view class="progress-actions">
             <t-button 
+              theme="primary" 
+              size="large" 
+              bind:tap="showContinueTreatmentOptions"
+              disabled="{{treatmentProgress.remainingCount <= 0}}"
+              block
+            >
+              继续治疗
+            </t-button>
+            <t-button 
               theme="success" 
               size="large" 
               bind:tap="showProgressDialog"
@@ -383,6 +392,168 @@
           data-field="notes"
           bind:change="onProgressFormInput"
         />
+      </view>
+    </view>
+  </t-dialog>
+
+  <!-- ========== ✅ 继续治疗选项对话框 ========== -->
+  <t-dialog
+    visible="{{showContinueTreatmentDialog}}"
+    title="继续治疗"
+    confirm-btn=""
+    cancel-btn="关闭"
+    bind:cancel="closeContinueTreatmentDialog"
+  >
+    <view class="continue-treatment-options">
+      <view class="option-item" bind:tap="showAddNoteDialog">
+        <view class="option-icon">📝</view>
+        <view class="option-content">
+          <text class="option-title">添加治疗笔记</text>
+          <text class="option-desc">记录治疗观察、病情变化</text>
+        </view>
+        <t-icon name="chevron-right" size="24" color="#999" />
+      </view>
+      
+      <view class="option-item" bind:tap="showAddMedicationDialog">
+        <view class="option-icon">💊</view>
+        <view class="option-content">
+          <text class="option-title">追加用药</text>
+          <text class="option-desc">添加新的药品或营养品</text>
+        </view>
+        <t-icon name="chevron-right" size="24" color="#999" />
+      </view>
+      
+      <view class="option-item" bind:tap="showAdjustPlanDialog">
+        <view class="option-icon">📋</view>
+        <view class="option-content">
+          <text class="option-title">调整治疗方案</text>
+          <text class="option-desc">修改治疗方案或更换药品</text>
+        </view>
+        <t-icon name="chevron-right" size="24" color="#999" />
+      </view>
+    </view>
+  </t-dialog>
+
+  <!-- ========== ✅ 添加治疗笔记对话框 ========== -->
+  <t-dialog
+    visible="{{showNoteDialog}}"
+    title="添加治疗笔记"
+    confirm-btn="保存"
+    cancel-btn="取消"
+    bind:confirm="submitTreatmentNote"
+    bind:cancel="closeNoteDialog"
+  >
+    <view class="note-dialog-content">
+      <view class="dialog-field">
+        <view class="field-label required">治疗笔记</view>
+        <t-textarea
+          value="{{noteForm.content}}"
+          placeholder="记录治疗观察、病情变化、食欲情况等"
+          maxlength="500"
+          data-field="content"
+          bind:change="onNoteFormInput"
+        />
+      </view>
+      
+      <view class="dialog-hint">
+        <text class="hint-text">💡 治疗笔记会记录在治疗历史中，便于追踪治疗效果</text>
+      </view>
+    </view>
+  </t-dialog>
+
+  <!-- ========== ✅ 追加用药对话框 ========== -->
+  <t-dialog
+    visible="{{showAddMedicationFormDialog}}"
+    title="追加用药"
+    confirm-btn="确认追加"
+    cancel-btn="取消"
+    bind:confirm="submitAddMedication"
+    bind:cancel="closeAddMedicationDialog"
+  >
+    <view class="add-medication-content">
+      <!-- 选择药品 -->
+      <view class="dialog-field">
+        <view class="field-label required">选择药品/营养品</view>
+        <picker 
+          mode="selector" 
+          range="{{filteredMaterials}}" 
+          range-key="name"
+          value="{{addMedicationForm.materialIndex}}"
+          bindchange="onAddMedicationMaterialChange"
+        >
+          <view class="native-picker">
+            {{addMedicationForm.materialName || '请选择药品或营养品'}}
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+      
+      <!-- 领取数量 -->
+      <view class="dialog-field" wx:if="{{addMedicationForm.materialId}}">
+        <view class="field-label required">领取数量</view>
+        <t-input
+          value="{{addMedicationForm.quantity}}"
+          placeholder="请输入领取数量"
+          type="digit"
+          data-field="quantity"
+          bind:change="onAddMedicationFormInput"
+        />
+        <view class="stock-info" wx:if="{{addMedicationForm.currentStock}}">
+          库存：{{addMedicationForm.currentStock}}{{addMedicationForm.unit}}
+        </view>
+      </view>
+      
+      <!-- 用法用量 -->
+      <view class="dialog-field" wx:if="{{addMedicationForm.materialId}}">
+        <view class="field-label">用法用量</view>
+        <t-input
+          value="{{addMedicationForm.dosage}}"
+          placeholder="如：10mg/kg 每日2次（可选）"
+          data-field="dosage"
+          bind:change="onAddMedicationFormInput"
+        />
+      </view>
+      
+      <view class="dialog-hint">
+        <text class="hint-text">💡 追加的用药会扣减库存并记录在治疗历史中</text>
+      </view>
+    </view>
+  </t-dialog>
+
+  <!-- ========== ✅ 调整治疗方案对话框 ========== -->
+  <t-dialog
+    visible="{{showAdjustPlanFormDialog}}"
+    title="调整治疗方案"
+    confirm-btn="保存修改"
+    cancel-btn="取消"
+    bind:confirm="submitAdjustPlan"
+    bind:cancel="closeAdjustPlanDialog"
+  >
+    <view class="adjust-plan-content">
+      <view class="dialog-field">
+        <view class="field-label required">治疗方案</view>
+        <t-textarea
+          value="{{adjustPlanForm.treatmentPlan}}"
+          placeholder="请输入调整后的治疗方案"
+          maxlength="500"
+          data-field="treatmentPlan"
+          bind:change="onAdjustPlanFormInput"
+        />
+      </view>
+      
+      <view class="dialog-field">
+        <view class="field-label">调整原因</view>
+        <t-textarea
+          value="{{adjustPlanForm.reason}}"
+          placeholder="说明为什么调整治疗方案（可选）"
+          maxlength="200"
+          data-field="reason"
+          bind:change="onAdjustPlanFormInput"
+        />
+      </view>
+      
+      <view class="dialog-hint">
+        <text class="hint-text">⚠️ 修改治疗方案会记录在治疗历史中</text>
       </view>
     </view>
   </t-dialog>

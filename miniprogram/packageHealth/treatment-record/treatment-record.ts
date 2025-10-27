@@ -105,6 +105,36 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       count: '',
       notes: '',
       deathCause: ''
+    },
+    
+    // ✅ 继续治疗对话框
+    showContinueTreatmentDialog: false,
+    
+    // ✅ 治疗笔记对话框
+    showNoteDialog: false,
+    noteForm: {
+      content: ''
+    },
+    
+    // ✅ 追加用药对话框
+    showAddMedicationFormDialog: false,
+    addMedicationForm: {
+      materialIndex: -1,
+      materialId: '',
+      materialName: '',
+      materialCode: '',
+      category: '',
+      unit: '',
+      currentStock: 0,
+      quantity: '',
+      dosage: ''
+    },
+    
+    // ✅ 调整治疗方案对话框
+    showAdjustPlanFormDialog: false,
+    adjustPlanForm: {
+      treatmentPlan: '',
+      reason: ''
     }
   },
 
@@ -1258,6 +1288,386 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       console.error('❌ 提交治疗进展失败:', error)
       wx.showToast({
         title: error.message || '提交失败',
+        icon: 'none'
+      })
+    }
+  },
+  
+  // ========== ✅ 继续治疗功能 ==========
+  
+  /**
+   * 显示继续治疗选项
+   */
+  showContinueTreatmentOptions: function() {
+    console.log('🔄 显示继续治疗选项')
+    this.setData({
+      showContinueTreatmentDialog: true
+    })
+  },
+  
+  /**
+   * 关闭继续治疗对话框
+   */
+  closeContinueTreatmentDialog: function() {
+    this.setData({
+      showContinueTreatmentDialog: false
+    })
+  },
+  
+  // ========== ✅ 治疗笔记功能 ==========
+  
+  /**
+   * 显示添加笔记对话框
+   */
+  showAddNoteDialog: function() {
+    console.log('📝 显示添加笔记对话框')
+    this.setData({
+      showContinueTreatmentDialog: false,
+      showNoteDialog: true,
+      noteForm: {
+        content: ''
+      }
+    })
+  },
+  
+  /**
+   * 关闭笔记对话框
+   */
+  closeNoteDialog: function() {
+    this.setData({
+      showNoteDialog: false,
+      noteForm: {
+        content: ''
+      }
+    })
+  },
+  
+  /**
+   * 笔记表单输入
+   */
+  onNoteFormInput: function(e: any) {
+    const { field } = e.currentTarget.dataset
+    const { value } = e.detail
+    this.setData({
+      [`noteForm.${field}`]: value
+    })
+  },
+  
+  /**
+   * 提交治疗笔记
+   */
+  submitTreatmentNote: async function() {
+    try {
+      const { noteForm, treatmentId } = this.data
+      
+      if (!noteForm.content) {
+        wx.showToast({
+          title: '请填写治疗笔记',
+          icon: 'none'
+        })
+        return
+      }
+      
+      wx.showLoading({ title: '保存中...' })
+      
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'add_treatment_note',
+          treatmentId: treatmentId,
+          note: noteForm.content
+        }
+      })
+      
+      wx.hideLoading()
+      
+      if (result.result && result.result.success) {
+        wx.showToast({
+          title: '笔记保存成功',
+          icon: 'success'
+        })
+        
+        this.closeNoteDialog()
+        
+        // 重新加载治疗详情
+        setTimeout(() => {
+          this.loadTreatmentDetail(treatmentId)
+        }, 1000)
+      } else {
+        throw new Error(result.result?.error || '保存失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('❌ 保存治疗笔记失败:', error)
+      wx.showToast({
+        title: error.message || '保存失败',
+        icon: 'none'
+      })
+    }
+  },
+  
+  // ========== ✅ 追加用药功能 ==========
+  
+  /**
+   * 显示追加用药对话框
+   */
+  showAddMedicationDialog: async function() {
+    console.log('💊 显示追加用药对话框')
+    
+    // 如果还没有加载物料，先加载
+    if (this.data.availableMaterials.length === 0) {
+      await this.loadAvailableMaterials()
+    }
+    
+    // 根据当前治疗类型过滤物料
+    const { formData, availableMaterials } = this.data
+    const filteredMaterials = formData.treatmentType === 'isolation'
+      ? availableMaterials.filter((m: any) => m.category === '营养品')
+      : availableMaterials
+    
+    this.setData({
+      showContinueTreatmentDialog: false,
+      showAddMedicationFormDialog: true,
+      filteredMaterials,
+      addMedicationForm: {
+        materialIndex: -1,
+        materialId: '',
+        materialName: '',
+        materialCode: '',
+        category: '',
+        unit: '',
+        currentStock: 0,
+        quantity: '',
+        dosage: ''
+      }
+    })
+  },
+  
+  /**
+   * 关闭追加用药对话框
+   */
+  closeAddMedicationDialog: function() {
+    this.setData({
+      showAddMedicationFormDialog: false,
+      addMedicationForm: {
+        materialIndex: -1,
+        materialId: '',
+        materialName: '',
+        materialCode: '',
+        category: '',
+        unit: '',
+        currentStock: 0,
+        quantity: '',
+        dosage: ''
+      }
+    })
+  },
+  
+  /**
+   * 追加用药 - 药品选择变化
+   */
+  onAddMedicationMaterialChange: function(e: any) {
+    const index = e.detail.value
+    const { filteredMaterials } = this.data
+    
+    if (index >= 0 && index < filteredMaterials.length) {
+      const material = filteredMaterials[index]
+      console.log('✅ 选择药品:', material)
+      
+      this.setData({
+        'addMedicationForm.materialIndex': index,
+        'addMedicationForm.materialId': material._id,
+        'addMedicationForm.materialName': material.name,
+        'addMedicationForm.materialCode': material.materialCode,
+        'addMedicationForm.category': material.category,
+        'addMedicationForm.unit': material.unit,
+        'addMedicationForm.currentStock': material.currentStock
+      })
+    }
+  },
+  
+  /**
+   * 追加用药 - 表单输入
+   */
+  onAddMedicationFormInput: function(e: any) {
+    const { field } = e.currentTarget.dataset
+    const { value } = e.detail
+    this.setData({
+      [`addMedicationForm.${field}`]: value
+    })
+  },
+  
+  /**
+   * 提交追加用药
+   */
+  submitAddMedication: async function() {
+    try {
+      const { addMedicationForm, treatmentId } = this.data
+      
+      // 验证
+      if (!addMedicationForm.materialId) {
+        wx.showToast({
+          title: '请选择药品',
+          icon: 'none'
+        })
+        return
+      }
+      
+      const quantity = parseInt(addMedicationForm.quantity)
+      if (!quantity || quantity <= 0) {
+        wx.showToast({
+          title: '请输入正确的数量',
+          icon: 'none'
+        })
+        return
+      }
+      
+      if (quantity > addMedicationForm.currentStock) {
+        wx.showToast({
+          title: '库存不足',
+          icon: 'none'
+        })
+        return
+      }
+      
+      wx.showLoading({ title: '追加中...' })
+      
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'add_treatment_medication',
+          treatmentId: treatmentId,
+          medication: {
+            materialId: addMedicationForm.materialId,
+            name: addMedicationForm.materialName,
+            materialCode: addMedicationForm.materialCode,
+            category: addMedicationForm.category,
+            unit: addMedicationForm.unit,
+            quantity: quantity,
+            dosage: addMedicationForm.dosage || ''
+          }
+        }
+      })
+      
+      wx.hideLoading()
+      
+      if (result.result && result.result.success) {
+        wx.showToast({
+          title: '用药追加成功',
+          icon: 'success'
+        })
+        
+        this.closeAddMedicationDialog()
+        
+        // 重新加载治疗详情
+        setTimeout(() => {
+          this.loadTreatmentDetail(treatmentId)
+        }, 1000)
+      } else {
+        throw new Error(result.result?.error || '追加失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('❌ 追加用药失败:', error)
+      wx.showToast({
+        title: error.message || '追加失败',
+        icon: 'none'
+      })
+    }
+  },
+  
+  // ========== ✅ 调整治疗方案功能 ==========
+  
+  /**
+   * 显示调整方案对话框
+   */
+  showAdjustPlanDialog: function() {
+    console.log('📋 显示调整方案对话框')
+    const { treatmentPlan } = this.data
+    
+    this.setData({
+      showContinueTreatmentDialog: false,
+      showAdjustPlanFormDialog: true,
+      adjustPlanForm: {
+        treatmentPlan: treatmentPlan.primary || '',
+        reason: ''
+      }
+    })
+  },
+  
+  /**
+   * 关闭调整方案对话框
+   */
+  closeAdjustPlanDialog: function() {
+    this.setData({
+      showAdjustPlanFormDialog: false,
+      adjustPlanForm: {
+        treatmentPlan: '',
+        reason: ''
+      }
+    })
+  },
+  
+  /**
+   * 调整方案 - 表单输入
+   */
+  onAdjustPlanFormInput: function(e: any) {
+    const { field } = e.currentTarget.dataset
+    const { value } = e.detail
+    this.setData({
+      [`adjustPlanForm.${field}`]: value
+    })
+  },
+  
+  /**
+   * 提交调整方案
+   */
+  submitAdjustPlan: async function() {
+    try {
+      const { adjustPlanForm, treatmentId } = this.data
+      
+      if (!adjustPlanForm.treatmentPlan) {
+        wx.showToast({
+          title: '请填写治疗方案',
+          icon: 'none'
+        })
+        return
+      }
+      
+      wx.showLoading({ title: '保存中...' })
+      
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'update_treatment_plan',
+          treatmentId: treatmentId,
+          treatmentPlan: adjustPlanForm.treatmentPlan,
+          adjustReason: adjustPlanForm.reason
+        }
+      })
+      
+      wx.hideLoading()
+      
+      if (result.result && result.result.success) {
+        wx.showToast({
+          title: '方案调整成功',
+          icon: 'success'
+        })
+        
+        this.closeAdjustPlanDialog()
+        
+        // 重新加载治疗详情
+        setTimeout(() => {
+          this.loadTreatmentDetail(treatmentId)
+        }, 1000)
+      } else {
+        throw new Error(result.result?.error || '保存失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('❌ 调整方案失败:', error)
+      wx.showToast({
+        title: error.message || '保存失败',
         icon: 'none'
       })
     }

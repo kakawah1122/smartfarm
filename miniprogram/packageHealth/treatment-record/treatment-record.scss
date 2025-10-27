@@ -1114,3 +1114,80 @@
     }
   }
 }
+
+// ========== 继续治疗选项对话框 ==========
+.continue-treatment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 8rpx 0;
+  
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    padding: 24rpx;
+    background: #f8f9fa;
+    border-radius: 12rpx;
+    transition: all 0.3s;
+    
+    &:active {
+      background: #e8e8e8;
+      transform: scale(0.98);
+    }
+    
+    .option-icon {
+      font-size: 36rpx;
+      flex-shrink: 0;
+    }
+    
+    .option-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+      
+      .option-title {
+        font-size: 30rpx;
+        font-weight: 600;
+        color: #333;
+      }
+      
+      .option-desc {
+        font-size: 24rpx;
+        color: #999;
+      }
+    }
+  }
+}
+
+// 治疗笔记对话框
+.note-dialog-content {
+  padding: 16rpx 0;
+}
+
+// 追加用药对话框
+.add-medication-content {
+  padding: 16rpx 0;
+}
+
+// 调整方案对话框
+.adjust-plan-content {
+  padding: 16rpx 0;
+}
+
+// 对话框提示信息
+.dialog-hint {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  background: #f0f8ff;
+  border-radius: 8rpx;
+  border-left: 4rpx solid #0052d9;
+  
+  .hint-text {
+    font-size: 24rpx;
+    color: #0052d9;
+    line-height: 1.6;
+  }
+}
+
