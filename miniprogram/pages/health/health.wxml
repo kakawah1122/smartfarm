@@ -17,7 +17,7 @@
           <text class="stat-value">{{healthStats.healthyRate}}</text>
           <text class="stat-label">健康率</text>
         </view>
-        <view class="stat-card stat-success" bind:tap="onCureRateClick">
+        <view class="stat-card stat-success">
           <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
           <text class="stat-label">治愈率</text>
         </view>

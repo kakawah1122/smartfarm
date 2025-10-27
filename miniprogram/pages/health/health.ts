@@ -614,14 +614,68 @@ Page<PageData>({
           totalCost
         }
         
-        // 处理治疗统计数据
+        // ✅ 处理治疗统计数据 - 汇总所有批次
+        let totalOngoing = 0
+        let totalCost = 0
+        let totalTreated = 0
+        let totalCured = 0
+        
+        // 并行查询所有批次的治疗统计
+        const treatmentPromises = batches.map(async (batch: any) => {
+          try {
+            const result = await wx.cloud.callFunction({
+              name: 'health-management',
+              data: {
+                action: 'calculate_treatment_cost',
+                batchId: batch._id
+              }
+            })
+            
+            if (result.result?.success) {
+              const data = result.result.data
+              return {
+                ongoingCount: data.ongoingCount || 0,
+                totalCost: parseFloat(data.totalCost || '0'),
+                totalTreated: data.totalTreated || 0,
+                totalCuredAnimals: data.totalCuredAnimals || 0
+              }
+            }
+          } catch (error) {
+            console.warn(`批次 ${batch._id} 治疗数据查询失败:`, error)
+          }
+          return { ongoingCount: 0, totalCost: 0, totalTreated: 0, totalCuredAnimals: 0 }
+        })
+        
+        const treatmentResults = await Promise.all(treatmentPromises)
+        
+        // 汇总所有批次的治疗数据
+        treatmentResults.forEach(result => {
+          totalOngoing += result.ongoingCount
+          totalCost += result.totalCost
+          totalTreated += result.totalTreated
+          totalCured += result.totalCuredAnimals
+        })
+        
+        // 计算总体治愈率
+        const cureRate = totalTreated > 0 
+          ? ((totalCured / totalTreated) * 100).toFixed(1)
+          : '0'
+        
         const treatmentStats = {
-          totalTreatments: 0,
-          totalCost: 0,
-          recoveredCount: 0,
-          ongoingCount: 0,
-          recoveryRate: '0%'
+          totalTreatments: totalTreated,
+          totalCost: totalCost,
+          recoveredCount: totalCured,
+          ongoingCount: totalOngoing,
+          recoveryRate: cureRate + '%'
         }
+        
+        console.log('✅ 全部批次治疗统计:', {
+          totalTreated,
+          totalCured,
+          cureRate,
+          totalOngoing,
+          totalCost
+        })
         
         // 设置监控数据（实时健康状态）
         // 注意：全部批次视图使用简化统计，sickCount作为异常数
@@ -644,7 +698,7 @@ Page<PageData>({
             healthyRate: healthyRate + '%',
             mortalityRate: mortalityRate + '%',
             abnormalCount: sickCount,  // 全部批次视图使用sickCount
-            treatingCount: 0,
+            treatingCount: totalOngoing,  // ✅ 设置治疗中数量
             isolatedCount: 0
           },
           preventionStats,
@@ -652,14 +706,20 @@ Page<PageData>({
             vaccinationRate,
             preventionCost: preventionStats.totalCost
           },
-          'preventionData.recentRecords': recentPreventionRecords,  // 修复：同时设置 preventionData.recentRecords
+          'preventionData.recentRecords': recentPreventionRecords,
           treatmentStats,
+          'treatmentData.stats': {
+            pendingDiagnosis: 0,
+            ongoingTreatment: totalOngoing,
+            totalTreatmentCost: totalCost,
+            cureRate: parseFloat(cureRate)  // ✅ 设置治愈率
+          },
           recentPreventionRecords,
           batchPreventionList: batchesWithPrevention,
           activeHealthAlerts: [],
-          monitoringData: monitoringData  // 设置监控数据
+          monitoringData: monitoringData
         }, () => {
-          // setData 回调，确认数据已设置
+          console.log('✅ 全部批次数据设置完成')
         })
       }
     } catch (error: any) {
@@ -807,21 +867,8 @@ Page<PageData>({
    */
   async loadTreatmentData() {
     try {
-      // 暂时使用默认数据，待云函数完善后再启用
-      // TODO: 完善云函数后启用以下代码
+      // ✅ 启用云函数调用，获取真实治疗统计数据
       
-      // 先设置默认值
-      this.setData({
-        'treatmentData.stats': {
-          pendingDiagnosis: 0,
-          ongoingTreatment: 0,
-          totalTreatmentCost: 0,
-          cureRate: 0
-        },
-        'treatmentData.currentTreatments': []
-      })
-      
-      /* 待云函数完善后启用
       // 1. 获取进行中的治疗记录
       const treatmentResult = await wx.cloud.callFunction({
         name: 'health-management',
@@ -831,7 +878,7 @@ Page<PageData>({
         }
       })
       
-      // 2. 计算治疗总成本
+      // 2. 计算治疗总成本和治愈率
       const costResult = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
@@ -841,31 +888,43 @@ Page<PageData>({
         }
       })
       
-      if (treatmentResult.result && treatmentResult.result.success) {
-        const treatments = treatmentResult.result.data?.treatments || []
-        const costData = costResult.result?.success ? costResult.result.data : {}
-        
-        this.setData({
-          'treatmentData.stats': {
-            pendingDiagnosis: 0, // 需要从AI诊断记录获取
-            ongoingTreatment: costData.ongoingCount || 0,
-            totalTreatmentCost: parseFloat(costData.totalCost || '0'),
-            cureRate: parseFloat(costData.cureRate || '0')
-          },
-          'treatmentData.currentTreatments': treatments
-        })
-      }
-      */
+      // 处理治疗记录数据
+      const treatments = treatmentResult.result?.success 
+        ? (treatmentResult.result.data?.treatments || [])
+        : []
+      
+      // 处理成本和统计数据
+      const costData = costResult.result?.success 
+        ? costResult.result.data 
+        : {}
+      
+      this.setData({
+        'treatmentData.stats': {
+          pendingDiagnosis: 0, // 需要从AI诊断记录获取
+          ongoingTreatment: costData.ongoingCount || 0,
+          totalTreatmentCost: parseFloat(costData.totalCost || '0'),
+          cureRate: parseFloat(costData.cureRate || '0')  // ✅ 显示真实治愈率
+        },
+        'treatmentData.currentTreatments': treatments
+      })
+      
+      console.log('✅ 治疗数据加载成功:', {
+        ongoingTreatment: costData.ongoingCount,
+        cureRate: costData.cureRate,
+        treatmentCount: treatments.length
+      })
+      
     } catch (error: any) {
-      console.error('加载治疗数据失败:', error)
-      // 出错时也设置默认值
+      console.error('❌ 加载治疗数据失败:', error)
+      // 出错时设置默认值
       this.setData({
         'treatmentData.stats': {
           pendingDiagnosis: 0,
           ongoingTreatment: 0,
           totalTreatmentCost: 0,
           cureRate: 0
-        }
+        },
+        'treatmentData.currentTreatments': []
       })
     }
   },
@@ -1216,17 +1275,6 @@ Page<PageData>({
     wx.showModal({
       title: '治疗成本详情',
       content: `当前批次治疗总成本：¥${this.data.treatmentData.stats.totalTreatmentCost || 0}\n\n包含所有进行中治疗的用药和操作成本。`,
-      showCancel: false
-    })
-  },
-
-  /**
-   * 治愈率卡片点击 - 显示治愈详情
-   */
-  onCureRateClick() {
-    wx.showModal({
-      title: '治愈率详情',
-      content: `当前批次治愈率：${this.data.treatmentData.stats.cureRate || 0}%\n\n计算方式：治愈数 / 治疗总数 × 100%`,
       showCancel: false
     })
   },
