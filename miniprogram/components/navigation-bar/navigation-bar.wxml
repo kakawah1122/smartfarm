@@ -2,8 +2,10 @@
 <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
   <view class="navbar-content" style="height: {{navBarHeight}}px;">
     <!-- 左侧返回按钮 -->
-    <view class="navbar-left" wx:if="{{showBack}}" bind:tap="goBack">
-      <text class="back-icon">←</text>
+    <view class="navbar-left" wx:if="{{showBack}}" catchtap="goBack">
+      <view class="back-button-area">
+        <text class="back-icon">←</text>
+      </view>
     </view>
     
     <!-- 中间标题 -->

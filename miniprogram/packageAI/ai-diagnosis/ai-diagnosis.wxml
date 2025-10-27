@@ -319,9 +319,9 @@
           <view 
             wx:for="{{commonSymptoms}}" 
             wx:key="id"
-            class="symptom-tag-inline"
+            class="symptom-tag-inline {{item.checked ? 'tag-checked' : ''}}"
             bind:tap="onSymptomTagTap"
-            data-name="{{item.name}}"
+            data-index="{{index}}"
           >
             <text class="tag-icon">+</text>
             <text class="tag-name">{{item.name}}</text>

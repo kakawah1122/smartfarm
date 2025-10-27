@@ -4,8 +4,9 @@
   top: 0;
   left: 0;
   right: 0;
+  width: 100%;
   background: linear-gradient(135deg, #0052d9 0%, #0066ff 100%);
-  z-index: 9999;
+  z-index: 99999;
   box-shadow: 0 2rpx 16rpx rgba(0, 82, 217, 0.12);
 }
 
@@ -14,17 +15,33 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32rpx;
+  padding: 0 16rpx;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 左侧返回按钮区域 */
 .navbar-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-width: 80rpx;
+  justify-content: flex-start;
+  min-width: 120rpx;
   height: 100%;
+  z-index: 100000;
+  position: relative;
+}
+
+/* 返回按钮可点击区域 */
+.back-button-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120rpx;
+  height: 100%;
+  min-height: 80rpx;
+  position: relative;
+  cursor: pointer;
 }
 
 .back-icon {
@@ -33,6 +50,7 @@
   font-weight: 300;
   line-height: 1;
   display: block;
+  pointer-events: none;
 }
 
 /* 中间标题区域 */

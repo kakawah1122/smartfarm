@@ -9,6 +9,9 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 引入疾病知识库
+const { getDiseaseKnowledgePrompt } = require('./disease-knowledge')
+
 // 生成AI诊断记录ID
 function generateAIDiagnosisId() {
   const now = new Date()
@@ -21,78 +24,105 @@ function generateAIDiagnosisId() {
 
 // 获取病鹅诊断的系统提示词
 function getLiveDiagnosisSystemPrompt() {
-  return `你是一位专业的家禽兽医，专精于鹅类疾病诊断。请根据提供的症状信息，给出准确的诊断建议和治疗方案。
+  return `你是一位资深家禽兽医，只针对狮头鹅开展诊断与处置。请基于提供的结构化数据、批次上下文、历史诊疗记录以及图片描述，做出严谨、可追溯的临床诊断。
 
-诊断规范：
-1. 基于症状进行差异诊断
-2. 考虑环境因素和鹅只状态
-3. 提供置信度评估(0-100)
-4. 给出具体治疗建议
-5. 建议预防措施
+诊断原则：
+1. 按狮头鹅日龄阶段（0-7、8-21、22-45、46-70、71天以上）判定高风险病种，并对比批次历史异常；
+2. 综合以下维度逐条论证：
+   • 临床症状与体征：精神、采食、呼吸、肠道、神经、姿势、羽毛、皮肤等；
+   • 图片线索：逐张说明羽毛、粘膜、肢体、姿势、分泌物等特征；
+   • 环境与饲养信息：温湿度、密度、饲料、应激、免疫记录；
+   • 批次动态：近期异常记录、治疗/隔离/死亡案例及AI修正反馈。
+3. 差异诊断：给出至少2项易混病的排除依据（结合日龄、病变特征、实验室结果或缺失信息）；
+4. 治疗建议：明确药物剂量、途径、频次、疗程；标注支持性护理和批次管理措施（隔离、消毒、饲养调整等）；
+5. 预防/复评：根据日龄阶段和历史风险，制定监测指标、随访周期、二次检测建议；
+6. 若信息不足，列出必须补充的狮头鹅数据或更清晰照片，不得臆测；
+7. 输出仅限狮头鹅相关内容，禁止扩展到其他禽类。
 
-回复格式请使用JSON：
+请严格使用以下JSON结构回复：
 {
   "primaryDiagnosis": {
     "disease": "疾病名称",
     "confidence": 85,
-    "reasoning": "诊断依据"
+    "reasoning": "结合症状、图片、日龄与历史数据的论证要点"
   },
   "differentialDiagnosis": [
-    {"disease": "可能疾病1", "confidence": 60},
-    {"disease": "可能疾病2", "confidence": 45}
+    {"disease": "鉴别疾病1", "confidence": 60, "exclusionReason": "排除或佐证依据"},
+    {"disease": "鉴别疾病2", "confidence": 45, "exclusionReason": "排除或佐证依据"}
   ],
-  "riskFactors": ["风险因素1", "风险因素2"],
+  "riskFactors": [
+    "记录高危因素：如日龄阶段、免疫空档、环境或管理缺陷"
+  ],
   "severity": "mild|moderate|severe",
   "urgency": "low|medium|high|critical",
   "treatmentRecommendation": {
-    "immediate": ["立即措施1", "立即措施2"],
+    "immediate": ["现场紧急措施，含隔离/支持性处理"],
     "medication": [
       {
         "name": "药物名称",
-        "dosage": "用量",
-        "route": "给药途径",
-        "frequency": "频率",
-        "duration": "疗程"
+        "dosage": "mg/kg或mL/L",
+        "route": "口服|饮水|注射等",
+        "frequency": "给药频次",
+        "duration": "疗程天数",
+        "notes": "注意事项/配伍禁忌/适用日龄"
       }
     ],
-    "supportive": ["支持性治疗1", "支持性治疗2"]
+    "supportive": ["补液、电解质、营养、温湿度调整等措施"]
   },
-  "preventionAdvice": ["预防建议1", "预防建议2"]
+  "preventionAdvice": [
+    "批次生物安全与免疫建议：结合日龄阶段、历史病史与环境风险"
+  ],
+  "followUp": {
+    "monitoring": ["未来24-72h需监测的指标及阈值"],
+    "recommendedTests": ["建议追加的实验室检测"],
+    "reviewInterval": "建议的复查或随访时间"
+  }
 }`
 }
 
 // 获取死因剖析的系统提示词
 function getAutopsySystemPrompt() {
-  return `你是一位经验丰富的家禽病理学专家，专精于鹅类尸体解剖和死因分析。
-请根据提供的生前症状、剖检所见和解剖发现，准确判断死亡原因。
+  return `你是一位资深家禽病理学专家，仅针对狮头鹅尸体解剖和死因分析。请基于批次历史、日龄阶段、临床表现、剖检病变与图片证据，精准判定死亡原因并给出防控建议。
 
-分析规范：
-1. 结合生前症状和剖检发现进行综合判断
-2. 重点分析内脏病变与疾病的对应关系
-3. 评估死因的置信度(0-100)
-4. 提供针对性的预防措施
-5. 建议生物安全改进方向
-6. 理解农民的白话描述（如"肠子里面全是血"、"肝脏有很多白点"等）
+分析要求：
+1. 对照不同日龄阶段常见死因（如雏鹅病毒性疾病、中鹅寄生虫、成鹅代谢病等），结合当前批次历史异常；
+2. 系统比对生前症状与剖检特征（肝脏、脾脏、肠系膜、呼吸道、神经系统等）逐条论证；
+3. 按照片信息逐张描述病变部位的颜色、质地、渗出、坏死、充血等特征；
+4. 提供死因置信度，并给出至少2项鉴别死因及排除理由；
+5. 结合批次现有隔离/治疗措施，提出针对性的预防与复盘建议，包括生物安全、营养、密度、消毒流程；
+6. 明确列出后续需要的实验室检查或新增样品采集；
+7. 若信息不足，请指出缺失项（如缺少肝脏切面照片、胆管情况等），不要猜测；
+8. 输出仅限狮头鹅相关内容。
 
-回复格式请使用JSON：
+请使用以下JSON结构输出：
 {
   "primaryCause": {
-    "disease": "死因名称",
+    "disease": "主要死因",
     "confidence": 85,
-    "reasoning": "判断依据（结合症状和剖检发现）",
-    "autopsyEvidence": ["解剖证据1", "解剖证据2"]
+    "reasoning": "结合症状+剖检+历史的详细推理",
+    "autopsyEvidence": ["关键解剖证据1", "关键解剖证据2"],
+    "pathogenesis": "推断致死机制"
   },
   "differentialCauses": [
-    {"disease": "可能死因1", "confidence": 60},
-    {"disease": "可能死因2", "confidence": 45}
+    {"disease": "鉴别死因1", "confidence": 60, "exclusionReason": "排除或保留理由"},
+    {"disease": "鉴别死因2", "confidence": 45, "exclusionReason": "排除或保留理由"}
   ],
   "pathologicalFindings": {
-    "summary": "病理变化总结",
-    "keyFindings": ["关键发现1", "关键发现2"]
+    "summary": "病理变化概述",
+    "organs": [
+      {"organ": "器官名称", "lesions": ["病变描述1", "病变描述2"], "imageReference": "对应图片序号"}
+    ]
   },
-  "preventionMeasures": ["预防措施1", "预防措施2"],
-  "biosecurityAdvice": ["生物安全建议1", "建议2"],
-  "epidemiologyRisk": "low|medium|high"
+  "preventionMeasures": ["针对该日龄批次的预防措施"],
+  "biosecurityAdvice": ["生物安全改进建议"],
+  "epidemiologyRisk": "low|medium|high",
+  "recommendedTests": ["建议追加的实验室/病理检测"],
+  "followUp": {
+    "monitoring": ["后续观察指标"],
+    "correctiveActions": ["需要立即执行的矫正措施"],
+    "dataToCollect": ["建议补充的照片或数据"],
+    "feedbackForAI": "此次分析中可用于改进模型的关键字段或修正要点"
+  }
 }`
 }
 
@@ -103,11 +133,11 @@ function getAutopsySystemPromptV2(historyCases = []) {
   if (historyCases.length > 0) {
     casesSection = `
 
-【历史准确诊断参考案例】
-以下是本养殖场近期确诊的真实病例，供参考学习：
+【本场历史准确诊断参考案例（Few-Shot Learning）】
+以下是本养殖场近期兽医确诊的真实病例，供学习避免误判：
 
 ${historyCases.map((c, i) => `
-案例${i+1}：${c.correctDiagnosis}（诊断准确性：${c.finalRating}星/5星）
+案例${i+1}：${c.correctDiagnosis}（AI准确性：${c.finalRating}星/5星）
   • 动物信息：日龄${c.dayAge}天，死亡${c.deathCount}只
   • 生前症状：${c.symptomsText || c.symptoms || '未详细观察'}
   • 剖检发现：${c.autopsyAbnormalities}
@@ -115,107 +145,22 @@ ${historyCases.map((c, i) => `
   • AI初步判断：${c.aiInitialDiagnosis}
   • 兽医最终确诊：${c.correctDiagnosis}
   • 修正依据：${c.correctionReason}
+  • ⚠️ 关键教训：${c.aiInitialDiagnosis !== c.correctDiagnosis ? '注意区分相似病变，避免重复误判' : 'AI诊断准确，可作为正例参考'}
 `).join('\n')}
 
 【学习要点】
-1. 参考这些案例的症状-疾病对应关系
-2. 注意兽医的修正理由，避免类似误判
-3. 关注本养殖场的常见疾病模式
-4. 特别注意剖检病变的鉴别诊断要点
+1. 参考这些案例的症状-疾病对应关系和日龄匹配
+2. 特别注意兽医的修正理由，避免类似误判陷阱
+3. 关注本养殖场的常见疾病模式和环境特点
+4. 优先考虑历史高频疾病，但不能忽视新发病种
+5. 剖检病变鉴别诊断是关键，必须结合多个特征综合判断
 `
   }
   
-  return `你是一位经验丰富的家禽病理学专家，专精于鹅类尸体解剖和死因分析。
-请根据提供的生前症状、剖检所见和解剖发现，准确判断死亡原因。
-
-分析规范：
-1. 结合生前症状和剖检发现进行综合判断
-2. 重点分析内脏病变与疾病的对应关系
-3. 评估死因的置信度(0-100)
-4. 提供针对性的预防措施
-5. 建议生物安全改进方向
-6. 理解农民的白话描述（如"肠子里面全是血"、"肝脏有很多白点"等）
-${casesSection}
-
-回复格式请使用JSON：
-{
-  "primaryCause": {
-    "disease": "死因名称",
-    "confidence": 85,
-    "reasoning": "判断依据（结合症状和剖检发现）",
-    "autopsyEvidence": ["解剖证据1", "解剖证据2"]
-  },
-  "differentialCauses": [
-    {"disease": "可能死因1", "confidence": 60},
-    {"disease": "可能死因2", "confidence": 45}
-  ],
-  "pathologicalFindings": {
-    "summary": "病理变化总结",
-    "keyFindings": ["关键发现1", "关键发现2"]
-  },
-  "preventionMeasures": ["预防措施1", "预防措施2"],
-  "biosecurityAdvice": ["生物安全建议1", "建议2"],
-  "epidemiologyRisk": "low|medium|high"
-}`
+  return getAutopsySystemPrompt() + casesSection
 }
 
-// 获取疾病特征知识库提示词
-function getDiseaseKnowledgePrompt() {
-  return `
-
-【常见鹅病特征速查表】
-
-1. 小鹅瘟（雏鹅高发）
-  • 易感日龄：1-15天（高峰期3-7天）
-  • 典型症状：精神萎靡、拉白色或绿色水样稀便、突然死亡
-  • 剖检特征：
-    - 小肠表面有白色或黄白色纤维素性假膜（特征性）
-    - 肝脏有针尖至小米粒大小白色坏死灶
-    - 肠道充血出血
-  • 鉴别要点：纤维素性假膜是关键，区别于大肠杆菌病
-
-2. 鹅副粘病毒病（中大鹅常见）
-  • 易感日龄：30-90天
-  • 典型症状：神经症状明显（扭颈、瘫痪、转圈）、拉绿色稀便
-  • 剖检特征：
-    - 脑膜充血水肿
-    - 心内膜及心外膜出血点
-    - 腺胃出血
-  • 鉴别要点：神经症状是关键特征
-
-3. 维生素缺乏症
-  • 易感日龄：10-30天
-  • 典型症状：腿软、站立困难、生长迟缓、无神经症状
-  • 剖检特征：
-    - 骨骼软化、易折断
-    - 内脏器官无明显病变（重要）
-  • 鉴别要点：内脏正常但骨骼异常
-
-4. 大肠杆菌病
-  • 易感日龄：全日龄（尤其15-45天）
-  • 典型症状：急性死亡、腹泻、呼吸困难
-  • 剖检特征：
-    - 心包炎、肝周炎、气囊炎（三炎并存）
-    - 黄色纤维素性渗出物
-    - 肠道可能有出血但无假膜
-  • 鉴别要点：纤维素渗出但无肠道假膜
-
-5. 鸭瘟（鹅瘟）
-  • 易感日龄：20天以上
-  • 典型症状：体温升高、流泪、下痢、头颈肿胀
-  • 剖检特征：
-    - 食道和泄殖腔黏膜出血、溃疡、假膜
-    - 肝脏肿大有坏死灶
-  • 鉴别要点：食道和泄殖腔病变
-
-【诊断原则】
-1. 先看日龄：缩小疾病范围
-2. 看剖检：内脏病变最可靠
-3. 看症状：辅助判断
-4. 多鉴别：列出2-3个可能
-5. 给置信度：不确定时说明原因
-`
-}
+// 疾病知识库已移到独立文件 disease-knowledge.js
 
 /**
  * 获取历史高准确率案例（用于Few-Shot Learning）
@@ -319,7 +264,7 @@ ${images && images.length > 0 ? `\n剖检照片：${images.length}张（已上�
 请根据以上信息进行死因分析，并提供预防建议。`
 }
 
-// 构建批次上下文信息
+// 构建批次上下文信息（优化格式，突出关键信息）
 function buildBatchContextSection(batchPromptData) {
   if (!batchPromptData || Object.keys(batchPromptData).length === 0) {
     return ''
@@ -328,49 +273,113 @@ function buildBatchContextSection(batchPromptData) {
   const { batch = {}, stats = {}, diagnosisTrend = [], treatmentHistory = [], isolationHistory = [], deathHistory = [], correctionFeedback = [] } = batchPromptData
 
   const batchLines = []
-  batchLines.push('\n【狮头鹅批次基线数据】')
-  batchLines.push(`- 批次编号：${batch.batchNumber || '未知'}`)
-  batchLines.push(`- 入栏日龄：第${batch.dayAge || '未知'}天，入栏日期：${batch.entryDate || '未知'}`)
-  batchLines.push(`- 当前总鹅数：${stats.totalAnimals ?? '未知'}，健康：${stats.healthyCount ?? '未知'}，患病：${stats.sickCount ?? '未知'}，死亡累计：${stats.deadCount ?? '未知'}`)
-  batchLines.push(`- 异常记录数：${stats.abnormalCount ?? 0}，治疗中：${stats.treatingCount ?? 0}，隔离中：${stats.isolatedCount ?? 0}`)
-  batchLines.push(`- 批次基础信息：品种${batch.breed || '狮头鹅'}，来源${batch.supplier || '未知'}，饲料/营养记录：${batch.feedType || '未记录'}`)
+  
+  // === 批次快照（一行概览）===
+  const dayAge = batch.dayAge || '未知'
+  const totalAnimals = stats.totalAnimals ?? '未知'
+  const abnormalCount = stats.abnormalCount ?? 0
+  const deadCount = stats.deadCount ?? 0
+  const mortalityRate = stats.mortalityRate ? `${stats.mortalityRate}%` : '未计算'
+  
+  batchLines.push('\n═══════════════════════════════════════════════')
+  batchLines.push(`【批次快照】${batch.batchNumber || '未知批次'} | 第${dayAge}天 | 存栏${totalAnimals}只 | ${abnormalCount > 0 ? `⚠️ 异常${abnormalCount}只` : '✓ 无异常'} | 累计死亡${deadCount}只(${mortalityRate})`)
+  batchLines.push('═══════════════════════════════════════════════')
 
+  // === 高风险提示（仅在有异常时显示）===
+  if (diagnosisTrend.length > 0 || correctionFeedback.length > 0) {
+    const highRiskAlerts = []
+    
+    // 从近期诊断中提取高频病种
+    if (diagnosisTrend.length > 0) {
+      const recentDiseases = {}
+      diagnosisTrend.slice(0, 5).forEach(record => {
+        const disease = record.diagnosis || '未知'
+        recentDiseases[disease] = (recentDiseases[disease] || 0) + 1
+      })
+      const topDisease = Object.entries(recentDiseases).sort((a, b) => b[1] - a[1])[0]
+      if (topDisease && topDisease[1] > 1) {
+        highRiskAlerts.push(`近7天内${topDisease[1]}例"${topDisease[0]}"病例 → 警惕流行趋势`)
+      }
+    }
+    
+    // 从修正反馈中提取AI常见误判
+    if (correctionFeedback.length > 0) {
+      const recentCorrection = correctionFeedback[0]
+      if (recentCorrection.aiAccuracyRating <= 3) {
+        highRiskAlerts.push(`⚠️ 上次AI误判：需从"${recentCorrection.correctedDiagnosis}"鉴别（${recentCorrection.correctionReason}）`)
+      }
+    }
+    
+    if (highRiskAlerts.length > 0) {
+      batchLines.push('\n【⚠️ 高风险提示】')
+      highRiskAlerts.forEach(alert => batchLines.push(`  ${alert}`))
+    }
+  }
+
+  // === 近期异常诊断（简化，突出核心）===
   if (diagnosisTrend && diagnosisTrend.length > 0) {
-    batchLines.push('\n【近期异常/诊断记录】')
-    diagnosisTrend.slice(0, 5).forEach((record, index) => {
-      batchLines.push(`案例${index + 1}（${record.checkDate || '未知日期'}）：诊断 ${record.diagnosis || '未知'}，症状 ${Array.isArray(record.symptoms) ? record.symptoms.join('、') : '未记录'}，病鹅数 ${record.sickCount || 0} 只，严重度 ${record.severity || '未注明'}`)
+    batchLines.push('\n【近期异常诊断】')
+    diagnosisTrend.slice(0, 3).forEach((record, index) => {
+      const symptoms = Array.isArray(record.symptoms) && record.symptoms.length > 0 
+        ? record.symptoms.slice(0, 3).join('、') + (record.symptoms.length > 3 ? '等' : '')
+        : '未记录'
+      const severityIcon = record.severity === 'severe' ? '🔴' : record.severity === 'moderate' ? '🟠' : '🟡'
+      batchLines.push(`  ${severityIcon} ${record.checkDate || '未知日期'} | ${record.diagnosis || '未知'} | ${record.sickCount || 0}只 | 症状：${symptoms}`)
     })
   }
 
-  if (treatmentHistory && treatmentHistory.length > 0) {
-    batchLines.push('\n【近期治疗记录】')
-    treatmentHistory.slice(0, 3).forEach((record, index) => {
-      batchLines.push(`治疗${index + 1}（${record.treatmentDate || '未知日期'}）：诊断 ${record.diagnosis || '未知'}，方案 ${record.treatmentPlan || '未记录'}，药物 ${Array.isArray(record.medications) ? record.medications.map(m => `${m.name}(${m.dosage})`).join('、') : '未记录'}，疗效 ${record.outcome || '进行中'}`)
+  // === 治疗中方案（仅显示进行中的）===
+  const ongoingTreatments = treatmentHistory.filter(t => t.outcome === 'ongoing' || !t.outcome)
+  if (ongoingTreatments.length > 0) {
+    batchLines.push('\n【治疗中方案】')
+    ongoingTreatments.slice(0, 2).forEach(record => {
+      const medications = Array.isArray(record.medications) && record.medications.length > 0
+        ? record.medications.map(m => m.name).join('、')
+        : '未记录药物'
+      batchLines.push(`  💊 ${record.treatmentDate || '未知'} | ${record.diagnosis || '未知'} | 用药：${medications}`)
     })
   }
 
-  if (isolationHistory && isolationHistory.length > 0) {
-    batchLines.push('\n【隔离观察记录】')
-    isolationHistory.slice(0, 3).forEach((record, index) => {
-      batchLines.push(`隔离${index + 1}（${record.startDate || '未知开始'}）：原因 ${record.reason || '未记录'}，状态 ${record.status || '未记录'}，备注 ${record.notes || '无'}`)
+  // === 隔离观察（仅显示进行中的）===
+  const ongoingIsolations = isolationHistory.filter(i => i.status === 'ongoing' || !i.endDate)
+  if (ongoingIsolations.length > 0) {
+    batchLines.push('\n【隔离观察中】')
+    ongoingIsolations.slice(0, 2).forEach(record => {
+      batchLines.push(`  🔒 ${record.startDate || '未知'} | 原因：${record.reason || '未记录'}`)
     })
   }
 
+  // === 死亡记录（突出修正差异）===
   if (deathHistory && deathHistory.length > 0) {
-    batchLines.push('\n【死亡记录】')
-    deathHistory.slice(0, 5).forEach((record, index) => {
-      batchLines.push(`死亡${index + 1}（${record.deathDate || '未知日期'}）：死亡 ${record.deathCount || 0} 只，AI初判 ${record.aiDiagnosis || '未知'}，兽医修正 ${record.correctedDiagnosis || '无'}，评分 ${record.aiAccuracyRating || '未评分'}，修正原因 ${record.correctionReason || '未提供'}`)
+    batchLines.push('\n【死亡记录（含AI修正对比）】')
+    deathHistory.slice(0, 3).forEach(record => {
+      const correctionMark = record.correctedDiagnosis && record.aiDiagnosis !== record.correctedDiagnosis
+        ? `❌ AI初判"${record.aiDiagnosis}" → ✅ 兽医确诊"${record.correctedDiagnosis}"`
+        : `${record.aiDiagnosis || '未知'}`
+      const rating = record.aiAccuracyRating ? `(${record.aiAccuracyRating}★)` : ''
+      batchLines.push(`  ${record.deathDate || '未知'} | ${record.deathCount || 0}只 | ${correctionMark} ${rating}`)
+      if (record.correctionReason) {
+        batchLines.push(`      └─ 修正依据：${record.correctionReason}`)
+      }
     })
   }
 
+  // === 关键学习点（从修正反馈中总结）===
   if (correctionFeedback && correctionFeedback.length > 0) {
-    batchLines.push('\n【AI修正反馈】')
-    correctionFeedback.slice(0, 10).forEach((record, index) => {
-      batchLines.push(`反馈${index + 1}：原诊断已被修正为 ${record.correctedDiagnosis || '未知'}，原因：${record.correctionReason || '未提供'}，AI准确性评分：${record.aiAccuracyRating || '未评分'}，修正日期：${record.correctedAt || '未知'}`)
-    })
+    const lowRatingFeedback = correctionFeedback.filter(f => f.aiAccuracyRating && f.aiAccuracyRating <= 3)
+    if (lowRatingFeedback.length > 0) {
+      batchLines.push('\n【🎯 关键学习点（避免重复误判）】')
+      lowRatingFeedback.slice(0, 2).forEach(record => {
+        batchLines.push(`  ⚠️ "${record.correctedDiagnosis}" - ${record.correctionReason}`)
+      })
+    }
   }
 
-  batchLines.push('\n【诊断注意】请结合以上批次历史与实时数据，对当前狮头鹅案例给出针对性诊断和建议。')
+  batchLines.push('\n═══════════════════════════════════════════════')
+  batchLines.push('【诊断指引】请结合以上批次历史数据、疾病流行趋势与修正反馈，')
+  batchLines.push('按照"日龄定位→主症分析→剖检对照→历史关联→鉴别诊断→置信度评估"')
+  batchLines.push('的六步流程，对当前狮头鹅案例给出精准、可追溯的诊断建议。')
+  batchLines.push('═══════════════════════════════════════════════\n')
 
   return '\n' + batchLines.join('\n') + '\n'
 }
@@ -432,7 +441,8 @@ async function callAIModel(inputData) {
         }
       ],
       taskType: 'health_diagnosis',  // ✨ ai-multi-model 根据此选择模型
-      priority: 'free_only'           // ✨ 优先使用免费模型
+      priority: 'free_only',          // ✨ 优先使用免费模型
+      images: images || []            // ✅ 传递图片文件ID（如果有）
     }
 
     // 调用AI多模型服务

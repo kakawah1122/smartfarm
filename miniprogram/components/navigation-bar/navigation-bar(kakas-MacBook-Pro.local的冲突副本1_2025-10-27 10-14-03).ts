@@ -70,12 +70,18 @@ Component({
           const fallbackUrl = this.properties.fallbackUrl
           
           if (fallbackUrl) {
-            // 如果指定了备用页面，跳转到备用页面
-            wx.redirectTo({
+            // 如果指定了备用页面，优先使用 switchTab（适用于 tabBar 页面）
+            wx.switchTab({
               url: fallbackUrl,
               fail: () => {
-                // 备用页面跳转失败，尝试跳转到健康管理页
-                this.goToHealthPage()
+                // switchTab 失败，尝试 redirectTo
+                wx.redirectTo({
+                  url: fallbackUrl,
+                  fail: () => {
+                    // 备用页面跳转失败，尝试跳转到健康管理页
+                    this.goToHealthPage()
+                  }
+                })
               }
             })
           } else {

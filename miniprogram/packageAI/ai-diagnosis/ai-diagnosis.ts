@@ -75,14 +75,14 @@ const pageConfig = {
     
     // 常见症状标签（快捷填充用）
     commonSymptoms: [
-      { id: 'fever', name: '发热' },
-      { id: 'cough', name: '咳嗽' },
-      { id: 'diarrhea', name: '腹泻' },
-      { id: 'appetite', name: '食欲不振' },
-      { id: 'lethargy', name: '精神萎靡' },
-      { id: 'respiratory', name: '呼吸困难' },
-      { id: 'discharge', name: '鼻眼分泌物' },
-      { id: 'lameness', name: '跛行' }
+      { id: 'fever', name: '发热', checked: false },
+      { id: 'cough', name: '咳嗽', checked: false },
+      { id: 'diarrhea', name: '腹泻', checked: false },
+      { id: 'appetite', name: '食欲不振', checked: false },
+      { id: 'lethargy', name: '精神萎靡', checked: false },
+      { id: 'respiratory', name: '呼吸困难', checked: false },
+      { id: 'discharge', name: '鼻眼分泌物', checked: false },
+      { id: 'lameness', name: '跛行', checked: false }
     ],
     
     // 死因剖析专用：常见异常快捷选择
@@ -235,6 +235,7 @@ const pageConfig = {
       symptoms: '',
       images: [],
       autopsyDescription: '',
+      commonSymptoms: this.data.commonSymptoms.map(item => ({ ...item, checked: false })),
       autopsyAbnormalities: this.data.autopsyAbnormalities.map(item => ({ ...item, checked: false }))
     }, () => {
       this.validateForm()
@@ -323,27 +324,25 @@ const pageConfig = {
     })
   },
 
-  // 点击症状标签填充到输入框
+  // 点击症状标签填充到输入框（支持切换）
   onSymptomTagTap(e: any) {
-    const { name } = e.currentTarget.dataset
-    const currentSymptoms = this.data.symptoms.trim()
+    const { index } = e.currentTarget.dataset
+    const symptoms = [...this.data.commonSymptoms]
     
-    // 检查是否已包含该症状，如果已包含则不重复添加
-    if (currentSymptoms.includes(name)) {
-      return
-    }
+    // 切换选中状态
+    symptoms[index].checked = !symptoms[index].checked
     
-    // 拼接症状（用中文顿号分隔）
-    let newSymptoms = ''
-    if (currentSymptoms) {
-      newSymptoms = `${currentSymptoms}、${name}`
-    } else {
-      newSymptoms = name
-    }
+    // 收集所有选中的症状名称
+    const selectedSymptoms = symptoms
+      .filter(item => item.checked)
+      .map(item => item.name)
     
+    // 拼接成文本（用顿号分隔）
+    const symptomsText = selectedSymptoms.join('、')
     
     this.setData({ 
-      symptoms: newSymptoms 
+      commonSymptoms: symptoms,
+      symptoms: symptomsText // 填充到文本框
     }, () => {
       this.validateForm()
     })
@@ -1049,7 +1048,8 @@ const pageConfig = {
             diagnosisResult: null,
             symptoms: '',
             affectedCount: '',  // 重置为空字符串
-            images: []
+            images: [],
+            commonSymptoms: this.data.commonSymptoms.map(item => ({ ...item, checked: false }))
           })
           this.validateForm()
         }
