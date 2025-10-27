@@ -687,10 +687,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     if (!formData.diagnosis) errors.diagnosis = '请输入诊断结果'
     if (!formData.treatmentDate) errors.treatmentDate = '请选择治疗日期'
     
-    // 至少需要一个治疗方案
-    if (!this.data.treatmentPlan.primary && this.data.medications.length === 0) {
-      errors.treatmentPlan = '请制定治疗方案或添加药物'
-    }
+    // ✅ 移除治疗方案和药物的必填验证 - 允许为空
+    // if (!this.data.treatmentPlan.primary && this.data.medications.length === 0) {
+    //   errors.treatmentPlan = '请制定治疗方案或添加药物'
+    // }
     
     this.setData({ formErrors: errors })
     return Object.keys(errors).length === 0
