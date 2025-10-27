@@ -26,7 +26,17 @@
 
       <!-- 诊断结果 -->
       <view class="form-item">
-        <view class="form-label required">诊断结果</view>
+        <view class="form-label-row">
+          <view class="form-label required">诊断结果</view>
+          <t-tag 
+            wx:if="{{isDiagnosisCorrected}}" 
+            theme="success" 
+            variant="light" 
+            size="small"
+          >
+            已修正
+          </t-tag>
+        </view>
         <t-input
           value="{{formData.diagnosis}}"
           placeholder="请输入诊断结果"
@@ -54,11 +64,8 @@
             wx:for="{{treatmentTypeOptions}}"
             wx:key="value"
             data-type="{{item.value}}"
-            bind:tap="showTreatmentTypeSelector"
+            bind:tap="selectTreatmentType"
           >
-            <view class="type-icon">
-              <t-icon name="{{item.icon}}" size="20" />
-            </view>
             <text class="type-name">{{item.label}}</text>
           </view>
         </view>
@@ -87,7 +94,11 @@
 
     <!-- 治疗方案 -->
     <view class="form-section">
-      <view class="section-title">治疗方案</view>
+      <view class="section-title">
+        <text wx:if="{{treatmentPlanSource === 'veterinarian'}}">兽医建议治疗方案</text>
+        <text wx:elif="{{treatmentPlanSource === 'ai'}}">AI建议治疗方案</text>
+        <text wx:else>治疗方案</text>
+      </view>
       
       <view class="form-item">
         <t-textarea
@@ -101,98 +112,45 @@
       </view>
     </view>
 
-    <!-- 用药管理 -->
+    <!-- 用药管理 - 原生实现 -->
     <view class="form-section">
-      <view class="section-header">
-        <view class="section-title">用药管理</view>
-        <t-button size="small" theme="primary" bind:tap="showAddMedicationDialog">
-          添加药物
-        </t-button>
-      </view>
-
-      <!-- 药物列表 -->
-      <view class="medication-list" wx:if="{{medications.length > 0}}">
-        <view 
-          class="medication-item status-{{item.status}}"
-          wx:for="{{medications}}"
-          wx:key="name"
+      <view class="section-title">用药管理</view>
+      
+      <view class="form-item">
+        <picker 
+          mode="selector" 
+          range="{{filteredMaterials}}" 
+          range-key="name"
+          value="{{selectedMaterialIndex}}"
+          bindchange="onMaterialPickerChange"
         >
-          <view class="medication-header">
-            <view class="medication-name">{{item.name}}</view>
-            <view class="medication-status">{{item.status === 'ongoing' ? '进行中' : item.status === 'completed' ? '已完成' : '已停药'}}</view>
-            <view class="medication-actions">
-              <t-icon name="edit" size="16" color="#0052d9" data-index="{{index}}" bind:tap="editMedication" />
-              <t-icon name="delete" size="16" color="#e34d59" data-index="{{index}}" bind:tap="deleteMedication" />
-            </view>
+          <view class="native-picker">
+            {{selectedMaterial ? selectedMaterial.name : (formData.treatmentType === 'isolation' ? '请选择营养品' : '请选择药品或营养品')}}
+            <text class="picker-arrow">▼</text>
           </view>
-          
-          <view class="medication-details">
-            <view class="detail-item">
-              <text class="detail-label">用量：</text>
-              <text class="detail-value">{{item.dosage}}</text>
-            </view>
-            <view class="detail-item">
-              <text class="detail-label">途径：</text>
-              <text class="detail-value">{{item.route}}</text>
-            </view>
-            <view class="detail-item">
-              <text class="detail-label">频次：</text>
-              <text class="detail-value">{{item.frequency}}</text>
-            </view>
-            <view class="detail-item">
-              <text class="detail-label">疗程：</text>
-              <text class="detail-value">{{item.startDate}} ~ {{item.endDate}}</text>
-            </view>
-          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item" wx:if="{{selectedMaterial}}">
+        <view class="form-label required">领取数量</view>
+        <t-input
+          value="{{medicationQuantity}}"
+          placeholder="请输入领取数量"
+          type="digit"
+          bindinput="onMedicationQuantityInput"
+        />
+        <view class="stock-info" wx:if="{{selectedMaterial}}">
+          库存：{{selectedMaterial.currentStock}}{{selectedMaterial.unit}}
         </view>
       </view>
-
-      <!-- 空状态 -->
-      <view class="empty-state" wx:if="{{medications.length === 0}}">
-        <t-icon name="service" size="48" color="#c8c9cc" />
-        <text class="empty-text">暂未添加用药</text>
-        <text class="empty-desc">点击"添加药物"开始制定用药方案</text>
-      </view>
-    </view>
-
-    <!-- 治疗进展 -->
-    <view class="form-section">
-      <view class="section-header">
-        <view class="section-title">治疗进展</view>
-        <t-button size="small" theme="light" bind:tap="showAddProgressDialog">
-          记录进展
-        </t-button>
-      </view>
-
-      <!-- 进展记录列表 -->
-      <view class="progress-list" wx:if="{{progressRecords.length > 0}}">
-        <view 
-          class="progress-item"
-          wx:for="{{progressRecords}}"
-          wx:key="id"
-        >
-          <view class="progress-header">
-            <view class="progress-day">第{{item.day}}天</view>
-            <view class="progress-date">{{item.date}}</view>
-            <view class="progress-operator">{{item.operator}}</view>
-          </view>
-          
-          <view class="progress-content">
-            <view class="progress-symptoms">{{item.symptoms}}</view>
-            <view class="progress-vitals">
-              <text class="vital-item" wx:if="{{item.temperature > 0}}">体温：{{item.temperature}}°C</text>
-              <text class="vital-item appetite-{{item.appetite}}">食欲：{{item.appetite === 'poor' ? '差' : item.appetite === 'fair' ? '一般' : item.appetite === 'good' ? '良好' : '优秀'}}</text>
-            </view>
-            <view class="progress-notes" wx:if="{{item.notes}}">{{item.notes}}</view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 空状态 -->
-      <view class="empty-state" wx:if="{{progressRecords.length === 0}}">
-        <t-icon name="chart" size="48" color="#c8c9cc" />
-        <text class="empty-text">暂无治疗进展</text>
-        <text class="empty-desc">点击"记录进展"开始跟踪治疗效果</text>
+      
+      <view class="form-item" wx:if="{{selectedMaterial}}">
+        <view class="form-label">用法用量</view>
+        <t-input
+          value="{{medicationDosage}}"
+          placeholder="如：10mg/kg 每日2次 连用7天（可选）"
+          bindinput="onMedicationDosageInput"
+        />
       </view>
     </view>
 
@@ -217,6 +175,7 @@
         size="large" 
         bind:tap="resetForm"
         disabled="{{submitting}}"
+        wx:if="{{!isEditMode}}"
       >
         重置
       </t-button>
@@ -226,190 +185,9 @@
         bind:tap="submitForm"
         loading="{{submitting}}"
       >
-        保存记录
+        {{isDraft ? '提交治疗方案' : (isEditMode ? '保存修改' : '保存记录')}}
       </t-button>
     </view>
   </view>
 
-  <!-- 治疗类型选择器 -->
-  <t-picker
-    visible="{{showTreatmentTypePicker}}"
-    value="{{[formData.treatmentType === 'medication' ? 0 : formData.treatmentType === 'isolation' ? 1 : formData.treatmentType === 'supportive' ? 2 : 0]}}"
-    data-source="{{treatmentTypeOptions}}"
-    bind:change="onTreatmentTypePickerChange"
-    bind:cancel="onTreatmentTypePickerCancel"
-    title="选择治疗类型"
-  >
-    <t-picker-item
-      wx:for="{{treatmentTypeOptions}}"
-      wx:key="value"
-      label="{{item.label}}"
-      value="{{index}}"
-    />
-  </t-picker>
-
-  <!-- 药物编辑对话框 -->
-  <t-dialog
-    visible="{{showMedicationDialog}}"
-    title="{{currentMedication && currentMedication.hasOwnProperty('index') ? '编辑药物' : '添加药物'}}"
-    confirm-btn="保存"
-    cancel-btn="取消"
-    bind:confirm="saveMedication"
-    bind:cancel="cancelMedicationEdit"
-  >
-    <view class="medication-dialog-content">
-      <view class="dialog-item">
-        <view class="dialog-label required">药物名称</view>
-        <t-input
-          value="{{currentMedication.name}}"
-          placeholder="请输入药物名称"
-          data-field="name"
-          bind:change="onMedicationInput"
-        />
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label required">用法用量</view>
-        <t-input
-          value="{{currentMedication.dosage}}"
-          placeholder="如：10mg/kg"
-          data-field="dosage"
-          bind:change="onMedicationInput"
-        />
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">给药途径</view>
-        <t-cell 
-          title="{{currentMedication.route === 'oral' ? '口服' : currentMedication.route === 'intramuscular' ? '肌肉注射' : currentMedication.route === 'subcutaneous' ? '皮下注射' : currentMedication.route === 'topical' ? '外用' : '请选择'}}"
-          arrow
-          bind:click="showRouteSelector"
-        />
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">用药频次</view>
-        <t-input
-          value="{{currentMedication.frequency}}"
-          placeholder="如：每日2次"
-          data-field="frequency"
-          bind:change="onMedicationInput"
-        />
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">开始日期</view>
-        <picker 
-          mode="date" 
-          value="{{currentMedication.startDate}}"
-          bind:change="onMedicationDateChange"
-          data-field="startDate"
-        >
-          <t-input
-            value="{{currentMedication.startDate}}"
-            readonly
-            suffix-icon="calendar"
-          />
-        </picker>
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">结束日期</view>
-        <picker 
-          mode="date" 
-          value="{{currentMedication.endDate}}"
-          bind:change="onMedicationDateChange"
-          data-field="endDate"
-        >
-          <t-input
-            value="{{currentMedication.endDate}}"
-            readonly
-            suffix-icon="calendar"
-          />
-        </picker>
-      </view>
-    </view>
-  </t-dialog>
-
-  <!-- 治疗进展对话框 -->
-  <t-dialog
-    visible="{{showProgressDialog}}"
-    title="记录治疗进展"
-    confirm-btn="保存"
-    cancel-btn="取消"
-    bind:confirm="saveProgress"
-    bind:cancel="cancelProgressEdit"
-  >
-    <view class="progress-dialog-content">
-      <view class="dialog-item">
-        <view class="dialog-label">治疗天数</view>
-        <text class="dialog-value">第{{currentProgress.day}}天</text>
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">记录日期</view>
-        <picker 
-          mode="date" 
-          value="{{currentProgress.date}}"
-          bind:change="onProgressDateChange"
-        >
-          <t-input
-            value="{{currentProgress.date}}"
-            readonly
-            suffix-icon="calendar"
-          />
-        </picker>
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label required">症状观察</view>
-        <t-textarea
-          value="{{currentProgress.symptoms}}"
-          placeholder="请描述当前症状和变化"
-          maxlength="200"
-          data-field="symptoms"
-          bind:change="onProgressInput"
-        />
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">体温</view>
-        <t-input
-          value="{{currentProgress.temperature}}"
-          placeholder="请输入体温（可选）"
-          type="digit"
-          data-field="temperature"
-          bind:input="onProgressInput"
-          suffix="°C"
-        />
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">食欲评估</view>
-        <view class="appetite-options">
-          <view 
-            class="appetite-option {{currentProgress.appetite === item.value ? 'active' : ''}}"
-            wx:for="{{appetiteOptions}}"
-            wx:key="value"
-            data-appetite="{{item.value}}"
-            bind:tap="onAppetiteChange"
-            style="border-color: {{item.color}}; color: {{currentProgress.appetite === item.value ? '#fff' : item.color}}; background-color: {{currentProgress.appetite === item.value ? item.color : 'transparent'}}"
-          >
-            {{item.label}}
-          </view>
-        </view>
-      </view>
-      
-      <view class="dialog-item">
-        <view class="dialog-label">备注</view>
-        <t-textarea
-          value="{{currentProgress.notes}}"
-          placeholder="请输入备注信息（可选）"
-          maxlength="100"
-          data-field="notes"
-          bind:change="onProgressInput"
-        />
-      </view>
-    </view>
-  </t-dialog>
 </view>

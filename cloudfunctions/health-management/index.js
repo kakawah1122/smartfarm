@@ -206,6 +206,24 @@ async function createAbnormalRecord(event, wxContext) {
 
     console.log('📥 创建异常记录:', diagnosis, '- 批次:', batchNumber)
 
+    const db = cloud.database()
+
+    // 获取用户信息
+    let userName = 'KAKA'
+    try {
+      const userResult = await db.collection(COLLECTIONS.WX_USERS)
+        .where({ _openid: openid })
+        .limit(1)
+        .get()
+      
+      if (userResult.data && userResult.data.length > 0) {
+        const user = userResult.data[0]
+        userName = user.nickName || user.nickname || user.farmName || user.position || 'KAKA'
+      }
+    } catch (userError) {
+      console.error('获取用户信息失败:', userError)
+    }
+
     const recordData = {
       batchId,
       batchNumber,
@@ -213,6 +231,7 @@ async function createAbnormalRecord(event, wxContext) {
       recordType: 'ai_diagnosis',
       checkDate: new Date().toISOString().split('T')[0],
       reporter: openid,
+      reporterName: userName,  // 添加记录者名称
       status: 'abnormal',  // 异常状态，等待制定治疗方案
       affectedCount: affectedCount || 0,
       symptoms: symptoms || '',
@@ -231,7 +250,6 @@ async function createAbnormalRecord(event, wxContext) {
     console.log('💾 准备保存到数据库的数据:', recordData)
 
     // 使用health_records collection，但状态为abnormal
-    const db = cloud.database()
     const result = await db.collection(COLLECTIONS.HEALTH_RECORDS).add({
       data: recordData
     })
@@ -283,9 +301,17 @@ async function getAbnormalRecordDetail(event, wxContext) {
       throw new Error('记录不存在')
     }
     
+    const record = result.data
+    
+    // 格式化修正时间（与死亡记录保持一致）
+    if (record.correctedAt) {
+      const date = new Date(record.correctedAt)
+      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+    }
+    
     return {
       success: true,
-      data: result.data,
+      data: record,
       message: '获取成功'
     }
   } catch (error) {
@@ -310,7 +336,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
     const openid = wxContext.OPENID
     const db = cloud.database()
     
-    // 创建治疗记录
+    // 创建治疗记录（草稿状态，等待用户填写完整信息）
     const treatmentData = {
       batchId,
       abnormalRecordId,  // 关联异常记录
@@ -330,7 +356,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       medications: [],
       progress: [],
       outcome: {
-        status: 'ongoing',
+        status: 'pending',  // pending: 待提交, ongoing: 治疗中
         curedCount: 0,
         improvedCount: 0,
         deathCount: 0,
@@ -343,6 +369,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
         total: 0
       },
       notes: '',
+      isDraft: true,  // 标记为草稿，表示还未正式提交
       createdBy: openid,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -352,13 +379,13 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       data: treatmentData
     })
     
-    // 更新异常记录状态为treating（治疗中）
+    // ⚠️ 不要在这里更新异常记录状态，保持为 abnormal
+    // 只关联治疗记录ID，方便后续查找
     await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .doc(abnormalRecordId)
       .update({
         data: {
-          status: 'treating',
-          treatmentRecordId: treatmentResult._id,
+          treatmentRecordId: treatmentResult._id,  // 关联治疗记录
           updatedAt: new Date()
         }
       })
@@ -468,6 +495,67 @@ async function createIsolationFromAbnormal(event, wxContext) {
   }
 }
 
+// 提交治疗计划（用户填写完治疗表单后调用）
+async function submitTreatmentPlan(event, wxContext) {
+  try {
+    const {
+      treatmentId,
+      abnormalRecordId,
+      treatmentType  // 'medication' | 'isolation'
+    } = event
+    const openid = wxContext.OPENID
+    const db = cloud.database()
+    
+    // 1. 更新治疗记录状态（从草稿变为正式）
+    await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .update({
+        data: {
+          isDraft: false,
+          'outcome.status': 'ongoing',
+          updatedAt: new Date()
+        }
+      })
+    
+    // 2. 根据治疗类型，更新异常记录的状态
+    const newStatus = treatmentType === 'isolation' ? 'isolated' : 'treating'
+    
+    await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .doc(abnormalRecordId)
+      .update({
+        data: {
+          status: newStatus,  // treating 或 isolated
+          updatedAt: new Date()
+        }
+      })
+    
+    // 3. 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'submit_treatment_plan',
+      COLLECTIONS.HEALTH_TREATMENT_RECORDS,
+      treatmentId,
+      {
+        abnormalRecordId,
+        treatmentType,
+        newStatus,
+        result: 'success'
+      }
+    )
+    
+    return {
+      success: true,
+      message: '治疗计划提交成功'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '提交治疗计划失败'
+    }
+  }
+}
+
 // 获取异常记录列表
 async function getAbnormalRecords(event, wxContext) {
   try {
@@ -476,10 +564,10 @@ async function getAbnormalRecords(event, wxContext) {
     
     console.log('🔍 查询异常记录 - 参数:', { batchId })
     
-    // 只查询从AI诊断创建的异常记录（recordType: 'ai_diagnosis' 且 status: 'abnormal'）
+    // 查询所有异常记录（包括待处理、治疗中、已隔离）
     let whereCondition = {
       recordType: 'ai_diagnosis',
-      status: 'abnormal',
+      status: _.in(['abnormal', 'treating', 'isolated']),  // 显示所有状态的记录
       isDeleted: _.neq(true)
     }
     
@@ -518,10 +606,10 @@ async function listAbnormalRecords(event, wxContext) {
     const { batchId, page = 1, pageSize = 20 } = event
     const db = cloud.database()
     
-    // 只查询从AI诊断创建的异常记录
+    // 查询所有异常记录（包括待处理、治疗中、已隔离）
     let whereCondition = {
       recordType: 'ai_diagnosis',
-      status: 'abnormal',
+      status: _.in(['abnormal', 'treating', 'isolated']),  // 显示所有状态的记录
       isDeleted: _.neq(true)
     }
     
@@ -571,7 +659,7 @@ async function getBatchPromptData(event, wxContext) {
     }
 
     // 1. 批次基础信息
-    const batchResult = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .doc(batchId)
       .get()
 
@@ -650,20 +738,27 @@ async function getBatchPromptData(event, wxContext) {
       notes: record.notes
     }))
 
-    const recentIsolationRecords = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
-      .where({ batchId, isDeleted: _.neq(true) })
-      .orderBy('startDate', 'desc')
-      .limit(3)
-      .get()
+    // 查询隔离记录（如果集合不存在则跳过）
+    let isolationHistory = []
+    try {
+      const recentIsolationRecords = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
+        .where({ batchId, isDeleted: _.neq(true) })
+        .orderBy('startDate', 'desc')
+        .limit(3)
+        .get()
 
-    const isolationHistory = recentIsolationRecords.data.map(record => ({
-      recordId: record._id,
-      startDate: record.startDate,
-      endDate: record.endDate,
-      reason: record.reason,
-      status: record.status,
-      notes: record.notes
-    }))
+      isolationHistory = recentIsolationRecords.data.map(record => ({
+        recordId: record._id,
+        startDate: record.startDate,
+        endDate: record.endDate,
+        reason: record.reason,
+        status: record.status,
+        notes: record.notes
+      }))
+    } catch (isolationError) {
+      // 隔离记录集合可能不存在，跳过
+      console.warn('隔离记录查询失败（集合可能不存在）:', isolationError.message)
+    }
 
     // 5. 最近死亡记录
     const recentDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
@@ -732,6 +827,7 @@ async function correctAbnormalDiagnosis(event, wxContext) {
       recordId,
       correctedDiagnosis,
       veterinarianDiagnosis,
+      veterinarianTreatmentPlan,
       aiAccuracyRating
     } = event
     const openid = wxContext.OPENID
@@ -761,15 +857,22 @@ async function correctAbnormalDiagnosis(event, wxContext) {
       throw new Error('记录不存在')
     }
     
-    // 获取用户信息
-    const userResult = await db.collection('users')
-      .where({ _openid: openid })
-      .limit(1)
-      .get()
-    
-    const userName = userResult.data && userResult.data.length > 0 
-      ? userResult.data[0].name || '未知用户' 
-      : '未知用户'
+    // 获取用户信息（与死亡记录保持一致）
+    let userName = '未知用户'
+    try {
+      const userResult = await db.collection(COLLECTIONS.WX_USERS)
+        .where({ _openid: openid })
+        .limit(1)
+        .get()
+      
+      if (userResult.data && userResult.data.length > 0) {
+        // 优先使用用户昵称，其次养殖场名称，最后职位
+        const user = userResult.data[0]
+        userName = user.nickName || user.nickname || user.farmName || user.position || '未知用户'
+      }
+    } catch (userError) {
+      console.error('获取用户信息失败:', userError)
+    }
     
     // 更新记录
     await db.collection(COLLECTIONS.HEALTH_RECORDS)
@@ -779,10 +882,11 @@ async function correctAbnormalDiagnosis(event, wxContext) {
           isCorrected: true,
           correctedDiagnosis: correctedDiagnosis,
           correctionReason: veterinarianDiagnosis,
+          veterinarianTreatmentPlan: veterinarianTreatmentPlan || '',
           aiAccuracyRating: aiAccuracyRating,
           correctedBy: openid,
           correctedByName: userName,
-          correctedAt: new Date().toISOString().split('T')[0],
+          correctedAt: new Date().toISOString(),
           updatedAt: new Date()
         }
       })
@@ -920,6 +1024,89 @@ async function createTreatmentRecord(event, wxContext) {
       success: false,
       error: error.message,
       message: '创建治疗记录失败'
+    }
+  }
+}
+
+// 获取治疗记录详情
+async function getTreatmentRecordDetail(event, wxContext) {
+  try {
+    const { treatmentId } = event
+    const db = cloud.database()
+    
+    if (!treatmentId) {
+      throw new Error('治疗记录ID不能为空')
+    }
+    
+    const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .get()
+    
+    if (!result.data) {
+      throw new Error('治疗记录不存在')
+    }
+    
+    return {
+      success: true,
+      data: result.data,
+      message: '获取成功'
+    }
+  } catch (error) {
+    console.error('获取治疗记录详情失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '获取治疗记录详情失败'
+    }
+  }
+}
+
+// 更新治疗记录
+async function updateTreatmentRecord(event, wxContext) {
+  try {
+    const { treatmentId, updateData } = event
+    const db = cloud.database()
+    const openid = wxContext.OPENID
+    
+    if (!treatmentId) {
+      throw new Error('治疗记录ID不能为空')
+    }
+    
+    if (!updateData) {
+      throw new Error('更新数据不能为空')
+    }
+    
+    // 添加更新时间
+    updateData.updatedAt = new Date()
+    
+    await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .doc(treatmentId)
+      .update({
+        data: updateData
+      })
+    
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'update_treatment_record',
+      COLLECTIONS.HEALTH_TREATMENT_RECORDS,
+      treatmentId,
+      {
+        updateFields: Object.keys(updateData),
+        result: 'success'
+      }
+    )
+    
+    return {
+      success: true,
+      message: '更新成功'
+    }
+  } catch (error) {
+    console.error('更新治疗记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '更新治疗记录失败'
     }
   }
 }
@@ -1553,8 +1740,17 @@ exports.main = async (event, context) => {
       case 'create_isolation_from_abnormal':
         return await createIsolationFromAbnormal(event, wxContext)
       
+      case 'submit_treatment_plan':
+        return await submitTreatmentPlan(event, wxContext)
+      
       case 'create_treatment_record':
         return await createTreatmentRecord(event, wxContext)
+      
+      case 'get_treatment_record_detail':
+        return await getTreatmentRecordDetail(event, wxContext)
+      
+      case 'update_treatment_record':
+        return await updateTreatmentRecord(event, wxContext)
       
       case 'create_ai_diagnosis':
         return await createAiDiagnosisRecord(event, wxContext)
@@ -2630,6 +2826,22 @@ async function createDeathRecordWithFinance(event, wxContext) {
     const financeLoss = unitCost * deathCount
     console.log(`💰 财务损失计算: ${unitCost}元/只 × ${deathCount}只 = ${financeLoss}元`)
     
+    // 获取用户信息
+    let userName = 'KAKA'
+    try {
+      const userResult = await db.collection(COLLECTIONS.WX_USERS)
+        .where({ _openid: openid })
+        .limit(1)
+        .get()
+      
+      if (userResult.data && userResult.data.length > 0) {
+        const user = userResult.data[0]
+        userName = user.nickName || user.nickname || user.farmName || user.position || 'KAKA'
+      }
+    } catch (userError) {
+      console.error('获取用户信息失败:', userError)
+    }
+    
     // 2. 创建死亡记录
     const deathRecordData = {
       _openid: openid,
@@ -2648,6 +2860,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
       financeLoss: parseFloat(financeLoss.toFixed(2)),
       unitCost: parseFloat(unitCost.toFixed(2)),
       operator: openid,
+      reporterName: userName,  // 添加记录者名称
       createdAt: new Date(),
       updatedAt: new Date(),
       isDeleted: false

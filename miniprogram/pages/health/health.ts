@@ -103,7 +103,7 @@ interface PageData {
 Page<PageData>({
   data: {
     // 选项卡
-    activeTab: 'prevention', // prevention|monitoring|treatment|analysis
+    activeTab: 'treatment', // prevention|monitoring|treatment|analysis
     
     // 健康统计数据
     healthStats: {
@@ -272,12 +272,16 @@ Page<PageData>({
    * 启动数据监听
    */
   startDataWatcher() {
+    // 先停止旧的监听器，确保状态清理干净
+    this.stopDataWatcher()
+    
     const db = wx.cloud.database()
     
     console.log('🔍 启动数据监听器...')
     
-    // 监听健康记录变化
-    if (!this.healthRecordsWatcher) {
+    // 延迟启动，给连接状态重置留出时间
+    setTimeout(() => {
+      // 监听健康记录变化
       try {
         this.healthRecordsWatcher = db.collection('health_records')
           .where({
@@ -297,16 +301,17 @@ Page<PageData>({
             },
             onError: (err) => {
               console.error('❌ 健康记录监听错误:', err)
+              // 错误时自动重置监听器
+              this.healthRecordsWatcher = null
             }
           })
         console.log('✅ 健康记录监听器已启动')
       } catch (error) {
         console.error('❌ 启动健康记录监听器失败:', error)
+        this.healthRecordsWatcher = null
       }
-    }
-    
-    // 监听死亡记录变化
-    if (!this.deathRecordsWatcher) {
+      
+      // 监听死亡记录变化
       try {
         this.deathRecordsWatcher = db.collection('health_death_records')
           .where({
@@ -326,13 +331,16 @@ Page<PageData>({
             },
             onError: (err) => {
               console.error('❌ 死亡记录监听错误:', err)
+              // 错误时自动重置监听器
+              this.deathRecordsWatcher = null
             }
           })
         console.log('✅ 死亡记录监听器已启动')
       } catch (error) {
         console.error('❌ 启动死亡记录监听器失败:', error)
+        this.deathRecordsWatcher = null
       }
-    }
+    }, 100) // 延迟100ms启动
   },
   
   /**
@@ -342,15 +350,23 @@ Page<PageData>({
     console.log('⏹️ 停止数据监听器...')
     
     if (this.healthRecordsWatcher) {
-      this.healthRecordsWatcher.close()
+      try {
+        this.healthRecordsWatcher.close()
+        console.log('✅ 健康记录监听器已停止')
+      } catch (error) {
+        console.error('❌ 停止健康记录监听器时出错:', error)
+      }
       this.healthRecordsWatcher = null
-      console.log('✅ 健康记录监听器已停止')
     }
     
     if (this.deathRecordsWatcher) {
-      this.deathRecordsWatcher.close()
+      try {
+        this.deathRecordsWatcher.close()
+        console.log('✅ 死亡记录监听器已停止')
+      } catch (error) {
+        console.error('❌ 停止死亡记录监听器时出错:', error)
+      }
       this.deathRecordsWatcher = null
-      console.log('✅ 死亡记录监听器已停止')
     }
     
     if (this.refreshTimer) {

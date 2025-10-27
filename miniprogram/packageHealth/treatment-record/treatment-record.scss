@@ -65,6 +65,17 @@
       }
     }
     
+    .form-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16rpx;
+      
+      .form-label {
+        margin-bottom: 0;
+      }
+    }
+    
     .error-text {
       font-size: 24rpx;
       color: #e34d59;
@@ -114,9 +125,9 @@
 
 .treatment-type-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 20rpx;
+  justify-content: center;
+  padding: 24rpx 20rpx;
   border: 2rpx solid #e0e0e0;
   border-radius: 12rpx;
   background: #fafafa;
@@ -126,10 +137,6 @@
   &.active {
     border-color: #0052d9;
     background: rgba(0, 82, 217, 0.1);
-    
-    .type-icon {
-      color: #0052d9;
-    }
     
     .type-name {
       color: #0052d9;
@@ -142,14 +149,8 @@
     background: #f0f0f0;
   }
   
-  .type-icon {
-    margin-bottom: 8rpx;
-    color: #666;
-    transition: color 0.3s ease;
-  }
-  
   .type-name {
-    font-size: 26rpx;
+    font-size: 28rpx;
     color: #1a1a1a;
     text-align: center;
     transition: color 0.3s ease;
@@ -545,6 +546,240 @@
       
       .detail-value {
         color: #e0e0e0;
+      }
+    }
+    
+    .empty-state {
+      .empty-text {
+        color: #ccc;
+      }
+      
+      .empty-desc {
+        color: #999;
+      }
+    }
+  }
+}
+
+/* 原生picker样式 */
+.native-picker {
+  padding: 24rpx 32rpx;
+  background: #fafafa;
+  border-radius: 8rpx;
+  border: 2rpx solid #e0e0e0;
+  font-size: 28rpx;
+  color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .picker-arrow {
+    color: #999;
+    font-size: 24rpx;
+  }
+}
+
+/* 库存信息 */
+.stock-info {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #0052d9;
+  padding: 8rpx 16rpx;
+  background: #f0f5ff;
+  border-radius: 8rpx;
+  display: inline-block;
+}
+
+/* 深色模式 */
+.dark-mode {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 999999;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  
+  &.show {
+    transform: translateY(0);
+  }
+  
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32rpx;
+    border-bottom: 2rpx solid #f0f0f0;
+    flex-shrink: 0;
+    
+    .sheet-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #000;
+    }
+    
+    .close-btn {
+      width: 64rpx;
+      height: 64rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+      
+      &:active {
+        background: #f0f0f0;
+      }
+    }
+  }
+  
+  .sheet-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .material-scroll {
+    flex: 1;
+    height: 100%;
+  }
+  
+  .material-item {
+    display: flex;
+    align-items: center;
+    padding: 24rpx 32rpx;
+    gap: 24rpx;
+    transition: background 0.2s;
+    
+    &:active {
+      background: #f5f5f5;
+    }
+    
+    &:not(:last-child) {
+      border-bottom: 1rpx solid #f0f0f0;
+    }
+    
+    .material-icon {
+      width: 80rpx;
+      height: 80rpx;
+      border-radius: 16rpx;
+      background: #f0f5ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .material-info {
+      flex: 1;
+      min-width: 0;
+      
+      .material-name {
+        font-size: 32rpx;
+        font-weight: 500;
+        color: #000;
+        margin-bottom: 12rpx;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .material-meta {
+        display: flex;
+        align-items: center;
+        gap: 24rpx;
+        font-size: 26rpx;
+        color: #999;
+        
+        .material-category {
+          padding: 4rpx 16rpx;
+          background: #f0f0f0;
+          border-radius: 8rpx;
+          color: #666;
+        }
+        
+        .material-stock {
+          color: #0052d9;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+  
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120rpx 64rpx;
+    
+    .empty-text {
+      font-size: 32rpx;
+      color: #666;
+      margin-top: 32rpx;
+    }
+    
+    .empty-desc {
+      font-size: 28rpx;
+      color: #999;
+      margin-top: 16rpx;
+    }
+  }
+}
+
+/* 深色模式 */
+.dark-mode {
+  .material-mask {
+    background: rgba(0, 0, 0, 0.7);
+  }
+  
+  .material-sheet {
+    background: #1a1a1a;
+    
+    .sheet-header {
+      border-bottom-color: #333;
+      
+      .sheet-title {
+        color: #fff;
+      }
+      
+      .close-btn:active {
+        background: #2a2a2a;
+      }
+    }
+    
+    .material-item {
+      &:active {
+        background: #2a2a2a;
+      }
+      
+      &:not(:last-child) {
+        border-bottom-color: #333;
+      }
+      
+      .material-icon {
+        background: rgba(0, 82, 217, 0.15);
+      }
+      
+      .material-info {
+        .material-name {
+          color: #fff;
+        }
+        
+        .material-meta {
+          color: #999;
+          
+          .material-category {
+            background: #2a2a2a;
+            color: #999;
+          }
+        }
       }
     }
     

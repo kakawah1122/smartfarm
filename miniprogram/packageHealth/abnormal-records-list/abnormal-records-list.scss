@@ -31,10 +31,10 @@
 .record-card {
   background: white;
   border-radius: 16rpx;
-  padding: 32rpx;
   margin-bottom: 24rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
+  overflow: hidden;
 
   &:active {
     transform: scale(0.98);
@@ -42,176 +42,183 @@
   }
 }
 
-.card-header {
+// 参照入栏记录的布局
+.record-header {
+  padding: 24rpx 32rpx 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.record-title-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
 }
 
-.date-info {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-
-  .date-text {
-    font-size: 28rpx;
-    color: #666;
-  }
-}
-
-.status-badge {
-  /* TDesign tag component */
-}
-
-// 核心信息区域
-.card-main {
-  margin-bottom: 24rpx;
-}
-
-.count-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
-.affected-count {
-  display: flex;
-  align-items: baseline;
-  gap: 8rpx;
-
-  .count-number {
-    font-size: 52rpx;
-    font-weight: bold;
-    color: #ed7b2f;
-  }
-
-  .count-unit {
-    font-size: 28rpx;
-    color: #999;
-  }
-}
-
-.confidence-badge {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-
-  .confidence-label {
-    font-size: 24rpx;
-    color: #999;
-  }
-
-  .confidence-value {
-    font-size: 28rpx;
-    font-weight: 600;
-
-    &.high {
-      color: #00a870;
-    }
-
-    &.medium {
-      color: #0052d9;
-    }
-
-    &.low {
-      color: #ed7b2f;
-    }
-  }
-}
-
-.diagnosis-section {
-  margin-bottom: 20rpx;
-}
-
-.diagnosis-header {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  margin-bottom: 12rpx;
-}
-
-.diagnosis-label {
-  font-size: 26rpx;
-  color: #666;
-}
-
-.diagnosis-value {
-  font-size: 30rpx;
-  color: #333;
+.record-name {
+  font-size: 32rpx;
   font-weight: 600;
-  line-height: 1.5;
+  color: #333;
+  line-height: 1.4;
+  flex: 1;
 }
 
-.symptoms-section {
-  padding-top: 20rpx;
-  border-top: 1rpx solid #f0f0f0;
+.record-content {
+  padding: 24rpx 32rpx;
 }
 
-.symptoms-header {
+// 信息行布局（参照入栏记录）
+.info-row {
   display: flex;
+  justify-content: flex-start;
   align-items: center;
-  gap: 8rpx;
-  margin-bottom: 12rpx;
-}
+  margin-bottom: 16rpx;
+  flex-wrap: nowrap;
 
-.symptoms-label {
-  font-size: 26rpx;
-  color: #666;
-}
+  .info-label {
+    font-size: 26rpx;
+    color: #999;
+    margin-right: 8rpx;
+    flex-shrink: 0;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
 
-.symptoms-value {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  .info-value {
+    font-size: 28rpx;
+    color: #333;
+    font-weight: 500;
+    text-align: left;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 
-// 底部信息栏
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 20rpx;
-  margin-top: 20rpx;
-  border-top: 1rpx solid #f0f0f0;
-}
+  &.symptoms-row {
+    align-items: flex-start;
+    margin-bottom: 20rpx;
+    gap: 12rpx;
 
-.tags-group {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
+    .symptoms-label {
+      font-size: 26rpx;
+      color: #999;
+      flex-shrink: 0;
+      line-height: 1.6;
+      white-space: nowrap;
+    }
 
-.batch-tag {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 16rpx;
-  background: #f8f9fa;
-  border-radius: 8rpx;
-
-  .batch-text {
-    font-size: 24rpx;
-    color: #666;
+    .symptoms-text {
+      flex: 1 1 auto;
+      font-size: 28rpx;
+      color: #666;
+      line-height: 1.6;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
   }
 }
 
-.has-images {
+.info-group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  
+  &.full-width {
+    flex: 1 1 100%;
+  }
+
+  // 第一个info-group（批次号）占更多空间
+  &:first-child {
+    flex: 1 1 auto;
+    min-width: 180rpx;
+    max-width: 300rpx;
+  }
+
+  // 其他info-group固定宽度
+  &:not(:first-child):not(.full-width) {
+    flex: 0 0 auto;
+    margin-left: 16rpx;
+  }
+
+  .info-label {
+    font-size: 26rpx;
+    color: #999;
+    margin-right: 8rpx;
+    flex-shrink: 0;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  .info-value {
+    font-size: 28rpx;
+    color: #333;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    &.highlight {
+      color: #ed7b2f;
+      font-weight: 600;
+    }
+
+    &.symptoms-text {
+      white-space: normal;
+      overflow: visible;
+    }
+
+    &.corrected-diagnosis {
+      color: #00a870;
+      font-weight: 600;
+      white-space: normal;
+      overflow: visible;
+    }
+  }
+}
+
+.image-indicator {
   display: flex;
   align-items: center;
   gap: 8rpx;
-  margin-top: 16rpx;
 
   .images-count {
     font-size: 24rpx;
     color: #0052d9;
   }
+}
+
+// 底部信息栏（参照入栏记录的风格）
+.record-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+
+  .date-text {
+    font-size: 26rpx;
+    color: #999;
+  }
+
+  .operator-text {
+    font-size: 26rpx;
+    color: #666;
+    font-weight: 500;
+  }
+}
+
+.status-tag {
+  /* TDesign tag component */
 }
 
 

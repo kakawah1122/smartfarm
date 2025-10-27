@@ -19,7 +19,36 @@
   padding-bottom: 200rpx; // 底部按钮高度 + 安全区域
 }
 
-// 信息区块
+// 信息卡片通用样式（与死亡记录保持一致）
+.info-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+
+  .title-text {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+  }
+}
+
+// 信息区块（保留用于其他区块）
 .info-section {
   background: white;
   border-radius: 16rpx;
@@ -294,37 +323,40 @@
   }
 }
 
-// 修正记录卡片
+// 修正记录卡片（与死亡记录样式完全一致）
 .correction-card {
   background: #f0fdf4 !important;
   border: 2rpx solid #86efac !important;
 
-  .section-title {
+  .card-title {
     border-bottom: 2rpx solid #86efac;
   }
 
   .correction-info {
     display: flex;
     flex-direction: column;
-    gap: 24rpx;
+    gap: 20rpx;
 
     .info-row {
       display: flex;
-      flex-direction: column;
-      gap: 12rpx;
+      justify-content: space-between;
       align-items: flex-start;
+      padding: 12rpx 0;
 
       .info-label {
-        font-size: 24rpx;
+        font-size: 26rpx;
         color: #666;
+        flex-shrink: 0;
+        margin-right: 24rpx;
       }
 
       .info-value {
         font-size: 28rpx;
         color: #333;
+        font-weight: 500;
+        text-align: right;
+        flex: 1;
         line-height: 1.6;
-        text-align: left;
-        max-width: 100%;
 
         &.corrected {
           color: #00a870;
@@ -334,6 +366,7 @@
 
         &.reason {
           color: #666;
+          font-weight: 400;
         }
       }
 
@@ -344,17 +377,23 @@
 
         .star-display {
           font-size: 40rpx;
-          color: #d0d0d0;
+          line-height: 1;
+          color: #dcdcdc;
+          margin-right: 8rpx;
+
+          &:last-of-type {
+            margin-right: 0;
+          }
 
           &.active {
-            color: #ffc107;
+            color: #FF9800;
           }
         }
 
         .rating-text {
-          margin-left: 12rpx;
           font-size: 24rpx;
           color: #666;
+          margin-left: 8rpx;
         }
       }
     }
@@ -384,7 +423,7 @@
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.08);
-  z-index: 100;
+  z-index: 10000;
 
   .buttons-row {
     display: grid;
@@ -438,7 +477,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2000;
+  z-index: 100001;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -452,6 +491,7 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   animation: fadeIn 0.3s;
+  z-index: 100001;
 }
 
 @keyframes fadeIn {
@@ -468,7 +508,7 @@
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 2001;
+  z-index: 100002;
   box-sizing: border-box;
   overflow: hidden;
 }

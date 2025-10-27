@@ -45,12 +45,9 @@ Page({
     correctionForm: {
       correctedDiagnosis: '',
       veterinarianDiagnosis: '',
+      veterinarianTreatmentPlan: '',
       aiAccuracyRating: 0
     },
-    
-    // 治疗方案选择弹窗
-    showTreatmentDialog: false,
-    selectedTreatmentType: 'medication' as 'medication' | 'isolation',
     
     // 评分提示
     ratingHints: ['很不准确', '不太准确', '基本准确', '比较准确', '非常准确']
@@ -95,8 +92,28 @@ Page({
           }
         }
 
+        // 转换图片为临时URL
+        let processedImages = record.images || []
+        if (processedImages.length > 0) {
+          try {
+            const tempUrlResult = await wx.cloud.getTempFileURL({
+              fileList: processedImages
+            })
+            
+            if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
+              processedImages = tempUrlResult.fileList.map((item: any) => 
+                item.tempFileURL || item.fileID
+              )
+              console.log('✅ 图片URL转换成功，共', processedImages.length, '张')
+            }
+          } catch (urlError) {
+            console.error('图片URL转换失败:', urlError)
+            // 转换失败也不影响其他数据显示
+          }
+        }
+
         this.setData({
-          record: { ...record, aiRecommendation },
+          record: { ...record, aiRecommendation, images: processedImages },
           loading: false
         })
       } else {
@@ -147,6 +164,7 @@ Page({
         correctionForm: {
           correctedDiagnosis: this.data.record.correctedDiagnosis || '',
           veterinarianDiagnosis: this.data.record.correctionReason || '',
+          veterinarianTreatmentPlan: this.data.record.veterinarianTreatmentPlan || '',
           aiAccuracyRating: this.data.record.aiAccuracyRating || 3
         }
       })
@@ -158,6 +176,7 @@ Page({
         correctionForm: {
           correctedDiagnosis: '',
           veterinarianDiagnosis: '',
+          veterinarianTreatmentPlan: '',
           aiAccuracyRating: 3
         }
       })
@@ -201,6 +220,7 @@ Page({
           recordId: this.data.record!._id,
           correctedDiagnosis: form.correctedDiagnosis,
           veterinarianDiagnosis: form.veterinarianDiagnosis,
+          veterinarianTreatmentPlan: form.veterinarianTreatmentPlan,
           aiAccuracyRating: form.aiAccuracyRating
         }
       })
@@ -248,6 +268,12 @@ Page({
     })
   },
 
+  onVeterinarianTreatmentPlanChange(e: any) {
+    this.setData({
+      'correctionForm.veterinarianTreatmentPlan': e.detail.value
+    })
+  },
+
   onRatingChange(e: any) {
     const rating = e.currentTarget.dataset.rating
     this.setData({
@@ -256,97 +282,21 @@ Page({
   },
 
   /**
-   * 显示治疗方案选择弹窗
+   * 创建治疗方案 - 直接跳转到治疗记录页面
    */
-  showTreatmentPlanDialog() {
-    this.setData({ showTreatmentDialog: true })
-  },
-
-  /**
-   * 取消治疗方案选择
-   */
-  cancelTreatmentPlan() {
-    this.setData({ showTreatmentDialog: false })
-  },
-
-  /**
-   * 选择治疗方式
-   */
-  selectTreatmentType(e: any) {
-    const { type } = e.currentTarget.dataset
-    this.setData({ selectedTreatmentType: type })
-  },
-
-  /**
-   * 确认治疗方案
-   */
-  async confirmTreatmentPlan() {
-    const { selectedTreatmentType, record } = this.data
+  createTreatmentPlan() {
+    const { record } = this.data
     
     if (!record) return
 
-    this.setData({ showTreatmentDialog: false })
+    // 优先使用修正后的诊断，否则使用AI诊断
+    const finalDiagnosis = record.isCorrected && record.correctedDiagnosis 
+      ? record.correctedDiagnosis 
+      : record.diagnosis
 
-    try {
-      wx.showLoading({ title: '创建中...' })
-
-      if (selectedTreatmentType === 'medication') {
-        // 创建药物治疗记录
-        const result = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'create_treatment_from_abnormal',
-            abnormalRecordId: record._id,
-            batchId: record.batchId,
-            diagnosis: record.diagnosis,
-            aiRecommendation: record.aiRecommendation
-          }
-        })
-
-        wx.hideLoading()
-
-        if (result.result && result.result.success) {
-          wx.showToast({ title: '创建成功', icon: 'success' })
-          setTimeout(() => {
-            wx.navigateTo({
-              url: `/packageHealth/treatment-record/treatment-record?id=${result.result.data.treatmentId}`
-            })
-          }, 1000)
-        } else {
-          throw new Error(result.result?.error || '创建失败')
-        }
-      } else {
-        // 创建隔离记录
-        const result = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'create_isolation_from_abnormal',
-            abnormalRecordId: record._id,
-            batchId: record.batchId,
-            diagnosis: record.diagnosis
-          }
-        })
-
-        wx.hideLoading()
-
-        if (result.result && result.result.success) {
-          wx.showToast({ title: '创建成功', icon: 'success' })
-          setTimeout(() => {
-            wx.navigateTo({
-              url: `/packageHealth/isolation-record/isolation-record?id=${result.result.data.isolationId}`
-            })
-          }, 1000)
-        } else {
-          throw new Error(result.result?.error || '创建失败')
-        }
-      }
-    } catch (error: any) {
-      wx.hideLoading()
-      console.error('创建治疗方案失败:', error)
-      wx.showToast({
-        title: error.message || '创建失败',
-        icon: 'none'
-      })
-    }
+    // 直接跳转到治疗记录页面，传递异常记录信息（传递批次编号而非ID）
+    wx.navigateTo({
+      url: `/packageHealth/treatment-record/treatment-record?abnormalRecordId=${record._id}&batchNumber=${record.batchNumber}&diagnosis=${encodeURIComponent(finalDiagnosis)}`
+    })
   }
 })

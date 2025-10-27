@@ -10,24 +10,20 @@
   <!-- 详情视图 -->
   <view class="detail-view">
 
-    <!-- 健康数据概览（整合实时状态） -->
+    <!-- 健康数据概览 -->
     <view class="health-stats-section">
-      <view class="stats-grid stats-grid-four">
+      <view class="stats-grid stats-grid-three">
         <view class="stat-card stat-primary">
           <text class="stat-value">{{healthStats.healthyRate}}</text>
           <text class="stat-label">健康率</text>
         </view>
-        <view class="stat-card stat-warning" bind:tap="onAbnormalCountTap">
-          <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.sickCount}}</text>
-          <text class="stat-label">异常</text>
+        <view class="stat-card stat-success" bind:tap="onCureRateClick">
+          <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
+          <text class="stat-label">治愈率</text>
         </view>
-        <view class="stat-card stat-info">
-          <text class="stat-value">{{monitoringData.realTimeStatus.isolatedCount || 0}}</text>
-          <text class="stat-label">隔离</text>
-        </view>
-        <view class="stat-card stat-danger" bind:tap="onDeathCountTap">
-          <text class="stat-value">{{healthStats.deadCount}}</text>
-          <text class="stat-label">死亡数</text>
+        <view class="stat-card stat-mortality">
+          <text class="stat-value">{{healthStats.mortalityRate}}</text>
+          <text class="stat-label">死亡率</text>
         </view>
       </view>
     </view>
@@ -242,8 +238,19 @@
           </view>
         </view>
         
-        <!-- 统计卡片（两列） -->
-        <view class="stats-grid stats-grid-two">
+        <!-- 统计卡片（四列） -->
+        <view class="stats-grid stats-grid-four-treatment">
+          <!-- 异常 -->
+          <view class="stat-card stat-card-abnormal" bind:tap="onAbnormalCountTap">
+            <view class="stat-icon stat-icon-abnormal">
+              <view class="css-icon-alert"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.sickCount}}</text>
+              <text class="stat-label">异常</text>
+            </view>
+          </view>
+
           <!-- 治疗中 -->
           <view class="stat-card stat-card-treating" bindtap="onOngoingTreatmentClick">
             <view class="stat-icon stat-icon-treating">
@@ -255,14 +262,25 @@
             </view>
           </view>
           
-          <!-- 治愈率 -->
-          <view class="stat-card stat-card-cured" bindtap="onCureRateClick">
-            <view class="stat-icon stat-icon-cured">
-              <view class="css-icon-shield"></view>
+          <!-- 隔离 -->
+          <view class="stat-card stat-card-isolation">
+            <view class="stat-icon stat-icon-isolation">
+              <view class="css-icon-location"></view>
             </view>
             <view class="stat-content">
-              <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
-              <text class="stat-label">治愈率</text>
+              <text class="stat-value">{{monitoringData.realTimeStatus.isolatedCount || 0}}</text>
+              <text class="stat-label">隔离</text>
+            </view>
+          </view>
+
+          <!-- 死亡数 -->
+          <view class="stat-card stat-card-death" bind:tap="onDeathCountTap">
+            <view class="stat-icon stat-icon-death">
+              <view class="css-icon-cross"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{healthStats.deadCount}}</text>
+              <text class="stat-label">死亡数</text>
             </view>
           </view>
         </view>

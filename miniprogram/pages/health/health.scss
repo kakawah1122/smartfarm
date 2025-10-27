@@ -90,6 +90,18 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 16rpx;
 
+    // 两列布局
+    &.stats-grid-two {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16rpx;
+    }
+
+    // 三列布局
+    &.stats-grid-three {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16rpx;
+    }
+
     // 四列布局（整合实时状态后）
     &.stats-grid-four {
       grid-template-columns: repeat(4, 1fr);
@@ -169,6 +181,43 @@
           color: #7c3aed;
         }
       }
+
+      &.stat-success {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        
+        .stat-value {
+          color: #059669;
+        }
+        
+        .stat-label {
+          color: #047857;
+        }
+      }
+
+      &.stat-mortality {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        
+        .stat-value {
+          color: #ef4444;
+        }
+        
+        .stat-label {
+          color: #dc2626;
+        }
+      }
+    }
+  }
+
+  // 三列布局时调整卡片样式
+  .stats-grid-three .stat-card {
+    padding: 24rpx 16rpx;
+
+    .stat-value {
+      font-size: 40rpx;
+    }
+
+    .stat-label {
+      font-size: 22rpx;
     }
   }
 
@@ -802,6 +851,13 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 16rpx;
     }
+
+    // 诊疗管理四列布局
+    .stats-grid-four-treatment {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16rpx;
+    }
     
     .stat-card {
       display: flex;
@@ -993,6 +1049,118 @@
           transform: rotate(-45deg);
         }
       }
+
+      // 定位图标（隔离）
+      .css-icon-location {
+        position: relative;
+        width: 28rpx;
+        height: 40rpx;
+        
+        // 定位标记
+        &::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 0;
+          transform: translateX(-50%);
+          width: 28rpx;
+          height: 36rpx;
+          background: #8b5cf6;
+          border-radius: 50% 50% 50% 0;
+          transform: translateX(-50%) rotate(-45deg);
+        }
+        
+        // 内圆点
+        &::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 8rpx;
+          transform: translateX(-50%);
+          width: 10rpx;
+          height: 10rpx;
+          background: white;
+          border-radius: 50%;
+          z-index: 1;
+        }
+      }
+
+      // 警铃图标（异常）
+      .css-icon-alert {
+        position: relative;
+        width: 28rpx;
+        height: 32rpx;
+        
+        // 铃铛主体
+        &::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 4rpx;
+          transform: translateX(-50%);
+          width: 24rpx;
+          height: 20rpx;
+          background: #ED7B2F;
+          border-radius: 50% 50% 0 0;
+          clip-path: polygon(
+            0% 100%, 
+            0% 30%, 
+            50% 0%, 
+            100% 30%, 
+            100% 100%
+          );
+        }
+        
+        // 铃铛底部横杠 + 铃舌
+        &::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          bottom: 4rpx;
+          transform: translateX(-50%);
+          width: 26rpx;
+          height: 3rpx;
+          background: #ED7B2F;
+          border-radius: 2rpx;
+          box-shadow: 
+            0 6rpx 0 -1rpx #ED7B2F,
+            0 8rpx 0 -2rpx #ED7B2F;
+        }
+      }
+
+      // 羽毛图标（死亡数）
+      .css-icon-cross {
+        position: relative;
+        width: 24rpx;
+        height: 40rpx;
+        
+        // 羽毛主干
+        &::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 0;
+          transform: translateX(-50%) rotate(-15deg);
+          width: 2rpx;
+          height: 36rpx;
+          background: #EF4444;
+          border-radius: 1rpx;
+        }
+        
+        // 羽毛片（椭圆形）
+        &::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 4rpx;
+          transform: translateX(-50%) rotate(-15deg);
+          width: 18rpx;
+          height: 28rpx;
+          background: #EF4444;
+          border-radius: 50% 50% 50% 0;
+          opacity: 0.9;
+        }
+      }
       
       // 图标容器的背景色
       .stat-icon-pending {
@@ -1009,6 +1177,18 @@
       
       .stat-icon-cured {
         background: rgba(0, 168, 112, 0.15);
+      }
+
+      .stat-icon-isolation {
+        background: rgba(139, 92, 246, 0.15);
+      }
+
+      .stat-icon-abnormal {
+        background: rgba(237, 123, 47, 0.15);
+      }
+
+      .stat-icon-death {
+        background: rgba(239, 68, 68, 0.15);
       }
       
       .stat-content {
@@ -1116,6 +1296,69 @@
         
         .stat-label {
           color: #047857;
+        }
+      }
+
+      // 隔离样式
+      &.stat-card-isolation {
+        background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+        
+        &::before {
+          background: #8b5cf6;
+        }
+        
+        .stat-icon {
+          background: rgba(139, 92, 246, 0.15);
+        }
+        
+        .stat-value {
+          color: #8b5cf6;
+        }
+        
+        .stat-label {
+          color: #7c3aed;
+        }
+      }
+
+      // 异常样式
+      &.stat-card-abnormal {
+        background: linear-gradient(135deg, #FFF7E6 0%, #FFE7BA 100%);
+        
+        &::before {
+          background: #ED7B2F;
+        }
+        
+        .stat-icon {
+          background: rgba(237, 123, 47, 0.15);
+        }
+        
+        .stat-value {
+          color: #D97706;
+        }
+        
+        .stat-label {
+          color: #B45309;
+        }
+      }
+
+      // 死亡数样式
+      &.stat-card-death {
+        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+        
+        &::before {
+          background: #EF4444;
+        }
+        
+        .stat-icon {
+          background: rgba(239, 68, 68, 0.15);
+        }
+        
+        .stat-value {
+          color: #EF4444;
+        }
+        
+        .stat-label {
+          color: #DC2626;
         }
       }
     }

@@ -1,7 +1,11 @@
 <!-- miniprogram/packageHealth/abnormal-record-detail/abnormal-record-detail.wxml -->
 <view class="abnormal-record-detail-page">
   <!-- 自定义导航栏 -->
-  <navigation-bar title="异常记录详情" />
+  <navigation-bar 
+    title="异常记录详情" 
+    showBack="{{true}}" 
+    fallbackUrl="/packageHealth/abnormal-records-list/abnormal-records-list" 
+  />
 
   <!-- 加载状态 -->
   <view class="loading-container" wx:if="{{loading}}">
@@ -52,18 +56,6 @@
       <view class="diagnosis-content">
         <view class="diagnosis-name-row">
           <text class="diagnosis-name" user-select="true">{{record.diagnosis}}</text>
-          <t-tag 
-            theme="{{record.severity === 'severe' ? 'danger' : (record.severity === 'moderate' ? 'warning' : 'primary')}}" 
-            size="small"
-          >
-            {{record.severity === 'severe' ? '严重' : (record.severity === 'moderate' ? '中度' : '轻度')}}
-          </t-tag>
-          <t-tag 
-            theme="{{record.urgency === 'high' ? 'danger' : (record.urgency === 'medium' ? 'warning' : 'primary')}}" 
-            size="small"
-          >
-            {{record.urgency === 'high' ? '危急' : (record.urgency === 'medium' ? '紧急' : '一般')}}
-          </t-tag>
         </view>
 
         <!-- 诊断详情 -->
@@ -202,8 +194,8 @@
     </view>
 
     <!-- 修正记录卡片 -->
-    <view class="info-section correction-card" wx:if="{{record.isCorrected}}">
-      <view class="section-title">
+    <view class="info-card correction-card" wx:if="{{record.isCorrected}}">
+      <view class="card-title">
         <t-icon name="check-circle" size="32rpx" color="#00a870" />
         <text class="title-text">诊断修正记录</text>
         <t-tag theme="success" size="small">已确认</t-tag>
@@ -226,8 +218,12 @@
           </view>
         </view>
         <view class="info-row" wx:if="{{record.correctionReason}}">
-          <text class="info-label">兽医诊断依据</text>
+          <text class="info-label">兽医诊断</text>
           <text class="info-value reason" user-select="true">{{record.correctionReason}}</text>
+        </view>
+        <view class="info-row" wx:if="{{record.veterinarianTreatmentPlan}}">
+          <text class="info-label">兽医治疗方案</text>
+          <text class="info-value reason" user-select="true">{{record.veterinarianTreatmentPlan}}</text>
         </view>
         <view class="info-row" wx:if="{{record.correctedByName}}">
           <text class="info-label">修正人</text>
@@ -290,7 +286,7 @@
         <t-button 
           theme="primary" 
           size="large" 
-          bind:tap="showTreatmentPlanDialog"
+          bind:tap="createTreatmentPlan"
           block
         >
           制定治疗方案
@@ -307,38 +303,6 @@
   <view class="empty-container" wx:if="{{!loading && !record}}">
     <t-empty icon="error-circle" description="记录不存在" />
   </view>
-
-  <!-- 治疗方案选择对话框 -->
-  <t-dialog
-    visible="{{showTreatmentDialog}}"
-    title="选择治疗方式"
-    confirm-btn="确定"
-    cancel-btn="取消"
-    bind:confirm="confirmTreatmentPlan"
-    bind:cancel="cancelTreatmentPlan"
-  >
-    <view class="treatment-options">
-      <view
-        class="treatment-option {{selectedTreatmentType === 'medication' ? 'active' : ''}}"
-        bind:tap="selectTreatmentType"
-        data-type="medication"
-      >
-        <t-icon name="service" size="32" color="{{selectedTreatmentType === 'medication' ? '#0052d9' : '#666'}}" />
-        <text class="option-name">药物治疗</text>
-        <text class="option-desc">创建治疗记录，跟踪用药进展</text>
-      </view>
-      
-      <view
-        class="treatment-option {{selectedTreatmentType === 'isolation' ? 'active' : ''}}"
-        bind:tap="selectTreatmentType"
-        data-type="isolation"
-      >
-        <t-icon name="location" size="32" color="{{selectedTreatmentType === 'isolation' ? '#0052d9' : '#666'}}" />
-        <text class="option-name">隔离观察</text>
-        <text class="option-desc">隔离患病个体，密切观察</text>
-      </view>
-    </view>
-  </t-dialog>
 
   <!-- 修正诊断弹窗 -->
   <view class="correction-dialog-wrapper" wx:if="{{showCorrectionDialog}}">
@@ -370,14 +334,27 @@
             />
           </view>
 
-          <!-- 兽医诊断依据 -->
+          <!-- 兽医诊断 -->
           <view class="form-item">
-            <text class="form-label">兽医诊断依据<text class="required">*</text></text>
+            <text class="form-label">兽医诊断<text class="required">*</text></text>
             <textarea
               class="form-textarea"
-              placeholder="请输入您的专业诊断依据和理由"
+              placeholder="请详细说明诊断依据和理由"
               value="{{correctionForm.veterinarianDiagnosis}}"
               bindinput="onVeterinarianDiagnosisChange"
+              maxlength="500"
+              auto-height
+            />
+          </view>
+
+          <!-- 兽医治疗方案 -->
+          <view class="form-item">
+            <text class="form-label">兽医治疗方案</text>
+            <textarea
+              class="form-textarea"
+              placeholder="请输入兽医的治疗方案建议（选填）"
+              value="{{correctionForm.veterinarianTreatmentPlan}}"
+              bindinput="onVeterinarianTreatmentPlanChange"
               maxlength="500"
               auto-height
             />

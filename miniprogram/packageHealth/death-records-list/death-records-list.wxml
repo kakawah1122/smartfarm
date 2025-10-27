@@ -27,69 +27,53 @@
       bind:tap="onRecordTap"
       data-id="{{item._id}}"
     >
-      <!-- 头部：日期和状态 -->
-      <view class="card-header">
-        <view class="date-info">
-          <t-icon name="time" size="32rpx" color="#999" />
-          <text class="date-text">{{item.deathDate}}</text>
+      <!-- 记录头部：死因 -->
+      <view class="record-header">
+        <view class="record-title-row">
+          <text class="record-name">{{item.deathCause || '未知死因'}}</text>
         </view>
-        <view class="status-badge">
+      </view>
+
+      <!-- 记录内容 -->
+      <view class="record-content">
+        <!-- 第一行：批次号 + 死亡数量 + 损失 -->
+        <view class="info-row">
+          <view class="info-group">
+            <text class="info-label">批次：</text>
+            <text class="info-value">{{item.batchNumber || '未知'}}</text>
+          </view>
+          <view class="info-group">
+            <text class="info-label">死亡：</text>
+            <text class="info-value death-count">{{item.deathCount}} 只</text>
+          </view>
+          <view class="info-group">
+            <text class="info-label">损失：</text>
+            <text class="info-value loss-value">¥{{item.financeLoss || 0}}</text>
+          </view>
+        </view>
+
+        <!-- 第二行：修正后的死因（如果存在） -->
+        <view class="info-row" wx:if="{{item.isCorrected}}">
+          <view class="info-group full-width">
+            <text class="info-label">修正后：</text>
+            <text class="info-value corrected-cause">{{item.correctedCause}}</text>
+          </view>
+        </view>
+
+        <!-- 底部：日期 + 记录者 + 状态 -->
+        <view class="record-footer">
+          <view class="footer-left">
+            <text class="date-text">{{item.deathDate}}</text>
+            <text class="operator-text">{{item.reporterName || 'KAKA'}}</text>
+          </view>
           <t-tag 
-            theme="{{item.isCorrected ? 'success' : 'default'}}" 
-            size="small"
-            icon="{{item.isCorrected ? 'check-circle' : ''}}"
+            theme="{{item.isCorrected ? 'success' : 'warning'}}" 
+            size="small" 
+            class="status-tag"
           >
             {{item.isCorrected ? '已修正' : '待确认'}}
           </t-tag>
         </view>
-      </view>
-
-      <!-- 批次信息 -->
-      <view class="batch-info">
-        <text class="batch-label">批次号：</text>
-        <text class="batch-value">{{item.batchNumber || '未知'}}</text>
-      </view>
-
-      <!-- 死亡数量 -->
-      <view class="death-count-row">
-        <view class="death-count">
-          <text class="count-number">{{item.deathCount}}</text>
-          <text class="count-unit">只</text>
-        </view>
-        <view class="loss-amount">
-          <text class="loss-label">损失：</text>
-          <text class="loss-value">¥{{item.financeLoss || 0}}</text>
-        </view>
-      </view>
-
-      <!-- AI诊断结果 -->
-      <view class="diagnosis-row">
-        <view class="diagnosis-label">
-          <t-icon name="logo-wechat" size="28rpx" color="#0052d9" />
-          <text class="label-text">AI诊断</text>
-        </view>
-        <text class="diagnosis-value">{{item.deathCause || '未知死因'}}</text>
-      </view>
-
-      <!-- 修正信息（如果有） -->
-      <view class="correction-row" wx:if="{{item.isCorrected}}">
-        <view class="correction-label">
-          <t-icon name="check-circle" size="28rpx" color="#00a870" />
-          <text class="label-text">修正诊断</text>
-        </view>
-        <text class="correction-value">{{item.correctedCause}}</text>
-      </view>
-
-      <!-- 剖检图片标识 -->
-      <view class="has-images" wx:if="{{item.autopsyImages && item.autopsyImages.length > 0}}">
-        <t-icon name="image" size="24rpx" color="#0052d9" />
-        <text class="images-count">{{item.autopsyImages.length}}张剖检照片</text>
-      </view>
-
-      <!-- 查看详情箭头 -->
-      <view class="view-detail">
-        <text class="detail-text">查看详情</text>
-        <t-icon name="chevron-right" size="32rpx" color="#999" />
       </view>
     </view>
 
