@@ -30,6 +30,7 @@
         "health-inspection/health-inspection",
         "health-care/health-care",
         "treatment-record/treatment-record",
+        "treatment-records-list/treatment-records-list",
         "death-record/death-record",
         "death-records-list/death-records-list",
         "death-record-detail/death-record-detail",

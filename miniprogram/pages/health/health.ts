@@ -1313,32 +1313,11 @@ Page<PageData>({
   },
 
   /**
-   * 治疗中卡片点击 - 显示进行中的治疗列表
+   * 治疗中卡片点击 - 跳转到治疗记录列表
    */
   onOngoingTreatmentClick() {
-    const treatments = this.data.treatmentData.currentTreatments || []
-    
-    if (treatments.length === 0) {
-      wx.showToast({
-        title: '暂无进行中的治疗',
-        icon: 'none'
-      })
-      return
-    }
-    
-    // 显示治疗列表供选择
-    const itemList = treatments.map((t: any) => 
-      `${t.diagnosis} - ${t.initialCount || 0}只`
-    )
-    
-    wx.showActionSheet({
-      itemList,
-      success: (res) => {
-        const selected = treatments[res.tapIndex]
-        wx.navigateTo({
-          url: `/packageHealth/treatment-record/treatment-record?treatmentId=${selected._id}`
-        })
-      }
+    wx.navigateTo({
+      url: '/packageHealth/treatment-records-list/treatment-records-list'
     })
   },
 

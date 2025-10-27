@@ -1,0 +1,11 @@
+{
+  "usingComponents": {
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
+  },
+  "enablePullDownRefresh": true,
+  "navigationStyle": "custom"
+}
+

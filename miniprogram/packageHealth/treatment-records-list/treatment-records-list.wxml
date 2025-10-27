@@ -1,0 +1,113 @@
+<!-- miniprogram/packageHealth/treatment-records-list/treatment-records-list.wxml -->
+<view class="treatment-records-page">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="治疗中记录" 
+    showBack="{{true}}" 
+    fallbackUrl="/pages/health/health" 
+  />
+
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-container" wx:if="{{!loading && records.length === 0}}">
+    <t-empty icon="info-circle" description="暂无进行中的治疗" />
+  </view>
+
+  <!-- 记录列表 -->
+  <view class="records-list" wx:if="{{!loading && records.length > 0}}">
+    <view 
+      class="record-card"
+      wx:for="{{records}}"
+      wx:key="_id"
+      bind:tap="onRecordTap"
+      data-id="{{item._id}}"
+    >
+      <!-- 记录头部：诊断名称 + 治疗类型 -->
+      <view class="record-header">
+        <view class="record-title-row">
+          <text class="record-name">{{item.diagnosis.confirmed || item.diagnosis.preliminary}}</text>
+          <t-tag 
+            theme="{{item.treatmentType === 'medication' ? 'primary' : 'success'}}" 
+            size="small" 
+            class="type-tag"
+          >
+            {{item.treatmentType === 'medication' ? '药物治疗' : '隔离观察'}}
+          </t-tag>
+        </view>
+      </view>
+
+      <!-- 记录内容 -->
+      <view class="record-content">
+        <!-- 第一行：治疗批次 + 治疗数量 -->
+        <view class="info-row">
+          <view class="info-group">
+            <text class="info-label">批次：</text>
+            <text class="info-value">{{item.batchId}}</text>
+          </view>
+          <view class="info-group">
+            <text class="info-label">治疗数量：</text>
+            <text class="info-value highlight">{{item.outcome.totalTreated || 0}} 只</text>
+          </view>
+        </view>
+
+        <!-- 第二行：治疗方案 -->
+        <view class="info-row treatment-plan-row" wx:if="{{item.treatmentPlan.primary}}">
+          <text class="info-label">方案：</text>
+          <text class="info-value treatment-plan-text">{{item.treatmentPlan.primary}}</text>
+        </view>
+
+        <!-- 第三行：用药情况 -->
+        <view class="info-row" wx:if="{{item.medications && item.medications.length > 0}}">
+          <view class="info-group full-width">
+            <text class="info-label">用药：</text>
+            <text class="info-value">
+              <block wx:for="{{item.medications}}" wx:for-item="med" wx:key="materialId">
+                {{med.name}}{{med.quantity}}{{med.unit}}
+                <text wx:if="{{index < item.medications.length - 1}}">、</text>
+              </block>
+            </text>
+          </view>
+        </view>
+
+        <!-- 第四行：治疗进展 -->
+        <view class="info-row">
+          <view class="info-group" wx:if="{{item.outcome.curedCount > 0}}">
+            <text class="info-label">已治愈：</text>
+            <text class="info-value success-text">{{item.outcome.curedCount}} 只</text>
+          </view>
+          <view class="info-group" wx:if="{{item.outcome.improvedCount > 0}}">
+            <text class="info-label">好转：</text>
+            <text class="info-value">{{item.outcome.improvedCount}} 只</text>
+          </view>
+          <view class="info-group" wx:if="{{item.outcome.deathCount > 0}}">
+            <text class="info-label">死亡：</text>
+            <text class="info-value danger-text">{{item.outcome.deathCount}} 只</text>
+          </view>
+        </view>
+
+        <!-- 底部：日期 + 状态 -->
+        <view class="record-footer">
+          <view class="footer-left">
+            <text class="date-text">{{item.treatmentDate}}</text>
+          </view>
+          <t-tag 
+            theme="primary" 
+            size="small" 
+            class="status-tag"
+          >
+            进行中
+          </t-tag>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部安全区域 -->
+  <view class="safe-area-bottom"></view>
+
+</view>
+
