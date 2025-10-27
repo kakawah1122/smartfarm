@@ -2839,8 +2839,8 @@ async function getOngoingTreatments(batchId, wxContext) {
   try {
     let query = db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
-        treatmentStatus: 'ongoing',
-        isDeleted: false
+        isDeleted: false,
+        isDraft: false  // ✅ 只查询非草稿记录
       })
     
     if (batchId && batchId !== 'all') {
@@ -2849,15 +2849,21 @@ async function getOngoingTreatments(batchId, wxContext) {
     
     const records = await query.orderBy('treatmentDate', 'desc').get()
     
+    // ✅ 在代码中过滤 outcome.status === 'ongoing' 的记录
+    const ongoingTreatments = records.data.filter(r => r.outcome?.status === 'ongoing')
+    
+    console.log(`✅ 进行中的治疗记录: ${ongoingTreatments.length} / 总记录: ${records.data.length}`)
+    
     return {
       success: true,
       data: {
-        treatments: records.data,
-        count: records.data.length
+        treatments: ongoingTreatments,
+        count: ongoingTreatments.length
       }
     }
     
   } catch (error) {
+    console.error('❌ 获取治疗记录失败:', error)
     return {
       success: false,
       error: error.message,
