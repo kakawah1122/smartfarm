@@ -1,0 +1,23 @@
+<view class="container">
+  <view class="header">
+    <text class="title">getSystemInfoSync 警告诊断</text>
+    <text class="subtitle">实时监控和追踪</text>
+  </view>
+
+  <view class="logs">
+    <view 
+      class="log-item log-{{item.type}}" 
+      wx:for="{{logs}}" 
+      wx:key="index"
+    >
+      <text class="log-time">{{item.time}}</text>
+      <text class="log-message">{{item.message}}</text>
+    </view>
+  </view>
+
+  <view class="footer">
+    <text class="tip">💡 此页面会自动监控 3 秒钟</text>
+    <text class="tip">请同时打开控制台查看详细信息</text>
+  </view>
+</view>
+

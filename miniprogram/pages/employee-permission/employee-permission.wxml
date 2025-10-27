@@ -1,0 +1,545 @@
+<!-- employee-permission.wxml - 员工权限与邀请管理页面 -->
+<view class="page-container">
+  <navigation-bar
+    title="员工管理中心"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
+    bind:back="goBack"
+  />
+
+  <!-- 主选项卡 -->
+  <view class="main-tabs-section">
+    <t-tabs value="{{activeMainTab}}" bind:change="onMainTabChange">
+      <t-tab-panel label="权限管理" value="permission" />
+      <t-tab-panel label="邀请管理" value="invite" />
+    </t-tabs>
+  </view>
+
+  <!-- 权限管理内容 -->
+  <view wx:if="{{activeMainTab === 'permission'}}">
+    <!-- 搜索和筛选 -->
+  <view class="search-section">
+    <t-search
+      value="{{searchKeyword}}"
+      placeholder="搜索员工姓名或手机号"
+      bind:change="onSearchChange"
+      bind:submit="onSearch"
+    />
+    
+    <t-tabs value="{{activeTab}}" bind:change="onTabChange" class="filter-tabs">
+      <t-tab-panel label="全部" value="all" />
+      <t-tab-panel label="管理员" value="admin" />
+      <t-tab-panel label="经理" value="manager" />
+      <t-tab-panel label="操作员" value="operator" />
+      <t-tab-panel label="用户" value="user" />
+    </t-tabs>
+  </view>
+
+  <!-- 员工列表 -->
+  <view class="content-container">
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <t-loading theme="spinner" size="40rpx" text="加载中..." />
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:elif="{{employeeList.length === 0}}" class="empty-container">
+      <t-empty icon="user" description="暂无员工数据" />
+    </view>
+
+    <!-- 员工卡片列表 -->
+    <view wx:else class="employee-list">
+      <view
+        wx:for="{{employeeList}}"
+        wx:key="_id"
+        class="employee-card {{isEmployeeSelected(item._id) ? 'selected' : ''}}"
+        bind:tap="onEmployeeClick"
+        data-employee="{{item}}"
+      >
+        <view class="employee-header">
+          <view class="employee-info">
+            <view class="employee-basic">
+              <text class="employee-name">{{item.nickname || '未设置'}}</text>
+              <text class="employee-details">{{item.farmName || '未设置农场'}} · {{item.department || '未设置部门'}}</text>
+            </view>
+            <view class="employee-role">
+              <view class="role-tag" style="background-color: {{getRoleColor(item.role)}}15; border-color: {{getRoleColor(item.role)}}; color: {{getRoleColor(item.role)}}">
+                {{item.roleDisplayName || '未知角色'}}
+              </view>
+              <t-icon name="chevron-right" size="16" color="#c8c9cc" />
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{hasMore && employeeList.length > 0}}" class="load-more">
+      <t-button
+        theme="default"
+        size="large"
+        block
+        loading="{{loadingMore}}"
+        bind:tap="loadMore"
+      >
+        {{loadingMore ? '加载中...' : '加载更多'}}
+      </t-button>
+    </view>
+  </view>
+  </view>
+
+  <!-- 邀请管理内容 -->
+  <view wx:if="{{activeMainTab === 'invite'}}">
+    <!-- 搜索栏 -->
+    <view class="search-section">
+      <t-search
+        value="{{inviteSearchKeyword}}"
+        placeholder="搜索姓名、手机号或邀请码"
+        bind:change="onInviteSearchChange"
+        bind:submit="onInviteSearch"
+        bind:clear="onInviteSearchClear"
+      />
+    </view>
+
+    <!-- 统计卡片 -->
+    <view class="stats-section">
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-number">{{inviteStats.total}}</text>
+          <text class="stat-label">总邀请数</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-number">{{inviteStats.pending}}</text>
+          <text class="stat-label">待使用</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-number">{{inviteStats.used}}</text>
+          <text class="stat-label">已使用</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-number">{{inviteStats.usageRate}}%</text>
+          <text class="stat-label">使用率</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 筛选选项卡 -->
+    <view class="filter-section">
+      <view class="filter-tabs">
+        <t-tabs value="{{inviteActiveTab}}" bind:change="onInviteTabChange">
+          <t-tab-panel label="全部邀请" value="all" />
+          <t-tab-panel label="待使用" value="pending" />
+          <t-tab-panel label="已使用" value="used" />
+          <t-tab-panel label="已过期" value="expired" />
+        </t-tabs>
+      </view>
+    </view>
+
+    <!-- 邀请列表内容 -->
+    <view class="content-container">
+      <!-- 加载状态 -->
+      <view wx:if="{{inviteLoading}}" class="loading-container">
+        <t-loading theme="spinner" size="40rpx" text="加载中..." />
+      </view>
+
+      <!-- 空状态 -->
+      <view wx:elif="{{inviteList.length === 0}}" class="empty-container">
+        <t-empty icon="user-add" description="暂无邀请记录" />
+      </view>
+
+      <!-- 邀请列表 -->
+      <view wx:else class="invite-list">
+        <view
+          wx:for="{{inviteList}}"
+          wx:key="_id"
+          class="invite-card"
+          bind:tap="onInviteClick"
+          data-invite="{{item}}"
+        >
+          <view class="invite-header">
+            <view class="invite-info">
+              <text class="invite-code">{{item.inviteCode || ''}}</text>
+              <text class="invite-phone">{{item.inviteePhone || ''}}</text>
+              <text class="invite-role">{{getInviteRoleText(item.role)}}</text>
+            </view>
+            <view class="invite-status">
+              <view class="status-tag {{getInviteStatusTheme(item.status)}}-tag">
+                {{item.statusText || '未知状态'}}
+              </view>
+              <t-icon name="chevron-right" size="16" color="#c8c9cc" />
+            </view>
+          </view>
+          <view wx:if="{{item.remark}}" class="invite-remark">
+            <text class="remark-text">{{item.remark}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 分页加载 -->
+      <view wx:if="{{inviteHasMore}}" class="load-more">
+        <view class="load-more-btn" bind:tap="loadMoreInvites">
+          <t-loading wx:if="{{inviteLoadingMore}}" theme="spinner" size="32rpx" />
+          <text class="load-more-text">{{inviteLoadingMore ? '加载中...' : '加载更多'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 创建邀请按钮 -->
+    <view class="create-button-container">
+      <view class="create-invite-btn" bind:tap="showCreateDialog">
+        <text class="create-btn-icon">+</text>
+        <text class="create-btn-text">创建邀请</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 权限详情弹窗 -->
+<t-popup
+  visible="{{showPermissionDetail}}"
+  placement="bottom"
+  close-on-overlay-click="{{true}}"
+  show-overlay="{{true}}"
+  z-index="{{12000}}"
+  bind:visible-change="onPermissionDetailChange"
+  t-class-content="permission-detail-popup"
+>
+  <view wx:if="{{selectedEmployee}}" class="permission-detail-container">
+    <!-- 弹窗头部 -->
+    <view class="popup-header">
+      <text class="popup-title">{{permissionDetailMode === 'edit' ? '修改员工角色' : '员工权限详情'}}</text>
+      <view class="close-btn" bind:tap="closePermissionDetail">
+        <text class="close-text">×</text>
+      </view>
+    </view>
+
+    <!-- 员工基本信息 -->
+    <view class="employee-profile-section">
+      <view class="profile-info">
+        <text class="profile-name">{{selectedEmployee.nickname || '未设置'}}</text>
+        <view class="profile-role-tag" style="background-color: {{getRoleColor(selectedEmployee.role)}}15; border-color: {{getRoleColor(selectedEmployee.role)}}; color: {{getRoleColor(selectedEmployee.role)}}">
+          {{selectedEmployeeRoleDisplayName}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 查看模式 -->
+    <view wx:if="{{permissionDetailMode === 'view'}}">
+      <!-- 基本信息卡片 -->
+      <view class="info-card">
+        <view class="card-header">
+          <text class="card-title">基本信息</text>
+          <view class="edit-info-btn" bind:tap="toggleEditInfo">
+            <text class="edit-info-text">{{editingInfo ? '保存' : '编辑'}}</text>
+          </view>
+        </view>
+        <view class="card-content">
+          <view class="info-row">
+            <text class="info-label">农场</text>
+            <input wx:if="{{editingInfo}}" 
+              class="info-input" 
+              value="{{tempEmployee.farmName}}"
+              placeholder="请输入农场名称"
+              data-field="farmName"
+              bind:input="onInfoInput"
+            />
+            <text wx:else class="info-value">{{selectedEmployee.farmName || '未设置'}}</text>
+          </view>
+          <!-- 部门字段已与农场名称字段合并，无需单独显示 -->
+          <view class="info-row">
+            <text class="info-label">职位</text>
+            <input wx:if="{{editingInfo}}" 
+              class="info-input" 
+              value="{{tempEmployee.position}}"
+              placeholder="请输入职位名称"
+              data-field="position"
+              bind:input="onInfoInput"
+            />
+            <text wx:else class="info-value">{{selectedEmployee.position || '未设置'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">注册时间</text>
+            <text class="info-value">{{selectedEmployee.formattedRegisterTime || '未知'}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 权限详情卡片 -->
+      <view class="info-card">
+        <view class="card-header">
+          <text class="card-title">权限详情</text>
+        </view>
+        <view class="card-content">
+          <view class="permission-role-info">
+            <text class="role-label">当前角色</text>
+            <view class="role-badge" style="background-color: {{getRoleColor(selectedEmployee.role)}}; color: #ffffff;">
+              {{selectedEmployeeRoleDisplayName}}
+            </view>
+          </view>
+          <view class="permission-list">
+            <text class="permission-list-title">权限清单</text>
+            <view class="permission-items">
+              <view 
+                wx:for="{{selectedEmployeePermissions}}"
+                wx:key="*this"
+                class="permission-item"
+              >
+                <text class="permission-check">•</text>
+                <text class="permission-name">{{item}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 查看模式操作按钮 -->
+      <view class="popup-actions">
+        <t-button theme="default" size="large" bind:tap="closePermissionDetail" class="secondary-button">
+          关闭
+        </t-button>
+        <t-button theme="primary" size="large" bind:tap="switchToEditMode" class="primary-button">
+          修改权限
+        </t-button>
+      </view>
+    </view>
+
+    <!-- 编辑模式 -->
+    <view wx:if="{{permissionDetailMode === 'edit'}}">
+      <!-- 角色选择区域 -->
+      <view class="role-selection-section">
+        <view class="section-header">
+          <text class="section-title">选择新角色</text>
+        </view>
+        
+        <view class="role-options">
+          <view 
+            wx:for="{{roleOptions}}"
+            wx:key="value"
+            class="role-option {{selectedRoleIndex[0] === index ? 'selected' : ''}}"
+            bind:tap="selectRole"
+            data-index="{{index}}"
+          >
+            <view class="role-option-header">
+              <view class="role-info">
+                <text class="role-name">{{item.label}}</text>
+                <text class="role-description">{{item.description}}</text>
+              </view>
+              <view class="role-check">
+                <text wx:if="{{selectedRoleIndex[0] === index}}" class="check-mark">✓</text>
+                <view wx:else class="unchecked-circle"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 编辑模式操作按钮 -->
+      <view class="popup-actions">
+        <t-button theme="default" size="large" bind:tap="switchToViewMode" class="secondary-button">
+          取消
+        </t-button>
+        <t-button theme="primary" size="large" bind:tap="updateEmployeeRole" disabled="{{selectedRoleIndex[0] === getRoleIndex(selectedEmployee.role)}}" class="primary-button">
+          确认修改
+        </t-button>
+      </view>
+    </view>
+  </view>
+</t-popup>
+
+<!-- 邀请详情弹窗 -->
+<t-popup
+  visible="{{showInviteDetail}}"
+  placement="bottom"
+  close-on-overlay-click="{{true}}"
+  show-overlay="{{true}}"
+  z-index="{{12000}}"
+  bind:visible-change="onInviteDetailChange"
+  t-class-content="invite-detail-popup"
+>
+  <view wx:if="{{selectedInvite}}" class="invite-detail-container">
+    <!-- 弹窗头部 -->
+    <view class="popup-header">
+      <text class="popup-title">邀请详情</text>
+      <view class="close-btn" bind:tap="closeInviteDetail">
+        <text class="close-text">×</text>
+      </view>
+    </view>
+
+    <!-- 邀请详情内容 -->
+    <view class="invite-detail-content">
+      <view class="detail-section">
+        <view class="detail-item">
+          <text class="detail-label">邀请码</text>
+          <text class="detail-value">{{selectedInvite.inviteCode}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">角色</text>
+          <text class="detail-value">{{selectedInvite.roleDisplayName || getInviteRoleText(selectedInvite.role) || '未知角色'}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">状态</text>
+          <view class="status-tag {{getInviteStatusTheme(selectedInvite.status)}}-tag">
+            {{selectedInvite.statusText || '未知状态'}}
+          </view>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">创建时间</text>
+          <text class="detail-value">{{selectedInvite.formattedCreateTime || formatInviteTime(selectedInvite.createTime) || '未知时间'}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">过期时间</text>
+          <text class="detail-value">{{selectedInvite.formattedExpiresAt || formatInviteTime(selectedInvite.expiresAt) || formatInviteTime(selectedInvite.expiryTime) || '未知时间'}}</text>
+        </view>
+        <view wx:if="{{selectedInvite.remark}}" class="detail-item">
+          <text class="detail-label">备注</text>
+          <text class="detail-value">{{selectedInvite.remark}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="popup-actions">
+      <t-button
+        wx:if="{{selectedInvite.status === 'pending'}}"
+        theme="warning"
+        size="large"
+        bind:tap="revokeInvite"
+        class="warning-button"
+      >
+        撤销邀请
+      </t-button>
+      <t-button
+        wx:if="{{selectedInvite.status === 'pending'}}"
+        theme="primary"
+        size="large"
+        bind:tap="resendInvite"
+        class="primary-button"
+      >
+        重新发送
+      </t-button>
+      <t-button
+        theme="default"
+        size="large"
+        bind:tap="copyInviteCodeFromDetail"
+        class="secondary-button"
+      >
+        复制邀请码
+      </t-button>
+    </view>
+  </view>
+</t-popup>
+
+<!-- 创建邀请码弹窗 -->
+<t-popup
+  visible="{{showCreateDialog}}"
+  placement="center"
+  close-on-overlay-click="{{false}}"
+  show-overlay="{{true}}"
+  z-index="{{12200}}"
+  bind:visible-change="onCreateDialogChange"
+  t-class-content="create-dialog-popup"
+>
+  <view class="create-dialog-content">
+    <view class="create-dialog-header">
+      <text class="create-dialog-title">创建邀请码</text>
+      <text class="create-dialog-close" bind:tap="closeCreateDialog">×</text>
+    </view>
+    
+    <view class="create-dialog-body">
+      <!-- 表单部分（未生成邀请码时显示） -->
+      <view wx:if="{{!isInviteGenerated}}">
+        <view class="form-tip">
+          <text class="tip-text">💡 生成邀请码后，被邀请人可使用邀请码自行注册并填写个人信息</text>
+        </view>
+        
+        <view class="form-group">
+          <text class="form-label">默认角色</text>
+          <picker 
+            range="{{inviteRoleOptions}}" 
+            range-key="label" 
+            value="{{selectedInviteRoleIndex[0]}}" 
+            bind:change="onInviteRoleChange"
+          >
+            <view class="picker-container">
+              <text class="picker-text">{{inviteRoleOptions[selectedInviteRoleIndex[0]].label}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        
+        <view class="form-group">
+          <text class="form-label">有效期</text>
+          <picker 
+            range="{{inviteExpiryOptions}}" 
+            range-key="label" 
+            value="{{selectedInviteExpiryIndex[0]}}" 
+            bind:change="onInviteExpiryDaysChange"
+          >
+            <view class="picker-container">
+              <text class="picker-text">{{inviteExpiryOptions[selectedInviteExpiryIndex[0]].label}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        
+        <view class="form-group">
+          <text class="form-label">备注（可选）</text>
+          <textarea 
+            class="form-textarea" 
+            placeholder="可填写此邀请码的用途说明" 
+            value="{{newInvite.remark}}" 
+            bind:input="onInviteRemarkInput"
+            maxlength="100"
+          />
+        </view>
+      </view>
+
+      <!-- 邀请码生成成功显示部分 -->
+      <view wx:if="{{isInviteGenerated}}" class="invite-success-content">
+        <view class="success-tip">
+          <text class="success-text">🎉 邀请码生成成功！</text>
+        </view>
+        
+        <view class="invite-code-section">
+          <text class="invite-code-label">邀请码</text>
+          <view class="invite-code-box" bind:tap="copyInviteCode">
+            <text class="invite-code-value">{{generatedInviteCode}}</text>
+            <text class="copy-hint">点击复制</text>
+          </view>
+        </view>
+        
+        <view class="usage-instructions">
+          <text class="instructions-title">使用说明</text>
+          <text class="instruction-item">• 用户使用此邀请码可自行注册</text>
+          <text class="instruction-item">• 注册时可填写个人信息</text>
+          <text class="instruction-item">• 邀请码使用后将自动失效</text>
+          <text class="instruction-item">• 请妥善保管邀请码信息</text>
+        </view>
+      </view>
+    </view>
+    
+    <view class="create-dialog-footer">
+      <view class="dialog-btn cancel-btn" bind:tap="closeCreateDialog">
+        {{isInviteGenerated ? '关闭' : '取消'}}
+      </view>
+      <view 
+        wx:if="{{!isInviteGenerated}}" 
+        class="dialog-btn confirm-btn" 
+        bind:tap="createInvite"
+      >
+        生成邀请码
+      </view>
+      <view 
+        wx:if="{{isInviteGenerated}}" 
+        class="dialog-btn copy-btn" 
+        bind:tap="copyInviteCode"
+      >
+        📋 复制邀请码
+      </view>
+    </view>
+  </view>
+</t-popup>
+
+<!-- 撤销确认弹窗已移除 -->
+

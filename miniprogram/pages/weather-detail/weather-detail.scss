@@ -1,0 +1,1010 @@
+/* weather-detail.scss - 优化版天气详情页样式 */
+
+/* 页面容器 */
+.weather-detail-page {
+  background: var(--color-bg-page);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* 滚动容器 - 现代化设计 */
+.scroll-container {
+  flex: 1;
+  background: linear-gradient(180deg, 
+    rgba(248, 250, 252, 0.9) 0%, 
+    rgba(241, 245, 249, 0.95) 50%,
+    rgba(248, 250, 252, 1) 100%);
+  margin-top: -32rpx;
+  padding-top: 20rpx;
+  padding-bottom: 160rpx;
+  border-radius: 32rpx 32rpx 0 0;
+  position: relative;
+  z-index: 2;
+  overflow-y: auto;
+  overflow-x: hidden;
+  backdrop-filter: blur(10rpx);
+}
+
+/* 卡片通用样式 - 优化间距和视觉效果 */
+.card {
+  background: var(--color-bg-primary);
+  border-radius: 24rpx;
+  margin: 16rpx 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06), 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10rpx);
+  position: relative;
+}
+
+.card:first-child {
+  margin-top: 24rpx;
+}
+
+.card:last-child {
+  margin-bottom: 48rpx;
+}
+
+/* 卡片悬浮动画效果 */
+.card:active {
+  transform: scale(0.98) translateY(2rpx);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 卡片头部统一样式 - 现代化设计 */
+.card-header {
+  padding: 20rpx 24rpx 16rpx 24rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
+  position: relative;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.3;
+  letter-spacing: 0.5rpx;
+}
+
+.card-content {
+  padding: 20rpx 24rpx 24rpx 24rpx;
+  position: relative;
+}
+
+/* 当前天气卡片 - 完全匹配首页样式 */
+.current-weather-card {
+  margin-top: 0;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(59, 130, 246, 0.12) 100%);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(14, 165, 233, 0.1));
+  margin: 24rpx 24rpx 20rpx 24rpx;
+  min-height: 180rpx;
+  border-radius: 28rpx;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+  box-shadow: 
+    0 8rpx 32rpx rgba(14, 165, 233, 0.15),
+    0 2rpx 8rpx rgba(14, 165, 233, 0.08),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.3);
+}
+
+.current-weather-card:active {
+  transform: scale(0.98) translateY(2rpx);
+  box-shadow: 
+    0 4rpx 20rpx rgba(14, 165, 233, 0.12),
+    0 2rpx 6rpx rgba(14, 165, 233, 0.08),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.2);
+}
+
+.current-weather-card .card-header {
+  background: transparent;
+  border-bottom: none;
+  padding: 0;
+}
+
+.current-weather-card .card-content {
+  padding: 20rpx 24rpx 8rpx 24rpx;
+  position: relative;
+}
+
+/* 当前天气卡片装饰背景 - 与首页一致 */
+.current-weather-card::after {
+  content: '';
+  position: absolute;
+  top: -2rpx;
+  left: -2rpx;
+  right: -2rpx;
+  bottom: -2rpx;
+  background: var(--primary-gradient);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.1;
+  filter: blur(8rpx);
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.location-info {
+  font-size: var(--font-size-base);
+  color: var(--primary-teal);
+  font-weight: var(--font-weight-medium);
+}
+
+.update-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 主要天气信息 - 优化布局和间距 */
+.weather-main-layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 44rpx;
+  position: relative;
+  z-index: 1;
+  min-height: 100rpx;
+}
+
+/* 左侧区域 - 添加图标和信息 */
+.left-city-section {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.weather-icon-wrapper {
+  width: 120rpx;
+  height: 120rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+  box-shadow: 0 8rpx 32rpx rgba(14, 165, 233, 0.25);
+  position: relative;
+  transform: scale(1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.weather-icon-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -4rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-full);
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(12rpx);
+  animation: weather-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes weather-glow {
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+.weather-emoji {
+  font-size: 48rpx;
+  filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.2));
+  transform: scale(1.2);
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 4rpx;
+  justify-content: center;
+}
+
+.weather-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+  letter-spacing: 0.5rpx;
+  margin-bottom: 4rpx;
+}
+
+.city-name {
+  font-size: 24rpx;
+  color: #6b7280;
+  line-height: 1.3;
+  font-weight: 500;
+  margin-bottom: 6rpx;
+}
+
+.district-name {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-medium);
+  opacity: 0.85;
+  margin-bottom: var(--spacing-xs);
+}
+
+.weather-condition {
+  font-size: 22rpx;
+  color: #374151;
+  line-height: 1.3;
+  font-weight: 500;
+  padding: 6rpx 12rpx;
+  background: rgba(14, 165, 233, 0.1);
+  border-radius: 8rpx;
+  border: 1rpx solid rgba(14, 165, 233, 0.2);
+  display: inline-block;
+  max-width: fit-content;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+/* 移除中间温度区域，整合到右侧 */
+.center-weather-section {
+  display: none;
+}
+
+.temperature-row {
+  display: none;
+}
+
+.weather-info-right {
+  display: none;
+}
+
+/* 右侧温度区域 - 水平布局 */
+.right-feels-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 160rpx;
+}
+
+/* 温度和天气状况水平容器 */
+.temperature-and-condition {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28rpx;
+}
+
+.temperature-and-condition .main-temperature {
+  font-size: 68rpx;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0EA5E9 0%, #3B82F6 50%, #6366F1 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  line-height: 1;
+  text-shadow: 0 2rpx 8rpx rgba(14, 165, 233, 0.2);
+  flex-shrink: 0;
+  transform: scaleY(1.15);
+}
+
+/* 在右侧温度旁边的天气状况样式 */
+.temperature-and-condition .weather-condition {
+  font-size: 24rpx;
+  color: #374151;
+  line-height: 1.2;
+  font-weight: 500;
+  padding: 6rpx 10rpx;
+  background: rgba(14, 165, 233, 0.1);
+  border-radius: 8rpx;
+  border: 1rpx solid rgba(14, 165, 233, 0.2);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+/* 体感温度样式已移至概览区域，此处移除 */
+
+/* 移除重复的湿度样式，因为湿度现在只在概览中显示 */
+
+.feels-label {
+  display: none;
+}
+
+/* 右上角更新时间 */
+.top-right-update {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  z-index: 5;
+}
+
+.update-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10rpx);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: var(--td-border-level-1-color, 2rpx solid rgba(20, 184, 166, 0.15));
+}
+
+/* 今日概览数据 - 优化4列布局 */
+.today-overview {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  padding: 18rpx 12rpx 16rpx 12rpx;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 16rpx;
+  gap: 8rpx;
+  backdrop-filter: blur(10rpx);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.overview-item {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  min-height: 60rpx;
+  position: relative;
+  min-width: 0; /* 防止文字溢出 */
+}
+
+/* 概览标签 - 与数值保持一致的颜色 */
+.overview-label {
+  font-size: 20rpx;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 今日最高标签 - 橙红色 */
+.overview-item:nth-child(1) .overview-label {
+  color: #dc2626;
+}
+
+/* 今日最低标签 - 蓝色 */
+.overview-item:nth-child(2) .overview-label {
+  color: #2563eb;
+}
+
+/* 体感温度标签 - 紫色 */
+.overview-item:nth-child(3) .overview-label {
+  color: #7c3aed;
+}
+
+/* 湿度标签 - 青色 */
+.overview-item:nth-child(4) .overview-label {
+  color: #0891b2;
+}
+
+/* 概览数值 - 不同颜色 */
+.overview-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 今日最高温度 - 橙红色 */
+.overview-item:nth-child(1) .overview-value {
+  color: #dc2626;
+}
+
+/* 今日最低温度 - 蓝色 */
+.overview-item:nth-child(2) .overview-value {
+  color: #2563eb;
+}
+
+/* 体感温度 - 紫色 */
+.overview-item:nth-child(3) .overview-value {
+  color: #7c3aed;
+}
+
+/* 湿度 - 青色 */
+.overview-item:nth-child(4) .overview-value {
+  color: #0891b2;
+}
+
+/* 湿度值现在使用统一的颜色样式 */
+
+/* 天气预警卡片 - 使用TDesign样式框架 */
+.warning-card {
+  border-left: 4rpx solid var(--td-warning-color);
+}
+
+.warning-count {
+  font-size: var(--td-font-size-s);
+  color: var(--td-warning-color);
+  background: var(--td-warning-color-1);
+  padding: var(--td-comp-margin-xs) var(--td-comp-margin-s);
+  border-radius: var(--td-radius-small);
+  font-weight: var(--td-font-weight-medium);
+}
+
+.warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--td-comp-margin-m);
+}
+
+.warning-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--td-comp-margin-s);
+  padding: var(--td-comp-paddingLR-l);
+  background: var(--td-bg-color-container);
+  border-radius: var(--td-radius-medium);
+  border: 2rpx solid var(--td-border-color);
+  box-shadow: var(--td-shadow-1);
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: var(--td-comp-margin-s);
+  margin-bottom: var(--td-comp-margin-xs);
+}
+
+.warning-type {
+  font-size: var(--td-font-size-base);
+  color: var(--td-text-color-primary);
+  font-weight: var(--td-font-weight-medium);
+}
+
+.warning-title {
+  font-size: var(--td-font-size-m);
+  color: var(--td-text-color-primary);
+  font-weight: var(--td-font-weight-medium);
+  line-height: var(--td-line-height-base);
+  margin: var(--td-comp-margin-xs) 0;
+}
+
+.warning-details {
+  padding: var(--td-comp-margin-s);
+  background: var(--td-bg-color-secondarycontainer);
+  border-radius: var(--td-radius-small);
+  margin: var(--td-comp-margin-xs) 0;
+}
+
+.warning-text {
+  font-size: var(--td-font-size-base);
+  color: var(--td-text-color-primary);
+  line-height: var(--td-line-height-base);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.warning-time-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--td-comp-margin-xs);
+  margin-top: var(--td-comp-margin-xs);
+  padding-top: var(--td-comp-margin-xs);
+  border-top: 2rpx dashed var(--td-border-color);
+}
+
+.warning-time {
+  font-size: var(--td-font-size-s);
+  color: var(--td-text-color-secondary);
+}
+
+.warning-period {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--td-comp-margin-l);
+}
+
+.period-start, .period-end {
+  font-size: var(--td-font-size-s);
+  color: var(--td-text-color-secondary);
+  background: var(--td-bg-color-secondarycontainer);
+  padding: 4rpx 12rpx;
+  border-radius: var(--td-radius-small);
+}
+
+/* 空气质量卡片 - 现代化视觉设计 */
+.air-quality-card {
+  border-left: 4rpx solid #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, rgba(34, 197, 94, 0.03) 100%);
+}
+
+.aqi-display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--td-comp-margin-xl);
+  margin-bottom: var(--td-comp-margin-l);
+}
+
+.aqi-main-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding: 24rpx;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 20rpx;
+  backdrop-filter: blur(10rpx);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.aqi-main-value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--td-comp-margin-s);
+  justify-content: center;
+  margin-bottom: var(--td-comp-margin-s);
+}
+
+.aqi-number {
+  font-size: 88rpx;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.aqi-unit {
+  font-size: 28rpx;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.aqi-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--td-comp-margin-s);
+  width: 100%;
+}
+
+.aqi-desc {
+  font-size: var(--td-font-size-s);
+  color: var(--td-text-color-secondary);
+  text-align: center;
+  margin-top: var(--td-comp-margin-xs);
+}
+
+/* 污染物网格 */
+.pollutants-grid {
+  margin-top: var(--td-comp-margin-l);
+  background: transparent !important;
+}
+
+/* 更新时间 */
+.aqi-update-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--td-comp-margin-xs);
+  margin-top: var(--td-comp-margin-l);
+  font-size: var(--td-font-size-s);
+  color: var(--td-text-color-secondary);
+  padding: var(--td-comp-margin-xs) 0;
+  border-top: 2rpx dashed var(--td-border-color);
+}
+
+/* 24小时预报卡片 - 视觉优化 */
+.hourly-forecast-card {
+  border-left: 4rpx solid #06b6d4;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.02) 0%, rgba(14, 165, 233, 0.03) 100%);
+}
+
+.next-hour-info {
+  font-size: 24rpx;
+  color: #0891b2;
+  background: rgba(6, 182, 212, 0.1);
+  padding: 8rpx 12rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+  border: 1rpx solid rgba(6, 182, 212, 0.2);
+}
+
+/* 下一小时天气详情样式优化 */
+.next-hour-summary {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: rgba(14, 165, 233, 0.03);
+  border-radius: var(--radius-base);
+  border: 2rpx solid rgba(14, 165, 233, 0.1);
+}
+
+.next-hour-details {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: flex-start;
+  line-height: var(--line-height-relaxed);
+  white-space: nowrap;
+}
+
+.next-hour-time {
+  font-size: var(--font-size-lg);
+  color: var(--color-info);
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+}
+
+.next-hour-temp {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+}
+
+.next-hour-wind {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.next-hour-pop {
+  font-size: var(--font-size-base);
+  color: var(--color-warning);
+  font-weight: var(--font-weight-medium);
+  background: rgba(255, 193, 7, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.hourly-scroll {
+  width: 100%;
+}
+
+.hourly-container {
+  display: flex;
+  gap: var(--spacing-base);
+  padding: var(--spacing-base) 0;
+}
+
+.hourly-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 88rpx;
+  padding: 16rpx 12rpx 20rpx 12rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10rpx);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.hourly-item.current {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(14, 165, 233, 0.12) 100%);
+  border: 2rpx solid #06b6d4;
+  transform: scale(1.05);
+  box-shadow: 0 4rpx 12rpx rgba(6, 182, 212, 0.2);
+}
+
+.hour-time {
+  font-size: 22rpx;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.hour-weather {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.hour-icon {
+  font-size: var(--font-size-xl);
+}
+
+.hour-temp {
+  font-size: 26rpx;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* 7天预报卡片 - 优化设计 */
+.weekly-forecast-card {
+  border-left: 4rpx solid #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.02) 0%, rgba(251, 191, 36, 0.03) 100%);
+}
+
+.forecast-trend {
+  font-size: 24rpx;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 8rpx 12rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+  border: 1rpx solid rgba(245, 158, 11, 0.2);
+}
+
+.daily-forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+}
+
+.daily-forecast-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 24rpx;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10rpx);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.daily-forecast-item:active {
+  transform: scale(0.98);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.day-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.day-name {
+  font-size: 28rpx;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.day-weather {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.day-icon {
+  font-size: var(--font-size-lg);
+}
+
+.day-condition {
+  font-size: 22rpx;
+  color: #6b7280;
+}
+
+.temp-info {
+  min-width: 180rpx;
+}
+
+.temp-range {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.temp-low, .temp-high {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  min-width: 36rpx;
+  text-align: center;
+}
+
+.temp-bar-wrapper {
+  flex: 1;
+  height: 8rpx;
+  background: var(--color-border-light);
+  border-radius: 4rpx;
+  overflow: hidden;
+  margin: 0 var(--spacing-sm);
+}
+
+.temp-bar {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+/* 详细指标卡片 - 优化设计 */
+.weather-metrics-card {
+  border-left: 4rpx solid #8b5cf6;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.02) 0%, rgba(147, 51, 234, 0.03) 100%);
+}
+
+.metrics-subtitle {
+  font-size: 24rpx;
+  color: #7c3aed;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 8rpx 12rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+  border: 1rpx solid rgba(139, 92, 246, 0.2);
+}
+
+/* TDesign四宫格样式 */
+.metrics-grid {
+  background: transparent;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 24rpx 20rpx;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10rpx);
+}
+
+.metric-item:active {
+  background: rgba(139, 92, 246, 0.08);
+  transform: scale(0.98);
+}
+
+.metric-value {
+  font-size: 36rpx;
+  color: #7c3aed;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.metric-label {
+  font-size: 22rpx;
+  color: #6b7280;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+
+
+/* 刷新按钮容器 - 现代化设计 */
+.refresh-button-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx 24rpx 48rpx 24rpx;
+  background: linear-gradient(180deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.98) 100%);
+  backdrop-filter: blur(20rpx);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.06);
+  z-index: 100;
+}
+
+.refresh-button {
+  width: 100%;
+  background: linear-gradient(135deg, #0EA5E9 0%, #3B82F6 50%, #6366F1 100%) !important;
+  border: none !important;
+  border-radius: 20rpx !important;
+  height: 88rpx !important;
+  font-size: 30rpx !important;
+  font-weight: 600 !important;
+  box-shadow: 0 8rpx 32rpx rgba(14, 165, 233, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.refresh-button:active {
+  transform: scale(0.96) !important;
+  box-shadow: 0 4rpx 16rpx rgba(14, 165, 233, 0.4) !important;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 480px) {
+  .card {
+    margin: var(--spacing-xs) var(--spacing-base);
+  }
+  
+  /* 小屏幕布局调整 */
+  .weather-main-layout {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .right-feels-section .main-temperature {
+    font-size: 110rpx;
+  }
+  
+  .weather-emoji {
+    font-size: 40rpx;
+  }
+  
+  .temperature-row {
+    gap: var(--spacing-base);
+  }
+  
+  .city-name {
+    font-size: var(--font-size-base);
+  }
+  
+  .feels-temperature {
+    font-size: var(--font-size-lg);
+  }
+  
+  .weather-condition {
+    font-size: var(--font-size-sm);
+  }
+  
+  /* 小屏幕概览调整 */
+  .today-overview {
+    padding-top: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+  
+  .overview-item {
+    height: 50rpx; /* 小屏幕稍微减少高度 */
+  }
+  
+  .overview-value,
+  .humidity-value {
+    font-size: var(--font-size-base);
+    min-height: 28rpx;
+  }
+  
+  /* 小屏幕下一小时天气详情调整 */
+  .next-hour-summary {
+    padding: var(--spacing-base);
+    margin-bottom: var(--spacing-base);
+  }
+  
+  .next-hour-details {
+    gap: var(--spacing-xs);
+    justify-content: space-between;
+  }
+  
+  .next-hour-time, .next-hour-temp {
+    font-size: var(--font-size-base);
+  }
+  
+  .next-hour-wind, .next-hour-pop {
+    font-size: var(--font-size-sm);
+  }
+  
+  /* 小屏幕预报调整 */
+  .hourly-container {
+    gap: var(--spacing-sm);
+  }
+  
+  .hourly-item {
+    min-width: 70rpx;
+    padding: var(--spacing-base) var(--spacing-sm);
+  }
+  
+  .temp-range {
+    gap: var(--spacing-xs);
+  }
+}
+
+
+/* 安全区域适配 */
+@supports (padding: max(0px)) {
+  .refresh-button-container {
+    padding-bottom: max(var(--spacing-xl), calc(var(--spacing-xl) + var(--safe-area-inset-bottom, 0)));
+  }
+}

@@ -1,0 +1,6 @@
+<view class="container">
+  <text class="title">🎉 测试页面</text>
+  <text class="desc">如果您能看到这个页面，说明项目可以正常运行</text>
+  <text class="info">当前时间：{{currentTime}}</text>
+</view>
+

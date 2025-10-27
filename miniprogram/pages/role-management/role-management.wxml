@@ -1,0 +1,173 @@
+<!--角色管理页面-->
+<view class="container">
+  <!-- 导航栏 -->
+  <view class="navbar">
+    <view class="navbar-content">
+      <view class="navbar-title">角色管理</view>
+    </view>
+  </view>
+
+  <!-- 角色概览 -->
+  <view class="role-overview">
+    <view class="overview-title">角色体系概览</view>
+    <view class="role-cards">
+      <view 
+        wx:for="{{roleList}}" 
+        wx:key="code" 
+        class="role-card"
+        style="border-left: 4rpx solid {{item.color}}"
+      >
+        <view class="role-header">
+          <view class="role-name">{{item.name}}</view>
+          <view class="role-level">级别 {{item.level}}</view>
+        </view>
+        <view class="role-description">{{item.description}}</view>
+        <view class="role-count">当前用户数：{{item.userCount || 0}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 权限矩阵 -->
+  <view class="permission-matrix">
+    <view class="matrix-title">权限矩阵</view>
+    <scroll-view scroll-x class="matrix-scroll">
+      <view class="matrix-table">
+        <!-- 表头 -->
+        <view class="matrix-header">
+          <view class="matrix-cell header-cell">功能模块</view>
+          <view 
+            wx:for="{{roleList}}" 
+            wx:key="code"
+            class="matrix-cell header-cell role-header"
+            style="color: {{item.color}}"
+          >
+            {{item.name}}
+          </view>
+        </view>
+        
+        <!-- 权限行 -->
+        <view 
+          wx:for="{{permissionMatrix}}" 
+          wx:for-item="module"
+          wx:for-index="moduleName"
+          wx:key="*this"
+          class="matrix-row"
+        >
+          <view class="matrix-cell module-cell">{{moduleName}}</view>
+          <view 
+            wx:for="{{roleList}}" 
+            wx:for-item="role"
+            wx:key="code"
+            class="matrix-cell permission-cell"
+          >
+            <view class="permission-tag {{getPermissionLevel(module[role.code])}}">
+              {{module[role.code] || '无权限'}}
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 用户角色分配 -->
+  <view class="user-role-assignment" wx:if="{{userRole === 'super_admin' || userRole === 'manager'}}">
+    <view class="assignment-title">用户角色分配</view>
+    
+    <!-- 搜索框 -->
+    <view class="search-section">
+      <t-input
+        placeholder="搜索用户姓名或手机号"
+        value="{{searchKeyword}}"
+        bind:change="onSearchChange"
+        prefix-icon="search"
+        clearable
+      />
+    </view>
+
+    <!-- 用户列表 -->
+    <view class="user-list">
+      <view 
+        wx:for="{{userList}}" 
+        wx:key="_id"
+        class="user-item"
+        bind:tap="onUserSelect"
+        data-user="{{item}}"
+      >
+        <view class="user-avatar">
+          <image src="{{item.avatarUrl || '/assets/icons/profile.png'}}" />
+        </view>
+        <view class="user-info">
+          <view class="user-name">{{item.nickname || '未设置'}}</view>
+          <view class="user-phone">{{item.phone || '未绑定手机'}}</view>
+        </view>
+        <view class="user-role">
+          <view 
+            class="role-badge"
+            style="background-color: {{getRoleColor(item.role)}}20; color: {{getRoleColor(item.role)}}"
+          >
+            {{getRoleName(item.role)}}
+          </view>
+        </view>
+        <view class="user-action">
+          <t-icon name="chevron-right" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view 
+      wx:if="{{hasMore}}" 
+      class="load-more"
+      bind:tap="loadMoreUsers"
+    >
+      <t-loading wx:if="{{loadingMore}}" size="small" />
+      <text wx:else>加载更多</text>
+    </view>
+  </view>
+
+  <!-- 角色选择弹窗 -->
+  <t-popup
+    visible="{{showRoleDialog}}"
+    bind:visible-change="onRoleDialogClose"
+    placement="bottom"
+  >
+    <view class="role-dialog">
+      <view class="dialog-header">
+        <view class="dialog-title">为 {{selectedUser.nickname}} 分配角色</view>
+        <view class="dialog-subtitle">当前角色：{{getRoleName(selectedUser.role)}}</view>
+      </view>
+      
+      <view class="role-options">
+        <view 
+          wx:for="{{availableRoles}}" 
+          wx:key="value"
+          class="role-option {{selectedRole === item.value ? 'selected' : ''}}"
+          style="border-color: {{item.color}}20"
+          bind:tap="onRoleSelect"
+          data-role="{{item.value}}"
+        >
+          <view class="option-header">
+            <view class="option-name" style="color: {{item.color}}">{{item.label}}</view>
+            <t-icon 
+              wx:if="{{selectedRole === item.value}}" 
+              name="check-circle-filled" 
+              style="color: {{item.color}}"
+            />
+          </view>
+          <view class="option-description">{{item.description}}</view>
+        </view>
+      </view>
+      
+      <view class="dialog-actions">
+        <t-button theme="light" bind:tap="onRoleDialogClose">取消</t-button>
+        <t-button 
+          theme="primary" 
+          bind:tap="onRoleConfirm"
+          disabled="{{!selectedRole || selectedRole === selectedUser.role}}"
+        >
+          确认分配
+        </t-button>
+      </view>
+    </view>
+  </t-popup>
+</view>

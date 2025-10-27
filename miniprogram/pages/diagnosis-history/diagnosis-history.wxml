@@ -1,0 +1,218 @@
+<!--diagnosis-history.wxml - 诊断历史页面-->
+<view class="page diagnosis-history-page">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="诊断历史"
+    show-back="{{true}}"
+    bind:back="goBack"
+  />
+
+  <!-- 状态筛选标签 -->
+  <view class="filter-tabs">
+    <t-tabs value="{{activeStatus}}" bind:change="onStatusChange" theme="line" class="status-tabs">
+      <t-tab-panel 
+        wx:for="{{statusOptions}}" 
+        wx:key="value"
+        value="{{item.value}}" 
+        label="{{item.label}}"
+      ></t-tab-panel>
+    </t-tabs>
+  </view>
+
+  <!-- 诊断记录列表 -->
+  <view class="records-container">
+    <!-- 加载状态 -->
+    <view class="loading-container" wx:if="{{loading}}">
+      <t-loading theme="circular" size="40rpx" text="加载中..." />
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-container" wx:elif="{{records.length === 0}}">
+      <t-empty 
+        icon="medical-record" 
+        description="暂无诊断记录"
+      >
+        <t-button 
+          theme="primary" 
+          size="medium"
+          bind:tap="goBack"
+        >去诊断</t-button>
+      </t-empty>
+    </view>
+
+    <!-- 记录列表 -->
+    <view class="records-list" wx:else>
+      <view 
+        class="record-item"
+        wx:for="{{records}}"
+        wx:key="_id"
+        bind:tap="onViewRecord"
+        data-record="{{item}}"
+      >
+        <!-- 记录头部 -->
+        <view class="record-header">
+          <view class="record-info">
+            <text class="diagnosis-result">{{item.diagnosisResult}}</text>
+            <view class="meta-info">
+              <text class="confidence">置信度 {{item.confidence}}%</text>
+              <t-tag 
+                theme="{{getStatusTheme(item.status)}}" 
+                variant="light"
+                size="small"
+              >{{getStatusText(item.status)}}</t-tag>
+            </view>
+          </view>
+          <view class="record-actions" catchtap="onActionTap">
+            <t-icon name="more" size="20" color="#c8c9cc" />
+          </view>
+        </view>
+
+        <!-- 症状描述 -->
+        <view class="symptoms-preview">
+          <text class="symptoms-text">{{item.symptoms}}</text>
+        </view>
+
+        <!-- 基础信息 -->
+        <view class="basic-info">
+          <view class="info-item" wx:if="{{item.affectedCount > 0}}">
+            <t-icon name="location" size="14" color="#c8c9cc" />
+            <text>{{item.affectedCount}}只受影响</text>
+          </view>
+          <view class="info-item" wx:if="{{item.dayAge > 0}}">
+            <t-icon name="time" size="14" color="#c8c9cc" />
+            <text>{{item.dayAge}}日龄</text>
+          </view>
+          <view class="info-item" wx:if="{{item.temperature > 0}}">
+            <t-icon name="thermometer" size="14" color="#c8c9cc" />
+            <text>{{item.temperature}}°C</text>
+          </view>
+        </view>
+
+        <!-- 建议用药预览 -->
+        <view class="medications-preview" wx:if="{{item.recommendedMedications.length > 0}}">
+          <text class="preview-label">建议用药：</text>
+          <text class="medications-text">{{item.recommendedMedications.join('、')}}</text>
+        </view>
+
+        <!-- 记录底部 -->
+        <view class="record-footer">
+          <text class="create-time">{{item.createTime}}</text>
+          <text class="treatment-duration">周期：{{item.treatmentDuration}}</text>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view class="record-operations">
+          <t-button 
+            theme="light" 
+            size="small"
+            bind:tap="onRedoDiagnosis"
+            data-record="{{item}}"
+            catchtap="onActionTap"
+          >重新诊断</t-button>
+          
+          <t-button 
+            theme="primary" 
+            size="small"
+            bind:tap="onCreateTreatment"
+            data-record="{{item}}"
+            catchtap="onActionTap"
+            wx:if="{{item.status === 'pending_confirmation' || item.status === 'adopted'}}"
+          >创建治疗方案</t-button>
+          
+          <t-button 
+            theme="success" 
+            size="small"
+            bind:tap="onConfirmDiagnosis"
+            data-record="{{item}}"
+            catchtap="onActionTap"
+            wx:if="{{item.status === 'adopted'}}"
+          >确认诊断</t-button>
+          
+          <t-button 
+            theme="light" 
+            size="small"
+            bind:tap="onShareRecord"
+            data-record="{{item}}"
+            catchtap="onActionTap"
+          >分享</t-button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{pagination.hasMore && records.length > 0}}">
+      <t-loading wx:if="{{loadingMore}}" theme="circular" size="32rpx" text="加载更多..." />
+      <text wx:else class="load-more-text">上拉加载更多</text>
+    </view>
+
+    <!-- 没有更多数据 -->
+    <view class="no-more" wx:if="{{!pagination.hasMore && records.length > 0}}">
+      <t-divider content="没有更多数据了" />
+    </view>
+  </view>
+
+  <!-- 详情弹窗 -->
+  <t-dialog
+    visible="{{showDetailDialog}}"
+    title="诊断详情"
+    confirm-btn="确定"
+    bind:confirm="onCloseDetail"
+    bind:close="onCloseDetail"
+  >
+    <view wx:if="{{selectedRecord}}" class="detail-content">
+      <view class="detail-section">
+        <text class="section-title">诊断结果</text>
+        <text class="diagnosis-text">{{selectedRecord.diagnosisResult}}</text>
+        <text class="confidence-text">置信度：{{selectedRecord.confidence}}%</text>
+      </view>
+
+      <view class="detail-section">
+        <text class="section-title">症状描述</text>
+        <text class="symptoms-detail">{{selectedRecord.symptoms}}</text>
+      </view>
+
+      <view class="detail-section" wx:if="{{selectedRecord.possibleDiseases.length > 0}}">
+        <text class="section-title">可能疾病</text>
+        <view class="diseases-list">
+          <t-tag 
+            wx:for="{{selectedRecord.possibleDiseases}}" 
+            wx:key="index"
+            theme="light" 
+            variant="outline"
+            size="small"
+          >{{item}}</t-tag>
+        </view>
+      </view>
+
+      <view class="detail-section" wx:if="{{selectedRecord.recommendedMedications.length > 0}}">
+        <text class="section-title">建议用药</text>
+        <view class="medications-detail">
+          <view 
+            class="medication-detail-item"
+            wx:for="{{selectedRecord.recommendedMedications}}" 
+            wx:key="index"
+          >
+            <t-icon name="medicine-box" size="16" color="#0052d9" />
+            <text>{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="detail-section">
+        <text class="section-title">治疗周期</text>
+        <text class="duration-text">{{selectedRecord.treatmentDuration}}</text>
+      </view>
+
+      <view class="detail-section">
+        <text class="section-title">基本信息</text>
+        <view class="basic-detail">
+          <text>受影响数量：{{selectedRecord.affectedCount || 0}}只</text>
+          <text>鹅只日龄：{{selectedRecord.dayAge || 0}}天</text>
+          <text>环境温度：{{selectedRecord.temperature || 0}}°C</text>
+          <text>创建时间：{{selectedRecord.createTime}}</text>
+        </view>
+      </view>
+    </view>
+  </t-dialog>
+
+</view>

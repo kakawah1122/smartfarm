@@ -1,0 +1,239 @@
+<!--performance-analysis.wxml - 性能分析页面-->
+<view class="page performance-analysis-page">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="性能分析"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <t-loading theme="circular" size="40rpx" />
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 内容区域 -->
+  <view wx:else class="content-container">
+    
+    <!-- 日期范围选择 -->
+    <view class="date-range-selector">
+      <t-radio-group value="{{dateRange}}" bind:change="onDateRangeChange" theme="primary">
+        <t-radio name="week" label="本周" />
+        <t-radio name="month" label="本月" />
+        <t-radio name="quarter" label="本季度" />
+        <t-radio name="year" label="本年度" />
+      </t-radio-group>
+    </view>
+
+    <!-- 综合评分 -->
+    <view class="overall-score-card">
+      <view class="score-header">
+        <text class="card-title">综合性能评分</text>
+        <view class="score-improvement">
+          <t-icon name="arrow-up" size="16" color="#00a870" />
+          <text class="improvement-text">+{{overallScore.improvement}}</text>
+        </view>
+      </view>
+      
+      <view class="score-display">
+        <view class="score-circle">
+          <text class="score-value">{{overallScore.score}}</text>
+          <text class="score-level">{{overallScore.level}}</text>
+        </view>
+        <view class="score-info">
+          <text class="score-description">当前综合评分表现优秀</text>
+          <view class="score-progress">
+            <view class="progress-bar">
+              <view 
+                class="progress-fill" 
+                style="width: {{overallScore.score}}%"
+              ></view>
+            </view>
+            <text class="progress-text">{{overallScore.score}}/{{overallScore.maxScore}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 关键性能指标 -->
+    <view class="kpis-card">
+      <text class="card-title">关键性能指标</text>
+      <view class="kpis-list">
+        <view 
+          class="kpi-item"
+          wx:for="{{kpis}}"
+          wx:key="name"
+          bind:tap="onKpiDetail"
+          data-kpi="{{item}}"
+        >
+          <view class="kpi-header">
+            <view class="kpi-name">{{item.name}}</view>
+            <view class="kpi-status status-{{item.status}}">
+              {{item.status === 'excellent' ? '优秀' : item.status === 'good' ? '良好' : '需改进'}}
+            </view>
+          </view>
+          
+          <view class="kpi-metrics">
+            <view class="kpi-current">
+              <text class="current-value">{{item.current}}</text>
+              <text class="current-unit">{{item.unit}}</text>
+              <view class="trend-indicator trend-{{item.trend}}">
+                <t-icon name="{{item.trend === 'up' ? 'arrow-up' : item.trend === 'down' ? 'arrow-down' : 'minus'}}" size="12" />
+              </view>
+            </view>
+            <view class="kpi-target">
+              <text class="target-label">目标: {{item.target}}{{item.unit}}</text>
+              <text class="previous-label">上期: {{item.previous}}{{item.unit}}</text>
+            </view>
+          </view>
+          
+          <view class="kpi-progress">
+            <view class="progress-bar">
+              <view 
+                class="progress-fill" 
+                style="width: {{item.current / item.target > 1 ? 100 : item.current / item.target * 100}}%"
+              ></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 性能趋势 -->
+    <view class="trends-card">
+      <text class="card-title">性能趋势</text>
+      <view class="trend-tabs">
+        <view class="tab-item active">存活率趋势</view>
+        <view class="tab-item">治愈率趋势</view>
+      </view>
+      
+      <view class="trend-chart">
+        <view class="chart-container">
+          <view 
+            class="trend-point"
+            wx:for="{{trends.survivalRate}}"
+            wx:key="date"
+          >
+            <view class="point-dot" style="bottom: {{(item.value - 98) * 400}}rpx"></view>
+            <text class="point-value">{{item.value}}%</text>
+            <text class="point-date">{{item.date}}</text>
+          </view>
+        </view>
+        <view class="chart-axis">
+          <text class="axis-label">98%</text>
+          <text class="axis-label">100%</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 性能对比 -->
+    <view class="benchmark-card">
+      <text class="card-title">性能对比</text>
+      <view class="benchmark-list">
+        <view class="benchmark-item">
+          <text class="benchmark-label">当前表现</text>
+          <text class="benchmark-value current">{{overallScore.score}}</text>
+        </view>
+        <view class="benchmark-item">
+          <text class="benchmark-label">行业均值</text>
+          <text class="benchmark-value">{{benchmarks.industryAverage}}</text>
+        </view>
+        <view class="benchmark-item">
+          <text class="benchmark-label">行业最佳</text>
+          <text class="benchmark-value best">{{benchmarks.topPerformer}}</text>
+        </view>
+        <view class="benchmark-item">
+          <text class="benchmark-label">公司目标</text>
+          <text class="benchmark-value">{{benchmarks.companyTarget}}</text>
+        </view>
+        <view class="benchmark-item">
+          <text class="benchmark-label">去年同期</text>
+          <text class="benchmark-value">{{benchmarks.lastYear}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 改进机会 -->
+    <view class="improvements-card">
+      <text class="card-title">改进机会</text>
+      <view class="improvements-list">
+        <view 
+          class="improvement-item"
+          wx:for="{{improvements}}"
+          wx:key="area"
+          bind:tap="onImprovementDetail"
+          data-improvement="{{item}}"
+        >
+          <view class="improvement-header">
+            <text class="improvement-area">{{item.area}}</text>
+            <view class="difficulty-badge difficulty-{{item.difficulty}}">
+              {{item.difficulty === 'high' ? '高' : item.difficulty === 'medium' ? '中' : '低'}}难度
+            </view>
+          </view>
+          
+          <view class="improvement-metrics">
+            <view class="current-performance">
+              <text class="performance-label">当前表现</text>
+              <text class="performance-value">{{item.currentPerformance}}分</text>
+            </view>
+            <view class="potential-gain">
+              <text class="gain-label">潜在提升</text>
+              <text class="gain-value">+{{item.potentialGain}}分</text>
+            </view>
+          </view>
+          
+          <view class="improvement-impact impact-{{item.impact}}">
+            影响程度: {{item.impact === 'high' ? '高' : item.impact === 'medium' ? '中' : '低'}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 区域对比 -->
+    <view class="area-comparison-card">
+      <text class="card-title">区域表现排名</text>
+      <view class="area-list">
+        <view 
+          class="area-item"
+          wx:for="{{areaComparison}}"
+          wx:key="area"
+          bind:tap="onAreaDetail"
+          data-area="{{item}}"
+        >
+          <view class="area-rank">
+            <text class="rank-number">{{item.rank}}</text>
+          </view>
+          <view class="area-info">
+            <text class="area-name">{{item.area}}</text>
+            <text class="area-score">{{item.score}}分</text>
+          </view>
+          <view class="area-progress">
+            <view class="progress-bar">
+              <view 
+                class="progress-fill" 
+                style="width: {{item.score}}%"
+              ></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作区域 -->
+    <view class="actions-section">
+      <t-button 
+        theme="primary" 
+        size="large" 
+        block
+        bind:tap="exportReport"
+      >
+        导出性能分析报告
+      </t-button>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view style="height: 120rpx;"></view>
+  </view>
+</view>

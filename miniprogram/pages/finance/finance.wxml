@@ -1,0 +1,376 @@
+<view class="page-container">
+  <!-- 新式导航栏 -->
+  <navigation-bar 
+    title="财务管理"
+    show-back="true"
+    show-menu="true"
+    show-record="false"
+    bind:back="goBack"
+    bind:menu="onMenuTap"
+  />
+
+  <scroll-view class="scroll-container" scroll-y>
+    <!-- 财务概览卡片 -->
+    <view class="card overview-card">
+      <view class="card-content">
+        <view class="overview-header">
+          <text class="overview-title">本月财务概览</text>
+          <t-dropdown-menu bind:change="onMonthChange">
+            <t-dropdown-item 
+              value="{{selectedMonth}}" 
+              options="{{monthOptions}}" 
+              label="{{selectedMonth}}"
+            />
+          </t-dropdown-menu>
+        </view>
+        
+        <!-- 收支对比 -->
+        <view class="comparison-section">
+          <view class="comparison-header">
+            <text class="comparison-label">收支对比</text>
+            <text class="growth-rate">+{{overview.growthRate}}% ↗</text>
+          </view>
+          <view class="comparison-data">
+            <view class="data-item">
+              <text class="data-value success">¥{{overview.income}}万</text>
+              <text class="data-label">总收入</text>
+            </view>
+            <view class="data-item">
+              <text class="data-value danger">¥{{overview.expense}}万</text>
+              <text class="data-label">总支出</text>
+            </view>
+            <view class="data-item">
+              <text class="data-value primary">¥{{overview.profit}}万</text>
+              <text class="data-label">净利润</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 成本构成 -->
+        <view class="cost-grid">
+          <view class="cost-item orange">
+            <text class="cost-label">饲料成本</text>
+            <text class="cost-value">¥{{overview.feedCost}}万</text>
+            <text class="cost-percent">占支出 {{overview.feedPercent}}%</text>
+          </view>
+          <view class="cost-item purple">
+            <text class="cost-label">人工成本</text>
+            <text class="cost-value">¥{{overview.laborCost}}万</text>
+            <text class="cost-percent">占支出 {{overview.laborPercent}}%</text>
+          </view>
+          <view class="cost-item yellow">
+            <text class="cost-label">医疗费用</text>
+            <text class="cost-value">¥{{overview.medicalCost}}万</text>
+            <text class="cost-percent">占支出 {{overview.medicalPercent}}%</text>
+          </view>
+          <view class="cost-item gray">
+            <text class="cost-label">其他费用</text>
+            <text class="cost-value">¥{{overview.otherCost}}万</text>
+            <text class="cost-percent">占支出 {{overview.otherPercent}}%</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI财务分析 -->
+    <view class="card ai-analysis-card">
+      <view class="card-content">
+        <view class="ai-header">
+          <view class="ai-icon">
+            <text>🤖</text>
+          </view>
+          <view class="ai-info">
+            <text class="ai-title">AI财务分析</text>
+            <text class="ai-subtitle">智能成本优化与盈利预测</text>
+          </view>
+          <t-button wx:if="{{!aiAnalysis.loading}}" size="small" theme="primary" bind:tap="generateFinancialAnalysis" class="ai-button primary-button">
+            {{aiAnalysis.result ? '重新分析' : '开始分析'}}
+          </t-button>
+        </view>
+        
+        <!-- AI分析进行中 -->
+        <view wx:if="{{aiAnalysis.loading}}" class="ai-loading">
+          <t-loading theme="spinner" size="40rpx" />
+          <text class="loading-text">AI正在分析财务数据...</text>
+        </view>
+        
+        <!-- AI分析结果 -->
+        <view wx:elif="{{aiAnalysis.result}}" class="ai-analysis-content">
+          <!-- 财务健康度评级 -->
+          <view class="financial-health">
+            <view class="health-header">
+              <text class="health-title">📊 财务健康度</text>
+              <view class="health-score {{aiAnalysis.result.healthLevel}}">
+                {{aiAnalysis.result.healthScore}}分
+              </view>
+            </view>
+            <view class="health-indicators">
+              <view wx:for="{{aiAnalysis.result.healthIndicators}}" wx:key="category" class="health-indicator">
+                <text class="indicator-name">{{item.category}}</text>
+                <view class="indicator-bar">
+                  <view class="bar-fill {{item.level}}" style="width: {{item.score}}%"></view>
+                </view>
+                <text class="indicator-score">{{item.score}}</text>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 成本优化建议 -->
+          <view class="cost-optimization">
+            <text class="section-title">💰 成本优化建议</text>
+            <view class="optimization-list">
+              <view wx:for="{{aiAnalysis.result.costOptimization}}" wx:key="category" class="optimization-item">
+                <view class="opt-header">
+                  <text class="opt-category">{{item.category}}</text>
+                  <text class="opt-saving">节省 ¥{{item.potentialSaving}}</text>
+                </view>
+                <text class="opt-recommendation">{{item.recommendation}}</text>
+                <view class="opt-details">
+                  <text class="opt-impact">预期效果：{{item.expectedImpact}}</text>
+                  <text class="opt-timeline">实施周期：{{item.timeline}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 盈利预测 -->
+          <view class="profit-forecast">
+            <text class="section-title">📈 盈利预测</text>
+            <view class="forecast-chart">
+              <view class="chart-header">
+                <text class="chart-title">未来3个月预测</text>
+                <text class="forecast-confidence">预测准确度: {{aiAnalysis.result.forecastConfidence}}%</text>
+              </view>
+              <view class="monthly-forecast">
+                <view wx:for="{{aiAnalysis.result.monthlyForecast}}" wx:key="month" class="forecast-month">
+                  <text class="month-name">{{item.month}}</text>
+                  <view class="forecast-metrics">
+                    <view class="metric-item">
+                      <text class="metric-label">预测收入</text>
+                      <text class="metric-value income">¥{{item.income}}万</text>
+                    </view>
+                    <view class="metric-item">
+                      <text class="metric-label">预测支出</text>
+                      <text class="metric-value expense">¥{{item.expense}}万</text>
+                    </view>
+                    <view class="metric-item">
+                      <text class="metric-label">净利润</text>
+                      <text class="metric-value profit">¥{{item.profit}}万</text>
+                    </view>
+                  </view>
+                  <view class="profit-trend {{item.trendDirection}}">
+                    {{item.trendDirection === 'up' ? '↗' : item.trendDirection === 'down' ? '↘' : '→'}} {{item.trendText}}
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 投资建议 -->
+          <view class="investment-advice">
+            <text class="section-title">💡 投资建议</text>
+            <view class="investment-opportunities">
+              <view wx:for="{{aiAnalysis.result.investmentOpportunities}}" wx:key="opportunity" class="investment-item">
+                <view class="investment-header">
+                  <text class="investment-type">{{item.type}}</text>
+                  <view class="roi-badge">ROI {{item.expectedROI}}%</view>
+                </view>
+                <text class="investment-desc">{{item.description}}</text>
+                <view class="investment-details">
+                  <view class="detail-item">
+                    <text class="detail-label">投资金额：</text>
+                    <text class="detail-value">¥{{item.requiredInvestment}}万</text>
+                  </view>
+                  <view class="detail-item">
+                    <text class="detail-label">回收周期：</text>
+                    <text class="detail-value">{{item.paybackPeriod}}</text>
+                  </view>
+                  <view class="detail-item">
+                    <text class="detail-label">风险等级：</text>
+                    <text class="detail-value {{item.riskLevel}}">{{item.riskLevelText}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 风险预警 -->
+          <view wx:if="{{aiAnalysis.result.riskAlerts && aiAnalysis.result.riskAlerts.length > 0}}" class="risk-alerts">
+            <text class="section-title">⚠️ 风险预警</text>
+            <view class="alert-list">
+              <view wx:for="{{aiAnalysis.result.riskAlerts}}" wx:key="index" class="alert-item {{item.severity}}">
+                <view class="alert-icon">{{item.icon}}</view>
+                <view class="alert-content">
+                  <text class="alert-title">{{item.title}}</text>
+                  <text class="alert-description">{{item.description}}</text>
+                  <text class="alert-suggestion">建议措施：{{item.suggestion}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 无分析结果时的提示 -->
+        <view wx:else class="ai-analysis-empty">
+          <view class="empty-icon">📊</view>
+          <text class="empty-text">点击"开始分析"获取AI财务洞察</text>
+          <text class="empty-desc">基于收支数据进行智能分析和预测</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Tab 切换 -->
+    <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" class="finance-tabs">
+      <t-tab-panel label="收支明细" value="records" />
+      <t-tab-panel label="财务报表" value="reports" />
+      <t-tab-panel label="审批管理" value="approval" />
+    </t-tabs>
+
+    <!-- 收支明细页面 -->
+    <view wx:if="{{activeTab === 'records'}}" class="tab-content">
+      <!-- 筛选条件 -->
+      <view class="filter-section">
+        <t-row gutter="24">
+          <t-col span="12">
+            <t-dropdown-menu bind:change="onTypeFilterChange">
+              <t-dropdown-item 
+                value="{{filters.type}}" 
+                options="{{typeOptions}}" 
+                label="{{filters.type}}"
+              />
+            </t-dropdown-menu>
+          </t-col>
+          <t-col span="12">
+            <t-dropdown-menu bind:change="onPeriodFilterChange">
+              <t-dropdown-item 
+                value="{{filters.period}}" 
+                options="{{periodOptions}}" 
+                label="{{filters.period}}"
+              />
+            </t-dropdown-menu>
+          </t-col>
+        </t-row>
+      </view>
+
+      <!-- 交易记录 -->
+      <view class="card">
+        <view class="card-content">
+          <view class="card-header">
+            <text class="card-title">最近交易记录</text>
+          </view>
+          <t-cell-group class="records-list">
+            <t-cell 
+              wx:for="{{filteredRecords}}" 
+              wx:key="id"
+              title="{{item.title}}"
+              description="{{item.description}}"
+              note="{{item.date}}"
+              left-icon="{{item.icon}}"
+              arrow
+              bind:click="viewRecordDetail"
+              data-item="{{item}}"
+            >
+              <view slot="right" class="record-amount">
+                <text class="amount-value {{item.type}}">{{item.type === 'income' ? '+' : '-'}}¥{{item.amount}}</text>
+                <text class="amount-type">{{item.autoGenerated ? '自动生成' : '手动录入'}}</text>
+              </view>
+              <view slot="note" class="record-meta">
+                <text class="record-time">{{item.date}}</text>
+                <t-tag theme="{{item.statusTheme || 'default'}}" size="small">{{item.status || '未知'}}</t-tag>
+              </view>
+            </t-cell>
+          </t-cell-group>
+        </view>
+      </view>
+    </view>
+
+    <!-- 财务报表页面 -->
+    <view wx:if="{{activeTab === 'reports'}}" class="tab-content">
+      <view class="card">
+        <view class="card-content">
+          <view class="card-header">
+            <text class="card-title">财务报表</text>
+          </view>
+          
+          <!-- 趋势图占位 -->
+          <view class="chart-section">
+            <text class="chart-header">收支趋势图</text>
+            <view class="chart-placeholder">
+              <text class="chart-text">📊 图表占位区域</text>
+            </view>
+          </view>
+
+          <!-- 同比分析 -->
+          <view class="analysis-grid">
+            <view class="analysis-item success">
+              <text class="analysis-title">同比增长</text>
+              <text class="analysis-value">+{{reports.yearGrowth}}%</text>
+              <text class="analysis-desc">较去年同期</text>
+            </view>
+            <view class="analysis-item primary">
+              <text class="analysis-title">利润率</text>
+              <text class="analysis-value">{{reports.profitRate}}%</text>
+              <text class="analysis-desc">较上月提升</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 审批管理页面 -->
+    <view wx:if="{{activeTab === 'approval'}}" class="tab-content">
+      <view class="card">
+        <view class="card-content">
+          <view class="card-header">
+            <text class="card-title">待审批事项</text>
+          </view>
+          
+          <t-swipe-cell-group class="approval-list">
+            <t-swipe-cell 
+              wx:for="{{approvalItems}}" 
+              wx:key="id"
+              right="{{[{text: '拒绝', theme: 'danger'}, {text: '通过', theme: 'success'}]}}"
+              bind:action="onApprovalAction"
+              data-item="{{item}}"
+            >
+              <t-cell 
+                title="{{item.applicant}} - {{item.title}}"
+                description="{{item.description}}"
+                note="提交时间：{{item.submitTime}}"
+                left-icon="{{item.icon}}"
+              >
+                <view slot="right" class="approval-amount">
+                  <text>¥{{item.amount}}</text>
+                </view>
+              </t-cell>
+            </t-swipe-cell>
+          </t-swipe-cell-group>
+        </view>
+      </view>
+    </view>
+
+    <!-- 快捷操作 -->
+    <view class="card">
+      <view class="card-content">
+        <view class="card-header">
+          <text class="card-title">快捷操作</text>
+        </view>
+        <t-row gutter="24" class="actions-grid">
+          <t-col span="12">
+            <t-button theme="primary" block size="large" icon="add" bind:tap="addManualRecord" class="primary-button">
+              手动记账
+            </t-button>
+          </t-col>
+          <t-col span="12">
+            <t-button theme="light" block size="large" icon="download" bind:tap="exportReport" class="light-button">
+              导出报表
+            </t-button>
+          </t-col>
+        </t-row>
+      </view>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view style="height: 120rpx;"></view>
+  </scroll-view>
+</view>

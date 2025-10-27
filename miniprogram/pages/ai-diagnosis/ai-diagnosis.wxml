@@ -1,0 +1,430 @@
+<!--ai-diagnosis.wxml - AI智能诊断页面-->
+<view class="page ai-diagnosis-page">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="AI智能诊断"
+    show-back="{{true}}"
+    bind:back="goBack"
+  />
+
+  <!-- 页面内容 -->
+  <view class="page-content">
+    
+    <!-- ✨ 轮询进度显示 -->
+    <view class="polling-container" wx:if="{{showPolling && diagnosisStatus === 'processing'}}">
+      <view class="polling-header">
+        <text class="polling-title">诊断处理中</text>
+        <text class="polling-subtitle">AI正在分析您的诊断信息...</text>
+      </view>
+      <view class="polling-progress">
+        <view class="spinner"></view>
+        <text class="progress-text">已轮询 {{pollRetries}} 次</text>
+      </view>
+      <view class="polling-tips">
+        <text class="tip-text">✓ 系统已收到您的诊断请求</text>
+        <text class="tip-text">✓ 正在调用AI大模型进行分析</text>
+        <text class="tip-text">✓ 预计需要 5-10 秒，请耐心等待</text>
+      </view>
+    </view>
+
+    <!-- 诊断结果展示 - 全新设计 -->
+    <view class="diagnosis-result" wx:if="{{diagnosisResult && diagnosisStatus === 'completed'}}">
+      
+      <!-- 诊断头部 -->
+      <view class="result-header-card">
+        <view class="header-icon">
+          <t-icon name="check-circle" size="48" color="#00a870" />
+        </view>
+        <view class="header-content">
+          <view class="header-title">AI诊断完成</view>
+          <view class="header-subtitle">基于症状分析的智能诊断结果</view>
+        </view>
+      </view>
+
+      <!-- 主要诊断卡片 -->
+      <view class="diagnosis-card primary-card">
+        <view class="card-header">
+          <view class="card-title">主要诊断</view>
+          <view class="confidence-badge">
+            <text class="confidence-number">{{diagnosisResult.primaryDiagnosis.confidence}}</text>
+            <text class="confidence-unit">%</text>
+          </view>
+        </view>
+        <view class="card-body">
+          <view class="diagnosis-name">{{diagnosisResult.primaryDiagnosis.disease}}</view>
+          <view class="diagnosis-reasoning">{{diagnosisResult.primaryDiagnosis.reasoning}}</view>
+        </view>
+        
+        <!-- 严重程度和紧急程度 -->
+        <view class="status-row">
+          <view class="status-item">
+            <text class="status-label">严重程度</text>
+            <t-tag 
+              theme="{{diagnosisResult.severity === 'severe' ? 'danger' : diagnosisResult.severity === 'moderate' ? 'warning' : 'success'}}"
+              size="medium"
+            >
+              {{diagnosisResult.severity === 'severe' ? '严重' : diagnosisResult.severity === 'moderate' ? '中度' : '轻度'}}
+            </t-tag>
+          </view>
+          <view class="status-item">
+            <text class="status-label">紧急程度</text>
+            <t-tag 
+              theme="{{diagnosisResult.urgency === 'critical' || diagnosisResult.urgency === 'high' ? 'danger' : diagnosisResult.urgency === 'medium' ? 'warning' : 'primary'}}"
+              size="medium"
+            >
+              {{diagnosisResult.urgency === 'critical' ? '危急' : diagnosisResult.urgency === 'high' ? '高' : diagnosisResult.urgency === 'medium' ? '中' : '低'}}
+            </t-tag>
+          </view>
+        </view>
+      </view>
+
+      <!-- 鉴别诊断卡片 -->
+      <view class="diagnosis-card" wx:if="{{diagnosisResult.differentialDiagnosis && diagnosisResult.differentialDiagnosis.length > 0}}">
+        <view class="card-header">
+          <view class="card-title">鉴别诊断</view>
+          <view class="card-subtitle">其他可能的疾病</view>
+        </view>
+        <view class="card-body">
+          <view class="differential-list">
+            <view 
+              class="differential-item"
+              wx:for="{{diagnosisResult.differentialDiagnosis}}" 
+              wx:key="index"
+            >
+              <view class="diff-name">{{item.disease}}</view>
+              <view class="diff-confidence">{{item.confidence}}%</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 立即措施卡片 -->
+      <view class="diagnosis-card action-card" wx:if="{{diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.immediate}}">
+        <view class="card-header">
+          <t-icon name="notification" size="20" color="#e34d59" />
+          <view class="card-title">立即措施</view>
+        </view>
+        <view class="card-body">
+          <view class="action-list">
+            <view 
+              class="action-list-item"
+              wx:for="{{diagnosisResult.treatmentRecommendation.immediate}}" 
+              wx:key="index"
+            >
+              <view class="action-number">{{index + 1}}</view>
+              <view class="action-content">{{item}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 药物治疗卡片 -->
+      <view class="diagnosis-card medication-card" wx:if="{{diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.medication}}">
+        <view class="card-header">
+          <t-icon name="edit" size="20" color="#0052d9" />
+          <view class="card-title">药物治疗方案</view>
+        </view>
+        <view class="card-body">
+          <view 
+            class="medication-box"
+            wx:for="{{diagnosisResult.treatmentRecommendation.medication}}" 
+            wx:key="index"
+          >
+            <view class="med-name-row">
+              <t-icon name="check-circle" size="18" color="#0052d9" />
+              <text class="med-name-text">{{item.name}}</text>
+            </view>
+            <view class="med-info-grid">
+              <view class="med-info-item">
+                <text class="med-info-label">用量</text>
+                <text class="med-info-value">{{item.dosage}}</text>
+              </view>
+              <view class="med-info-item">
+                <text class="med-info-label">途径</text>
+                <text class="med-info-value">{{item.route}}</text>
+              </view>
+              <view class="med-info-item">
+                <text class="med-info-label">频率</text>
+                <text class="med-info-value">{{item.frequency}}</text>
+              </view>
+              <view class="med-info-item">
+                <text class="med-info-label">疗程</text>
+                <text class="med-info-value">{{item.duration}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 支持性治疗卡片 -->
+      <view class="diagnosis-card" wx:if="{{diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.supportive}}">
+        <view class="card-header">
+          <t-icon name="heart" size="20" color="#ed7b2f" />
+          <view class="card-title">支持性治疗</view>
+        </view>
+        <view class="card-body">
+          <view class="simple-list">
+            <view 
+              class="simple-list-item"
+              wx:for="{{diagnosisResult.treatmentRecommendation.supportive}}" 
+              wx:key="index"
+            >
+              <view class="list-dot"></view>
+              <text class="list-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 预防建议卡片 -->
+      <view class="diagnosis-card" wx:if="{{diagnosisResult.preventionAdvice}}">
+        <view class="card-header">
+          <t-icon name="secured" size="20" color="#00a870" />
+          <view class="card-title">预防建议</view>
+        </view>
+        <view class="card-body">
+          <view class="simple-list">
+            <view 
+              class="simple-list-item"
+              wx:for="{{diagnosisResult.preventionAdvice}}" 
+              wx:key="index"
+            >
+              <view class="list-dot prevention-dot"></view>
+              <text class="list-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="result-actions">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block
+          bind:tap="adoptAdvice"
+          class="primary-action-btn"
+        >
+          <t-icon name="add" size="20" />
+          采纳建议并创建治疗方案
+        </t-button>
+        
+        <view class="secondary-actions">
+          <t-button 
+            theme="light" 
+            size="medium" 
+            bind:tap="saveRecord"
+            icon="file-add"
+          >保存记录</t-button>
+          
+          <t-button 
+            theme="light" 
+            size="medium" 
+            bind:tap="resetDiagnosis"
+            icon="refresh"
+          >重新诊断</t-button>
+          
+          <t-button 
+            theme="light" 
+            size="medium" 
+            bind:tap="contactVet"
+            icon="call"
+          >联系兽医</t-button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 症状输入表单 -->
+    <view class="diagnosis-form" wx:else>
+      
+      <!-- 重要提醒 -->
+      <view class="notice-section">
+        <t-notice-bar 
+          theme="warning" 
+          content="⚠️ AI诊断仅供参考，请结合专业兽医建议进行最终诊断和治疗"
+        />
+      </view>
+
+      <!-- 基本信息 -->
+      <view class="form-section">
+        <text class="section-title">基本信息</text>
+        
+        <!-- 批次选择 -->
+        <view class="form-row">
+          <text class="form-label">选择批次</text>
+          <picker 
+            class="form-picker"
+            mode="selector"
+            range="{{batchPickerRange}}"
+            value="{{batchPickerIndex}}"
+            bindchange="onBatchPickerChange"
+          >
+            <view class="picker-value {{selectedBatchNumber ? '' : 'placeholder'}}">
+              {{selectedBatchNumber ? selectedBatchNumber : '请选择批次'}}
+            </view>
+          </picker>
+        </view>
+
+        <!-- 日龄（自动显示） -->
+        <view class="form-row" wx:if="{{selectedBatchId}}">
+          <text class="form-label">鹅只日龄</text>
+          <view class="form-value">
+            <text class="value-text">{{dayAge}}</text>
+            <text class="form-unit">天</text>
+          </view>
+        </view>
+        
+        <view class="form-row">
+          <text class="form-label">受影响数量</text>
+          <input 
+            class="form-input"
+            type="number"
+            placeholder=""
+            value="{{affectedCount}}"
+            bindinput="onAffectedCountInput"
+          />
+          <text class="form-unit">只</text>
+        </view>
+      </view>
+
+      <!-- 症状描述 -->
+      <view class="form-section">
+        <text class="section-title">症状描述</text>
+        
+        <!-- 常见症状标签（点击填充） -->
+        <view class="symptom-tags-inline">
+          <view 
+            wx:for="{{commonSymptoms}}" 
+            wx:key="id"
+            class="symptom-tag-inline"
+            bind:tap="onSymptomTagTap"
+            data-name="{{item.name}}"
+          >
+            <text class="tag-icon">+</text>
+            <text class="tag-name">{{item.name}}</text>
+          </view>
+        </view>
+        
+        <!-- 症状输入框 -->
+        <textarea 
+          placeholder="请详细描述鹅群症状，如：精神状态、食欲情况、排便状况、异常行为等..."
+          value="{{symptoms}}"
+          bindinput="onSymptomsInput"
+          maxlength="500"
+          auto-height="{{true}}"
+          class="symptoms-textarea"
+        />
+        
+        <view class="char-count">{{symptoms.length}}/500</view>
+      </view>
+
+      <!-- 图片上传 - ✨ 增强版 -->
+      <view class="form-section">
+        <view class="section-header-with-tip">
+          <text class="section-title">上传症状图片（可选）</text>
+          <view class="image-benefit-badge">
+            <t-icon name="tips" size="16" color="#0052d9" />
+            <text class="benefit-text">图片诊断准确率提升15%</text>
+          </view>
+        </view>
+        
+        <!-- ✨ 拍摄建议 -->
+        <view class="photo-tips-card">
+          <view class="tips-title">
+            <t-icon name="lightbulb" size="18" color="#ed7b2f" />
+            <text class="tips-title-text">拍摄建议（可提高诊断准确性）</text>
+          </view>
+          <view class="tips-list">
+            <view class="tip-item">
+              <text class="tip-number">1</text>
+              <text class="tip-text">粪便照片：拍摄清晰、光线充足，能看清颜色和性状</text>
+            </view>
+            <view class="tip-item">
+              <text class="tip-number">2</text>
+              <text class="tip-text">病鹅姿态：全身照，能看清精神状态和异常姿势</text>
+            </view>
+            <view class="tip-item">
+              <text class="tip-number">3</text>
+              <text class="tip-text">局部病变：肛门周围、眼部、肢体等异常部位特写</text>
+            </view>
+            <view class="tip-item">
+              <text class="tip-number">4</text>
+              <text class="tip-text">避免模糊：请勿抖动，确保对焦清晰</text>
+            </view>
+          </view>
+        </view>
+        
+        <view class="image-upload-container">
+          <!-- 已上传的图片 -->
+          <view 
+            class="uploaded-image-item"
+            wx:for="{{images}}" 
+            wx:key="index"
+          >
+            <t-image 
+              src="{{item}}"
+              mode="aspectFill"
+              width="200rpx"
+              height="200rpx"
+              bind:tap="onPreviewImage"
+              data-src="{{item}}"
+              class="uploaded-image"
+            />
+            <view 
+              class="image-delete-btn"
+              bind:tap="onDeleteImage"
+              data-index="{{index}}"
+            >
+              <t-icon name="close" size="16" color="#fff" />
+            </view>
+          </view>
+
+          <!-- 上传按钮 -->
+          <view 
+            class="upload-placeholder {{images.length === 0 ? 'first-upload' : ''}}"
+            wx:if="{{images.length < 9}}"
+            bind:tap="onChooseImage"
+          >
+            <t-icon name="add" size="{{images.length === 0 ? 56 : 48}}" color="{{images.length === 0 ? '#0052d9' : '#c8c9cc'}}" />
+            <text class="upload-text {{images.length === 0 ? 'upload-text-primary' : ''}}">
+              {{images.length === 0 ? '拍摄症状照片' : '继续添加'}}
+            </text>
+            <text class="upload-hint" wx:if="{{images.length === 0}}">可提升诊断准确率</text>
+          </view>
+        </view>
+        
+        <!-- 已上传提示 -->
+        <view class="upload-status" wx:if="{{images.length > 0}}">
+          <t-icon name="check-circle" size="16" color="#00a870" />
+          <text class="status-text">已上传 {{images.length}} 张图片，AI将结合图片进行综合诊断</text>
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="submit-section">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block
+          disabled="{{!formValid || submitting}}"
+          loading="{{submitting}}"
+          bind:tap="startDiagnosis"
+          class="submit-btn"
+        >
+          {{submitting ? 'AI诊断中...' : '开始AI智能诊断'}}
+        </t-button>
+      </view>
+
+      <!-- 底部链接 -->
+      <view class="bottom-links">
+        <text class="link-text" bind:tap="viewDiagnosisHistory">查看历史诊断</text>
+        <text class="link-divider">|</text>
+        <text class="link-text" bind:tap="contactVet">联系专业兽医</text>
+      </view>
+
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view class="safe-area-bottom"></view>
+  </view>
+</view>

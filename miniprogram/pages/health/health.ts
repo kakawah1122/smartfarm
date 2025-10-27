@@ -715,15 +715,21 @@ Page<PageData>({
           ? (abnormalResult.result.data || [])
           : []
         
+        // ✅ 累加受影响的动物数量，而不是记录条数
+        const abnormalAnimalCount = abnormalRecords.reduce((sum: number, record: any) => {
+          return sum + (record.affectedCount || 0)
+        }, 0)
+        
         console.log('✅ 全部批次异常记录统计:', {
-          abnormalCount: abnormalRecords.length
+          abnormalRecordCount: abnormalRecords.length,
+          abnormalAnimalCount: abnormalAnimalCount
         })
         
         // 设置监控数据（实时健康状态）
         const monitoringData = {
           realTimeStatus: {
             healthyCount: healthyCount,
-            abnormalCount: abnormalRecords.length,  // ✅ 使用真实异常记录数量
+            abnormalCount: abnormalAnimalCount,  // ✅ 使用受影响的动物数量
             isolatedCount: 0  // 全部批次视图暂不统计隔离数
           },
           abnormalList: abnormalRecords,
@@ -738,7 +744,7 @@ Page<PageData>({
             deadCount: deadCount,
             healthyRate: healthyRate + '%',
             mortalityRate: mortalityRate + '%',
-            abnormalCount: abnormalRecords.length,  // ✅ 使用真实异常记录数量
+            abnormalCount: abnormalAnimalCount,  // ✅ 使用受影响的动物数量
             treatingCount: totalOngoing,  // ✅ 设置治疗中数量
             isolatedCount: 0
           },
@@ -943,6 +949,11 @@ Page<PageData>({
         ? (abnormalResult.result.data || [])
         : []
       
+      // ✅ 累加受影响的动物数量，而不是记录条数
+      const abnormalAnimalCount = abnormalRecords.reduce((sum: number, record: any) => {
+        return sum + (record.affectedCount || 0)
+      }, 0)
+      
       // 处理治疗记录数据
       const treatments = treatmentResult.result?.success 
         ? (treatmentResult.result.data?.treatments || [])
@@ -962,13 +973,14 @@ Page<PageData>({
           cureRate: parseFloat(costData.cureRate || '0')  // ✅ 显示真实治愈率
         },
         'treatmentData.currentTreatments': treatments,
-        // ✅ 更新异常数量 - 关联数据库异常记录
-        'monitoringData.realTimeStatus.abnormalCount': abnormalRecords.length,
+        // ✅ 更新异常数量 - 按受影响的动物数量统计
+        'monitoringData.realTimeStatus.abnormalCount': abnormalAnimalCount,
         'monitoringData.abnormalList': abnormalRecords
       })
       
       console.log('✅ 治疗数据加载成功:', {
-        abnormalCount: abnormalRecords.length,
+        abnormalRecordCount: abnormalRecords.length,
+        abnormalAnimalCount: abnormalAnimalCount,
         ongoingTreatment: costData.ongoingCount,
         cureRate: costData.cureRate,
         treatmentCount: treatments.length

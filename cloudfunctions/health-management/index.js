@@ -1247,6 +1247,7 @@ async function getHealthStatistics(batchId, dateRange) {
     let mortalityRate = 0
     
     // 统计异常记录（只统计从AI诊断创建的异常记录）
+    // ✅ 累加 affectedCount，而不是记录条数
     const abnormalRecords = await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .where({
         batchId,
@@ -1254,28 +1255,39 @@ async function getHealthStatistics(batchId, dateRange) {
         status: 'abnormal',
         isDeleted: _.neq(true)
       })
-      .count()
-    const abnormalCount = abnormalRecords.total || 0
+      .get()
+    
+    const abnormalCount = abnormalRecords.data.reduce((sum, record) => {
+      return sum + (record.affectedCount || 0)
+    }, 0)
     
     // 统计治疗中记录（status='treating' 或 treatment_records中status='ongoing'）
+    // ✅ 累加 totalTreated 或 animalIds.length
     const treatingRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
         batchId,
         'outcome.status': 'ongoing',
         isDeleted: _.neq(true)
       })
-      .count()
-    const treatingCount = treatingRecords.total || 0
+      .get()
+    
+    const treatingCount = treatingRecords.data.reduce((sum, record) => {
+      return sum + (record.outcome?.totalTreated || 0)
+    }, 0)
     
     // 统计隔离中记录（status='isolated' 或 isolation_records中status='ongoing'）
+    // ✅ 累加 isolatedCount
     const isolatedRecords = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
       .where({
         batchId,
         status: 'ongoing',
         isDeleted: _.neq(true)
       })
-      .count()
-    const isolatedCount = isolatedRecords.total || 0
+      .get()
+    
+    const isolatedCount = isolatedRecords.data.reduce((sum, record) => {
+      return sum + (record.isolatedCount || 0)
+    }, 0)
     
     // ✅ 获取实时死亡数（从死亡记录表）
     const deathRecordsResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
@@ -1568,7 +1580,8 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         let lastCheckDate = null
         let recentIssues = []
         
-        // ✅ 查询异常记录数量（状态为 abnormal, treating, isolated 的记录）
+        // ✅ 查询异常记录（状态为 abnormal, treating, isolated 的记录）
+        // ⚠️ 不能只用 .count()，要累加每条记录的 affectedCount
         const abnormalRecordsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
           .where({
             batchId: batch._id,
@@ -1576,13 +1589,17 @@ async function getAllBatchesHealthSummary(event, wxContext) {
             status: _.in(['abnormal', 'treating', 'isolated']),
             isDeleted: _.neq(true)
           })
-          .count()
+          .get()
         
-        const abnormalCount = abnormalRecordsResult.total || 0
+        // ✅ 累加受影响的动物数量，而不是记录数
+        const abnormalCount = abnormalRecordsResult.data.reduce((sum, record) => {
+          return sum + (record.affectedCount || 0)
+        }, 0)
         
         console.log(`📊 批次 ${batch.batchNumber} 异常统计:`, {
           批次ID: batch._id,
-          异常记录数: abnormalCount,
+          异常记录条数: abnormalRecordsResult.data.length,
+          受影响动物数: abnormalCount,
           总存栏数: totalCount
         })
         

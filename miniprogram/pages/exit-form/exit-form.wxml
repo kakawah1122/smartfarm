@@ -1,0 +1,233 @@
+<!--exit-form.wxml - 出栏记录表单页面-->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="新增出栏记录"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
+    bind:back="goBack"
+  />
+
+  <!-- 表单内容区域 -->
+  <view class="form-content">
+    <!-- 表单顶部信息卡片 -->
+    <view class="form-header">
+      <view class="form-card">
+        <view class="header-info">
+          <view class="batch-id-section">
+            <view class="batch-label">批次ID</view>
+            <view class="batch-id" bind:tap="showBatchPicker">
+              <text class="batch-text">{{formData.batchId || '请选择入栏批次'}}</text>
+              <t-icon name="chevron-down" size="24" color="#666" />
+            </view>
+            <t-tag theme="primary" size="small">从入栏批次选择</t-tag>
+          </view>
+          <view class="date-info">
+            <text class="date-text">{{formData.exitDate || '请选择出栏日期'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI盘点信息卡片 -->
+    <view wx:if="{{showAIInfo}}" class="ai-info-section">
+      <view class="ai-info-card">
+        <view class="ai-header">
+          <view class="ai-icon">🤖</view>
+          <view class="ai-title">
+            <text class="ai-title-text">AI智能盘点结果</text>
+            <view class="ai-confidence">置信度 {{aiData.confidence}}%</view>
+          </view>
+        </view>
+        <view class="ai-content">
+          <view class="ai-count-info">
+            <text class="ai-count-label">识别数量：</text>
+            <text class="ai-count-value">{{aiData.count}} 只</text>
+          </view>
+          <view wx:if="{{aiData.abnormalCount > 0}}" class="ai-warning">
+            <text class="warning-text">⚠️ 发现 {{aiData.abnormalCount}} 只疑似异常个体</text>
+          </view>
+          <view wx:if="{{aiData.suggestions.length > 0}}" class="ai-suggestions">
+            <text class="suggestions-title">建议：</text>
+            <text wx:for="{{aiData.suggestions}}" wx:key="index" class="suggestion-item">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主要表单 -->
+    <view class="entry-form">
+      <!-- 基础信息卡片 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">基础信息</text>
+        </view>
+        <view class="form-card">
+          <!-- 出栏日期 -->
+          <view class="form-item" bind:tap="showDatePicker">
+            <view class="item-label required">出栏日期</view>
+            <view class="item-input date-input">
+              <text class="date-text">{{formData.exitDate || '请选择出栏日期'}}</text>
+              <t-icon name="calendar" size="32" color="#c8c9cc" />
+            </view>
+          </view>
+
+          <!-- 鹅的类型（从入栏批次自动获取） -->
+          <view class="form-item">
+            <view class="item-label non-required">鹅的品种</view>
+            <view class="item-input">
+              <text class="auto-fill-text-right">{{formData.type || '请先选择入栏批次'}}</text>
+            </view>
+          </view>
+
+          <!-- 客户信息 -->
+          <view class="form-item">
+            <view class="item-label required">客户信息</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入客户名称"
+                value="{{formData.customer}}"
+                bind:change="onFieldChange"
+                data-field="customer"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 出栏数量 -->
+          <view class="form-item">
+            <view class="item-label required">出栏数量</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入数量"
+                value="{{formData.quantity}}"
+                type="number"
+                bind:change="onFieldChange"
+                data-field="quantity"
+                suffix="羽"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 重量与价格信息卡片 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">重量与价格</text>
+        </view>
+        <view class="form-card">
+          <!-- 平均重量 -->
+          <view class="form-item">
+            <view class="item-label required">平均重量</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入平均重量"
+                value="{{formData.avgWeight}}"
+                type="digit"
+                bind:change="onFieldChange"
+                data-field="avgWeight"
+                suffix="斤/羽"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 单价（按重量） -->
+          <view class="form-item">
+            <view class="item-label required">单价</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入单价"
+                value="{{formData.unitPrice}}"
+                type="digit"
+                bind:change="onFieldChange"
+                data-field="unitPrice"
+                suffix="元/斤"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
+          <!-- 总重量 -->
+          <view class="form-item">
+            <view class="item-label non-required">总重量</view>
+            <view class="item-value">
+              <text class="weight-value">{{totalWeight}}斤</text>
+            </view>
+          </view>
+
+          <!-- 总收入 -->
+          <view class="form-item amount-item">
+            <view class="item-label non-required">总收入</view>
+            <view class="item-value">
+              <text class="amount-value">￥{{totalRevenue}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 备注信息 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">备注</text>
+        </view>
+        <!-- 备注输入框 - 左右满屏 -->
+        <view class="fullwidth-textarea-container">
+          <t-textarea
+            placeholder="请输入备注信息（可选）"
+            value="{{formData.remarks}}"
+            bind:change="onFieldChange"
+            data-field="remarks"
+            maxlength="200"
+            indicator
+            autosize
+            class="fullwidth-textarea"
+          />
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="form-actions">
+        <t-button 
+          theme="primary" 
+          size="large" 
+          block 
+          bind:tap="onSubmit"
+          loading="{{submitting}}"
+          class="action-button primary-button"
+        >
+          {{submitting ? '提交中...' : '提交出栏记录'}}
+        </t-button>
+        <t-button 
+          theme="default" 
+          size="large" 
+          block 
+          bind:tap="onReset"
+          class="action-button secondary-button"
+        >
+          重置表单
+        </t-button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 日期选择器 -->
+  <t-date-time-picker 
+    visible="{{showDate}}"
+    mode="date"
+    value="{{dateValue}}"
+    format="YYYY-MM-DD"
+    bind:change="onDateChange"
+    bind:cancel="hideDatePicker"
+    bind:confirm="onDateConfirm"
+  />
+
+  <!-- 批次选择器已改为使用原生wx.showActionSheet -->
+</view>

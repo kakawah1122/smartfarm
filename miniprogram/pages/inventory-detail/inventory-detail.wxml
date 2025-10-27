@@ -1,0 +1,140 @@
+<!--inventory-detail.wxml - 库存详情页面-->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="{{pageTitle}}"
+    show-back="true"
+    show-menu="false"
+    show-record="false"
+    bind:back="goBack"
+  />
+
+  <!-- 页面内容 -->
+  <view class="content">
+    <!-- 库存列表 -->
+    <view class="materials-section">
+      <view wx:if="{{filterCategory}}" class="filter-info">
+        <t-tag theme="primary" size="small">
+          {{filterCategory === 'feed' ? '饲料分类' : filterCategory === 'medicine' ? '药品分类' : filterCategory === 'equipment' ? '设备分类' : '全部分类'}}
+        </t-tag>
+      </view>
+      
+      <!-- 搜索和筛选 -->
+      <view class="search-bar">
+        <view class="search-input-wrapper">
+          <t-input 
+            placeholder="搜索物料名称" 
+            value="{{searchKeyword}}"
+            bind:change="onSearchChange"
+            prefixIcon="search"
+            style="height: 28px; line-height: 28px; font-size: 13px; padding: 4px 10px;"
+          />
+        </view>
+        <t-button theme="light" size="small" bind:tap="showFilter" class="light-button filter-button">筛选</t-button>
+      </view>
+
+      <!-- 物料列表 -->
+      <view class="materials-list" wx:if="{{filteredMaterialsList.length > 0}}">
+        <view 
+          class="material-item" 
+          wx:for="{{filteredMaterialsList}}" 
+          wx:key="materialId"
+          bind:tap="showMaterialDetail"
+          data-material="{{item}}"
+        >
+          <view class="item-header">
+            <view class="material-name">{{item.materialName}}</view>
+            <view class="warning-badge" wx:if="{{item.isLowStock}}">库存不足</view>
+          </view>
+          
+          <view class="item-content">
+            <view class="stock-info">
+              <view class="current-stock">
+                <text class="number">{{item.currentStock}}</text>
+                <text class="unit">{{item.unit}}</text>
+              </view>
+              <view class="safety-stock">
+                <text class="label">安全库存：{{item.safetyStock}} {{item.unit}}</text>
+              </view>
+            </view>
+            
+            <view class="material-info">
+              <view class="supplier">供应商：{{item.supplier}}</view>
+              <view class="purchase-date">最新入库：{{item.latestPurchaseDate}}</view>
+            </view>
+          </view>
+
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:else>
+        <t-empty 
+          wx:if="{{loading}}"
+          description="正在加载中..."
+        />
+        <t-empty 
+          wx:else
+          description="暂无物料数据"
+        />
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 物料详情弹窗 -->
+  <bottom-popup
+    visible="{{showDetailPopup}}"
+    title="物料详情"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="确定"
+    bind:close="closeMaterialDetailPopup"
+    bind:confirm="closeMaterialDetailPopup"
+    bind:visiblechange="onDetailPopupChange"
+  >
+    <view wx:if="{{selectedMaterial}}" class="material-detail-content">
+      <view class="detail-card">
+        <view class="card-content">
+          <view class="info-row">
+            <text class="info-label">物料名称：</text>
+            <text class="info-value">{{selectedMaterial.materialName}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">当前库存：</text>
+            <text class="info-value stock-value">{{selectedMaterial.currentStock}} {{selectedMaterial.unit}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">安全库存：</text>
+            <text class="info-value">{{selectedMaterial.safetyStock}} {{selectedMaterial.unit}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">库存状态：</text>
+            <view class="status-value">
+              <text class="status-text {{selectedMaterial.isLowStock ? 'low-stock' : 'normal-stock'}}">
+                {{selectedMaterial.isLowStock ? '库存不足' : '库存正常'}}
+              </text>
+            </view>
+          </view>
+          <view class="info-row">
+            <text class="info-label">供应商：</text>
+            <text class="info-value">{{selectedMaterial.supplier}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">最新入库：</text>
+            <text class="info-value">{{selectedMaterial.latestPurchaseDate}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedMaterial.specification}}">
+            <text class="info-label">规格：</text>
+            <text class="info-value">{{selectedMaterial.specification}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedMaterial.unitPrice}}">
+            <text class="info-label">单价：</text>
+            <text class="info-value price-value">￥{{selectedMaterial.unitPrice}}/{{selectedMaterial.unit}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
+
+</view>

@@ -1,0 +1,168 @@
+<!--survival-analysis.wxml - 存活率分析页面-->
+<view class="page survival-analysis-page">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="存活率分析"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <t-loading theme="circular" size="40rpx" />
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 内容区域 -->
+  <view wx:else class="content-container">
+    
+    <!-- 日期范围选择 -->
+    <view class="date-range-selector">
+      <t-radio-group value="{{dateRange}}" bind:change="onDateRangeChange" theme="primary">
+        <t-radio name="week" label="本周" />
+        <t-radio name="month" label="本月" />
+        <t-radio name="quarter" label="本季度" />
+        <t-radio name="year" label="本年度" />
+      </t-radio-group>
+    </view>
+
+    <!-- 存活率总览 -->
+    <view class="overview-card">
+      <view class="overview-header">
+        <text class="card-title">存活率总览</text>
+        <view class="trend-indicator trend-{{overview.trend}}">
+          <t-icon name="{{overview.trend === 'improving' ? 'arrow-up' : 'arrow-down'}}" size="16" />
+          <text>{{overview.trendValue}}%</text>
+        </view>
+      </view>
+      
+      <view class="overview-main">
+        <view class="main-rate">
+          <text class="rate-value">{{overview.currentRate}}%</text>
+          <text class="rate-label">当前存活率</text>
+        </view>
+        <view class="overview-stats">
+          <view class="stat-item">
+            <text class="stat-value">{{overview.totalAnimals}}</text>
+            <text class="stat-label">总数量</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{overview.survivedAnimals}}</text>
+            <text class="stat-label">存活数量</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="comparison-bar">
+        <view class="comparison-item">
+          <text class="comparison-label">上期</text>
+          <text class="comparison-value">{{overview.previousRate}}%</text>
+        </view>
+        <view class="comparison-item">
+          <text class="comparison-label">行业均值</text>
+          <text class="comparison-value">{{comparison.industryAverage}}%</text>
+        </view>
+        <view class="comparison-item">
+          <text class="comparison-label">目标值</text>
+          <text class="comparison-value">{{comparison.target}}%</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 分阶段分析 -->
+    <view class="stage-analysis-card">
+      <text class="card-title">分阶段分析</text>
+      <view class="stage-list">
+        <view 
+          class="stage-item"
+          wx:for="{{stageAnalysis}}"
+          wx:key="stage"
+          bind:tap="onStageDetail"
+          data-stage="{{item}}"
+        >
+          <view class="stage-info">
+            <view class="stage-name">{{item.stage}}</view>
+            <view class="stage-details">
+              <text class="stage-rate">{{item.rate}}%</text>
+              <text class="stage-count">{{item.survived}}/{{item.total}}</text>
+            </view>
+          </view>
+          <view class="stage-progress">
+            <view class="progress-bar">
+              <view 
+                class="progress-fill" 
+                style="width: {{item.rate}}%; background-color: {{item.color}}"
+              ></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 时间趋势 -->
+    <view class="trend-analysis-card">
+      <text class="card-title">时间趋势</text>
+      <view class="trend-chart">
+        <view class="trend-list">
+          <view 
+            class="trend-item"
+            wx:for="{{trendData}}"
+            wx:key="date"
+          >
+            <view class="trend-date">{{item.date}}</view>
+            <view class="trend-rate">{{item.rate}}%</view>
+            <view class="trend-bar">
+              <view 
+                class="trend-fill" 
+                style="height: {{item.rate - 95}}0rpx"
+              ></view>
+            </view>
+          </view>
+        </view>
+        <view class="trend-axis">
+          <text class="axis-label">95%</text>
+          <text class="axis-label">100%</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 影响因素分析 -->
+    <view class="factors-analysis-card">
+      <text class="card-title">影响因素分析</text>
+      <view class="factors-list">
+        <view 
+          class="factor-item"
+          wx:for="{{factors}}"
+          wx:key="name"
+        >
+          <view class="factor-info">
+            <text class="factor-name">{{item.name}}</text>
+            <view class="factor-meta">
+              <text class="factor-value">{{item.value}}{{item.name === '环境消毒频率' ? '次' : '%'}}</text>
+              <text class="correlation">相关性: {{item.correlation}}</text>
+            </view>
+          </view>
+          <view class="impact-indicator impact-{{item.impact}}">
+            {{item.impact === 'high' ? '高' : item.impact === 'medium' ? '中' : '低'}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作区域 -->
+    <view class="actions-section">
+      <t-button 
+        theme="primary" 
+        size="large" 
+        block
+        bind:tap="exportReport"
+      >
+        导出存活率分析报告
+      </t-button>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view style="height: 120rpx;"></view>
+  </view>
+</view>
