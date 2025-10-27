@@ -67,6 +67,23 @@
             <t-tag theme="primary" size="small">进行中</t-tag>
           </view>
 
+          <!-- 用药记录 -->
+          <view class="medication-records" wx:if="{{medications.length > 0}}">
+            <view class="records-title">用药记录</view>
+            <view class="records-list">
+              <view class="record-item" wx:for="{{medications}}" wx:key="index">
+                <view class="record-icon">💊</view>
+                <view class="record-info">
+                  <text class="record-name">{{item.name}}</text>
+                  <text class="record-spec">{{item.quantity}}{{item.unit}}</text>
+                </view>
+                <view class="record-dosage" wx:if="{{item.dosage}}">
+                  <text>{{item.dosage}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
           <!-- 进度统计 -->
           <view class="progress-stats">
             <view class="stat-item">
