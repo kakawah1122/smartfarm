@@ -247,7 +247,7 @@
             </view>
             <view class="stat-content">
               <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.sickCount}}</text>
-              <text class="stat-label">异常</text>
+              <text class="stat-label">异常数</text>
             </view>
           </view>
 
@@ -269,7 +269,7 @@
             </view>
             <view class="stat-content">
               <text class="stat-value">{{monitoringData.realTimeStatus.isolatedCount || 0}}</text>
-              <text class="stat-label">隔离</text>
+              <text class="stat-label">隔离数</text>
             </view>
           </view>
 
