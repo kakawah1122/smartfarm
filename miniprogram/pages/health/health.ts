@@ -504,6 +504,18 @@ Page<PageData>({
         const data = healthResult.result.data
         const batches = data.batches || []
         
+        console.log('📊 后端返回的批次数据:', {
+          批次数量: batches.length,
+          批次详情: batches.map((b: any) => ({
+            批次号: b.batchNumber,
+            总数: b.totalCount,
+            健康数: b.healthyCount,
+            生病数: b.sickCount,
+            死亡数: b.deadCount,
+            健康率: b.healthyRate
+          }))
+        })
+        
         // 为每个批次并行查询预防记录
         const batchPreventionPromises = batches.map(async (batch: any) => {
           try {
@@ -568,9 +580,22 @@ Page<PageData>({
         const sickCount = batches.reduce((sum: number, b: any) => sum + (b.sickCount || 0), 0)
         const deadCount = batches.reduce((sum: number, b: any) => sum + (b.deadCount || 0), 0)
         
+        console.log('📊 汇总统计:', {
+          总动物数: totalAnimals,
+          健康数: healthyCount,
+          生病数: sickCount,
+          死亡数: deadCount,
+          计算公式: `健康率 = (${healthyCount} / ${totalAnimals}) * 100`
+        })
+        
         // 计算健康率
         const healthyRate = totalAnimals > 0 ? ((healthyCount / totalAnimals) * 100).toFixed(1) : '100'
         const mortalityRate = totalAnimals > 0 ? ((deadCount / totalAnimals) * 100).toFixed(1) : '0'
+        
+        console.log('✅ 计算结果:', {
+          健康率: healthyRate + '%',
+          死亡率: mortalityRate + '%'
+        })
         
         // 汇总所有批次的预防统计
         const totalVaccineCoverage = batchesWithPrevention.reduce((sum: number, b: any) => 
