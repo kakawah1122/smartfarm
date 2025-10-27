@@ -400,6 +400,57 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       data: treatmentData
     })
     
+    // ✅ 如果是直接提交且有药物使用，扣减库存
+    if (isDirectSubmit && medications && medications.length > 0) {
+      for (const med of medications) {
+        if (med.materialId && med.quantity > 0) {
+          try {
+            // 检查库存
+            const material = await db.collection('prod_materials').doc(med.materialId).get()
+            
+            if (material.data) {
+              const currentStock = material.data.currentStock || 0
+              
+              if (currentStock < med.quantity) {
+                console.warn(`⚠️ 库存不足: ${material.data.name}，当前库存：${currentStock}，需要：${med.quantity}`)
+                continue  // 库存不足时跳过，不阻断治疗记录创建
+              }
+              
+              // 扣减库存
+              const newStock = currentStock - med.quantity
+              await db.collection('prod_materials').doc(med.materialId).update({
+                data: {
+                  currentStock: newStock,
+                  updateTime: new Date()
+                }
+              })
+              
+              // 创建库存流水记录
+              await db.collection('prod_inventory_logs').add({
+                data: {
+                  materialId: med.materialId,
+                  recordId: treatmentResult._id,
+                  operation: '治疗领用',
+                  quantity: med.quantity,
+                  beforeStock: currentStock,
+                  afterStock: newStock,
+                  operator: openid,
+                  operationTime: new Date(),
+                  relatedType: 'treatment',
+                  notes: `治疗领用 - ${diagnosis}`
+                }
+              })
+              
+              console.log(`✅ 库存扣减成功: ${material.data.name}，数量：${med.quantity}，剩余：${newStock}`)
+            }
+          } catch (error) {
+            console.error(`❌ 扣减库存失败:`, error)
+            // 不阻断治疗记录创建
+          }
+        }
+      }
+    }
+    
     // ✅ 根据是否直接提交，决定异常记录的状态
     // 直接提交：status = 'treating'（已制定方案并开始治疗）
     // 创建草稿：status 保持 'abnormal'（还在制定方案中）

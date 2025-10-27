@@ -706,6 +706,39 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       return
     }
     
+    // ✅ 在提交前，先将当前选中的物料添加到 medications 数组
+    const { selectedMaterial, medicationQuantity, medicationDosage } = this.data
+    if (selectedMaterial && medicationQuantity) {
+      const quantity = parseFloat(medicationQuantity)
+      
+      // 验证库存
+      if (quantity > selectedMaterial.currentStock) {
+        wx.showToast({
+          title: `库存不足，当前库存：${selectedMaterial.currentStock}`,
+          icon: 'none',
+          duration: 2000
+        })
+        return
+      }
+      
+      // 添加到medications数组
+      const newMedication = {
+        materialId: selectedMaterial._id,
+        name: selectedMaterial.name,
+        specification: selectedMaterial.specification || '',
+        quantity: quantity,
+        unit: selectedMaterial.unit || '件',
+        dosage: medicationDosage || '',
+        startDate: this.data.formData.treatmentDate,
+        category: selectedMaterial.category
+      }
+      
+      const medications = [...this.data.medications, newMedication]
+      this.setData({ medications })
+      
+      console.log('✅ 添加药物到medications:', newMedication)
+    }
+    
     this.setData({ submitting: true })
     
     try {
