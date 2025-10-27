@@ -370,6 +370,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       },
       notes: '',
       isDraft: true,  // 标记为草稿，表示还未正式提交
+      isDeleted: false,  // ✅ 添加删除标记字段，确保统计时能查询到
       createdBy: openid,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -448,6 +449,7 @@ async function createIsolationFromAbnormal(event, wxContext) {
         stillIsolatedCount: affectedCount || 0
       },
       notes: '',
+      isDeleted: false,  // ✅ 添加删除标记字段，确保统计时能查询到
       createdBy: openid,
       createdAt: new Date(),
       updatedAt: new Date()
