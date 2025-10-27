@@ -340,6 +340,10 @@ async function createTreatmentFromAbnormal(event, wxContext) {
     const openid = wxContext.OPENID
     const db = cloud.database()
     
+    console.log('📦 云函数接收到的参数:')
+    console.log('  - medications:', JSON.stringify(medications))
+    console.log('  - treatmentPlan:', JSON.stringify(treatmentPlan))
+    
     // ✅ 如果没有 affectedCount，从异常记录中获取
     let finalAffectedCount = affectedCount
     if (!finalAffectedCount) {
@@ -399,6 +403,10 @@ async function createTreatmentFromAbnormal(event, wxContext) {
     const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS).add({
       data: treatmentData
     })
+    
+    console.log('✅ 治疗记录已保存到数据库')
+    console.log('  - 记录ID:', treatmentResult._id)
+    console.log('  - medications字段:', JSON.stringify(treatmentData.medications))
     
     // ✅ 如果是直接提交且有药物使用，扣减库存
     if (isDirectSubmit && medications && medications.length > 0) {
@@ -3229,6 +3237,11 @@ async function getTreatmentDetail(treatmentId, wxContext) {
     }
     
     const treatment = treatmentResult.data
+    
+    console.log('📋 查询到的治疗记录:')
+    console.log('  - 记录ID:', treatmentId)
+    console.log('  - medications字段:', JSON.stringify(treatment.medications))
+    console.log('  - medications数量:', treatment.medications ? treatment.medications.length : 0)
     
     // 计算治疗天数
     const startDate = new Date(treatment.treatmentDate)

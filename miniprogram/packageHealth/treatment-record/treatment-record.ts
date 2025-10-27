@@ -953,6 +953,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       : 'create_treatment_record'
     
     // 调用云函数创建治疗记录
+    console.log('📦 准备提交治疗记录')
+    console.log('📋 medications数组:', JSON.stringify(medications))
+    console.log('📋 treatmentPlan:', JSON.stringify(treatmentPlan))
+    
     const result = await wx.cloud.callFunction({
       name: 'health-management',
       data: abnormalRecordId ? {
@@ -972,6 +976,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         diagnosisId: this.data.diagnosisId
       }
     })
+    
+    console.log('📦 云函数返回结果:', result.result)
     
     if (result.result && result.result.success) {
       wx.showToast({
