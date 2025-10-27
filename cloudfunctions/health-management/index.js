@@ -1555,8 +1555,16 @@ async function getAllBatchesHealthSummary(event, wxContext) {
             totalCount = latestRecord.totalCount
           }
           
-          // 计算健康率（基于存栏数）
-          healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 0
+          // ✅ 修复：如果健康数和生病数都是0，说明健康记录没有填写，应该默认所有存栏都是健康的
+          if (healthyCount === 0 && sickCount === 0 && totalCount > 0) {
+            healthyCount = totalCount
+            sickCount = 0
+            healthyRate = 100
+          } else {
+            // 计算健康率（基于存栏数）
+            healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 0
+          }
+          
           lastCheckDate = latestRecord.checkDate
           
           // 收集近期问题
@@ -1570,10 +1578,9 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           })
           recentIssues = [...new Set(recentIssues)].slice(0, 3)
         } else {
-          // 没有健康记录，默认都是健康的（存栏数 - 死亡数）
+          // 没有健康记录，默认都是健康的（存栏数）
           healthyCount = totalCount > 0 ? totalCount : 0
           sickCount = 0
-          // deadCount 已经从批次表获取
           healthyRate = 100            // 健康率100%
         }
         
