@@ -248,9 +248,20 @@ Page<PageData>({
     // 启动实时数据监听（只在页面可见时监听，节省资源）
     this.startDataWatcher()
     
-    // 刷新数据
-    if (this.data.currentBatchId) {
-      this.loadHealthData()
+    // ✅ 检查是否需要刷新数据（从其他页面返回时）
+    const needRefresh = wx.getStorageSync('health_page_need_refresh')
+    if (needRefresh) {
+      console.log('✅ 检测到刷新标记，强制刷新健康数据')
+      wx.removeStorageSync('health_page_need_refresh')
+      // 强制刷新
+      if (this.data.currentBatchId) {
+        this.loadHealthData()
+      }
+    } else {
+      // 正常刷新数据
+      if (this.data.currentBatchId) {
+        this.loadHealthData()
+      }
     }
   },
   

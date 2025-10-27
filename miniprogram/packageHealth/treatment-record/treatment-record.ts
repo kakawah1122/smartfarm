@@ -857,14 +857,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             fail: () => {
               // 如果跳转失败，返回健康管理中心
               wx.switchTab({
-                url: '/pages/health/health'
+                url: '/pages/health/health',
+                success: () => {
+                  // ✅ 通知健康页面刷新数据
+                  this.notifyHealthPageRefresh()
+                }
               })
             }
           })
         } else {
           // 药物治疗：返回健康管理中心（治疗中）
           wx.switchTab({
-            url: '/pages/health/health'
+            url: '/pages/health/health',
+            success: () => {
+              // ✅ 通知健康页面刷新数据
+              this.notifyHealthPageRefresh()
+            }
           })
         }
       }, 1500)
@@ -994,14 +1002,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             fail: () => {
               // 如果跳转失败，返回健康管理中心
               wx.switchTab({
-                url: '/pages/health/health'
+                url: '/pages/health/health',
+                success: () => {
+                  // ✅ 通知健康页面刷新数据
+                  this.notifyHealthPageRefresh()
+                }
               })
             }
           })
         } else {
           // 药物治疗：返回健康管理中心（治疗中）
           wx.switchTab({
-            url: '/pages/health/health'
+            url: '/pages/health/health',
+            success: () => {
+              // ✅ 通知健康页面刷新数据
+              this.notifyHealthPageRefresh()
+            }
           })
         }
       }, 1500)
@@ -1676,6 +1692,33 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         title: error.message || '保存失败',
         icon: 'none'
       })
+    }
+  },
+  
+  /**
+   * 通知健康页面刷新数据
+   */
+  notifyHealthPageRefresh: function() {
+    try {
+      // 通过页面栈获取健康页面实例
+      const pages = getCurrentPages()
+      const healthPage = pages.find((page: any) => page.route === 'pages/health/health')
+      
+      if (healthPage && typeof healthPage.loadHealthData === 'function') {
+        console.log('✅ 通知健康页面刷新数据')
+        // 延迟刷新，确保数据已保存
+        setTimeout(() => {
+          healthPage.loadHealthData()
+        }, 500)
+      } else {
+        console.log('⚠️ 未找到健康页面实例，使用存储标记')
+        // 如果页面不在栈中，使用存储标记
+        wx.setStorageSync('health_page_need_refresh', true)
+      }
+    } catch (error) {
+      console.error('❌ 通知健康页面刷新失败:', error)
+      // 降级方案：使用存储标记
+      wx.setStorageSync('health_page_need_refresh', true)
     }
   }
 }
