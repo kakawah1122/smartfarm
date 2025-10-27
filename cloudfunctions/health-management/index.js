@@ -379,12 +379,13 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       data: treatmentData
     })
     
-    // ⚠️ 不要在这里更新异常记录状态，保持为 abnormal
-    // 只关联治疗记录ID，方便后续查找
+    // ✅ 创建治疗记录后，立即更新异常记录状态为 treating
+    // 因为用户已经制定了治疗方案，应该从"异常"流转到"治疗中"
     await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .doc(abnormalRecordId)
       .update({
         data: {
+          status: 'treating',  // ✅ 更新状态为治疗中
           treatmentRecordId: treatmentResult._id,  // 关联治疗记录
           updatedAt: new Date()
         }
@@ -1276,23 +1277,47 @@ async function getHealthStatistics(batchId, dateRange) {
       .count()
     const isolatedCount = isolatedRecords.total || 0
     
+    // ✅ 获取实时死亡数（从死亡记录表）
+    const deathRecordsResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+      .where({
+        batchId: batchId,
+        isDeleted: false
+      })
+      .get()
+    
+    deathRecordsResult.data.forEach(record => {
+      deadCount += record.deathCount || 0
+    })
+    
+    // ✅ 当前存栏数 = 原始数量 - 死亡数
+    totalAnimals = originalQuantity - deadCount
+    
     if (records.data.length > 0) {
       // 有健康记录，使用最新的记录
       const latestRecord = records.data[0]
-      healthyCount = latestRecord.healthyCount || 0
-      sickCount = latestRecord.sickCount || 0
-      deadCount = latestRecord.deadCount || 0
-      totalAnimals = latestRecord.totalCount || originalQuantity
+      let recordHealthyCount = latestRecord.healthyCount || 0
+      let recordSickCount = latestRecord.sickCount || 0
       
+      // ✅ 如果健康记录的健康数和生病数都是0，说明没有填写
+      // 应该用 总存栏数 - 异常数 - 治疗中数 - 隔离中数 来计算健康数
+      if (recordHealthyCount === 0 && recordSickCount === 0) {
+        healthyCount = totalAnimals - abnormalCount - treatingCount - isolatedCount
+        sickCount = abnormalCount + treatingCount + isolatedCount
+      } else {
+        healthyCount = recordHealthyCount
+        sickCount = recordSickCount
+      }
+      
+      healthyCount = Math.max(0, healthyCount)  // 确保不为负数
       healthyRate = totalAnimals > 0 ? ((healthyCount / totalAnimals) * 100).toFixed(1) : 0
       mortalityRate = originalQuantity > 0 ? ((deadCount / originalQuantity) * 100).toFixed(2) : 0
     } else {
-      // 没有健康记录，默认都是健康的
-      healthyCount = totalAnimals
-      sickCount = 0
-      deadCount = 0
-      healthyRate = 100
-      mortalityRate = 0
+      // 没有健康记录，根据异常、治疗中、隔离记录计算
+      healthyCount = totalAnimals - abnormalCount - treatingCount - isolatedCount
+      healthyCount = Math.max(0, healthyCount)  // 确保不为负数
+      sickCount = abnormalCount + treatingCount + isolatedCount
+      healthyRate = totalAnimals > 0 ? ((healthyCount / totalAnimals) * 100).toFixed(1) : 100
+      mortalityRate = originalQuantity > 0 ? ((deadCount / originalQuantity) * 100).toFixed(2) : 0
     }
 
     return {
@@ -1543,6 +1568,24 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         let lastCheckDate = null
         let recentIssues = []
         
+        // ✅ 查询异常记录数量（状态为 abnormal, treating, isolated 的记录）
+        const abnormalRecordsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+          .where({
+            batchId: batch._id,
+            recordType: 'ai_diagnosis',
+            status: _.in(['abnormal', 'treating', 'isolated']),
+            isDeleted: _.neq(true)
+          })
+          .count()
+        
+        const abnormalCount = abnormalRecordsResult.total || 0
+        
+        console.log(`📊 批次 ${batch.batchNumber} 异常统计:`, {
+          批次ID: batch._id,
+          异常记录数: abnormalCount,
+          总存栏数: totalCount
+        })
+        
         if (healthRecords.length > 0) {
           // 有健康记录，使用实际检查数据
           const latestRecord = healthRecords[0]
@@ -1555,11 +1598,12 @@ async function getAllBatchesHealthSummary(event, wxContext) {
             totalCount = latestRecord.totalCount
           }
           
-          // ✅ 修复：如果健康数和生病数都是0，说明健康记录没有填写，应该默认所有存栏都是健康的
+          // ✅ 修复：如果健康数和生病数都是0，说明健康记录没有填写
+          // 应该用 总存栏数 - 异常数 来计算健康数
           if (healthyCount === 0 && sickCount === 0 && totalCount > 0) {
-            healthyCount = totalCount
-            sickCount = 0
-            healthyRate = 100
+            healthyCount = totalCount - abnormalCount  // ✅ 减去异常数量
+            sickCount = abnormalCount  // ✅ 生病数 = 异常数
+            healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 100
           } else {
             // 计算健康率（基于存栏数）
             healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 0
@@ -1578,10 +1622,10 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           })
           recentIssues = [...new Set(recentIssues)].slice(0, 3)
         } else {
-          // 没有健康记录，默认都是健康的（存栏数）
-          healthyCount = totalCount > 0 ? totalCount : 0
-          sickCount = 0
-          healthyRate = 100            // 健康率100%
+          // 没有健康记录，根据异常记录计算
+          healthyCount = totalCount > 0 ? (totalCount - abnormalCount) : 0
+          sickCount = abnormalCount
+          healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 100
         }
         
         // 确定预警级别
