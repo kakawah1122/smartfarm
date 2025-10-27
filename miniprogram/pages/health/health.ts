@@ -702,15 +702,31 @@ Page<PageData>({
           totalTreatmentCost  // 使用重命名后的变量
         })
         
+        // ✅ 查询所有批次的异常记录
+        const abnormalResult = await wx.cloud.callFunction({
+          name: 'health-management',
+          data: {
+            action: 'get_abnormal_records',
+            batchId: 'all'  // 查询所有批次
+          }
+        })
+        
+        const abnormalRecords = abnormalResult.result?.success 
+          ? (abnormalResult.result.data || [])
+          : []
+        
+        console.log('✅ 全部批次异常记录统计:', {
+          abnormalCount: abnormalRecords.length
+        })
+        
         // 设置监控数据（实时健康状态）
-        // 注意：全部批次视图使用简化统计，sickCount作为异常数
         const monitoringData = {
           realTimeStatus: {
             healthyCount: healthyCount,
-            abnormalCount: sickCount,  // 全部批次视图使用sickCount作为异常数
+            abnormalCount: abnormalRecords.length,  // ✅ 使用真实异常记录数量
             isolatedCount: 0  // 全部批次视图暂不统计隔离数
           },
-          abnormalList: [],
+          abnormalList: abnormalRecords,
           diseaseDistribution: []
         }
         
@@ -722,7 +738,7 @@ Page<PageData>({
             deadCount: deadCount,
             healthyRate: healthyRate + '%',
             mortalityRate: mortalityRate + '%',
-            abnormalCount: sickCount,  // 全部批次视图使用sickCount
+            abnormalCount: abnormalRecords.length,  // ✅ 使用真实异常记录数量
             treatingCount: totalOngoing,  // ✅ 设置治疗中数量
             isolatedCount: 0
           },
@@ -894,7 +910,16 @@ Page<PageData>({
     try {
       // ✅ 启用云函数调用，获取真实治疗统计数据
       
-      // 1. 获取进行中的治疗记录
+      // 1. 获取异常记录（待处理和治疗中的）
+      const abnormalResult = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'get_abnormal_records',
+          batchId: this.data.currentBatchId
+        }
+      })
+      
+      // 2. 获取进行中的治疗记录
       const treatmentResult = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
@@ -903,7 +928,7 @@ Page<PageData>({
         }
       })
       
-      // 2. 计算治疗总成本和治愈率
+      // 3. 计算治疗总成本和治愈率
       const costResult = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
@@ -912,6 +937,11 @@ Page<PageData>({
           dateRange: this.data.dateRange
         }
       })
+      
+      // 处理异常记录数据
+      const abnormalRecords = abnormalResult.result?.success 
+        ? (abnormalResult.result.data || [])
+        : []
       
       // 处理治疗记录数据
       const treatments = treatmentResult.result?.success 
@@ -923,6 +953,7 @@ Page<PageData>({
         ? costResult.result.data 
         : {}
       
+      // 更新治疗数据和异常数据
       this.setData({
         'treatmentData.stats': {
           pendingDiagnosis: 0, // 需要从AI诊断记录获取
@@ -930,10 +961,14 @@ Page<PageData>({
           totalTreatmentCost: parseFloat(costData.totalCost || '0'),
           cureRate: parseFloat(costData.cureRate || '0')  // ✅ 显示真实治愈率
         },
-        'treatmentData.currentTreatments': treatments
+        'treatmentData.currentTreatments': treatments,
+        // ✅ 更新异常数量 - 关联数据库异常记录
+        'monitoringData.realTimeStatus.abnormalCount': abnormalRecords.length,
+        'monitoringData.abnormalList': abnormalRecords
       })
       
       console.log('✅ 治疗数据加载成功:', {
+        abnormalCount: abnormalRecords.length,
         ongoingTreatment: costData.ongoingCount,
         cureRate: costData.cureRate,
         treatmentCount: treatments.length
@@ -949,7 +984,9 @@ Page<PageData>({
           totalTreatmentCost: 0,
           cureRate: 0
         },
-        'treatmentData.currentTreatments': []
+        'treatmentData.currentTreatments': [],
+        'monitoringData.realTimeStatus.abnormalCount': 0,
+        'monitoringData.abnormalList': []
       })
     }
   },
