@@ -56,92 +56,61 @@
         </view>
       </view>
 
-      <!-- 治疗进展跟进 -->
-      <view class="view-section progress-section">
-        <view class="section-title">治疗进展</view>
+      <!-- 用药历史 -->
+      <view class="view-section medication-history-section">
+        <view class="section-title">用药历史</view>
         
-        <view class="progress-card">
-          <!-- 治疗天数 -->
-          <view class="progress-header">
-            <text class="treatment-days">已治疗 {{treatmentProgress.treatmentDays}} 天</text>
-            <t-tag theme="primary" size="small">进行中</t-tag>
-          </view>
-
-          <!-- 用药记录 -->
-          <view class="medication-records" wx:if="{{medications.length > 0}}">
-            <view class="records-title">用药记录</view>
-            <view class="records-list">
-              <view class="record-item" wx:for="{{medications}}" wx:key="index">
-                <view class="record-icon">💊</view>
-                <view class="record-info">
-                  <text class="record-name">{{item.name}}</text>
-                  <text class="record-spec">{{item.quantity}}{{item.unit}}</text>
-                </view>
-                <view class="record-dosage" wx:if="{{item.dosage}}">
-                  <text>{{item.dosage}}</text>
-                </view>
+        <!-- 用药记录 -->
+        <view class="medication-records" wx:if="{{medications.length > 0}}">
+          <view class="records-list">
+            <view class="record-item" wx:for="{{medications}}" wx:key="index">
+              <view class="record-icon">💊</view>
+              <view class="record-info">
+                <text class="record-name">{{item.name}}</text>
+                <text class="record-spec">{{item.quantity}}{{item.unit}}</text>
+              </view>
+              <view class="record-dosage" wx:if="{{item.dosage}}">
+                <text>{{item.dosage}}</text>
               </view>
             </view>
           </view>
+        </view>
+        
+        <view class="empty-records" wx:else>
+          <text class="empty-text">暂无用药记录</text>
+        </view>
 
-          <!-- 进度统计 -->
-          <view class="progress-stats">
-            <view class="stat-item">
-              <text class="stat-label">治疗总数</text>
-              <text class="stat-value total">{{treatmentProgress.totalTreated}} 只</text>
-            </view>
-            <view class="stat-item">
-              <text class="stat-label">已治愈</text>
-              <text class="stat-value cured">{{treatmentProgress.curedCount}} 只</text>
-            </view>
-            <view class="stat-item">
-              <text class="stat-label">死亡</text>
-              <text class="stat-value died">{{treatmentProgress.deathCount}} 只</text>
-            </view>
-            <view class="stat-item">
-              <text class="stat-label">继续治疗</text>
-              <text class="stat-value remaining">{{treatmentProgress.remainingCount}} 只</text>
-            </view>
-          </view>
-
-          <!-- 进度条 -->
-          <view class="progress-bar">
-            <view class="bar-cured" style="width: {{treatmentProgress.cureRate}}%"></view>
-            <view class="bar-died" style="width: {{treatmentProgress.mortalityRate}}%"></view>
-          </view>
-
-          <!-- 操作按钮 -->
-          <view class="progress-actions">
-            <t-button 
-              theme="primary" 
-              size="large" 
-              bind:tap="showContinueTreatmentOptions"
-              disabled="{{treatmentProgress.remainingCount <= 0}}"
-              block
-            >
-              继续治疗
-            </t-button>
-            <t-button 
-              theme="success" 
-              size="large" 
-              bind:tap="showProgressDialog"
-              data-type="cured"
-              disabled="{{treatmentProgress.remainingCount <= 0}}"
-              block
-            >
-              记录治愈
-            </t-button>
-            <t-button 
-              theme="danger" 
-              size="large" 
-              bind:tap="showProgressDialog"
-              data-type="died"
-              disabled="{{treatmentProgress.remainingCount <= 0}}"
-              block
-            >
-              记录死亡
-            </t-button>
-          </view>
+        <!-- 操作按钮 -->
+        <view class="action-buttons">
+          <t-button 
+            theme="primary" 
+            size="large" 
+            bind:tap="showContinueTreatmentOptions"
+            disabled="{{treatmentProgress.remainingCount <= 0}}"
+            block
+          >
+            继续治疗
+          </t-button>
+          <t-button 
+            theme="success" 
+            size="large" 
+            bind:tap="showProgressDialog"
+            data-type="cured"
+            disabled="{{treatmentProgress.remainingCount <= 0}}"
+            block
+          >
+            记录治愈
+          </t-button>
+          <t-button 
+            theme="danger" 
+            size="large" 
+            bind:tap="showProgressDialog"
+            data-type="died"
+            disabled="{{treatmentProgress.remainingCount <= 0}}"
+            block
+          >
+            记录死亡
+          </t-button>
         </view>
       </view>
 

@@ -880,103 +880,7 @@
   }
 }
 
-// 治疗进展卡片
-.progress-section {
-  .progress-card {
-    background: white;
-    border-radius: 16rpx;
-    padding: 32rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-  }
-  
-  .progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 32rpx;
-    padding-bottom: 24rpx;
-    border-bottom: 1rpx solid #f0f0f0;
-    
-    .treatment-days {
-      font-size: 32rpx;
-      font-weight: 600;
-      color: #0052d9;
-    }
-  }
-  
-  .progress-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24rpx;
-    margin-bottom: 32rpx;
-    
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24rpx;
-      background: #f8f9fa;
-      border-radius: 12rpx;
-      
-      .stat-label {
-        font-size: 24rpx;
-        color: #999;
-        margin-bottom: 12rpx;
-      }
-      
-      .stat-value {
-        font-size: 36rpx;
-        font-weight: 600;
-        
-        &.total {
-          color: #0052d9;
-        }
-        
-        &.cured {
-          color: #00a870;
-        }
-        
-        &.died {
-          color: #e34d59;
-        }
-        
-        &.remaining {
-          color: #ed7b2f;
-        }
-      }
-    }
-  }
-  
-  .progress-bar {
-    height: 12rpx;
-    background: #f0f0f0;
-    border-radius: 6rpx;
-    overflow: hidden;
-    display: flex;
-    margin-bottom: 32rpx;
-    
-    .bar-cured {
-      background: linear-gradient(90deg, #00a870 0%, #00c48c 100%);
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-    
-    .bar-died {
-      background: linear-gradient(90deg, #e34d59 0%, #ff6b7a 100%);
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-  }
-  
-  .progress-actions {
-    display: flex;
-    gap: 20rpx;
-    
-    t-button {
-      flex: 1;
-    }
-  }
-}
+// 用药历史已移到上方（.medication-history-section）
 
 // 备注卡片
 .notes-card {
@@ -1042,76 +946,85 @@
   }
 }
 
-// 用药记录
-.medication-records {
-  margin-bottom: 32rpx;
-  padding: 24rpx;
-  background: #f8f9fa;
-  border-radius: 12rpx;
-  border: 1rpx solid #e8e8e8;
-  
-  .records-title {
-    font-size: 26rpx;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 16rpx;
-    padding-bottom: 12rpx;
-    border-bottom: 1rpx dashed #d0d0d0;
-  }
-  
-  .records-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12rpx;
-  }
-  
-  .record-item {
-    display: flex;
-    align-items: center;
-    gap: 16rpx;
-    padding: 16rpx;
-    background: white;
-    border-radius: 8rpx;
+// ========== 用药历史模块 ==========
+.medication-history-section {
+  .medication-records {
+    margin-bottom: 32rpx;
     
-    .record-icon {
-      font-size: 32rpx;
-      flex-shrink: 0;
-    }
-    
-    .record-info {
-      flex: 1;
+    .records-list {
       display: flex;
       flex-direction: column;
-      gap: 4rpx;
-      
-      .record-name {
-        font-size: 28rpx;
-        font-weight: 600;
-        color: #333;
-      }
-      
-      .record-spec {
-        font-size: 24rpx;
-        color: #0052d9;
-        font-weight: 500;
-      }
+      gap: 16rpx;
     }
     
-    .record-dosage {
-      flex-shrink: 0;
-      font-size: 24rpx;
-      color: #666;
-      max-width: 200rpx;
-      text-align: right;
+    .record-item {
+      display: flex;
+      align-items: center;
+      gap: 16rpx;
+      padding: 24rpx;
+      background: white;
+      border-radius: 12rpx;
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+      border: 1rpx solid #f0f0f0;
       
-      text {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .record-icon {
+        font-size: 36rpx;
+        flex-shrink: 0;
+      }
+      
+      .record-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6rpx;
+        
+        .record-name {
+          font-size: 30rpx;
+          font-weight: 600;
+          color: #333;
+        }
+        
+        .record-spec {
+          font-size: 26rpx;
+          color: #0052d9;
+          font-weight: 500;
+        }
+      }
+      
+      .record-dosage {
+        flex-shrink: 0;
+        font-size: 24rpx;
+        color: #666;
+        max-width: 220rpx;
+        text-align: right;
+        line-height: 1.5;
+        
+        text {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       }
     }
+  }
+  
+  .empty-records {
+    padding: 80rpx 0;
+    text-align: center;
+    
+    .empty-text {
+      font-size: 28rpx;
+      color: #999;
+    }
+  }
+  
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+    margin-top: 32rpx;
   }
 }
 
