@@ -660,10 +660,10 @@ async function getAbnormalRecords(event, wxContext) {
     
     console.log('🔍 查询异常记录 - 参数:', { batchId })
     
-    // 查询所有异常记录（包括待处理、治疗中、已隔离）
+    // ✅ 只查询真正的异常记录（待处理状态），已流转到治疗中或隔离的不计入异常数
     let whereCondition = {
       recordType: 'ai_diagnosis',
-      status: _.in(['abnormal', 'treating', 'isolated']),  // 显示所有状态的记录
+      status: 'abnormal',  // ✅ 只查询 abnormal 状态，不包括 treating 和 isolated
       isDeleted: _.neq(true)
     }
     
@@ -676,7 +676,7 @@ async function getAbnormalRecords(event, wxContext) {
       .orderBy('checkDate', 'desc')
       .get()
     
-    console.log('📋 查询到异常记录数量:', result.data.length)
+    console.log('📋 查询到异常记录数量（仅待处理）:', result.data.length)
     if (result.data.length > 0) {
       console.log('📄 第一条记录示例:', result.data[0])
     }
