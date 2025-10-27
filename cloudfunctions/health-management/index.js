@@ -331,18 +331,38 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       batchId,
       affectedCount,
       diagnosis,
-      aiRecommendation
+      aiRecommendation,
+      treatmentPlan,  // ✅ 接收前端传来的治疗方案
+      medications,    // ✅ 接收前端传来的药物
+      notes,          // ✅ 接收前端传来的备注
+      treatmentType   // ✅ 接收治疗类型
     } = event
     const openid = wxContext.OPENID
     const db = cloud.database()
     
-    // 创建治疗记录（草稿状态，等待用户填写完整信息）
+    // ✅ 如果没有 affectedCount，从异常记录中获取
+    let finalAffectedCount = affectedCount
+    if (!finalAffectedCount) {
+      const abnormalRecord = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .doc(abnormalRecordId)
+        .get()
+      
+      if (abnormalRecord.data) {
+        finalAffectedCount = abnormalRecord.data.affectedCount || 1
+      }
+    }
+    
+    // ✅ 判断是创建草稿还是直接创建正式记录
+    // 如果传入了 treatmentPlan，说明是前端已填写完整表单，直接创建正式记录
+    const isDirectSubmit = treatmentPlan && treatmentPlan.primary
+    
+    // 创建治疗记录
     const treatmentData = {
       batchId,
       abnormalRecordId,  // 关联异常记录
       animalIds: [],
       treatmentDate: new Date().toISOString().split('T')[0],
-      treatmentType: 'medication',
+      treatmentType: treatmentType || 'medication',
       diagnosis: {
         preliminary: diagnosis,
         confirmed: diagnosis,
@@ -350,17 +370,17 @@ async function createTreatmentFromAbnormal(event, wxContext) {
         diagnosisMethod: 'ai'
       },
       treatmentPlan: {
-        primary: aiRecommendation?.primary || '',
-        followUpSchedule: []
+        primary: treatmentPlan?.primary || aiRecommendation?.primary || '',
+        followUpSchedule: treatmentPlan?.followUpSchedule || []
       },
-      medications: [],
+      medications: medications || [],
       progress: [],
       outcome: {
-        status: 'pending',  // pending: 待提交, ongoing: 治疗中
+        status: isDirectSubmit ? 'ongoing' : 'pending',  // ✅ 直接提交则为 ongoing
         curedCount: 0,
         improvedCount: 0,
         deathCount: 0,
-        totalTreated: affectedCount || 0
+        totalTreated: finalAffectedCount || 1
       },
       cost: {
         medication: 0,
@@ -368,9 +388,9 @@ async function createTreatmentFromAbnormal(event, wxContext) {
         supportive: 0,
         total: 0
       },
-      notes: '',
-      isDraft: true,  // 标记为草稿，表示还未正式提交
-      isDeleted: false,  // ✅ 添加删除标记字段，确保统计时能查询到
+      notes: notes || '',
+      isDraft: !isDirectSubmit,  // ✅ 直接提交则不是草稿
+      isDeleted: false,
       createdBy: openid,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -380,17 +400,30 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       data: treatmentData
     })
     
-    // ✅ 创建治疗记录后，立即更新异常记录状态为 treating
-    // 因为用户已经制定了治疗方案，应该从"异常"流转到"治疗中"
-    await db.collection(COLLECTIONS.HEALTH_RECORDS)
-      .doc(abnormalRecordId)
-      .update({
-        data: {
-          status: 'treating',  // ✅ 更新状态为治疗中
-          treatmentRecordId: treatmentResult._id,  // 关联治疗记录
-          updatedAt: new Date()
-        }
-      })
+    // ✅ 根据是否直接提交，决定异常记录的状态
+    // 直接提交：status = 'treating'（已制定方案并开始治疗）
+    // 创建草稿：status 保持 'abnormal'（还在制定方案中）
+    if (isDirectSubmit) {
+      await db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .doc(abnormalRecordId)
+        .update({
+          data: {
+            status: 'treating',  // ✅ 更新状态为治疗中
+            treatmentRecordId: treatmentResult._id,
+            updatedAt: new Date()
+          }
+        })
+    } else {
+      // 草稿状态，只关联治疗记录ID
+      await db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .doc(abnormalRecordId)
+        .update({
+          data: {
+            treatmentRecordId: treatmentResult._id,
+            updatedAt: new Date()
+          }
+        })
+    }
     
     // 记录审计日志
     await dbManager.createAuditLog(
@@ -401,7 +434,8 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       {
         abnormalRecordId,
         batchId,
-        affectedCount,
+        affectedCount: finalAffectedCount,
+        isDirectSubmit,
         result: 'success'
       }
     )
