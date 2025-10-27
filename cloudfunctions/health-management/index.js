@@ -2802,12 +2802,14 @@ async function calculateTreatmentCost(event, wxContext) {
     const records = await query.get()
     
     const totalCost = records.data.reduce((sum, r) => sum + (r.totalCost || 0), 0)
-    const ongoingCount = records.data.filter(r => r.treatmentStatus === 'ongoing').length
-    const curedCount = records.data.filter(r => r.treatmentStatus === 'cured').length
-    const diedCount = records.data.filter(r => r.treatmentStatus === 'died').length
     
-    const totalTreated = records.data.reduce((sum, r) => sum + (r.initialCount || 0), 0)
-    const totalCuredAnimals = records.data.reduce((sum, r) => sum + (r.curedCount || 0), 0)
+    // ✅ 修复：使用 outcome.status 而不是 treatmentStatus
+    const ongoingCount = records.data.filter(r => r.outcome?.status === 'ongoing').length
+    const curedCount = records.data.filter(r => r.outcome?.status === 'cured').length
+    const diedCount = records.data.filter(r => r.outcome?.status === 'died').length
+    
+    const totalTreated = records.data.reduce((sum, r) => sum + (r.outcome?.totalTreated || r.initialCount || 0), 0)
+    const totalCuredAnimals = records.data.reduce((sum, r) => sum + (r.outcome?.curedCount || r.curedCount || 0), 0)
     const cureRate = totalTreated > 0 ? ((totalCuredAnimals / totalTreated) * 100).toFixed(1) : 0
     
     return {
