@@ -251,17 +251,6 @@
             </view>
           </view>
 
-          <!-- 治疗中 -->
-          <view class="stat-card stat-card-treating" bindtap="onOngoingTreatmentClick">
-            <view class="stat-icon stat-icon-treating">
-              <view class="css-icon-medicine"></view>
-            </view>
-            <view class="stat-content">
-              <text class="stat-value">{{treatmentData.stats.ongoingTreatment}}</text>
-              <text class="stat-label">治疗中</text>
-            </view>
-          </view>
-          
           <!-- 隔离 -->
           <view class="stat-card stat-card-isolation">
             <view class="stat-icon stat-icon-isolation">
@@ -270,6 +259,17 @@
             <view class="stat-content">
               <text class="stat-value">{{monitoringData.realTimeStatus.isolatedCount || 0}}</text>
               <text class="stat-label">隔离数</text>
+            </view>
+          </view>
+          
+          <!-- 治疗中 -->
+          <view class="stat-card stat-card-treating" bindtap="onOngoingTreatmentClick">
+            <view class="stat-icon stat-icon-treating">
+              <view class="css-icon-medicine"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{treatmentData.stats.ongoingTreatment}}</text>
+              <text class="stat-label">治疗中</text>
             </view>
           </view>
 
