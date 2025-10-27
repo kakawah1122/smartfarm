@@ -616,7 +616,7 @@ Page<PageData>({
         
         // ✅ 处理治疗统计数据 - 汇总所有批次
         let totalOngoing = 0
-        let totalCost = 0
+        let totalTreatmentCost = 0  // 重命名避免与预防统计的 totalCost 冲突
         let totalTreated = 0
         let totalCured = 0
         
@@ -651,7 +651,7 @@ Page<PageData>({
         // 汇总所有批次的治疗数据
         treatmentResults.forEach(result => {
           totalOngoing += result.ongoingCount
-          totalCost += result.totalCost
+          totalTreatmentCost += result.totalCost  // 使用重命名后的变量
           totalTreated += result.totalTreated
           totalCured += result.totalCuredAnimals
         })
@@ -663,7 +663,7 @@ Page<PageData>({
         
         const treatmentStats = {
           totalTreatments: totalTreated,
-          totalCost: totalCost,
+          totalCost: totalTreatmentCost,  // 使用重命名后的变量
           recoveredCount: totalCured,
           ongoingCount: totalOngoing,
           recoveryRate: cureRate + '%'
@@ -674,7 +674,7 @@ Page<PageData>({
           totalCured,
           cureRate,
           totalOngoing,
-          totalCost
+          totalTreatmentCost  // 使用重命名后的变量
         })
         
         // 设置监控数据（实时健康状态）
@@ -711,7 +711,7 @@ Page<PageData>({
           'treatmentData.stats': {
             pendingDiagnosis: 0,
             ongoingTreatment: totalOngoing,
-            totalTreatmentCost: totalCost,
+            totalTreatmentCost: totalTreatmentCost,  // 使用重命名后的变量
             cureRate: parseFloat(cureRate)  // ✅ 设置治愈率
           },
           recentPreventionRecords,
