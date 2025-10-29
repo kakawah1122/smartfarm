@@ -66,12 +66,15 @@ Page({
       const db = wx.cloud.database()
       const _ = db.command
 
-      // ✅ 优化查询：分步查询，避免索引问题
-      // 1. 先查询所有未删除的治疗记录
+      // ✅ 优化查询：避免使用 neq 操作符，提高索引效率
+      // 查询 isDeleted 为 false 或不存在的记录
       const result = await db.collection('health_treatment_records')
-        .where({
-          isDeleted: _.neq(true)
-        })
+        .where(
+          _.or([
+            { isDeleted: false },
+            { isDeleted: _.exists(false) }
+          ])
+        )
         .orderBy('createdAt', 'desc')
         .limit(200)
         .get()
