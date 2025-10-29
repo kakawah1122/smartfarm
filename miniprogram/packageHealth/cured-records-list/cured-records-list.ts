@@ -66,27 +66,63 @@ Page({
       const db = wx.cloud.database()
       const _ = db.command
 
-      // 查询已治愈的治疗记录
+      // ✅ 优化查询：分步查询，避免索引问题
+      // 1. 先查询所有未删除的治疗记录
       const result = await db.collection('health_treatment_records')
         .where({
-          'outcome.status': _.in(['cured', 'completed']),
-          'outcome.curedCount': _.gt(0),
           isDeleted: _.neq(true)
         })
-        .orderBy('completedAt', 'desc')
         .orderBy('createdAt', 'desc')
-        .limit(100)
+        .limit(200)
         .get()
 
-      console.log('查询到的治愈记录数:', result.data.length)
+      console.log('📊 查询到的所有治疗记录数:', result.data.length)
 
-      // 计算统计数据
+      // 调试：查看所有记录的outcome结构
+      if (result.data.length > 0) {
+        console.log('🔍 第一条记录的outcome结构:', result.data[0].outcome)
+      }
+
+      // 2. 在前端过滤出有治愈数的记录
+      const allRecords = result.data as CuredRecord[]
+      const curedRecords = allRecords.filter(record => {
+        const hasCured = (record.outcome?.curedCount || 0) > 0
+        if (hasCured) {
+          console.log('✅ 找到治愈记录:', {
+            id: record._id,
+            batchId: record.batchId,
+            curedCount: record.outcome.curedCount,
+            status: record.outcome.status,
+            curedCost: record.outcome.curedCost
+          })
+        }
+        return hasCured
+      })
+
+      console.log('✅ 过滤后的治愈记录数:', curedRecords.length)
+      
+      // 如果没有治愈记录，提示用户
+      if (curedRecords.length === 0 && result.data.length > 0) {
+        console.log('💡 提示：查询到', result.data.length, '条治疗记录，但都没有治愈数量')
+        console.log('可能的原因：')
+        console.log('1. 还没有记录治愈的治疗')
+        console.log('2. outcome.curedCount 字段未被正确设置')
+      }
+
+      // 3. 按完成时间排序（如果有的话），否则按创建时间
+      curedRecords.sort((a, b) => {
+        const timeA = a.completedAt || a.createdAt || new Date(0)
+        const timeB = b.completedAt || b.createdAt || new Date(0)
+        return new Date(timeB).getTime() - new Date(timeA).getTime()
+      })
+
+      // 4. 计算统计数据并格式化
       let totalCured = 0
       let totalCost = 0
       let totalMedicationCost = 0
 
       // ✅ 预处理数据，格式化成本字段
-      const records = (result.data as CuredRecord[]).map(record => {
+      const records = curedRecords.map(record => {
         totalCured += record.outcome.curedCount || 0
         totalCost += record.outcome.curedCost || 0
         totalMedicationCost += record.outcome.curedMedicationCost || 0

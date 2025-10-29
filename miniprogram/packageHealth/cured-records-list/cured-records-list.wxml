@@ -52,7 +52,16 @@
 
     <!-- 空状态 -->
     <view class="empty-container" wx:if="{{records.length === 0}}">
-      <t-empty icon="info-circle" description="暂无治愈记录" />
+      <t-empty 
+        icon="info-circle" 
+        description="暂无治愈记录"
+      >
+        <view slot="description" class="empty-tip">
+          <text class="tip-title">暂无治愈记录</text>
+          <text class="tip-subtitle">请在治疗记录中点击"记录治愈"按钮</text>
+          <text class="tip-subtitle">治愈后的记录将在此处显示</text>
+        </view>
+      </t-empty>
     </view>
 
     <!-- 记录列表 -->

@@ -92,6 +92,26 @@
   min-height: 60vh;
 }
 
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.tip-title {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.tip-subtitle {
+  font-size: 26rpx;
+  color: #999;
+  line-height: 1.6;
+}
+
 // ============ 记录列表 ============
 .records-list {
   padding: 0 32rpx;
