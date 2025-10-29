@@ -33,7 +33,7 @@
             <t-icon name="money-circle" size="48rpx" />
           </view>
           <view class="stat-info">
-            <text class="stat-value">¥{{stats.totalCost.toFixed(2)}}</text>
+            <text class="stat-value">¥{{stats.totalCost}}</text>
             <text class="stat-label">总治疗成本</text>
           </view>
         </view>
@@ -43,7 +43,7 @@
             <t-icon name="chart-bubble" size="48rpx" />
           </view>
           <view class="stat-info">
-            <text class="stat-value">¥{{stats.avgCostPerAnimal.toFixed(2)}}</text>
+            <text class="stat-value">¥{{stats.avgCostPerAnimal}}</text>
             <text class="stat-label">单只平均成本</text>
           </view>
         </view>
@@ -92,7 +92,7 @@
             </view>
             <view class="info-group">
               <text class="info-label">治愈成本</text>
-              <text class="info-value primary-text">¥{{(item.outcome.curedCost || 0).toFixed(2)}}</text>
+              <text class="info-value primary-text">¥{{item.formattedCuredCost}}</text>
             </view>
           </view>
 
@@ -112,11 +112,11 @@
           <view class="info-row cost-row" wx:if="{{item.outcome.curedMedicationCost}}">
             <view class="cost-item">
               <text class="cost-label">药物成本：</text>
-              <text class="cost-value">¥{{(item.outcome.curedMedicationCost || 0).toFixed(2)}}</text>
+              <text class="cost-value">¥{{item.formattedMedicationCost}}</text>
             </view>
             <view class="cost-item">
               <text class="cost-label">单只成本：</text>
-              <text class="cost-value">¥{{((item.outcome.curedCost || 0) / item.outcome.curedCount).toFixed(2)}}</text>
+              <text class="cost-value">¥{{item.formattedCostPerAnimal}}</text>
             </view>
           </view>
 

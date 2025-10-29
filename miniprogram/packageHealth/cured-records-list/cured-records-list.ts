@@ -80,17 +80,26 @@ Page({
 
       console.log('查询到的治愈记录数:', result.data.length)
 
-      const records = result.data as CuredRecord[]
-
       // 计算统计数据
       let totalCured = 0
       let totalCost = 0
       let totalMedicationCost = 0
 
-      records.forEach(record => {
+      // ✅ 预处理数据，格式化成本字段
+      const records = (result.data as CuredRecord[]).map(record => {
         totalCured += record.outcome.curedCount || 0
         totalCost += record.outcome.curedCost || 0
         totalMedicationCost += record.outcome.curedMedicationCost || 0
+
+        return {
+          ...record,
+          // 添加格式化后的成本字段
+          formattedCuredCost: (record.outcome.curedCost || 0).toFixed(2),
+          formattedMedicationCost: (record.outcome.curedMedicationCost || 0).toFixed(2),
+          formattedCostPerAnimal: record.outcome.curedCount > 0 
+            ? ((record.outcome.curedCost || 0) / record.outcome.curedCount).toFixed(2)
+            : '0.00'
+        }
       })
 
       const avgCostPerAnimal = totalCured > 0 ? (totalCost / totalCured) : 0
@@ -99,9 +108,9 @@ Page({
         records,
         stats: {
           totalCured,
-          totalCost,
-          totalMedicationCost,
-          avgCostPerAnimal
+          totalCost: parseFloat(totalCost.toFixed(2)),
+          totalMedicationCost: parseFloat(totalMedicationCost.toFixed(2)),
+          avgCostPerAnimal: parseFloat(avgCostPerAnimal.toFixed(2))
         },
         loading: false
       })
