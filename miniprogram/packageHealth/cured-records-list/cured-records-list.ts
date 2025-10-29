@@ -64,10 +64,17 @@ Page({
       this.setData({ loading: true })
 
       const db = wx.cloud.database()
+      const _ = db.command
 
-      // ✅ 简化查询：只按创建时间排序，在前端过滤已删除的记录
-      // 这样可以高效使用 createdAt 索引
+      // ✅ 优化查询：添加时间范围避免全量查询警告
+      // 查询最近1年的治疗记录（超过1年的记录一般不需要展示）
+      const oneYearAgo = new Date()
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+
       const result = await db.collection('health_treatment_records')
+        .where({
+          createdAt: _.gte(oneYearAgo)  // 只查询最近1年的记录
+        })
         .orderBy('createdAt', 'desc')
         .limit(200)
         .get()
