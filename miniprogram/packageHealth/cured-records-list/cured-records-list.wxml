@@ -1,0 +1,155 @@
+<!-- miniprogram/packageHealth/cured-records-list/cured-records-list.wxml -->
+<view class="cured-records-page">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="治愈记录" 
+    showBack="{{true}}" 
+    fallbackUrl="/pages/health/health" 
+  />
+
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
+
+  <!-- 内容区 -->
+  <view class="page-content" wx:else>
+    
+    <!-- 统计卡片 -->
+    <view class="stats-section">
+      <view class="stats-grid">
+        <view class="stat-card">
+          <view class="stat-icon success">
+            <t-icon name="check-circle" size="48rpx" />
+          </view>
+          <view class="stat-info">
+            <text class="stat-value">{{stats.totalCured}}</text>
+            <text class="stat-label">累计治愈</text>
+          </view>
+        </view>
+
+        <view class="stat-card">
+          <view class="stat-icon primary">
+            <t-icon name="money-circle" size="48rpx" />
+          </view>
+          <view class="stat-info">
+            <text class="stat-value">¥{{stats.totalCost.toFixed(2)}}</text>
+            <text class="stat-label">总治疗成本</text>
+          </view>
+        </view>
+
+        <view class="stat-card">
+          <view class="stat-icon warning">
+            <t-icon name="chart-bubble" size="48rpx" />
+          </view>
+          <view class="stat-info">
+            <text class="stat-value">¥{{stats.avgCostPerAnimal.toFixed(2)}}</text>
+            <text class="stat-label">单只平均成本</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-container" wx:if="{{records.length === 0}}">
+      <t-empty icon="info-circle" description="暂无治愈记录" />
+    </view>
+
+    <!-- 记录列表 -->
+    <view class="records-list" wx:if="{{records.length > 0}}">
+      <view 
+        class="record-card"
+        wx:for="{{records}}"
+        wx:key="_id"
+        bind:tap="onRecordTap"
+        data-id="{{item._id}}"
+      >
+        <!-- 记录头部 -->
+        <view class="record-header">
+          <view class="record-title-row">
+            <text class="record-name">{{item.diagnosis.confirmed || item.diagnosis.preliminary}}</text>
+            <t-tag 
+              theme="success" 
+              size="small" 
+              class="status-tag"
+            >
+              已治愈
+            </t-tag>
+          </view>
+          <view class="record-batch">
+            <t-icon name="layers" size="28rpx" color="#999" />
+            <text class="batch-text">{{item.batchNumber || item.batchId}}</text>
+          </view>
+        </view>
+
+        <!-- 记录内容 -->
+        <view class="record-content">
+          <!-- 治愈信息 -->
+          <view class="info-row highlight-row">
+            <view class="info-group">
+              <text class="info-label">治愈数量</text>
+              <text class="info-value success-text">{{item.outcome.curedCount}} 只</text>
+            </view>
+            <view class="info-group">
+              <text class="info-label">治愈成本</text>
+              <text class="info-value primary-text">¥{{(item.outcome.curedCost || 0).toFixed(2)}}</text>
+            </view>
+          </view>
+
+          <!-- 详细信息 -->
+          <view class="info-row">
+            <view class="info-group">
+              <text class="info-label">总治疗数</text>
+              <text class="info-value">{{item.outcome.totalTreated}} 只</text>
+            </view>
+            <view class="info-group" wx:if="{{item.outcome.deathCount > 0}}">
+              <text class="info-label">死亡数</text>
+              <text class="info-value danger-text">{{item.outcome.deathCount}} 只</text>
+            </view>
+          </view>
+
+          <!-- 成本明细 -->
+          <view class="info-row cost-row" wx:if="{{item.outcome.curedMedicationCost}}">
+            <view class="cost-item">
+              <text class="cost-label">药物成本：</text>
+              <text class="cost-value">¥{{(item.outcome.curedMedicationCost || 0).toFixed(2)}}</text>
+            </view>
+            <view class="cost-item">
+              <text class="cost-label">单只成本：</text>
+              <text class="cost-value">¥{{((item.outcome.curedCost || 0) / item.outcome.curedCount).toFixed(2)}}</text>
+            </view>
+          </view>
+
+          <!-- 治疗方案 -->
+          <view class="info-row treatment-plan-row" wx:if="{{item.treatmentPlan.primary}}">
+            <t-icon name="file-text" size="28rpx" color="#0052d9" />
+            <text class="treatment-plan-text">{{item.treatmentPlan.primary}}</text>
+          </view>
+
+          <!-- 用药情况 -->
+          <view class="info-row medication-row" wx:if="{{item.medications && item.medications.length > 0}}">
+            <t-icon name="queue" size="28rpx" color="#00a870" />
+            <text class="medication-text">
+              <block wx:for="{{item.medications}}" wx:for-item="med" wx:key="materialId">
+                {{med.name}}{{med.quantity}}{{med.unit}}<text wx:if="{{index < item.medications.length - 1}}">、</text>
+              </block>
+            </text>
+          </view>
+
+          <!-- 底部：日期 -->
+          <view class="record-footer">
+            <view class="footer-left">
+              <text class="date-label">治疗日期：</text>
+              <text class="date-text">{{item.treatmentDate}}</text>
+            </view>
+            <view class="footer-right" wx:if="{{item.completedAt}}">
+              <text class="date-label">完成日期：</text>
+              <text class="date-text">{{item.completedAt}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+

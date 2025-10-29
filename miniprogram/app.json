@@ -18,7 +18,9 @@
         "material-records-list/material-records-list",
         "entry-records-list/entry-records-list",
         "exit-records-list/exit-records-list",
-        "inventory-detail/inventory-detail"
+        "inventory-detail/inventory-detail",
+        "feed-usage-form/feed-usage-form",
+        "batch-feed-cost/batch-feed-cost"
       ]
     },
     {
@@ -31,6 +33,7 @@
         "health-care/health-care",
         "treatment-record/treatment-record",
         "treatment-records-list/treatment-records-list",
+        "cured-records-list/cured-records-list",
         "death-record/death-record",
         "death-records-list/death-records-list",
         "death-record-detail/death-record-detail",

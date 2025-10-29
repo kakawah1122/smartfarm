@@ -3,8 +3,7 @@
   <!-- 导航栏 -->
   <navigation-bar 
     title="健康管理中心"
-    show-back="{{true}}"
-    bind:back="goBack"
+    show-back="{{false}}"
   />
 
   <!-- 详情视图 -->
@@ -17,13 +16,13 @@
           <text class="stat-value">{{healthStats.healthyRate}}</text>
           <text class="stat-label">健康率</text>
         </view>
-        <view class="stat-card stat-success">
+        <view class="stat-card stat-success clickable" bind:tap="navigateToCuredRecords">
           <text class="stat-value">{{treatmentData.stats.cureRate}}%</text>
-          <text class="stat-label">治愈率</text>
+          <text class="stat-label">治愈率 ›</text>
         </view>
-        <view class="stat-card stat-mortality">
+        <view class="stat-card stat-mortality clickable" bind:tap="navigateToDeathRecords">
           <text class="stat-value">{{healthStats.mortalityRate}}</text>
-          <text class="stat-label">死亡率</text>
+          <text class="stat-label">死亡率 ›</text>
         </view>
       </view>
     </view>
@@ -246,8 +245,8 @@
               <view class="css-icon-alert"></view>
             </view>
             <view class="stat-content">
-              <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.sickCount}}</text>
-              <text class="stat-label">异常数</text>
+              <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.abnormalCount || 0}}</text>
+              <text class="stat-label">待处理</text>
             </view>
           </view>
 
@@ -286,57 +285,38 @@
         </view>
       </view>
 
-      <!-- 当前治疗记录 -->
-      <view class="current-treatments">
+      <!-- 治疗记录 -->
+      <view class="treatment-history">
         <view class="section-header">
-          <text class="section-title">当前治疗</text>
-          <text class="more-link">查看全部 ></text>
+          <text class="section-title">治疗记录</text>
+          <text class="more-link" bind:tap="onViewAllTreatments">查看全部 ></text>
         </view>
-        <view class="treatment-list">
+        <view class="treatment-records-list" wx:if="{{treatmentData.treatmentHistory.length > 0}}">
           <view 
-            class="treatment-item"
-            wx:for="{{treatmentData.currentTreatments}}"
+            class="treatment-record-item"
+            wx:for="{{treatmentData.treatmentHistory}}"
             wx:key="_id"
-            bind:tap="onTreatmentAction"
-            data-action="view_treatment"
-            data-data="{{item}}"
+            bind:tap="onTreatmentRecordTap"
+            data-id="{{item._id}}"
           >
-            <view class="treatment-info">
-              <text class="treatment-title">{{item.diagnosisDisease}}</text>
-              <text class="treatment-desc">{{item.location}} · 第{{item.treatmentDay}}天</text>
+            <view class="record-info">
+              <text class="record-title">{{item.diagnosis}}</text>
+              <text class="record-desc">{{item.treatmentType === 'medication' ? '药物治疗' : '隔离观察'}} · {{item.batchNumber}}</text>
             </view>
-            <view class="treatment-meta">
-              <text class="treatment-date">{{item.nextTreatmentDate}}</text>
-              <t-tag variant="light" theme="warning" size="small">进行中</t-tag>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- AI诊断历史 -->
-      <view class="ai-diagnosis-history">
-        <text class="section-title">AI诊断历史</text>
-        <view class="diagnosis-list">
-          <view 
-            class="diagnosis-item"
-            wx:for="{{treatmentData.aiDiagnosisHistory}}"
-            wx:key="_id"
-          >
-            <view class="diagnosis-info">
-              <text class="diagnosis-title">{{item.diagnosisResult}}</text>
-              <text class="diagnosis-desc">置信度：{{item.confidence}}%</text>
-            </view>
-            <view class="diagnosis-meta">
-              <text class="diagnosis-date">{{item.createTime}}</text>
+            <view class="record-meta">
+              <text class="record-date">{{item.startDate}}</text>
               <t-tag 
                 variant="light" 
-                theme="{{item.status === 'confirmed' ? 'success' : 'primary'}}" 
+                theme="{{item.status === 'cured' ? 'success' : item.status === 'died' ? 'danger' : 'warning'}}" 
                 size="small"
               >
-                {{item.status === 'confirmed' ? '已确认' : '待确认'}}
+                {{item.statusText}}
               </t-tag>
             </view>
           </view>
+        </view>
+        <view class="empty-placeholder" wx:else>
+          <text class="empty-text">暂无治疗记录</text>
         </view>
       </view>
     </view>
