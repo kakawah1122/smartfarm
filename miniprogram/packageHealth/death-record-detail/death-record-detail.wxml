@@ -11,8 +11,8 @@
   <!-- 详情内容 -->
   <view class="detail-content" wx:else>
     
-    <!-- 状态标识卡片 -->
-    <view class="status-card {{record.isCorrected ? 'corrected' : 'pending'}}">
+    <!-- 状态标识卡片（仅 AI 死因剖析来源显示）-->
+    <view class="status-card {{record.isCorrected ? 'corrected' : 'pending'}}" wx:if="{{record.source === 'ai_diagnosis'}}">
       <view class="status-icon">
         <t-icon 
           name="{{record.isCorrected ? 'check-circle' : 'error-circle'}}" 
@@ -47,12 +47,42 @@
           <text class="info-value highlight">{{record.deathCount}} 只</text>
         </view>
         <view class="info-row">
+          <text class="info-label">单位成本</text>
+          <text class="info-value">¥{{record.unitCost || 0}}/只</text>
+        </view>
+        <view class="info-row" wx:if="{{record.breedingCost && record.breedingCost > 0}}">
+          <text class="info-label">饲养成本</text>
+          <text class="info-value">¥{{record.breedingCost}}</text>
+        </view>
+        <view class="info-row" wx:if="{{record.treatmentCost && record.treatmentCost > 0}}">
+          <text class="info-label">治疗成本</text>
+          <text class="info-value treatment-cost">¥{{record.treatmentCost}}</text>
+        </view>
+        <view class="info-row">
           <text class="info-label">财务损失</text>
           <text class="info-value loss">¥{{record.financeLoss || 0}}</text>
         </view>
-        <view class="info-row">
-          <text class="info-label">单位成本</text>
-          <text class="info-value">¥{{record.unitCost || 0}}/只</text>
+      </view>
+    </view>
+
+    <!-- 治疗信息卡片 -->
+    <view class="info-card treatment-card" wx:if="{{record.treatmentRecordId && (record.medications && record.medications.length > 0)}}">
+      <view class="card-title">
+        <t-icon name="root-list" size="32rpx" color="#0052d9" />
+        <text class="title-text">治疗用药</text>
+        <t-tag theme="warning" size="small">治疗期间死亡</t-tag>
+      </view>
+      
+      <view class="medications-list">
+        <view class="medication-item" wx:for="{{record.medications}}" wx:key="index">
+          <view class="medication-header">
+            <text class="medication-name">{{item.name}}</text>
+            <text class="medication-quantity">×{{item.quantity}}{{item.unit || ''}}</text>
+          </view>
+          <view class="medication-info" wx:if="{{item.dosage || item.frequency}}">
+            <text class="info-text" wx:if="{{item.dosage}}">用量: {{item.dosage}}</text>
+            <text class="info-text" wx:if="{{item.frequency}}">频次: {{item.frequency}}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -194,8 +224,8 @@
       </view>
     </view>
 
-    <!-- 操作按钮 -->
-    <view class="action-buttons">
+    <!-- 操作按钮（仅 AI 死因剖析来源显示）-->
+    <view class="action-buttons" wx:if="{{record.source === 'ai_diagnosis'}}">
       <t-button 
         theme="primary" 
         size="large" 
@@ -225,6 +255,11 @@
       >
         重新修正
       </t-button>
+    </view>
+    
+    <!-- 治疗来源的提示信息 -->
+    <view class="treatment-source-tip" wx:if="{{record.source === 'treatment'}}">
+      <t-notice-bar visible theme="info" content="此记录来自治疗进展，诊断已在治疗前确认，无需再次修正。" />
     </view>
 
   </view>

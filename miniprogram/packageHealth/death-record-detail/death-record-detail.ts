@@ -9,6 +9,7 @@ interface DeathRecord {
   deathCause: string
   financeLoss: number
   unitCost: number
+  source?: string  // ✅ 来源标识：'treatment' 治疗记录 | 'ai_diagnosis' AI死因剖析
   aiDiagnosisId: string
   diagnosisResult: any
   autopsyImages?: string[]

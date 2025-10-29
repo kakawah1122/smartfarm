@@ -5,7 +5,7 @@
 
 .detail-content {
   padding: 20rpx;
-  padding-top: 0;
+  padding-top: calc(var(--navbar-height, 132rpx) + 40rpx); /* 导航栏高度 + 安全间距 */
 }
 
 .loading-container {
@@ -28,12 +28,12 @@
 
   &.corrected {
     background: linear-gradient(135deg, #f0faf5 0%, #e6f7f0 100%);
-    border-left: 4rpx solid #00a870;
+    // ❌ 移除突兀的粗线条（违反UI规范）
   }
 
   &.pending {
     background: linear-gradient(135deg, #fff7e6 0%, #ffe8cc 100%);
-    border-left: 4rpx solid #ed7b2f;
+    // ❌ 移除突兀的粗线条（违反UI规范）
   }
 }
 
@@ -117,6 +117,12 @@
   &.loss {
     color: #e34d59;
     font-size: 32rpx;
+  }
+
+  &.treatment-cost, &.medication-cost {
+    color: #ed7b2f;
+    font-size: 30rpx;
+    font-weight: 500;
   }
 
   &.corrected {
@@ -346,6 +352,12 @@
   margin-top: 20rpx;
 }
 
+// 治疗来源提示
+.treatment-source-tip {
+  margin-top: 20rpx;
+  padding: 0 30rpx;
+}
+
 // 修正诊断弹窗 - 自定义实现
 .correction-dialog-wrapper {
   position: fixed;
@@ -558,6 +570,50 @@
     color: #fff;
     font-weight: 500;
   }
+}
+
+// 治疗信息卡片
+.medications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.medication-item {
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  // ❌ 移除突兀的粗线条（违反UI规范）
+}
+
+.medication-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.medication-name {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.medication-quantity {
+  font-size: 28rpx;
+  color: #0052d9;
+  font-weight: 500;
+}
+
+.medication-info {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 8rpx;
+}
+
+.info-text {
+  font-size: 24rpx;
+  color: #666;
 }
 
 .safe-area-bottom {

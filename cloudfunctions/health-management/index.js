@@ -204,7 +204,6 @@ async function createAbnormalRecord(event, wxContext) {
     } = event
     const openid = wxContext.OPENID
 
-    console.log('📥 创建异常记录:', diagnosis, '- 批次:', batchNumber)
 
     const db = cloud.database()
 
@@ -227,7 +226,8 @@ async function createAbnormalRecord(event, wxContext) {
     const recordData = {
       batchId,
       batchNumber,
-      diagnosisId,  // 关联AI诊断记录
+      diagnosisId,  // 保留原字段名兼容性
+      relatedDiagnosisId: diagnosisId,  // ✅ 统一使用 relatedDiagnosisId 字段名
       recordType: 'ai_diagnosis',
       checkDate: new Date().toISOString().split('T')[0],
       reporter: openid,
@@ -247,14 +247,12 @@ async function createAbnormalRecord(event, wxContext) {
       updatedAt: new Date()
     }
 
-    console.log('💾 准备保存到数据库的数据:', recordData)
 
     // 使用health_records collection，但状态为abnormal
     const result = await db.collection(COLLECTIONS.HEALTH_RECORDS).add({
       data: recordData
     })
     
-    console.log('✅ 异常记录已保存, ID:', result._id)
 
     // 记录审计日志
     await dbManager.createAuditLog(
@@ -335,14 +333,12 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       treatmentPlan,  // ✅ 接收前端传来的治疗方案
       medications,    // ✅ 接收前端传来的药物
       notes,          // ✅ 接收前端传来的备注
-      treatmentType   // ✅ 接收治疗类型
+      treatmentType,  // ✅ 接收治疗类型
+      isDirectSubmit  // ✅ 接收是否直接提交标记
     } = event
     const openid = wxContext.OPENID
     const db = cloud.database()
     
-    console.log('📦 云函数接收到的参数:')
-    console.log('  - medications:', JSON.stringify(medications))
-    console.log('  - treatmentPlan:', JSON.stringify(treatmentPlan))
     
     // ✅ 如果没有 affectedCount，从异常记录中获取
     let finalAffectedCount = affectedCount
@@ -354,11 +350,14 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       if (abnormalRecord.data) {
         finalAffectedCount = abnormalRecord.data.affectedCount || 1
       }
+    } else {
     }
     
-    // ✅ 判断是创建草稿还是直接创建正式记录
-    // 如果传入了 treatmentPlan，说明是前端已填写完整表单，直接创建正式记录
-    const isDirectSubmit = treatmentPlan && treatmentPlan.primary
+    
+    // ✅ 所有治疗记录都创建为正式记录（不使用草稿）
+    const hasMedicationsPayload = Array.isArray(medications) && medications.length > 0
+    const hasMedicationsEvent = !!event.hasMedications
+    const hasMedications = hasMedicationsPayload || hasMedicationsEvent
     
     // 创建治疗记录
     const treatmentData = {
@@ -380,7 +379,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       medications: medications || [],
       progress: [],
       outcome: {
-        status: isDirectSubmit ? 'ongoing' : 'pending',  // ✅ 直接提交则为 ongoing
+        status: 'ongoing',  // ✅ 始终创建为正式记录
         curedCount: 0,
         improvedCount: 0,
         deathCount: 0,
@@ -393,7 +392,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
         total: 0
       },
       notes: notes || '',
-      isDraft: !isDirectSubmit,  // ✅ 直接提交则不是草稿
+      isDraft: false,  // ✅ 始终为正式记录
       isDeleted: false,
       createdBy: openid,
       createdAt: new Date(),
@@ -404,57 +403,121 @@ async function createTreatmentFromAbnormal(event, wxContext) {
       data: treatmentData
     })
     
-    console.log('✅ 治疗记录已保存到数据库')
-    console.log('  - 记录ID:', treatmentResult._id)
-    console.log('  - medications字段:', JSON.stringify(treatmentData.medications))
     
-    // ✅ 如果是直接提交且有药物使用，扣减库存
+    // ✅ 如果是直接提交且有药物使用，扣减库存并创建领用记录
+    let totalMedicationCost = 0  // ✅ 累计用药成本
+    
     if (isDirectSubmit && medications && medications.length > 0) {
+      
       for (const med of medications) {
-        if (med.materialId && med.quantity > 0) {
-          try {
-            // 检查库存
-            const material = await db.collection('prod_materials').doc(med.materialId).get()
-            
-            if (material.data) {
-              const currentStock = material.data.currentStock || 0
-              
-              if (currentStock < med.quantity) {
-                console.warn(`⚠️ 库存不足: ${material.data.name}，当前库存：${currentStock}，需要：${med.quantity}`)
-                continue  // 库存不足时跳过，不阻断治疗记录创建
-              }
-              
-              // 扣减库存
-              const newStock = currentStock - med.quantity
-              await db.collection('prod_materials').doc(med.materialId).update({
-                data: {
-                  currentStock: newStock,
-                  updateTime: new Date()
-                }
-              })
-              
-              // 创建库存流水记录
-              await db.collection('prod_inventory_logs').add({
-                data: {
-                  materialId: med.materialId,
-                  recordId: treatmentResult._id,
-                  operation: '治疗领用',
-                  quantity: med.quantity,
-                  beforeStock: currentStock,
-                  afterStock: newStock,
-                  operator: openid,
-                  operationTime: new Date(),
-                  relatedType: 'treatment',
-                  notes: `治疗领用 - ${diagnosis}`
-                }
-              })
-              
-              console.log(`✅ 库存扣减成功: ${material.data.name}，数量：${med.quantity}，剩余：${newStock}`)
-            }
-          } catch (error) {
-            console.error(`❌ 扣减库存失败:`, error)
-            // 不阻断治疗记录创建
+        if (!med.materialId || !med.quantity || med.quantity <= 0) {
+          continue
+        }
+        
+        try {
+          // 使用事务确保数据一致性
+          const transaction = await db.startTransaction()
+          
+          // 1. 查询当前库存
+          const materialResult = await transaction.collection('prod_materials')
+            .doc(med.materialId)
+            .get()
+          
+          if (!materialResult.data) {
+            await transaction.rollback()
+            continue
           }
+          
+          const material = materialResult.data
+          const currentStock = material.currentStock || 0
+          const quantity = parseFloat(med.quantity) || 0
+          
+          if (currentStock < quantity) {
+            await transaction.rollback()
+            continue
+          }
+          
+          // ✅ 计算该药品的成本
+          const unitPrice = material.unitPrice || material.avgCost || 0
+          const medicationCost = unitPrice * quantity
+          totalMedicationCost += medicationCost
+          
+          // 2. 扣减库存
+          await transaction.collection('prod_materials')
+            .doc(med.materialId)
+            .update({
+              data: {
+                currentStock: _.inc(-quantity),
+                updateTime: db.serverDate()
+              }
+            })
+          
+          // 3. 创建物资领用记录（主记录）
+          const materialRecordResult = await transaction.collection('prod_material_records').add({
+            data: {
+              type: 'use',
+              materialId: med.materialId,
+              materialCode: material.code || med.materialCode || '',
+              materialName: med.name || material.name,
+              category: material.category || med.category || 'medicine',
+              quantity: quantity,
+              unit: med.unit || material.unit,
+              recordDate: new Date().toISOString().split('T')[0],
+              relatedModule: 'health_treatment',
+              relatedId: treatmentResult._id,
+              notes: `制定治疗方案 - ${diagnosis} - 用法：${med.dosage || '无'}`,
+              operator: openid,
+              createTime: db.serverDate(),
+              updateTime: db.serverDate()
+            }
+          })
+          
+          // 4. 创建库存流水（追踪记录）
+          await transaction.collection('prod_inventory_logs').add({
+            data: {
+              materialId: med.materialId,
+              recordId: materialRecordResult._id,  // ✅ 关联物资记录
+              materialCode: material.code || med.materialCode,
+              materialName: med.name || material.name,
+              category: material.category,
+              operation: '治疗领用',
+              operationType: '治疗领用',
+              quantity: -quantity,  // 负数表示出库
+              unit: med.unit || material.unit,
+              beforeStock: material.currentStock,
+              afterStock: material.currentStock - quantity,
+              relatedModule: 'health_treatment',
+              relatedId: treatmentResult._id,
+              notes: `制定治疗方案领用：${med.name}，用法：${med.dosage || '无'}`,
+              operator: openid,
+              createTime: db.serverDate()
+            }
+          })
+          
+          // 提交事务
+          await transaction.commit()
+          
+        } catch (error) {
+          console.error(`❌ 处理药品库存失败: ${med.name}`, error)
+          // 继续处理下一个药品，不阻断治疗记录创建
+        }
+      }
+      
+      // ✅ 更新治疗记录的用药成本
+      if (totalMedicationCost > 0) {
+        try {
+          await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+            .doc(treatmentResult._id)
+            .update({
+              data: {
+                'cost.medication': parseFloat(totalMedicationCost.toFixed(2)),
+                'cost.total': parseFloat(totalMedicationCost.toFixed(2)),
+                totalCost: parseFloat(totalMedicationCost.toFixed(2)),  // 兼容字段
+                updatedAt: new Date()
+              }
+            })
+        } catch (costError) {
+          console.error('❌ 更新治疗成本失败:', costError)
         }
       }
     }
@@ -525,12 +588,27 @@ async function createIsolationFromAbnormal(event, wxContext) {
     const openid = wxContext.OPENID
     const db = cloud.database()
     
+    
+    // ✅ 如果没有 affectedCount，从异常记录中获取
+    let finalAffectedCount = affectedCount
+    if (!finalAffectedCount) {
+      const abnormalRecord = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .doc(abnormalRecordId)
+        .get()
+      
+      if (abnormalRecord.data) {
+        finalAffectedCount = abnormalRecord.data.affectedCount || 1
+      }
+    } else {
+    }
+    
+    
     // 创建隔离记录
     const isolationData = {
       batchId,
       abnormalRecordId,  // 关联异常记录
       isolationDate: new Date().toISOString().split('T')[0],
-      isolatedCount: affectedCount || 0,
+      isolatedCount: finalAffectedCount || 0,
       diagnosis: diagnosis || '',
       isolationLocation: '',  // 隔离位置
       isolationReason: diagnosis || '',
@@ -539,7 +617,7 @@ async function createIsolationFromAbnormal(event, wxContext) {
       outcome: {
         recoveredCount: 0,
         diedCount: 0,
-        stillIsolatedCount: affectedCount || 0
+        stillIsolatedCount: finalAffectedCount || 0
       },
       notes: '',
       isDeleted: false,  // ✅ 添加删除标记字段，确保统计时能查询到
@@ -572,7 +650,7 @@ async function createIsolationFromAbnormal(event, wxContext) {
       {
         abnormalRecordId,
         batchId,
-        affectedCount,
+        affectedCount: finalAffectedCount,  // ✅ 使用最终确定的数量
         result: 'success'
       }
     )
@@ -658,7 +736,6 @@ async function getAbnormalRecords(event, wxContext) {
     const { batchId } = event
     const db = cloud.database()
     
-    console.log('🔍 查询异常记录 - 参数:', { batchId })
     
     // ✅ 只查询真正的异常记录（待处理状态），已流转到治疗中或隔离的不计入异常数
     let whereCondition = {
@@ -676,9 +753,7 @@ async function getAbnormalRecords(event, wxContext) {
       .orderBy('checkDate', 'desc')
       .get()
     
-    console.log('📋 查询到异常记录数量（仅待处理）:', result.data.length)
     if (result.data.length > 0) {
-      console.log('📄 第一条记录示例:', result.data[0])
     }
     
     return {
@@ -692,6 +767,51 @@ async function getAbnormalRecords(event, wxContext) {
       success: false,
       error: error.message,
       message: '获取异常记录失败'
+    }
+  }
+}
+
+// 查询各状态的健康记录（待处理/治疗中/隔离）
+async function getHealthRecordsByStatus(event, wxContext) {
+  try {
+    const { batchId, status } = event  // status: 'abnormal' | 'treating' | 'isolated'
+    const db = cloud.database()
+    
+    
+    let whereCondition = {
+      recordType: 'ai_diagnosis',
+      status: status || 'abnormal',
+      isDeleted: _.neq(true)
+    }
+    
+    if (batchId && batchId !== 'all') {
+      whereCondition.batchId = batchId
+    }
+    
+    const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .where(whereCondition)
+      .get()
+    
+    // ✅ 累加受影响的动物数量
+    const totalCount = result.data.reduce((sum, record) => {
+      return sum + (record.affectedCount || 0)
+    }, 0)
+    
+    return {
+      success: true,
+      data: {
+        records: result.data,
+        totalCount: totalCount,
+        recordCount: result.data.length
+      },
+      message: '获取成功'
+    }
+  } catch (error) {
+    console.error('❌ 查询健康记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '获取健康记录失败'
     }
   }
 }
@@ -853,7 +973,6 @@ async function getBatchPromptData(event, wxContext) {
       }))
     } catch (isolationError) {
       // 隔离记录集合可能不存在，跳过
-      console.warn('隔离记录查询失败（集合可能不存在）:', isolationError.message)
     }
 
     // 5. 最近死亡记录
@@ -1358,15 +1477,21 @@ async function getHealthStatistics(batchId, dateRange) {
     
     // 统计治疗中记录（status='treating' 或 treatment_records中status='ongoing'）
     // ✅ 累加 totalTreated 或 animalIds.length
-    const treatingRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+    // ⚠️ 不在查询中过滤 outcome.status，因为微信云数据库嵌套字段查询可能失败
+    const treatingRecordsResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
         batchId,
-        'outcome.status': 'ongoing',
         isDeleted: _.neq(true)
       })
       .get()
     
-    const treatingCount = treatingRecords.data.reduce((sum, record) => {
+    // ✅ 在代码中过滤进行中的治疗记录（包含 ongoing 和 pending）
+    const treatingRecords = treatingRecordsResult.data.filter(r => {
+      const status = r.outcome?.status
+      return status === 'ongoing' || status === 'pending'
+    })
+    
+    const treatingCount = treatingRecords.reduce((sum, record) => {
       return sum + (record.outcome?.totalTreated || 0)
     }, 0)
     
@@ -1642,27 +1767,33 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         let originalQuantity = batch.quantity || 0  // 原始入栏数
         
         // ✅ 实时统计死亡数（从死亡记录表查询）
-        const deathRecordsResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+        // 尝试同时使用批次ID和批次号查询（因为治疗记录可能存储的是批次号）
+        const deathRecordsByIdResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
           .where({
             batchId: batch._id,
             isDeleted: false
           })
           .get()
         
-        let deadCount = 0
-        deathRecordsResult.data.forEach(record => {
-          deadCount += record.deathCount || 0
+        const deathRecordsByNumberResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+          .where({
+            batchId: batch.batchNumber,
+            isDeleted: false
+          })
+          .get()
+        
+        // 合并两次查询结果（去重）
+        const allDeathRecords = [...deathRecordsByIdResult.data]
+        const existingIds = new Set(allDeathRecords.map(r => r._id))
+        deathRecordsByNumberResult.data.forEach(record => {
+          if (!existingIds.has(record._id)) {
+            allDeathRecords.push(record)
+          }
         })
         
-        console.log(`📊 批次 ${batch.batchNumber} 死亡统计:`, {
-          批次ID: batch._id,
-          死亡记录数: deathRecordsResult.data.length,
-          累计死亡数: deadCount,
-          死亡记录详情: deathRecordsResult.data.map(r => ({
-            日期: r.deathDate,
-            数量: r.deathCount,
-            原因: r.deathCause
-          }))
+        let deadCount = 0
+        allDeathRecords.forEach(record => {
+          deadCount += record.deathCount || 0
         })
         
         // ✅ 当前存栏数 = 原始数量 - 实时死亡数 - 出栏数
@@ -1675,52 +1806,73 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         let lastCheckDate = null
         let recentIssues = []
         
-        // ✅ 查询异常记录（状态为 abnormal, treating, isolated 的记录）
-        // ⚠️ 不能只用 .count()，要累加每条记录的 affectedCount
+        // ✅ 查询待处理记录条数（用于界面显示）
         const abnormalRecordsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
           .where({
             batchId: batch._id,
             recordType: 'ai_diagnosis',
-            status: _.in(['abnormal', 'treating', 'isolated']),
+            status: 'abnormal',
+            isDeleted: _.neq(true)
+          })
+          .count()
+        
+        const abnormalRecordCount = abnormalRecordsResult.total || 0
+        
+        // ✅ 查询所有治疗记录（包括药物治疗和隔离）
+        // ⚠️ 不在查询中过滤 outcome.status，因为微信云数据库嵌套字段查询可能失败
+        const allTreatmentRecordsResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+          .where({
+            batchId: batch._id,
             isDeleted: _.neq(true)
           })
           .get()
         
-        // ✅ 累加受影响的动物数量，而不是记录数
-        const abnormalCount = abnormalRecordsResult.data.reduce((sum, record) => {
+        // ✅ 在代码中过滤进行中的治疗记录（包含 ongoing 和旧的 pending 记录）
+        const ongoingTreatmentRecords = allTreatmentRecordsResult.data.filter(r => {
+          const status = r.outcome?.status
+          return status === 'ongoing' || status === 'pending'
+        })
+        
+        // 分别统计治疗中和隔离中的数量
+        let treatingCount = 0
+        let isolatedCount = 0
+        
+        ongoingTreatmentRecords.forEach(record => {
+          const count = record.outcome?.totalTreated || 0
+          if (record.treatmentType === 'isolation') {
+            isolatedCount += count
+          } else {
+            treatingCount += count
+          }
+        })
+        
+        // ✅ 查询待处理的动物数量（从 health_records，累加 affectedCount）
+        const abnormalAnimalsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+          .where({
+            batchId: batch._id,
+            recordType: 'ai_diagnosis',
+            status: 'abnormal',
+            isDeleted: _.neq(true)
+          })
+          .get()
+        
+        const abnormalCount = abnormalAnimalsResult.data.reduce((sum, record) => {
           return sum + (record.affectedCount || 0)
         }, 0)
         
-        console.log(`📊 批次 ${batch.batchNumber} 异常统计:`, {
-          批次ID: batch._id,
-          异常记录条数: abnormalRecordsResult.data.length,
-          受影响动物数: abnormalCount,
-          总存栏数: totalCount
-        })
+        // ✅ 计算健康数和异常数
+        // 异常数 = 待处理 + 治疗中 + 隔离中
+        sickCount = abnormalCount + treatingCount + isolatedCount
+        // 健康数 = 总存栏 - 异常数
+        healthyCount = totalCount - sickCount
+        healthyCount = Math.max(0, healthyCount) // 确保不为负数
+        
+        // 计算健康率
+        healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 100
         
         if (healthRecords.length > 0) {
-          // 有健康记录，使用实际检查数据
+          // 有健康记录，获取最近检查日期
           const latestRecord = healthRecords[0]
-          healthyCount = latestRecord.healthyCount || 0
-          sickCount = latestRecord.sickCount || 0
-          // ❌ 不再从健康记录获取死亡数，因为那是单次检查的数据
-          
-          // 如果健康记录的存栏数不同，使用健康记录的
-          if (latestRecord.totalCount && latestRecord.totalCount !== totalCount) {
-            totalCount = latestRecord.totalCount
-          }
-          
-          // ✅ 修复：如果健康数和生病数都是0，说明健康记录没有填写
-          // 应该用 总存栏数 - 异常数 来计算健康数
-          if (healthyCount === 0 && sickCount === 0 && totalCount > 0) {
-            healthyCount = totalCount - abnormalCount  // ✅ 减去异常数量
-            sickCount = abnormalCount  // ✅ 生病数 = 异常数
-            healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 100
-          } else {
-            // 计算健康率（基于存栏数）
-            healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 0
-          }
-          
           lastCheckDate = latestRecord.checkDate
           
           // 收集近期问题
@@ -1733,11 +1885,6 @@ async function getAllBatchesHealthSummary(event, wxContext) {
             }
           })
           recentIssues = [...new Set(recentIssues)].slice(0, 3)
-        } else {
-          // 没有健康记录，根据异常记录计算
-          healthyCount = totalCount > 0 ? (totalCount - abnormalCount) : 0
-          sickCount = abnormalCount
-          healthyRate = totalCount > 0 ? ((healthyCount / totalCount) * 100) : 100
         }
         
         // 确定预警级别
@@ -1748,7 +1895,7 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           alertLevel = 'warning'
         }
         
-        batchHealthSummaries.push({
+        const batchData = {
           batchId: batch._id,
           batchNumber: batch.batchNumber,
           breed: batch.breed || '未知品种',
@@ -1758,11 +1905,17 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           healthyCount,
           sickCount,
           deadCount,
+          abnormalCount,      // ✅ 待处理动物数
+          treatingCount,      // ✅ 治疗中动物数
+          isolatedCount,      // ✅ 隔离中动物数
+          abnormalRecordCount, // ✅ 待处理记录数
           recentIssues,
           alertLevel,
           lastCheckDate: lastCheckDate || '未检查',
           entryDate: batch.entryDate
-        })
+        }
+        
+        batchHealthSummaries.push(batchData)
       } catch (batchError) {
         // 已移除调试日志
       }
@@ -1780,7 +1933,8 @@ async function getAllBatchesHealthSummary(event, wxContext) {
       success: true,
       data: {
         batches: batchHealthSummaries,
-        totalBatches: batchHealthSummaries.length
+        totalBatches: batchHealthSummaries.length,
+        _version: '2025-10-28-v6'  // ✅ 新记录始终为 ongoing，统计兼容旧 pending 记录
       }
     }
   } catch (error) {
@@ -1901,8 +2055,8 @@ async function addTreatmentNote(event, wxContext) {
     
     const treatment = treatmentResult.data
     
-    // 权限验证
-    if (treatment._openid !== openid) {
+    // 权限验证（兼容 _openid 和 createdBy 两种字段）
+    if (treatment._openid !== openid && treatment.createdBy !== openid) {
       throw new Error('无权操作此治疗记录')
     }
     
@@ -1969,8 +2123,8 @@ async function addTreatmentMedication(event, wxContext) {
     
     const treatment = treatmentResult.data
     
-    // 权限验证
-    if (treatment._openid !== openid) {
+    // 权限验证（兼容 _openid 和 createdBy 两种字段）
+    if (treatment._openid !== openid && treatment.createdBy !== openid) {
       throw new Error('无权操作此治疗记录')
     }
     
@@ -1988,6 +2142,10 @@ async function addTreatmentMedication(event, wxContext) {
       throw new Error(`库存不足，当前库存：${material.currentStock}${material.unit}`)
     }
     
+    // ✅ 计算该药品的成本
+    const unitPrice = material.unitPrice || material.avgCost || 0
+    const medicationCost = unitPrice * quantity
+    
     // 开始事务
     const transaction = await db.startTransaction()
     
@@ -2002,27 +2160,49 @@ async function addTreatmentMedication(event, wxContext) {
           }
         })
       
-      // 2. 创建库存日志
+      // 2. ✅ 创建物资领用记录（主记录）
+      const materialRecordResult = await transaction.collection('prod_material_records').add({
+        data: {
+          type: 'use',  // 领用类型
+          materialId: medication.materialId,
+          materialCode: medication.materialCode || '',
+          materialName: medication.name,
+          category: medication.category || 'medicine',
+          quantity: quantity,
+          unit: medication.unit,
+          recordDate: new Date().toISOString().split('T')[0],
+          relatedModule: 'health_treatment',
+          relatedId: treatmentId,
+          notes: `治疗领用 - ${treatment.diagnosis || '待确定'} - 用法：${medication.dosage || '无'}`,
+          operator: openid,
+          createTime: db.serverDate(),
+          updateTime: db.serverDate()
+        }
+      })
+      
+      // 3. 创建库存流水（追踪记录）
       await transaction.collection('prod_inventory_logs').add({
         data: {
           materialId: medication.materialId,
+          recordId: materialRecordResult._id,  // ✅ 关联物资记录
           materialCode: medication.materialCode,
           materialName: medication.name,
           category: medication.category,
+          operation: '治疗领用',
           operationType: '治疗领用',
-          quantity: -quantity,
+          quantity: -quantity,  // 负数表示出库
           unit: medication.unit,
           beforeStock: material.currentStock,
           afterStock: material.currentStock - quantity,
           relatedModule: 'health_treatment',
           relatedId: treatmentId,
-          notes: `追加用药：${medication.name}，用法：${medication.dosage || '无'}`,
+          notes: `制定治疗方案领用：${medication.name}，用法：${medication.dosage || '无'}`,
           operator: openid,
           createTime: db.serverDate()
         }
       })
       
-      // 3. 添加用药记录到治疗记录
+      // 4. 添加用药记录到治疗记录
       const medicationRecord = {
         type: 'medication_added',
         medication: {
@@ -2037,6 +2217,23 @@ async function addTreatmentMedication(event, wxContext) {
         createdBy: openid
       }
       
+      // ✅ 更新治疗记录（添加用药并累加成本，按实际用药数分摊）
+      const totalTreatedAnimals = treatment.outcome?.totalTreated || 1
+      const curedCount = treatment.outcome?.curedCount || 0
+      const deathCount = treatment.outcome?.deathCount || 0
+      const remainingCount = totalTreatedAnimals - curedCount - deathCount
+      
+      
+      // ✅ 计算追加用药的单只成本（给剩余的鹅用）
+      const medicationCostPerAnimal = remainingCount > 0 ? medicationCost / remainingCount : 0
+      
+      // ✅ 换算到总数（用于统一按总数分摊）
+      const normalizedMedicationCost = medicationCostPerAnimal * totalTreatedAnimals
+      
+      // ✅ 累加到总成本
+      const currentMedicationCost = treatment.cost?.medication || treatment.totalCost || 0
+      const newTotalCost = currentMedicationCost + normalizedMedicationCost
+      
       await transaction.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
         .doc(treatmentId)
         .update({
@@ -2050,6 +2247,9 @@ async function addTreatmentMedication(event, wxContext) {
               category: medication.category
             }),
             treatmentHistory: _.push(medicationRecord),
+            'cost.medication': parseFloat(newTotalCost.toFixed(2)),
+            'cost.total': parseFloat(newTotalCost.toFixed(2)),
+            totalCost: parseFloat(newTotalCost.toFixed(2)),  // 兼容字段
             updateTime: db.serverDate()
           }
         })
@@ -2102,8 +2302,8 @@ async function updateTreatmentPlan(event, wxContext) {
     
     const treatment = treatmentResult.data
     
-    // 权限验证
-    if (treatment._openid !== openid) {
+    // 权限验证（兼容 _openid 和 createdBy 两种字段）
+    if (treatment._openid !== openid && treatment.createdBy !== openid) {
       throw new Error('无权操作此治疗记录')
     }
     
@@ -2221,6 +2421,9 @@ exports.main = async (event, context) => {
       case 'calculate_treatment_cost':
         return await calculateTreatmentCost(event, wxContext)
       
+      case 'get_treatment_history':
+        return await getTreatmentHistory(event, wxContext)
+      
       case 'update_treatment_progress':
         return await updateTreatmentProgress(event, wxContext)
       
@@ -2259,6 +2462,9 @@ exports.main = async (event, context) => {
       case 'get_abnormal_records':
         return await getAbnormalRecords(event, wxContext)
       
+      case 'get_health_records_by_status':
+        return await getHealthRecordsByStatus(event, wxContext)
+      
       case 'list_abnormal_records':
         return await listAbnormalRecords(event, wxContext)
       
@@ -2293,16 +2499,34 @@ async function calculateBatchCost(event, wxContext) {
       throw new Error('批次ID不能为空')
     }
     
-    // 1. 获取批次入栏信息
-    const batchEntry = await db.collection('prod_batch_entries')
-      .doc(batchId).get()
+    // 获取批次入栏信息（容错处理：batchId可能是文档ID或批次号）
+    let batch = null
     
-    if (!batchEntry.data) {
-      throw new Error('批次不存在')
+    try {
+      // 先尝试作为文档ID查询
+      const batchEntry = await db.collection('prod_batch_entries')
+        .doc(batchId)
+        .get()
+      batch = batchEntry.data
+    } catch (err) {
+      // 如果文档不存在，尝试通过批次号查询
+      const batchQueryResult = await db.collection('prod_batch_entries')
+        .where({
+          batchNumber: batchId,
+          isDeleted: _.neq(true)
+        })
+        .limit(1)
+        .get()
+      
+      if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+        batch = batchQueryResult.data[0]
+      }
     }
     
-    const batch = batchEntry.data
-    const entryUnitCost = batch.unitCost || 0
+    if (!batch) {
+      throw new Error(`批次不存在: ${batchId}`)
+    }
+    const entryUnitCost = batch.unitPrice || 0  // ✅ 修正：数据库字段名是 unitPrice
     const initialQuantity = batch.quantity || 0
     const currentCount = batch.currentCount || 1
     
@@ -2343,15 +2567,23 @@ async function calculateBatchCost(event, wxContext) {
       return sum + (record.costInfo?.totalCost || 0)
     }, 0)
     
-    // 5. 计算总成本和平均成本
+    // 5. 计算各项成本
     const entryCost = entryUnitCost * initialQuantity
+    
+    // ✅ 饲养成本 = 只包含物料成本（不含入栏价）
+    const avgBreedingCost = currentCount > 0 ? (materialCost / currentCount) : 0
+    
+    // 综合成本（包含所有成本）
     const totalCost = entryCost + materialCost + preventionCost + treatmentCost
-    const avgCost = currentCount > 0 ? (totalCost / currentCount) : 0
+    const avgTotalCost = currentCount > 0 ? (totalCost / currentCount) : 0
     
     return {
       success: true,
       data: {
-        avgCost: avgCost.toFixed(2),
+        avgCost: avgBreedingCost.toFixed(2),
+        avgBreedingCost: avgBreedingCost.toFixed(2),
+        avgTotalCost: avgTotalCost.toFixed(2),
+        entryUnitCost: entryUnitCost.toFixed(2),
         breakdown: {
           entryCost: entryCost.toFixed(2),
           materialCost: materialCost.toFixed(2),
@@ -2406,23 +2638,42 @@ async function createDeathRecord(event, wxContext) {
     if (!description) throw new Error('请填写详细描述')
     if (!disposalMethod) throw new Error('请选择处理方式')
     
-    // 2. 获取批次信息
-    const batchEntry = await db.collection('prod_batch_entries')
-      .doc(batchId).get()
+    // 2. 获取批次信息（容错处理：batchId可能是文档ID或批次号）
+    let batch = null
+    let batchDocId = batchId  // ✅ 批次文档的真实_id
     
-    if (!batchEntry.data) {
-      throw new Error('批次不存在')
+    try {
+      const batchEntry = await db.collection('prod_batch_entries')
+        .doc(batchId).get()
+      batch = batchEntry.data
+      batchDocId = batchId  // 文档ID就是传入的batchId
+    } catch (err) {
+      // 如果文档不存在，尝试通过批次号查询
+      const batchQueryResult = await db.collection('prod_batch_entries')
+        .where({
+          batchNumber: batchId,
+          isDeleted: _.neq(true)
+        })
+        .limit(1)
+        .get()
+      
+      if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+        batch = batchQueryResult.data[0]
+        batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
+      }
     }
     
-    const batch = batchEntry.data
+    if (!batch) {
+      throw new Error(`批次不存在: ${batchId}`)
+    }
     
     // 验证死亡数量不超过当前存栏数
     if (deathCount > batch.currentCount) {
       throw new Error(`死亡数量不能超过当前存栏数(${batch.currentCount})`)
     }
     
-    // 3. 计算平均成本
-    const costResult = await calculateBatchCost({ batchId }, wxContext)
+    // 3. 计算平均成本（✅ 使用批次文档的真实_id而不是批次号）
+    const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
     if (!costResult.success) {
       throw new Error('计算成本失败')
     }
@@ -2673,11 +2924,6 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
     const { diagnosisId, batchId, affectedCount, diagnosis, recommendations } = event
     const openid = wxContext.OPENID
     
-    console.log('======= 创建治疗记录参数 =======')
-    console.log('diagnosisId:', diagnosisId)
-    console.log('batchId:', batchId)
-    console.log('affectedCount:', affectedCount)
-    console.log('diagnosis:', diagnosis)
     
     // 验证必填参数
     if (!diagnosisId) {
@@ -2694,7 +2940,6 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
     const diagnosisRecord = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .doc(diagnosisId).get()
     
-    console.log('诊断记录查询结果:', diagnosisRecord.data ? '找到记录' : '未找到记录')
     
     if (!diagnosisRecord.data) {
       throw new Error(`诊断记录不存在 (ID: ${diagnosisId})`)
@@ -2726,6 +2971,124 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
     const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS).add({
       data: treatmentData
     })
+    
+    // ✅ 扣减库存并创建领用记录（如果有用药）
+    const medications = recommendations?.medication || []
+    let totalMedicationCost = 0  // ✅ 累计用药成本
+    
+    if (medications.length > 0) {
+      
+      for (const medication of medications) {
+        if (!medication.materialId) {
+          continue
+        }
+        
+        try {
+          // 开启事务
+          const transaction = await db.startTransaction()
+          
+          // 1. 查询当前库存
+          const materialResult = await transaction.collection('prod_materials')
+            .doc(medication.materialId)
+            .get()
+          
+          if (!materialResult.data) {
+            await transaction.rollback()
+            continue
+          }
+          
+          const material = materialResult.data
+          const quantity = medication.quantity || 1
+          
+          if (material.currentStock < quantity) {
+            await transaction.rollback()
+            continue
+          }
+          
+          // ✅ 计算该药品的成本
+          const unitPrice = material.unitPrice || material.avgCost || 0
+          const medicationCost = unitPrice * quantity
+          totalMedicationCost += medicationCost
+          
+          // 2. 扣减库存
+          await transaction.collection('prod_materials')
+            .doc(medication.materialId)
+            .update({
+              data: {
+                currentStock: _.inc(-quantity),
+                updateTime: db.serverDate()
+              }
+            })
+          
+          // 3. 创建物资领用记录（主记录）
+          const materialRecordResult = await transaction.collection('prod_material_records').add({
+            data: {
+              type: 'use',
+              materialId: medication.materialId,
+              materialCode: material.code || '',
+              materialName: medication.name,
+              category: material.category || 'medicine',
+              quantity: quantity,
+              unit: medication.unit || material.unit,
+              recordDate: new Date().toISOString().split('T')[0],
+              relatedModule: 'health_treatment',
+              relatedId: result._id,
+              notes: `制定治疗方案 - ${diagnosis || '待确定'} - 用法：${medication.dosage || '无'}`,
+              operator: openid,
+              createTime: db.serverDate(),
+              updateTime: db.serverDate()
+            }
+          })
+          
+          // 4. 创建库存流水（追踪记录）
+          await transaction.collection('prod_inventory_logs').add({
+            data: {
+              materialId: medication.materialId,
+              recordId: materialRecordResult._id,
+              materialCode: material.code,
+              materialName: medication.name,
+              category: material.category,
+              operation: '治疗领用',
+              operationType: '治疗领用',
+              quantity: -quantity,
+              unit: medication.unit || material.unit,
+              beforeStock: material.currentStock,
+              afterStock: material.currentStock - quantity,
+              relatedModule: 'health_treatment',
+              relatedId: result._id,
+              notes: `制定治疗方案领用：${medication.name}，用法：${medication.dosage || '无'}`,
+              operator: openid,
+              createTime: db.serverDate()
+            }
+          })
+          
+          // 提交事务
+          await transaction.commit()
+          
+        } catch (medicationError) {
+          console.error(`❌ 处理药品库存失败: ${medication.name}`, medicationError)
+          // 继续处理下一个药品，不影响主流程
+        }
+      }
+      
+      // ✅ 更新治疗记录的用药成本
+      if (totalMedicationCost > 0) {
+        try {
+          await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+            .doc(result._id)
+            .update({
+              data: {
+                'cost.medication': parseFloat(totalMedicationCost.toFixed(2)),
+                'cost.total': parseFloat(totalMedicationCost.toFixed(2)),
+                totalCost: parseFloat(totalMedicationCost.toFixed(2)),  // 兼容字段
+                updatedAt: new Date()
+              }
+            })
+        } catch (costError) {
+          console.error('❌ 更新治疗成本失败:', costError)
+        }
+      }
+    }
     
     // ✨ 创建健康记录，记录病鹅数量到"异常"统计
     try {
@@ -2767,11 +3130,39 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
           data: healthRecordData
         })
         
-        console.log('✅ 健康记录已创建，病鹅数量:', affectedCount)
       }
     } catch (healthRecordError) {
       console.error('创建健康记录失败（不影响治疗记录）:', healthRecordError)
       // 不影响主流程
+    }
+    
+    // ✅ 更新原异常记录的状态为 'treating'（治疗中），从异常数中移除
+    try {
+      const abnormalRecordsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .where({
+          recordType: 'ai_diagnosis',
+          status: 'abnormal',
+          relatedDiagnosisId: diagnosisId,
+          isDeleted: _.neq(true)
+        })
+        .get()
+      
+      if (abnormalRecordsResult.data && abnormalRecordsResult.data.length > 0) {
+        // 批量更新所有相关异常记录的状态
+        const updatePromises = abnormalRecordsResult.data.map(record => {
+          return db.collection(COLLECTIONS.HEALTH_RECORDS).doc(record._id).update({
+            data: {
+              status: 'treating',  // ✅ 更新状态为治疗中
+              relatedTreatmentId: result._id,  // 关联治疗记录
+              updatedAt: new Date()
+            }
+          })
+        })
+        
+        await Promise.all(updatePromises)
+      }
+    } catch (updateError) {
+      console.error('更新异常记录状态失败（不影响主流程）:', updateError)
     }
     
     // 更新AI诊断记录，关联治疗记录
@@ -2936,22 +3327,47 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       isDeleted: false
     }
     
-    // 获取批次信息计算损失
-    const batchEntry = await db.collection('prod_batch_entries')
-      .doc(treatment.batchId).get()
-    
-    if (batchEntry.data) {
-      const avgCost = await calculateBatchCost({ batchId: treatment.batchId }, wxContext)
-      const costPerAnimal = avgCost.data?.averageCost || 0
-      const totalLoss = (costPerAnimal * actualDiedCount) + treatment.totalCost
+    // 获取批次信息计算损失（容错处理）
+    try {
+      let batch = null
+      let batchDocId = treatment.batchId  // ✅ 批次文档的真实_id
       
-      deathRecordData.financialLoss = {
-        costPerAnimal,
-        totalLoss,
-        treatmentCost: treatment.totalCost,
-        currency: 'CNY'
+      try {
+        const batchEntry = await db.collection('prod_batch_entries')
+          .doc(treatment.batchId).get()
+        batch = batchEntry.data
+        batchDocId = treatment.batchId  // 文档ID就是传入的batchId
+      } catch (err) {
+        // 如果文档不存在，尝试通过批次号查询
+        const batchQueryResult = await db.collection('prod_batch_entries')
+          .where({
+            batchNumber: treatment.batchId,
+            isDeleted: _.neq(true)
+          })
+          .limit(1)
+          .get()
+        
+        if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+          batch = batchQueryResult.data[0]
+          batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
+        }
       }
-      deathRecordData.batchNumber = batchEntry.data.batchNumber
+      
+      if (batch) {
+        const avgCost = await calculateBatchCost({ batchId: batchDocId }, wxContext)
+        const costPerAnimal = avgCost.data?.averageCost || 0
+        const totalLoss = (costPerAnimal * actualDiedCount) + treatment.totalCost
+        
+        deathRecordData.financialLoss = {
+          costPerAnimal,
+          totalLoss,
+          treatmentCost: treatment.totalCost,
+          currency: 'CNY'
+        }
+        deathRecordData.batchNumber = batch.batchNumber
+      }
+    } catch (costError) {
+      console.error('计算财务损失失败:', costError.message)
     }
     
     const deathResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).add({
@@ -3037,13 +3453,32 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
  */
 async function updateBatchHealthStatus(batchId, updateData) {
   try {
-    // 获取批次当前存栏数
-    const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
-    if (!batchEntry.data) {
+    // 获取批次当前存栏数（容错处理：batchId可能是文档ID或批次号）
+    let batch = null
+    
+    try {
+      const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+      batch = batchEntry.data
+    } catch (err) {
+      // 如果文档不存在，尝试通过批次号查询
+      const batchQueryResult = await db.collection('prod_batch_entries')
+        .where({
+          batchNumber: batchId,
+          isDeleted: _.neq(true)
+        })
+        .limit(1)
+        .get()
+      
+      if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+        batch = batchQueryResult.data[0]
+      }
+    }
+    
+    if (!batch) {
       return
     }
     
-    const currentStock = batchEntry.data.currentCount || 0
+    const currentStock = batch.currentCount || 0
     
     // 根据更新类型处理
     if (updateData.type === 'cured') {
@@ -3075,13 +3510,32 @@ async function updateBatchHealthStatus(batchId, updateData) {
  */
 async function calculateHealthRate(batchId) {
   try {
-    // 1. 获取批次当前存栏数（已扣除死亡）
-    const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
-    if (!batchEntry.data) {
+    // 1. 获取批次当前存栏数（已扣除死亡）（容错处理：batchId可能是文档ID或批次号）
+    let batch = null
+    
+    try {
+      const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+      batch = batchEntry.data
+    } catch (err) {
+      // 如果文档不存在，尝试通过批次号查询
+      const batchQueryResult = await db.collection('prod_batch_entries')
+        .where({
+          batchNumber: batchId,
+          isDeleted: _.neq(true)
+        })
+        .limit(1)
+        .get()
+      
+      if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+        batch = batchQueryResult.data[0]
+      }
+    }
+    
+    if (!batch) {
       return '0'
     }
     
-    const currentStock = batchEntry.data.currentCount || 0
+    const currentStock = batch.currentCount || 0
     
     if (currentStock === 0) {
       return '0'
@@ -3139,10 +3593,12 @@ async function getOngoingTreatments(batchId, wxContext) {
     
     const records = await query.orderBy('treatmentDate', 'desc').get()
     
-    // ✅ 在代码中过滤 outcome.status === 'ongoing' 的记录
-    const ongoingTreatments = records.data.filter(r => r.outcome?.status === 'ongoing')
+    // ✅ 在代码中过滤进行中的治疗记录（包含 ongoing 和 pending）
+    const ongoingTreatments = records.data.filter(r => {
+      const status = r.outcome?.status
+      return status === 'ongoing' || status === 'pending'
+    })
     
-    console.log(`✅ 进行中的治疗记录: ${ongoingTreatments.length} / 总记录: ${records.data.length}`)
     
     return {
       success: true,
@@ -3186,8 +3642,18 @@ async function calculateTreatmentCost(event, wxContext) {
     
     const totalCost = records.data.reduce((sum, r) => sum + (r.totalCost || 0), 0)
     
-    // ✅ 修复：使用 outcome.status 而不是 treatmentStatus
-    const ongoingCount = records.data.filter(r => r.outcome?.status === 'ongoing').length
+    // ✅ 修复：使用 outcome.status，包含 ongoing 和 pending 状态
+    const ongoingRecords = records.data.filter(r => {
+      const status = r.outcome?.status
+      return status === 'ongoing' || status === 'pending'
+    })
+    const ongoingCount = ongoingRecords.length  // 记录条数
+    
+    // ✅ 计算治疗中的动物总数（记录的受影响动物数累加）
+    const ongoingAnimalsCount = ongoingRecords.reduce((sum, r) => {
+      return sum + (r.outcome?.totalTreated || r.initialCount || 0)
+    }, 0)
+    
     const curedCount = records.data.filter(r => r.outcome?.status === 'cured').length
     const diedCount = records.data.filter(r => r.outcome?.status === 'died').length
     
@@ -3200,7 +3666,8 @@ async function calculateTreatmentCost(event, wxContext) {
       data: {
         totalCost: totalCost.toFixed(2),
         treatmentCount: records.data.length,
-        ongoingCount,
+        ongoingCount,  // 治疗中记录条数
+        ongoingAnimalsCount,  // ✅ 治疗中动物总数
         curedCount,
         diedCount,
         totalTreated,
@@ -3238,10 +3705,6 @@ async function getTreatmentDetail(treatmentId, wxContext) {
     
     const treatment = treatmentResult.data
     
-    console.log('📋 查询到的治疗记录:')
-    console.log('  - 记录ID:', treatmentId)
-    console.log('  - medications字段:', JSON.stringify(treatment.medications))
-    console.log('  - medications数量:', treatment.medications ? treatment.medications.length : 0)
     
     // 计算治疗天数
     const startDate = new Date(treatment.treatmentDate)
@@ -3282,6 +3745,118 @@ async function getTreatmentDetail(treatmentId, wxContext) {
 }
 
 /**
+ * 获取治疗历史记录
+ */
+async function getTreatmentHistory(event, wxContext) {
+  try {
+    const { batchId, limit = 5 } = event
+    const openid = wxContext.OPENID
+    
+    // 构建查询条件
+    const where = {
+      _openid: openid,
+      isDeleted: _.neq(true)
+    }
+    
+    // 如果指定了批次ID，添加批次条件
+    if (batchId && batchId !== 'all') {
+      where.batchId = batchId
+    }
+    
+    // 查询治疗记录（包括药物治疗和隔离记录）
+    const treatmentRecordsResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where(where)
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get()
+    
+    const isolationRecordsResult = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
+      .where(where)
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get()
+    
+    // 合并两种记录
+    const allRecords = [
+      ...treatmentRecordsResult.data.map(r => ({
+        ...r,
+        treatmentType: 'medication',
+        diagnosis: r.diagnosisDisease || r.diagnosis || '未知疾病'
+      })),
+      ...isolationRecordsResult.data.map(r => ({
+        ...r,
+        treatmentType: 'isolation',
+        diagnosis: r.diagnosisDisease || r.diagnosis || '隔离观察'
+      }))
+    ]
+    
+    // 按创建时间排序
+    allRecords.sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime()
+      const timeB = new Date(b.createdAt).getTime()
+      return timeB - timeA
+    })
+    
+    // 只返回指定数量
+    const records = allRecords.slice(0, limit)
+    
+    // 为每条记录添加批次号（如果有的话）
+    for (const record of records) {
+      if (record.batchId) {
+        try {
+          const batchResult = await db.collection('prod_batch_entries')
+            .where({
+              _id: record.batchId,
+              isDeleted: _.neq(true)
+            })
+            .limit(1)
+            .get()
+          
+          if (batchResult.data && batchResult.data.length > 0) {
+            record.batchNumber = batchResult.data[0].batchNumber
+          } else {
+            // 尝试用批次号查询
+            const batchByNumberResult = await db.collection('prod_batch_entries')
+              .where({
+                batchNumber: record.batchId,
+                isDeleted: _.neq(true)
+              })
+              .limit(1)
+              .get()
+            
+            if (batchByNumberResult.data && batchByNumberResult.data.length > 0) {
+              record.batchNumber = batchByNumberResult.data[0].batchNumber
+            } else {
+              record.batchNumber = record.batchId
+            }
+          }
+        } catch (err) {
+          record.batchNumber = record.batchId
+        }
+      }
+    }
+    
+    
+    return {
+      success: true,
+      data: {
+        records,
+        total: records.length
+      },
+      message: '获取治疗历史记录成功'
+    }
+    
+  } catch (error) {
+    console.error('❌ 获取治疗历史记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '获取治疗历史记录失败'
+    }
+  }
+}
+
+/**
  * 更新治疗进展（记录治愈/死亡）
  */
 async function updateTreatmentProgress(event, wxContext) {
@@ -3291,7 +3866,7 @@ async function updateTreatmentProgress(event, wxContext) {
       progressType,  // 'cured' | 'died'
       count,
       notes,
-      deathCause  // 死亡原因（progressType=died时必填）
+      deathCause  // 死亡原因（可选）
     } = event
     
     const openid = wxContext.OPENID
@@ -3299,10 +3874,6 @@ async function updateTreatmentProgress(event, wxContext) {
     // 参数验证
     if (!treatmentId || !progressType || !count || count <= 0) {
       throw new Error('参数错误：治疗记录ID、进展类型、数量不能为空')
-    }
-    
-    if (progressType === 'died' && !deathCause) {
-      throw new Error('记录死亡时必须填写死亡原因')
     }
     
     // 获取治疗记录
@@ -3366,27 +3937,253 @@ async function updateTreatmentProgress(event, wxContext) {
         data: updateData
       })
     
-    // 如果是记录死亡，创建死亡记录
+    // 如果是记录死亡，创建死亡记录并更新批次死亡数
     if (progressType === 'died') {
+      
+      // 1️⃣ 获取批次信息（容错处理：batchId可能是文档ID或批次号）
+      let batch = null
+      let batchNumber = treatment.batchId
+      let batchDocId = treatment.batchId  // ✅ 批次文档的真实_id
+      
+      try {
+        // 先尝试作为文档ID查询
+        const batchResult = await db.collection('prod_batch_entries')
+          .doc(treatment.batchId)
+          .get()
+        batch = batchResult.data
+        batchNumber = batch?.batchNumber || treatment.batchId
+        batchDocId = treatment.batchId  // 文档ID就是传入的batchId
+      } catch (err) {
+        // 如果文档不存在，尝试通过批次号查询
+        console.log('批次ID查询失败，尝试通过批次号查询:', treatment.batchId)
+        try {
+          const batchQueryResult = await db.collection('prod_batch_entries')
+            .where({
+              batchNumber: treatment.batchId,
+              isDeleted: _.neq(true)
+            })
+            .limit(1)
+            .get()
+          
+          if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+            batch = batchQueryResult.data[0]
+            batchNumber = batch.batchNumber
+            batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
+            console.log('通过批次号查询成功，批次号:', batchNumber, '文档ID:', batchDocId)
+          } else {
+            console.warn('未找到批次信息:', treatment.batchId)
+            // 批次不存在，使用默认值
+            batchNumber = treatment.batchId
+          }
+        } catch (err2) {
+          console.error('批次查询失败:', err2.message)
+          batchNumber = treatment.batchId
+        }
+      }
+      
+      // 2️⃣ 计算成本数据（✅ 使用批次文档的真实_id而不是批次号）
+      let unitCost = 0
+      let breedingCostPerAnimal = 0
+      
+      console.log('========== 批次成本计算开始 ==========')
+      console.log('治疗记录中的 batchId:', treatment.batchId)
+      console.log('查询到的批次文档ID:', batchDocId)
+      console.log('查询到的批次号:', batchNumber)
+      console.log('批次数据:', JSON.stringify(batch))
+      
+      if (batch) {
+        try {
+          console.log('调用 calculateBatchCost，传入 batchId:', batchDocId)
+          const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
+          console.log('calculateBatchCost 返回结果:', JSON.stringify(costResult))
+          
+          if (costResult.success) {
+            unitCost = parseFloat(costResult.data.entryUnitCost || 0)
+            breedingCostPerAnimal = parseFloat(costResult.data.avgBreedingCost || 0)
+            console.log('从成本计算结果获取 - 入栏单价:', unitCost, '饲养成本:', breedingCostPerAnimal)
+          }
+        } catch (costError) {
+          console.error('❌ 计算成本失败:', costError)
+          console.error('错误详情:', costError.message, costError.stack)
+        }
+        
+        // 如果成本计算失败，尝试直接使用批次入栏单价
+        if ((unitCost === 0 || isNaN(unitCost)) && batch) {
+          unitCost = batch.unitPrice || 0  // ✅ 修正：数据库字段名是 unitPrice
+          console.log('使用批次文档中的入栏单价:', unitCost)
+          console.log('批次对象的 unitPrice 字段:', batch.unitPrice)
+        }
+      } else {
+        console.error('❌ 批次数据为空')
+      }
+      
+      console.log('最终获取的入栏单价:', unitCost)
+      console.log('========== 批次成本计算结束 ==========')
+      
+      if (unitCost === 0) {
+        console.warn(`❌ 批次 ${batchNumber} (文档ID: ${batchDocId}) 缺少入栏单价`)
+        console.warn('批次完整数据:', JSON.stringify(batch, null, 2))
+        throw new Error(`批次 ${batchNumber} 缺少入栏单价，请先补充批次入栏单价`)
+      }
+      
+      // 3️⃣ 提取死因（处理对象或字符串）
+      let diagnosisText = '治疗中死亡'
+      if (deathCause) {
+        diagnosisText = deathCause
+      } else if (treatment.diagnosis) {
+        // 如果 diagnosis 是对象，提取字符串
+        if (typeof treatment.diagnosis === 'object') {
+          diagnosisText = treatment.diagnosis.preliminary || 
+                         treatment.diagnosis.confirmed || 
+                         treatment.diagnosis.disease || 
+                         '治疗中死亡'
+        } else {
+          diagnosisText = treatment.diagnosis
+        }
+      }
+      
+      // 4️⃣ 计算治疗成本（按单只分摊）
+      const totalTreatedAnimals = treatment.outcome?.totalTreated || 1
+      const totalTreatmentCost = treatment.cost?.total || treatment.totalCost || 0
+      const totalMedicationCost = treatment.cost?.medication || 0
+      
+      // ✅ 计算单只分摊成本
+      const treatmentCostPerAnimal = totalTreatmentCost / totalTreatedAnimals
+      const medicationCostPerAnimal = totalMedicationCost / totalTreatedAnimals
+      
+      // ✅ 计算死亡数的实际成本
+      const deathTreatmentCost = treatmentCostPerAnimal * count
+      const deathMedicationCost = medicationCostPerAnimal * count
+      
+      // 计算财务损失 = 入栏单价 + 物料成本 + 治疗成本
+      const entryCostLoss = unitCost * count
+      const breedingCostLoss = breedingCostPerAnimal * count
+      const financeLoss = entryCostLoss + breedingCostLoss + deathTreatmentCost
+      
+      // 创建死亡记录
       const deathRecordData = {
         batchId: treatment.batchId,
+        batchNumber: batchNumber,
         treatmentRecordId: treatmentId,
         deathDate: new Date().toISOString().split('T')[0],
         deathCount: count,
-        deathCause: deathCause,
+        deathCause: diagnosisText,
         deathCategory: 'disease',
-        costPerAnimal: 0,
-        totalCost: 0,
+        source: 'treatment',  // ✅ 标记来源为治疗记录（治疗前已确认诊断，不需要再次修正）
+        financeLoss: parseFloat(financeLoss.toFixed(2)),
+        unitCost: parseFloat(unitCost.toFixed(2)),
+        breedingCost: parseFloat(breedingCostLoss.toFixed(2)),
+        costPerAnimal: parseFloat(unitCost.toFixed(2)),
+        totalCost: parseFloat(financeLoss.toFixed(2)),
+        treatmentCost: parseFloat(deathTreatmentCost.toFixed(2)),
+        medicationCost: parseFloat(deathMedicationCost.toFixed(2)),
+        treatmentCostPerAnimal: parseFloat(treatmentCostPerAnimal.toFixed(2)),
+        medications: treatment.medications || [],
         notes: notes || '',
         isDeleted: false,
+        _openid: openid,
         createdBy: openid,
         createdAt: new Date(),
         updatedAt: new Date()
       }
       
-      await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).add({
+      // 创建死亡记录
+      const deathResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).add({
         data: deathRecordData
       })
+      
+      // ✅ 更新批次的死亡数（容错处理，因为可能 batchId 是批次号而不是文档ID）
+      
+      try {
+        // 尝试查询批次文档
+        const batchDoc = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+          .doc(treatment.batchId)
+          .get()
+        
+        if (batchDoc.data) {
+          // 批次文档存在，直接更新
+          await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+            .doc(treatment.batchId)
+            .update({
+              data: {
+                deadCount: _.inc(count),
+                updatedAt: new Date()
+              }
+            })
+        }
+      } catch (err) {
+        // 文档不存在或查询失败（可能 batchId 是 batchNumber）
+        
+        try {
+          const entryResult = await db.collection('prod_batch_entries')
+            .where({
+              batchNumber: treatment.batchId,
+              isDeleted: _.neq(true)
+            })
+            .limit(1)
+            .get()
+          
+          if (entryResult.data && entryResult.data.length > 0) {
+            const entry = entryResult.data[0]
+          } else {
+          }
+        } catch (err2) {
+        }
+      }
+      
+    }
+    
+    // ✅ 如果是记录治愈，计算治愈成本并更新批次
+    if (progressType === 'cured') {
+      
+      // 1️⃣ 计算治愈成本（按单只分摊）
+      const totalTreatedAnimals = treatment.outcome?.totalTreated || 1
+      const totalTreatmentCost = treatment.cost?.total || treatment.totalCost || 0
+      const totalMedicationCost = treatment.cost?.medication || 0
+      
+      // ✅ 计算单只分摊成本
+      const treatmentCostPerAnimal = totalTreatmentCost / totalTreatedAnimals
+      const medicationCostPerAnimal = totalMedicationCost / totalTreatedAnimals
+      
+      // ✅ 计算治愈数的实际成本
+      const cureTreatmentCost = treatmentCostPerAnimal * count
+      const cureMedicationCost = medicationCostPerAnimal * count
+      
+      
+      // 2️⃣ 记录治愈成本（添加到治疗记录的outcome中）
+      try {
+        await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+          .doc(treatmentId)
+          .update({
+            data: {
+              'outcome.curedCost': _.inc(cureTreatmentCost),
+              'outcome.curedMedicationCost': _.inc(cureMedicationCost),
+              updatedAt: new Date()
+            }
+          })
+      } catch (costError) {
+      }
+      
+      // 3️⃣ 更新批次的病态数
+      // 治愈的动物从sick/treatment状态恢复为健康状态
+      try {
+        const batchDoc = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+          .doc(treatment.batchId)
+          .get()
+        
+        if (batchDoc.data) {
+          await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+            .doc(treatment.batchId)
+            .update({
+              data: {
+                sickCount: _.inc(-count),
+                updatedAt: new Date()
+              }
+            })
+        } else {
+        }
+      } catch (error) {
+      }
     }
     
     // 如果治疗记录关联了异常记录，更新异常记录状态
@@ -3416,7 +4213,6 @@ async function updateTreatmentProgress(event, wxContext) {
       }
     )
     
-    console.log(`✅ 治疗进展更新成功: ${progressType} ${count}只, 剩余${newRemainingCount}只`)
     
     return {
       success: true,
@@ -3462,43 +4258,65 @@ async function createDeathRecordWithFinance(event, wxContext) {
       throw new Error('批次ID和死亡数量不能为空')
     }
     
-    // 1. 获取批次信息，计算单位成本
-    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
-      .doc(batchId)
-      .get()
+    // 1. 获取批次信息，计算单位成本（容错处理：batchId可能是文档ID或批次号）
+    let batch = null
+    let batchDocId = batchId  // ✅ 批次文档的真实_id
     
-    if (!batchResult.data) {
-      throw new Error('批次不存在')
+    try {
+      // 先尝试作为文档ID查询
+      const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .doc(batchId)
+        .get()
+      batch = batchResult.data
+      batchDocId = batchId  // 文档ID就是传入的batchId
+    } catch (err) {
+      // 如果文档不存在，尝试通过批次号查询
+      console.log('批次ID查询失败，尝试通过批次号查询:', batchId)
+      const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          batchNumber: batchId,
+          isDeleted: _.neq(true)
+        })
+        .limit(1)
+        .get()
+      
+      if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+        batch = batchQueryResult.data[0]
+        batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
+        console.log('通过批次号查询成功，批次号:', batch.batchNumber, '文档ID:', batchDocId)
+      }
     }
     
-    const batch = batchResult.data
+    if (!batch) {
+      throw new Error(`批次不存在: ${batchId}`)
+    }
     
-    // 计算单位成本（使用 calculateBatchCost 函数获取综合成本）
+    // 计算成本数据（✅ 使用批次文档的真实_id而不是批次号）
     let unitCost = 0
+    let breedingCostPerAnimal = 0
+    
     try {
-      const costResult = await calculateBatchCost({ batchId }, wxContext)
-      console.log('📊 成本计算结果:', JSON.stringify(costResult))
-      if (costResult.success && costResult.data.avgCost) {
-        unitCost = parseFloat(costResult.data.avgCost)
-        console.log('✅ 使用计算的平均成本:', unitCost)
+      const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
+      if (costResult.success) {
+        unitCost = parseFloat(costResult.data.entryUnitCost || 0)
+        breedingCostPerAnimal = parseFloat(costResult.data.avgBreedingCost || 0)
       }
     } catch (costError) {
-      console.error('⚠️ 计算成本失败，将使用入栏单价:', costError.message)
+      console.error('计算成本失败:', costError.message)
     }
     
-    // 如果计算失败或为0，使用入栏单价
     if (unitCost === 0 || isNaN(unitCost)) {
-      const batchUnitCost = batch.unitCost || 0
-      const defaultCost = 50 // 最低保底成本
-      
-      // 优先使用批次入栏单价，如果为0则使用默认值
-      unitCost = batchUnitCost > 0 ? batchUnitCost : defaultCost
-      
-      console.log(`📝 批次入栏单价: ${batchUnitCost}元, 最终使用成本: ${unitCost}元`)
+      unitCost = batch.unitPrice || 0  // ✅ 修正：数据库字段名是 unitPrice
     }
     
-    const financeLoss = unitCost * deathCount
-    console.log(`💰 财务损失计算: ${unitCost}元/只 × ${deathCount}只 = ${financeLoss}元`)
+    if (unitCost === 0) {
+      throw new Error(`批次 ${batch.batchNumber} 缺少入栏单价，请先在入栏记录中补充单价`)
+    }
+    
+    // 计算财务损失 = 入栏单价 + 物料成本
+    const entryCostLoss = unitCost * deathCount
+    const breedingCostLoss = breedingCostPerAnimal * deathCount
+    const financeLoss = entryCostLoss + breedingCostLoss
     
     // 获取用户信息
     let userName = 'KAKA'
@@ -3516,7 +4334,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
       console.error('获取用户信息失败:', userError)
     }
     
-    // 2. 创建死亡记录
+    // 创建死亡记录
     const deathRecordData = {
       _openid: openid,
       openid: openid,
@@ -3526,15 +4344,17 @@ async function createDeathRecordWithFinance(event, wxContext) {
       deathCount: deathCount,
       deathCause: deathCause || '待确定',
       deathCategory: deathCategory,
-      disposalMethod: 'burial', // 默认深埋
+      source: 'ai_diagnosis',  // ✅ 标记来源为AI死因剖析（需要兽医确认和修正）
+      disposalMethod: 'burial',
       autopsyFindings: autopsyFindings || '',
-      photos: images || [], // 保存剖检图片
+      photos: images || [],
       aiDiagnosisId: diagnosisId || null,
       diagnosisResult: diagnosisResult || null,
       financeLoss: parseFloat(financeLoss.toFixed(2)),
       unitCost: parseFloat(unitCost.toFixed(2)),
+      breedingCost: parseFloat(breedingCostLoss.toFixed(2)),
       operator: openid,
-      reporterName: userName,  // 添加记录者名称
+      reporterName: userName,
       createdAt: new Date(),
       updatedAt: new Date(),
       isDeleted: false
@@ -3567,7 +4387,38 @@ async function createDeathRecordWithFinance(event, wxContext) {
       // 即使财务记录失败，死亡记录也已创建，继续返回成功
     }
     
-    // 4. 更新批次存栏量
+    // 4. ✅ 更新原异常记录的状态为 'dead'（已死亡），从异常数中移除
+    if (diagnosisId) {
+      try {
+        const abnormalRecordsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+          .where({
+            recordType: 'ai_diagnosis',
+            status: 'abnormal',
+            relatedDiagnosisId: diagnosisId,
+            isDeleted: _.neq(true)
+          })
+          .get()
+        
+        if (abnormalRecordsResult.data && abnormalRecordsResult.data.length > 0) {
+          // 批量更新所有相关异常记录的状态
+          const updatePromises = abnormalRecordsResult.data.map(record => {
+            return db.collection(COLLECTIONS.HEALTH_RECORDS).doc(record._id).update({
+              data: {
+                status: 'dead',  // ✅ 更新状态为已死亡
+                relatedDeathRecordId: deathRecordId,  // 关联死亡记录
+                updatedAt: new Date()
+              }
+            })
+          })
+          
+          await Promise.all(updatePromises)
+        }
+      } catch (updateError) {
+        console.error('更新异常记录状态失败（不影响主流程）:', updateError)
+      }
+    }
+    
+    // 5. 更新批次存栏量
     try {
       await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .doc(batchId)
@@ -3657,8 +4508,8 @@ async function getDeathRecordDetail(event, wxContext) {
     
     const record = result.data
     
-    // 验证权限
-    if (record._openid !== openid) {
+    // 验证权限（兼容 _openid 和 createdBy 两种字段）
+    if (record._openid !== openid && record.createdBy !== openid) {
       throw new Error('无权访问此记录')
     }
     
@@ -3745,8 +4596,8 @@ async function correctDeathDiagnosis(event, wxContext) {
     
     const record = recordResult.data
     
-    // 验证权限
-    if (record._openid !== openid) {
+    // 验证权限（兼容 _openid 和 createdBy 两种字段）
+    if (record._openid !== openid && record.createdBy !== openid) {
       throw new Error('无权修改此记录')
     }
     

@@ -2,7 +2,10 @@
   "name": "miniprogram-ts-sass-quickstart",
   "version": "1.0.0",
   "description": "",
-  "scripts": {},
+  "scripts": {
+    "check:ui": "bash scripts/check-ui-guidelines.sh",
+    "precommit": "npm run check:ui"
+  },
   "keywords": [],
   "author": "",
   "license": "",
