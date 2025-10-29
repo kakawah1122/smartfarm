@@ -141,12 +141,16 @@
 
 ---
 
-## 📊 集合：health_abnormal_records
+## 📊 集合：health_records
+
+> **📌 说明**：本集合用于存储各类健康记录，包括异常记录、日常检查、观察记录等。
+> 通过 `recordType` 字段区分记录类型（如：abnormal、inspection、observation），
+> 通过 `status` 字段区分处理状态（如：pending、processing、resolved）。
 
 ### 📝 添加索引
 
 #### 索引1：创建时间和状态索引
-**用途：** 查询待处理/已处理的异常记录
+**用途：** 查询待处理/已处理的健康异常记录
 
 - **索引名称**：`createdAt_-1_status_1`
 - **索引属性**：非唯一
@@ -155,12 +159,21 @@
   - 字段：`status`，排序：**升序**
 
 #### 索引2：批次和创建时间索引
-**用途：** 查询特定批次的异常记录
+**用途：** 查询特定批次的健康记录（包括异常记录）
 
 - **索引名称**：`batchId_1_createdAt_-1`
 - **索引属性**：非唯一
 - **索引字段**：
   - 字段：`batchId`，排序：**升序**
+  - 字段：`createdAt`，排序：**降序**
+
+#### 索引3：记录类型和创建时间索引
+**用途：** 区分不同类型的健康记录（异常、检查、日常观察等）
+
+- **索引名称**：`recordType_1_createdAt_-1`
+- **索引属性**：非唯一
+- **索引字段**：
+  - 字段：`recordType`，排序：**升序**
   - 字段：`createdAt`，排序：**降序**
 
 ---
@@ -243,7 +256,7 @@ console.log(`查询耗时: ${endTime - startTime}ms`)
 |------|------|------|
 | `health_treatment_records` | `batchId_1_createdAt_-1` | 批次维度治疗记录查询 |
 | `prod_batch_entries` | `status_1_entryDate_-1` | 在栏批次查询 |
-| `health_abnormal_records` | `createdAt_-1_status_1` | 异常记录处理 |
+| `health_records` | `createdAt_-1_status_1` | 健康异常记录查询 |
 
 ### 低优先级（按需创建）
 
@@ -256,6 +269,11 @@ console.log(`查询耗时: ${endTime - startTime}ms`)
 ---
 
 ## 📝 更新日志
+
+### v1.1.1 (2025-10-29)
+- ✅ 修正集合名称：`health_abnormal_records` → `health_records`
+- ✅ 说明：异常记录存储在 `health_records` 集合中，通过 `status` 和 `recordType` 字段区分
+- ✅ 新增 `recordType` 索引，支持记录类型筛选
 
 ### v1.1.0 (2025-10-29)
 - ✅ 按照项目规则格式重构文档结构
