@@ -64,17 +64,10 @@ Page({
       this.setData({ loading: true })
 
       const db = wx.cloud.database()
-      const _ = db.command
 
-      // ✅ 优化查询：避免使用 neq 操作符，提高索引效率
-      // 查询 isDeleted 为 false 或不存在的记录
+      // ✅ 简化查询：只按创建时间排序，在前端过滤已删除的记录
+      // 这样可以高效使用 createdAt 索引
       const result = await db.collection('health_treatment_records')
-        .where(
-          _.or([
-            { isDeleted: false },
-            { isDeleted: _.exists(false) }
-          ])
-        )
         .orderBy('createdAt', 'desc')
         .limit(200)
         .get()
@@ -86,9 +79,15 @@ Page({
         console.log('🔍 第一条记录的outcome结构:', result.data[0].outcome)
       }
 
-      // 2. 在前端过滤出有治愈数的记录
+      // 2. 在前端过滤：排除已删除 + 筛选有治愈数的记录
       const allRecords = result.data as CuredRecord[]
       const curedRecords = allRecords.filter(record => {
+        // 过滤已删除的记录
+        if (record.isDeleted === true) {
+          return false
+        }
+        
+        // 筛选有治愈数的记录
         const hasCured = (record.outcome?.curedCount || 0) > 0
         if (hasCured) {
           console.log('✅ 找到治愈记录:', {

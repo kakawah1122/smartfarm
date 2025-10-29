@@ -7,18 +7,18 @@
   flex-direction: column;
 }
 
-/* 表单内容区域 - 极致紧凑间距优化 */
+/* 表单内容区域 - 优化顶部安全间距 */
 .form-content {
   flex: 1;
-  padding-top: calc(var(--status-bar-height) + 16rpx); /* 极致紧凑的顶部间距 */
+  padding-top: calc(var(--navbar-height, 132rpx) + 32rpx); /* 导航栏高度 + 安全间距 */
   padding-bottom: calc(32rpx + var(--safe-area-inset-bottom, 0));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* 表单头部信息卡片 - 极致紧凑间距 */
+/* 表单头部信息卡片 - 优化顶部间距 */
 .form-header {
-  margin: 0rpx 24rpx 16rpx 24rpx; /* 与主表单边距保持一致 */
+  margin: 24rpx 24rpx 16rpx 24rpx; /* 增加顶部安全间距 */
 }
 
 .form-card {
@@ -470,14 +470,14 @@
 
 
 
-/* 响应式设计 - 极致紧凑间距优化 */
+/* 响应式设计 - 优化顶部安全间距 */
 @media screen and (max-width: 480px) {
   .form-content {
-    padding-top: calc(var(--status-bar-height) + 16rpx); /* 与主样式保持一致的紧凑间距 */
+    padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距（小屏幕稍小） */
   }
   
   .form-header {
-    margin: 0rpx 16rpx 12rpx 16rpx; /* 与主样式保持一致，顶部无边距 */
+    margin: 16rpx 16rpx 12rpx 16rpx; /* 小屏幕的顶部安全间距 */
   }
   
   .ai-info-section {

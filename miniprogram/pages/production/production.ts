@@ -322,7 +322,8 @@ const pageConfig = {
         data: {
           action: 'list_records',
           page: 1,
-          pageSize: 10
+          pageSize: 10,
+          includeFeedRecords: true // 包含饲料投喂记录
         }
       })
       
@@ -334,21 +335,43 @@ const pageConfig = {
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 转换数据格式以匹配优化后的界面显示
-        const formattedRecords = records.map(record => ({
-          id: record._id || record.recordNumber,
-          recordNumber: record.recordNumber || record._id,
-          name: record.material?.name || '未知物料',
-          category: record.material?.category || '未分类',
-          type: record.type === 'purchase' ? '采购' : '领用',
-          quantity: `${record.quantity}${record.material?.unit || '件'}`,
-          supplier: record.supplier || '',
-          targetLocation: record.targetLocation || '',
-          operator: (!record.operator || record.operator === '未知' || record.operator === '系统用户') ? currentUser : record.operator,
-          date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          status: record.status || '已完成',
-          // 兼容旧版显示格式  
-          description: `${record.material?.category || '未分类'} • ${record.supplier || record.targetLocation || ''}`
-        }))
+        const formattedRecords = records.map(record => {
+          // 判断记录类型
+          let displayType = '领用'
+          let displayDescription = ''
+          
+          if (record.type === 'purchase') {
+            displayType = '采购'
+            displayDescription = `${record.material?.category || '未分类'} • ${record.supplier || ''}`
+          } else if (record.type === 'feed') {
+            displayType = '投喂'
+            displayDescription = `${record.material?.category || '饲料'} • 批次${record.batchNumber || '未知'}`
+          } else {
+            displayType = '领用'
+            displayDescription = `${record.material?.category || '未分类'} • ${record.targetLocation || ''}`
+          }
+          
+          return {
+            id: record._id || record.recordNumber,
+            recordNumber: record.recordNumber || record._id,
+            name: record.material?.name || '未知物料',
+            category: record.material?.category || '未分类',
+            type: displayType,
+            recordType: record.recordType || 'material', // 'material' 或 'feed'
+            quantity: `${record.quantity}${record.material?.unit || '件'}`,
+            supplier: record.supplier || '',
+            targetLocation: record.targetLocation || '',
+            batchNumber: record.batchNumber || '',
+            operator: (!record.operator || record.operator === '未知' || record.operator === '系统用户') ? currentUser : record.operator,
+            date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
+            status: record.status || '已完成',
+            description: displayDescription,
+            // 饲料投喂相关额外信息
+            currentStock: record.currentStock || null,
+            costPerBird: record.costPerBird || null,
+            dayAge: record.dayAge || null
+          }
+        })
         
         this.setData({
           materialRecords: formattedRecords,
@@ -472,7 +495,14 @@ const pageConfig = {
       url: '/packageProduction/material-use-form/material-use-form'
     })
   },
-
+  
+  // 饲料投喂记录
+  recordFeedUsage() {
+    wx.navigateTo({
+      url: '/packageProduction/feed-usage-form/feed-usage-form'
+    })
+  },
+  
   // 查看全部物料记录
   viewAllMaterialRecords() {
     wx.navigateTo({

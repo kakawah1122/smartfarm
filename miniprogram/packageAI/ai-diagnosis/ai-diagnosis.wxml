@@ -219,9 +219,11 @@
           size="large" 
           block
           bind:tap="saveRecord"
+          disabled="{{isSaving}}"
+          loading="{{isSaving}}"
           class="primary-action-btn"
         >
-          {{diagnosisType === 'autopsy_analysis' ? '记录死亡报告' : '保存诊断记录'}}
+          {{isSaving ? '保存中...' : (diagnosisType === 'autopsy_analysis' ? '记录死亡报告' : '保存诊断记录')}}
         </t-button>
       </view>
     </view>
@@ -312,7 +314,7 @@
 
       <!-- 症状描述（仅病鹅诊断显示） -->
       <view class="form-section" wx:if="{{diagnosisType !== 'autopsy_analysis'}}">
-        <text class="section-title">症状描述</text>
+        <text class="section-title">症状描述<text class="required-mark">*</text></text>
         
         <!-- 常见症状标签（点击填充） -->
         <view class="symptom-tags-inline">
@@ -489,7 +491,23 @@
         
         <!-- 预计等待时间提示 -->
         <view class="submit-hint" wx:if="{{submitting}}">
-          <text class="hint-text">⏱️ 预计需要 20-30 秒，AI正在深度分析中...</text>
+          <text class="hint-text">⏱️ 预计需要 30-50 秒，AI正在深度分析中...</text>
+        </view>
+        
+        <!-- 必填项提示（未完成表单时显示） -->
+        <view class="required-hint" wx:if="{{!formValid && !submitting}}">
+          <view class="hint-icon">
+            <t-icon name="info-circle" size="16" color="#ed7b2f" />
+          </view>
+          <view class="hint-content">
+            <text class="hint-title">请完善以下必填信息：</text>
+            <view class="hint-items">
+              <text class="hint-item" wx:if="{{!selectedBatchId}}">• 选择批次</text>
+              <text class="hint-item" wx:if="{{diagnosisType === 'live_diagnosis' && (!affectedCount || affectedCount === '' || parseInt(affectedCount) <= 0)}}">• 受影响数量</text>
+              <text class="hint-item" wx:if="{{diagnosisType === 'live_diagnosis' && (!symptoms || symptoms.trim() === '')}}">• 症状描述</text>
+              <text class="hint-item" wx:if="{{diagnosisType === 'autopsy_analysis' && (!deathCount || deathCount === '' || parseInt(deathCount) <= 0)}}">• 死亡数量</text>
+            </view>
+          </view>
         </view>
       </view>
 

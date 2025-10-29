@@ -301,7 +301,6 @@ class DailyCostController {
         usage.byModel[record.modelId].cost += (record.cost || 0)
       })
       
-      console.log(`📊 今日预算使用: ${(usage.percentage * 100).toFixed(1)}% (${usage.spent.toFixed(2)}元/${this.dailyBudget}元)`)
       
       return usage
     } catch (error) {
@@ -320,8 +319,6 @@ class DailyCostController {
   async selectOptimalModel(taskType, hasImages, isComplex, isUrgent) {
     const usage = await this.getTodayUsage()
     
-    console.log(`🎯 智能路由 - 任务类型: ${taskType}, 图片: ${hasImages}, 复杂: ${isComplex}, 紧急: ${isUrgent}`)
-    console.log(`💰 预算状态: ${(usage.percentage * 100).toFixed(1)}%`)
     
     // 1️⃣ 预算充足 (0-70%)：优先使用最佳模型
     if (usage.percentage < this.warningThreshold) {
@@ -434,7 +431,6 @@ class DailyCostController {
           createTime: new Date()
         }
       })
-      console.log(`📝 记录成本: ${modelId} - ${cost}元`)
     } catch (error) {
       console.error('记录成本失败:', error)
     }
@@ -453,18 +449,11 @@ class AIModelManager {
   // ✨ 下载云存储图片并转换为base64
   async downloadImageToBase64(fileID) {
     try {
-      console.log('正在下载图片:', fileID)
       
       // 方法1: 直接下载文件内容
       try {
         const result = await cloud.downloadFile({
           fileID: fileID
-        })
-        
-        console.log('下载结果:', {
-          有内容: !!result.fileContent,
-          内容类型: typeof result.fileContent,
-          内容长度: result.fileContent?.length
         })
         
         if (result.fileContent) {
@@ -479,7 +468,6 @@ class AIModelManager {
           
           // ✅ 检查Base64长度（避免请求体过大）
           const base64SizeMB = (base64.length * 0.75) / 1024 / 1024  // Base64解码后约0.75倍
-          console.log(`图片大小: 原始${fileSizeMB.toFixed(2)}MB, Base64${base64SizeMB.toFixed(2)}MB`)
           
           // 获取文件扩展名
           const ext = fileID.split('.').pop().toLowerCase()
@@ -487,17 +475,9 @@ class AIModelManager {
           
           const dataUrl = `data:${mimeType};base64,${base64}`
           
-          console.log('图片转换成功 (方法1):', {
-            fileID,
-            base64长度: base64.length,
-            mimeType,
-            大小: `${fileSizeMB.toFixed(2)}MB`
-          })
-          
           return dataUrl
         }
       } catch (directError) {
-        console.warn('方法1下载失败，尝试方法2:', directError.message)
         // 如果是文件过大错误，直接抛出
         if (directError.message.includes('过大')) {
           throw directError
@@ -505,7 +485,6 @@ class AIModelManager {
       }
       
       // 方法2: 使用临时链接下载
-      console.log('尝试方法2: 获取临时链接')
       const tempResult = await cloud.getTempFileURL({
         fileList: [fileID]
       })
@@ -513,7 +492,6 @@ class AIModelManager {
       if (tempResult.fileList && tempResult.fileList.length > 0) {
         const fileInfo = tempResult.fileList[0]
         const tempURL = fileInfo.tempFileURL
-        console.log('获得临时链接:', tempURL)
         
         // 检查URL是否有效
         if (!tempURL) {
@@ -542,13 +520,6 @@ class AIModelManager {
         
         const dataUrl = `data:${mimeType};base64,${base64}`
         
-        console.log('图片转换成功 (方法2):', {
-          fileID,
-          base64长度: base64.length,
-          mimeType,
-          大小: `${fileSizeMB.toFixed(2)}MB`
-        })
-        
         return dataUrl
       }
       
@@ -569,9 +540,6 @@ class AIModelManager {
       return messages
     }
 
-    console.log(`====== 开始处理图片 ======`)
-    console.log(`图片数量: ${imageFileIDs.length}`)
-    console.log(`目标模型: ${modelId}`)
     
     const modelConfig = MODEL_CONFIGS[modelId]
     
@@ -579,7 +547,6 @@ class AIModelManager {
     const supportsVision = modelConfig?.supportVision === true
     
     if (!supportsVision) {
-      console.log(`⚠️ 模型 ${modelId} 不支持视觉，图片将被忽略，仅使用文字描述`)
       // 在消息中添加提示
       const enhancedMessages = messages.map((msg, index) => {
         if (msg.role === 'user' && index === messages.length - 1) {
@@ -594,12 +561,10 @@ class AIModelManager {
     }
     
     // ✅ 通义千问使用HTTPS URL（支持OpenAI兼容格式）
-    console.log(`图片格式策略: HTTPS URL（通义千问原生支持）`)
 
     let imageData = []
     
     // 获取HTTPS临时URL
-    console.log(`正在获取临时URL...`)
     const tempResult = await cloud.getTempFileURL({
       fileList: imageFileIDs
     })
@@ -607,18 +572,15 @@ class AIModelManager {
     tempResult.fileList.forEach((item, index) => {
       if (item.status === 0) {
         imageData.push(item.tempFileURL)
-        console.log(`✅ 图片${index + 1} URL获取成功`)
       } else {
         console.error(`❌ 图片${index + 1} 失败:`, item.errmsg)
       }
     })
     
     if (imageData.length === 0) {
-      console.warn('所有图片处理失败，使用纯文本诊断')
       return messages
     }
 
-    console.log(`✅ 成功处理${imageData.length}张图片`)
 
     // 修改用户消息，添加图片
     const processedMessages = messages.map((msg, index) => {
@@ -642,9 +604,7 @@ class AIModelManager {
       return msg
     })
 
-    console.log(`====== 消息处理完成 ======`)
     const estimatedSize = (JSON.stringify(processedMessages).length / 1024).toFixed(2)
-    console.log(`请求体大小: 约${estimatedSize}KB`)
 
     return processedMessages
   }
@@ -713,9 +673,6 @@ class AIModelManager {
     }
 
     try {
-      console.log('====== 调用通义千问模型 ======')
-      console.log('模型:', config.model)
-      console.log('是否支持视觉:', config.supportVision)
       
       // ✅ 通义千问使用OpenAI兼容格式，统一调用方式
       const response = await axios.post(
@@ -736,8 +693,6 @@ class AIModelManager {
         }
       )
 
-      console.log('✅ 通义千问调用成功')
-      console.log('返回内容长度:', response.data.choices[0].message.content.length)
 
       const result = {
         content: response.data.choices[0].message.content,
@@ -915,7 +870,6 @@ async function handleChatCompletion(event, manager) {
     let usedVision = false
     
     if (images && images.length > 0) {
-      console.log(`开始处理${images.length}张图片...`)
       try {
         // 传入第一个要尝试的模型ID，以便选择正确的图片格式
         processedMessages = await manager.processMessagesWithImages(messages, images, modelsToTry[0])
@@ -928,13 +882,10 @@ async function handleChatCompletion(event, manager) {
         
         if (hasImageContent) {
           usedVision = true
-          console.log('图片处理完成，已加入消息')
         } else {
-          console.warn('⚠️ 图片处理失败，降级为纯文本诊断')
           // 如果是视觉任务但图片失败，切换回纯文本任务
           if (actualTaskType === 'health_diagnosis_vision') {
             actualTaskType = 'health_diagnosis'
-            console.log(`切换任务类型: health_diagnosis_vision → health_diagnosis`)
             
             // 重新获取纯文本模型配置
             const textModelMapping = TASK_MODEL_MAPPING[actualTaskType]
@@ -943,12 +894,10 @@ async function handleChatCompletion(event, manager) {
             if (textModelMapping.fallback) {
               modelsToTry.push(...textModelMapping.fallback)
             }
-            console.log(`使用纯文本模型: ${modelsToTry.join(', ')}`)
           }
         }
       } catch (error) {
         console.error('图片处理异常:', error.message)
-        console.warn('⚠️ 图片处理失败，降级为纯文本诊断')
         // 降级处理同上
         if (actualTaskType === 'health_diagnosis_vision') {
           actualTaskType = 'health_diagnosis'
@@ -958,7 +907,6 @@ async function handleChatCompletion(event, manager) {
           if (textModelMapping.fallback) {
             modelsToTry.push(...textModelMapping.fallback)
           }
-          console.log(`使用纯文本模型: ${modelsToTry.join(', ')}`)
         }
       }
     }
@@ -974,13 +922,11 @@ async function handleChatCompletion(event, manager) {
         continue
       }
       
-      console.log(`尝试模型 ${i + 1}/${modelsToTry.length}: ${modelId} (${modelConfig.provider})`)
       
       try {
         // 调用模型
         const result = await manager.callModel(modelId, processedMessages, options)
         
-        console.log(`✅ 模型 ${modelId} 调用成功`)
         
         // 设置缓存（图片诊断不缓存或缓存时间更短）
         const cacheDuration = images.length > 0 ? 600 : 3600
@@ -1000,14 +946,12 @@ async function handleChatCompletion(event, manager) {
         
         // 如果是速率限制且还有其他模型可尝试，继续下一个
         if (error.isRateLimited && i < modelsToTry.length - 1) {
-          console.log(`⚠️ 速率限制，等待2秒后尝试下一个模型...`)
           await new Promise(resolve => setTimeout(resolve, 2000))
           continue
         }
         
         // 如果还有其他模型可尝试，继续
         if (i < modelsToTry.length - 1) {
-          console.log(`尝试下一个备用模型...`)
           continue
         }
         

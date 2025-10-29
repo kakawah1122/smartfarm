@@ -573,16 +573,6 @@ const pageConfig = {
 
 
 
-  // 返回上一页
-  goBack() {
-    wx.navigateBack({
-      fail: () => {
-        wx.switchTab({
-          url: '/pages/index/index'
-        })
-      }
-    })
-  },
 
   // 查看财务详情
   viewFinanceDetail() {

@@ -3,8 +3,7 @@
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="生产管理"
-    show-back="{{true}}"
-    bind:back="goBack"
+    show-back="{{false}}"
   />
 
   <!-- 主内容区域 -->
@@ -394,14 +393,19 @@
         <!-- 快速操作 -->
         <view class="quick-action">
           <t-row gutter="16">
-            <t-col span="12">
-              <t-button theme="light" size="medium" block icon="add" bind:tap="purchaseMaterial" class="action-button success-button">
+            <t-col span="8">
+              <t-button theme="light" size="medium" block bind:tap="purchaseMaterial" class="action-button success-button">
                 采购入库
               </t-button>
             </t-col>
-            <t-col span="12">
-              <t-button theme="light" size="medium" block icon="remove" bind:tap="useMaterial" class="action-button purple-button">
+            <t-col span="8">
+              <t-button theme="light" size="medium" block bind:tap="useMaterial" class="action-button purple-button">
                 物料领用
+              </t-button>
+            </t-col>
+            <t-col span="8">
+              <t-button theme="light" size="medium" block bind:tap="recordFeedUsage" class="action-button primary-button">
+                饲料投喂
               </t-button>
             </t-col>
           </t-row>
@@ -434,9 +438,9 @@
                       <view class="record-title-row">
                         <text class="record-name">{{item.name}}</text>
                         <t-tag 
-                          theme="{{item.type === '采购' ? 'success' : 'light'}}" 
+                          theme="{{item.type === '采购' ? 'success' : item.type === '投喂' ? 'warning' : 'light'}}" 
                           size="small" 
-                          class="{{item.type === '采购' ? 'record-type-tag' : 'record-type-tag purple-tag'}}"
+                          class="{{item.type === '采购' ? 'record-type-tag' : item.type === '投喂' ? 'record-type-tag orange-tag' : 'record-type-tag purple-tag'}}"
                         >
                           {{item.type}}
                         </t-tag>

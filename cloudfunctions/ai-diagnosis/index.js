@@ -403,9 +403,7 @@ async function callAIModel(inputData) {
     if (diagnosisType === 'autopsy_analysis') {
       try {
         historyCases = await getTopAccuracyCases(5)
-        console.log(`✅ 获取历史案例${historyCases.length}条`)
       } catch (caseError) {
-        console.warn('⚠️ 获取历史案例失败，继续使用标准诊断:', caseError.message)
       }
     }
     
@@ -804,7 +802,6 @@ async function performAIDiagnosis(event, openid) {
     // 使用微信自动生成的_id
     const diagnosisId = addResult._id
 
-    console.log(`诊断任务已创建: ${diagnosisId}，状态: processing`)
 
     // ✨ 触发后台处理任务（异步）
     // ⚠️ 注意：即使触发超时，任务仍在数据库中，会自动重试或在控制台配置超时
@@ -812,7 +809,6 @@ async function performAIDiagnosis(event, openid) {
       name: 'process-ai-diagnosis',
       data: { diagnosisId: diagnosisId }
     }).then(() => {
-      console.log(`✅ 后台处理任务已触发: ${diagnosisId}`)
     }).catch((error) => {
       // ⚠️ 触发可能超时，但不标记任务失败
       // 任务状态由 process-ai-diagnosis 自己维护

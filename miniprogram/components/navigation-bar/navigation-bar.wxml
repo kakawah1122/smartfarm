@@ -9,11 +9,11 @@
     </view>
     
     <!-- 中间标题 -->
-    <view class="navbar-center">
+    <view class="navbar-center {{showBack ? '' : 'navbar-center-alone'}}">
       <text class="navbar-title">{{title}}</text>
     </view>
     
-    <!-- 右侧预留空间，与系统胶囊按钮宽度一致 -->
-    <view class="navbar-right" style="width: {{capsuleWidth}}px;"></view>
+    <!-- 右侧预留空间，与系统胶囊按钮区域一致 -->
+    <view class="navbar-right" style="width: {{capsuleRight}}px;"></view>
   </view>
 </view>

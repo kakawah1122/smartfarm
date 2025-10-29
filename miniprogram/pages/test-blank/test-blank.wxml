@@ -1,9 +1,0 @@
-<view class="container">
-  <view class="test-box">
-    <text class="test-title">🎉 项目运行正常</text>
-    <text class="test-desc">如果您能看到这个页面，说明小程序已经可以正常运行了</text>
-    <button type="primary" bindtap="goToLogin">前往登录页</button>
-    <button type="default" bindtap="goToHome">前往首页</button>
-  </view>
-</view>
-

@@ -173,6 +173,7 @@ npm install
 - [性能优化指南](./PERFORMANCE_OPTIMIZATION_GUIDE.md) - 性能优化最佳实践
 - [部署检查清单](./PRE_DEPLOYMENT_CHECKLIST.md) - 部署前检查事项
 - [数据库配置指南](./DATABASE_CONFIG_GUIDE.md) - 数据库设置
+- **[数据库索引指南](./DATABASE_INDEX_GUIDE.md) - 索引配置与性能优化** 🚀
 - [部署清单](./DEPLOYMENT_CHECKLIST.md) - 部署步骤
 - **[UI 设计规范](./UI_DESIGN_GUIDELINES.md) - 界面设计标准与规范** ⭐️
 

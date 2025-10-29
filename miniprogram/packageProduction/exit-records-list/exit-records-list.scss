@@ -19,6 +19,7 @@ page {
   display: flex;
   flex-direction: column;
   padding: 0 16rpx;
+  padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
 }
 
 /* 搜索栏区域 */

@@ -7,7 +7,7 @@
 
 .page-content {
   padding: 24rpx;
-  padding-top: 200rpx; /* 为固定定位的导航栏预留空间 (状态栏 + 导航栏高度 + 间距) */
+  padding-top: calc(var(--navbar-height, 132rpx) + 68rpx); /* 导航栏高度 + 安全间距 */
   padding-bottom: 120rpx;
 }
 
@@ -623,7 +623,6 @@
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   margin-bottom: 20rpx;
-  border-left: 4rpx solid #ed7b2f;
 }
 
 .tips-title {
@@ -794,13 +793,52 @@
   padding: 16rpx 24rpx;
   background: linear-gradient(135deg, rgba(0, 82, 217, 0.05) 0%, rgba(0, 132, 244, 0.05) 100%);
   border-radius: 12rpx;
-  border-left: 4rpx solid var(--td-brand-color);
   text-align: center;
 }
 
 .hint-text {
   font-size: 26rpx;
   color: var(--td-brand-color);
+  line-height: 1.6;
+}
+
+/* ✨ 必填项提示样式 */
+.required-hint {
+  margin-top: 20rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, rgba(237, 123, 47, 0.05) 0%, rgba(247, 107, 107, 0.05) 100%);
+  border-radius: 12rpx;
+  display: flex;
+  gap: 12rpx;
+}
+
+.hint-icon {
+  flex-shrink: 0;
+  padding-top: 2rpx;
+}
+
+.hint-content {
+  flex: 1;
+}
+
+.hint-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #ed7b2f;
+  margin-bottom: 12rpx;
+}
+
+.hint-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.hint-item {
+  display: block;
+  font-size: 24rpx;
+  color: #666666;
   line-height: 1.6;
 }
 
@@ -867,7 +905,6 @@
 
 .autopsy-tips-card {
   background: linear-gradient(135deg, #fff0f0 0%, #ffe8e8 100%);
-  border-left-color: #e34d59;
   
   .tips-title-text {
     color: #e34d59;

@@ -2,6 +2,7 @@
 .page-container {
   min-height: 100vh;
   background: #f5f6fa;
+  padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
   padding-bottom: 40rpx;
 }
 

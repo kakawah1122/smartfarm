@@ -42,20 +42,6 @@
         </view>
       </view>
 
-      <!-- 用药情况（只读） -->
-      <view class="view-section" wx:if="{{medications.length > 0}}">
-        <view class="section-title">用药情况</view>
-        <view class="medications-list">
-          <view class="medication-item" wx:for="{{medications}}" wx:key="index">
-            <view class="med-name">{{item.name}}</view>
-            <view class="med-detail">
-              <text wx:if="{{item.quantity}}">数量：{{item.quantity}}{{item.unit}}</text>
-              <text wx:if="{{item.dosage}}">　用法：{{item.dosage}}</text>
-            </view>
-          </view>
-        </view>
-      </view>
-
       <!-- 用药历史 -->
       <view class="view-section medication-history-section">
         <view class="section-title">用药历史</view>
@@ -66,11 +52,11 @@
             <view class="record-item" wx:for="{{medications}}" wx:key="index">
               <view class="record-icon">💊</view>
               <view class="record-info">
-                <text class="record-name">{{item.name}}</text>
-                <text class="record-spec">{{item.quantity}}{{item.unit}}</text>
-              </view>
-              <view class="record-dosage" wx:if="{{item.dosage}}">
-                <text>{{item.dosage}}</text>
+                <view class="record-header">
+                  <text class="record-name">{{item.name}}</text>
+                  <text class="record-spec">{{item.quantity}}{{item.unit}}</text>
+                </view>
+                <text class="record-dosage" wx:if="{{item.dosage}}">{{item.dosage}}</text>
               </view>
             </view>
           </view>
@@ -89,7 +75,7 @@
             disabled="{{treatmentProgress.remainingCount <= 0}}"
             block
           >
-            继续治疗
+            进一步治疗
           </t-button>
           <t-button 
             theme="success" 
@@ -213,7 +199,7 @@
     <view class="form-section">
       <view class="section-title">
         <text wx:if="{{treatmentPlanSource === 'veterinarian'}}">兽医建议治疗方案</text>
-        <text wx:elif="{{treatmentPlanSource === 'ai'}}">AI建议治疗方案</text>
+        <text wx:elif="{{treatmentPlanSource === 'ai'}}">AI建议措施</text>
         <text wx:else>治疗方案</text>
       </view>
       
@@ -229,45 +215,116 @@
       </view>
     </view>
 
-    <!-- 用药管理 - 原生实现 -->
-    <view class="form-section">
+    <!-- ✅ AI用药建议（仅显示） -->
+    <view class="form-section" wx:if="{{aiMedicationSuggestions.length > 0}}">
+      <view class="section-title">AI用药建议</view>
+      <view class="ai-medication-suggestions">
+        <view class="suggestion-item" wx:for="{{aiMedicationSuggestions}}" wx:key="index">
+          <view class="suggestion-header">
+            <text class="med-name">💊 {{item.name}}</text>
+          </view>
+          <view class="suggestion-details">
+            <view class="detail-row" wx:if="{{item.dosage}}">
+              <text class="detail-label">用量：</text>
+              <text class="detail-value">{{item.dosage}}</text>
+            </view>
+            <view class="detail-row" wx:if="{{item.route}}">
+              <text class="detail-label">途径：</text>
+              <text class="detail-value">{{item.route}}</text>
+            </view>
+            <view class="detail-row" wx:if="{{item.frequency}}">
+              <text class="detail-label">频次：</text>
+              <text class="detail-value">{{item.frequency}}</text>
+            </view>
+            <view class="detail-row" wx:if="{{item.duration}}">
+              <text class="detail-label">疗程：</text>
+              <text class="detail-value">{{item.duration}}</text>
+            </view>
+            <view class="detail-row" wx:if="{{item.notes}}">
+              <text class="detail-label">备注：</text>
+              <text class="detail-value">{{item.notes}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="ai-suggestion-hint">
+        <text class="hint-icon">💡</text>
+        <text class="hint-text">以上为AI建议，实际用药请从下方库存中选择</text>
+      </view>
+    </view>
+
+    <!-- ✅ 用药管理 - 多选联合用药 -->
+    <view class="form-section medication-multi-select-section">
       <view class="section-title">用药管理</view>
       
+      <!-- 选择药品 -->
       <view class="form-item">
+        <view class="form-label">选择药品</view>
         <picker 
           mode="selector" 
           range="{{filteredMaterials}}" 
           range-key="name"
-          value="{{selectedMaterialIndex}}"
-          bindchange="onMaterialPickerChange"
+          value="{{currentMedicationForm.materialIndex}}"
+          bindchange="onInitialMedicationChange"
         >
           <view class="native-picker">
-            {{selectedMaterial ? selectedMaterial.name : (formData.treatmentType === 'isolation' ? '请选择营养品' : '请选择药品或营养品')}}
+            {{formData.treatmentType === 'isolation' ? '请选择营养品' : '请选择药品或营养品'}}
             <text class="picker-arrow">▼</text>
           </view>
         </picker>
       </view>
       
-      <view class="form-item" wx:if="{{selectedMaterial}}">
-        <view class="form-label required">领取数量</view>
-        <t-input
-          value="{{medicationQuantity}}"
-          placeholder="请输入领取数量"
-          type="digit"
-          bindinput="onMedicationQuantityInput"
-        />
-        <view class="stock-info" wx:if="{{selectedMaterial}}">
-          库存：{{selectedMaterial.currentStock}}{{selectedMaterial.unit}}
+      <!-- 已选择的药品列表 -->
+      <view class="selected-medications-list" wx:if="{{initialMedications.length > 0}}">
+        <view class="medication-card-new" style="padding: 32rpx; margin-bottom: 16rpx; background: #fff; border-radius: 16rpx; border: 2rpx solid #e8eaed;" wx:for="{{initialMedications}}" wx:key="materialId">
+          <!-- 头部：药品名称和删除按钮 -->
+          <view class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; padding-bottom: 16rpx; border-bottom: 2rpx solid #f5f6f7;">
+            <view class="drug-info" style="flex: 1;">
+              <text class="drug-name" style="font-size: 30rpx; font-weight: normal; color: #1a1a1a; display: block;">{{item.materialName}}</text>
+            </view>
+            <view class="delete-icon" style="width: 56rpx; height: 56rpx; display: flex; align-items: center; justify-content: center; background: #fff1f0; border-radius: 50%; margin-left: 16rpx;" bind:tap="removeInitialMedication" data-index="{{index}}">
+              <text class="icon-close" style="font-size: 56rpx; color: #ff4d4f; line-height: 1; font-weight: 300;">×</text>
+            </view>
+          </view>
+          
+          <!-- 药品信息输入 -->
+          <view class="medication-inputs-simple">
+            <!-- 数量行 -->
+            <view class="input-row-simple" style="display: flex; align-items: center; margin-bottom: 20rpx;">
+              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">数量</text>
+              <input
+                class="input-field-simple"
+                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
+                value="{{item.quantity}}"
+                placeholder="请输入数量（库存: {{item.currentStock}}{{item.unit}}）"
+                type="digit"
+                data-index="{{index}}"
+                data-field="quantity"
+                bind:input="onInitialMedicationInput"
+              />
+              <text class="unit-simple" style="font-size: 26rpx; color: #646566; margin-left: 16rpx;">{{item.unit}}</text>
+            </view>
+            
+            <!-- 用法行 -->
+            <view class="input-row-simple" style="display: flex; align-items: center;">
+              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">用法</text>
+              <input
+                class="input-field-simple full-width"
+                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
+                value="{{item.dosage}}"
+                placeholder="如：10mg/kg 每日2次"
+                data-index="{{index}}"
+                data-field="dosage"
+                bind:input="onInitialMedicationInput"
+              />
+            </view>
+          </view>
         </view>
       </view>
       
-      <view class="form-item" wx:if="{{selectedMaterial}}">
-        <view class="form-label">用法用量</view>
-        <t-input
-          value="{{medicationDosage}}"
-          placeholder="如：10mg/kg 每日2次 连用7天（可选）"
-          bindinput="onMedicationDosageInput"
-        />
+      <!-- 空状态提示 -->
+      <view class="empty-medications" wx:else>
+        <text class="empty-text">暂无选择药品，请选择并添加</text>
       </view>
     </view>
 
@@ -309,16 +366,27 @@
     <!-- ========== 编辑/创建模式结束 ========== -->
   </view>
 
-  <!-- ========== ✅ 治疗进展对话框 ========== -->
-  <t-dialog
-    visible="{{showProgressDialog}}"
-    title="{{progressDialogType === 'cured' ? '记录治愈' : '记录死亡'}}"
-    confirm-btn="确认"
-    cancel-btn="取消"
-    bind:confirm="submitProgress"
-    bind:cancel="closeProgressDialog"
-  >
-    <view class="progress-dialog-content">
+  <!-- ========== ✅ 治疗进展自定义弹窗 ========== -->
+  <!-- 遮罩层 -->
+  <view 
+    class="progress-mask" 
+    wx:if="{{showProgressDialog}}"
+    bind:tap="closeProgressDialog"
+    catchtouchmove="preventTouchMove"
+  ></view>
+  
+  <!-- 弹窗内容 -->
+  <view class="progress-popup {{showProgressDialog ? 'show' : ''}}" wx:if="{{showProgressDialog}}">
+    <!-- 标题栏 -->
+    <view class="popup-header">
+      <text class="popup-title">{{progressDialogType === 'cured' ? '记录治愈' : '记录死亡'}}</text>
+      <view class="close-btn" bind:tap="closeProgressDialog">
+        <text class="icon-close">×</text>
+      </view>
+    </view>
+    
+    <!-- 内容区域 -->
+    <scroll-view class="popup-content" scroll-y>
       <!-- 剩余数量提示 -->
       <view class="dialog-hint">
         <text class="hint-text">当前剩余治疗数：</text>
@@ -330,91 +398,85 @@
         <view class="field-label required">
           {{progressDialogType === 'cured' ? '治愈数量' : '死亡数量'}}
         </view>
-        <t-input
-          value="{{progressForm.count}}"
-          placeholder="请输入数量"
-          type="digit"
-          data-field="count"
-          bind:change="onProgressFormInput"
-        />
+        <view class="count-input-row">
+          <input
+            class="count-input"
+            value="{{progressForm.count}}"
+            placeholder="{{progressDialogType === 'cured' ? '输入治愈的只数' : '输入死亡的只数'}}"
+            type="digit"
+            data-field="count"
+            bind:input="onProgressFormInput"
+          />
+          <view class="all-btn" bind:tap="fillAllCount">
+            <text>全部</text>
+          </view>
+        </view>
+        <text class="field-hint">可输入1-{{treatmentProgress.remainingCount}}只</text>
       </view>
 
       <!-- 死亡原因（仅死亡时显示） -->
       <view class="dialog-field" wx:if="{{progressDialogType === 'died'}}">
-        <view class="field-label required">死亡原因</view>
-        <t-textarea
+        <view class="field-label">死亡原因</view>
+        <textarea
+          class="field-textarea"
           value="{{progressForm.deathCause}}"
-          placeholder="请填写死亡原因"
+          placeholder="请填写死亡原因（可选）"
           maxlength="200"
           data-field="deathCause"
-          bind:change="onProgressFormInput"
+          bind:input="onProgressFormInput"
         />
       </view>
 
       <!-- 备注（可选） -->
       <view class="dialog-field">
         <view class="field-label">备注</view>
-        <t-textarea
+        <textarea
+          class="field-textarea"
           value="{{progressForm.notes}}"
           placeholder="补充说明（可选）"
           maxlength="200"
           data-field="notes"
-          bind:change="onProgressFormInput"
+          bind:input="onProgressFormInput"
         />
       </view>
-    </view>
-  </t-dialog>
-
-  <!-- ========== ✅ 继续治疗选项对话框 ========== -->
-  <t-dialog
-    visible="{{showContinueTreatmentDialog}}"
-    title="继续治疗"
-    confirm-btn=""
-    cancel-btn="关闭"
-    bind:cancel="closeContinueTreatmentDialog"
-  >
-    <view class="continue-treatment-options">
-      <view class="option-item" bind:tap="showAddNoteDialog">
-        <view class="option-icon">📝</view>
-        <view class="option-content">
-          <text class="option-title">添加治疗笔记</text>
-          <text class="option-desc">记录治疗观察、病情变化</text>
-        </view>
-        <t-icon name="chevron-right" size="24" color="#999" />
+    </scroll-view>
+    
+    <!-- 底部按钮 -->
+    <view class="popup-footer">
+      <view class="footer-btn cancel-btn" bind:tap="closeProgressDialog">
+        <text>取消</text>
       </view>
-      
-      <view class="option-item" bind:tap="showAddMedicationDialog">
-        <view class="option-icon">💊</view>
-        <view class="option-content">
-          <text class="option-title">追加用药</text>
-          <text class="option-desc">添加新的药品或营养品</text>
-        </view>
-        <t-icon name="chevron-right" size="24" color="#999" />
-      </view>
-      
-      <view class="option-item" bind:tap="showAdjustPlanDialog">
-        <view class="option-icon">📋</view>
-        <view class="option-content">
-          <text class="option-title">调整治疗方案</text>
-          <text class="option-desc">修改治疗方案或更换药品</text>
-        </view>
-        <t-icon name="chevron-right" size="24" color="#999" />
+      <view class="footer-btn confirm-btn" bind:tap="submitProgress">
+        <text>确认</text>
       </view>
     </view>
-  </t-dialog>
+  </view>
 
-  <!-- ========== ✅ 添加治疗笔记对话框 ========== -->
-  <t-dialog
-    visible="{{showNoteDialog}}"
-    title="添加治疗笔记"
-    confirm-btn="保存"
-    cancel-btn="取消"
-    bind:confirm="submitTreatmentNote"
-    bind:cancel="closeNoteDialog"
-  >
-    <view class="note-dialog-content">
-      <view class="dialog-field">
-        <view class="field-label required">治疗笔记</view>
+  <!-- ========== ✅ 进一步治疗一体化底部弹窗 ========== -->
+  <!-- 遮罩层 -->
+  <view 
+    class="treatment-mask" 
+    wx:if="{{showContinueTreatmentDialog}}"
+    bind:tap="closeContinueTreatmentDialog"
+  ></view>
+  
+  <!-- 底部弹窗 -->
+  <view class="treatment-sheet {{showContinueTreatmentDialog ? 'show' : ''}}">
+    <view class="sheet-header">
+      <text class="sheet-title">进一步治疗</text>
+      <view class="close-btn" bind:tap="closeContinueTreatmentDialog">
+        <t-icon name="close" size="48rpx" />
+      </view>
+    </view>
+    
+    <scroll-view scroll-y class="sheet-scroll">
+      <!-- 治疗笔记 -->
+      <view class="form-section-inline">
+        <view class="section-title-inline">
+          <text class="title-icon">📝</text>
+          <text class="title-text">治疗笔记</text>
+          <text class="title-optional">（可选）</text>
+        </view>
         <t-textarea
           value="{{noteForm.content}}"
           placeholder="记录治疗观察、病情变化、食欲情况等"
@@ -424,107 +486,99 @@
         />
       </view>
       
-      <view class="dialog-hint">
-        <text class="hint-text">💡 治疗笔记会记录在治疗历史中，便于追踪治疗效果</text>
-      </view>
-    </view>
-  </t-dialog>
-
-  <!-- ========== ✅ 追加用药对话框 ========== -->
-  <t-dialog
-    visible="{{showAddMedicationFormDialog}}"
-    title="追加用药"
-    confirm-btn="确认追加"
-    cancel-btn="取消"
-    bind:confirm="submitAddMedication"
-    bind:cancel="closeAddMedicationDialog"
-  >
-    <view class="add-medication-content">
-      <!-- 选择药品 -->
-      <view class="dialog-field">
-        <view class="field-label required">选择药品/营养品</view>
-        <picker 
-          mode="selector" 
-          range="{{filteredMaterials}}" 
-          range-key="name"
-          value="{{addMedicationForm.materialIndex}}"
-          bindchange="onAddMedicationMaterialChange"
-        >
-          <view class="native-picker">
-            {{addMedicationForm.materialName || '请选择药品或营养品'}}
-            <text class="picker-arrow">▼</text>
+      <!-- 追加用药 -->
+      <view class="form-section-inline">
+        <view class="section-title-inline">
+          <text class="title-icon">💊</text>
+          <text class="title-text">追加用药</text>
+          <text class="title-optional">（可选，支持联合用药）</text>
+        </view>
+        
+        <!-- ✅ 已选择的药品列表（统一样式） -->
+        <view class="medication-card-new" style="padding: 32rpx; margin-bottom: 16rpx; background: #fff; border-radius: 16rpx; border: 2rpx solid #e8eaed;" wx:for="{{selectedMedications}}" wx:key="materialId">
+          <!-- 头部：药品名称和删除按钮 -->
+          <view class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; padding-bottom: 16rpx; border-bottom: 2rpx solid #f5f6f7;">
+            <view class="drug-info" style="flex: 1;">
+              <text class="drug-name" style="font-size: 30rpx; font-weight: normal; color: #1a1a1a; display: block;">{{item.materialName}}</text>
+            </view>
+            <view class="delete-icon" style="width: 56rpx; height: 56rpx; display: flex; align-items: center; justify-content: center; background: #fff1f0; border-radius: 50%; margin-left: 16rpx;" bind:tap="removeMedication" data-index="{{index}}">
+              <text class="icon-close" style="font-size: 56rpx; color: #ff4d4f; line-height: 1; font-weight: 300;">×</text>
+            </view>
           </view>
-        </picker>
-      </view>
-      
-      <!-- 领取数量 -->
-      <view class="dialog-field" wx:if="{{addMedicationForm.materialId}}">
-        <view class="field-label required">领取数量</view>
-        <t-input
-          value="{{addMedicationForm.quantity}}"
-          placeholder="请输入领取数量"
-          type="digit"
-          data-field="quantity"
-          bind:change="onAddMedicationFormInput"
-        />
-        <view class="stock-info" wx:if="{{addMedicationForm.currentStock}}">
-          库存：{{addMedicationForm.currentStock}}{{addMedicationForm.unit}}
+
+          <!-- 药品信息输入 -->
+          <view class="medication-inputs-simple">
+            <!-- 数量行 -->
+            <view class="input-row-simple" style="display: flex; align-items: center; margin-bottom: 20rpx;">
+              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">数量</text>
+              <input
+                class="input-field-simple"
+                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
+                value="{{item.quantity}}"
+                placeholder="请输入数量（库存: {{item.currentStock}}{{item.unit}}）"
+                type="digit"
+                data-index="{{index}}"
+                data-field="quantity"
+                bind:input="onSelectedMedicationInput"
+              />
+              <text class="unit-simple" style="font-size: 26rpx; color: #646566; margin-left: 16rpx;">{{item.unit}}</text>
+            </view>
+
+            <!-- 用法行 -->
+            <view class="input-row-simple" style="display: flex; align-items: center;">
+              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">用法</text>
+              <input
+                class="input-field-simple full-width"
+                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
+                value="{{item.dosage}}"
+                placeholder="如：10mg/kg 每日2次"
+                data-index="{{index}}"
+                data-field="dosage"
+                bind:input="onSelectedMedicationInput"
+              />
+            </view>
+          </view>
+        </view>
+        
+        <!-- ✅ 添加药品区域（去掉按钮） -->
+        <view class="add-medication-area">
+          <view class="form-item-inline">
+            <view class="form-label-inline">
+              <text>选择药品/营养品</text>
+              <text class="add-hint" wx:if="{{selectedMedications.length > 0}}">（继续添加）</text>
+            </view>
+            <picker 
+              mode="selector" 
+              range="{{filteredMaterials}}" 
+              range-key="name"
+              bindchange="onAddMedicationMaterialChange"
+            >
+              <view class="native-picker">
+                请选择药品或营养品
+                <text class="picker-arrow">▼</text>
+              </view>
+            </picker>
+          </view>
         </view>
       </view>
       
-      <!-- 用法用量 -->
-      <view class="dialog-field" wx:if="{{addMedicationForm.materialId}}">
-        <view class="field-label">用法用量</view>
-        <t-input
-          value="{{addMedicationForm.dosage}}"
-          placeholder="如：10mg/kg 每日2次（可选）"
-          data-field="dosage"
-          bind:change="onAddMedicationFormInput"
-        />
+      <view class="form-hint-inline">
+        <text class="hint-icon">💡</text>
+        <text class="hint-text">至少填写一项内容，会记录在治疗历史中</text>
       </view>
-      
-      <view class="dialog-hint">
-        <text class="hint-text">💡 追加的用药会扣减库存并记录在治疗历史中</text>
-      </view>
+    </scroll-view>
+    
+    <!-- 底部按钮 -->
+    <view class="sheet-footer">
+      <t-button 
+        theme="primary" 
+        size="large" 
+        block
+        bind:tap="submitContinueTreatment"
+      >
+        确认提交
+      </t-button>
     </view>
-  </t-dialog>
-
-  <!-- ========== ✅ 调整治疗方案对话框 ========== -->
-  <t-dialog
-    visible="{{showAdjustPlanFormDialog}}"
-    title="调整治疗方案"
-    confirm-btn="保存修改"
-    cancel-btn="取消"
-    bind:confirm="submitAdjustPlan"
-    bind:cancel="closeAdjustPlanDialog"
-  >
-    <view class="adjust-plan-content">
-      <view class="dialog-field">
-        <view class="field-label required">治疗方案</view>
-        <t-textarea
-          value="{{adjustPlanForm.treatmentPlan}}"
-          placeholder="请输入调整后的治疗方案"
-          maxlength="500"
-          data-field="treatmentPlan"
-          bind:change="onAdjustPlanFormInput"
-        />
-      </view>
-      
-      <view class="dialog-field">
-        <view class="field-label">调整原因</view>
-        <t-textarea
-          value="{{adjustPlanForm.reason}}"
-          placeholder="说明为什么调整治疗方案（可选）"
-          maxlength="200"
-          data-field="reason"
-          bind:change="onAdjustPlanFormInput"
-        />
-      </view>
-      
-      <view class="dialog-hint">
-        <text class="hint-text">⚠️ 修改治疗方案会记录在治疗历史中</text>
-      </view>
-    </view>
-  </t-dialog>
+  </view>
 
 </view>

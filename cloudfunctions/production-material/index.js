@@ -89,6 +89,22 @@ exports.main = async (event, context) => {
       case 'purchase_inbound':
         return await purchaseInbound(event, wxContext)
       
+      // 饲料投喂管理
+      case 'record_feed_usage':
+        return await recordFeedUsage(event, wxContext)
+      case 'list_feed_usage':
+        return await listFeedUsage(event, wxContext)
+      case 'get_batch_feed_cost':
+        return await getBatchFeedCost(event, wxContext)
+      case 'get_feed_cost_analysis':
+        return await getFeedCostAnalysis(event, wxContext)
+      case 'update_feed_usage':
+        return await updateFeedUsage(event, wxContext)
+      case 'delete_feed_usage':
+        return await deleteFeedUsage(event, wxContext)
+      case 'get_current_stock_count':
+        return await getCurrentStockCountWrapper(event, wxContext)
+      
       default:
         throw new Error('无效的操作类型')
     }
@@ -300,89 +316,181 @@ async function listMaterialRecords(event, wxContext) {
     type = null,
     materialId = null,
     dateRange = null,
-    status = null 
+    status = null,
+    includeFeedRecords = true // 是否包含饲料投喂记录
   } = event
   
-  let query = db.collection('prod_material_records')
-  
-  // 构建查询条件
-  const where = {}
-  
-  if (type) {
-    where.type = type
-  }
-  
-  if (materialId) {
-    where.materialId = materialId
-  }
-  
-  if (status) {
-    where.status = status
-  }
-  
-  if (dateRange && dateRange.start && dateRange.end) {
-    where.recordDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
-  }
-  
-  if (Object.keys(where).length > 0) {
-    query = query.where(where)
-  }
-  
-  // 分页查询
-  const countResult = await query.count()
-  const total = countResult.total
-  
-  const records = await query
-    .orderBy('createTime', 'desc')
-    .skip((page - 1) * pageSize)
-    .limit(pageSize)
-    .get()
-  
-  // 获取关联的物料信息
-  const materialIds = [...new Set(records.data.map(r => r.materialId))]
-  const materials = {}
-  
-  if (materialIds.length > 0) {
-    const materialQuery = await db.collection('prod_materials')
-      .where({ _id: _.in(materialIds) })
+  try {
+    // 1. 查询物料记录（采购和领用）
+    let materialQuery = db.collection('prod_material_records')
+    const materialWhere = {}
+    
+    if (type) {
+      materialWhere.type = type
+    }
+    if (materialId) {
+      materialWhere.materialId = materialId
+    }
+    if (status) {
+      materialWhere.status = status
+    }
+    if (dateRange && dateRange.start && dateRange.end) {
+      materialWhere.recordDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
+    }
+    
+    if (Object.keys(materialWhere).length > 0) {
+      materialQuery = materialQuery.where(materialWhere)
+    }
+    
+    const materialRecords = await materialQuery
+      .orderBy('createTime', 'desc')
+      .limit(100) // 先获取更多数据用于合并
       .get()
     
-    materialQuery.data.forEach(material => {
-      materials[material._id] = material
+    // 2. 查询饲料投喂记录
+    let feedRecords = { data: [] }
+    if (includeFeedRecords) {
+      let feedQuery = db.collection('feed_usage_records')
+      const feedWhere = {}
+      
+      if (materialId) {
+        feedWhere.materialId = materialId
+      }
+      if (dateRange && dateRange.start && dateRange.end) {
+        feedWhere.recordDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
+      }
+      
+      if (Object.keys(feedWhere).length > 0) {
+        feedQuery = feedQuery.where(feedWhere)
+      }
+      
+      feedRecords = await feedQuery
+        .orderBy('createTime', 'desc')
+        .limit(100)
+        .get()
+    }
+    
+    // 3. 获取所有物料信息
+    const allMaterialIds = [
+      ...new Set([
+        ...materialRecords.data.map(r => r.materialId),
+        ...feedRecords.data.map(r => r.materialId)
+      ])
+    ]
+    const materials = {}
+    
+    if (allMaterialIds.length > 0) {
+      const materialQuery = await db.collection('prod_materials')
+        .where({ _id: _.in(allMaterialIds) })
+        .get()
+      
+      materialQuery.data.forEach(material => {
+        materials[material._id] = material
+      })
+    }
+    
+    // 4. 获取批次信息（用于饲料投喂记录）
+    const batchIds = [...new Set(feedRecords.data.map(r => r.batchId).filter(Boolean))]
+    const batches = {}
+    
+    if (batchIds.length > 0) {
+      const batchQuery = await db.collection('prod_batch_entries')
+        .where({ _id: _.in(batchIds) })
+        .get()
+      
+      batchQuery.data.forEach(batch => {
+        batches[batch._id] = batch
+      })
+    }
+    
+    // 5. 转换物料记录格式
+    const formattedMaterialRecords = await Promise.all(materialRecords.data.map(async record => {
+      let operator = record.operator
+      if (!operator || operator === '未知' || operator === '系统用户') {
+        try {
+          const user = await db.collection('wx_users').where({ _openid: record.userId }).get()
+          if (user.data && user.data.length > 0) {
+            const u = user.data[0]
+            operator = u.name || u.nickname || u.nickName || operator || '未知'
+          }
+        } catch (e) {}
+      }
+      
+      return {
+        ...record,
+        operator,
+        material: materials[record.materialId] || null,
+        recordType: 'material', // 标记为物料记录
+        displayType: record.type // purchase 或 usage
+      }
+    }))
+    
+    // 6. 转换饲料投喂记录格式（统一为物料记录格式）
+    const formattedFeedRecords = feedRecords.data.map(record => {
+      const batch = batches[record.batchId]
+      
+      return {
+        _id: record._id,
+        recordNumber: `FEED-${record._id.slice(-8)}`, // 生成记录编号
+        userId: record.userId,
+        materialId: record.materialId,
+        type: 'feed', // 标记为投喂类型
+        quantity: record.quantity,
+        unitPrice: record.unitPrice,
+        totalAmount: record.totalCost,
+        supplier: '',
+        operator: record.operator,
+        status: '已完成',
+        notes: record.notes || '',
+        relatedBatch: record.batchId,
+        recordDate: record.recordDate,
+        createTime: record.createTime,
+        updateTime: record.updateTime || record.createTime,
+        // 额外信息
+        material: materials[record.materialId] || null,
+        batchNumber: record.batchNumber || (batch ? batch.batchNumber : ''),
+        batchInfo: batch || null,
+        currentStock: record.currentStock,
+        costPerBird: record.costPerBird,
+        dayAge: record.dayAge,
+        recordType: 'feed', // 标记为饲料投喂记录
+        displayType: 'feed' // 显示类型
+      }
     })
-  }
-  
-  // 组合数据
-  const recordsWithMaterial = await Promise.all(records.data.map(async record => {
-    // 兜底操作员
-    let operator = record.operator
-    if (!operator || operator === '未知' || operator === '系统用户') {
-      try {
-        const user = await db.collection('wx_users').where({ _openid: record.userId }).get()
-        if (user.data && user.data.length > 0) {
-          const u = user.data[0]
-          operator = u.name || u.nickname || u.nickName || operator || '未知'
-        }
-      } catch (e) {}
-    }
+    
+    // 7. 合并并排序所有记录
+    const allRecords = [...formattedMaterialRecords, ...formattedFeedRecords]
+    allRecords.sort((a, b) => {
+      const timeA = new Date(a.createTime).getTime()
+      const timeB = new Date(b.createTime).getTime()
+      return timeB - timeA // 降序
+    })
+    
+    // 8. 分页
+    const total = allRecords.length
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    const paginatedRecords = allRecords.slice(startIndex, endIndex)
+    
     return {
-      ...record,
-      operator,
-      material: materials[record.materialId] || null
-    }
-  }))
-  
-  return {
-    success: true,
-    data: {
-      records: recordsWithMaterial,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize)
+      success: true,
+      data: {
+        records: paginatedRecords,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize)
+        },
+        summary: {
+          materialRecords: formattedMaterialRecords.length,
+          feedRecords: formattedFeedRecords.length,
+          total: allRecords.length
+        }
       }
     }
+  } catch (error) {
+    throw new Error('查询物料记录失败: ' + error.message)
   }
 }
 
@@ -1262,5 +1370,681 @@ function getMostActiveCategory(purchaseStats, useStats) {
   return {
     category: maxCategory,
     totalAmount: maxAmount
+  }
+}
+
+// ===================
+// 饲料投喂管理功能
+// ===================
+
+// 获取当前存栏数（核心计算函数）
+async function getCurrentStockCount(batchId, recordDate) {
+  try {
+    // 1. 查询批次入栏数量
+    const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+    
+    if (!batchEntry.data) {
+      throw new Error('批次不存在')
+    }
+    
+    const initialQuantity = batchEntry.data.quantity || 0
+    
+    // 2. 查询截至recordDate的累计死亡数
+    const deathRecords = await db.collection('health_death_records')
+      .where({
+        batchId: batchId,
+        deathDate: _.lte(recordDate)
+      })
+      .get()
+    
+    const totalDeathCount = deathRecords.data.reduce((sum, r) => sum + (r.deadCount || 0), 0)
+    
+    // 3. 查询截至recordDate的出栏数（如果有）
+    const exitRecords = await db.collection('prod_batch_exits')
+      .where({
+        batchId: batchId,
+        exitDate: _.lte(recordDate)
+      })
+      .get()
+    
+    const totalExitCount = exitRecords.data.reduce((sum, r) => sum + (r.quantity || 0), 0)
+    
+    // 4. 当前存栏 = 入栏 - 死亡 - 出栏
+    const currentStock = initialQuantity - totalDeathCount - totalExitCount
+    
+    return {
+      currentStock: Math.max(0, currentStock),
+      initialQuantity,
+      totalDeathCount,
+      totalExitCount
+    }
+  } catch (error) {
+    throw new Error('计算存栏数失败: ' + error.message)
+  }
+}
+
+// 计算日龄
+function calculateDayAge(entryDate, recordDate) {
+  const entry = new Date(entryDate)
+  const record = new Date(recordDate)
+  const diffTime = record.getTime() - entry.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return Math.max(1, diffDays) // 至少为1天
+}
+
+// 获取当前存栏数接口（供前端调用）
+async function getCurrentStockCountWrapper(event, wxContext) {
+  const { batchId, recordDate } = event
+  
+  if (!batchId) {
+    throw new Error('缺少批次ID')
+  }
+  
+  const date = recordDate || new Date().toISOString().split('T')[0]
+  const stockInfo = await getCurrentStockCount(batchId, date)
+  
+  return {
+    success: true,
+    data: stockInfo
+  }
+}
+
+// 记录饲料投喂
+async function recordFeedUsage(event, wxContext) {
+  const { feedData } = event
+  
+  // 数据验证
+  if (!feedData.batchId || !feedData.materialId || !feedData.quantity) {
+    throw new Error('缺少必填字段：批次ID、饲料ID、数量')
+  }
+  
+  if (feedData.quantity <= 0) {
+    throw new Error('投喂数量必须大于0')
+  }
+  
+  try {
+    return await db.runTransaction(async transaction => {
+      const now = new Date()
+      const recordDate = feedData.recordDate || now.toISOString().split('T')[0]
+      
+      // 1. 获取批次信息
+      const batchEntry = await transaction.collection('prod_batch_entries').doc(feedData.batchId).get()
+      if (!batchEntry.data) {
+        throw new Error('批次不存在')
+      }
+      const batchInfo = batchEntry.data
+      
+      // 2. 获取当前存栏数
+      const stockInfo = await getCurrentStockCount(feedData.batchId, recordDate)
+      
+      if (stockInfo.currentStock <= 0) {
+        throw new Error('当前批次存栏数为0，无法记录投喂')
+      }
+      
+      // 3. 获取饲料信息
+      const material = await transaction.collection('prod_materials').doc(feedData.materialId).get()
+      if (!material.data) {
+        throw new Error('饲料不存在')
+      }
+      const materialInfo = material.data
+      
+      // 检查是否是饲料类
+      if (materialInfo.category !== '饲料') {
+        throw new Error('只能记录饲料类物料的投喂')
+      }
+      
+      // 4. 计算成本
+      const quantity = Number(feedData.quantity)
+      const unitPrice = Number(feedData.unitPrice) || materialInfo.unitPrice || 0
+      const totalCost = quantity * unitPrice
+      const costPerBird = stockInfo.currentStock > 0 ? totalCost / stockInfo.currentStock : 0
+      
+      // 5. 计算日龄
+      const dayAge = calculateDayAge(batchInfo.entryDate, recordDate)
+      
+      // 6. 获取操作员信息
+      let operatorName = feedData.operator || '未知'
+      try {
+        const user = await db.collection('wx_users').where({ _openid: wxContext.OPENID }).get()
+        if (user.data && user.data.length > 0) {
+          const u = user.data[0]
+          operatorName = u.name || u.nickname || u.nickName || operatorName
+        }
+      } catch (e) {}
+      
+      // 7. 检查库存是否充足
+      if (materialInfo.currentStock < quantity) {
+        throw new Error(`饲料库存不足！当前库存: ${materialInfo.currentStock}${materialInfo.unit}，需要: ${quantity}${materialInfo.unit}`)
+      }
+      
+      // 8. 扣减饲料库存
+      const newStock = materialInfo.currentStock - quantity
+      await transaction.collection('prod_materials').doc(feedData.materialId).update({
+        data: {
+          currentStock: newStock,
+          updateTime: now
+        }
+      })
+      
+      // 9. 记录库存变动日志
+      await transaction.collection('prod_inventory_logs').add({
+        data: {
+          materialId: feedData.materialId,
+          materialName: materialInfo.name,
+          changeType: 'use',
+          changeReason: 'feed_usage',
+          relatedRecordId: null, // 先创建记录再更新
+          quantity: -quantity,
+          unit: materialInfo.unit,
+          beforeStock: materialInfo.currentStock,
+          afterStock: newStock,
+          batchId: feedData.batchId,
+          batchNumber: batchInfo.batchNumber,
+          operator: operatorName,
+          userId: wxContext.OPENID,
+          createTime: now
+        }
+      })
+      
+      // 10. 创建投喂记录
+      const feedRecord = {
+        batchId: feedData.batchId,
+        batchNumber: batchInfo.batchNumber,
+        materialId: feedData.materialId,
+        materialName: materialInfo.name,
+        recordDate: recordDate,
+        quantity: quantity,
+        unit: materialInfo.unit,
+        unitPrice: unitPrice,
+        totalCost: totalCost,
+        dayAge: dayAge,
+        stockAtTime: stockInfo.currentStock,
+        costPerBird: Number(costPerBird.toFixed(4)),
+        operator: operatorName,
+        userId: wxContext.OPENID,
+        notes: feedData.notes || '',
+        recordType: feedData.recordType || 'manual',
+        createTime: now,
+        updateTime: now
+      }
+      
+      const result = await transaction.collection('feed_usage_records').add({
+        data: feedRecord
+      })
+      
+      return {
+        success: true,
+        data: {
+          _id: result._id,
+          ...feedRecord,
+          stockInfo: stockInfo,
+          materialStock: {
+            before: materialInfo.currentStock,
+            after: newStock,
+            used: quantity
+          }
+        },
+        message: `饲料投喂记录创建成功，已扣减库存${quantity}${materialInfo.unit}`
+      }
+    })
+  } catch (error) {
+    throw new Error('记录投喂失败: ' + error.message)
+  }
+}
+
+// 查询饲料投喂记录列表
+async function listFeedUsage(event, wxContext) {
+  const {
+    page = 1,
+    pageSize = 20,
+    batchId = null,
+    materialId = null,
+    dateRange = null
+  } = event
+  
+  let query = db.collection('feed_usage_records')
+  
+  // 构建查询条件
+  const where = {}
+  
+  if (batchId) {
+    where.batchId = batchId
+  }
+  
+  if (materialId) {
+    where.materialId = materialId
+  }
+  
+  if (dateRange && dateRange.start && dateRange.end) {
+    where.recordDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
+  }
+  
+  if (Object.keys(where).length > 0) {
+    query = query.where(where)
+  }
+  
+  // 分页查询
+  const countResult = await query.count()
+  const total = countResult.total
+  
+  const records = await query
+    .orderBy('recordDate', 'desc')
+    .orderBy('createTime', 'desc')
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .get()
+  
+  return {
+    success: true,
+    data: {
+      records: records.data,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    }
+  }
+}
+
+// 获取批次饲料成本统计
+async function getBatchFeedCost(event, wxContext) {
+  const { batchId } = event
+  
+  if (!batchId) {
+    throw new Error('缺少批次ID')
+  }
+  
+  try {
+    // 1. 获取批次信息
+    const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+    if (!batchEntry.data) {
+      throw new Error('批次不存在')
+    }
+    const batchInfo = batchEntry.data
+    
+    // 2. 获取当前存栏数
+    const today = new Date().toISOString().split('T')[0]
+    const stockInfo = await getCurrentStockCount(batchId, today)
+    
+    // 3. 获取所有投喂记录
+    const feedRecords = await db.collection('feed_usage_records')
+      .where({ batchId: batchId })
+      .orderBy('recordDate', 'asc')
+      .get()
+    
+    // 4. 统计分析
+    const costSummary = {
+      totalFeedCost: 0,
+      totalFeedQuantity: 0,
+      avgCostPerBird: 0,
+      feedingCount: feedRecords.data.length,
+      avgCostPerFeeding: 0
+    }
+    
+    const costByMaterial = {}
+    
+    feedRecords.data.forEach(record => {
+      costSummary.totalFeedCost += record.totalCost || 0
+      costSummary.totalFeedQuantity += record.quantity || 0
+      
+      // 按饲料类型统计
+      const materialName = record.materialName
+      if (!costByMaterial[materialName]) {
+        costByMaterial[materialName] = {
+          materialName: materialName,
+          materialId: record.materialId,
+          totalQuantity: 0,
+          totalCost: 0,
+          usageCount: 0,
+          unit: record.unit
+        }
+      }
+      
+      costByMaterial[materialName].totalQuantity += record.quantity || 0
+      costByMaterial[materialName].totalCost += record.totalCost || 0
+      costByMaterial[materialName].usageCount++
+    })
+    
+    // 计算平均值
+    if (stockInfo.currentStock > 0) {
+      costSummary.avgCostPerBird = costSummary.totalFeedCost / stockInfo.currentStock
+    }
+    
+    if (costSummary.feedingCount > 0) {
+      costSummary.avgCostPerFeeding = costSummary.totalFeedCost / costSummary.feedingCount
+    }
+    
+    // 计算百分比
+    const costByMaterialArray = Object.values(costByMaterial).map(item => ({
+      ...item,
+      percentage: costSummary.totalFeedCost > 0 
+        ? ((item.totalCost / costSummary.totalFeedCost) * 100).toFixed(2)
+        : 0
+    }))
+    
+    // 计算日龄
+    const dayAge = calculateDayAge(batchInfo.entryDate, today)
+    
+    return {
+      success: true,
+      data: {
+        batchInfo: {
+          batchId: batchId,
+          batchNumber: batchInfo.batchNumber,
+          breed: batchInfo.breed,
+          entryDate: batchInfo.entryDate,
+          currentStock: stockInfo.currentStock,
+          initialQuantity: stockInfo.initialQuantity,
+          dayAge: dayAge
+        },
+        costSummary: costSummary,
+        costByMaterial: costByMaterialArray,
+        feedRecords: feedRecords.data
+      }
+    }
+  } catch (error) {
+    throw new Error('获取批次成本失败: ' + error.message)
+  }
+}
+
+// 获取饲料成本分析
+async function getFeedCostAnalysis(event, wxContext) {
+  const {
+    batchIds = null,
+    dateRange = null,
+    analysisType = 'batch' // 'batch', 'time', 'material', 'stage'
+  } = event
+  
+  try {
+    let query = db.collection('feed_usage_records')
+    const where = {}
+    
+    // 构建查询条件
+    if (batchIds && batchIds.length > 0) {
+      where.batchId = _.in(batchIds)
+    }
+    
+    if (dateRange && dateRange.start && dateRange.end) {
+      where.recordDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
+    }
+    
+    if (Object.keys(where).length > 0) {
+      query = query.where(where)
+    }
+    
+    const records = await query.get()
+    
+    // 根据分析类型返回不同的数据
+    const analysisData = {}
+    
+    if (analysisType === 'batch') {
+      // 批次维度分析
+      analysisData.batchComparison = await analyzeBatchComparison(records.data)
+    } else if (analysisType === 'time') {
+      // 时间维度分析
+      analysisData.timeTrend = analyzeTimeTrend(records.data)
+    } else if (analysisType === 'material') {
+      // 饲料类型分析
+      analysisData.materialAnalysis = analyzeMaterialUsage(records.data)
+    } else if (analysisType === 'stage') {
+      // 阶段分析
+      analysisData.stageAnalysis = analyzeByStage(records.data)
+    }
+    
+    return {
+      success: true,
+      data: {
+        analysisType: analysisType,
+        totalRecords: records.data.length,
+        totalCost: records.data.reduce((sum, r) => sum + (r.totalCost || 0), 0),
+        ...analysisData
+      }
+    }
+  } catch (error) {
+    throw new Error('成本分析失败: ' + error.message)
+  }
+}
+
+// 批次对比分析
+async function analyzeBatchComparison(records) {
+  const batchStats = {}
+  
+  records.forEach(record => {
+    const batchId = record.batchId
+    if (!batchStats[batchId]) {
+      batchStats[batchId] = {
+        batchId: batchId,
+        batchNumber: record.batchNumber,
+        totalCost: 0,
+        totalQuantity: 0,
+        feedingCount: 0,
+        avgStockAtTime: 0,
+        stockSamples: []
+      }
+    }
+    
+    const batch = batchStats[batchId]
+    batch.totalCost += record.totalCost || 0
+    batch.totalQuantity += record.quantity || 0
+    batch.feedingCount++
+    batch.stockSamples.push(record.stockAtTime || 0)
+  })
+  
+  // 计算平均存栏数和单只成本
+  Object.values(batchStats).forEach(batch => {
+    if (batch.stockSamples.length > 0) {
+      batch.avgStockAtTime = batch.stockSamples.reduce((a, b) => a + b, 0) / batch.stockSamples.length
+      batch.avgCostPerBird = batch.avgStockAtTime > 0 ? batch.totalCost / batch.avgStockAtTime : 0
+    }
+    delete batch.stockSamples // 清理临时数据
+  })
+  
+  return Object.values(batchStats).sort((a, b) => b.totalCost - a.totalCost)
+}
+
+// 时间趋势分析
+function analyzeTimeTrend(records) {
+  const timeSeries = {}
+  
+  records.forEach(record => {
+    const date = record.recordDate
+    if (!timeSeries[date]) {
+      timeSeries[date] = {
+        date: date,
+        totalCost: 0,
+        totalQuantity: 0,
+        recordCount: 0
+      }
+    }
+    
+    timeSeries[date].totalCost += record.totalCost || 0
+    timeSeries[date].totalQuantity += record.quantity || 0
+    timeSeries[date].recordCount++
+  })
+  
+  return Object.values(timeSeries).sort((a, b) => a.date.localeCompare(b.date))
+}
+
+// 饲料类型分析
+function analyzeMaterialUsage(records) {
+  const materialStats = {}
+  
+  records.forEach(record => {
+    const materialName = record.materialName
+    if (!materialStats[materialName]) {
+      materialStats[materialName] = {
+        materialName: materialName,
+        materialId: record.materialId,
+        totalCost: 0,
+        totalQuantity: 0,
+        usageCount: 0,
+        avgUnitPrice: 0,
+        unit: record.unit
+      }
+    }
+    
+    const material = materialStats[materialName]
+    material.totalCost += record.totalCost || 0
+    material.totalQuantity += record.quantity || 0
+    material.usageCount++
+  })
+  
+  // 计算平均单价
+  Object.values(materialStats).forEach(material => {
+    if (material.totalQuantity > 0) {
+      material.avgUnitPrice = material.totalCost / material.totalQuantity
+    }
+  })
+  
+  return Object.values(materialStats).sort((a, b) => b.totalCost - a.totalCost)
+}
+
+// 阶段分析（按日龄分组）
+function analyzeByStage(records) {
+  const stages = {
+    '0-7天': { minAge: 0, maxAge: 7, records: [], totalCost: 0, avgCostPerBird: 0 },
+    '8-14天': { minAge: 8, maxAge: 14, records: [], totalCost: 0, avgCostPerBird: 0 },
+    '15-28天': { minAge: 15, maxAge: 28, records: [], totalCost: 0, avgCostPerBird: 0 },
+    '29-56天': { minAge: 29, maxAge: 56, records: [], totalCost: 0, avgCostPerBird: 0 },
+    '56天以上': { minAge: 57, maxAge: 9999, records: [], totalCost: 0, avgCostPerBird: 0 }
+  }
+  
+  records.forEach(record => {
+    const dayAge = record.dayAge || 0
+    
+    for (const [stageName, stage] of Object.entries(stages)) {
+      if (dayAge >= stage.minAge && dayAge <= stage.maxAge) {
+        stage.records.push(record)
+        stage.totalCost += record.totalCost || 0
+        break
+      }
+    }
+  })
+  
+  // 计算每个阶段的平均单只成本
+  Object.values(stages).forEach(stage => {
+    const totalStock = stage.records.reduce((sum, r) => sum + (r.stockAtTime || 0), 0)
+    if (stage.records.length > 0 && totalStock > 0) {
+      stage.avgCostPerBird = stage.totalCost / (totalStock / stage.records.length)
+    }
+    stage.recordCount = stage.records.length
+    delete stage.records // 清理详细记录
+  })
+  
+  return stages
+}
+
+// 更新投喂记录
+async function updateFeedUsage(event, wxContext) {
+  const { recordId, updateData } = event
+  
+  if (!recordId) {
+    throw new Error('缺少记录ID')
+  }
+  
+  // 检查记录是否存在
+  const existingRecord = await db.collection('feed_usage_records').doc(recordId).get()
+  
+  if (!existingRecord.data) {
+    throw new Error('记录不存在')
+  }
+  
+  // 只允许更新备注
+  const updateFields = {
+    updateTime: new Date()
+  }
+  
+  if (updateData.notes !== undefined) {
+    updateFields.notes = updateData.notes
+  }
+  
+  await db.collection('feed_usage_records').doc(recordId).update({
+    data: updateFields
+  })
+  
+  return {
+    success: true,
+    message: '投喂记录更新成功'
+  }
+}
+
+// 删除投喂记录（需要回退库存）
+async function deleteFeedUsage(event, wxContext) {
+  const { recordId } = event
+  
+  if (!recordId) {
+    throw new Error('缺少记录ID')
+  }
+  
+  try {
+    return await db.runTransaction(async transaction => {
+      // 1. 检查记录是否存在
+      const record = await transaction.collection('feed_usage_records').doc(recordId).get()
+      
+      if (!record.data) {
+        throw new Error('记录不存在')
+      }
+      
+      const recordData = record.data
+      
+      // 2. 获取饲料信息
+      const material = await transaction.collection('prod_materials').doc(recordData.materialId).get()
+      
+      if (!material.data) {
+        throw new Error('关联的饲料不存在')
+      }
+      
+      const materialInfo = material.data
+      const now = new Date()
+      
+      // 3. 回退库存
+      const newStock = materialInfo.currentStock + recordData.quantity
+      await transaction.collection('prod_materials').doc(recordData.materialId).update({
+        data: {
+          currentStock: newStock,
+          updateTime: now
+        }
+      })
+      
+      // 4. 记录库存变动日志
+      await transaction.collection('prod_inventory_logs').add({
+        data: {
+          materialId: recordData.materialId,
+          materialName: recordData.materialName,
+          changeType: 'return',
+          changeReason: 'feed_usage_delete',
+          relatedRecordId: recordId,
+          quantity: recordData.quantity,
+          unit: recordData.unit,
+          beforeStock: materialInfo.currentStock,
+          afterStock: newStock,
+          batchId: recordData.batchId,
+          batchNumber: recordData.batchNumber,
+          operator: recordData.operator,
+          userId: wxContext.OPENID,
+          createTime: now
+        }
+      })
+      
+      // 5. 删除投喂记录
+      await transaction.collection('feed_usage_records').doc(recordId).remove()
+      
+      return {
+        success: true,
+        data: {
+          returnedQuantity: recordData.quantity,
+          unit: recordData.unit,
+          materialStock: {
+            before: materialInfo.currentStock,
+            after: newStock
+          }
+        },
+        message: `投喂记录删除成功，已回退库存${recordData.quantity}${recordData.unit}`
+      }
+    })
+  } catch (error) {
+    throw new Error('删除记录失败: ' + error.message)
   }
 }

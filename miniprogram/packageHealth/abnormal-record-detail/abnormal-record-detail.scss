@@ -3,7 +3,7 @@
 .abnormal-record-detail-page {
   min-height: 100vh;
   background: #f5f5f5;
-  padding-top: 200rpx; // 自定义导航栏高度
+  padding-top: calc(var(--navbar-height, 132rpx) + 68rpx); /* 导航栏高度 + 安全间距 */
 }
 
 .loading-container,

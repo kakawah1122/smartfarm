@@ -25,11 +25,11 @@ page {
   flex-direction: column;
 }
 
-/* 滚动容器 - 刘海屏适配 */
+/* 滚动容器 - 导航栏安全间距适配 */
 .scroll-container {
   flex: 1;
   background-color: #f9fafb !important;
-  margin-top: -var(--spacing-lg, 24rpx);
+  margin-top: calc(var(--navbar-height, 132rpx) + 8rpx); /* 导航栏高度 + 安全间距 */
   padding-top: var(--spacing-base, 16rpx);
   padding-bottom: var(--spacing-lg, 24rpx);
   border-radius: var(--spacing-xl, 32rpx) var(--spacing-xl, 32rpx) 0 0;

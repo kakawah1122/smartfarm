@@ -1,0 +1,162 @@
+<!--batch-feed-cost.wxml - 批次饲养成本统计页面-->
+<view class="batch-feed-cost-page">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="批次饲养成本"
+    show-back="{{true}}"
+    fallbackUrl="/pages/production/production"
+  />
+  
+  <!-- 批次选择器 - 添加顶部间距避免被导航栏遮挡 -->
+  <view class="batch-selector" style="margin-top: {{totalNavHeight}}rpx;" bindtap="showBatchPicker">
+    <view class="selector-content">
+      <text class="batch-label">批次</text>
+      <text class="batch-number">{{selectedBatchNumber}}</text>
+      <t-icon name="chevron-down" size="20px" color="#666" />
+    </view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <t-loading theme="circular" size="48rpx" />
+    <text class="loading-text">加载中...</text>
+  </view>
+  
+  <!-- 无数据 -->
+  <view wx:elif="{{!hasData}}" class="empty-container">
+    <t-icon name="info-circle" size="80rpx" color="#ccc" />
+    <text class="empty-text">该批次暂无投喂记录</text>
+    <t-button theme="primary" size="medium" bindtap="addFeedRecord">
+      添加投喂记录
+    </t-button>
+  </view>
+  
+  <!-- 有数据 -->
+  <view wx:else class="content-container">
+    
+    <!-- 批次信息卡片 -->
+    <view class="info-card">
+      <view class="card-title">批次信息</view>
+      <view class="info-grid">
+        <view class="info-item">
+          <text class="info-label">品种</text>
+          <text class="info-value">{{batchInfo.breed}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">日龄</text>
+          <text class="info-value">{{batchInfo.dayAge}}天</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">入栏数</text>
+          <text class="info-value">{{batchInfo.initialQuantity}}只</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">当前存栏</text>
+          <text class="info-value primary">{{batchInfo.currentStock}}只</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 成本概览卡片 -->
+    <view class="cost-overview-card">
+      <view class="card-title">成本概览</view>
+      
+      <view class="cost-main">
+        <view class="cost-main-item">
+          <text class="cost-main-label">总饲料成本</text>
+          <text class="cost-main-value">¥{{costSummary.totalFeedCost.toFixed(2)}}</text>
+        </view>
+        <view class="cost-main-item">
+          <text class="cost-main-label">平均单只成本</text>
+          <text class="cost-main-value highlight">¥{{costSummary.avgCostPerBird.toFixed(2)}}</text>
+        </view>
+      </view>
+      
+      <view class="cost-stats">
+        <view class="stat-item">
+          <text class="stat-value">{{costSummary.feedingCount}}</text>
+          <text class="stat-label">投喂次数</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{costSummary.totalFeedQuantity}}</text>
+          <text class="stat-label">总用量</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">¥{{costSummary.avgCostPerFeeding.toFixed(2)}}</text>
+          <text class="stat-label">平均每次成本</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 饲料使用统计 -->
+    <view class="material-stats-card">
+      <view class="card-title">饲料使用统计</view>
+      <view class="material-list">
+        <view
+          wx:for="{{costByMaterial}}"
+          wx:key="materialId"
+          class="material-item"
+          bindtap="viewMaterialDetail"
+          data-material="{{item}}"
+        >
+          <view class="material-header">
+            <text class="material-name">{{item.materialName}}</text>
+            <text class="material-percentage">{{item.percentage}}%</text>
+          </view>
+          <view class="material-info">
+            <text class="material-detail">用量：{{item.totalQuantity}}{{item.unit}}</text>
+            <text class="material-detail">使用：{{item.usageCount}}次</text>
+            <text class="material-cost">¥{{item.totalCost.toFixed(2)}}</text>
+          </view>
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{item.percentage}}%;"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 投喂记录列表 -->
+    <view class="records-card">
+      <view class="card-title-row">
+        <text class="card-title">投喂记录</text>
+        <text class="record-count">共{{feedRecords.length}}条</text>
+      </view>
+      
+      <view class="records-list">
+        <view
+          wx:for="{{feedRecords}}"
+          wx:key="_id"
+          class="record-item"
+          bindtap="viewRecordDetail"
+          data-record="{{item}}"
+        >
+          <view class="record-header">
+            <text class="record-date">{{item.recordDate}}</text>
+            <text class="record-cost">¥{{item.totalCost.toFixed(2)}}</text>
+          </view>
+          <view class="record-content">
+            <text class="record-material">{{item.materialName}}</text>
+            <text class="record-quantity">{{item.quantity}}{{item.unit}}</text>
+          </view>
+          <view class="record-footer">
+            <text class="record-info">存栏{{item.stockAtTime}}只 · 日龄{{item.dayAge}}天</text>
+            <text class="record-per-bird">¥{{item.costPerBird}}/只</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 浮动操作按钮 -->
+  <view class="fab-buttons">
+    <view class="fab-button" bindtap="onRefresh">
+      <t-icon name="refresh" size="24px" color="#fff" />
+    </view>
+    <view class="fab-button primary" bindtap="addFeedRecord">
+      <t-icon name="add" size="28px" color="#fff" />
+    </view>
+  </view>
+</view>
+

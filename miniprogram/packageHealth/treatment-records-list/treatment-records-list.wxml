@@ -61,16 +61,11 @@
         </view>
 
         <!-- 第三行：用药情况 -->
-        <view class="info-row" wx:if="{{item.medications && item.medications.length > 0}}">
-          <view class="info-group full-width">
-            <text class="info-label">用药：</text>
-            <text class="info-value">
-              <block wx:for="{{item.medications}}" wx:for-item="med" wx:key="materialId">
-                {{med.name}}{{med.quantity}}{{med.unit}}
-                <text wx:if="{{index < item.medications.length - 1}}">、</text>
-              </block>
-            </text>
-          </view>
+        <view class="info-row medication-row" wx:if="{{item.medications && item.medications.length > 0}}">
+          <text class="info-label">用药：</text>
+          <text class="info-value medication-value">
+            <block wx:for="{{item.medications}}" wx:for-item="med" wx:key="materialId">{{med.name}}{{med.quantity}}{{med.unit}}<text wx:if="{{index < item.medications.length - 1}}">、</text></block>
+          </text>
         </view>
 
         <!-- 第四行：治疗进展 -->

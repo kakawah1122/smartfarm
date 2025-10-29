@@ -13,7 +13,7 @@ page {
 
 /* 主内容区域 - 避免被导航栏遮挡 */
 .main-content {
-  margin-top: calc(44px + 44px); /* 状态栏 + 导航栏高度 */
+  margin-top: var(--navbar-height, 132rpx); /* 导航栏高度 */
   flex: 1;
 }
 
@@ -21,6 +21,7 @@ page {
 .production-overview {
   padding: 24rpx;
   background: white;
+  margin-top: 32rpx; /* 增加顶部安全间距 */
   margin-bottom: 16rpx;
 }
 
@@ -171,6 +172,12 @@ page {
   background: rgba(83, 29, 171, 0.1) !important;
   color: #531dab !important;
   border: 1rpx solid rgba(83, 29, 171, 0.2) !important;
+}
+
+.orange-tag {
+  background: rgba(255, 152, 0, 0.1) !important;
+  color: #ff9800 !important;
+  border: 1rpx solid rgba(255, 152, 0, 0.2) !important;
 }
 
 .success-button {

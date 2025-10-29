@@ -3,6 +3,7 @@ import { createPageWithNavbar } from '../../utils/navigation'
 
 interface Medication {
   medicationId?: string
+  materialId?: string
   name: string
   dosage: string
   route: string
@@ -22,6 +23,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       treatmentType: 'medication', // medication|isolation|supportive
       diagnosis: '',
       diagnosisConfidence: 0,
+      affectedCount: 0,  // ✅ 受影响的动物数量（用于健康率计算）
       notes: ''
     },
     
@@ -34,6 +36,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       primary: '',
       followUpSchedule: [] as string[]
     },
+    
+    // AI建议的用药信息（仅用于显示，不参与提交）
+    aiMedicationSuggestions: [] as any[],
     
     // 用药记录
     medications: [] as Medication[],
@@ -61,11 +66,32 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     availableMaterials: [] as any[],
     filteredMaterials: [] as any[], // 根据治疗类型过滤后的物料
     
-    // 原生选择器
+    // ⚡ 数据加载状态标记（性能优化）
+    dataLoadStatus: {
+      batchesLoaded: false,
+      materialsLoaded: false
+    },
+    
+    // 原生选择器（已废弃，保留兼容性）
     selectedMaterialIndex: -1,
     selectedMaterial: null as any,
     medicationQuantity: '',
     medicationDosage: '',
+    
+    // ✅ 首次创建治疗记录时的用药列表（支持多选联合用药）
+    initialMedications: [] as any[],
+    currentMedicationForm: {
+      materialIndex: -1,
+      materialId: '',
+      materialName: '',
+      materialCode: '',
+      category: '',
+      unit: '',
+      currentStock: 0,
+      specification: '',
+      quantity: '',
+      dosage: ''
+    },
     
     // 页面状态
     loading: false,
@@ -126,9 +152,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       category: '',
       unit: '',
       currentStock: 0,
+      specification: '',
       quantity: '',
       dosage: ''
     },
+    
+    // ✅ 已选择的药品列表（支持联合用药）
+    selectedMedications: [] as any[],
     
     // ✅ 调整治疗方案对话框
     showAdjustPlanFormDialog: false,
@@ -138,7 +168,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
-  onLoad(options: any) {
+  async onLoad(options: any) {
     const { sourceType, sourceId, diagnosisId, batchId, batchNumber, treatmentId, id, abnormalRecordId, diagnosis, mode } = options || {}
     
     // ✅ 判断是否为查看模式
@@ -158,6 +188,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       this.loadTreatmentDetail(treatmentId || id)
       return
     }
+    
+    // ⚡ 性能优化：首次加载基础数据（批次和物料）
+    await Promise.all([
+      this.loadActiveBatches(),
+      this.loadAvailableMaterials()
+    ])
     
     // 如果来自异常记录，设置相关数据（优先使用批次编号）
     if (abnormalRecordId) {
@@ -189,9 +225,34 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
-  onShow: async function() {
-    await this.loadActiveBatches()
-    await this.loadAvailableMaterials()
+  /**
+   * ⚡ 性能优化：智能数据刷新
+   * 只在以下情况才重新加载数据：
+   * 1. 数据未加载过（首次进入）
+   * 2. 其他页面设置了刷新标记
+   */
+  async onShow() {
+    const { batchesLoaded, materialsLoaded } = this.data.dataLoadStatus
+    
+    // 检查是否需要刷新批次数据
+    const needRefreshBatches = wx.getStorageSync('treatment_batches_changed')
+    if (!batchesLoaded || needRefreshBatches) {
+      await this.loadActiveBatches()
+      if (needRefreshBatches) {
+        wx.removeStorageSync('treatment_batches_changed')
+      }
+    } else {
+    }
+    
+    // 检查是否需要刷新物料数据
+    const needRefreshMaterials = wx.getStorageSync('treatment_materials_changed')
+    if (!materialsLoaded || needRefreshMaterials) {
+      await this.loadAvailableMaterials()
+      if (needRefreshMaterials) {
+        wx.removeStorageSync('treatment_materials_changed')
+      }
+    } else {
+    }
   },
 
   // 初始化表单
@@ -222,7 +283,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       if (result.result && result.result.success) {
         const record = result.result.data
         
-        console.log('📝 加载治疗记录:', record)
         
         // 填充表单数据
         this.setData({
@@ -291,6 +351,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       if (result.result && result.result.success) {
         const record = result.result.data
         
+        // ✅ 保存受影响的数量（用于健康率计算）
+        const affectedCount = record.affectedCount || 1
+        
         // 优先使用修正后的诊断，否则使用AI诊断
         const finalDiagnosis = record.isCorrected && record.correctedDiagnosis 
           ? record.correctedDiagnosis 
@@ -300,6 +363,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         if (finalDiagnosis) {
           this.setData({
             'formData.diagnosis': finalDiagnosis,
+            'formData.affectedCount': affectedCount,  // ✅ 保存受影响数量
             isDiagnosisCorrected: !!(record.isCorrected && record.correctedDiagnosis)
           })
         }
@@ -312,7 +376,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             treatmentPlanSource: 'veterinarian'
           })
         } else {
-          // 没有修正：尝试填充AI建议的治疗方案
+          // 没有修正：预填充AI建议的措施和用药
           let aiRecommendation = record.aiRecommendation
           if (typeof aiRecommendation === 'string') {
             try {
@@ -322,10 +386,18 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             }
           }
           
+          // ✅ 预填充立即处置措施到治疗方案（用户可修改）
           if (aiRecommendation && aiRecommendation.immediate && aiRecommendation.immediate.length > 0) {
             this.setData({
               'treatmentPlan.primary': aiRecommendation.immediate.join('；'),
               treatmentPlanSource: 'ai'
+            })
+          }
+          
+          // ✅ 提取 AI 建议的用药信息（仅显示）
+          if (aiRecommendation && aiRecommendation.medication && aiRecommendation.medication.length > 0) {
+            this.setData({
+              aiMedicationSuggestions: aiRecommendation.medication
             })
           }
         }
@@ -354,7 +426,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       if (result.result && result.result.success) {
         this.setData({
-          activeBatches: result.result.data.batches || []
+          activeBatches: result.result.data.batches || [],
+          'dataLoadStatus.batchesLoaded': true // ⚡ 标记已加载
         })
       }
     } catch (error) {
@@ -365,7 +438,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 加载可用的药品和营养品
   loadAvailableMaterials: async function() {
     try {
-      console.log('🔄 开始加载可用物料...')
       
       // 并行获取药品和营养品
       const [medicineResult, nutritionResult] = await Promise.all([
@@ -389,35 +461,27 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       ])
       
-      console.log('📦 药品查询结果:', medicineResult.result)
-      console.log('📦 营养品查询结果:', nutritionResult.result)
       
       const materials: any[] = []
       
       if (medicineResult.result && medicineResult.result.success) {
         const medicines = medicineResult.result.data.materials || []
-        console.log('✅ 药品数量:', medicines.length)
         materials.push(...medicines.map((m: any) => ({
           ...m,
           categoryLabel: '药品'
         })))
       } else {
-        console.log('❌ 药品查询失败或无数据')
       }
       
       if (nutritionResult.result && nutritionResult.result.success) {
         const nutrition = nutritionResult.result.data.materials || []
-        console.log('✅ 营养品数量:', nutrition.length)
         materials.push(...nutrition.map((m: any) => ({
           ...m,
           categoryLabel: '营养品'
         })))
       } else {
-        console.log('❌ 营养品查询失败或无数据')
       }
       
-      console.log('📊 合计物料数量:', materials.length)
-      console.log('📊 物料列表:', materials)
       
       // 根据当前治疗类型过滤物料
       let filteredMaterials = []
@@ -438,11 +502,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         filteredMaterials = materials
       }
       
-      console.log(`📊 根据治疗类型 ${treatmentType} 过滤后物料数量:`, filteredMaterials.length)
       
       this.setData({
         availableMaterials: materials,
-        filteredMaterials
+        filteredMaterials,
+        'dataLoadStatus.materialsLoaded': true // ⚡ 标记已加载
       })
     } catch (error) {
       console.error('❌ 加载药品营养品失败:', error)
@@ -498,7 +562,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 显示给药途径选择器
   showRouteSelector() {
-    const itemList = this.data.routeOptions.map(item => item.label)
+    const itemList = this.data.routeOptions.map((item: { label: string; value: string }) => item.label)
     
     wx.showActionSheet({
       itemList,
@@ -521,7 +585,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       return
     }
     
-    const itemList = this.data.activeBatches.map(batch => batch.displayName)
+    const itemList = this.data.activeBatches.map((batch: any) => batch.displayName)
     
     wx.showActionSheet({
       itemList,
@@ -565,7 +629,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       medicationDosage: ''
     })
     
-    console.log(`✅ 治疗类型切换为: ${type}, 可选物料数量: ${filteredMaterials.length}`)
     
     this.validateField('treatmentType', type)
   },
@@ -579,7 +642,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 如果是治疗开始日期变化，更新药物开始日期
     if (field === 'treatmentDate') {
-      const updatedMedications = this.data.medications.map(med => ({
+      const updatedMedications = this.data.medications.map((med: Medication) => ({
         ...med,
         startDate: e.detail.value,
         endDate: this.calculateEndDate(e.detail.value, 7)
@@ -595,7 +658,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const index = parseInt(e.detail.value)
     const material = this.data.filteredMaterials[index]
     
-    console.log('✅ 选择物料:', material)
     
     this.setData({
       selectedMaterialIndex: index,
@@ -630,6 +692,84 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       medicationDosage: e.detail.value
     })
   },
+
+  // ========== ✅ 初始用药管理（多选联合用药） ==========
+  
+  /**
+   * 初始用药 - 药品选择变化
+   */
+  onInitialMedicationChange: function(e: any) {
+    const index = e.detail.value
+    const { filteredMaterials, initialMedications } = this.data
+    
+    
+    if (index >= 0 && index < filteredMaterials.length) {
+      const material = filteredMaterials[index]
+      
+      const materialId = material._id || material.id
+      
+      // 检查是否已经添加过该药品
+      const existingIndex = initialMedications.findIndex(
+        (med: any) => med.materialId === materialId
+      )
+      
+      if (existingIndex >= 0) {
+        return
+      }
+      
+      // 直接添加到列表
+      const newMedication = {
+        materialId: materialId,
+        materialName: material.name,
+        materialCode: material.materialCode || material.code || '',
+        category: material.category,
+        unit: material.unit || '件',
+        currentStock: material.currentStock || 0,
+        specification: material.specification || '',
+        quantity: '',
+        dosage: ''
+      }
+      
+      initialMedications.push(newMedication)
+      
+      
+      this.setData({
+        initialMedications
+      })
+    }
+  },
+  
+  /**
+   * 从初始用药列表中删除药品
+   */
+  removeInitialMedication: function(e: any) {
+    const index = e.currentTarget.dataset.index
+    const { initialMedications } = this.data
+    
+    
+    initialMedications.splice(index, 1)
+    
+    this.setData({
+      initialMedications
+    })
+  },
+  
+  /**
+   * 更新初始用药列表中药品的数量或用法
+   */
+  onInitialMedicationInput: function(e: any) {
+    const { index, field } = e.currentTarget.dataset
+    const value = e.detail.value
+    const { initialMedications } = this.data
+    
+    
+    initialMedications[index][field] = value
+    
+    this.setData({
+      initialMedications
+    })
+  },
+  
 
   // 编辑药物
   editMedication(e: any) {
@@ -760,6 +900,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 提交表单
   submitForm: async function() {
+    // ✅ 防止重复提交
+    if (this.data.submitting) {
+      return
+    }
+    
     if (!this.validateForm()) {
       wx.showToast({
         title: '请检查表单信息',
@@ -768,50 +913,70 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       return
     }
     
-    // ✅ 在提交前，先将当前选中的物料添加到 medications 数组
-    const { selectedMaterial, medicationQuantity, medicationDosage } = this.data
-    if (selectedMaterial && medicationQuantity) {
-      const quantity = parseFloat(medicationQuantity)
+    // ✅ 使用新的多选用药列表
+    const { initialMedications } = this.data
+    let finalMedications: any[] = []
+    
+    
+    // 验证并转换initialMedications
+    if (initialMedications.length > 0) {
       
-      // 验证库存
-      if (quantity > selectedMaterial.currentStock) {
-        wx.showToast({
-          title: `库存不足，当前库存：${selectedMaterial.currentStock}`,
-          icon: 'none',
-          duration: 2000
-        })
-        return
+      for (let i = 0; i < initialMedications.length; i++) {
+        const med = initialMedications[i]
+        
+        // 验证数量
+        if (!med.quantity || parseFloat(med.quantity) <= 0) {
+          wx.showToast({
+            title: `请输入${med.materialName}的数量`,
+            icon: 'none'
+          })
+          return
+        }
+        
+        const quantity = parseFloat(med.quantity)
+        
+        // 验证库存
+        if (quantity > med.currentStock) {
+          wx.showToast({
+            title: `${med.materialName}库存不足，当前库存：${med.currentStock}${med.unit}`,
+            icon: 'none',
+            duration: 2000
+          })
+          return
+        }
+        
+        // 添加到提交列表
+        const medication = {
+          materialId: med.materialId,
+          name: med.materialName,
+          specification: med.specification || '',
+          quantity: quantity,
+          unit: med.unit || '件',
+          dosage: med.dosage || '',
+          startDate: this.data.formData.treatmentDate,
+          category: med.category
+        }
+        
+        finalMedications.push(medication)
       }
-      
-      // 添加到medications数组
-      const newMedication = {
-        materialId: selectedMaterial._id,
-        name: selectedMaterial.name,
-        specification: selectedMaterial.specification || '',
-        quantity: quantity,
-        unit: selectedMaterial.unit || '件',
-        dosage: medicationDosage || '',
-        startDate: this.data.formData.treatmentDate,
-        category: selectedMaterial.category
-      }
-      
-      const medications = [...this.data.medications, newMedication]
-      this.setData({ medications })
-      
-      console.log('✅ 添加药物到medications:', newMedication)
     }
     
-    this.setData({ submitting: true })
+    
+    // ✅ 同步更新 medications 到 data（仅用于页面显示）
+    this.setData({ 
+      medications: finalMedications,
+      submitting: true 
+    })
     
     try {
-      const { isDraft, isEditMode, treatmentId, abnormalRecordId } = this.data
+      const { isDraft, isEditMode, treatmentId } = this.data
       
       // 如果是草稿状态（从异常记录创建的治疗记录），需要调用 submit_treatment_plan
       if (isDraft && isEditMode && treatmentId) {
         await this.submitTreatmentPlan()
       } else {
-        // 否则按照原有逻辑创建新的治疗记录
-        await this.createTreatmentRecord()
+        // ✅ 传递 finalMedications 给创建函数
+        await this.createTreatmentRecord(finalMedications)
       }
     } catch (error: any) {
       console.error('提交失败:', error)
@@ -826,7 +991,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 提交治疗计划（草稿变正式）
   submitTreatmentPlan: async function() {
-    const { treatmentId, abnormalRecordId, formData, treatmentPlan, medications } = this.data
+    const { treatmentId, abnormalRecordId, formData } = this.data
     
     // 1. 先更新治疗记录的详细信息
     await this.updateTreatmentRecord()
@@ -916,8 +1081,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 创建新的治疗记录
-  createTreatmentRecord: async function() {
-    const { formData, treatmentPlan, medications, abnormalRecordId } = this.data
+  createTreatmentRecord: async function(finalMedications?: any[]) {
+    const { formData, treatmentPlan, abnormalRecordId } = this.data
+    // ✅ 优先使用传入的 medications，否则使用 this.data.medications
+    const medications = finalMedications || this.data.medications
     
     // 构建治疗记录数据
     const treatmentRecord = {
@@ -961,9 +1128,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       : 'create_treatment_record'
     
     // 调用云函数创建治疗记录
-    console.log('📦 准备提交治疗记录')
-    console.log('📋 medications数组:', JSON.stringify(medications))
-    console.log('📋 treatmentPlan:', JSON.stringify(treatmentPlan))
     
     const result = await wx.cloud.callFunction({
       name: 'health-management',
@@ -973,19 +1137,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         batchId: formData.batchId,
         diagnosis: formData.diagnosis,
         treatmentType: formData.treatmentType,
+        affectedCount: formData.affectedCount || 1,  // ✅ 传递受影响的动物数量
         treatmentPlan,
         medications,
-        notes: formData.notes
+        hasMedications: medications.length > 0,  // ✅ 使用 medications 长度判断
+        notes: formData.notes,
+        isDirectSubmit: true  // ✅ 添加缺失的参数
       } : {
         action,
         ...treatmentRecord,
         sourceType: this.data.sourceType,
         sourceId: this.data.sourceId,
-        diagnosisId: this.data.diagnosisId
+        diagnosisId: this.data.diagnosisId,
+        isDirectSubmit: true  // ✅ 添加缺失的参数
       }
     })
     
-    console.log('📦 云函数返回结果:', result.result)
     
     if (result.result && result.result.success) {
       wx.showToast({
@@ -1042,6 +1209,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
               treatmentType: 'medication',
               diagnosis: '',
               diagnosisConfidence: 0,
+              affectedCount: 0,  // ✅ 重置受影响数量
               notes: ''
             },
             treatmentPlan: {
@@ -1164,8 +1332,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       if (result.result && result.result.success) {
         const { treatment, progress } = result.result.data
         
-        console.log('📝 治疗详情:', treatment)
-        console.log('📊 治疗进展:', progress)
         
         // 填充治疗基本信息（只读）
         this.setData({
@@ -1234,9 +1400,27 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
    */
   onProgressFormInput(e: any) {
     const { field } = e.currentTarget.dataset
+    const value = e.detail.value
     this.setData({
-      [`progressForm.${field}`]: e.detail.value
+      [`progressForm.${field}`]: value
     })
+  },
+  
+  /**
+   * ✅ 一键填入全部剩余数量
+   */
+  fillAllCount() {
+    const { remainingCount } = this.data.treatmentProgress
+    this.setData({
+      'progressForm.count': String(remainingCount)
+    })
+  },
+  
+  /**
+   * 阻止遮罩层滑动穿透
+   */
+  preventTouchMove() {
+    return false
   },
 
   /**
@@ -1264,15 +1448,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         return
       }
       
-      // 死亡必须填写原因
-      if (progressDialogType === 'died' && !progressForm.deathCause) {
-        wx.showToast({
-          title: '请填写死亡原因',
-          icon: 'none'
-        })
-        return
-      }
-      
       wx.showLoading({ title: '提交中...' })
       
       const result = await wx.cloud.callFunction({
@@ -1290,13 +1465,31 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       wx.hideLoading()
       
       if (result.result && result.result.success) {
+        const { remainingCount, newStatus } = result.result.data || {}
+        
+        // ✅ 根据剩余数量显示不同的提示
+        let successMessage = result.result.message || '记录成功'
+        if (remainingCount > 0) {
+          successMessage += `，剩余${remainingCount}只继续治疗`
+        } else if (newStatus === 'cured') {
+          successMessage = '🎉 全部治愈，治疗完成！'
+        } else if (newStatus === 'died') {
+          successMessage = '治疗记录已完成（全部死亡）'
+        } else {
+          successMessage = '治疗记录已完成'
+        }
+        
         wx.showToast({
-          title: result.result.message || '记录成功',
-          icon: 'success'
+          title: successMessage,
+          icon: remainingCount === 0 && newStatus === 'cured' ? 'success' : 'none',
+          duration: 2000
         })
         
         // 关闭对话框
         this.closeProgressDialog()
+        
+        // ✅ 设置刷新标记，返回健康管理中心时会自动刷新
+        wx.setStorageSync('health_page_need_refresh', true)
         
         // 重新加载治疗详情
         setTimeout(() => {
@@ -1320,10 +1513,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   /**
    * 显示继续治疗选项
    */
-  showContinueTreatmentOptions: function() {
-    console.log('🔄 显示继续治疗选项')
+  showContinueTreatmentOptions: async function() {
+    
+    // 如果还没有加载物料，先加载
+    if (this.data.availableMaterials.length === 0) {
+      await this.loadAvailableMaterials()
+    }
+    
+    // 根据治疗类型过滤物料
+    const { formData, availableMaterials } = this.data
+    const filteredMaterials = formData.treatmentType === 'isolation'
+      ? availableMaterials.filter((m: any) => m.category === '营养品')
+      : availableMaterials
+    
     this.setData({
-      showContinueTreatmentDialog: true
+      showContinueTreatmentDialog: true,
+      filteredMaterials
     })
   },
   
@@ -1332,8 +1537,178 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
    */
   closeContinueTreatmentDialog: function() {
     this.setData({
-      showContinueTreatmentDialog: false
+      showContinueTreatmentDialog: false,
+      // 重置表单
+      'noteForm.content': '',
+      selectedMedications: [],
+      'addMedicationForm.materialId': '',
+      'addMedicationForm.materialName': '',
+      'addMedicationForm.quantity': '',
+      'addMedicationForm.dosage': '',
+      'addMedicationForm.materialIndex': -1,
+      'addMedicationForm.currentStock': 0,
+      'addMedicationForm.unit': '',
+      'addMedicationForm.materialCode': '',
+      'addMedicationForm.category': '',
+      'addMedicationForm.specification': ''
     })
+  },
+  
+  /**
+   * 提交一体化表单
+   */
+  submitContinueTreatment: async function() {
+    try {
+      const { noteForm, selectedMedications, treatmentId } = this.data
+      
+      // 检查是否至少填写了一项
+      const hasNote = noteForm.content && noteForm.content.trim()
+      const hasMedications = selectedMedications.length > 0
+      
+      if (!hasNote && !hasMedications) {
+        wx.showToast({
+          title: '请至少填写一项内容',
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 验证已选择的药品
+      if (hasMedications) {
+        for (let i = 0; i < selectedMedications.length; i++) {
+          const med = selectedMedications[i]
+          if (!med.quantity || parseFloat(med.quantity) <= 0) {
+            wx.showToast({
+              title: `请输入${med.materialName}的数量`,
+              icon: 'none'
+            })
+            return
+          }
+          
+          const quantity = parseFloat(med.quantity)
+          if (quantity > med.currentStock) {
+            wx.showToast({
+              title: `${med.materialName}库存不足`,
+              icon: 'none',
+              duration: 2000
+            })
+            return
+          }
+        }
+      }
+      
+      wx.showLoading({ title: '提交中...' })
+      
+      // 依次处理每项内容
+      const results: any[] = []
+      
+      // 1. 提交治疗笔记
+      if (hasNote) {
+        const noteResult = await wx.cloud.callFunction({
+          name: 'health-management',
+          data: {
+            action: 'add_treatment_note',
+            treatmentId: treatmentId,
+            note: {
+              content: noteForm.content,
+              recordDate: new Date().toISOString().split('T')[0]
+            }
+          }
+        })
+        results.push({ type: '治疗笔记', success: noteResult.result?.success })
+      }
+      
+      // 2. 批量追加用药
+      if (hasMedications) {
+        
+        for (let i = 0; i < selectedMedications.length; i++) {
+          const med = selectedMedications[i]
+          const quantity = parseFloat(med.quantity)
+          
+          const medResult = await wx.cloud.callFunction({
+            name: 'health-management',
+            data: {
+              action: 'add_treatment_medication',
+              treatmentId: treatmentId,
+              medication: {
+                materialId: med.materialId,
+                name: med.materialName,
+                materialCode: med.materialCode,
+                category: med.category,
+                unit: med.unit,
+                quantity: quantity,
+                dosage: med.dosage || ''
+              }
+            }
+          })
+          
+          
+          if (!medResult.result?.success) {
+            console.error(`❌ 追加用药失败 [${i + 1}]:`, medResult.result?.message || medResult.result?.error)
+          }
+          
+          results.push({ 
+            type: `追加用药-${med.materialName}`, 
+            success: medResult.result?.success,
+            message: medResult.result?.message || medResult.result?.error
+          })
+        }
+      }
+      
+      wx.hideLoading()
+      
+      // 检查结果
+      const allSuccess = results.every(r => r.success)
+      const successCount = results.filter(r => r.success).length
+      const failedItems = results.filter(r => !r.success)
+      
+      
+      if (allSuccess) {
+        wx.showToast({
+          title: `成功提交${successCount}项`,
+          icon: 'success'
+        })
+        
+        this.closeContinueTreatmentDialog()
+        
+        // 重新加载治疗详情
+        setTimeout(() => {
+          this.loadTreatmentDetail(treatmentId)
+        }, 1000)
+      } else if (successCount > 0) {
+        // 部分成功
+        const failedNames = failedItems.map(item => item.type).join('、')
+        wx.showModal({
+          title: '部分提交成功',
+          content: `${successCount}项成功，${failedItems.length}项失败（${failedNames}）\n\n失败原因：${failedItems[0].message || '未知错误'}`,
+          showCancel: false,
+          confirmText: '知道了',
+          success: () => {
+            if (successCount > 0) {
+              this.closeContinueTreatmentDialog()
+              this.loadTreatmentDetail(treatmentId)
+            }
+          }
+        })
+      } else {
+        // 全部失败
+        const failedNames = failedItems.map(item => item.type).join('、')
+        wx.showModal({
+          title: '提交失败',
+          content: `${failedNames}提交失败\n\n失败原因：${failedItems[0].message || '未知错误'}`,
+          showCancel: true,
+          cancelText: '关闭',
+          confirmText: '重试'
+        })
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('❌ 提交失败:', error)
+      wx.showToast({
+        title: error.message || '提交失败',
+        icon: 'none'
+      })
+    }
   },
   
   // ========== ✅ 治疗笔记功能 ==========
@@ -1342,7 +1717,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
    * 显示添加笔记对话框
    */
   showAddNoteDialog: function() {
-    console.log('📝 显示添加笔记对话框')
     this.setData({
       showContinueTreatmentDialog: false,
       showNoteDialog: true,
@@ -1434,7 +1808,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
    * 显示追加用药对话框
    */
   showAddMedicationDialog: async function() {
-    console.log('💊 显示追加用药对话框')
     
     // 如果还没有加载物料，先加载
     if (this.data.availableMaterials.length === 0) {
@@ -1486,26 +1859,139 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
   
   /**
-   * 追加用药 - 药品选择变化
+   * 追加用药 - 药品选择变化（✅ 与首次用药逻辑保持一致）
    */
   onAddMedicationMaterialChange: function(e: any) {
     const index = e.detail.value
-    const { filteredMaterials } = this.data
+    const { filteredMaterials, selectedMedications } = this.data
+    
     
     if (index >= 0 && index < filteredMaterials.length) {
       const material = filteredMaterials[index]
-      console.log('✅ 选择药品:', material)
+      
+      const materialId = material._id || material.id
+      
+      // ✅ 检查是否已经添加过该药品
+      const existingIndex = selectedMedications.findIndex(
+        (med: any) => med.materialId === materialId
+      )
+      
+      if (existingIndex >= 0) {
+        return
+      }
+      
+      // ✅ 直接添加到列表（与首次用药逻辑一致）
+      const newMedication = {
+        materialId: materialId,
+        materialName: material.name,
+        materialCode: material.materialCode || material.code || '',
+        category: material.category,
+        unit: material.unit || '件',
+        currentStock: material.currentStock || 0,
+        specification: material.specification || '',
+        quantity: '',
+        dosage: ''
+      }
+      
+      selectedMedications.push(newMedication)
+      
       
       this.setData({
-        'addMedicationForm.materialIndex': index,
-        'addMedicationForm.materialId': material._id,
-        'addMedicationForm.materialName': material.name,
-        'addMedicationForm.materialCode': material.materialCode,
-        'addMedicationForm.category': material.category,
-        'addMedicationForm.unit': material.unit,
-        'addMedicationForm.currentStock': material.currentStock
+        selectedMedications
       })
     }
+  },
+  
+  /**
+   * 将选中的药品添加到列表
+   */
+  addMedicationToList: function() {
+    const { addMedicationForm, selectedMedications } = this.data
+    
+    // 检查是否已经添加过该药品
+    const existingIndex = selectedMedications.findIndex(
+      (med: any) => med.materialId === addMedicationForm.materialId
+    )
+    
+    if (existingIndex >= 0) {
+      wx.showToast({
+        title: '该药品已在列表中',
+        icon: 'none'
+      })
+      return
+    }
+    
+    // 添加到列表
+    const newMedication = {
+      materialId: addMedicationForm.materialId,
+      materialName: addMedicationForm.materialName,
+      materialCode: addMedicationForm.materialCode,
+      category: addMedicationForm.category,
+      unit: addMedicationForm.unit,
+      currentStock: addMedicationForm.currentStock,
+      specification: addMedicationForm.specification,
+      quantity: '',
+      dosage: ''
+    }
+    
+    selectedMedications.push(newMedication)
+    
+    
+    this.setData({
+      selectedMedications,
+      // 重置选择器
+      'addMedicationForm.materialIndex': -1,
+      'addMedicationForm.materialId': '',
+      'addMedicationForm.materialName': '',
+      'addMedicationForm.materialCode': '',
+      'addMedicationForm.category': '',
+      'addMedicationForm.unit': '',
+      'addMedicationForm.currentStock': 0,
+      'addMedicationForm.specification': ''
+    })
+    
+    wx.showToast({
+      title: '已添加',
+      icon: 'success',
+      duration: 1000
+    })
+  },
+  
+  /**
+   * 从列表中删除药品
+   */
+  removeMedication: function(e: any) {
+    const index = e.currentTarget.dataset.index
+    const { selectedMedications } = this.data
+    
+    
+    selectedMedications.splice(index, 1)
+    
+    this.setData({
+      selectedMedications
+    })
+    
+    wx.showToast({
+      title: '已删除',
+      icon: 'success',
+      duration: 1000
+    })
+  },
+  
+  /**
+   * 更新已选药品的数量或用法
+   */
+  onSelectedMedicationInput: function(e: any) {
+    const { index, field } = e.currentTarget.dataset
+    const value = e.detail.value
+    const { selectedMedications } = this.data
+    
+    
+    selectedMedications[index][field] = value
+    
+    this.setData({
+      selectedMedications
+    })
   },
   
   /**
@@ -1604,7 +2090,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
    * 显示调整方案对话框
    */
   showAdjustPlanDialog: function() {
-    console.log('📋 显示调整方案对话框')
     const { treatmentPlan } = this.data
     
     this.setData({
@@ -1705,13 +2190,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       const healthPage = pages.find((page: any) => page.route === 'pages/health/health')
       
       if (healthPage && typeof healthPage.loadHealthData === 'function') {
-        console.log('✅ 通知健康页面刷新数据')
         // 延迟刷新，确保数据已保存
         setTimeout(() => {
           healthPage.loadHealthData()
         }, 500)
       } else {
-        console.log('⚠️ 未找到健康页面实例，使用存储标记')
         // 如果页面不在栈中，使用存储标记
         wx.setStorageSync('health_page_need_refresh', true)
       }

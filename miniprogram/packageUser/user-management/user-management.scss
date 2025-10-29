@@ -25,6 +25,7 @@ $spacing-xl: 40rpx;
   background: $bg-color-page;
   min-height: 100vh;
   overflow-y: auto;
+  padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
 }
 
 .content-container {

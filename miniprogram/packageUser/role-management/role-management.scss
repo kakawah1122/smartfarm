@@ -32,7 +32,7 @@
 
 /* 角色概览 */
 .role-overview {
-  margin-top: 88rpx;
+  margin-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
   padding: 32rpx;
 
   .overview-title {

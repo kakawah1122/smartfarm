@@ -27,7 +27,8 @@
   },
   "include": [
     "./miniprogram/pages/**/*.ts",
-    "./miniprogram/components/**/*.ts", 
+    "./miniprogram/components/**/*.ts",
+    "./miniprogram/package*/**/*.ts",
     "./typings/**/*.ts"
   ],
   "exclude": [

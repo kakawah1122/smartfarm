@@ -6,7 +6,7 @@
 }
 
 .profile-content {
-  padding-top: calc(44px + 44px + 20rpx); /* 状态栏 + 导航栏 + 原有间距 */
+  padding-top: calc(var(--navbar-height, 132rpx) + 40rpx); /* 导航栏高度 + 安全间距 */
   height: 100vh;
 }
 

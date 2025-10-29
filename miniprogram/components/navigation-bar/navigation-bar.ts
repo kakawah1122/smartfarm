@@ -18,7 +18,8 @@ Component({
   data: {
     statusBarHeight: 44,
     navBarHeight: 44,
-    capsuleWidth: 87
+    capsuleWidth: 87,
+    capsuleRight: 0  // 胶囊按钮右侧总宽度（包含间距）
   },
 
   attached() {
@@ -39,17 +40,20 @@ Component({
         // 计算导航栏高度 = 胶囊按钮底部 - 状态栏高度
         const navBarHeight = (menuButtonInfo.top - statusBarHeight) * 2 + menuButtonInfo.height
         
-        // 胶囊按钮宽度（用于右侧预留空间）
+        // 胶囊按钮宽度
         const capsuleWidth = menuButtonInfo.width
+        
+        // 计算胶囊按钮右侧总宽度 = 屏幕宽度 - 胶囊按钮左边距
+        const capsuleRight = windowInfo.windowWidth - menuButtonInfo.left
         
         this.setData({
           statusBarHeight,
           navBarHeight,
-          capsuleWidth
+          capsuleWidth,
+          capsuleRight
         })
       } catch (error) {
         // 获取失败，使用默认值
-        console.warn('获取导航栏信息失败，使用默认值')
       }
     },
 

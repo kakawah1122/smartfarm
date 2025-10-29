@@ -6,7 +6,7 @@
 }
 
 .content {
-  padding-top: var(--status-bar-height);
+  padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
   padding-bottom: calc(32rpx + var(--safe-area-inset-bottom, 0));
 }
 

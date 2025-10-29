@@ -24,13 +24,10 @@ exports.main = async (event, context) => {
   try {
     // ✨ 模式1：处理指定任务
     if (diagnosisId) {
-      console.log(`====== 模式1: 处理指定任务 ======`)
-      console.log(`诊断ID: ${diagnosisId}`)
       return await processTask(diagnosisId)
     }
     
     // ✨ 模式2：自动扫描处理所有待处理任务（定时触发器）
-    console.log(`====== 模式2: 自动扫描待处理任务 ======`)
     const tasksResult = await db.collection('health_ai_diagnosis')
       .where({
         status: 'processing',
@@ -41,7 +38,6 @@ exports.main = async (event, context) => {
       .get()
     
     const tasks = tasksResult.data || []
-    console.log(`找到 ${tasks.length} 个待处理任务`)
     
     if (tasks.length === 0) {
       return {
@@ -57,7 +53,6 @@ exports.main = async (event, context) => {
     )
     
     const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length
-    console.log(`处理完成: 成功 ${successCount}/${tasks.length}`)
     
     return {
       success: true,
@@ -143,11 +138,6 @@ function selectOptimalTaskType(task) {
   const complexity = evaluateDiagnosisComplexity(task)
   const urgency = evaluateUrgency(task)
   
-  console.log(`📊 诊断特征分析:`)
-  console.log(`  - 复杂度: ${complexity}`)
-  console.log(`  - 紧急度: ${urgency}`)
-  console.log(`  - 图片数: ${task.images?.length || 0}`)
-  console.log(`  - 受影响数量: ${task.affectedCount || 1}`)
   
   // 1. 有图片 → 优先使用视觉模型
   if (hasImages) {
@@ -173,7 +163,6 @@ function selectOptimalTaskType(task) {
  */
 async function processTask(diagnosisId) {
   try {
-    console.log(`\n----- 处理任务: ${diagnosisId} -----`)
     
     // 1. 从数据库获取任务
     const taskResult = await db.collection('health_ai_diagnosis')
@@ -185,11 +174,9 @@ async function processTask(diagnosisId) {
     }
     
     const task = taskResult.data[0]
-    console.log(`任务状态: ${task.status}`)
     
     // 2. 检查状态
     if (task.status !== 'processing') {
-      console.log(`任务状态不是processing，跳过`)
       return {
         success: false,
         error: `任务状态不正确: ${task.status}`
@@ -199,9 +186,6 @@ async function processTask(diagnosisId) {
     // 3. ✨ 智能选择任务类型（基于复杂度、图片、紧急度）
     const optimalTaskType = selectOptimalTaskType(task)
     
-    console.log(`====== 准备调用 ai-multi-model ======`)
-    console.log(`智能路由结果: ${optimalTaskType}`)
-    console.log(`图片数量: ${task.images ? task.images.length : 0}`)
     
     // 调用AI多模型服务进行诊断
     const aiResult = await cloud.callFunction({
@@ -216,9 +200,6 @@ async function processTask(diagnosisId) {
       timeout: 60000  // ✅ 设置60秒超时（ai-multi-model需要调用通义千问API，15-25秒）
     })
     
-    console.log(`====== ai-multi-model 调用结果 ======`)
-    console.log(`调用成功: ${!!aiResult}`)
-    console.log(`返回结果: ${JSON.stringify(aiResult.result).substring(0, 200)}`)
     
     if (!aiResult.result || !aiResult.result.success) {
       const errorMsg = aiResult.result?.error || aiResult.result?.fallback || 'AI诊断调用失败'
@@ -241,12 +222,10 @@ async function processTask(diagnosisId) {
       const jsonMatch = diagnosisContent.match(/```json\s*([\s\S]*?)\s*```/)
       if (jsonMatch) {
         jsonContent = jsonMatch[1].trim()
-        console.log('检测到markdown代码块，已提取JSON内容')
       }
       
       // 解析JSON
       diagnosisData = JSON.parse(jsonContent)
-      console.log('JSON解析成功')
     } catch (parseError) {
       console.error('JSON解析失败:', parseError.message)
       // 如果无法解析JSON，尝试提取文本内容
@@ -276,7 +255,6 @@ async function processTask(diagnosisId) {
         }
       })
     
-    console.log(`诊断任务处理成功: ${diagnosisId}`)
     
     return {
       success: true,
@@ -311,7 +289,6 @@ async function processTask(diagnosisId) {
           }
         })
       
-      console.log(`已更新任务状态为 failed: ${diagnosisId}`)
     } catch (updateError) {
       console.error('更新失败状态异常:', updateError)
     }

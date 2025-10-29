@@ -685,7 +685,7 @@ Page({
       // 3. 尝试直接调用待办页面的同步方法（如果存在）
       try {
         const pages = getCurrentPages()
-        const breedingTodoPage = pages.find((page: any) => page.route === 'pages/breeding-todo/breeding-todo')
+        const breedingTodoPage = pages.find((page: any) => page.route === 'packageHealth/breeding-todo/breeding-todo')
         if (breedingTodoPage && typeof (breedingTodoPage as any).syncTaskStatusFromHomepage === 'function') {
           setTimeout(() => {
             (breedingTodoPage as any).syncTaskStatusFromHomepage(taskId, completed)

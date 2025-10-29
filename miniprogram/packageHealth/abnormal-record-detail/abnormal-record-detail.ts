@@ -80,7 +80,6 @@ Page({
 
       if (result.result && result.result.success) {
         const record = result.result.data
-        console.log('📄 加载异常记录详情:', record._id)
 
         // 预处理 aiRecommendation
         let aiRecommendation = record.aiRecommendation
@@ -104,7 +103,6 @@ Page({
               processedImages = tempUrlResult.fileList.map((item: any) => 
                 item.tempFileURL || item.fileID
               )
-              console.log('✅ 图片URL转换成功，共', processedImages.length, '张')
             }
           } catch (urlError) {
             console.error('图片URL转换失败:', urlError)

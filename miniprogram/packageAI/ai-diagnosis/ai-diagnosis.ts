@@ -106,6 +106,7 @@ const pageConfig = {
     // 页面状态
     loading: false,
     submitting: false,
+    isSaving: false,  // ✅ 防止重复保存
     
     // 来源记录ID（从健康记录页面跳转时传入）
     sourceRecordId: '',
@@ -387,9 +388,7 @@ const pageConfig = {
                 compressedHeight: 1024   // ✨ 限制最大高度1024px
               })
               finalPath = compressResult.tempFilePath
-              console.log('图片压缩成功')
             } catch (compressError) {
-              console.warn('图片压缩失败，使用原图:', compressError)
               // 压缩失败则使用原图
             }
             
@@ -488,8 +487,14 @@ const pageConfig = {
 
   // 开始AI诊断
   async startDiagnosis() {
+    // ✅ 统一的必填项验证，提供清晰的提示
     if (!this.data.selectedBatchId) {
-      wx.showToast({ title: '请先选择批次', icon: 'none' })
+      wx.showModal({
+        title: '请选择批次',
+        content: '请先选择要诊断的批次',
+        showCancel: false,
+        confirmText: '知道了'
+      })
       return
     }
     
@@ -497,25 +502,62 @@ const pageConfig = {
     
     // 根据诊断类型验证必填项
     if (diagnosisType === 'live_diagnosis') {
+      // 病鹅诊断验证
       const affectedCount = parseInt(this.data.affectedCount) || 0
-      if (affectedCount <= 0) {
-        wx.showToast({ title: '请输入受影响数量', icon: 'none' })
+      const symptomsText = this.data.symptoms.trim()
+      
+      if (affectedCount <= 0 && !symptomsText) {
+        wx.showModal({
+          title: '请完善必填信息',
+          content: '病鹅诊断需要填写：\n\n1. 受影响数量（必填）\n2. 症状描述（必填）\n\n请填写完整后再开始诊断',
+          showCancel: false,
+          confirmText: '知道了'
+        })
         return
       }
-      if (!this.data.symptoms || this.data.symptoms.trim() === '') {
-        wx.showToast({ title: '请输入症状描述', icon: 'none' })
+      
+      if (affectedCount <= 0) {
+        wx.showModal({
+          title: '请输入受影响数量',
+          content: '请输入有多少只鹅出现症状',
+          showCancel: false,
+          confirmText: '知道了'
+        })
+        return
+      }
+      
+      if (!symptomsText) {
+        wx.showModal({
+          title: '请输入症状描述',
+          content: '请详细描述鹅群症状，或点击下方常见症状标签快速填写',
+          showCancel: false,
+          confirmText: '知道了'
+        })
         return
       }
     } else {
+      // 死因剖析验证
       const deathCount = parseInt(this.data.deathCount) || 0
+      
       if (deathCount <= 0) {
-        wx.showToast({ title: '请输入死亡数量', icon: 'none' })
+        wx.showModal({
+          title: '请输入死亡数量',
+          content: '死因剖析需要填写死亡数量',
+          showCancel: false,
+          confirmText: '知道了'
+        })
         return
       }
     }
     
+    // 通用表单验证（兜底检查）
     if (!this.data.formValid) {
-      wx.showToast({ title: '请完善表单信息', icon: 'none' })
+      wx.showModal({
+        title: '请完善必填信息',
+        content: '请检查并填写所有必填项后再开始诊断',
+        showCancel: false,
+        confirmText: '知道了'
+      })
       return
     }
 
@@ -567,7 +609,6 @@ const pageConfig = {
 
       // ✅ 如果有图片，提示用户图片仅作参考
       if (this.data.images.length > 0) {
-        console.log(`提示：已上传${this.data.images.length}张图片，将基于文字描述进行AI诊断`)
       }
 
       // ✨ 改为异步：提交诊断任务
@@ -586,10 +627,8 @@ const pageConfig = {
           if (promptDataResult?.success) {
             batchPromptData = promptDataResult.data
           } else {
-            console.warn('获取批次提示词数据失败:', promptDataResult?.error || promptDataResult?.message)
           }
         } catch (promptError) {
-          console.warn('获取批次提示词数据异常:', promptError)
         }
       }
 
@@ -602,15 +641,12 @@ const pageConfig = {
         timeout: 10000  // ✅ 设置10秒超时（ai-diagnosis 应该<2秒就返回）
       })
 
-      console.log('====== ai-diagnosis 返回结果 ======')
-      console.log('完整返回:', JSON.stringify(rawResult))
 
       const result = normalizeCloudResult<{ diagnosisId: string; status: string }>(rawResult)
 
       if (result?.success && result.data) {
         const { diagnosisId, status } = result.data
         
-        console.log(`✅ 诊断任务已创建: ${diagnosisId}，状态: ${status}`)
         
         // ✨ 保存诊断ID并开始轮询（不显示轮询UI）
         this.setData({
@@ -686,17 +722,12 @@ const pageConfig = {
 
         if (task.status === 'completed') {
           // ✨ 诊断完成
-          console.log('====== 诊断任务完成 ======')
-          console.log('任务ID:', diagnosisId)
-          console.log('结果类型:', typeof task.result)
-          console.log('结果内容:', JSON.stringify(task.result).substring(0, 200))
           
           // ✅ 确保 result 是对象，不是字符串
           let diagnosisResult = task.result
           if (typeof task.result === 'string') {
             try {
               diagnosisResult = JSON.parse(task.result)
-              console.log('✅ JSON解析成功')
             } catch (e) {
               console.error('❌ JSON解析失败:', e)
               throw new Error('诊断结果格式错误')
@@ -841,11 +872,6 @@ const pageConfig = {
       // 获取诊断ID
       const diagnosisId = this.data.diagnosisId
       
-      console.log('======= 前端创建治疗记录参数 =======')
-      console.log('diagnosisId:', diagnosisId)
-      console.log('batchId:', this.data.selectedBatchId)
-      console.log('affectedCount:', affectedCount)
-      console.log('diagnosis:', diagnosis)
       
       // 验证必填参数
       if (!diagnosisId) {
@@ -978,8 +1004,16 @@ const pageConfig = {
   // 保存为记录
   async saveRecord() {
     if (!this.data.diagnosisResult) return
+    
+    // ✅ 防止重复提交
+    if (this.data.isSaving) {
+      return
+    }
 
     try {
+      // ✅ 设置保存状态，禁止重复点击
+      this.setData({ isSaving: true })
+      
       wx.showLoading({ title: '保存中...' })
       
       const diagnosis = this.data.diagnosisResult
@@ -1002,7 +1036,6 @@ const pageConfig = {
         images: this.data.images || []
       }
       
-      console.log('💾 保存异常记录:', recordData.diagnosis)
       
       // 创建异常记录
       const rawResult = await wx.cloud.callFunction({
@@ -1018,18 +1051,22 @@ const pageConfig = {
         wx.showToast({
           title: '异常记录已保存',
           icon: 'success',
-          duration: 2000
+          duration: 1500
         })
         
-        // 返回健康管理页面，用户可以从异常记录列表查看
+        // ✅ 保存成功后跳转到异常记录列表页面
         setTimeout(() => {
-          wx.navigateBack()
+          wx.redirectTo({
+            url: '/packageHealth/abnormal-records-list/abnormal-records-list'
+          })
         }, 1500)
       } else {
         throw new Error(result?.message || result?.error || '保存失败')
       }
     } catch (error: any) {
       wx.hideLoading()
+      // ✅ 保存失败时重置状态，允许重试
+      this.setData({ isSaving: false })
       wx.showToast({
         title: error.message || '保存失败',
         icon: 'none'

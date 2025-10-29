@@ -79,7 +79,6 @@ Page({
       })
 
       if (result.result && result.result.success) {
-        console.log('治疗记录数据:', result.result.data)
         this.setData({
           records: result.result.data?.treatments || [],
           loading: false

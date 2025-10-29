@@ -1,7 +1,6 @@
 /**app.scss**/
 @import "./miniprogram_npm/tdesign-miniprogram/common/style/index.wxss";
-@import "./styles/font-override.wxss";
-@import "./styles/navbar-fix.wxss";
+@import "./styles/font-override.scss";
 
 /* 修复 TDesign 字体加载问题 - 彻底覆盖外部字体定义 */
 @font-face {

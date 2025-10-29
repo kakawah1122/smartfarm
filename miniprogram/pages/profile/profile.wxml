@@ -3,8 +3,7 @@
   <!-- 新式导航栏 -->
   <navigation-bar 
     title="个人中心"
-    show-back="{{true}}"
-    bind:back="goBack"
+    show-back="{{false}}"
   />
   
   <scroll-view class="profile-content" scroll-y>

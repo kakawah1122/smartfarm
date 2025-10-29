@@ -599,6 +599,13 @@ async function getActiveBatches(event, wxContext) {
       })
       .get()
     
+    // 获取所有死亡记录
+    const deathRecordsResult = await db.collection('health_death_records')
+      .where({
+        userId: wxContext.OPENID
+      })
+      .get()
+    
     // 统计每个批次的出栏数量
     const exitQuantityMap = {}
     exitRecordsResult.data.forEach(exitRecord => {
@@ -609,12 +616,24 @@ async function getActiveBatches(event, wxContext) {
       exitQuantityMap[batchNumber] += exitRecord.quantity || 0
     })
 
-    // 筛选存栏批次（排除完全出栏和已删除的）
+    // 统计每个批次的死亡数量
+    const deathQuantityMap = {}
+    deathRecordsResult.data.forEach(deathRecord => {
+      const batchNumber = deathRecord.batchNumber
+      if (!deathQuantityMap[batchNumber]) {
+        deathQuantityMap[batchNumber] = 0
+      }
+      deathQuantityMap[batchNumber] += deathRecord.quantity || 0
+    })
+
+    // 筛选存栏批次（排除完全出栏/死亡和已删除的）
     const activeRecords = allResult.data.filter(record => {
       const isNotDeleted = record.isDeleted !== true
       const totalExited = exitQuantityMap[record.batchNumber] || 0
-      const isNotFullyExited = totalExited < (record.quantity || 0)
-      return isNotDeleted && isNotFullyExited
+      const totalDeath = deathQuantityMap[record.batchNumber] || 0
+      const totalGone = totalExited + totalDeath
+      const hasStock = totalGone < (record.quantity || 0)
+      return isNotDeleted && hasStock
     })
 
     // 已移除调试日志

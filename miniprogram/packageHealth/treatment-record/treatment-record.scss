@@ -6,7 +6,7 @@
   
   .page-content {
     padding: 32rpx;
-    padding-top: 200rpx; /* 为固定定位的导航栏预留空间 (状态栏 + 导航栏高度 + 间距) */
+    padding-top: calc(var(--navbar-height, 132rpx) + 68rpx); /* 导航栏高度 + 安全间距 + 预留空间 */
     padding-bottom: 120rpx; /* 为底部按钮预留空间 */
   }
 }
@@ -976,35 +976,33 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 6rpx;
+        gap: 8rpx;
         
-        .record-name {
-          font-size: 30rpx;
-          font-weight: 600;
-          color: #333;
+        .record-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          
+          .record-name {
+            font-size: 30rpx;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+          }
+          
+          .record-spec {
+            font-size: 26rpx;
+            color: #0052d9;
+            font-weight: 500;
+            flex-shrink: 0;
+            margin-left: 16rpx;
+          }
         }
         
-        .record-spec {
-          font-size: 26rpx;
-          color: #0052d9;
-          font-weight: 500;
-        }
-      }
-      
-      .record-dosage {
-        flex-shrink: 0;
-        font-size: 24rpx;
-        color: #666;
-        max-width: 220rpx;
-        text-align: right;
-        line-height: 1.5;
-        
-        text {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        .record-dosage {
+          font-size: 24rpx;
+          color: #666;
+          line-height: 1.5;
         }
       }
     }
@@ -1028,12 +1026,12 @@
   }
 }
 
-// ========== 继续治疗选项对话框 ==========
+// ========== 继续治疗选项 ==========
 .continue-treatment-options {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
-  padding: 8rpx 0;
+  padding: 16rpx 24rpx;
   
   .option-item {
     display: flex;
@@ -1074,6 +1072,244 @@
   }
 }
 
+// ========== ✅ 治疗进展自定义弹窗样式 ==========
+.progress-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999998;
+  animation: fadeIn 0.3s ease;
+}
+
+.progress-popup {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  
+  &.show {
+    transform: translateY(0);
+  }
+  
+  .popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32rpx;
+    border-bottom: 2rpx solid #f0f0f0;
+    flex-shrink: 0;
+    
+    .popup-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .close-btn {
+      width: 56rpx;
+      height: 56rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      border-radius: 50%;
+      
+      .icon-close {
+        font-size: 56rpx;
+        color: #999;
+        line-height: 1;
+        font-weight: 300;
+      }
+    }
+  }
+  
+  .popup-content {
+    flex: 1;
+    padding: 32rpx 32rpx 32rpx 32rpx;
+    overflow-y: auto;
+    box-sizing: border-box;
+    
+    .dialog-hint {
+      margin-bottom: 24rpx;
+      padding: 16rpx 20rpx;
+      background: #fff7e6;
+      border-radius: 12rpx;
+      border-left: 6rpx solid #faad14;
+      box-sizing: border-box;
+      
+      .hint-text {
+        font-size: 26rpx;
+        color: #ad6800;
+        margin-right: 8rpx;
+      }
+      
+      .hint-value {
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #d46b08;
+      }
+    }
+    
+    .dialog-tip {
+      margin-bottom: 32rpx;
+      padding: 20rpx;
+      background: #e8f4fd;
+      border-radius: 12rpx;
+      box-sizing: border-box;
+      
+      .tip-title {
+        display: block;
+        font-size: 28rpx;
+        color: #1677ff;
+        line-height: 1.6;
+        margin-bottom: 12rpx;
+        font-weight: 500;
+      }
+      
+      .tip-desc {
+        display: block;
+        font-size: 24rpx;
+        color: #666;
+        line-height: 1.5;
+      }
+    }
+    
+    .dialog-field {
+      margin-bottom: 32rpx;
+      box-sizing: border-box;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .field-label {
+        font-size: 28rpx;
+        color: #333;
+        margin-bottom: 16rpx;
+        font-weight: 500;
+        
+        &.required::before {
+          content: '*';
+          color: #ff4d4f;
+          margin-right: 4rpx;
+        }
+      }
+      
+      .count-input-row {
+        display: flex;
+        align-items: center;
+        gap: 16rpx;
+        width: 100%;
+        box-sizing: border-box;
+        
+        .count-input {
+          flex: 1;
+          height: 88rpx;
+          padding: 0 24rpx;
+          font-size: 30rpx;
+          background: #f7f8fa;
+          border-radius: 12rpx;
+          border: 2rpx solid #e8eaed;
+          box-sizing: border-box;
+        }
+        
+        .all-btn {
+          flex-shrink: 0;
+          height: 88rpx;
+          padding: 0 32rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+          border: 2rpx solid #0052d9;
+          border-radius: 12rpx;
+          box-sizing: border-box;
+          
+          text {
+            font-size: 28rpx;
+            color: #0052d9;
+            font-weight: 500;
+          }
+          
+          &:active {
+            background: #f0f8ff;
+          }
+        }
+      }
+      
+      .field-hint {
+        display: block;
+        margin-top: 12rpx;
+        font-size: 24rpx;
+        color: #999;
+      }
+      
+      .field-textarea {
+        width: 100%;
+        min-height: 120rpx;
+        padding: 16rpx 20rpx;
+        font-size: 28rpx;
+        background: #f7f8fa;
+        border-radius: 12rpx;
+        border: 2rpx solid #e8eaed;
+        line-height: 1.6;
+        box-sizing: border-box;
+      }
+    }
+  }
+  
+  .popup-footer {
+    display: flex;
+    padding: 24rpx 32rpx;
+    padding-bottom: calc(24rpx + constant(safe-area-inset-bottom));
+    padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+    gap: 24rpx;
+    border-top: 2rpx solid #f0f0f0;
+    flex-shrink: 0;
+    background: #fff;
+    
+    .footer-btn {
+      flex: 1;
+      height: 88rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12rpx;
+      font-size: 32rpx;
+      font-weight: 500;
+      
+      &.cancel-btn {
+        background: #f5f5f5;
+        color: #666;
+        
+        &:active {
+          background: #e8e8e8;
+        }
+      }
+      
+      &.confirm-btn {
+        background: #0052d9;
+        color: #fff;
+        
+        &:active {
+          background: #0041a8;
+        }
+      }
+    }
+  }
+}
+
 // 治疗笔记对话框
 .note-dialog-content {
   padding: 16rpx 0;
@@ -1089,18 +1325,604 @@
   padding: 16rpx 0;
 }
 
-// 对话框提示信息
-.dialog-hint {
-  margin-top: 16rpx;
-  padding: 16rpx;
-  background: #f0f8ff;
+// ========== 进一步治疗选项底部弹窗样式 ==========
+.treatment-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999996;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.treatment-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 999997;
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.12);
+  // 安全区域适配
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+  
+  &.show {
+    transform: translateY(0);
+  }
+  
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 40rpx 32rpx 24rpx;
+    border-bottom: 2rpx solid #f0f0f0;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    
+    .sheet-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: 0.5rpx;
+    }
+    
+    .close-btn {
+      width: 64rpx;
+      height: 64rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      margin-right: -8rpx;
+      
+      &:active {
+        background: #e8e8e8;
+        transform: scale(0.95);
+      }
+    }
+  }
+  
+  .sheet-scroll {
+    flex: 1;
+    padding: 40rpx 32rpx;
+    overflow-y: auto;
+  }
+  
+  .sheet-footer {
+    padding: 24rpx 32rpx 32rpx;
+    border-top: 2rpx solid #f0f0f0;
+    background: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.04);
+  }
+}
+
+// ========== 一体化表单样式 ==========
+.form-section-inline {
+  margin-bottom: 32rpx;
+  padding: 32rpx;
+  background: #fafafa;
+  border-radius: 16rpx;
+  border: 2rpx solid #f0f0f0;
+  transition: all 0.2s ease;
+  
+  &:last-child {
+    margin-bottom: 24rpx;
+  }
+  
+  .section-title-inline {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24rpx;
+    
+    .title-icon {
+      font-size: 40rpx;
+      margin-right: 12rpx;
+    }
+    
+    .title-text {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: 0.5rpx;
+    }
+    
+    .title-optional {
+      font-size: 24rpx;
+      color: #999;
+      margin-left: 8rpx;
+      font-weight: normal;
+    }
+  }
+  
+  .form-item-inline {
+    margin-bottom: 24rpx;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .form-label-inline {
+      font-size: 28rpx;
+      color: #666;
+      margin-bottom: 16rpx;
+      font-weight: 500;
+      
+      .add-hint {
+        font-size: 24rpx;
+        color: #0052d9;
+        margin-left: 8rpx;
+      }
+    }
+    
+    .native-picker {
+      padding: 26rpx 32rpx;
+      background: #fff;
+      border-radius: 12rpx;
+      border: 2rpx solid #e5e5e5;
+      font-size: 28rpx;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+      
+      &:active {
+        border-color: #0052d9;
+        background: #f8faff;
+      }
+      
+      .picker-arrow {
+        color: #999;
+        font-size: 24rpx;
+        transition: transform 0.2s ease;
+      }
+    }
+    
+    .stock-info-inline {
+      margin-top: 16rpx;
+      font-size: 24rpx;
+      color: #0052d9;
+      padding: 12rpx 20rpx;
+      background: #f0f5ff;
+      border-radius: 8rpx;
+      display: inline-block;
+      border: 1rpx solid #d6e4ff;
+      font-weight: 500;
+    }
+  }
+  
+  // ========== ✅ 全新优化的药品卡片样式 ==========
+  .selected-medications-list {
+    margin-bottom: 24rpx;
+    
+    .medication-card-new {
+      background: #ffffff;
+      border-radius: 16rpx;
+      padding: 32rpx;
+      margin-bottom: 16rpx;
+      border: 2rpx solid #e8eaed;
+      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      // 头部区域
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24rpx;
+        padding-bottom: 20rpx;
+        border-bottom: 2rpx solid #f5f6f7;
+        
+        .drug-info {
+          flex: 1;
+          
+          .drug-name {
+            font-size: 34rpx;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: block;
+            margin-bottom: 8rpx;
+          }
+          
+          .drug-spec {
+            font-size: 26rpx;
+            color: #8a8e99;
+            display: block;
+          }
+        }
+        
+        .delete-icon {
+          width: 56rpx;
+          height: 56rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #fff1f0;
+          border-radius: 50%;
+          margin-left: 16rpx;
+          flex-shrink: 0;
+          
+          &:active {
+            background: #ffccc7;
+          }
+          
+          .icon-close {
+            font-size: 56rpx;
+            color: #ff4d4f;
+            line-height: 1;
+            font-weight: 300;
+          }
+        }
+      }
+      
+      // ========== ✅ 优化后的输入框排版 ==========
+      .medication-inputs-simple {
+        .input-row-simple {
+          display: flex;
+          align-items: center;
+          margin-bottom: 24rpx;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          .label-simple {
+            font-size: 32rpx;
+            font-weight: 600;
+            color: #1a1a1a;
+            width: 100rpx;
+            margin-right: 20rpx;
+            flex-shrink: 0;
+          }
+          
+          .input-field-simple {
+            flex: 1;
+            height: 80rpx;
+            padding: 0 28rpx;
+            font-size: 32rpx;
+            color: #1a1a1a;
+            background: #f7f8fa;
+            border-radius: 12rpx;
+            border: 2rpx solid #e8eaed;
+            transition: all 0.2s ease;
+            
+            &:focus {
+              background: #fff;
+              border-color: #0052d9;
+              box-shadow: 0 0 0 6rpx rgba(0, 82, 217, 0.08);
+            }
+            
+            &.full-width {
+              flex: 1;
+            }
+          }
+          
+          .unit-simple {
+            font-size: 30rpx;
+            color: #646566;
+            font-weight: 500;
+            margin-left: 20rpx;
+            flex-shrink: 0;
+          }
+          
+          .stock-simple {
+            font-size: 26rpx;
+            color: #0052d9;
+            font-weight: 700;
+            padding: 14rpx 24rpx;
+            background: linear-gradient(135deg, #e6f2ff 0%, #f0f7ff 100%);
+            border-radius: 10rpx;
+            border: 2rpx solid #b3d9ff;
+            white-space: nowrap;
+            margin-left: 20rpx;
+            flex-shrink: 0;
+            box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.12);
+          }
+        }
+      }
+    }
+  }
+  
+  // ========== ✅ 初始用药管理使用统一样式（与追加用药一致） ==========
+  // medication-item, medication-header, medication-inputs 等样式已在上方定义，这里复用
+  
+  .empty-medications {
+    padding: 80rpx 32rpx;
+    text-align: center;
+    background: #fafbfc;
+    border-radius: 12rpx;
+    border: 2rpx dashed #e0e3e8;
+    
+    .empty-text {
+      font-size: 28rpx;
+      color: #969799;
+      line-height: 1.6;
+      
+      &::before {
+        content: '💊';
+        display: block;
+        font-size: 64rpx;
+        margin-bottom: 16rpx;
+        opacity: 0.5;
+      }
+    }
+  }
+  
+  // ========== 添加药品区域 ==========
+  .add-medication-area {
+    .add-btn-wrapper {
+      margin-top: 16rpx;
+    }
+  }
+}
+
+.form-hint-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 24rpx;
+  background: linear-gradient(135deg, #fff9e6 0%, #fff4d9 100%);
+  border-radius: 12rpx;
+  border: 2rpx solid #ffe9b8;
+  margin-top: 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(230, 119, 0, 0.08);
+  
+  .hint-icon {
+    font-size: 36rpx;
+    flex-shrink: 0;
+    margin-top: 2rpx;
+  }
+  
+  .hint-text {
+    font-size: 26rpx;
+    color: #d97706;
+    line-height: 1.6;
+    font-weight: 500;
+    flex: 1;
+  }
+}
+
+// ========== 追加用药底部弹窗样式（已废弃，保留以防万一）==========
+.medication-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999998;
+}
+
+.medication-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 999999;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  
+  &.show {
+    transform: translateY(0);
+  }
+  
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32rpx;
+    border-bottom: 2rpx solid #f0f0f0;
+    flex-shrink: 0;
+    
+    .sheet-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #000;
+    }
+    
+    .close-btn {
+      width: 64rpx;
+      height: 64rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+      
+      &:active {
+        background: #f0f0f0;
+      }
+    }
+  }
+  
+  .sheet-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .medication-form-scroll {
+    flex: 1;
+    padding: 32rpx;
+    
+    .form-item {
+      margin-bottom: 32rpx;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .form-label {
+        font-size: 28rpx;
+        color: #1a1a1a;
+        margin-bottom: 16rpx;
+        display: flex;
+        align-items: center;
+        
+        &.required::after {
+          content: '*';
+          color: #e34d59;
+          margin-left: 8rpx;
+          font-size: 24rpx;
+        }
+      }
+      
+      .native-picker {
+        padding: 24rpx 32rpx;
+        background: #fafafa;
+        border-radius: 8rpx;
+        border: 2rpx solid #e0e0e0;
+        font-size: 28rpx;
+        color: #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        .picker-arrow {
+          color: #999;
+          font-size: 24rpx;
+        }
+      }
+      
+      .stock-info {
+        margin-top: 12rpx;
+        font-size: 24rpx;
+        color: #0052d9;
+        padding: 8rpx 16rpx;
+        background: #f0f5ff;
+        border-radius: 8rpx;
+        display: inline-block;
+      }
+    }
+    
+    .form-hint {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      padding: 20rpx;
+      background: #fff8e1;
+      border-radius: 8rpx;
+      border: 1rpx solid #ffe9b8;
+      margin-top: 24rpx;
+      
+      .hint-icon {
+        font-size: 32rpx;
+        flex-shrink: 0;
+      }
+      
+      .hint-text {
+        font-size: 24rpx;
+        color: #e67700;
+        line-height: 1.5;
+      }
+    }
+  }
+  
+  .sheet-footer {
+    padding: 24rpx 32rpx;
+    border-top: 2rpx solid #f0f0f0;
+    background: #fff;
+    flex-shrink: 0;
+  }
+}
+
+// ========== AI用药建议样式 ==========
+.ai-medication-suggestions {
+  .suggestion-item {
+    background: #f0f8ff;
+    border-radius: 12rpx;
+    padding: 24rpx;
+    margin-bottom: 16rpx;
+    border: 1rpx solid #d0e8ff;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .suggestion-header {
+      margin-bottom: 16rpx;
+      
+      .med-name {
+        font-size: 30rpx;
+        font-weight: 600;
+        color: #0052d9;
+      }
+    }
+    
+    .suggestion-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12rpx;
+      
+      .detail-row {
+        display: flex;
+        align-items: flex-start;
+        font-size: 26rpx;
+        line-height: 1.6;
+        
+        .detail-label {
+          color: #666;
+          min-width: 100rpx;
+          flex-shrink: 0;
+        }
+        
+        .detail-value {
+          color: #333;
+          flex: 1;
+        }
+      }
+    }
+  }
+}
+
+.ai-suggestion-hint {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 20rpx;
+  background: #fff8e1;
   border-radius: 8rpx;
-  border-left: 4rpx solid #0052d9;
+  border: 1rpx solid #ffe9b8;
+  margin-top: 16rpx;
+  
+  .hint-icon {
+    font-size: 32rpx;
+    flex-shrink: 0;
+  }
   
   .hint-text {
     font-size: 24rpx;
-    color: #0052d9;
-    line-height: 1.6;
+    color: #e67700;
+    line-height: 1.5;
   }
 }
 

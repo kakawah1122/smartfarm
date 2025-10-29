@@ -10,7 +10,7 @@
 /* 表单内容区域 */
 .form-content {
   flex: 1;
-  padding-top: calc(var(--status-bar-height) + 88rpx);
+  padding-top: calc(var(--navbar-height, 132rpx) + 100rpx); /* 导航栏高度 + 安全间距 */
   padding-bottom: calc(32rpx + var(--safe-area-inset-bottom, 0));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -251,7 +251,7 @@
 /* 响应式设计 */
 @media screen and (max-width: 480px) {
   .form-content {
-    padding-top: calc(var(--status-bar-height) + 88rpx);
+    padding-top: calc(var(--navbar-height, 132rpx) + 96rpx); /* 导航栏高度 + 安全间距 */
   }
   
   .form-header {
