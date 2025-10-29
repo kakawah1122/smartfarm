@@ -173,6 +173,7 @@ export async function loadAllBatchesData(context: any) {
       let totalTreatmentCost = 0
       let totalTreated = 0
       let totalCured = 0
+      let totalDied = 0
       
       // 并行查询所有批次的治疗统计
       const treatmentPromises = batches.map(async (batch: any) => {
@@ -192,13 +193,14 @@ export async function loadAllBatchesData(context: any) {
               ongoingAnimalsCount: data.ongoingAnimalsCount || 0,
               totalCost: parseFloat(data.totalCost || '0'),
               totalTreated: data.totalTreated || 0,
-              totalCuredAnimals: data.totalCuredAnimals || 0
+              totalCuredAnimals: data.totalCuredAnimals || 0,
+              totalDied: data.diedCount || 0
             }
           }
         } catch (error) {
           // 错误处理
         }
-        return { ongoingCount: 0, ongoingAnimalsCount: 0, totalCost: 0, totalTreated: 0, totalCuredAnimals: 0 }
+        return { ongoingCount: 0, ongoingAnimalsCount: 0, totalCost: 0, totalTreated: 0, totalCuredAnimals: 0, totalDied: 0 }
       })
       
       const treatmentResults = await Promise.all(treatmentPromises)
@@ -210,11 +212,17 @@ export async function loadAllBatchesData(context: any) {
         totalTreatmentCost += result.totalCost
         totalTreated += result.totalTreated
         totalCured += result.totalCuredAnimals
+        totalDied += result.totalDied
       })
       
-      // 计算总体治愈率
+      // 计算总体治愈率和死亡率（都基于治疗总数）
       const cureRate = totalTreated > 0 
         ? ((totalCured / totalTreated) * 100).toFixed(1)
+        : '0'
+      
+      // ✅ 死亡率也基于治疗总数计算
+      const mortalityRate = totalTreated > 0 
+        ? ((totalDied / totalTreated) * 100).toFixed(1)
         : '0'
       
       const treatmentStats = {
@@ -259,10 +267,10 @@ export async function loadAllBatchesData(context: any) {
         ? (isolatedResult.result.data?.recordCount || 0)
         : 0
       
-      // 重新计算健康率和死亡率
+      // 重新计算健康率（健康率仍基于批次总数）
       const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount - isolatedCount
       const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
-      const mortalityRate = totalAnimals > 0 ? ((deadCount / totalAnimals) * 100).toFixed(1) : '0'
+      // 死亡率已在上面计算（基于治疗总数）
       
       // 设置监控数据
       const monitoringData = {

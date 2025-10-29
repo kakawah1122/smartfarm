@@ -220,6 +220,9 @@ Page<PageData>({
   healthRecordsWatcher: null as any,
   deathRecordsWatcher: null as any,
   refreshTimer: null as any,
+  loadDataDebounceTimer: null as any,  // ✅ 防抖定时器
+  isLoadingData: false,  // ✅ 数据加载标志，防止重复加载
+  lastClickTime: 0,  // ✅ 上次点击时间，防止重复点击
 
   /**
    * 页面加载
@@ -255,14 +258,14 @@ Page<PageData>({
     const needRefresh = wx.getStorageSync('health_page_need_refresh')
     if (needRefresh) {
       wx.removeStorageSync('health_page_need_refresh')
-      // 强制刷新
+      // ✅ 使用静默刷新，避免阻塞UI交互
       if (this.data.currentBatchId) {
-        this.loadHealthData()
+        this.loadHealthData(true)
       }
     } else {
-      // 正常刷新数据
+      // ✅ 正常情况下也使用静默刷新，因为EventChannel已经提前刷新过了
       if (this.data.currentBatchId) {
-        this.loadHealthData()
+        this.loadHealthData(true)
       }
     }
   },
@@ -471,10 +474,35 @@ Page<PageData>({
   },
 
   /**
-   * 加载健康数据（主入口）
+   * 加载健康数据（主入口 - 带防抖和防重复机制）
+   * @param silent 静默刷新（不显示loading，避免阻塞UI交互）
+   * @param debounce 是否使用防抖（默认true）
    */
-  async loadHealthData() {
-    this.setData({ loading: true })
+  async loadHealthData(silent: boolean = false, debounce: boolean = true) {
+    // ✅ 防抖机制：避免短时间内多次触发
+    if (debounce) {
+      if (this.loadDataDebounceTimer) {
+        clearTimeout(this.loadDataDebounceTimer)
+      }
+      
+      this.loadDataDebounceTimer = setTimeout(() => {
+        this.loadHealthData(silent, false)  // 递归调用，但关闭防抖
+      }, 300) as any  // 300ms防抖
+      return
+    }
+    
+    // ✅ 防重复加载：如果正在加载中，直接返回
+    if (this.isLoadingData) {
+      console.log('⚠️ 数据正在加载中，跳过重复请求')
+      return
+    }
+    
+    this.isLoadingData = true
+    
+    // ✅ 如果是静默刷新，不设置loading状态，避免阻塞UI
+    if (!silent) {
+      this.setData({ loading: true })
+    }
 
     try {
       // 如果是全部批次模式，加载汇总数据
@@ -490,102 +518,76 @@ Page<PageData>({
       }
     } catch (error: any) {
       // 已移除调试日志
-      wx.showToast({
-        title: '加载数据失败',
-        icon: 'error'
-      })
+      if (!silent) {
+        wx.showToast({
+          title: '加载数据失败',
+          icon: 'error'
+        })
+      }
     } finally {
-      this.setData({ loading: false })
+      if (!silent) {
+        this.setData({ loading: false })
+      }
+      this.isLoadingData = false  // ✅ 重置加载标志
     }
   },
 
   /**
-   * 加载所有批次的汇总数据
+   * 加载所有批次的汇总数据（优化版 - 渐进式加载）
    */
   async loadAllBatchesData() {
     try {
-      // 1. 查询批次健康汇总
+      console.time('⏱️ 加载健康数据总耗时')
+      
+      // ✅ 第一阶段：快速加载核心数据（关键指标）
+      console.time('⏱️ 第一阶段：核心数据')
       const healthResult = await wx.cloud.callFunction({
         name: 'health-management',
         data: { action: 'get_all_batches_health_summary' }
       })
+      console.timeEnd('⏱️ 第一阶段：核心数据')
 
       // 处理健康统计数据
       if (healthResult.result && healthResult.result.success) {
         const data = healthResult.result.data
         const batches = data.batches || []
         
-        // 云函数版本号日志（用于确认更新）
-        if (data._version) {
-        }
+        // ✅ 第二阶段：立即显示基础数据（不等待预防和治疗数据）
+        const totalAnimals = batches.reduce((sum: number, b: any) => sum + (b.totalCount || 0), 0)
+        const deadCount = batches.reduce((sum: number, b: any) => sum + (b.deadCount || 0), 0)
+        const sickCount = batches.reduce((sum: number, b: any) => sum + (b.sickCount || 0), 0)
         
-        // 为每个批次并行查询预防记录
-        const batchPreventionPromises = batches.map(async (batch: any) => {
-          try {
-            // 使用 batch._id 而不是 batch.batchId
-            const result = await CloudApi.listPreventionRecords({
-              batchId: batch._id || batch.batchId,
-              pageSize: 100
-            })
-            
-            
-            if (result.success && result.data) {
-              const records = result.data.records || []
-              
-              const stats = this.calculatePreventionStats(records)
-              const formattedRecords = records.slice(0, 3).map((r: any) => this.formatPreventionRecord(r))
-              
-              
-              return {
-                ...batch,
-                preventionStats: stats,
-                vaccinationRate: batch.totalCount > 0 
-                  ? ((stats.vaccineCoverage / batch.totalCount) * 100).toFixed(1)
-                  : '0',
-                recentRecords: formattedRecords
-              }
-            }
-            return { 
-              ...batch, 
-              preventionStats: { 
-                totalPreventions: 0, 
-                vaccineCount: 0, 
-                vaccineCoverage: 0,
-                vaccineStats: {},
-                disinfectionCount: 0, 
-                totalCost: 0 
-              }, 
-              vaccinationRate: '0',
-              recentRecords: []
-            }
-          } catch (error) {
-            return { 
-              ...batch, 
-              preventionStats: { 
-                totalPreventions: 0, 
-                vaccineCount: 0, 
-                vaccineCoverage: 0,
-                vaccineStats: {},
-                disinfectionCount: 0, 
-                totalCost: 0 
-              }, 
-              vaccinationRate: '0',
-              recentRecords: []
-            }
+        // 立即设置基础数据，让用户看到初始状态
+        this.setData({
+          healthStats: {
+            totalChecks: totalAnimals,
+            healthyCount: 0,  // 后续更新
+            sickCount: sickCount,
+            deadCount: deadCount,
+            healthyRate: '计算中...',
+            mortalityRate: totalAnimals > 0 ? ((deadCount / totalAnimals) * 100).toFixed(1) + '%' : '0%',
+            abnormalCount: 0,
+            treatingCount: 0,
+            isolatedCount: 0
           }
         })
         
-        const batchesWithPrevention = await Promise.all(batchPreventionPromises)
-        
-        // 计算汇总统计
-        const totalAnimals = batches.reduce((sum: number, b: any) => sum + (b.totalCount || 0), 0)
-        const healthyCount = batches.reduce((sum: number, b: any) => sum + (b.healthyCount || 0), 0)
-        const sickCount = batches.reduce((sum: number, b: any) => sum + (b.sickCount || 0), 0)
-        const deadCount = batches.reduce((sum: number, b: any) => sum + (b.deadCount || 0), 0)
-        
-        // ✅ 添加详细日志，追踪每个批次的死亡数
-        batches.forEach((b: any, index: number) => {
-        })
+        // ✅ 优化策略：只查询汇总预防数据，不为每个批次单独查询（节省大量时间）
+        console.time('⏱️ 第三阶段：预防汇总')
+        const batchesWithPrevention = batches.map((batch: any) => ({
+          ...batch,
+          preventionStats: { 
+            totalPreventions: 0, 
+            vaccineCount: 0, 
+            vaccineCoverage: 0,
+            vaccineStats: {},
+            disinfectionCount: 0, 
+            totalCost: 0 
+          }, 
+          vaccinationRate: '0',
+          recentRecords: []
+        }))
+        console.timeEnd('⏱️ 第三阶段：预防汇总')
         
         // 汇总所有批次的预防统计
         const totalVaccineCoverage = batchesWithPrevention.reduce((sum: number, b: any) => 
@@ -629,12 +631,14 @@ Page<PageData>({
           totalCost
         }
         
-        // ✅ 处理治疗统计数据 - 汇总所有批次
-        let totalOngoing = 0  // 治疗中的动物总数
-        let totalOngoingRecords = 0  // 治疗中的记录条数
-        let totalTreatmentCost = 0  // 重命名避免与预防统计的 totalCost 冲突
+        // ✅ 第四阶段：后台异步加载治疗数据（不阻塞预防数据的显示）
+        console.time('⏱️ 第四阶段：治疗数据')
+        let totalOngoing = 0
+        let totalOngoingRecords = 0
+        let totalTreatmentCost = 0
         let totalTreated = 0
         let totalCured = 0
+        let totalDied = 0
         
         // 并行查询所有批次的治疗统计
         const treatmentPromises = batches.map(async (batch: any) => {
@@ -654,15 +658,17 @@ Page<PageData>({
                 ongoingAnimalsCount: data.ongoingAnimalsCount || 0,  // ✅ 动物总数
                 totalCost: parseFloat(data.totalCost || '0'),
                 totalTreated: data.totalTreated || 0,
-                totalCuredAnimals: data.totalCuredAnimals || 0
+                totalCuredAnimals: data.totalCuredAnimals || 0,
+                totalDied: data.diedCount || 0
               }
             }
           } catch (error) {
           }
-          return { ongoingCount: 0, ongoingAnimalsCount: 0, totalCost: 0, totalTreated: 0, totalCuredAnimals: 0 }
+          return { ongoingCount: 0, ongoingAnimalsCount: 0, totalCost: 0, totalTreated: 0, totalCuredAnimals: 0, totalDied: 0 }
         })
         
         const treatmentResults = await Promise.all(treatmentPromises)
+        console.timeEnd('⏱️ 第四阶段：治疗数据')
         
         // 汇总所有批次的治疗数据
         treatmentResults.forEach(result => {
@@ -671,85 +677,44 @@ Page<PageData>({
           totalTreatmentCost += result.totalCost  // 使用重命名后的变量
           totalTreated += result.totalTreated
           totalCured += result.totalCuredAnimals
+          totalDied += result.totalDied
         })
         
-        // 计算总体治愈率
+        // 计算总体治愈率和死亡率（都基于治疗总数）
         const cureRate = totalTreated > 0 
           ? ((totalCured / totalTreated) * 100).toFixed(1)
           : '0'
         
+        // ✅ 死亡率也基于治疗总数计算（与治愈率保持一致）
+        const mortalityRate = totalTreated > 0 
+          ? ((totalDied / totalTreated) * 100).toFixed(1)
+          : '0'
+        
         const treatmentStats = {
           totalTreatments: totalTreated,
-          totalCost: totalTreatmentCost,  // 使用重命名后的变量
+          totalCost: totalTreatmentCost,
           recoveredCount: totalCured,
-          ongoingCount: totalOngoingRecords,  // 治疗中记录条数（用于卡片显示）
+          ongoingCount: totalOngoingRecords,
           recoveryRate: cureRate + '%'
         }
         
-        // ✅ 查询所有批次的待处理记录
-        const abnormalResult = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'get_health_records_by_status',
-            batchId: 'all',
-            status: 'abnormal'
-          }
-        })
+        // ✅ 优化：先计算基础健康率（不等待异常和隔离数据）
+        // 临时健康数 = 总数 - 死亡 - 治疗中
+        const tempHealthyCount = totalAnimals - deadCount - totalOngoing
+        const healthyRate = totalAnimals > 0 ? ((tempHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
         
-        // ✅ 使用受影响的动物只数，而不是记录条数
-        const abnormalCount = abnormalResult.result?.success 
-          ? (abnormalResult.result.data?.totalCount || 0)
-          : 0
-        const abnormalRecordCount = abnormalResult.result?.success 
-          ? (abnormalResult.result.data?.recordCount || 0)
-          : 0
-        
-        // ✅ 查询所有批次的隔离记录
-        const isolatedResult = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'get_health_records_by_status',
-            batchId: 'all',
-            status: 'isolated'
-          }
-        })
-        
-        // ✅ 使用受影响的动物只数，而不是记录条数
-        const isolatedCount = isolatedResult.result?.success 
-          ? (isolatedResult.result.data?.totalCount || 0)
-          : 0
-        const isolatedRecordCount = isolatedResult.result?.success 
-          ? (isolatedResult.result.data?.recordCount || 0)
-          : 0
-        
-        // ✅ 重新计算健康率和死亡率（扣除治疗中、待处理、隔离的动物）
-        // 真正健康的动物 = 总数 - 死亡 - 治疗中 - 待处理 - 隔离
-        const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount - isolatedCount
-        const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
-        const mortalityRate = totalAnimals > 0 ? ((deadCount / totalAnimals) * 100).toFixed(1) : '0'
-        
-        // 设置监控数据（实时健康状态）
-        const monitoringData = {
-          realTimeStatus: {
-            healthyCount: actualHealthyCount,  // ✅ 使用重新计算的健康数
-            abnormalCount: abnormalCount,  // ✅ 待处理记录条数
-            isolatedCount: isolatedCount  // ✅ 隔离记录条数
-          },
-          abnormalList: [],
-          diseaseDistribution: []
-        }
-        
+        // ✅ 立即设置关键数据（不等待异常和隔离数据）
         this.setData({
           healthStats: {
             totalChecks: totalAnimals,
-            healthyCount: actualHealthyCount,  // ✅ 使用重新计算的健康数
+            healthyCount: tempHealthyCount,  // 临时健康数
             sickCount: sickCount,
             deadCount: deadCount,
             healthyRate: healthyRate + '%',
             mortalityRate: mortalityRate + '%',
-            abnormalCount: abnormalRecordCount,  // ✅ 待处理记录条数（卡片显示）
-            treatingCount: totalOngoingRecords,  // ✅ 治疗中记录条数（卡片显示）
-            isolatedCount: isolatedRecordCount  // ✅ 隔离记录条数（卡片显示）
+            abnormalCount: 0,  // 后台更新
+            treatingCount: totalOngoingRecords,
+            isolatedCount: 0  // 后台更新
           },
           preventionStats,
           'preventionData.stats': {
@@ -760,19 +725,363 @@ Page<PageData>({
           treatmentStats,
           'treatmentData.stats': {
             pendingDiagnosis: 0,
-            ongoingTreatment: totalOngoingRecords,  // ✅ 使用记录条数（卡片显示）
-            totalTreatmentCost: totalTreatmentCost,  // 使用重命名后的变量
-            cureRate: parseFloat(cureRate)  // ✅ 设置治愈率
+            ongoingTreatment: totalOngoingRecords,
+            totalTreatmentCost: totalTreatmentCost,
+            cureRate: parseFloat(cureRate)
           },
           recentPreventionRecords,
           batchPreventionList: batchesWithPrevention,
-          activeHealthAlerts: [],
-          monitoringData: monitoringData
-        }, () => {
+          activeHealthAlerts: []
         })
+        
+        console.timeEnd('⏱️ 加载健康数据总耗时')
+        console.log('✅ 关键数据加载完成，用户可以立即交互')
+        
+        // ✅ 延迟加载：在后台异步加载次要数据（不阻塞用户交互）
+        setTimeout(() => {
+          this.loadSecondaryDataInBackground(batches, totalAnimals, deadCount, totalOngoing)
+        }, 200)
       }
     } catch (error: any) {
-      console.error('loadAllBatchesData 错误:', error)
+      console.error('❌ loadAllBatchesData 错误:', error)
+      console.timeEnd('⏱️ 加载健康数据总耗时')
+    }
+  },
+  
+  /**
+   * 完全后台刷新数据（不使用加载锁，不阻塞任何操作）
+   */
+  backgroundRefreshData() {
+    console.log('🔄 启动完全后台刷新（不阻塞用户操作）')
+    
+    // ✅ 不使用防抖，不检查isLoadingData，立即开始刷新
+    setTimeout(() => {
+      this._performBackgroundRefresh()
+    }, 100)  // 100ms延迟，避免与页面跳转冲突
+  },
+  
+  /**
+   * 执行后台刷新（核心逻辑）
+   */
+  async _performBackgroundRefresh() {
+    try {
+      console.time('⏱️ 后台刷新总耗时')
+      
+      if (this.data.currentBatchId === 'all') {
+        // 全部批次模式：快速刷新关键数据
+        await this._backgroundRefreshAllBatches()
+      } else {
+        // 单个批次模式：并行加载
+        await Promise.all([
+          this.loadHealthOverview(),
+          this.loadPreventionData(),
+          this.loadTreatmentData()
+        ])
+      }
+      
+      console.timeEnd('⏱️ 后台刷新总耗时')
+      console.log('✅ 后台刷新完成')
+    } catch (error: any) {
+      console.error('❌ 后台刷新失败:', error)
+    }
+  },
+  
+  /**
+   * 后台刷新所有批次（优化版 - 只刷新关键数据）
+   */
+  async _backgroundRefreshAllBatches() {
+    try {
+      // 第一阶段：快速获取核心数据
+      const healthResult = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: { action: 'get_all_batches_health_summary' }
+      })
+
+      if (healthResult.result && healthResult.result.success) {
+        const data = healthResult.result.data
+        const batches = data.batches || []
+        
+        const totalAnimals = batches.reduce((sum: number, b: any) => sum + (b.totalCount || 0), 0)
+        const deadCount = batches.reduce((sum: number, b: any) => sum + (b.deadCount || 0), 0)
+        const sickCount = batches.reduce((sum: number, b: any) => sum + (b.sickCount || 0), 0)
+        
+        // 第二阶段：并行加载治疗数据（最重要）
+        const treatmentPromises = batches.map(async (batch: any) => {
+          try {
+            const result = await wx.cloud.callFunction({
+              name: 'health-management',
+              data: {
+                action: 'calculate_treatment_cost',
+                batchId: batch._id
+              }
+            })
+            
+            if (result.result?.success) {
+              const data = result.result.data
+              return {
+                ongoingCount: data.ongoingCount || 0,
+                ongoingAnimalsCount: data.ongoingAnimalsCount || 0,
+                totalCost: parseFloat(data.totalCost || '0'),
+                totalTreated: data.totalTreated || 0,
+                totalCuredAnimals: data.totalCuredAnimals || 0,
+                totalDied: data.diedCount || 0
+              }
+            }
+          } catch (error) {
+            // 忽略错误
+          }
+          return { ongoingCount: 0, ongoingAnimalsCount: 0, totalCost: 0, totalTreated: 0, totalCuredAnimals: 0, totalDied: 0 }
+        })
+        
+        const treatmentResults = await Promise.all(treatmentPromises)
+        
+        // 汇总治疗数据
+        let totalOngoing = 0
+        let totalOngoingRecords = 0
+        let totalTreatmentCost = 0
+        let totalTreated = 0
+        let totalCured = 0
+        let totalDied = 0
+        
+        treatmentResults.forEach(result => {
+          totalOngoing += result.ongoingAnimalsCount
+          totalOngoingRecords += result.ongoingCount
+          totalTreatmentCost += result.totalCost
+          totalTreated += result.totalTreated
+          totalCured += result.totalCuredAnimals
+          totalDied += result.totalDied
+        })
+        
+        const cureRate = totalTreated > 0 
+          ? ((totalCured / totalTreated) * 100).toFixed(1)
+          : '0'
+        
+        // ✅ 死亡率也基于治疗总数计算
+        const mortalityRate = totalTreated > 0 
+          ? ((totalDied / totalTreated) * 100).toFixed(1)
+          : '0'
+        
+        // 第三阶段：快速查询异常数据（使用Promise.all并行）
+        const [abnormalResult, isolatedResult] = await Promise.all([
+          wx.cloud.callFunction({
+            name: 'health-management',
+            data: {
+              action: 'get_health_records_by_status',
+              batchId: 'all',
+              status: 'abnormal'
+            }
+          }),
+          wx.cloud.callFunction({
+            name: 'health-management',
+            data: {
+              action: 'get_health_records_by_status',
+              batchId: 'all',
+              status: 'isolated'
+            }
+          })
+        ])
+        
+        const abnormalCount = abnormalResult.result?.success 
+          ? (abnormalResult.result.data?.totalCount || 0)
+          : 0
+        const abnormalRecordCount = abnormalResult.result?.success 
+          ? (abnormalResult.result.data?.recordCount || 0)
+          : 0
+        const isolatedCount = isolatedResult.result?.success 
+          ? (isolatedResult.result.data?.totalCount || 0)
+          : 0
+        const isolatedRecordCount = isolatedResult.result?.success 
+          ? (isolatedResult.result.data?.recordCount || 0)
+          : 0
+        
+        // 重新计算健康率（健康率仍基于批次总数）
+        const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount - isolatedCount
+        const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
+        // 死亡率已在上面计算（基于治疗总数）
+        
+        // 静默更新数据（不影响用户操作）
+        this.setData({
+          healthStats: {
+            totalChecks: totalAnimals,
+            healthyCount: actualHealthyCount,
+            sickCount: sickCount,
+            deadCount: deadCount,
+            healthyRate: healthyRate + '%',
+            mortalityRate: mortalityRate + '%',
+            abnormalCount: abnormalRecordCount,
+            treatingCount: totalOngoingRecords,
+            isolatedCount: isolatedRecordCount
+          },
+          treatmentStats: {
+            totalTreatments: totalTreated,
+            totalCost: totalTreatmentCost,
+            recoveredCount: totalCured,
+            ongoingCount: totalOngoingRecords,
+            recoveryRate: cureRate + '%'
+          },
+          'treatmentData.stats': {
+            pendingDiagnosis: 0,
+            ongoingTreatment: totalOngoingRecords,
+            totalTreatmentCost: totalTreatmentCost,
+            cureRate: parseFloat(cureRate)
+          }
+        })
+        
+        console.log('✅ 关键数据已更新，用户操作不受影响')
+      }
+    } catch (error: any) {
+      console.error('❌ 后台刷新失败:', error)
+    }
+  },
+  
+  /**
+   * 后台加载次要数据（异常、隔离、预防详情）
+   */
+  async loadSecondaryDataInBackground(batches: any[], totalAnimals: number, deadCount: number, totalOngoing: number) {
+    try {
+      console.log('🔄 开始后台加载次要数据（异常、隔离、预防详情）')
+      console.time('⏱️ 后台加载次要数据')
+      
+      // 并行加载异常和隔离数据
+      const [abnormalResult, isolatedResult] = await Promise.all([
+        wx.cloud.callFunction({
+          name: 'health-management',
+          data: {
+            action: 'get_health_records_by_status',
+            batchId: 'all',
+            status: 'abnormal'
+          }
+        }),
+        wx.cloud.callFunction({
+          name: 'health-management',
+          data: {
+            action: 'get_health_records_by_status',
+            batchId: 'all',
+            status: 'isolated'
+          }
+        })
+      ])
+      
+      const abnormalCount = abnormalResult.result?.success 
+        ? (abnormalResult.result.data?.totalCount || 0)
+        : 0
+      const abnormalRecordCount = abnormalResult.result?.success 
+        ? (abnormalResult.result.data?.recordCount || 0)
+        : 0
+      const isolatedCount = isolatedResult.result?.success 
+        ? (isolatedResult.result.data?.totalCount || 0)
+        : 0
+      const isolatedRecordCount = isolatedResult.result?.success 
+        ? (isolatedResult.result.data?.recordCount || 0)
+        : 0
+      
+      // 重新计算精确的健康数
+      const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount - isolatedCount
+      const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
+      
+      // 更新监控数据
+      const monitoringData = {
+        realTimeStatus: {
+          healthyCount: actualHealthyCount,
+          abnormalCount: abnormalCount,
+          isolatedCount: isolatedCount
+        },
+        abnormalList: [],
+        diseaseDistribution: []
+      }
+      
+      // 静默更新数据
+      this.setData({
+        'healthStats.healthyCount': actualHealthyCount,
+        'healthStats.healthyRate': healthyRate + '%',
+        'healthStats.abnormalCount': abnormalRecordCount,
+        'healthStats.isolatedCount': isolatedRecordCount,
+        monitoringData: monitoringData
+      })
+      
+      console.timeEnd('⏱️ 后台加载次要数据')
+      console.log('✅ 次要数据已更新')
+      
+      // 继续加载预防详细数据
+      this.loadPreventionDataInBackground(batches)
+      
+    } catch (error: any) {
+      console.error('❌ 后台加载次要数据失败:', error)
+    }
+  },
+  
+  /**
+   * 后台加载预防数据（不阻塞UI）
+   */
+  async loadPreventionDataInBackground(batches: any[]) {
+    try {
+      console.log('🔄 开始后台加载预防详细数据...')
+      console.time('⏱️ 后台加载预防数据')
+      
+      // 只为有效批次加载预防记录
+      const preventionPromises = batches.map(async (batch: any) => {
+        try {
+          const result = await CloudApi.listPreventionRecords({
+            batchId: batch._id || batch.batchId,
+            pageSize: 50  // 减少查询量
+          })
+          
+          if (result.success && result.data) {
+            const records = result.data.records || []
+            return {
+              batchId: batch._id,
+              stats: this.calculatePreventionStats(records),
+              records: records.slice(0, 3)
+            }
+          }
+        } catch (error) {
+          console.warn(`批次 ${batch._id} 预防数据加载失败`, error)
+        }
+        return null
+      })
+      
+      const results = await Promise.all(preventionPromises)
+      
+      // 更新预防数据（静默更新，不影响用户）
+      const validResults = results.filter(r => r !== null)
+      if (validResults.length > 0) {
+        console.log(`✅ 后台加载了 ${validResults.length} 个批次的预防数据`)
+        
+        // 重新计算汇总统计
+        const totalVaccineCoverage = validResults.reduce((sum, r: any) => 
+          sum + (r.stats?.vaccineCoverage || 0), 0)
+        const totalVaccineCount = validResults.reduce((sum, r: any) => 
+          sum + (r.stats?.vaccineCount || 0), 0)
+        const totalPreventions = validResults.reduce((sum, r: any) => 
+          sum + (r.stats?.totalPreventions || 0), 0)
+        const totalCost = validResults.reduce((sum, r: any) => 
+          sum + (r.stats?.totalCost || 0), 0)
+        
+        const totalAnimals = this.data.healthStats.totalChecks || 1
+        const vaccinationRate = totalAnimals > 0 
+          ? ((totalVaccineCoverage / totalAnimals) * 100).toFixed(1)
+          : 0
+        
+        // 静默更新预防统计
+        this.setData({
+          preventionStats: {
+            totalPreventions,
+            vaccineCount: totalVaccineCount,
+            vaccineCoverage: totalVaccineCoverage,
+            vaccineStats: {},
+            disinfectionCount: 0,
+            totalCost
+          },
+          'preventionData.stats': {
+            vaccinationRate,
+            preventionCost: totalCost
+          }
+        })
+      }
+      
+      console.timeEnd('⏱️ 后台加载预防数据')
+    } catch (error) {
+      console.error('后台加载预防数据失败:', error)
     }
   },
 
@@ -1017,9 +1326,26 @@ Page<PageData>({
    * 点击治疗记录，跳转到详情页
    */
   onTreatmentRecordTap(e: any) {
+    // ✅ 防重复点击：500ms内只允许点击一次
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) {
+      console.log('⚠️ 点击过快，请稍候')
+      return
+    }
+    this.lastClickTime = now
+    
     const { id } = e.currentTarget.dataset
     wx.navigateTo({
-      url: `/packageHealth/treatment-record/treatment-record?id=${id}&mode=view`
+      url: `/packageHealth/treatment-record/treatment-record?id=${id}&mode=view`,
+      // ✅ 使用EventChannel监听治疗进展更新
+      events: {
+        // 监听治疗进展更新事件（治愈、死亡等）
+        treatmentProgressUpdated: (data: any) => {
+          console.log('✅ 收到治疗进展更新通知，完全后台刷新')
+          // ✅ 完全后台刷新，不阻塞任何操作
+          this.backgroundRefreshData()
+        }
+      }
     })
   },
 
@@ -1027,8 +1353,20 @@ Page<PageData>({
    * 查看全部治疗记录
    */
   onViewAllTreatments() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
     wx.navigateTo({
-      url: '/packageHealth/treatment-records-list/treatment-records-list'
+      url: '/packageHealth/treatment-records-list/treatment-records-list',
+      // ✅ 使用EventChannel监听列表页的更新
+      events: {
+        treatmentListUpdated: (data: any) => {
+          console.log('✅ 收到治疗列表更新通知，完全后台刷新')
+          this.backgroundRefreshData()
+        }
+      }
     })
   },
 
@@ -1335,8 +1673,20 @@ Page<PageData>({
    * 治疗中卡片点击 - 跳转到治疗记录列表
    */
   onOngoingTreatmentClick() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
     wx.navigateTo({
-      url: '/packageHealth/treatment-records-list/treatment-records-list'
+      url: '/packageHealth/treatment-records-list/treatment-records-list',
+      // ✅ 使用EventChannel监听列表页的更新
+      events: {
+        treatmentListUpdated: (data: any) => {
+          console.log('✅ 收到治疗列表更新通知，完全后台刷新')
+          this.backgroundRefreshData()
+        }
+      }
     })
   },
 
@@ -1419,11 +1769,6 @@ Page<PageData>({
         break
       case 'add_treatment':
         this.createTreatmentRecord()
-        break
-      case 'recovery_manage':
-        wx.navigateTo({
-          url: `/packageHealth/recovery-management/recovery-management?batchId=${this.data.currentBatchId}`
-        })
         break
       case 'view_treatment':
         const data = e.currentTarget.dataset.data
@@ -1615,8 +1960,20 @@ Page<PageData>({
    * 点击治愈率卡片，跳转到治愈记录列表
    */
   navigateToCuredRecords() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
     wx.navigateTo({
-      url: '/packageHealth/cured-records-list/cured-records-list'
+      url: '/packageHealth/cured-records-list/cured-records-list',
+      // ✅ 使用EventChannel监听治愈记录更新
+      events: {
+        curedRecordsUpdated: (data: any) => {
+          console.log('✅ 收到治愈记录更新通知，完全后台刷新')
+          this.backgroundRefreshData()
+        }
+      }
     })
   },
 
@@ -1624,8 +1981,20 @@ Page<PageData>({
    * 点击死亡率卡片，跳转到死亡记录列表
    */
   navigateToDeathRecords() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
     wx.navigateTo({
-      url: '/packageHealth/death-records-list/death-records-list'
+      url: '/packageHealth/death-records-list/death-records-list',
+      // ✅ 使用EventChannel监听死亡记录更新
+      events: {
+        deathRecordsUpdated: (data: any) => {
+          console.log('✅ 收到死亡记录更新通知，完全后台刷新')
+          this.backgroundRefreshData()
+        }
+      }
     })
   },
 
@@ -1633,8 +2002,20 @@ Page<PageData>({
    * 点击死亡数卡片，跳转到死亡记录列表
    */
   onDeathCountTap() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
     wx.navigateTo({
-      url: '/packageHealth/death-records-list/death-records-list'
+      url: '/packageHealth/death-records-list/death-records-list',
+      // ✅ 使用EventChannel监听死亡记录更新
+      events: {
+        deathRecordsUpdated: (data: any) => {
+          console.log('✅ 收到死亡记录更新通知，完全后台刷新')
+          this.backgroundRefreshData()
+        }
+      }
     })
   },
 
@@ -1642,8 +2023,19 @@ Page<PageData>({
    * 异常数量卡片点击 - 跳转到异常记录列表
    */
   onAbnormalCountTap() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
     wx.navigateTo({
-      url: '/packageHealth/abnormal-records-list/abnormal-records-list'
+      url: '/packageHealth/abnormal-records-list/abnormal-records-list',
+      events: {
+        abnormalRecordsUpdated: (data: any) => {
+          console.log('✅ 收到待处理记录更新通知，完全后台刷新')
+          this.backgroundRefreshData()
+        }
+      }
     })
   },
 
