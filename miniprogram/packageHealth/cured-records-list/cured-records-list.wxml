@@ -18,33 +18,24 @@
     <!-- 统计卡片 -->
     <view class="stats-section">
       <view class="stats-grid">
-        <view class="stat-card">
-          <view class="stat-icon success">
-            <t-icon name="check-circle" size="48rpx" />
-          </view>
+        <view class="stat-card success">
           <view class="stat-info">
-            <text class="stat-value">{{stats.totalCured}}</text>
             <text class="stat-label">累计治愈</text>
+            <text class="stat-value">{{stats.totalCured}}</text>
           </view>
         </view>
 
-        <view class="stat-card">
-          <view class="stat-icon primary">
-            <t-icon name="money-circle" size="48rpx" />
-          </view>
+        <view class="stat-card primary">
           <view class="stat-info">
+            <text class="stat-label">治疗成本</text>
             <text class="stat-value">¥{{stats.totalCost}}</text>
-            <text class="stat-label">总治疗成本</text>
           </view>
         </view>
 
-        <view class="stat-card">
-          <view class="stat-icon warning">
-            <t-icon name="chart-bubble" size="48rpx" />
-          </view>
+        <view class="stat-card warning">
           <view class="stat-info">
+            <text class="stat-label">平均成本</text>
             <text class="stat-value">¥{{stats.avgCostPerAnimal}}</text>
-            <text class="stat-label">单只平均成本</text>
           </view>
         </view>
       </view>
@@ -85,80 +76,139 @@
               已治愈
             </t-tag>
           </view>
-          <view class="record-batch">
-            <t-icon name="layers" size="28rpx" color="#999" />
-            <text class="batch-text">{{item.batchNumber || item.batchId}}</text>
-          </view>
         </view>
 
         <!-- 记录内容 -->
         <view class="record-content">
-          <!-- 治愈信息 -->
-          <view class="info-row highlight-row">
-            <view class="info-group">
-              <text class="info-label">治愈数量</text>
-              <text class="info-value success-text">{{item.outcome.curedCount}} 只</text>
-            </view>
-            <view class="info-group">
-              <text class="info-label">治愈成本</text>
-              <text class="info-value primary-text">¥{{item.formattedCuredCost}}</text>
-            </view>
-          </view>
-
-          <!-- 详细信息 -->
+          <!-- 信息行：批次 + 治愈数量 + 治疗数量 -->
           <view class="info-row">
             <view class="info-group">
-              <text class="info-label">总治疗数</text>
+              <text class="info-label">批次：</text>
+              <text class="info-value">{{item.batchNumber || item.batchId}}</text>
+            </view>
+            <view class="info-group">
+              <text class="info-label">治愈：</text>
+              <text class="info-value cured-count">{{item.outcome.curedCount}} 只</text>
+            </view>
+            <view class="info-group" wx:if="{{item.outcome.totalTreated}}">
+              <text class="info-label">治疗：</text>
               <text class="info-value">{{item.outcome.totalTreated}} 只</text>
             </view>
-            <view class="info-group" wx:if="{{item.outcome.deathCount > 0}}">
-              <text class="info-label">死亡数</text>
-              <text class="info-value danger-text">{{item.outcome.deathCount}} 只</text>
-            </view>
           </view>
 
-          <!-- 成本明细 -->
-          <view class="info-row cost-row" wx:if="{{item.outcome.curedMedicationCost}}">
-            <view class="cost-item">
-              <text class="cost-label">药物成本：</text>
-              <text class="cost-value">¥{{item.formattedMedicationCost}}</text>
-            </view>
-            <view class="cost-item">
-              <text class="cost-label">单只成本：</text>
-              <text class="cost-value">¥{{item.formattedCostPerAnimal}}</text>
-            </view>
-          </view>
-
-          <!-- 治疗方案 -->
-          <view class="info-row treatment-plan-row" wx:if="{{item.treatmentPlan.primary}}">
-            <t-icon name="file-text" size="28rpx" color="#0052d9" />
-            <text class="treatment-plan-text">{{item.treatmentPlan.primary}}</text>
-          </view>
-
-          <!-- 用药情况 -->
-          <view class="info-row medication-row" wx:if="{{item.medications && item.medications.length > 0}}">
-            <t-icon name="queue" size="28rpx" color="#00a870" />
-            <text class="medication-text">
-              <block wx:for="{{item.medications}}" wx:for-item="med" wx:key="materialId">
-                {{med.name}}{{med.quantity}}{{med.unit}}<text wx:if="{{index < item.medications.length - 1}}">、</text>
-              </block>
-            </text>
-          </view>
-
-          <!-- 底部：日期 -->
+          <!-- 底部：日期 + 记录者 -->
           <view class="record-footer">
             <view class="footer-left">
-              <text class="date-label">治疗日期：</text>
               <text class="date-text">{{item.treatmentDate}}</text>
-            </view>
-            <view class="footer-right" wx:if="{{item.completedAt}}">
-              <text class="date-label">完成日期：</text>
-              <text class="date-text">{{item.completedAt}}</text>
+              <text class="operator-text" wx:if="{{item.operatorName}}">{{item.operatorName}}</text>
             </view>
           </view>
         </view>
       </view>
     </view>
+  </view>
+
+  <!-- ========== 治疗详情底部弹窗 ========== -->
+  <!-- 遮罩层 -->
+  <view 
+    class="detail-mask" 
+    wx:if="{{showDetailDialog}}"
+    bind:tap="closeDetailDialog"
+    catchtouchmove="preventTouchMove"
+  ></view>
+  
+  <!-- 弹窗内容 -->
+  <view class="detail-popup {{showDetailDialog ? 'show' : ''}}" wx:if="{{showDetailDialog && selectedRecord}}">
+    <!-- 标题栏 -->
+    <view class="popup-header">
+      <text class="popup-title">治疗详情</text>
+      <view class="close-btn" bind:tap="closeDetailDialog">
+        <text class="icon-close">×</text>
+      </view>
+    </view>
+    
+    <!-- 内容区域 -->
+    <scroll-view class="popup-content" scroll-y>
+      <!-- 诊断信息 -->
+      <view class="detail-section">
+        <view class="section-title">诊断信息</view>
+        <view class="info-card">
+          <view class="info-row">
+            <text class="info-label">诊断结果</text>
+            <text class="info-value">{{selectedRecord.diagnosis.confirmed || selectedRecord.diagnosis.preliminary}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">治疗批次</text>
+            <text class="info-value">{{selectedRecord.batchNumber || selectedRecord.batchId}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">治疗类型</text>
+            <text class="info-value">{{selectedRecord.treatmentType === 'medication' ? '药物治疗' : '隔离观察'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">治疗日期</text>
+            <text class="info-value">{{selectedRecord.treatmentDate}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治愈结果 -->
+      <view class="detail-section">
+        <view class="section-title">治愈结果</view>
+        <view class="cure-summary">
+          <view class="cure-stat-item primary">
+            <text class="stat-label">治愈数量</text>
+            <text class="stat-value">{{selectedRecord.outcome.curedCount}} 只</text>
+          </view>
+          <view class="cure-stat-item" wx:if="{{selectedRecord.outcome.totalTreated > selectedRecord.outcome.curedCount}}">
+            <text class="stat-label">总治疗数</text>
+            <text class="stat-value">{{selectedRecord.outcome.totalTreated}} 只</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治愈成本 -->
+      <view class="detail-section">
+        <view class="section-title">治愈成本</view>
+        <view class="cost-grid">
+          <view class="cost-item">
+            <text class="cost-label">治愈总成本</text>
+            <text class="cost-value primary">¥{{selectedRecord.formattedCuredCost}}</text>
+          </view>
+          <view class="cost-item" wx:if="{{selectedRecord.formattedMedicationCost > 0}}">
+            <text class="cost-label">药物成本</text>
+            <text class="cost-value">¥{{selectedRecord.formattedMedicationCost}}</text>
+          </view>
+          <view class="cost-item">
+            <text class="cost-label">单只成本</text>
+            <text class="cost-value">¥{{selectedRecord.formattedCostPerAnimal}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 治疗方案 -->
+      <view class="detail-section" wx:if="{{selectedRecord.treatmentPlan.primary}}">
+        <view class="section-title">治疗方案</view>
+        <view class="plan-card">
+          <text class="plan-text">{{selectedRecord.treatmentPlan.primary}}</text>
+        </view>
+      </view>
+
+      <!-- 用药记录 -->
+      <view class="detail-section" wx:if="{{selectedRecord.medications && selectedRecord.medications.length > 0}}">
+        <view class="section-title">用药记录</view>
+        <view class="medication-list">
+          <view class="medication-item" wx:for="{{selectedRecord.medications}}" wx:key="index">
+            <view class="med-icon">💊</view>
+            <view class="med-info">
+              <text class="med-name">{{item.name}}</text>
+              <text class="med-spec">{{item.quantity}}{{item.unit}}</text>
+              <text class="med-dosage" wx:if="{{item.dosage}}">{{item.dosage}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 </view>
 

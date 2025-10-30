@@ -87,12 +87,16 @@ Page({
           try {
             aiRecommendation = JSON.parse(aiRecommendation)
           } catch (e) {
-            console.error('解析AI建议失败:', e)
+            // AI建议解析失败，使用原始文本
           }
         }
 
         // 转换图片为临时URL
         let processedImages = record.images || []
+        
+        // ✅ 首先过滤掉原始数据中的无效值
+        processedImages = processedImages.filter((url: any) => url && typeof url === 'string')
+        
         if (processedImages.length > 0) {
           try {
             const tempUrlResult = await wx.cloud.getTempFileURL({
@@ -100,13 +104,14 @@ Page({
             })
             
             if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
-              processedImages = tempUrlResult.fileList.map((item: any) => 
-                item.tempFileURL || item.fileID
-              )
+              processedImages = tempUrlResult.fileList
+                .map((item: any) => item.tempFileURL || item.fileID)
+                .filter((url: any) => url && typeof url === 'string') // 过滤掉无效的URL
             }
           } catch (urlError) {
-            console.error('图片URL转换失败:', urlError)
-            // 转换失败也不影响其他数据显示
+            // 图片URL转换失败，静默处理
+            // 继续使用已过滤的原始图片URL（不影响显示）
+            console.warn('图片URL转换失败，使用原始URL:', urlError)
           }
         }
 
@@ -118,7 +123,7 @@ Page({
         throw new Error(result.result?.error || '加载失败')
       }
     } catch (error: any) {
-      console.error('加载记录详情失败:', error)
+      // 加载失败，已显示错误提示
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -243,7 +248,7 @@ Page({
       }
     } catch (error: any) {
       wx.hideLoading()
-      console.error('提交修正失败:', error)
+      // 提交失败，已显示错误提示
       wx.showToast({
         title: error.message || '提交失败',
         icon: 'none'

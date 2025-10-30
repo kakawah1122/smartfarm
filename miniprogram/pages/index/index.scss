@@ -32,7 +32,7 @@ page {
 .scroll-container {
   flex: 1;
   background-color: #f9fafb !important;
-  margin-top: calc(var(--navbar-height, 132rpx) + 16rpx); /* 导航栏高度 + 安全间距 */
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx); /* 状态栏 + 导航栏 + 安全间距 */
   padding-top: var(--spacing-base, 16rpx);
   padding-bottom: 0;
   border-radius: var(--spacing-xl, 32rpx) var(--spacing-xl, 32rpx) 0 0;

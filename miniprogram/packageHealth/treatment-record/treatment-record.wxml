@@ -24,10 +24,6 @@
             <text class="info-value">{{formData.diagnosis}}</text>
           </view>
           <view class="info-row">
-            <text class="info-label">治疗类型</text>
-            <text class="info-value">{{formData.treatmentType === 'medication' ? '药物治疗' : '隔离观察'}}</text>
-          </view>
-          <view class="info-row">
             <text class="info-label">治疗日期</text>
             <text class="info-value">{{formData.treatmentDate}}</text>
           </view>
@@ -155,22 +151,6 @@
           <text class="confidence-value {{formData.diagnosisConfidence >= 80 ? 'high' : formData.diagnosisConfidence >= 60 ? 'medium' : 'low'}}">
             {{formData.diagnosisConfidence}}%
           </text>
-        </view>
-      </view>
-
-      <!-- 治疗类型 -->
-      <view class="form-item">
-        <view class="form-label">治疗类型</view>
-        <view class="treatment-type-grid">
-          <view 
-            class="treatment-type-item {{formData.treatmentType === item.value ? 'active' : ''}}"
-            wx:for="{{treatmentTypeOptions}}"
-            wx:key="value"
-            data-type="{{item.value}}"
-            bind:tap="selectTreatmentType"
-          >
-            <text class="type-name">{{item.label}}</text>
-          </view>
         </view>
       </view>
 

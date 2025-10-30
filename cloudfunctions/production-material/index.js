@@ -1393,21 +1393,26 @@ async function getCurrentStockCount(batchId, recordDate) {
     const deathRecords = await db.collection('health_death_records')
       .where({
         batchId: batchId,
-        deathDate: _.lte(recordDate)
+        deathDate: _.lte(recordDate),
+        isDeleted: _.neq(true)  // 排除已删除的记录
       })
       .get()
     
-    const totalDeathCount = deathRecords.data.reduce((sum, r) => sum + (r.deadCount || 0), 0)
+    // 兼容多种字段名：deathCount（新）、deadCount（旧）、totalDeathCount（兼容）
+    const totalDeathCount = deathRecords.data.reduce((sum, r) => {
+      return sum + (r.deathCount || r.deadCount || r.totalDeathCount || 0)
+    }, 0)
     
     // 3. 查询截至recordDate的出栏数（如果有）
     const exitRecords = await db.collection('prod_batch_exits')
       .where({
         batchId: batchId,
-        exitDate: _.lte(recordDate)
+        exitDate: _.lte(recordDate),
+        isDeleted: _.neq(true)  // 排除已删除的记录
       })
       .get()
     
-    const totalExitCount = exitRecords.data.reduce((sum, r) => sum + (r.quantity || 0), 0)
+    const totalExitCount = exitRecords.data.reduce((sum, r) => sum + (r.quantity || r.exitQuantity || 0), 0)
     
     // 4. 当前存栏 = 入栏 - 死亡 - 出栏
     const currentStock = initialQuantity - totalDeathCount - totalExitCount

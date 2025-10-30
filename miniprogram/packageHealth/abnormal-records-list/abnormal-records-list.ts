@@ -76,7 +76,7 @@ Page({
       })
 
       if (result.result && result.result.success) {
-        console.log('异常记录数据:', result.result.data)
+        // 加载成功
         this.setData({
           records: result.result.data || [],
           loading: false
@@ -85,7 +85,7 @@ Page({
         throw new Error(result.result?.error || '加载失败')
       }
     } catch (error: any) {
-      console.error('加载异常记录失败:', error)
+      // 加载失败，已显示错误提示
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'

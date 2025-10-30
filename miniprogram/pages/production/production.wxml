@@ -357,39 +357,6 @@
 
       <!-- 物料管理 -->
       <view wx:if="{{activeTab === 'material'}}" class="tab-content">
-        <!-- 库存状态 - 四宫格布局 -->
-        <view class="material-section">
-          <view class="material-overview-grid">
-            <!-- 饲料库存 -->
-            <view class="material-overview-card feed-card" bind:tap="viewFeedInventory">
-              <view class="material-overview-value">{{materialStats.feedDetails.totalCount}}</view>
-              <view class="material-overview-label">饲料库存</view>
-              <view class="material-overview-status">{{materialStats.feedDetails.statusText}}</view>
-            </view>
-            
-            <!-- 药品库存 -->
-            <view class="material-overview-card medicine-card" bind:tap="viewMedicineInventory">
-              <view class="material-overview-value">{{materialStats.medicineDetails.totalCount}}</view>
-              <view class="material-overview-label">药品库存</view>
-              <view class="material-overview-status">{{materialStats.medicineDetails.statusText}}</view>
-            </view>
-
-            <!-- 设备物料 -->
-            <view class="material-overview-card equipment-card" bind:tap="viewEquipmentInventory">
-              <view class="material-overview-value">{{materialStats.equipmentDetails.totalCount}}</view>
-              <view class="material-overview-label">设备物料</view>
-              <view class="material-overview-status">{{materialStats.equipmentDetails.statusText}}</view>
-            </view>
-
-            <!-- 库存总览 -->
-            <view class="material-overview-card summary-card" bind:tap="viewInventoryDetail">
-              <view class="material-overview-value">{{materialStats.feedDetails.totalCount + materialStats.medicineDetails.totalCount + materialStats.equipmentDetails.totalCount}}</view>
-              <view class="material-overview-label">库存总览</view>
-              <view class="material-overview-status">{{(materialStats.feedDetails.status === 'critical' || materialStats.medicineDetails.status === 'critical' || materialStats.equipmentDetails.status === 'critical') ? '需要关注' : (materialStats.feedDetails.status === 'warning' || materialStats.medicineDetails.status === 'warning' || materialStats.equipmentDetails.status === 'warning') ? '部分偏低' : '状态良好'}}</view>
-            </view>
-          </view>
-        </view>
-
         <!-- 快速操作 -->
         <view class="quick-action">
           <t-row gutter="16">
@@ -409,6 +376,35 @@
               </t-button>
             </t-col>
           </t-row>
+        </view>
+
+        <!-- 库存状态 - 四宫格布局 -->
+        <view class="material-section">
+          <view class="material-overview-grid">
+            <!-- 饲料库存 -->
+            <view class="material-overview-card feed-card" bind:tap="viewFeedInventory">
+              <view class="material-overview-label">饲料库存</view>
+              <view class="material-overview-status">{{materialStats.feedDetails.statusText}}</view>
+            </view>
+            
+            <!-- 药品库存 -->
+            <view class="material-overview-card medicine-card" bind:tap="viewMedicineInventory">
+              <view class="material-overview-label">药品库存</view>
+              <view class="material-overview-status">{{materialStats.medicineDetails.statusText}}</view>
+            </view>
+
+            <!-- 设备物料 -->
+            <view class="material-overview-card equipment-card" bind:tap="viewEquipmentInventory">
+              <view class="material-overview-label">设备物料</view>
+              <view class="material-overview-status">{{materialStats.equipmentDetails.statusText}}</view>
+            </view>
+
+            <!-- 库存总览 -->
+            <view class="material-overview-card summary-card" bind:tap="viewInventoryDetail">
+              <view class="material-overview-label">库存总览</view>
+              <view class="material-overview-status">{{(materialStats.feedDetails.status === 'critical' || materialStats.medicineDetails.status === 'critical' || materialStats.equipmentDetails.status === 'critical') ? '需要关注' : (materialStats.feedDetails.status === 'warning' || materialStats.medicineDetails.status === 'warning' || materialStats.equipmentDetails.status === 'warning') ? '部分偏低' : '状态良好'}}</view>
+            </view>
+          </view>
         </view>
 
         <!-- 记录列表 -->
@@ -438,9 +434,9 @@
                       <view class="record-title-row">
                         <text class="record-name">{{item.name}}</text>
                         <t-tag 
-                          theme="{{item.type === '采购' ? 'success' : item.type === '投喂' ? 'warning' : 'light'}}" 
+                          theme="light" 
                           size="small" 
-                          class="{{item.type === '采购' ? 'record-type-tag' : item.type === '投喂' ? 'record-type-tag orange-tag' : 'record-type-tag purple-tag'}}"
+                          class="record-type-tag {{item.category === '饲料' || item.category === '营养品' ? 'feed-tag' : item.category === '药品' ? 'medicine-tag' : item.category === '设备' ? 'equipment-tag' : 'default-tag'}}"
                         >
                           {{item.type}}
                         </t-tag>
@@ -673,9 +669,9 @@
             <text class="info-label">操作类型：</text>
             <view class="status-value">
               <t-tag 
-                theme="{{selectedMaterialRecord.type === '采购' ? 'success' : 'light'}}" 
+                theme="light" 
                 size="small"
-                class="{{selectedMaterialRecord.type === '采购' ? '' : 'purple-tag'}}"
+                class="{{selectedMaterialRecord.category === '饲料' || selectedMaterialRecord.category === '营养品' ? 'feed-tag' : selectedMaterialRecord.category === '药品' ? 'medicine-tag' : selectedMaterialRecord.category === '设备' ? 'equipment-tag' : 'default-tag'}}"
               >
                 {{selectedMaterialRecord.type}}
               </t-tag>

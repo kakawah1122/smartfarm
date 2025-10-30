@@ -6,7 +6,7 @@
   
   .page-content {
     padding: 32rpx;
-    padding-top: calc(var(--navbar-height, 132rpx) + 68rpx); /* 导航栏高度 + 安全间距 + 预留空间 */
+    padding-top: 200rpx; /* 增加导航栏与内容的间距（原160rpx + 40rpx） */
     padding-bottom: 120rpx; /* 为底部按钮预留空间 */
   }
 }
@@ -112,48 +112,6 @@
     &.low {
       color: #e34d59;
     }
-  }
-}
-
-/* 治疗类型选择网格 */
-.treatment-type-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16rpx;
-  margin-top: 16rpx;
-}
-
-.treatment-type-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24rpx 20rpx;
-  border: 2rpx solid #e0e0e0;
-  border-radius: 12rpx;
-  background: #fafafa;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &.active {
-    border-color: #0052d9;
-    background: rgba(0, 82, 217, 0.1);
-    
-    .type-name {
-      color: #0052d9;
-      font-weight: 600;
-    }
-  }
-  
-  &:not(.active):hover {
-    border-color: #ccc;
-    background: #f0f0f0;
-  }
-  
-  .type-name {
-    font-size: 28rpx;
-    color: #1a1a1a;
-    text-align: center;
-    transition: color 0.3s ease;
   }
 }
 
@@ -425,28 +383,8 @@
   .treatment-record-page {
     .page-content {
       padding: 24rpx;
-      padding-top: 200rpx;
+      padding-top: 160rpx; /* 保持与默认值一致，确保导航栏不遮挡内容 */
       padding-bottom: 120rpx;
-    }
-    
-    .treatment-type-grid {
-      grid-template-columns: 1fr;
-      gap: 12rpx;
-    }
-    
-    .treatment-type-item {
-      flex-direction: row;
-      justify-content: flex-start;
-      padding: 16rpx;
-      
-      .type-icon {
-        margin-bottom: 0;
-        margin-right: 12rpx;
-      }
-      
-      .type-name {
-        font-size: 24rpx;
-      }
     }
     
     .medication-details {
@@ -501,24 +439,6 @@
           --td-cell-border-color: #505050;
           --td-cell-title-color: #e0e0e0;
         }
-      }
-    }
-    
-    .treatment-type-item {
-      background: #3a3a3a;
-      border-color: #505050;
-      
-      &.active {
-        background: rgba(0, 82, 217, 0.2);
-      }
-      
-      &:not(.active):hover {
-        background: #404040;
-        border-color: #666;
-      }
-      
-      .type-name {
-        color: #e0e0e0;
       }
     }
     

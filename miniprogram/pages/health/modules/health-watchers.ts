@@ -38,13 +38,11 @@ export function startDataWatcher(
             }, 1000) // 1秒防抖
           },
           onError: (err) => {
-            console.error('健康记录监听错误:', err)
             // 错误时自动重置监听器
             watchers.healthRecordsWatcher = null
           }
         })
     } catch (error) {
-      console.error('启动健康记录监听器失败:', error)
       watchers.healthRecordsWatcher = null
     }
     
@@ -65,13 +63,11 @@ export function startDataWatcher(
             }, 1000) // 1秒防抖
           },
           onError: (err) => {
-            console.error('死亡记录监听错误:', err)
             // 错误时自动重置监听器
             watchers.deathRecordsWatcher = null
           }
         })
     } catch (error) {
-      console.error('启动死亡记录监听器失败:', error)
       watchers.deathRecordsWatcher = null
     }
   }, 100) // 延迟100ms启动
@@ -84,12 +80,9 @@ export function stopDataWatcher(watchers: WatcherManager) {
   if (watchers.healthRecordsWatcher) {
     try {
       watchers.healthRecordsWatcher.close()
-    } catch (error: any) {
-      // 忽略 WebSocket 连接已断开的非致命错误
-      if (!error.message || !error.message.includes('websocket not connected')) {
-        console.error('停止健康记录监听器时出错:', error)
-      }
-    } finally {
+      } catch (error: any) {
+        // 忽略 WebSocket 连接已断开的非致命错误
+      } finally {
       watchers.healthRecordsWatcher = null
     }
   }
@@ -97,12 +90,9 @@ export function stopDataWatcher(watchers: WatcherManager) {
   if (watchers.deathRecordsWatcher) {
     try {
       watchers.deathRecordsWatcher.close()
-    } catch (error: any) {
-      // 忽略 WebSocket 连接已断开的非致命错误
-      if (!error.message || !error.message.includes('websocket not connected')) {
-        console.error('停止死亡记录监听器时出错:', error)
-      }
-    } finally {
+      } catch (error: any) {
+        // 忽略 WebSocket 连接已断开的非致命错误
+      } finally {
       watchers.deathRecordsWatcher = null
     }
   }

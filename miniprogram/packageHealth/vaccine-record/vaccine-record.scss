@@ -6,7 +6,7 @@
   
   .page-container {
     padding: 32rpx 32rpx 0;
-    padding-top: calc(var(--navbar-height, 132rpx) + 32rpx); /* 导航栏高度 + 安全间距 */
+    padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
   }
 }
 

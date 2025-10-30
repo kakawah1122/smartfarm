@@ -6,7 +6,7 @@
   
   .content-container {
     padding: 20rpx;
-    padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏高度 + 安全间距 */
+    padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
   }
 
   .form-container {

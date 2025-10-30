@@ -724,6 +724,8 @@ exports.main = async (event, context) => {
         return await performAIDiagnosis(event, openid)
       case 'get_diagnosis_history':
         return await getDiagnosisHistory(event, openid)
+      case 'get_diagnosis_result':
+        return await getDiagnosisResult(event, openid)
       case 'update_diagnosis_review':
         return await updateDiagnosisReview(event, openid)
       case 'adopt_diagnosis':
@@ -835,6 +837,18 @@ async function performAIDiagnosis(event, openid) {
 }
 
 // 获取诊断历史
+// 治疗结果文本映射
+function getOutcomeText(outcome) {
+  const outcomeMap = {
+    'ongoing': '治疗中',
+    'effective': '有效',
+    'ineffective': '无效',
+    'completed': '已完成',
+    'stopped': '已中止'
+  }
+  return outcomeMap[outcome] || outcome || '未知'
+}
+
 async function getDiagnosisHistory(event, openid) {
   try {
     const { 
@@ -875,10 +889,189 @@ async function getDiagnosisHistory(event, openid) {
 
     const total = await query.count()
 
+    // ✅ 批量查询批次信息，填充批次编号
+    const batchIds = [...new Set(result.data.map(r => r.batchId).filter(id => id))]
+    const batchMap = {}
+    
+    if (batchIds.length > 0) {
+      try {
+        const batchResult = await db.collection('production_batches')
+          .where({
+            _id: _.in(batchIds)
+          })
+          .field({ batchNumber: true })
+          .get()
+        
+        batchResult.data.forEach(batch => {
+          batchMap[batch._id] = batch.batchNumber
+        })
+      } catch (batchError) {
+        console.error('查询批次信息失败:', batchError)
+        // 继续执行，不影响诊断记录的返回
+      }
+    }
+
+    // ✅ 批量查询关联的治疗记录
+    const diagnosisIds = result.data.map(r => r._id)
+    const treatmentMap = {}
+    
+    if (diagnosisIds.length > 0) {
+      try {
+        const treatmentResult = await db.collection('health_treatment_records')
+          .where({
+            diagnosisId: _.in(diagnosisIds),
+            isDeleted: _.neq(true)
+          })
+          .field({
+            diagnosisId: true,
+            treatmentPlan: true,
+            medications: true,
+            treatmentDate: true,
+            outcome: true,
+            updatedAt: true
+          })
+          .get()
+        
+        // 按诊断ID分组，取最新的治疗记录
+        treatmentResult.data.forEach(treatment => {
+          const existingTreatment = treatmentMap[treatment.diagnosisId]
+          const treatmentTime = treatment.updatedAt || treatment.treatmentDate
+          const existingTime = existingTreatment?.updatedAt || existingTreatment?.treatmentDate
+          
+          // 如果没有现有记录，或当前记录更新时间更晚，则使用当前记录
+          if (!existingTreatment || treatmentTime > existingTime) {
+            treatmentMap[treatment.diagnosisId] = treatment
+          }
+        })
+      } catch (treatmentError) {
+        console.error('查询治疗记录失败:', treatmentError)
+        // 继续执行，不影响诊断记录的返回
+      }
+    }
+
+    // 映射数据库字段到前端期望的格式
+    const mappedRecords = result.data.map(record => {
+      // ✅ 修复：支持新旧两种数据结构
+      // 新结构：record.result (从 process-ai-diagnosis 保存)
+      // 旧结构：record.aiResult (从旧版本保存)
+      const aiResult = record.result || record.aiResult || {}
+      
+      // 支持病鹅诊断和死因剖析两种类型
+      const primaryDiagnosis = aiResult.primaryDiagnosis || aiResult.primaryCause || {}
+      const treatmentRecommendation = aiResult.treatmentRecommendation || {}
+      
+      // 处理用药建议（支持多种格式）
+      const medications = treatmentRecommendation.medication || 
+                         treatmentRecommendation.medications || 
+                         []
+      
+      // ✅ 修复：直接从顶层字段读取，而不是从 input.animalInfo
+      const symptoms = record.symptomsText || (Array.isArray(record.symptoms) ? record.symptoms.join('、') : '') || ''
+      const affectedCount = record.affectedCount || 0
+      const dayAge = record.dayAge || 0
+      
+      // ✅ 修复：治疗周期的获取逻辑
+      let treatmentDuration = '未知'
+      if (aiResult.followUp?.reviewInterval) {
+        treatmentDuration = aiResult.followUp.reviewInterval
+      } else if (treatmentRecommendation.followUp?.timeline) {
+        treatmentDuration = treatmentRecommendation.followUp.timeline
+      } else if (medications.length > 0 && medications[0].duration) {
+        treatmentDuration = medications[0].duration
+      }
+      
+      // ✅ 修复：时间格式处理
+      let createTimeStr = ''
+      if (record.createdAt) {
+        createTimeStr = typeof record.createdAt === 'string' 
+          ? record.createdAt 
+          : record.createdAt.toISOString()
+      } else if (record.createTime) {
+        createTimeStr = typeof record.createTime === 'string' 
+          ? record.createTime 
+          : record.createTime.toISOString()
+      }
+      
+      // ✅ 获取关联的实际治疗记录
+      const actualTreatment = treatmentMap[record._id]
+      let actualTreatmentData = null
+      
+      if (actualTreatment) {
+        actualTreatmentData = {
+          treatmentPlan: actualTreatment.treatmentPlan || '',
+          medications: actualTreatment.medications || [],
+          treatmentDate: actualTreatment.treatmentDate || '',
+          outcome: getOutcomeText(actualTreatment.outcome || ''),
+          updatedAt: actualTreatment.updatedAt
+        }
+      }
+      
+      return {
+        _id: record._id,
+        // 诊断结果
+        diagnosisResult: primaryDiagnosis.disease || '未知疾病',
+        diagnosis: primaryDiagnosis.disease || '未知疾病',
+        confidence: primaryDiagnosis.confidence || 0,
+        
+        // 症状和输入信息
+        symptoms: symptoms,
+        affectedCount: affectedCount,
+        dayAge: dayAge,
+        temperature: 0, // 暂不使用
+        
+        // ✅ 诊断图片（症状图片或剖检图片）
+        images: record.images || [],
+        diagnosisType: record.diagnosisType || 'live_diagnosis',
+        
+        // 治疗方案
+        treatmentDuration: treatmentDuration,
+        recommendedMedications: medications.map(med => 
+          typeof med === 'string' ? med : (med.name || med.medication || '')
+        ).filter(m => m),
+        
+        // 其他可能的疾病
+        possibleDiseases: (aiResult.differentialDiagnosis || aiResult.differentialCauses || []).map(dd => ({
+          name: dd.disease || '',
+          confidence: dd.confidence || 0
+        })),
+        
+        // 时间和批次信息
+        createTime: createTimeStr,
+        diagnosisDate: createTimeStr ? createTimeStr.substring(0, 16).replace('T', ' ') : '',
+        batchId: record.batchId || '',
+        batchNumber: batchMap[record.batchId] || record.batchNumber || '未知批次',
+        
+        // 操作员信息
+        operator: record.operatorName || record._openid?.substring(0, 8) || '',
+        
+        // 状态信息
+        status: record.status || 'completed',
+        reviewed: record.veterinaryReview?.reviewed || false,
+        adopted: record.application?.adopted || false,
+        
+        // ✅ 修正信息（如果存在）
+        isCorrected: record.isCorrected || false,
+        correctedDiagnosis: record.correctedDiagnosis || '',
+        correctionReason: record.correctionReason || '',
+        veterinarianDiagnosis: record.veterinarianDiagnosis || '',
+        veterinarianTreatmentPlan: record.veterinarianTreatmentPlan || '',
+        aiAccuracyRating: record.aiAccuracyRating || 0,
+        correctedBy: record.correctedBy || '',
+        correctedByName: record.correctedByName || '',
+        correctedAt: record.correctedAt || '',
+        
+        // ✅ 实际治疗记录（如果存在）
+        actualTreatment: actualTreatmentData,
+        
+        // 保留原始数据以备需要
+        _raw: record
+      }
+    })
+
     return {
       success: true,
       data: {
-        records: result.data,
+        records: mappedRecords,
         pagination: {
           page,
           pageSize,
@@ -892,6 +1085,91 @@ async function getDiagnosisHistory(event, openid) {
     return {
       success: false,
       error: error.message
+    }
+  }
+}
+
+// 获取单条诊断记录详情（用于治疗记录页面）
+async function getDiagnosisResult(event, openid) {
+  try {
+    const { diagnosisId } = event
+
+    if (!diagnosisId) {
+      throw new Error('诊断ID不能为空')
+    }
+
+    const record = await db.collection('health_ai_diagnosis')
+      .doc(diagnosisId)
+      .get()
+
+    if (!record.data) {
+      throw new Error('诊断记录不存在')
+    }
+
+    // 验证权限：只能查看自己的记录
+    if (record.data._openid !== openid) {
+      throw new Error('无权查看该诊断记录')
+    }
+
+    // 处理并返回诊断结果
+    const aiResult = record.data.result || record.data.aiResult || {}
+    const primaryDiagnosis = aiResult.primaryDiagnosis || aiResult.primaryCause || {}
+    const treatmentRecommendation = aiResult.treatmentRecommendation || {}
+    
+    // 查询批次信息
+    let batchNumber = record.data.batchNumber || '未知批次'
+    if (record.data.batchId && !record.data.batchNumber) {
+      try {
+        const batchResult = await db.collection('production_batches')
+          .doc(record.data.batchId)
+          .field({ batchNumber: true })
+          .get()
+        
+        if (batchResult.data) {
+          batchNumber = batchResult.data.batchNumber
+        }
+      } catch (batchError) {
+        console.error('查询批次信息失败:', batchError)
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        // 基本信息
+        diagnosisId: record.data._id,
+        batchId: record.data.batchId || '',
+        batchNumber: batchNumber,
+        diagnosisType: record.data.diagnosisType || 'live_diagnosis',
+        
+        // 诊断结果
+        primaryDiagnosis: primaryDiagnosis.disease || '未知疾病',
+        confidence: primaryDiagnosis.confidence || 0,
+        reasoning: primaryDiagnosis.reasoning || '',
+        
+        // 症状信息
+        symptoms: record.data.symptomsText || (Array.isArray(record.data.symptoms) ? record.data.symptoms.join('、') : ''),
+        affectedCount: record.data.affectedCount || record.data.deathCount || 0,
+        dayAge: record.data.dayAge || 0,
+        
+        // 治疗建议
+        treatmentRecommendation: treatmentRecommendation,
+        medications: treatmentRecommendation.medication || [],
+        
+        // 完整的AI结果（供需要时使用）
+        fullResult: aiResult,
+        
+        // 时间信息
+        createdAt: record.data.createdAt || record.data.createTime || '',
+        status: record.data.status || 'completed'
+      }
+    }
+  } catch (error) {
+    console.error('获取诊断结果失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: error.message || '获取诊断结果失败'
     }
   }
 }

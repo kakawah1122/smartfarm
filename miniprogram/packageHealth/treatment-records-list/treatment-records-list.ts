@@ -87,7 +87,7 @@ Page({
         throw new Error(result.result?.error || '加载失败')
       }
     } catch (error: any) {
-      console.error('加载治疗记录失败:', error)
+      // 加载失败，已显示错误提示
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -102,7 +102,28 @@ Page({
   onRecordTap(e: any) {
     const { id } = e.currentTarget.dataset
     wx.navigateTo({
-      url: `/packageHealth/treatment-record/treatment-record?treatmentId=${id}&mode=view`
+      url: `/packageHealth/treatment-record/treatment-record?treatmentId=${id}&mode=view`,
+      // ✅ 使用EventChannel监听治疗进展更新
+      events: {
+        treatmentProgressUpdated: (data: any) => {
+          // 收到治疗进展更新通知，立即刷新列表
+          // 刷新列表数据
+          this.loadTreatmentRecords()
+          
+          // ✅ 同时通知上一页（健康管理中心）刷新
+          try {
+            const eventChannel = this.getOpenerEventChannel()
+            if (eventChannel) {
+              eventChannel.emit('treatmentListUpdated', data)
+              // 已通知健康管理中心刷新
+            }
+          } catch (error) {
+            // 无法通知上一页，使用降级方案
+            // 降级方案
+            wx.setStorageSync('health_page_need_refresh', true)
+          }
+        }
+      }
     })
   },
 

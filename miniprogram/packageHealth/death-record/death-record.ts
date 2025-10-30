@@ -134,7 +134,7 @@ const pageConfig = {
       }
     } catch (error) {
       wx.hideLoading()
-      console.error('加载诊断信息失败:', error)
+      // 加载失败，静默处理
     }
   },
 
@@ -164,7 +164,7 @@ const pageConfig = {
       }
     } catch (error) {
       wx.hideLoading()
-      console.error('加载治疗信息失败:', error)
+      // 加载失败，静默处理
     }
   },
 
@@ -189,7 +189,7 @@ const pageConfig = {
         this.calculateFinancialLoss(batch)
       }
     } catch (error) {
-      console.error('加载批次信息失败:', error)
+      // 加载失败，静默处理
     }
   },
 
@@ -216,7 +216,7 @@ const pageConfig = {
         })
       }
     } catch (error) {
-      console.error('计算财务损失失败:', error)
+      // 计算失败，静默处理
     }
   },
 
@@ -417,6 +417,9 @@ const pageConfig = {
         wx.hideLoading()
         
         if (result.result && result.result.success) {
+          // ✅ 设置刷新标志，通知健康页面刷新
+          wx.setStorageSync('health_page_need_refresh', true)
+          
           wx.showToast({
             title: '死亡记录已提交',
             icon: 'success'

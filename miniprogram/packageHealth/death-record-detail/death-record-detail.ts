@@ -82,13 +82,37 @@ Page({
           try {
             diagnosisResult = JSON.parse(diagnosisResult)
           } catch (e) {
-            console.error('解析诊断结果失败:', e)
+            // 解析失败，使用原始数据
             diagnosisResult = {}
           }
         }
 
+        // 处理剖检图片，转换为临时URL并过滤无效值
+        let processedImages = record.autopsyImages || []
+        
+        // ✅ 首先过滤掉原始数据中的无效值
+        processedImages = processedImages.filter((url: any) => url && typeof url === 'string')
+        
+        if (processedImages.length > 0) {
+          try {
+            const tempUrlResult = await wx.cloud.getTempFileURL({
+              fileList: processedImages
+            })
+            
+            if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
+              processedImages = tempUrlResult.fileList
+                .map((item: any) => item.tempFileURL || item.fileID)
+                .filter((url: any) => url && typeof url === 'string') // 过滤掉无效的URL
+            }
+          } catch (urlError) {
+            // 图片URL转换失败，静默处理
+            // 继续使用已过滤的原始图片URL（不影响显示）
+            console.warn('剖检图片URL转换失败，使用原始URL:', urlError)
+          }
+        }
+
         this.setData({
-          record: record,
+          record: { ...record, autopsyImages: processedImages },
           diagnosisResult: diagnosisResult || {},
           loading: false
         })
@@ -96,7 +120,7 @@ Page({
         throw new Error(result.result?.error || '加载失败')
       }
     } catch (error: any) {
-      console.error('加载记录详情失败:', error)
+      // 加载失败，已显示错误提示
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -230,7 +254,7 @@ Page({
       }
     } catch (error: any) {
       wx.hideLoading()
-      console.error('提交修正失败:', error)
+      // 提交失败，已显示错误提示
       wx.showToast({
         title: error.message || '提交失败',
         icon: 'none'

@@ -13,7 +13,7 @@ page {
 
 /* 主内容区域 - 避免被导航栏遮挡 */
 .main-content {
-  margin-top: var(--navbar-height, 132rpx); /* 导航栏高度 */
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx)); /* 状态栏 + 导航栏 */
   flex: 1;
 }
 
@@ -167,17 +167,42 @@ page {
   box-shadow: 0 2rpx 8rpx rgba(83, 29, 171, 0.4) !important;
 }
 
-/* 紫色标签样式 */
+/* 物料类型标签样式 - 对应四宫格配色 */
+.feed-tag {
+  background: rgba(250, 140, 22, 0.15) !important;
+  color: #fa8c16 !important;
+  border: 1rpx solid rgba(250, 140, 22, 0.3) !important;
+}
+
+.medicine-tag {
+  background: rgba(235, 47, 150, 0.15) !important;
+  color: #eb2f96 !important;
+  border: 1rpx solid rgba(235, 47, 150, 0.3) !important;
+}
+
+.equipment-tag {
+  background: rgba(114, 46, 209, 0.15) !important;
+  color: #722ed1 !important;
+  border: 1rpx solid rgba(114, 46, 209, 0.3) !important;
+}
+
+.default-tag {
+  background: rgba(24, 144, 255, 0.15) !important;
+  color: #1890ff !important;
+  border: 1rpx solid rgba(24, 144, 255, 0.3) !important;
+}
+
+/* 保留旧样式以兼容其他地方 */
 .purple-tag {
-  background: rgba(83, 29, 171, 0.1) !important;
-  color: #531dab !important;
-  border: 1rpx solid rgba(83, 29, 171, 0.2) !important;
+  background: rgba(114, 46, 209, 0.15) !important;
+  color: #722ed1 !important;
+  border: 1rpx solid rgba(114, 46, 209, 0.3) !important;
 }
 
 .orange-tag {
-  background: rgba(255, 152, 0, 0.1) !important;
-  color: #ff9800 !important;
-  border: 1rpx solid rgba(255, 152, 0, 0.2) !important;
+  background: rgba(250, 140, 22, 0.15) !important;
+  color: #fa8c16 !important;
+  border: 1rpx solid rgba(250, 140, 22, 0.3) !important;
 }
 
 .success-button {
@@ -573,17 +598,12 @@ page {
     padding: 16rpx 10rpx;
   }
   
-  .material-overview-value {
-    font-size: 28rpx;
-  }
-  
   .material-overview-label {
-    font-size: 20rpx;
+    font-size: 22rpx;
   }
   
   .material-overview-status {
-    font-size: 16rpx;
-    padding: 2rpx 4rpx;
+    font-size: 18rpx;
   }
 }
 
@@ -602,9 +622,14 @@ page {
 }
 
 .material-overview-card {
-  padding: 24rpx 16rpx;
+  padding: 32rpx 16rpx;
   border-radius: 12rpx;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 120rpx;
   transition: all 0.3s ease;
   
   &:active {
@@ -613,52 +638,47 @@ page {
   }
   
   &.feed-card {
-    background: linear-gradient(135deg, #f6ffed 0%, #f0f9e8 100%);
-    color: #389e0d;
-    border: 1rpx solid #d9f7be;
+    background: linear-gradient(135deg, #fa8c16 0%, #ffa940 100%);
+    color: #ffffff;
+    border: 1rpx solid #d46b08;
+    box-shadow: 0 4rpx 12rpx rgba(250, 140, 22, 0.3);
   }
   
   &.medicine-card {
-    background: linear-gradient(135deg, #fff0f6 0%, #fce8f0 100%);
-    color: #c41d7f;
-    border: 1rpx solid #ffadd2;
+    background: linear-gradient(135deg, #eb2f96 0%, #f759ab 100%);
+    color: #ffffff;
+    border: 1rpx solid #c41d7f;
+    box-shadow: 0 4rpx 12rpx rgba(235, 47, 150, 0.3);
   }
   
   &.equipment-card {
-    background: linear-gradient(135deg, #f9f0ff 0%, #f4e8ff 100%);
-    color: #531dab;
-    border: 1rpx solid #d3adf7;
+    background: linear-gradient(135deg, #722ed1 0%, #9254de 100%);
+    color: #ffffff;
+    border: 1rpx solid #531dab;
+    box-shadow: 0 4rpx 12rpx rgba(114, 46, 209, 0.3);
   }
   
   &.summary-card {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
-    color: #0050b3;
-    border: 1rpx solid #91d5ff;
+    background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+    color: #ffffff;
+    border: 1rpx solid #096dd9;
+    box-shadow: 0 4rpx 12rpx rgba(24, 144, 255, 0.3);
   }
 }
 
-.material-overview-value {
-  font-size: 40rpx;
-  font-weight: 600;
-  line-height: 1.2;
-  margin-bottom: 8rpx;
-}
-
 .material-overview-label {
-  font-size: 24rpx;
-  opacity: 0.9;
-  margin-bottom: 6rpx;
+  font-size: 28rpx;
+  margin-bottom: 12rpx;
+  font-weight: 600;
+  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.15);
 }
 
 .material-overview-status {
-  font-size: 20rpx;
+  font-size: 24rpx;
   font-weight: 500;
-  padding: 4rpx 8rpx;
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 10rpx;
-  display: inline-block;
-  line-height: 1.2;
-  opacity: 0.8;
+  line-height: 1.4;
+  opacity: 0.95;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.15);
 }
 
 /* 物料卡片响应式设计 */
@@ -673,19 +693,13 @@ page {
     border-radius: 8rpx;
   }
   
-  .material-overview-value {
-    font-size: 32rpx;
-    margin-bottom: 6rpx;
-  }
-  
   .material-overview-label {
-    font-size: 22rpx;
-    margin-bottom: 4rpx;
+    font-size: 24rpx;
+    margin-bottom: 8rpx;
   }
   
   .material-overview-status {
-    font-size: 18rpx;
-    padding: 3rpx 6rpx;
+    font-size: 20rpx;
   }
 }
 

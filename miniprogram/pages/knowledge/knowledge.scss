@@ -195,6 +195,7 @@ page {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;  // ✅ 添加标准属性以提高兼容性
   overflow: hidden;
 }
 

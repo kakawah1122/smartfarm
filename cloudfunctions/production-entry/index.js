@@ -599,12 +599,14 @@ async function getActiveBatches(event, wxContext) {
       })
       .get()
     
-    // 获取所有死亡记录
+    // 获取所有死亡记录（不过滤 userId，因为死亡记录可能没有这个字段）
     const deathRecordsResult = await db.collection('health_death_records')
       .where({
-        userId: wxContext.OPENID
+        isDeleted: _.neq(true)
       })
       .get()
+    
+    console.log('所有死亡记录:', deathRecordsResult.data)  // 调试日志
     
     // 统计每个批次的出栏数量
     const exitQuantityMap = {}
@@ -616,15 +618,33 @@ async function getActiveBatches(event, wxContext) {
       exitQuantityMap[batchNumber] += exitRecord.quantity || 0
     })
 
-    // 统计每个批次的死亡数量
+    // 构建批次ID到批次号的映射
+    const batchIdToNumberMap = {}
+    allResult.data.forEach(record => {
+      batchIdToNumberMap[record._id] = record.batchNumber
+    })
+
+    // 统计每个批次的死亡数量（兼容 batchId 和 batchNumber）
     const deathQuantityMap = {}
     deathRecordsResult.data.forEach(deathRecord => {
-      const batchNumber = deathRecord.batchNumber
-      if (!deathQuantityMap[batchNumber]) {
-        deathQuantityMap[batchNumber] = 0
+      // 优先使用 batchNumber，如果没有则通过 batchId 查找
+      let batchNumber = deathRecord.batchNumber
+      if (!batchNumber && deathRecord.batchId) {
+        batchNumber = batchIdToNumberMap[deathRecord.batchId]
       }
-      deathQuantityMap[batchNumber] += deathRecord.quantity || 0
+      
+      if (batchNumber) {
+        if (!deathQuantityMap[batchNumber]) {
+          deathQuantityMap[batchNumber] = 0
+        }
+        // 兼容多种死亡数字段名
+        const deathCount = deathRecord.deathCount || deathRecord.deadCount || deathRecord.totalDeathCount || 0
+        deathQuantityMap[batchNumber] += deathCount
+        console.log(`批次 ${batchNumber} 累计死亡: ${deathQuantityMap[batchNumber]}`)  // 调试日志
+      }
     })
+    
+    console.log('死亡数量汇总:', deathQuantityMap)  // 调试日志
 
     // 筛选存栏批次（排除完全出栏/死亡和已删除的）
     const activeRecords = allResult.data.filter(record => {
@@ -651,12 +671,20 @@ async function getActiveBatches(event, wxContext) {
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
       const dayAge = diffDays + 1 // 入栏当天为第1日龄
 
-      // 已移除调试日志
+      // ✅ 计算实际存栏数：入栏数 - 死亡数 - 出栏数
+      const totalExited = exitQuantityMap[record.batchNumber] || 0
+      const totalDeath = deathQuantityMap[record.batchNumber] || 0
+      const currentStock = record.quantity - totalExited - totalDeath
+
+      console.log(`批次 ${record.batchNumber}: 入栏=${record.quantity}, 出栏=${totalExited}, 死亡=${totalDeath}, 存栏=${currentStock}`)
+      
       return {
         _id: record._id,  // 使用标准的 _id 字段
         batchNumber: record.batchNumber,
         entryDate: record.entryDate,
-        currentCount: record.quantity, // 当前数量（后续可以从存栏记录计算）
+        currentStock: currentStock,   // ✅ 实际存栏数
+        currentCount: currentStock,   // 兼容旧字段
+        currentQuantity: currentStock, // 兼容其他字段
         entryCount: record.quantity, // 入栏数量
         quantity: record.quantity,    // 添加 quantity 字段，方便前端使用
         location: record.location,

@@ -1,11 +1,11 @@
-// health-data-loader.ts - 健康数据加载模块（优化版，包含缓存机制）
+// health-data-loader.ts - 健康数据加载模块（✅优化：wx.storage持久化缓存）
 
 import CloudApi from '../../../utils/cloud-api'
 import { calculatePreventionStats, formatPreventionRecord } from './health-stats-calculator'
 
-// 数据缓存层
-const batchDataCache = new Map()
+// ✅ 优化：使用wx.storage替代Map，实现持久化缓存
 const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
+const CACHE_PREFIX = 'health_cache_' // 缓存key前缀
 
 interface CachedData {
   data: any
@@ -13,32 +13,75 @@ interface CachedData {
 }
 
 /**
- * 检查缓存是否有效
+ * 检查缓存是否有效（✅优化：从wx.storage读取）
  */
 function isCacheValid(cacheKey: string): boolean {
-  const cached = batchDataCache.get(cacheKey) as CachedData
-  if (!cached) return false
-  
-  const now = Date.now()
-  return (now - cached.timestamp) < CACHE_DURATION
+  try {
+    const cached = wx.getStorageSync(CACHE_PREFIX + cacheKey) as CachedData
+    if (!cached) return false
+    
+    const now = Date.now()
+    return (now - cached.timestamp) < CACHE_DURATION
+  } catch (error) {
+    console.warn('[Cache] 读取缓存失败:', error)
+    return false
+  }
 }
 
 /**
- * 获取缓存数据
+ * 获取缓存数据（✅优化：从wx.storage读取）
  */
 function getCachedData(cacheKey: string): any {
-  const cached = batchDataCache.get(cacheKey) as CachedData
-  return cached ? cached.data : null
+  try {
+    const cached = wx.getStorageSync(CACHE_PREFIX + cacheKey) as CachedData
+    return cached ? cached.data : null
+  } catch (error) {
+    console.warn('[Cache] 获取缓存数据失败:', error)
+    return null
+  }
 }
 
 /**
- * 设置缓存数据
+ * 设置缓存数据（✅优化：保存到wx.storage）
  */
 function setCachedData(cacheKey: string, data: any) {
-  batchDataCache.set(cacheKey, {
-    data,
-    timestamp: Date.now()
-  })
+  try {
+    wx.setStorageSync(CACHE_PREFIX + cacheKey, {
+      data,
+      timestamp: Date.now()
+    })
+  } catch (error) {
+    console.warn('[Cache] 保存缓存失败:', error)
+    // 失败不影响主流程
+  }
+}
+
+/**
+ * 清除指定缓存（✅新增：用于缓存失效）
+ */
+export function clearCache(cacheKey: string) {
+  try {
+    wx.removeStorageSync(CACHE_PREFIX + cacheKey)
+    console.log('[Cache] 已清除缓存:', cacheKey)
+  } catch (error) {
+    console.warn('[Cache] 清除缓存失败:', error)
+  }
+}
+
+/**
+ * 清除所有健康数据缓存（✅新增：用于数据更新后）
+ */
+export function clearAllHealthCache() {
+  try {
+    const info = wx.getStorageInfoSync()
+    const healthCacheKeys = info.keys.filter((key: string) => key.startsWith(CACHE_PREFIX))
+    healthCacheKeys.forEach((key: string) => {
+      wx.removeStorageSync(key)
+    })
+    console.log('[Cache] 已清除所有健康数据缓存，共', healthCacheKeys.length, '个')
+  } catch (error) {
+    console.warn('[Cache] 清除所有缓存失败:', error)
+  }
 }
 
 /**
@@ -215,14 +258,14 @@ export async function loadAllBatchesData(context: any) {
         totalDied += result.totalDied
       })
       
-      // 计算总体治愈率和死亡率（都基于治疗总数）
+      // 计算总体治愈率（基于治疗总数）
       const cureRate = totalTreated > 0 
         ? ((totalCured / totalTreated) * 100).toFixed(1)
         : '0'
       
-      // ✅ 死亡率也基于治疗总数计算
-      const mortalityRate = totalTreated > 0 
-        ? ((totalDied / totalTreated) * 100).toFixed(1)
+      // ✅ 死亡率：使用批次汇总的总死亡数（而非仅治疗中的死亡数）
+      const mortalityRate = totalAnimals > 0 
+        ? ((deadCount / totalAnimals) * 100).toFixed(1)
         : '0'
       
       const treatmentStats = {
@@ -270,7 +313,7 @@ export async function loadAllBatchesData(context: any) {
       // 重新计算健康率（健康率仍基于批次总数）
       const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount - isolatedCount
       const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
-      // 死亡率已在上面计算（基于治疗总数）
+      // 死亡率已在上面计算（基于总动物数）
       
       // 设置监控数据
       const monitoringData = {
@@ -318,11 +361,11 @@ export async function loadAllBatchesData(context: any) {
       setCachedData(cacheKey, resultData)
       
       context.setData(resultData)
+      }
+    } catch (error: any) {
+      // 加载失败，静默处理
     }
-  } catch (error: any) {
-    console.error('loadAllBatchesData 错误:', error)
   }
-}
 
 /**
  * 加载单个批次的健康数据（优化版）
@@ -436,7 +479,7 @@ async function loadPreventionData(context: any, batchId: string) {
       })
     }
   } catch (error: any) {
-    console.error('loadPreventionData 错误:', error)
+    // 加载失败，静默处理
   }
 }
 
@@ -508,7 +551,7 @@ async function loadTreatmentData(context: any, batchId: string) {
       'monitoringData.abnormalList': abnormalRecords
     })
   } catch (error: any) {
-    console.error('加载治疗数据失败:', error)
+    // 加载失败，静默处理
   }
 }
 

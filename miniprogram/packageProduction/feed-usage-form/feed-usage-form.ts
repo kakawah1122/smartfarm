@@ -95,6 +95,7 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const batches = result.result.data || []
+        console.log('加载的批次数据:', batches)  // 调试日志
         this.setData({
           availableBatches: batches
         })
@@ -209,53 +210,39 @@ const pageConfig = {
     const selectedBatch = this.data.availableBatches[index]
     
     if (selectedBatch) {
+      // 直接使用批次数据中的当前存栏数
+      console.log('选中的批次:', selectedBatch)  // 调试日志
+      const currentStock = selectedBatch.currentStock || 
+                          selectedBatch.currentQuantity || 
+                          selectedBatch.currentCount || 
+                          0
+      
+      console.log('存栏数:', currentStock)  // 调试日志
+      
       this.setData({
         'formData.batchId': selectedBatch._id,
-        'formData.batchNumber': selectedBatch.batchNumber
+        'formData.batchNumber': selectedBatch.batchNumber,
+        currentStock: currentStock,
+        stockInfo: null  // 清空详细信息
       })
       
-      // 获取当前存栏数
-      await this.updateStockInfo()
+      // 重新计算成本
+      this.calculateCost()
     }
   },
 
-  // 更新存栏信息
+  // 更新存栏信息（简化版 - 仅在日期变化时调用）
   async updateStockInfo() {
-    const { batchId, recordDate } = this.data.formData
-    
-    if (!batchId || !recordDate) {
-      return
-    }
-    
-    try {
-      wx.showLoading({ title: '计算存栏...' })
-      
-      const result = await wx.cloud.callFunction({
-        name: 'production-material',
-        data: {
-          action: 'get_current_stock_count',
-          batchId: batchId,
-          recordDate: recordDate
-        }
-      })
-      
-      if (result.result && result.result.success) {
-        const stockInfo = result.result.data
+    // 如果已经有批次，重新获取批次信息以更新存栏数
+    if (this.data.formData.batchId) {
+      const batch = this.data.availableBatches.find(b => b._id === this.data.formData.batchId)
+      if (batch) {
+        const currentStock = batch.currentStock || batch.currentQuantity || 0
         this.setData({
-          currentStock: stockInfo.currentStock,
-          stockInfo: stockInfo
+          currentStock: currentStock
         })
-        
-        // 重新计算成本
         this.calculateCost()
       }
-    } catch (error) {
-      wx.showToast({
-        title: '获取存栏数失败',
-        icon: 'none'
-      })
-    } finally {
-      wx.hideLoading()
     }
   },
 

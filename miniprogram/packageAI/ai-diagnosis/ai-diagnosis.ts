@@ -65,6 +65,7 @@ const pageConfig = {
     deathCount: '',     // 死因剖析使用
     dayAge: 0,
     images: [] as string[],
+    validImagesCount: 0,  // 有效图片数量
     
     // 批次相关
     selectedBatchId: '',
@@ -235,6 +236,7 @@ const pageConfig = {
       deathCount: '',
       symptoms: '',
       images: [],
+      validImagesCount: 0,
       autopsyDescription: '',
       commonSymptoms: this.data.commonSymptoms.map(item => ({ ...item, checked: false })),
       autopsyAbnormalities: this.data.autopsyAbnormalities.map(item => ({ ...item, checked: false }))
@@ -446,19 +448,111 @@ const pageConfig = {
     const images = [...this.data.images]
     images.splice(index, 1)
     
+    const validCount = images.filter(img => img).length
+    
     this.setData({ 
-      images 
+      images,
+      validImagesCount: validCount
     }, () => {
       this.validateForm()
+    })
+  },
+
+  // 选择单张图片上传到指定位置
+  onChooseSingleImage(e: any) {
+    const { index } = e.currentTarget.dataset
+    const targetIndex = parseInt(index)
+    
+    // 检查该位置是否已有图片
+    if (this.data.images[targetIndex]) {
+      wx.showToast({
+        title: '该位置已有图片，请先删除',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+    
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: async (res) => {
+        wx.showLoading({ title: '压缩并上传图片中...' })
+        
+        try {
+          const file = res.tempFiles[0]
+          
+          // 压缩图片
+          let finalPath = file.tempFilePath
+          try {
+            const compressResult = await wx.compressImage({
+              src: file.tempFilePath,
+              quality: 50,
+              compressedWidth: 1024,
+              compressedHeight: 1024
+            })
+            finalPath = compressResult.tempFilePath
+          } catch (compressError) {
+            // 压缩失败则使用原图
+          }
+          
+          // 上传到云存储
+          const timestamp = Date.now()
+          const random = Math.floor(Math.random() * 10000)
+          const ext = file.tempFilePath.split('.').pop()
+          const cloudPath = `ai-diagnosis/${timestamp}_${random}.${ext}`
+          
+          const uploadResult = await wx.cloud.uploadFile({
+            cloudPath: cloudPath,
+            filePath: finalPath
+          })
+          
+          wx.hideLoading()
+          
+          // 更新images数组，在指定位置插入图片
+          const newImages = [...this.data.images]
+          newImages[targetIndex] = uploadResult.fileID
+          const validCount = newImages.filter(img => img).length
+          
+          this.setData({
+            images: newImages,
+            validImagesCount: validCount
+          }, () => {
+            this.validateForm()
+          })
+          
+          wx.showToast({
+            title: '上传成功',
+            icon: 'success',
+            duration: 1500
+          })
+        } catch (error: any) {
+          wx.hideLoading()
+          console.error('图片上传失败:', error)
+          wx.showToast({
+            title: '图片上传失败，请重试',
+            icon: 'none'
+          })
+        }
+      },
+      fail: (error) => {
+        wx.showToast({
+          title: '图片选择失败',
+          icon: 'none'
+        })
+      }
     })
   },
 
   // 预览图片
   onPreviewImage(e: any) {
     const { src } = e.currentTarget.dataset
+    // 过滤掉undefined的图片
+    const validImages = this.data.images.filter(img => img)
     wx.previewImage({
       current: src,
-      urls: this.data.images
+      urls: validImages
     })
   },
 
@@ -774,6 +868,7 @@ const pageConfig = {
                 // 用户选择重新诊断，清除图片
                 this.setData({
                   images: [],
+                  validImagesCount: 0,
                   diagnosisResult: null,
                   diagnosisStatus: 'idle'
                 })
@@ -1086,6 +1181,7 @@ const pageConfig = {
             symptoms: '',
             affectedCount: '',  // 重置为空字符串
             images: [],
+            validImagesCount: 0,
             commonSymptoms: this.data.commonSymptoms.map(item => ({ ...item, checked: false }))
           })
           this.validateForm()

@@ -706,12 +706,10 @@ const pageConfig = {
 
   // 获取微信头像授权
   async onChooseAvatar(e: any) {
-    // 已移除调试日志
     const { avatarUrl } = e.detail
     
     // 检查头像URL是否有效
     if (!avatarUrl || avatarUrl === '') {
-      // 已移除调试日志
       wx.showModal({
         title: '提示',
         content: '头像获取失败，请确保已授权微信头像获取权限，或在真机上测试此功能。',
@@ -721,33 +719,53 @@ const pageConfig = {
       return
     }
     
-    // 已移除调试日志
-    // 立即显示新头像，提升用户体验
-    this.setData({
-      'userInfo.avatarUrl': avatarUrl
-    })
-    
-    // 显示成功提示
-    wx.showToast({
-      title: '头像已更新',
-      icon: 'success',
-      duration: 1500
-    })
-    
     let loadingShown = false
     try {
       wx.showLoading({ 
-        title: '更新头像中...',
+        title: '上传头像中...',
         mask: true 
       })
       loadingShown = true
+      
+      // 如果是本地临时文件，需要先上传到云存储
+      let cloudAvatarUrl = avatarUrl
+      
+      // 检查是否为本地临时文件路径（包含 tmp 或 wxfile 等）
+      if (avatarUrl.includes('tmp') || avatarUrl.startsWith('wxfile://') || !avatarUrl.startsWith('https://')) {
+        // 上传到云存储
+        const timestamp = Date.now()
+        const randomStr = Math.random().toString(36).substring(2, 15)
+        const cloudPath = `avatars/${timestamp}_${randomStr}.jpg`
+        
+        try {
+          const uploadResult = await wx.cloud.uploadFile({
+            cloudPath: cloudPath,
+            filePath: avatarUrl
+          })
+          
+          if (uploadResult.fileID) {
+            cloudAvatarUrl = uploadResult.fileID
+            console.log('头像上传成功，云存储路径：', cloudAvatarUrl)
+          } else {
+            throw new Error('上传失败，未获取到文件ID')
+          }
+        } catch (uploadError) {
+          console.error('头像上传失败：', uploadError)
+          throw new Error('头像上传失败，请重试')
+        }
+      }
+      
+      // 立即显示新头像，提升用户体验
+      this.setData({
+        'userInfo.avatarUrl': cloudAvatarUrl
+      })
       
       // 调用云函数更新用户头像
       const result = await wx.cloud.callFunction({
         name: 'user-management',
         data: {
           action: 'update_user_profile',
-          avatarUrl: avatarUrl
+          avatarUrl: cloudAvatarUrl
         }
       })
       
@@ -756,20 +774,21 @@ const pageConfig = {
         const app = getApp<App.AppOption>()
         const updatedUserInfo = result.result.data?.user || {
           ...app.globalData.userInfo,
-          avatarUrl: avatarUrl
+          avatarUrl: cloudAvatarUrl
         }
         
-        // 已移除调试日志
         app.globalData.userInfo = updatedUserInfo
         wx.setStorageSync('userInfo', updatedUserInfo)
         
         this.setData({
-          'userInfo.avatarUrl': avatarUrl,
+          'userInfo.avatarUrl': cloudAvatarUrl,
           cloudUserInfo: updatedUserInfo
         })
         
-        wx.hideLoading()
-        loadingShown = false
+        if (loadingShown) {
+          wx.hideLoading()
+          loadingShown = false
+        }
         
         wx.showToast({
           title: '头像更新成功',
@@ -779,25 +798,27 @@ const pageConfig = {
         throw new Error(result.result?.message || '云端更新失败')
       }
     } catch (error) {
-      // 已移除调试日志
-      // 如果是文件路径错误（开发者工具常见问题），给出友好提示
-      let errorMessage = '头像更新失败'
-      if (error.message && error.message.includes('ENOENT')) {
-        errorMessage = '开发环境头像路径错误，请在真机上测试'
-        // 在开发环境中，头像仍然显示（已经设置），只是云端同步失败
-        // 已移除调试日志
-      } else {
-        // 其他错误，恢复原头像
-        const app = getApp<App.AppOption>()
-        const originalAvatar = app.globalData.userInfo?.avatarUrl || '/assets/icons/profile.png'
-        this.setData({
-          'userInfo.avatarUrl': originalAvatar
-        })
-      }
+      console.error('头像更新失败：', error)
+      
+      // 恢复原头像
+      const app = getApp<App.AppOption>()
+      const originalAvatar = app.globalData.userInfo?.avatarUrl || '/assets/icons/profile.png'
+      this.setData({
+        'userInfo.avatarUrl': originalAvatar
+      })
       
       if (loadingShown) {
         wx.hideLoading()
         loadingShown = false
+      }
+      
+      let errorMessage = '头像更新失败，请重试'
+      if (error.message) {
+        if (error.message.includes('ENOENT')) {
+          errorMessage = '开发环境头像路径错误，请在真机上测试'
+        } else if (error.message.includes('上传失败')) {
+          errorMessage = error.message
+        }
       }
       
       wx.showToast({

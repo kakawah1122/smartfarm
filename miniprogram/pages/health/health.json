@@ -15,7 +15,9 @@
     "t-cell": "tdesign-miniprogram/cell/cell",
     "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
     "t-row": "tdesign-miniprogram/row/row",
-    "t-col": "tdesign-miniprogram/col/col"
+    "t-col": "tdesign-miniprogram/col/col",
+    "t-image": "tdesign-miniprogram/image/image",
+    "t-empty": "tdesign-miniprogram/empty/empty"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

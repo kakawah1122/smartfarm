@@ -1,5 +1,45 @@
 /* health.scss - 健康管理中心完整重构版本 - 基于TDesign设计规范 */
 
+/* ✅ SCSS变量定义 - 统一管理尺寸和颜色 */
+// 间距变量
+$spacing-xs: 8rpx;     // 极小间距
+$spacing-sm: 12rpx;    // 小间距
+$spacing-base: 16rpx;  // 基础间距
+$spacing-md: 20rpx;    // 中间距
+$spacing-lg: 24rpx;    // 大间距
+$spacing-xl: 32rpx;    // 超大间距
+$spacing-2xl: 40rpx;   // 特大间距
+
+// 圆角变量
+$radius-xs: 4rpx;      // 极小圆角
+$radius-sm: 8rpx;      // 小圆角
+$radius-base: 12rpx;   // 基础圆角
+$radius-md: 16rpx;     // 中圆角
+$radius-lg: 24rpx;     // 大圆角
+$radius-xl: 32rpx;     // 超大圆角
+$radius-round: 50%;    // 圆形
+
+// 字号变量
+$font-xs: 20rpx;       // 极小字号
+$font-sm: 24rpx;       // 小字号
+$font-base: 28rpx;     // 基础字号
+$font-md: 30rpx;       // 中字号
+$font-lg: 32rpx;       // 大字号
+$font-xl: 36rpx;       // 超大字号
+$font-2xl: 40rpx;      // 特大字号
+$font-3xl: 48rpx;      // 巨大字号
+
+// 阴影变量
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);    // 小阴影
+$shadow-base: 0 2rpx 12rpx rgba(0, 0, 0, 0.06); // 基础阴影
+$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);   // 中阴影
+$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);   // 大阴影
+
+// 品牌色阴影
+$shadow-brand-sm: 0 2rpx 8rpx rgba(0, 82, 217, 0.15);
+$shadow-brand-base: 0 4rpx 12rpx rgba(0, 82, 217, 0.25);
+$shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
+
 /* 基础页面样式 */
 .page {
   background-color: var(--td-bg-color-page, #f5f5f5);
@@ -14,16 +54,22 @@
   background-color: var(--td-bg-color-page);
   display: flex;
   flex-direction: column;
-  padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 安全间距 */
+}
+
+/* 批次筛选和Tab导航卡片组 */
+.filter-tabs-card {
+  background: white;
+  margin: 0 $spacing-lg $spacing-base;
+  border-radius: $radius-md;
+  box-shadow: $shadow-base;
+  overflow: hidden;
 }
 
 /* 批次筛选区域 */
 .batch-filter-section {
-  background: white;
-  padding: 24rpx;
-  margin: 0 24rpx 16rpx;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid #f0f0f0;
 
   .filter-header {
     display: flex;
@@ -33,16 +79,16 @@
     .current-batch {
       display: flex;
       align-items: center;
-      gap: 12rpx;
+      gap: $spacing-sm;
 
       .label {
-        font-size: 28rpx;
+        font-size: $font-base;
         color: var(--td-text-color-secondary, #666);
         line-height: 1.2;
       }
 
       .value {
-        font-size: 32rpx;
+        font-size: $font-lg;
         font-weight: 600;
         color: var(--td-brand-color, #0052d9);
         line-height: 1.2;
@@ -52,12 +98,12 @@
     .filter-action {
       display: flex;
       align-items: center;
-      gap: 8rpx;
-      padding: 12rpx 24rpx;
+      gap: $spacing-xs;
+      padding: $spacing-sm $spacing-lg;
       background: linear-gradient(135deg, #0052d9 0%, #266fe8 100%);
-      border-radius: 24rpx;
+      border-radius: $radius-lg;
       transition: all 0.3s;
-      box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.25);
+      box-shadow: $shadow-brand-base;
 
       &:active {
         transform: scale(0.95);
@@ -81,14 +127,14 @@
 
 /* 健康数据概览（整合实时状态） */
 .health-stats-section {
-  padding: 24rpx;
+  padding: $spacing-lg;
   background: white;
-  margin: 0 0 16rpx 0;
+  margin: 0 0 $spacing-base 0;
 
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16rpx;
+    gap: $spacing-base;
 
     // 两列布局
     &.stats-grid-two {
@@ -364,7 +410,7 @@
 }
 
 /* 批次筛选区域调整 - 添加 relative 定位 */
-.batch-filter-section {
+.filter-tabs-card {
   position: relative;
   z-index: 101;
 }
@@ -487,17 +533,11 @@
 /* 主要Tab切换 */
 /* 主Tab标签栏优化 */
 .health-main-tabs {
-  background: white;
   --td-tab-track-color: var(--td-brand-color);
   --td-tab-item-active-color: var(--td-brand-color);
   --td-tab-item-color: var(--td-text-color-secondary);
   --td-tab-item-font-size: 28rpx;
-  position: sticky;
-  top: 0;
-  z-index: 10;
   padding: 0 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  margin-bottom: 8rpx;
 }
 
 /* Tab内容区域 */
@@ -795,72 +835,6 @@
     margin-bottom: 24rpx;
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
     
-    // AI诊断卡片（单独一行）
-    .ai-diagnosis-card {
-      display: flex;
-      align-items: center;
-      padding: 32rpx 24rpx;
-      margin-bottom: 16rpx;
-      border-radius: 16rpx;
-      background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-      
-      // 背景装饰
-      &::before {
-        content: '';
-        position: absolute;
-        right: -40rpx;
-        top: -40rpx;
-        width: 160rpx;
-        height: 160rpx;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
-      }
-      
-      &:active {
-        transform: scale(0.98);
-        background: linear-gradient(135deg, #DDD6FE 0%, #C4B5FD 100%);
-      }
-      
-      .ai-card-icon {
-        font-size: 56rpx;
-        margin-right: 20rpx;
-        flex-shrink: 0;
-        position: relative;
-        z-index: 1;
-      }
-      
-      .ai-card-content {
-        flex: 1;
-        position: relative;
-        z-index: 1;
-        
-        .ai-card-title {
-          display: block;
-          font-size: 32rpx;
-          font-weight: 600;
-          color: #7C3AED;
-          margin-bottom: 8rpx;
-        }
-        
-        .ai-card-desc {
-          display: block;
-          font-size: 24rpx;
-          color: #6B21A8;
-          opacity: 0.8;
-        }
-      }
-      
-      .ai-card-arrow {
-        flex-shrink: 0;
-        position: relative;
-        z-index: 1;
-      }
-    }
-    
     .stats-grid-two {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -1065,38 +1039,45 @@
         }
       }
 
-      // 定位图标（隔离）
-      .css-icon-location {
+      // AI闪电图标
+      .css-icon-ai {
+        font-size: 52rpx;
+        line-height: 1;
+        color: #7C3AED;
+      }
+
+      // 心形图标（治愈率）
+      .css-icon-heart {
         position: relative;
-        width: 28rpx;
-        height: 40rpx;
+        width: 32rpx;
+        height: 32rpx;
         
-        // 定位标记
+        // 左半心
         &::before {
           content: '';
           position: absolute;
           left: 50%;
           top: 0;
-          transform: translateX(-50%);
-          width: 28rpx;
-          height: 36rpx;
-          background: #8b5cf6;
-          border-radius: 50% 50% 50% 0;
-          transform: translateX(-50%) rotate(-45deg);
+          width: 16rpx;
+          height: 24rpx;
+          background: #00A870;
+          border-radius: 16rpx 16rpx 0 0;
+          transform: translateX(-100%) rotate(-45deg);
+          transform-origin: bottom right;
         }
         
-        // 内圆点
+        // 右半心
         &::after {
           content: '';
           position: absolute;
-          left: 50%;
-          top: 8rpx;
-          transform: translateX(-50%);
-          width: 10rpx;
-          height: 10rpx;
-          background: white;
-          border-radius: 50%;
-          z-index: 1;
+          right: 50%;
+          top: 0;
+          width: 16rpx;
+          height: 24rpx;
+          background: #00A870;
+          border-radius: 16rpx 16rpx 0 0;
+          transform: translateX(100%) rotate(45deg);
+          transform-origin: bottom left;
         }
       }
 
@@ -1192,6 +1173,10 @@
       
       .stat-icon-cured {
         background: rgba(0, 168, 112, 0.15);
+      }
+
+      .stat-icon-ai {
+        background: rgba(124, 58, 237, 0.15);
       }
 
       .stat-icon-isolation {
@@ -1312,6 +1297,51 @@
         .stat-label {
           color: #047857;
         }
+      }
+
+      // AI诊断样式（单独一行）
+      &.stat-card-ai-diagnosis {
+        background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+        margin-bottom: 16rpx;
+        
+        &::before {
+          background: #7C3AED;
+        }
+        
+        .stat-icon {
+          background: rgba(124, 58, 237, 0.15);
+          width: 80rpx;
+          height: 80rpx;
+        }
+        
+        .stat-content {
+          flex: 1;
+          gap: 6rpx;
+        }
+        
+        .stat-value {
+          color: #7C3AED;
+          font-size: 32rpx;
+          font-weight: 600;
+        }
+        
+        .stat-label {
+          color: #6B21A8;
+          font-size: 24rpx;
+          opacity: 0.85;
+        }
+        
+        .stat-arrow {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: 16rpx;
+        }
+      }
+      
+      // 全宽卡片
+      &.stat-card-full-width {
+        grid-column: 1 / -1;
       }
 
       // 隔离样式
@@ -1443,6 +1473,204 @@
     .empty-text {
       font-size: 28rpx;
       color: var(--td-text-color-placeholder);
+    }
+  }
+
+  // ✅ 诊断记录样式（与诊断历史页面保持一致）
+  .diagnosis-history {
+    background: white;
+    border-radius: $radius-md;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-lg;
+    box-shadow: $shadow-base;
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: $spacing-base;
+
+      .section-title {
+        font-size: $font-lg;
+        font-weight: 600;
+        color: var(--td-text-color-primary);
+        margin: 0;
+      }
+
+      .sub-title {
+        font-size: $font-sm;
+        color: var(--td-text-color-placeholder, #bbbbbb);
+        margin-left: $spacing-xs;
+        flex: 1;
+      }
+
+      .more-link {
+        font-size: $font-sm;
+        color: var(--td-brand-color);
+        font-weight: 500;
+      }
+    }
+
+    .diagnosis-records-list {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-base;
+    }
+
+    .diagnosis-record-item {
+      background: var(--td-bg-color-container, #ffffff);
+      border-radius: $radius-base;
+      padding: $spacing-base;
+      border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+      transition: all 0.3s ease;
+
+      &:active {
+        background: var(--td-bg-color-container-active, #f5f5f5);
+        transform: scale(0.98);
+      }
+    }
+
+    .record-main {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+
+    .record-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: $spacing-base;
+      margin-bottom: $spacing-sm;
+    }
+
+    .record-name {
+      flex: 1;
+      font-size: $font-lg;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      line-height: 1.4;
+    }
+
+    .confidence-badge {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #4dabf7 0%, #0284c7 100%);
+      padding: $spacing-xs $spacing-base;
+      border-radius: $radius-base;
+      line-height: 1;
+    }
+
+    .confidence-text {
+      font-size: 22rpx;
+      color: #ffffff;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .record-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10rpx;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: $spacing-xl;
+      flex-wrap: wrap;
+      margin-bottom: 4rpx;
+    }
+
+    .info-group {
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+      min-width: 0;
+      flex: 0 1 auto;
+      max-width: 45%;
+
+      &.full-width {
+        max-width: 100%;
+        flex: 1;
+      }
+    }
+
+    .info-label {
+      font-size: $font-sm;
+      color: var(--td-text-color-secondary, #666666);
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      font-size: 26rpx;
+      color: var(--td-text-color-primary, #000000);
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+
+      &.symptoms-value {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;  // ✅ 添加标准属性以提高兼容性
+        -webkit-box-orient: vertical;
+        overflow: hidden;  // ✅ 确保文本溢出隐藏
+      }
+    }
+
+    .record-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: $spacing-base;
+      margin-top: $spacing-xs;
+      padding-top: $spacing-sm;
+      border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: $spacing-base;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .operator-text {
+      font-size: $font-sm;
+      color: var(--td-text-color-secondary, #666666);
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+
+    .date-text {
+      font-size: $font-sm;
+      color: var(--td-text-color-placeholder, #bbbbbb);
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .duration-text {
+      font-size: $font-sm;
+      color: var(--td-text-color-secondary, #666666);
+      background: var(--td-bg-color-component, #f3f3f3);
+      padding: 4rpx 10rpx;
+      border-radius: $radius-sm;
+      flex-shrink: 0;
+    }
+
+    .empty-placeholder {
+      padding: $spacing-2xl 0;
+      text-align: center;
     }
   }
 }
@@ -1878,4 +2106,269 @@
       }
     }
   }
+}
+/* ✅ 诊断记录详情弹窗样式（复用 diagnosis-history 的样式） */
+.diagnosis-detail-content {
+  padding: 0;
+}
+
+.detail-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.detail-section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary, #000000);
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 2rpx solid var(--td-border-level-1-color, #e7e7e7);
+  
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.detail-label {
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary, #666666);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 28rpx;
+  color: var(--td-text-color-primary, #000000);
+  font-weight: 400;
+  text-align: right;
+  max-width: 60%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.primary {
+    color: #0052d9;
+    font-weight: 600;
+  }
+
+  &.confidence {
+    color: #667eea;
+    font-weight: 600;
+  }
+  
+  &.text-content {
+    text-align: left;
+    max-width: 60%;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.5;
+    font-size: 26rpx;
+  }
+}
+
+.detail-text-content {
+  padding: 16rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 12rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.detail-text {
+  font-size: 26rpx;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.6;
+}
+
+.medications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.medication-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx;
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 12rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.medication-icon {
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
+.medication-name {
+  font-size: 26rpx;
+  color: var(--td-text-color-primary, #000000);
+  font-weight: 400;
+  flex: 1;
+}
+
+/* 修正记录卡片样式 */
+.correction-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+  padding: 24rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #00a870;
+  box-shadow: 0 4rpx 12rpx rgba(0, 168, 112, 0.1);
+
+  .detail-section-title {
+    border-bottom: 2rpx solid rgba(0, 168, 112, 0.2);
+
+    text {
+      color: #00a870;
+    }
+  }
+
+  .detail-item {
+    padding: 12rpx 0;
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .detail-value {
+    &.corrected {
+      color: #00a870;
+      font-weight: 600;
+      font-size: 30rpx;
+    }
+  }
+}
+
+/* 实际治疗记录卡片样式 */
+.treatment-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 24rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #0284c7;
+  box-shadow: 0 4rpx 12rpx rgba(2, 132, 199, 0.1);
+
+  .detail-section-title {
+    border-bottom: 2rpx solid rgba(2, 132, 199, 0.2);
+
+    text {
+      color: #0284c7;
+    }
+  }
+
+  .detail-item {
+    padding: 12rpx 0;
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .medications-list-actual {
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+    width: 100%;
+  }
+
+  .medication-item-actual {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    padding: 12rpx;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8rpx;
+    
+    .medication-icon {
+      font-size: 32rpx;
+      flex-shrink: 0;
+    }
+    
+    .medication-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+      
+      .medication-name {
+        font-size: 26rpx;
+        color: #333;
+        font-weight: 500;
+      }
+      
+      .medication-detail {
+        font-size: 24rpx;
+        color: #999;
+      }
+    }
+  }
+}
+
+/* 评分显示 */
+.rating-display {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.star-display {
+  font-size: 32rpx;
+  color: #e0e0e0;
+  
+  &.active {
+    color: #ffa726;
+  }
+}
+
+.rating-text {
+  font-size: 24rpx;
+  color: #00a870;
+  font-weight: 600;
+  margin-left: 8rpx;
+}
+
+/* 诊断图片展示 */
+.diagnosis-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  padding-top: 12rpx;
+}
+
+.image-item {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  
+  &:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+.image-count {
+  font-size: 24rpx;
+  color: var(--td-text-color-placeholder, #bbbbbb);
+  font-weight: 400;
+  margin-left: 8rpx;
 }

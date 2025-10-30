@@ -7,7 +7,7 @@
 
 .page-content {
   padding: 24rpx;
-  padding-top: calc(var(--navbar-height, 132rpx) + 68rpx); /* 导航栏高度 + 安全间距 */
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 68rpx); /* 状态栏 + 导航栏 + 安全间距 */
   padding-bottom: 120rpx;
 }
 
@@ -426,10 +426,6 @@
     background: white;
     outline: none;
   }
-  
-  &::placeholder {
-    color: var(--td-text-color-placeholder);
-  }
 }
 
 .form-unit {
@@ -461,37 +457,14 @@
   position: relative;
   transition: all 0.3s ease;
   
-  // 下拉箭头
-  &::after {
-    content: '';
-    position: absolute;
-    right: 20rpx;
-    top: 50%;
-    transform: translateY(-50%) rotate(0deg);
-    width: 0;
-    height: 0;
-    border-left: 8rpx solid transparent;
-    border-right: 8rpx solid transparent;
-    border-top: 10rpx solid var(--td-text-color-secondary);
-    transition: transform 0.3s ease;
-  }
-  
   &.placeholder {
     color: var(--td-text-color-placeholder);
-    
-    &::after {
-      border-top-color: var(--td-text-color-placeholder);
-    }
   }
   
   // 点击效果
   &:active {
     border-color: var(--td-brand-color);
     background: var(--td-bg-color-container);
-    
-    &::after {
-      border-top-color: var(--td-brand-color);
-    }
   }
 }
 
@@ -576,11 +549,6 @@
     border-color: var(--td-brand-color);
     background: white;
     outline: none;
-  }
-  
-  &::placeholder {
-    color: var(--td-text-color-placeholder);
-    line-height: 1.6;
   }
 }
 
@@ -695,17 +663,45 @@
   position: absolute;
   top: 8rpx;
   right: 8rpx;
-  width: 32rpx;
-  height: 32rpx;
-  background: rgba(0, 0, 0, 0.6);
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
   
   &:active {
     transform: scale(0.9);
+    background: rgba(255, 255, 255, 1);
   }
+}
+
+.delete-icon-x {
+  position: relative;
+  width: 24rpx;
+  height: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.x-line {
+  position: absolute;
+  width: 24rpx;
+  height: 4rpx;
+  background: #ff3b30;
+  border-radius: 2rpx;
+}
+
+.x-line-1 {
+  transform: rotate(45deg);
+}
+
+.x-line-2 {
+  transform: rotate(-45deg);
 }
 
 .upload-placeholder {
@@ -755,6 +751,70 @@
   width: 100%;
 }
 
+// ✨ 新版三宫格上传样式
+.image-upload-grid-three {
+  display: flex;
+  gap: 16rpx;
+  justify-content: space-between;
+}
+
+.upload-box-item {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: 12rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.uploaded-image-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.upload-placeholder-box {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f3f3f3;
+  border: 2rpx dashed #dcdcdc;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+  gap: 4rpx;
+  padding: 0;
+  box-sizing: border-box;
+  
+  &:active {
+    transform: scale(0.95);
+    background: #e8e8e8;
+    border-color: #0052d9;
+  }
+}
+
+.upload-text-small {
+  font-size: 26rpx;
+  color: #0052d9;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.upload-hint-small {
+  font-size: 22rpx;
+  color: #999999;
+  text-align: center;
+  line-height: 1.4;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 // ✨ 已上传状态提示
 .upload-status {
   display: flex;
@@ -780,12 +840,6 @@
   background: linear-gradient(135deg, var(--td-brand-color) 0%, var(--td-brand-color-hover) 100%);
   --td-button-default-bg-color: transparent;
   box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.3);
-  
-  &[disabled] {
-    background: var(--td-bg-color-component-disabled);
-    box-shadow: none;
-    --td-button-disabled-bg-color: var(--td-bg-color-component-disabled);
-  }
 }
 
 .submit-hint {

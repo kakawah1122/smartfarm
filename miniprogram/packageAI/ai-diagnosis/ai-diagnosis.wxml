@@ -430,48 +430,114 @@
           </view>
         </view>
         
-        <view class="image-upload-container">
-          <!-- 已上传的图片 -->
-          <view 
-            class="uploaded-image-item"
-            wx:for="{{images}}" 
-            wx:key="index"
-          >
-            <t-image 
-              src="{{item}}"
-              mode="aspectFill"
-              width="200rpx"
-              height="200rpx"
-              bind:tap="onPreviewImage"
-              data-src="{{item}}"
-              class="uploaded-image"
-            />
+        <view class="image-upload-grid-three">
+          <!-- 上传框 1 -->
+          <view class="upload-box-item">
+            <view wx:if="{{images[0]}}" class="uploaded-image-wrapper">
+              <t-image 
+                src="{{images[0]}}"
+                mode="aspectFill"
+                width="100%"
+                height="100%"
+                bind:tap="onPreviewImage"
+                data-src="{{images[0]}}"
+                class="uploaded-image"
+              />
+              <view 
+                class="image-delete-btn"
+                bind:tap="onDeleteImage"
+                data-index="0"
+              >
+                <view class="delete-icon-x">
+                  <view class="x-line x-line-1"></view>
+                  <view class="x-line x-line-2"></view>
+                </view>
+              </view>
+            </view>
             <view 
-              class="image-delete-btn"
-              bind:tap="onDeleteImage"
-              data-index="{{index}}"
+              wx:else
+              class="upload-placeholder-box"
+              bind:tap="onChooseSingleImage"
+              data-index="0"
             >
-              <t-icon name="close" size="16" color="#fff" />
+              <text class="upload-text-small">拍摄症状照片</text>
+              <text class="upload-hint-small">可提升诊断准确率</text>
             </view>
           </view>
 
-          <!-- 上传按钮 -->
-          <view 
-            class="upload-placeholder {{images.length === 0 ? 'first-upload' : ''}}"
-            wx:if="{{images.length < (diagnosisType === 'autopsy_analysis' ? 4 : 2)}}"
-            bind:tap="onChooseImage"
-          >
-            <text class="upload-text {{images.length === 0 ? 'upload-text-primary' : ''}}">
-              {{images.length === 0 ? (diagnosisType === 'autopsy_analysis' ? '拍摄剖检照片' : '拍摄症状照片') : '继续添加'}}
-            </text>
-            <text class="upload-hint" wx:if="{{images.length === 0}}">{{diagnosisType === 'autopsy_analysis' ? '帮助AI准确分析死因' : '可提升诊断准确率'}}</text>
+          <!-- 上传框 2 -->
+          <view class="upload-box-item">
+            <view wx:if="{{images[1]}}" class="uploaded-image-wrapper">
+              <t-image 
+                src="{{images[1]}}"
+                mode="aspectFill"
+                width="100%"
+                height="100%"
+                bind:tap="onPreviewImage"
+                data-src="{{images[1]}}"
+                class="uploaded-image"
+              />
+              <view 
+                class="image-delete-btn"
+                bind:tap="onDeleteImage"
+                data-index="1"
+              >
+                <view class="delete-icon-x">
+                  <view class="x-line x-line-1"></view>
+                  <view class="x-line x-line-2"></view>
+                </view>
+              </view>
+            </view>
+            <view 
+              wx:else
+              class="upload-placeholder-box"
+              bind:tap="onChooseSingleImage"
+              data-index="1"
+            >
+              <text class="upload-text-small">拍摄症状照片</text>
+              <text class="upload-hint-small">可提升诊断准确率</text>
+            </view>
+          </view>
+
+          <!-- 上传框 3 -->
+          <view class="upload-box-item">
+            <view wx:if="{{images[2]}}" class="uploaded-image-wrapper">
+              <t-image 
+                src="{{images[2]}}"
+                mode="aspectFill"
+                width="100%"
+                height="100%"
+                bind:tap="onPreviewImage"
+                data-src="{{images[2]}}"
+                class="uploaded-image"
+              />
+              <view 
+                class="image-delete-btn"
+                bind:tap="onDeleteImage"
+                data-index="2"
+              >
+                <view class="delete-icon-x">
+                  <view class="x-line x-line-1"></view>
+                  <view class="x-line x-line-2"></view>
+                </view>
+              </view>
+            </view>
+            <view 
+              wx:else
+              class="upload-placeholder-box"
+              bind:tap="onChooseSingleImage"
+              data-index="2"
+            >
+              <text class="upload-text-small">拍摄症状照片</text>
+              <text class="upload-hint-small">可提升诊断准确率</text>
+            </view>
           </view>
         </view>
         
         <!-- 已上传提示 -->
-        <view class="upload-status" wx:if="{{images.length > 0}}">
+        <view class="upload-status" wx:if="{{validImagesCount > 0}}">
           <t-icon name="check-circle" size="16" color="#00a870" />
-          <text class="status-text">已上传 {{images.length}} 张{{diagnosisType === 'autopsy_analysis' ? '剖检' : ''}}图片，AI将结合图片进行综合{{diagnosisType === 'autopsy_analysis' ? '分析' : '诊断'}}</text>
+          <text class="status-text">已上传 {{validImagesCount}} 张{{diagnosisType === 'autopsy_analysis' ? '剖检' : ''}}图片，AI将结合图片进行综合{{diagnosisType === 'autopsy_analysis' ? '分析' : '诊断'}}</text>
         </view>
       </view>
 

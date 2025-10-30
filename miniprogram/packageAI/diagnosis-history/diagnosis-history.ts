@@ -67,9 +67,11 @@ const pageConfig = {
     this.loadMoreData()
   },
 
-  // 返回上一页
+  // 返回首页
   goBack() {
-    wx.navigateBack()
+    wx.switchTab({
+      url: '/pages/index/index'
+    })
   },
 
   // 刷新数据
@@ -168,10 +170,37 @@ const pageConfig = {
   },
 
   // 查看诊断详情
-  onViewRecord(e: any) {
+  async onViewRecord(e: any) {
     const { record } = e.currentTarget.dataset
+    
+    // ✅ 处理图片URL - 转换为临时URL
+    let processedImages = record.images || []
+    
+    // 首先过滤掉无效值
+    processedImages = processedImages.filter((url: any) => url && typeof url === 'string')
+    
+    if (processedImages.length > 0) {
+      try {
+        const tempUrlResult = await wx.cloud.getTempFileURL({
+          fileList: processedImages
+        })
+        
+        if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
+          processedImages = tempUrlResult.fileList
+            .map((item: any) => item.tempFileURL || item.fileID)
+            .filter((url: any) => url && typeof url === 'string')
+        }
+      } catch (urlError) {
+        console.warn('图片URL转换失败，使用原始URL:', urlError)
+        // 继续使用已过滤的原始图片URL
+      }
+    }
+    
     this.setData({
-      selectedRecord: record,
+      selectedRecord: {
+        ...record,
+        images: processedImages
+      },
       showDetailDialog: true
     })
   },
@@ -184,12 +213,32 @@ const pageConfig = {
     })
   },
 
-  // 重新诊断
-  onRedoDiagnosis(e: any) {
-    const { record } = e.currentTarget.dataset
+  // 预览图片
+  onPreviewImage(e: any) {
+    const { url } = e.currentTarget.dataset
+    const images = this.data.selectedRecord?.images || []
     
+    if (images.length > 0) {
+      wx.previewImage({
+        current: url,
+        urls: images
+      })
+    }
+  },
+
+  // 从详情弹窗创建治疗方案
+  onCreateTreatmentFromDetail() {
+    const record = this.data.selectedRecord
+    if (!record) return
+
+    // 关闭弹窗
+    this.setData({
+      showDetailDialog: false
+    })
+
+    // 跳转到治疗记录创建页面，传递诊断信息
     wx.navigateTo({
-      url: `/packageAI/ai-diagnosis/ai-diagnosis?symptoms=${encodeURIComponent(record.symptoms)}&affectedCount=${record.affectedCount}&dayAge=${record.dayAge}&temperature=${record.temperature}`
+      url: `/packageHealth/treatment-record/treatment-record?mode=create&diagnosisId=${record._id}&diagnosis=${encodeURIComponent(record.diagnosisResult)}`
     })
   },
 
@@ -302,98 +351,59 @@ const pageConfig = {
     }
   },
 
-  // 分享记录（模拟功能）
-  onShareRecord(e: any) {
-    const { record } = e.currentTarget.dataset
-    
-    wx.showActionSheet({
-      itemList: ['发送给兽医', '导出为PDF', '复制诊断结果'],
-      success: (res) => {
-        switch (res.tapIndex) {
-          case 0:
-            this.sendToVet(record)
-            break
-          case 1:
-            this.exportToPDF(record)
-            break
-          case 2:
-            this.copyDiagnosis(record)
-            break
-        }
-      }
-    })
-  },
-
-  // 发送给兽医（模拟）
-  sendToVet(record: DiagnosisRecord) {
-    wx.showToast({
-      title: '已发送给兽医',
-      icon: 'success'
-    })
-  },
-
-  // 导出PDF（模拟）
-  exportToPDF(record: DiagnosisRecord) {
-    wx.showLoading({ title: '生成PDF中...' })
-    
-    setTimeout(() => {
-      wx.hideLoading()
-      wx.showToast({
-        title: 'PDF已生成',
-        icon: 'success'
-      })
-    }, 2000)
-  },
-
-  // 复制诊断结果
-  copyDiagnosis(record: DiagnosisRecord) {
-    const content = `AI诊断结果：${record.diagnosisResult}\n置信度：${record.confidence}%\n建议用药：${record.recommendedMedications.join('、')}\n治疗周期：${record.treatmentDuration}`
-    
-    wx.setClipboardData({
-      data: content,
-      success: () => {
-        wx.showToast({
-          title: '已复制到剪贴板',
-          icon: 'success'
-        })
-      }
-    })
-  },
-
   // 格式化时间
   formatDateTime(dateString: string): string {
-    const date = new Date(dateString)
+    // ✅ 修复：处理空值和无效值
+    if (!dateString) {
+      return '未知时间'
+    }
+    
+    // ✅ 修复：处理各种日期格式
+    let date: Date
+    try {
+      date = new Date(dateString)
+      
+      // 检查日期是否有效
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date string:', dateString)
+        return '时间格式错误'
+      }
+    } catch (e) {
+      console.error('Date parsing error:', e, dateString)
+      return '时间解析失败'
+    }
+    
     const now = new Date()
     const diff = now.getTime() - date.getTime()
     
     // 小于1分钟
-    if (diff < 60000) {
+    if (diff < 60000 && diff >= 0) {
       return '刚刚'
     }
     
     // 小于1小时
-    if (diff < 3600000) {
+    if (diff < 3600000 && diff >= 0) {
       return Math.floor(diff / 60000) + '分钟前'
     }
     
     // 小于1天
-    if (diff < 86400000) {
+    if (diff < 86400000 && diff >= 0) {
       return Math.floor(diff / 3600000) + '小时前'
     }
     
     // 小于7天
-    if (diff < 604800000) {
+    if (diff < 604800000 && diff >= 0) {
       return Math.floor(diff / 86400000) + '天前'
     }
     
-    // 格式化为具体时间
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).replace(/\//g, '-')
+    // 格式化为具体时间 (YYYY-MM-DD HH:mm)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hour = String(date.getHours()).padStart(2, '0')
+    const minute = String(date.getMinutes()).padStart(2, '0')
+    
+    return `${year}-${month}-${day} ${hour}:${minute}`
   },
 
   // 获取状态文本

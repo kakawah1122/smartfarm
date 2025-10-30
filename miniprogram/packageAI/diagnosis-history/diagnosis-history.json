@@ -1,6 +1,7 @@
 {
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
+    "bottom-popup": "/components/bottom-popup/bottom-popup",
     "t-button": "tdesign-miniprogram/button/button",
     "t-tag": "tdesign-miniprogram/tag/tag",
     "t-icon": "tdesign-miniprogram/icon/icon",
@@ -8,7 +9,10 @@
     "t-empty": "tdesign-miniprogram/empty/empty",
     "t-divider": "tdesign-miniprogram/divider/divider",
     "t-tabs": "tdesign-miniprogram/tabs/tabs",
-    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel"
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-image": "tdesign-miniprogram/image/image"
   },
-  "navigationBarTitleText": "诊断历史"
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "诊断历史",
+  "enablePullDownRefresh": true
 }

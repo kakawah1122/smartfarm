@@ -10,7 +10,7 @@
 /* 表单内容区域 - 优化顶部安全间距 */
 .form-content {
   flex: 1;
-  padding-top: calc(var(--navbar-height, 132rpx) + 32rpx); /* 导航栏高度 + 安全间距 */
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx); /* 状态栏 + 导航栏 + 安全间距 */
   padding-bottom: calc(32rpx + var(--safe-area-inset-bottom, 0));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -473,7 +473,7 @@
 /* 响应式设计 - 优化顶部安全间距 */
 @media screen and (max-width: 480px) {
   .form-content {
-    padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距（小屏幕稍小） */
+    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 安全间距（小屏幕稍小） */
   }
   
   .form-header {

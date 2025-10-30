@@ -19,7 +19,7 @@ page {
   display: flex;
   flex-direction: column;
   padding: 0 16rpx;
-  padding-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 安全间距 */
 }
 
 /* 搜索栏区域 */
@@ -238,6 +238,7 @@ page {
 @media screen and (max-width: 480px) {
   .main-content {
     padding: 0 12rpx;
+    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx);
   }
   
   .search-section,

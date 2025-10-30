@@ -28,6 +28,12 @@ interface CuredRecord {
     primary?: string
   }
   completedAt?: string
+  createdAt?: any
+  isDeleted?: boolean
+  operatorName?: string
+  formattedCuredCost?: string
+  formattedMedicationCost?: string
+  formattedCostPerAnimal?: string
 }
 
 Page({
@@ -41,7 +47,11 @@ Page({
       totalCost: 0,
       totalMedicationCost: 0,
       avgCostPerAnimal: 0
-    }
+    },
+    
+    // 详情弹窗
+    showDetailDialog: false,
+    selectedRecord: null as CuredRecord | null
   },
 
   onLoad() {
@@ -79,11 +89,11 @@ Page({
         .limit(200)
         .get()
 
-      console.log('📊 查询到的所有治疗记录数:', result.data.length)
+      // 查询到治疗记录
 
       // 调试：查看所有记录的outcome结构
       if (result.data.length > 0) {
-        console.log('🔍 第一条记录的outcome结构:', result.data[0].outcome)
+        // 检查记录结构
       }
 
       // 2. 在前端过滤：排除已删除 + 筛选有治愈数的记录
@@ -96,26 +106,14 @@ Page({
         
         // 筛选有治愈数的记录
         const hasCured = (record.outcome?.curedCount || 0) > 0
-        if (hasCured) {
-          console.log('✅ 找到治愈记录:', {
-            id: record._id,
-            batchId: record.batchId,
-            curedCount: record.outcome.curedCount,
-            status: record.outcome.status,
-            curedCost: record.outcome.curedCost
-          })
-        }
         return hasCured
       })
 
-      console.log('✅ 过滤后的治愈记录数:', curedRecords.length)
+      // 过滤完成
       
       // 如果没有治愈记录，提示用户
       if (curedRecords.length === 0 && result.data.length > 0) {
-        console.log('💡 提示：查询到', result.data.length, '条治疗记录，但都没有治愈数量')
-        console.log('可能的原因：')
-        console.log('1. 还没有记录治愈的治疗')
-        console.log('2. outcome.curedCount 字段未被正确设置')
+        // 暂无治愈记录
       }
 
       // 3. 按完成时间排序（如果有的话），否则按创建时间
@@ -161,7 +159,7 @@ Page({
       })
 
     } catch (error: any) {
-      console.error('❌ 加载治愈记录失败:', error)
+      // 加载失败，已显示错误提示
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -173,9 +171,25 @@ Page({
   // 点击记录查看详情
   onRecordTap(e: any) {
     const { id } = e.currentTarget.dataset
-    wx.navigateTo({
-      url: `/packageHealth/treatment-record/treatment-record?id=${id}&viewMode=true`
+    const record = this.data.records.find(r => r._id === id)
+    if (record) {
+      this.setData({
+        selectedRecord: record,
+        showDetailDialog: true
+      })
+    }
+  },
+
+  // 关闭详情弹窗
+  closeDetailDialog() {
+    this.setData({
+      showDetailDialog: false
     })
+  },
+
+  // 阻止遮罩层滚动穿透
+  preventTouchMove() {
+    return false
   },
 
   // 返回

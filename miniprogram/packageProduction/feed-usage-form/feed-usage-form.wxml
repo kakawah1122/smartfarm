@@ -40,15 +40,10 @@
       </view>
       
       <!-- 当前存栏数 -->
-      <view wx:if="{{currentStock > 0}}" class="stock-info-card">
+      <view wx:if="{{formData.batchId && currentStock >= 0}}" class="stock-info-card">
         <view class="stock-info-item">
           <text class="stock-label">当前存栏</text>
           <text class="stock-value">{{currentStock}} 只</text>
-        </view>
-        <view wx:if="{{stockInfo}}" class="stock-details">
-          <text class="detail-text">入栏: {{stockInfo.initialQuantity}}只</text>
-          <text class="detail-text">死亡: {{stockInfo.totalDeathCount}}只</text>
-          <text class="detail-text">出栏: {{stockInfo.totalExitCount}}只</text>
         </view>
       </view>
     </view>
