@@ -55,9 +55,18 @@
 │   ├── user-management/    # 用户管理
 │   └── ai-multi-model/     # AI多模型
 └── docs/                   # 文档目录
-    ├── OPTIMIZATION_REPORT.md
+    ├── health/            # 健康管理相关维护文档
+    │   └── 健康页面维护指南.md
+    ├── diagnosis/         # 诊断历史相关维护文档
+    │   └── 诊断历史维护指南.md
+    ├── OPTIMIZATION_SUMMARY.md
     ├── PERFORMANCE_OPTIMIZATION_GUIDE.md
-    └── PRE_DEPLOYMENT_CHECKLIST.md
+    ├── DATABASE_CONFIG_GUIDE.md
+    ├── DATABASE_INDEX_GUIDE.md
+    ├── DEPLOYMENT_CHECKLIST.md
+    ├── UI_DESIGN_GUIDELINES.md
+    ├── 饲养成本管理-快速使用指南.md
+    └── 饲养成本管理-数据库配置.md
 ```
 
 ---
@@ -169,15 +178,16 @@ npm install
 ## 📚 文档
 
 ### 核心文档
-- [优化报告](./OPTIMIZATION_REPORT.md) - 项目优化详细报告
+- [优化总结](./OPTIMIZATION_SUMMARY.md) - 近期优化与成果概览
 - [性能优化指南](./PERFORMANCE_OPTIMIZATION_GUIDE.md) - 性能优化最佳实践
-- [部署检查清单](./PRE_DEPLOYMENT_CHECKLIST.md) - 部署前检查事项
-- [数据库配置指南](./DATABASE_CONFIG_GUIDE.md) - 数据库设置
-- **[数据库索引指南](./DATABASE_INDEX_GUIDE.md) - 索引配置与性能优化** 🚀
-- [部署清单](./DEPLOYMENT_CHECKLIST.md) - 部署步骤
-- **[UI 设计规范](./UI_DESIGN_GUIDELINES.md) - 界面设计标准与规范** ⭐️
+- [部署检查清单](./DEPLOYMENT_CHECKLIST.md) - 部署与上线流程
+- [数据库配置指南](./DATABASE_CONFIG_GUIDE.md) - 数据库环境与集合设置
+- [数据库索引指南](./DATABASE_INDEX_GUIDE.md) - 索引配置与性能策略
+- [UI 设计规范](./UI_DESIGN_GUIDELINES.md) - 界面设计标准与样式约束
 
-### 功能文档
+### 业务文档
+- [健康页面维护指南](./docs/health/健康页面维护指南.md)
+- [诊断历史维护指南](./docs/diagnosis/诊断历史维护指南.md)
 - [饲养成本管理 - 快速使用指南](./饲养成本管理-快速使用指南.md)
 - [饲养成本管理 - 数据库配置](./饲养成本管理-数据库配置.md)
 

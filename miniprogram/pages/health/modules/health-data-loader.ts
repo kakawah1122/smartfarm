@@ -23,7 +23,6 @@ function isCacheValid(cacheKey: string): boolean {
     const now = Date.now()
     return (now - cached.timestamp) < CACHE_DURATION
   } catch (error) {
-    console.warn('[Cache] 读取缓存失败:', error)
     return false
   }
 }
@@ -36,7 +35,6 @@ function getCachedData(cacheKey: string): any {
     const cached = wx.getStorageSync(CACHE_PREFIX + cacheKey) as CachedData
     return cached ? cached.data : null
   } catch (error) {
-    console.warn('[Cache] 获取缓存数据失败:', error)
     return null
   }
 }
@@ -51,7 +49,6 @@ function setCachedData(cacheKey: string, data: any) {
       timestamp: Date.now()
     })
   } catch (error) {
-    console.warn('[Cache] 保存缓存失败:', error)
     // 失败不影响主流程
   }
 }
@@ -62,9 +59,8 @@ function setCachedData(cacheKey: string, data: any) {
 export function clearCache(cacheKey: string) {
   try {
     wx.removeStorageSync(CACHE_PREFIX + cacheKey)
-    console.log('[Cache] 已清除缓存:', cacheKey)
   } catch (error) {
-    console.warn('[Cache] 清除缓存失败:', error)
+    // 缓存清理失败时静默处理
   }
 }
 
@@ -78,9 +74,8 @@ export function clearAllHealthCache() {
     healthCacheKeys.forEach((key: string) => {
       wx.removeStorageSync(key)
     })
-    console.log('[Cache] 已清除所有健康数据缓存，共', healthCacheKeys.length, '个')
   } catch (error) {
-    console.warn('[Cache] 清除所有缓存失败:', error)
+    // 缓存清理失败时静默处理
   }
 }
 
@@ -293,25 +288,8 @@ export async function loadAllBatchesData(context: any) {
         ? (abnormalResult.result.data?.recordCount || 0)
         : 0
       
-      // 查询所有批次的隔离记录
-      const isolatedResult = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'get_health_records_by_status',
-          batchId: 'all',
-          status: 'isolated'
-        }
-      })
-      
-      const isolatedCount = isolatedResult.result?.success 
-        ? (isolatedResult.result.data?.totalCount || 0)
-        : 0
-      const isolatedRecordCount = isolatedResult.result?.success 
-        ? (isolatedResult.result.data?.recordCount || 0)
-        : 0
-      
       // 重新计算健康率（健康率仍基于批次总数）
-      const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount - isolatedCount
+      const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount
       const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
       // 死亡率已在上面计算（基于总动物数）
       
@@ -319,8 +297,7 @@ export async function loadAllBatchesData(context: any) {
       const monitoringData = {
         realTimeStatus: {
           healthyCount: actualHealthyCount,
-          abnormalCount: abnormalCount,
-          isolatedCount: isolatedCount
+          abnormalCount: abnormalCount
         },
         abnormalList: [],
         diseaseDistribution: []
@@ -335,8 +312,7 @@ export async function loadAllBatchesData(context: any) {
           healthyRate: healthyRate + '%',
           mortalityRate: mortalityRate + '%',
           abnormalCount: abnormalRecordCount,
-          treatingCount: totalOngoingRecords,
-          isolatedCount: isolatedRecordCount
+          treatingCount: totalOngoingRecords
         },
         preventionStats,
         'preventionData.stats': {
@@ -411,8 +387,7 @@ async function loadHealthOverview(context: any, batchId: string) {
           healthyRate: healthStats.healthyRate + '%',
           mortalityRate: healthStats.mortalityRate + '%',
           abnormalCount: healthStats.abnormalCount || 0,
-          treatingCount: healthStats.treatingCount || 0,
-          isolatedCount: healthStats.isolatedCount || 0
+          treatingCount: healthStats.treatingCount || 0
         },
         recentPreventionRecords: recentPrevention || [],
         activeHealthAlerts: activeAlerts || [],

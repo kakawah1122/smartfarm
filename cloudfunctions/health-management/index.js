@@ -774,10 +774,11 @@ async function getAbnormalRecords(event, wxContext) {
 // 查询各状态的健康记录（待处理/治疗中/隔离）
 async function getHealthRecordsByStatus(event, wxContext) {
   try {
-    const { batchId, status } = event  // status: 'abnormal' | 'treating' | 'isolated'
+    const { batchId, status, limit = 20 } = event  // status: 'abnormal' | 'treating' | 'isolated'
     const db = cloud.database()
-    
-    
+
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50)
+
     let whereCondition = {
       recordType: 'ai_diagnosis',
       status: status || 'abnormal',
@@ -787,16 +788,19 @@ async function getHealthRecordsByStatus(event, wxContext) {
     if (batchId && batchId !== 'all') {
       whereCondition.batchId = batchId
     }
-    
-    const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+
+    let query = db.collection(COLLECTIONS.HEALTH_RECORDS)
       .where(whereCondition)
+      .orderBy('checkDate', 'desc')
+
+    const result = await query
+      .limit(safeLimit)
       .get()
-    
-    // ✅ 累加受影响的动物数量
+
     const totalCount = result.data.reduce((sum, record) => {
       return sum + (record.affectedCount || 0)
     }, 0)
-    
+
     return {
       success: true,
       data: {
@@ -911,7 +915,6 @@ async function getBatchPromptData(event, wxContext) {
       deadCount: summaryResult.deadCount,
       abnormalCount: summaryResult.abnormalCount,
       treatingCount: summaryResult.treatingCount,
-      isolatedCount: summaryResult.isolatedCount,
       mortalityRate: summaryResult.mortalityRate
     }
 
@@ -1577,20 +1580,6 @@ async function getHealthStatistics(batchId, dateRange) {
       return sum + (record.outcome?.totalTreated || 0)
     }, 0)
     
-    // 统计隔离中记录（status='isolated' 或 isolation_records中status='ongoing'）
-    // ✅ 累加 isolatedCount
-    const isolatedRecords = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
-      .where({
-        batchId,
-        status: 'ongoing',
-        isDeleted: _.neq(true)
-      })
-      .get()
-    
-    const isolatedCount = isolatedRecords.data.reduce((sum, record) => {
-      return sum + (record.isolatedCount || 0)
-    }, 0)
-    
     // ✅ 获取实时死亡数（从死亡记录表）
     const deathRecordsResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({
@@ -1615,8 +1604,8 @@ async function getHealthStatistics(batchId, dateRange) {
       // ✅ 如果健康记录的健康数和生病数都是0，说明没有填写
       // 应该用 总存栏数 - 异常数 - 治疗中数 - 隔离中数 来计算健康数
       if (recordHealthyCount === 0 && recordSickCount === 0) {
-        healthyCount = totalAnimals - abnormalCount - treatingCount - isolatedCount
-        sickCount = abnormalCount + treatingCount + isolatedCount
+        healthyCount = totalAnimals - abnormalCount - treatingCount
+        sickCount = abnormalCount + treatingCount
       } else {
         healthyCount = recordHealthyCount
         sickCount = recordSickCount
@@ -1627,10 +1616,10 @@ async function getHealthStatistics(batchId, dateRange) {
       // ✅ 死亡率基于原始数量计算（而非治疗总数）
       mortalityRate = originalQuantity > 0 ? ((deadCount / originalQuantity) * 100).toFixed(2) : 0
     } else {
-      // 没有健康记录，根据异常、治疗中、隔离记录计算
-      healthyCount = totalAnimals - abnormalCount - treatingCount - isolatedCount
+      // 没有健康记录，根据异常、治疗中计算
+      healthyCount = totalAnimals - abnormalCount - treatingCount
       healthyCount = Math.max(0, healthyCount)  // 确保不为负数
-      sickCount = abnormalCount + treatingCount + isolatedCount
+      sickCount = abnormalCount + treatingCount
       healthyRate = totalAnimals > 0 ? ((healthyCount / totalAnimals) * 100).toFixed(1) : 100
       // ✅ 死亡率基于原始数量计算（而非治疗总数）
       mortalityRate = originalQuantity > 0 ? ((deadCount / originalQuantity) * 100).toFixed(2) : 0
@@ -1645,8 +1634,7 @@ async function getHealthStatistics(batchId, dateRange) {
       healthyRate,
       mortalityRate,
       abnormalCount,
-      treatingCount,
-      isolatedCount
+      treatingCount
     }
 
   } catch (error) {
@@ -1917,17 +1905,12 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           return status === 'ongoing' || status === 'pending'
         })
         
-        // 分别统计治疗中和隔离中的数量
+        // 统计进行中的治疗数量
         let treatingCount = 0
-        let isolatedCount = 0
         
         ongoingTreatmentRecords.forEach(record => {
           const count = record.outcome?.totalTreated || 0
-          if (record.treatmentType === 'isolation') {
-            isolatedCount += count
-          } else {
-            treatingCount += count
-          }
+          treatingCount += count
         })
         
         // ✅ 查询待处理的动物数量（从 health_records，累加 affectedCount）
@@ -1945,8 +1928,8 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         }, 0)
         
         // ✅ 计算健康数和异常数
-        // 异常数 = 待处理 + 治疗中 + 隔离中
-        sickCount = abnormalCount + treatingCount + isolatedCount
+        // 异常数 = 待处理 + 治疗中
+        sickCount = abnormalCount + treatingCount
         // 健康数 = 总存栏 - 异常数
         healthyCount = totalCount - sickCount
         healthyCount = Math.max(0, healthyCount) // 确保不为负数
@@ -1991,7 +1974,6 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           deadCount,
           abnormalCount,      // ✅ 待处理动物数
           treatingCount,      // ✅ 治疗中动物数
-          isolatedCount,      // ✅ 隔离中动物数
           abnormalRecordCount, // ✅ 待处理记录数
           recentIssues,
           alertLevel,
@@ -2027,6 +2009,128 @@ async function getAllBatchesHealthSummary(event, wxContext) {
       success: false,
       error: error.message,
       message: '获取批次健康汇总失败'
+    }
+  }
+}
+
+async function getDashboardSnapshot(event, wxContext) {
+  try {
+    const {
+      batchId = 'all',
+      includeDiagnosis = true,
+      diagnosisLimit = 10,
+      includeAbnormalRecords = true,
+      abnormalLimit = 20
+    } = event || {}
+
+    if (batchId && batchId !== 'all') {
+      return await getHealthOverview({ batchId }, wxContext)
+    }
+
+    const summaryResult = await getAllBatchesHealthSummary({}, wxContext)
+
+    if (!summaryResult.success) {
+      return summaryResult
+    }
+
+    const summaryData = summaryResult.data || {}
+    const batches = summaryData.batches || []
+
+    const totalAnimals = batches.reduce((sum, batch) => sum + (batch.totalCount || 0), 0)
+    const deadCount = batches.reduce((sum, batch) => sum + (batch.deadCount || 0), 0)
+    const sickCount = batches.reduce((sum, batch) => sum + (batch.sickCount || 0), 0)
+
+    const batchIds = batches
+      .map(batch => batch.batchId || batch._id)
+      .filter(Boolean)
+
+    let totalOngoing = 0
+    let totalOngoingRecords = 0
+    let totalTreatmentCost = 0
+    let totalTreated = 0
+    let totalCured = 0
+    let totalDied = 0
+    let totalDiedAnimals = 0
+
+    if (batchIds.length > 0) {
+      const treatmentResult = await calculateBatchTreatmentCosts({ batchIds }, wxContext)
+
+      if (treatmentResult?.success && treatmentResult.data) {
+        Object.values(treatmentResult.data).forEach((stats) => {
+          const item = stats || {}
+          totalOngoing += Number(item.ongoingAnimalsCount || 0)
+          totalOngoingRecords += Number(item.ongoingCount || 0)
+          totalTreatmentCost += parseFloat(item.totalCost || 0)
+          totalTreated += Number(item.totalTreated || 0)
+          totalCured += Number(item.totalCuredAnimals || 0)
+          totalDied += Number(item.diedCount || 0)
+          totalDiedAnimals += Number(item.totalDiedAnimals || item.diedCount || 0)
+        })
+      }
+    }
+
+    const [abnormalResult, diagnosisResult] = await Promise.all([
+      includeAbnormalRecords
+        ? getHealthRecordsByStatus({ batchId: 'all', status: 'abnormal', limit: abnormalLimit }, wxContext)
+        : Promise.resolve(null),
+      includeDiagnosis
+        ? getDiagnosisHistory({ batchId: undefined, limit: diagnosisLimit, page: 1 }, wxContext)
+        : Promise.resolve(null)
+    ])
+
+    const abnormalData = abnormalResult?.success ? abnormalResult.data : { totalCount: 0, recordCount: 0, records: [] }
+
+    let latestDiagnosisRecords = []
+    let pendingDiagnosis = 0
+
+    if (diagnosisResult?.success && diagnosisResult.data) {
+      latestDiagnosisRecords = diagnosisResult.data.records || []
+      pendingDiagnosis = latestDiagnosisRecords.filter((record) => {
+        const status = record.status || ''
+        return status === 'pending' || status === 'pending_confirmation'
+      }).length
+    }
+
+    const abnormalCount = abnormalData.totalCount || 0
+    const abnormalRecordCount = abnormalData.recordCount || 0
+    const abnormalRecords = abnormalData.records || []
+
+    const actualHealthyCount = Math.max(0, totalAnimals - deadCount - totalOngoing - abnormalCount)
+    const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
+    const mortalityRate = totalAnimals > 0 ? ((deadCount / totalAnimals) * 100).toFixed(1) : '0'
+    const cureRate = totalTreated > 0 ? ((totalCured / totalTreated) * 100).toFixed(1) : '0'
+
+    return {
+      success: true,
+      data: {
+        batches,
+        totalBatches: summaryData.totalBatches || batches.length,
+        totalAnimals,
+        deadCount,
+        sickCount,
+        actualHealthyCount,
+        healthyRate,
+        mortalityRate,
+        abnormalCount,
+        abnormalRecordCount,
+        abnormalRecords,
+        totalOngoing,
+        totalOngoingRecords,
+        totalTreatmentCost,
+        totalTreated,
+        totalCured,
+        totalDiedAnimals,
+        totalDied,
+        cureRate,
+        pendingDiagnosis,
+        latestDiagnosisRecords
+      }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '获取健康面板数据失败'
     }
   }
 }
@@ -2602,6 +2706,9 @@ exports.main = async (event, context) => {
       
       case 'get_all_batches_health_summary':
         return await getAllBatchesHealthSummary(event, wxContext)
+      
+      case 'get_dashboard_snapshot':
+        return await getDashboardSnapshot(event, wxContext)
       
       case 'get_homepage_health_overview':
         return await getHomepageHealthOverview(event, wxContext)
@@ -3899,37 +4006,59 @@ async function getOngoingTreatments(batchId, wxContext) {
  * 计算单个批次的治疗成本（内部辅助函数）
  */
 function calculateBatchTreatmentStats(records) {
-  const totalCost = records.reduce((sum, r) => sum + (r.totalCost || 0), 0)
-  
-  // ✅ 修复：兼容 outcome 的两种格式
-  // 格式1：字符串 outcome: 'ongoing'
-  // 格式2：对象 outcome: { status: 'ongoing', ... }
-  const ongoingRecords = records.filter(r => {
-    if (typeof r.outcome === 'string') {
-      return r.outcome === 'ongoing' || r.outcome === 'pending'
+  const normalizeStatus = (record) => {
+    if (typeof record.outcome === 'string') {
+      return record.outcome
     }
-    const status = r.outcome?.status
+    return record.outcome?.status || record.treatmentStatus || record.status || ''
+  }
+
+  const getTotalTreated = (record) => {
+    const outcomeTotal = typeof record.outcome === 'object' ? record.outcome?.totalTreated : undefined
+    return outcomeTotal ?? record.totalTreated ?? record.affectedCount ?? record.initialCount ?? 0
+  }
+
+  const getCuredAnimals = (record) => {
+    if (typeof record.outcome === 'object' && record.outcome) {
+      const cured = record.outcome.curedCount ?? record.outcome.totalCured ?? record.outcome.recoveredCount ?? 0
+      return Number(cured) || 0
+    }
+    return Number(record.curedCount ?? record.totalCured ?? record.recoveredCount ?? 0) || 0
+  }
+
+  const getDiedAnimals = (record) => {
+    if (typeof record.outcome === 'object' && record.outcome) {
+      const died = record.outcome.deathCount ?? record.outcome.diedCount ?? 0
+      return Number(died) || 0
+    }
+    return Number(record.deathCount ?? record.diedCount ?? 0) || 0
+  }
+
+  const totalCost = records.reduce((sum, r) => sum + (r.totalCost || 0), 0)
+
+  const ongoingRecords = records.filter(r => {
+    const status = normalizeStatus(r)
     return status === 'ongoing' || status === 'pending'
   })
+
   const ongoingCount = ongoingRecords.length
-  // ✅ 关键修复：计算治疗中的实际动物数（总数 - 已治愈 - 已死亡）
+
   const ongoingAnimalsCount = ongoingRecords.reduce((sum, r) => {
-    const totalTreated = r.outcome?.totalTreated || r.affectedCount || r.initialCount || 0
-    const curedAnimals = r.outcome?.curedCount || 0
-    const diedAnimals = r.outcome?.deathCount || 0
-    // 实际还在治疗中的 = 总数 - 治愈 - 死亡
-    const actualOngoing = totalTreated - curedAnimals - diedAnimals
+    const totalTreated = getTotalTreated(r)
+    const curedAnimals = getCuredAnimals(r)
+    const diedAnimals = getDiedAnimals(r)
+    const actualOngoing = Math.max(totalTreated - curedAnimals - diedAnimals, 0)
     return sum + actualOngoing
   }, 0)
-  
-  const curedCount = records.filter(r => r.outcome?.status === 'cured').length
-  const diedCount = records.filter(r => r.outcome?.status === 'died').length
-  
-  const totalTreated = records.reduce((sum, r) => sum + (r.outcome?.totalTreated || r.initialCount || 0), 0)
-  const totalCuredAnimals = records.reduce((sum, r) => sum + (r.outcome?.curedCount || r.curedCount || 0), 0)
-  const totalDiedAnimals = records.reduce((sum, r) => sum + (r.outcome?.deathCount || 0), 0)
+
+  const curedCount = records.filter(r => normalizeStatus(r) === 'cured').length
+  const diedCount = records.filter(r => normalizeStatus(r) === 'died').length
+
+  const totalTreated = records.reduce((sum, r) => sum + getTotalTreated(r), 0)
+  const totalCuredAnimals = records.reduce((sum, r) => sum + getCuredAnimals(r), 0)
+  const totalDiedAnimals = records.reduce((sum, r) => sum + getDiedAnimals(r), 0)
   const cureRate = totalTreated > 0 ? ((totalCuredAnimals / totalTreated) * 100).toFixed(1) : 0
-  
+
   return {
     totalCost: totalCost.toFixed(2),
     treatmentCount: records.length,
@@ -3939,6 +4068,7 @@ function calculateBatchTreatmentStats(records) {
     diedCount,
     totalTreated,
     totalCuredAnimals,
+    totalDiedAnimals,
     cureRate
   }
 }
@@ -3962,10 +4092,9 @@ async function calculateBatchTreatmentCosts(event, wxContext) {
       }
     }
     
-    // 构建查询条件（✅ 添加 openid 过滤，确保只查询当前用户的数据）
+    // 构建查询条件
     let query = db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
-        _openid: openid,  // ✅ 关键修复：添加用户过滤
         isDeleted: false,
         batchId: _.in(batchIds)
       })
@@ -3979,14 +4108,6 @@ async function calculateBatchTreatmentCosts(event, wxContext) {
     
     // 一次性查询所有批次的治疗记录
     const result = await query.get()
-    
-    // 🔍 调试：查看查询结果
-    console.log('[calculateBatchTreatmentCosts] 查询结果:', {
-      totalRecords: result.data.length,
-      batchIds,
-      firstRecord: result.data[0],
-      recordBatchIds: result.data.map(r => r.batchId)
-    })
     
     // 按批次ID分组
     const recordsByBatch = {}
@@ -4005,14 +4126,6 @@ async function calculateBatchTreatmentCosts(event, wxContext) {
     batchIds.forEach(batchId => {
       const records = recordsByBatch[batchId] || []
       batchStats[batchId] = calculateBatchTreatmentStats(records)
-    })
-    
-    // 🔍 调试：查看批量计算结果
-    console.log('[calculateBatchTreatmentCosts] 批量计算结果:', {
-      batchCount: batchIds.length,
-      batchIds,
-      batchStatsKeys: Object.keys(batchStats),
-      firstBatchStats: Object.values(batchStats)[0]
     })
     
     return {

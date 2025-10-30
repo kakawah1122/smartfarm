@@ -297,9 +297,9 @@ Page({
       ? record.correctedDiagnosis 
       : record.diagnosis
 
-    // 直接跳转到治疗记录页面，传递异常记录信息（传递批次编号而非ID）
+    // 直接跳转到治疗记录页面，传递异常记录信息
     wx.navigateTo({
-      url: `/packageHealth/treatment-record/treatment-record?abnormalRecordId=${record._id}&batchNumber=${record.batchNumber}&diagnosis=${encodeURIComponent(finalDiagnosis)}`
+      url: `/packageHealth/treatment-record/treatment-record?abnormalRecordId=${record._id}&batchId=${record.batchId}&diagnosis=${encodeURIComponent(finalDiagnosis)}`
     })
   }
 })

@@ -1,10 +1,39 @@
 // health/health.ts - 健康管理页面（模块化优化版）
 import CloudApi from '../../utils/cloud-api'
-import * as HealthUtils from './modules/health-utils'
 import * as HealthStatsCalculator from './modules/health-stats-calculator'
-import * as HealthWatchers from './modules/health-watchers'
-import * as HealthDataLoader from './modules/health-data-loader'
+import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopDataWatcher as stopHealthDataWatcher } from './modules/health-watchers'
 import { clearAllHealthCache } from './modules/health-data-loader'
+
+const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
+const CACHE_DURATION = 5 * 60 * 1000
+
+function getCachedAllBatchesData() {
+  try {
+    const cached = wx.getStorageSync(ALL_BATCHES_CACHE_KEY) as { timestamp: number; data: any }
+    if (!cached) {
+      return null
+    }
+
+    if (Date.now() - cached.timestamp > CACHE_DURATION) {
+      return null
+    }
+
+    return cached.data
+  } catch (error) {
+    return null
+  }
+}
+
+function setCachedAllBatchesData(data: any) {
+  try {
+    wx.setStorageSync(ALL_BATCHES_CACHE_KEY, {
+      timestamp: Date.now(),
+      data
+    })
+  } catch (error) {
+    // 缓存失败不影响主流程
+  }
+}
 
 interface HealthStats {
   totalChecks: number
@@ -13,6 +42,8 @@ interface HealthStats {
   deadCount: number
   healthyRate: string
   mortalityRate: string
+  abnormalCount: number
+  treatingCount: number
 }
 
 interface PreventionStats {
@@ -53,14 +84,6 @@ interface HealthAlert {
   description: string
   status: string
   createdAt: string
-}
-
-// Page 实例属性（不在 data 中）
-interface PageInstance {
-  data: PageData
-  healthRecordsWatcher: any
-  deathRecordsWatcher: any
-  refreshTimer: any
 }
 
 interface PageData {
@@ -119,8 +142,7 @@ Page<PageData>({
       healthyRate: '0%',
       mortalityRate: '0%',
       abnormalCount: 0,
-      treatingCount: 0,
-      isolatedCount: 0
+      treatingCount: 0
     },
     
     // 预防统计数据
@@ -181,8 +203,7 @@ Page<PageData>({
     monitoringData: {
       realTimeStatus: {
         healthyCount: 0,
-        abnormalCount: 0,
-        isolatedCount: 0
+        abnormalCount: 0
       },
       abnormalList: [],
       diseaseDistribution: []
@@ -192,7 +213,8 @@ Page<PageData>({
         pendingDiagnosis: 0,
         ongoingTreatment: 0,
         totalTreatmentCost: 0,
-        cureRate: 0
+        cureRate: 0,
+        ongoingAnimalsCount: 0
       },
       treatmentHistory: [] as any[],
       diagnosisHistory: [] as any[]
@@ -221,19 +243,27 @@ Page<PageData>({
   },
   
   // Page 实例属性（不在 data 中）
-  healthRecordsWatcher: null as any,
-  deathRecordsWatcher: null as any,
-  treatmentRecordsWatcher: null as any,  // ✅ 新增：治疗记录监听器
-  refreshTimer: null as any,
+  dataWatchers: null as ReturnType<typeof createWatcherManager> | null,
   loadDataDebounceTimer: null as any,  // ✅ 防抖定时器
   isLoadingData: false,  // ✅ 数据加载标志，防止重复加载
   lastClickTime: 0,  // ✅ 上次点击时间，防止重复点击
+  pendingAllBatchesPromise: null as Promise<any> | null,
+  latestAllBatchesSnapshot: null as any,
+  latestAllBatchesFetchedAt: 0,
+
+  invalidateAllBatchesCache() {
+    this.pendingAllBatchesPromise = null
+    this.latestAllBatchesSnapshot = null
+    this.latestAllBatchesFetchedAt = 0
+  },
 
   /**
    * 页面加载
    */
   async onLoad(options: any) {
     const batchId = options.batchId
+    
+    this.dataWatchers = createWatcherManager()
     
     this.initDateRange()
     
@@ -289,139 +319,29 @@ Page<PageData>({
    * 启动数据监听
    */
   startDataWatcher() {
-    // 先停止旧的监听器，确保状态清理干净
-    this.stopDataWatcher()
-    
-    const db = wx.cloud.database()
-    
-    
-    // 延迟启动，给连接状态重置留出时间
-    setTimeout(() => {
-      // 监听健康记录变化
-      try {
-        this.healthRecordsWatcher = db.collection('health_records')
-          .where({
-            isDeleted: false
-          })
-          .watch({
-            onChange: (snapshot) => {
-              // ✅ 数据变化时清除缓存，确保数据一致性
-              clearAllHealthCache()
-              
-              // 延迟刷新，避免频繁更新
-              if (this.refreshTimer) {
-                clearTimeout(this.refreshTimer)
-              }
-              this.refreshTimer = setTimeout(() => {
-                this.loadHealthData()
-              }, 1000)
-            },
-            onError: (err) => {
-              // 错误时自动重置监听器
-              this.healthRecordsWatcher = null
-            }
-          })
-    } catch (error) {
-      this.healthRecordsWatcher = null
+    if (!this.dataWatchers) {
+      this.dataWatchers = createWatcherManager()
     }
-      
-      // 监听死亡记录变化
-      try {
-        this.deathRecordsWatcher = db.collection('health_death_records')
-          .where({
-            isDeleted: false
-          })
-          .watch({
-            onChange: (snapshot) => {
-              // ✅ 数据变化时清除缓存，确保数据一致性
-              clearAllHealthCache()
-              
-              // 延迟刷新，避免频繁更新
-              if (this.refreshTimer) {
-                clearTimeout(this.refreshTimer)
-              }
-              this.refreshTimer = setTimeout(() => {
-                this.loadHealthData()
-              }, 1000)
-            },
-          onError: (err) => {
-            // 错误时自动重置监听器
-            this.deathRecordsWatcher = null
-          }
-          })
-    } catch (error) {
-      this.deathRecordsWatcher = null
-    }
-      
-      // ✅ 新增：监听治疗记录变化（创建、更新治疗方案时触发刷新）
-      try {
-        this.treatmentRecordsWatcher = db.collection('health_treatment_records')
-          .where({
-            isDeleted: false
-          })
-          .watch({
-            onChange: (snapshot) => {
-              // ✅ 数据变化时清除缓存，确保数据一致性
-              clearAllHealthCache()
-              
-              // 延迟刷新，避免频繁更新
-              if (this.refreshTimer) {
-                clearTimeout(this.refreshTimer)
-              }
-              this.refreshTimer = setTimeout(() => {
-                this.loadHealthData()
-              }, 1000)
-            },
-            onError: (err) => {
-              // 错误时自动重置监听器
-              this.treatmentRecordsWatcher = null
-            }
-          })
-      } catch (error) {
-        this.treatmentRecordsWatcher = null
+    
+    this.dataWatchers = startHealthDataWatcher(this.dataWatchers, {
+      includeTreatmentWatcher: true,
+      onBeforeChange: () => {
+        clearAllHealthCache()
+        this.invalidateAllBatchesCache()
+      },
+      onDataChange: () => {
+        this.loadHealthData()
       }
-    }, 100) // 延迟100ms启动
+    })
   },
   
   /**
    * 停止数据监听
    */
   stopDataWatcher() {
-    
-    if (this.healthRecordsWatcher) {
-      try {
-        this.healthRecordsWatcher.close()
-      } catch (error: any) {
-        // 忽略 WebSocket 连接已断开的非致命错误
-      } finally {
-        this.healthRecordsWatcher = null
-      }
-    }
-    
-    if (this.deathRecordsWatcher) {
-      try {
-        this.deathRecordsWatcher.close()
-      } catch (error: any) {
-        // 忽略 WebSocket 连接已断开的非致命错误
-      } finally {
-        this.deathRecordsWatcher = null
-      }
-    }
-    
-    // ✅ 新增：关闭治疗记录监听器
-    if (this.treatmentRecordsWatcher) {
-      try {
-        this.treatmentRecordsWatcher.close()
-      } catch (error: any) {
-        // 忽略 WebSocket 连接已断开的非致命错误
-      } finally {
-        this.treatmentRecordsWatcher = null
-      }
-    }
-    
-    if (this.refreshTimer) {
-      clearTimeout(this.refreshTimer)
-      this.refreshTimer = null
+    if (this.dataWatchers) {
+      stopHealthDataWatcher(this.dataWatchers)
+      this.dataWatchers = createWatcherManager()
     }
   },
 
@@ -431,6 +351,7 @@ Page<PageData>({
   onPullDownRefresh() {
     // ✅ 清除缓存，强制重新加载
     clearAllHealthCache()
+    this.invalidateAllBatchesCache()
     
     this.setData({ refreshing: true })
     
@@ -574,138 +495,94 @@ Page<PageData>({
    * 核心辅助方法：获取所有批次的健康数据（✅优化：批量API + 并行查询）
    * @private
    */
-  async _fetchAllBatchesHealthData() {
-    // 第一阶段：获取批次健康汇总
-    const healthResult = await wx.cloud.callFunction({
-      name: 'health-management',
-      data: { action: 'get_all_batches_health_summary' }
-    })
+  async _fetchAllBatchesHealthData(options: boolean | { useCache?: boolean; forceRefresh?: boolean } = { useCache: true, forceRefresh: false }) {
+    const normalizedOptions = typeof options === 'boolean'
+      ? { useCache: options }
+      : (options || {})
+    const useCache = normalizedOptions.useCache !== undefined ? normalizedOptions.useCache : true
+    const forceRefresh = normalizedOptions.forceRefresh ?? false
 
-    if (!healthResult.result || !healthResult.result.success) {
-      throw new Error('获取批次健康汇总失败')
+    const now = Date.now()
+
+    if (!forceRefresh && this.pendingAllBatchesPromise) {
+      return this.pendingAllBatchesPromise
     }
 
-    const data = healthResult.result.data
-    const batches = data.batches || []
-    
-    // 计算基础统计
-    const totalAnimals = batches.reduce((sum: number, b: any) => sum + (b.totalCount || 0), 0)
-    const deadCount = batches.reduce((sum: number, b: any) => sum + (b.deadCount || 0), 0)
-    const sickCount = batches.reduce((sum: number, b: any) => sum + (b.sickCount || 0), 0)
-    
-    // ✅ 优化：使用批量API一次性获取所有批次的治疗数据（N次调用 → 1次调用）
-    const batchIds = batches.map((b: any) => b._id || b.batchId).filter(Boolean)
-    
-    let totalOngoing = 0
-    let totalOngoingRecords = 0
-    let totalTreatmentCost = 0
-    let totalTreated = 0
-    let totalCured = 0
-    let totalDied = 0
-    
-    if (batchIds.length > 0) {
-      try {
-        const batchTreatmentResult = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'calculate_batch_treatment_costs',
-            batchIds: batchIds
-          }
-        })
-        
-        if (batchTreatmentResult.result?.success) {
-          const batchStats = batchTreatmentResult.result.data
-          
-          // 🔍 调试：查看批量治疗统计数据
-          console.log('[Health] _fetchAllBatchesHealthData - 批量治疗统计:', {
-            batchCount: Object.keys(batchStats).length,
-            batchIds: Object.keys(batchStats),
-            firstBatchStats: Object.values(batchStats)[0]
-          })
-          
-          // 汇总所有批次的治疗数据
-          Object.values(batchStats).forEach((stats: any) => {
-            totalOngoing += stats.ongoingAnimalsCount || 0
-            totalOngoingRecords += stats.ongoingCount || 0
-            totalTreatmentCost += parseFloat(stats.totalCost || '0')
-            totalTreated += stats.totalTreated || 0
-            totalCured += stats.totalCuredAnimals || 0
-            totalDied += stats.diedCount || 0
-          })
-          
-          // 🔍 调试：查看累加后的结果
-          console.log('[Health] _fetchAllBatchesHealthData - 累加结果:', {
-            totalOngoing,
-            totalOngoingRecords,
-            totalTreated,
-            totalCured,
-            totalDied
-          })
-        }
-      } catch (treatmentError) {
-        console.warn('[Health] 批量治疗成本计算失败，使用默认值:', treatmentError)
+    if (!forceRefresh && useCache) {
+      const isMemoryValid = this.latestAllBatchesSnapshot && (now - this.latestAllBatchesFetchedAt) < CACHE_DURATION
+      if (isMemoryValid) {
+        return this.latestAllBatchesSnapshot
+      }
+
+      const cached = getCachedAllBatchesData()
+      if (cached) {
+        this.latestAllBatchesSnapshot = cached
+        this.latestAllBatchesFetchedAt = now
+        return cached
       }
     }
-    
-    // 第三阶段：并行查询异常和隔离数据
-    const [abnormalResult, isolatedResult] = await Promise.all([
-      wx.cloud.callFunction({
+
+    const fetchPromise = (async () => {
+      const snapshotResult = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
-          action: 'get_health_records_by_status',
+          action: 'get_dashboard_snapshot',
           batchId: 'all',
-          status: 'abnormal'
-        }
-      }),
-      wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'get_health_records_by_status',
-          batchId: 'all',
-          status: 'isolated'
+          includeDiagnosis: true,
+          diagnosisLimit: 10,
+        includeAbnormalRecords: true,
+        abnormalLimit: 50
         }
       })
-    ])
-    
-    const abnormalCount = abnormalResult.result?.success 
-      ? (abnormalResult.result.data?.totalCount || 0)
-      : 0
-    const abnormalRecordCount = abnormalResult.result?.success 
-      ? (abnormalResult.result.data?.recordCount || 0)
-      : 0
-    const isolatedCount = isolatedResult.result?.success 
-      ? (isolatedResult.result.data?.totalCount || 0)
-      : 0
-    const isolatedRecordCount = isolatedResult.result?.success 
-      ? (isolatedResult.result.data?.recordCount || 0)
-      : 0
-    
-    // 计算健康率和死亡率
-    const actualHealthyCount = totalAnimals - deadCount - totalOngoing - abnormalCount - isolatedCount
-    const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
-    const mortalityRate = totalAnimals > 0 ? ((deadCount / totalAnimals) * 100).toFixed(1) : '0'
-    const cureRate = totalTreated > 0 ? ((totalCured / totalTreated) * 100).toFixed(1) : '0'
-    
-    // 返回完整的数据对象
-    return {
-      batches,
-      totalAnimals,
-      deadCount,
-      sickCount,
-      actualHealthyCount,
-      healthyRate,
-      mortalityRate,
-      abnormalCount,
-      abnormalRecordCount,
-      isolatedCount,
-      isolatedRecordCount,
-      totalOngoing,
-      totalOngoingRecords,
-      totalTreatmentCost,
-      totalTreated,
-      totalCured,
-      totalDied,
-      cureRate
+
+      if (!snapshotResult.result || !snapshotResult.result.success) {
+        throw new Error('获取健康面板数据失败')
+      }
+
+      const rawData = snapshotResult.result.data || {}
+
+      const normalized = {
+        batches: rawData.batches || [],
+        totalBatches: rawData.totalBatches ?? ((rawData.batches || []).length),
+        totalAnimals: Number(rawData.totalAnimals ?? 0) || 0,
+        deadCount: Number(rawData.deadCount ?? 0) || 0,
+        sickCount: Number(rawData.sickCount ?? 0) || 0,
+        actualHealthyCount: Number(rawData.actualHealthyCount ?? 0) || 0,
+        healthyRate: rawData.healthyRate || '0',
+        mortalityRate: rawData.mortalityRate || '0',
+        abnormalCount: Number(rawData.abnormalCount ?? 0) || 0,
+        abnormalRecordCount: Number(rawData.abnormalRecordCount ?? 0) || 0,
+        abnormalRecords: rawData.abnormalRecords || [],
+        totalOngoing: Number(rawData.totalOngoing ?? 0) || 0,
+        totalOngoingRecords: Number(rawData.totalOngoingRecords ?? 0) || 0,
+        totalTreatmentCost: Number(rawData.totalTreatmentCost ?? 0) || 0,
+        totalTreated: Number(rawData.totalTreated ?? 0) || 0,
+        totalCured: Number(rawData.totalCured ?? 0) || 0,
+      totalDiedAnimals: Number(rawData.totalDiedAnimals ?? 0) || 0,
+      totalDied: Number(rawData.totalDied ?? rawData.totalDiedAnimals ?? 0) || 0,
+        cureRate: rawData.cureRate || '0',
+        pendingDiagnosis: Number(rawData.pendingDiagnosis ?? 0) || 0,
+        latestDiagnosisRecords: rawData.latestDiagnosisRecords || [],
+        fetchedAt: Date.now()
+      }
+
+      setCachedAllBatchesData(normalized)
+      this.latestAllBatchesSnapshot = normalized
+      this.latestAllBatchesFetchedAt = normalized.fetchedAt
+
+      return normalized
+    })()
+
+    if (!forceRefresh) {
+      this.pendingAllBatchesPromise = fetchPromise
+    }
+
+    try {
+      return await fetchPromise
+    } finally {
+      if (!forceRefresh) {
+        this.pendingAllBatchesPromise = null
+      }
     }
   },
 
@@ -714,58 +591,22 @@ Page<PageData>({
    */
   async loadAllBatchesData() {
     try {
-      // ✅ 先加载治疗数据，获取准确的治疗中动物数量
-      await this.loadTreatmentData()
-      
-      // ✅ 使用公共方法获取核心数据（批量API优化，减少90%云函数调用）
       const healthData = await this._fetchAllBatchesHealthData()
-      
-      // ✅ 使用 loadTreatmentData 中已获取的准确数据
-      const treatmentStats = this.data.treatmentData?.stats || {}
-      const actualOngoingCount = treatmentStats.ongoingTreatment || 0
-      
-      // ✅ 如果有实际治疗数据，使用它来重新计算健康率
-      if (actualOngoingCount > 0 && healthData.totalOngoing === 0) {
-        // 需要获取 ongoingAnimalsCount
-        const costResult = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'calculate_treatment_cost',
-            batchId: this.data.currentBatchId
-          }
-        })
-        
-        const ongoingAnimalsCount = costResult.result?.success 
-          ? (costResult.result.data?.ongoingAnimalsCount || 0)
-          : 0
-        
-        // 重新计算健康率
-        const totalAnimals = healthData.totalAnimals
-        const actualHealthyCount = totalAnimals - healthData.deadCount - ongoingAnimalsCount - healthData.abnormalCount - healthData.isolatedCount
-        const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
-        
-        // 更新 healthData
-        healthData.totalOngoing = ongoingAnimalsCount
-        healthData.totalOngoingRecords = actualOngoingCount
-        healthData.actualHealthyCount = actualHealthyCount
-        healthData.healthyRate = healthyRate
-      }
-      
-      // 构建批次预防数据（简化版，不单独查询每个批次）
+
       const batchesWithPrevention = healthData.batches.map((batch: any) => ({
         ...batch,
-        preventionStats: { 
-          totalPreventions: 0, 
-          vaccineCount: 0, 
+        preventionStats: {
+          totalPreventions: 0,
+          vaccineCount: 0,
           vaccineCoverage: 0,
           vaccineStats: {},
-          disinfectionCount: 0, 
-          totalCost: 0 
-        }, 
+          disinfectionCount: 0,
+          totalCost: 0
+        },
         vaccinationRate: '0',
         recentRecords: []
       }))
-      
+
       const preventionStats = {
         totalPreventions: 0,
         vaccineCount: 0,
@@ -774,20 +615,11 @@ Page<PageData>({
         disinfectionCount: 0,
         totalCost: 0
       }
-      
-      const vaccinationRate = healthData.totalAnimals > 0 
+
+      const vaccinationRate = healthData.totalAnimals > 0
         ? ((preventionStats.vaccineCoverage / healthData.totalAnimals) * 100).toFixed(1)
         : 0
-      
-      // 🔍 调试：查看治愈数据
-      console.log('[Health] 治愈数据检查:', {
-        totalCured: healthData.totalCured,
-        totalTreated: healthData.totalTreated,
-        cureRate: healthData.cureRate,
-        totalCuredAnimals: healthData.totalCuredAnimals
-      })
-      
-      // 一次性设置所有数据
+
       this.setData({
         healthStats: {
           totalChecks: healthData.totalAnimals,
@@ -797,8 +629,7 @@ Page<PageData>({
           healthyRate: healthData.healthyRate + '%',
           mortalityRate: healthData.mortalityRate + '%',
           abnormalCount: healthData.abnormalRecordCount,
-          treatingCount: healthData.totalOngoingRecords,
-          isolatedCount: healthData.isolatedRecordCount
+          treatingCount: healthData.totalOngoingRecords
         },
         preventionStats,
         'preventionData.stats': {
@@ -806,29 +637,27 @@ Page<PageData>({
           preventionCost: preventionStats.totalCost
         },
         'preventionData.recentRecords': [],
-        treatmentStats: {
-          totalTreatments: healthData.totalTreated || this.data.treatmentStats.totalTreatments,
-          totalCost: healthData.totalTreatmentCost || this.data.treatmentStats.totalCost,
-          // ✅ 关键修复：使用 loadTreatmentData 中已设置的正确值，不被批量API的0覆盖
-          recoveredCount: this.data.treatmentStats.recoveredCount || healthData.totalCured,
-          ongoingCount: healthData.totalOngoingRecords || this.data.treatmentStats.ongoingCount,
-          recoveryRate: this.data.treatmentStats.recoveryRate || (healthData.cureRate + '%')
-        },
-        'treatmentData.stats': {
-          pendingDiagnosis: 0,
-          ongoingTreatment: healthData.totalOngoingRecords,
-          totalTreatmentCost: healthData.totalTreatmentCost,
-          cureRate: parseFloat(healthData.cureRate)
-        },
         recentPreventionRecords: [],
         batchPreventionList: batchesWithPrevention,
-        activeHealthAlerts: []
+        activeHealthAlerts: [],
+        'treatmentStats.totalTreatments': healthData.totalTreated,
+        'treatmentStats.totalCost': healthData.totalTreatmentCost,
+        'treatmentStats.recoveredCount': healthData.totalCured,
+        'treatmentStats.ongoingCount': healthData.totalOngoingRecords,
+        'treatmentStats.recoveryRate': healthData.cureRate + '%',
+        'treatmentData.stats.pendingDiagnosis': healthData.pendingDiagnosis,
+        'treatmentData.stats.ongoingTreatment': healthData.totalOngoing,
+        'treatmentData.stats.totalTreatmentCost': healthData.totalTreatmentCost,
+        'treatmentData.stats.cureRate': parseFloat(healthData.cureRate),
+        'treatmentData.stats.ongoingAnimalsCount': healthData.totalOngoing,
+        'treatmentData.diagnosisHistory': healthData.latestDiagnosisRecords,
+        'monitoringData.realTimeStatus.abnormalCount': healthData.abnormalRecordCount,
+        'monitoringData.abnormalList': healthData.abnormalRecords || []
       })
     } catch (error: any) {
-      console.error('[Health] 加载所有批次数据失败:', {
-        error: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString()
+      wx.showToast({
+        title: '批次数据加载失败',
+        icon: 'error'
       })
     }
   },
@@ -837,6 +666,8 @@ Page<PageData>({
    * 完全后台刷新数据（不使用加载锁，不阻塞任何操作）
    */
   backgroundRefreshData() {
+    clearAllHealthCache()
+    this.invalidateAllBatchesCache()
     // ✅ 不使用防抖，不检查isLoadingData，立即开始刷新
     setTimeout(() => {
       this._performBackgroundRefresh()
@@ -870,7 +701,7 @@ Page<PageData>({
   async _backgroundRefreshAllBatches() {
     try {
       // ✅ 使用公共方法获取最新数据（自动使用批量API）
-      const healthData = await this._fetchAllBatchesHealthData()
+      const healthData = await this._fetchAllBatchesHealthData({ useCache: false, forceRefresh: true })
       
       // ✅ 差异对比：只在数据有显著变化时更新（避免不必要的重绘）
       const currentHealthyRate = parseFloat(this.data.healthStats.healthyRate)
@@ -891,95 +722,24 @@ Page<PageData>({
         'healthStats.mortalityRate': healthData.mortalityRate + '%',
         'healthStats.abnormalCount': healthData.abnormalRecordCount,
         'healthStats.treatingCount': healthData.totalOngoingRecords,
-        'healthStats.isolatedCount': healthData.isolatedRecordCount,
         'treatmentStats.totalTreatments': healthData.totalTreated,
         'treatmentStats.totalCost': healthData.totalTreatmentCost,
         'treatmentStats.recoveredCount': healthData.totalCured,
         'treatmentStats.ongoingCount': healthData.totalOngoingRecords,
         'treatmentStats.recoveryRate': healthData.cureRate + '%',
-        'treatmentData.stats.pendingDiagnosis': 0,
-        'treatmentData.stats.ongoingTreatment': healthData.totalOngoingRecords,
+        'treatmentData.stats.pendingDiagnosis': healthData.pendingDiagnosis || 0,
+        'treatmentData.stats.ongoingTreatment': healthData.totalOngoing,
         'treatmentData.stats.totalTreatmentCost': healthData.totalTreatmentCost,
-        'treatmentData.stats.cureRate': parseFloat(healthData.cureRate)
+        'treatmentData.stats.cureRate': parseFloat(healthData.cureRate || '0'),
+        'treatmentData.stats.ongoingAnimalsCount': healthData.totalOngoing,
+        'treatmentData.diagnosisHistory': healthData.latestDiagnosisRecords || [],
+        'monitoringData.realTimeStatus.abnormalCount': healthData.abnormalRecordCount,
+        'monitoringData.abnormalList': healthData.abnormalRecords || []
       })
     } catch (error: any) {
-      console.warn('[Health] 后台刷新失败:', {
-        error: error.message,
-        timestamp: new Date().toISOString()
-      })
+      // 后台刷新失败时静默处理
     }
   },
-  
-  
-  /**
-   * 后台加载预防数据（不阻塞UI）
-   */
-  async loadPreventionDataInBackground(batches: any[]) {
-    try {
-      
-      // 只为有效批次加载预防记录
-      const preventionPromises = batches.map(async (batch: any) => {
-        try {
-          const result = await CloudApi.listPreventionRecords({
-            batchId: batch._id || batch.batchId,
-            pageSize: 50  // 减少查询量
-          })
-          
-          if (result.success && result.data) {
-            const records = result.data.records || []
-            return {
-              batchId: batch._id,
-              stats: this.calculatePreventionStats(records),
-              records: records.slice(0, 3)
-            }
-          }
-        } catch (error) {
-          // 忽略单个批次的加载错误
-        }
-        return null
-      })
-      
-      const results = await Promise.all(preventionPromises)
-      
-      // 更新预防数据（静默更新，不影响用户）
-      const validResults = results.filter(r => r !== null)
-      if (validResults.length > 0) {
-        // 重新计算汇总统计
-        const totalVaccineCoverage = validResults.reduce((sum, r: any) => 
-          sum + (r.stats?.vaccineCoverage || 0), 0)
-        const totalVaccineCount = validResults.reduce((sum, r: any) => 
-          sum + (r.stats?.vaccineCount || 0), 0)
-        const totalPreventions = validResults.reduce((sum, r: any) => 
-          sum + (r.stats?.totalPreventions || 0), 0)
-        const totalCost = validResults.reduce((sum, r: any) => 
-          sum + (r.stats?.totalCost || 0), 0)
-        
-        const totalAnimals = this.data.healthStats.totalChecks || 1
-        const vaccinationRate = totalAnimals > 0 
-          ? ((totalVaccineCoverage / totalAnimals) * 100).toFixed(1)
-          : 0
-        
-        // 静默更新预防统计
-        this.setData({
-          preventionStats: {
-            totalPreventions,
-            vaccineCount: totalVaccineCount,
-            vaccineCoverage: totalVaccineCoverage,
-            vaccineStats: {},
-            disinfectionCount: 0,
-            totalCost
-          },
-          'preventionData.stats': {
-            vaccinationRate,
-            preventionCost: totalCost
-          }
-        })
-      }
-    } catch (error) {
-      // 后台加载失败，静默处理
-    }
-  },
-
   /**
    * 加载健康概览数据
    */
@@ -999,8 +759,7 @@ Page<PageData>({
             healthyRate: healthStats.healthyRate + '%',
             mortalityRate: healthStats.mortalityRate + '%',
             abnormalCount: healthStats.abnormalCount || 0,
-            treatingCount: healthStats.treatingCount || 0,
-            isolatedCount: healthStats.isolatedCount || 0
+            treatingCount: healthStats.treatingCount || 0
           },
           recentPreventionRecords: recentPrevention || [],
           activeHealthAlerts: activeAlerts || [],
@@ -1032,10 +791,10 @@ Page<PageData>({
         const records = result.data.records || []
         
         // 格式化记录，映射字段
-        const formattedRecords = records.map((record: any) => this.formatPreventionRecord(record))
+        const formattedRecords = records.map((record: any) => HealthStatsCalculator.formatPreventionRecord(record))
         
         // 计算预防统计
-        const preventionStats = this.calculatePreventionStats(records)
+        const preventionStats = HealthStatsCalculator.calculatePreventionStats(records)
         
         // 🔥 修复：从批次列表中获取当前批次的总动物数
         let totalAnimals = 1
@@ -1098,12 +857,11 @@ Page<PageData>({
       
       // 如果当前批次不是全部批次，且监控数据为空，使用健康统计数据填充
       if (this.data.currentBatchId !== 'all' && 
-          (!currentData.healthyCount && !currentData.abnormalCount && !currentData.isolatedCount)) {
+          (!currentData.healthyCount && !currentData.abnormalCount)) {
         this.setData({
           'monitoringData.realTimeStatus': {
             healthyCount: this.data.healthStats.healthyCount || 0,
-            abnormalCount: this.data.healthStats.abnormalCount || 0,
-            isolatedCount: this.data.healthStats.isolatedCount || 0
+            abnormalCount: this.data.healthStats.abnormalCount || 0
           },
           'monitoringData.abnormalList': [],
           'monitoringData.diseaseDistribution': []
@@ -1117,8 +875,42 @@ Page<PageData>({
   /**
    * 加载治疗数据
    */
-  async loadTreatmentData() {
+  async loadTreatmentData(options: {
+    aggregated?: {
+      totalCost: number
+      totalTreated: number
+      totalCured: number
+      ongoingCount: number
+      ongoingAnimalsCount: number
+      cureRate: string
+    }
+  } = {}) {
+    const aggregatedStats = options.aggregated
     try {
+      if (this.data.currentBatchId === 'all') {
+        const aggregatedData = aggregatedStats || await this._fetchAllBatchesHealthData()
+
+        this.setData({
+          'treatmentData.stats': {
+            pendingDiagnosis: aggregatedData.pendingDiagnosis || 0,
+            ongoingTreatment: aggregatedData.totalOngoing || 0,
+            totalTreatmentCost: aggregatedData.totalTreatmentCost || 0,
+            cureRate: parseFloat((aggregatedData.cureRate || '0').toString()),
+            ongoingAnimalsCount: aggregatedData.totalOngoing || 0
+          },
+          'treatmentStats.totalTreatments': aggregatedData.totalTreated || 0,
+          'treatmentStats.totalCost': aggregatedData.totalTreatmentCost || 0,
+          'treatmentStats.recoveredCount': aggregatedData.totalCured || 0,
+          'treatmentStats.ongoingCount': aggregatedData.totalOngoingRecords || 0,
+          'treatmentStats.recoveryRate': (aggregatedData.cureRate || 0) + '%',
+          'treatmentData.diagnosisHistory': aggregatedData.latestDiagnosisRecords || [],
+          'monitoringData.realTimeStatus.abnormalCount': aggregatedData.abnormalRecordCount || 0,
+          'monitoringData.abnormalList': aggregatedData.abnormalRecords || []
+        })
+
+        return
+      }
+
       // ✅ 启用云函数调用，获取真实治疗统计数据
       
       // 1. 统计待处理的AI诊断记录（还没有创建治疗方案的）
@@ -1139,14 +931,29 @@ Page<PageData>({
       const pendingDiagnosisCount = allDiagnosis.filter((d: any) => !d.hasTreatment).length
       
       // 2. 计算治疗总成本和治愈率
-      const costResult = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'calculate_treatment_cost',
-          batchId: this.data.currentBatchId,
-          dateRange: this.data.dateRange
+      let costData: any = null
+      if (!aggregatedStats) {
+        const costResult = await wx.cloud.callFunction({
+          name: 'health-management',
+          data: {
+            action: 'calculate_treatment_cost',
+            batchId: this.data.currentBatchId,
+            dateRange: this.data.dateRange
+          }
+        })
+        costData = costResult.result?.success
+          ? costResult.result.data
+          : {}
+      } else {
+        costData = {
+          totalCost: aggregatedStats.totalCost,
+          totalTreated: aggregatedStats.totalTreated,
+          totalCuredAnimals: aggregatedStats.totalCured,
+          ongoingCount: aggregatedStats.ongoingCount,
+          ongoingAnimalsCount: aggregatedStats.ongoingAnimalsCount,
+          cureRate: aggregatedStats.cureRate
         }
-      })
+      }
       
       // 3. 获取异常记录（仅用于列表显示，不用于统计）
       const abnormalResult = await wx.cloud.callFunction({
@@ -1163,10 +970,6 @@ Page<PageData>({
         : []
       
       // 处理成本和统计数据
-      const costData = costResult.result?.success 
-        ? costResult.result.data 
-        : {}
-      
       // 3. 获取历史诊断记录（✅ 始终限制为近7天）
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -1199,25 +1002,18 @@ Page<PageData>({
           }))
         : []
       
-      // 🔍 调试：查看治愈数据
-      console.log('[Health] loadTreatmentData - 治愈数据:', {
-        totalCuredAnimals: costData.totalCuredAnimals,
-        totalTreated: costData.totalTreated,
-        cureRate: costData.cureRate
-      })
-      
       // 更新治疗数据和异常数据
       this.setData({
         'treatmentData.stats': {
           pendingDiagnosis: pendingDiagnosisCount,  // ✅ 使用AI诊断记录统计
           ongoingTreatment: costData.ongoingCount || 0,
-          totalTreatmentCost: parseFloat(costData.totalCost || '0'),
-          cureRate: parseFloat(costData.cureRate || '0'),  // ✅ 显示真实治愈率
+          totalTreatmentCost: parseFloat((costData.totalCost ?? 0).toString()),
+          cureRate: parseFloat((costData.cureRate ?? '0').toString()),  // ✅ 显示真实治愈率
           ongoingAnimalsCount: costData.ongoingAnimalsCount || 0  // ✅ 存储治疗中动物数量
         },
         // ✅ 同时更新卡片显示的治疗统计数据
         'treatmentStats.totalTreatments': costData.totalTreated || 0,
-        'treatmentStats.totalCost': parseFloat(costData.totalCost || '0'),
+        'treatmentStats.totalCost': parseFloat((costData.totalCost ?? 0).toString()),
         'treatmentStats.recoveredCount': costData.totalCuredAnimals || 0,  // ✅ 关键修复
         'treatmentStats.ongoingCount': costData.ongoingCount || 0,
         'treatmentStats.recoveryRate': (costData.cureRate || 0) + '%',
@@ -1227,9 +1023,12 @@ Page<PageData>({
         'monitoringData.abnormalList': abnormalRecords
       })
       
-    } catch (error: any) {
-      console.error('[Health] 加载治疗数据失败:', error)
-      // 出错时设置默认值
+  } catch (error: any) {
+    wx.showToast({
+      title: '治疗数据加载失败',
+      icon: 'error'
+    })
+    // 出错时设置默认值
       this.setData({
         'treatmentData.stats': {
           pendingDiagnosis: 0,
@@ -1249,20 +1048,6 @@ Page<PageData>({
         'monitoringData.abnormalList': []
       })
     }
-  },
-
-  /**
-   * 获取治疗状态文本
-   */
-  getTreatmentStatusText(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'ongoing': '治疗中',
-      'cured': '已治愈',
-      'died': '已死亡',
-      'completed': '已完成',
-      'pending': '待处理'
-    }
-    return statusMap[status] || '未知'
   },
 
   /**
@@ -1303,7 +1088,10 @@ Page<PageData>({
           }
         }
       } catch (error) {
-        console.error('[Health] 获取图片临时URL失败:', error)
+        wx.showToast({
+          title: '图片加载失败',
+          icon: 'error'
+        })
       }
     }
     
@@ -1407,110 +1195,6 @@ Page<PageData>({
   async loadAnalysisData() {
     // 实现健康分析数据加载
     // 已移除调试日志
-  },
-
-  /**
-   * 格式化预防记录，映射数据库字段到显示字段
-   */
-  formatPreventionRecord(record: any) {
-    // 预防类型中文名称映射
-    const preventionTypeNames: { [key: string]: string } = {
-      'vaccine': '疫苗接种',
-      'disinfection': '消毒防疫',
-      'deworming': '驱虫',
-      'quarantine': '隔离检疫'
-    }
-    
-    // 提取疫苗信息
-    const vaccineInfo = record.vaccineInfo || {}
-    const costInfo = record.costInfo || {}
-    
-    // 构建显示标题
-    let title = preventionTypeNames[record.preventionType] || record.preventionType
-    if (vaccineInfo.name) {
-      title = `${title} - ${vaccineInfo.name}`
-    }
-    
-    // 构建描述信息
-    let desc = ''
-    if (vaccineInfo.route) {
-      desc += vaccineInfo.route
-    }
-    if (vaccineInfo.count) {
-      desc += ` · ${vaccineInfo.count}只`
-    }
-    
-    // 格式化日期时间
-    let createTime = record.preventionDate || ''
-    if (record.createdAt) {
-      const date = new Date(record.createdAt)
-      createTime = `${date.getMonth() + 1}月${date.getDate()}日`
-    }
-    
-    return {
-      ...record,
-      // 显示字段
-      preventionType: title,
-      location: vaccineInfo.route || '-',
-      targetAnimals: vaccineInfo.count || 0,
-      createTime: createTime,
-      // 关联任务标识
-      hasRelatedTask: !!record.relatedTaskId,
-      isFromTask: record.creationSource === 'task',
-      // 成本信息
-      cost: costInfo.totalCost || 0
-    }
-  },
-
-  /**
-   * 计算预防统计数据
-   */
-  calculatePreventionStats(records: PreventionRecord[]): PreventionStats {
-    const totalPreventions = records.length
-    
-    // 按疫苗名称分类统计
-    const vaccineStats: { [key: string]: number } = {}
-    let totalVaccinatedCount = 0
-    
-    records.forEach(r => {
-      if (r.preventionType === 'vaccine' && r.vaccineInfo) {
-        const vaccineName = r.vaccineInfo.name || '未知疫苗'
-        const count = r.vaccineInfo.count || 0
-        
-        if (!vaccineStats[vaccineName]) {
-          vaccineStats[vaccineName] = 0
-        }
-        vaccineStats[vaccineName] += count
-        
-        // 累加总接种数（用于统计）
-        totalVaccinatedCount += count
-      }
-    })
-    
-    // 计算接种覆盖数（使用第一针的接种数作为基数）
-    const firstVaccineNames = ['小鹅瘟疫苗第一针', '小鹅瘟高免血清', '小鹅瘟高免血清或高免蛋黄抗体注射', '第一针']
-    let vaccineCoverage = 0
-    for (const name of firstVaccineNames) {
-      if (vaccineStats[name]) {
-        vaccineCoverage = Math.max(vaccineCoverage, vaccineStats[name])
-      }
-    }
-    // 如果没有找到第一针，使用所有疫苗中的最大值作为覆盖基数
-    if (vaccineCoverage === 0 && Object.keys(vaccineStats).length > 0) {
-      vaccineCoverage = Math.max(...Object.values(vaccineStats))
-    }
-    
-    const disinfectionCount = records.filter(r => r.preventionType === 'disinfection').length
-    const totalCost = records.reduce((sum, r) => sum + (r.costInfo?.totalCost || 0), 0)
-
-    return {
-      totalPreventions,
-      vaccineCount: totalVaccinatedCount,
-      vaccineCoverage,
-      vaccineStats,
-      disinfectionCount,
-      totalCost
-    }
   },
 
   /**
@@ -1623,63 +1307,6 @@ Page<PageData>({
   },
 
   /**
-   * 获取预防类型显示文本
-   */
-  getPreventionTypeText(type: string): string {
-    const typeMap: { [key: string]: string } = {
-      'vaccine': '疫苗接种',
-      'disinfection': '消毒防疫',
-      'nutrition': '营养补充',
-      'inspection': '健康检查'
-    }
-    return typeMap[type] || type
-  },
-
-  /**
-   * 获取严重程度颜色
-   */
-  getSeverityColor(severity: string): string {
-    const colorMap: { [key: string]: string } = {
-      'low': '#52c41a',
-      'medium': '#faad14',
-      'high': '#ff4d4f',
-      'critical': '#a8071a'
-    }
-    return colorMap[severity] || '#d9d9d9'
-  },
-
-  /**
-   * 获取健康状态图标
-   */
-  getHealthStatusIcon(healthyRate: string): string {
-    const rate = parseFloat(healthyRate)
-    if (rate >= 95) return '🟢'
-    if (rate >= 90) return '🟡'
-    if (rate >= 80) return '🟠'
-    return '🔴'
-  },
-
-  /**
-   * 格式化数字显示
-   */
-  formatNumber(num: number): string {
-    if (num >= 10000) {
-      return (num / 10000).toFixed(1) + '万'
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K'
-    }
-    return num.toString()
-  },
-
-  /**
-   * 格式化金额显示
-   */
-  formatAmount(amount: number): string {
-    return '¥' + amount.toFixed(2)
-  },
-
-  /**
    * 菜单点击事件
    */
   onMenuTap() {
@@ -1774,11 +1401,6 @@ Page<PageData>({
     switch (action) {
       case 'batch_check':
         this.createHealthRecord()
-        break
-      case 'isolation_manage':
-        wx.navigateTo({
-          url: `/packageHealth/health-care/health-care?mode=isolation&batchId=${this.data.currentBatchId}`
-        })
         break
       case 'view_abnormal':
         const data = e.currentTarget.dataset.data

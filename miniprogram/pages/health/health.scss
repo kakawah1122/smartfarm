@@ -1179,10 +1179,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         background: rgba(124, 58, 237, 0.15);
       }
 
-      .stat-icon-isolation {
-        background: rgba(139, 92, 246, 0.15);
-      }
-
       .stat-icon-abnormal {
         background: rgba(237, 123, 47, 0.15);
       }
@@ -1342,27 +1338,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       // 全宽卡片
       &.stat-card-full-width {
         grid-column: 1 / -1;
-      }
-
-      // 隔离样式
-      &.stat-card-isolation {
-        background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-        
-        &::before {
-          background: #8b5cf6;
-        }
-        
-        .stat-icon {
-          background: rgba(139, 92, 246, 0.15);
-        }
-        
-        .stat-value {
-          color: #8b5cf6;
-        }
-        
-        .stat-label {
-          color: #7c3aed;
-        }
       }
 
       // 异常样式

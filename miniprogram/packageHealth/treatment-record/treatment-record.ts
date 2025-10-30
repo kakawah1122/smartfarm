@@ -194,15 +194,15 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       this.loadAvailableMaterials()
     ])
     
-    // 如果来自异常记录，设置相关数据（优先使用批次编号）
+    // 如果来自异常记录，设置相关数据
     if (abnormalRecordId) {
       this.setData({
-        'formData.batchId': batchNumber || batchId || '',
+        'formData.batchId': batchId || '',  // ✅ 使用批次对象ID
         'formData.diagnosis': diagnosis ? decodeURIComponent(diagnosis) : ''
       })
-    } else if (batchNumber || batchId) {
+    } else if (batchId) {
       this.setData({
-        'formData.batchId': batchNumber || batchId
+        'formData.batchId': batchId  // ✅ 使用批次对象ID
       })
     }
     
@@ -627,9 +627,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       success: (res) => {
         const selectedBatch = this.data.activeBatches[res.tapIndex]
         this.setData({
-          'formData.batchId': selectedBatch.batchNumber
+          'formData.batchId': selectedBatch._id,  // ✅ 使用批次对象ID而不是批次号
+          'formData.batchNumber': selectedBatch.batchNumber  // 保存批次号用于显示
         })
-        this.validateField('batchId', selectedBatch.batchNumber)
+        this.validateField('batchId', selectedBatch._id)
       }
     })
   },
