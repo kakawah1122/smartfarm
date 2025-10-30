@@ -5,6 +5,8 @@ export interface WatcherManager {
   deathRecordsWatcher: WechatMiniprogram.DBRealtimeListener | null
   treatmentRecordsWatcher: WechatMiniprogram.DBRealtimeListener | null
   refreshTimer: ReturnType<typeof setTimeout> | null
+  initTimer: ReturnType<typeof setTimeout> | null
+  isActive: boolean
 }
 
 export interface StartWatcherOptions {
@@ -20,7 +22,9 @@ export function createWatcherManager(): WatcherManager {
     healthRecordsWatcher: null,
     deathRecordsWatcher: null,
     treatmentRecordsWatcher: null,
-    refreshTimer: null
+    refreshTimer: null,
+    initTimer: null,
+    isActive: false
   }
 }
 
@@ -39,6 +43,7 @@ export function startDataWatcher(
 ) {
   const manager = watchers ?? createWatcherManager()
 
+  // 先停止现有的监听器
   stopDataWatcher(manager)
 
   const db = wx.cloud.database()
@@ -53,54 +58,76 @@ export function startDataWatcher(
     }, delay)
   }
 
-  setTimeout(() => {
-    try {
-      manager.healthRecordsWatcher = db.collection('health_records')
-        .where(query)
-        .watch({
-          onChange: () => {
-            scheduleRefresh()
-          },
-          onError: () => {
-            manager.healthRecordsWatcher = null
-          }
-        })
-    } catch (error) {
-      manager.healthRecordsWatcher = null
+  // 标记为活跃状态
+  manager.isActive = true
+
+  // ✅ 增加延迟时间到300ms，给页面更多时间稳定
+  // 延迟初始化监听器，避免过于频繁的初始化
+  manager.initTimer = setTimeout(() => {
+    // ✅ 双重检查：在初始化前再次确认是否还处于活跃状态
+    if (!manager.isActive) {
+      console.log('Watcher initialization cancelled - manager is not active')
+      return
     }
 
-    try {
-      manager.deathRecordsWatcher = db.collection('health_death_records')
-        .where(query)
-        .watch({
-          onChange: () => {
-            scheduleRefresh()
-          },
-          onError: () => {
-            manager.deathRecordsWatcher = null
-          }
-        })
-    } catch (error) {
-      manager.deathRecordsWatcher = null
-    }
-
-    if (includeTreatmentWatcher) {
+    // ✅ 安全的watcher初始化函数
+    const safeInitWatcher = (collectionName: string, watcherKey: keyof WatcherManager) => {
       try {
-        manager.treatmentRecordsWatcher = db.collection('health_treatment_records')
+        // 最后一次检查活跃状态
+        if (!manager.isActive) {
+          console.log(`Skipping ${collectionName} watcher - manager is not active`)
+          return
+        }
+        
+        const watcher = db.collection(collectionName)
           .where(query)
           .watch({
             onChange: () => {
-              scheduleRefresh()
+              // 每次onChange时都检查活跃状态
+              if (manager.isActive) {
+                scheduleRefresh()
+              }
             },
-            onError: () => {
-              manager.treatmentRecordsWatcher = null
+            onError: (err: any) => {
+              // ✅ 区分不同类型的错误
+              const errorMsg = err?.message || err?.errMsg || String(err)
+              
+              // 忽略已知的非致命错误
+              if (errorMsg.includes('CLOSED') || errorMsg.includes('closed')) {
+                console.log(`${collectionName} watcher closed normally`)
+              } else {
+                console.warn(`${collectionName} watcher error:`, errorMsg)
+              }
+              
+              // 清除watcher引用
+              manager[watcherKey] = null
             }
           })
-      } catch (error) {
-        manager.treatmentRecordsWatcher = null
+        
+        // 只在成功创建后赋值
+        manager[watcherKey] = watcher
+      } catch (error: any) {
+        const errorMsg = error?.message || error?.errMsg || String(error)
+        
+        // ✅ 静默处理已知的状态错误
+        if (errorMsg.includes('CLOSED') || errorMsg.includes('closed') || errorMsg.includes('initWatchFail')) {
+          console.log(`${collectionName} watcher init skipped - connection closed`)
+        } else {
+          console.warn(`Failed to init ${collectionName} watcher:`, errorMsg)
+        }
+        
+        manager[watcherKey] = null
       }
     }
-  }, 100)
+
+    // 初始化各个监听器
+    safeInitWatcher('health_records', 'healthRecordsWatcher')
+    safeInitWatcher('health_death_records', 'deathRecordsWatcher')
+    
+    if (includeTreatmentWatcher) {
+      safeInitWatcher('health_treatment_records', 'treatmentRecordsWatcher')
+    }
+  }, 300) // ✅ 增加到300ms，更稳定
 
   return manager
 }
@@ -113,39 +140,55 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
     return
   }
 
+  // 标记为非活跃状态，防止正在初始化的监听器继续执行
+  watchers.isActive = false
+
+  // 清除初始化定时器
+  if (watchers.initTimer) {
+    clearTimeout(watchers.initTimer)
+    watchers.initTimer = null
+  }
+
+  // 清除刷新定时器
+  if (watchers.refreshTimer) {
+    clearTimeout(watchers.refreshTimer)
+    watchers.refreshTimer = null
+  }
+
+  // 关闭健康记录监听器
   if (watchers.healthRecordsWatcher) {
     try {
       watchers.healthRecordsWatcher.close()
     } catch (error: any) {
       // 忽略 WebSocket 连接已断开的非致命错误
+      console.warn('Error closing healthRecordsWatcher:', error?.message)
     } finally {
       watchers.healthRecordsWatcher = null
     }
   }
 
+  // 关闭死亡记录监听器
   if (watchers.deathRecordsWatcher) {
     try {
       watchers.deathRecordsWatcher.close()
     } catch (error: any) {
       // 忽略 WebSocket 连接已断开的非致命错误
+      console.warn('Error closing deathRecordsWatcher:', error?.message)
     } finally {
       watchers.deathRecordsWatcher = null
     }
   }
 
+  // 关闭治疗记录监听器
   if (watchers.treatmentRecordsWatcher) {
     try {
       watchers.treatmentRecordsWatcher.close()
     } catch (error: any) {
       // 忽略 WebSocket 连接已断开的非致命错误
+      console.warn('Error closing treatmentRecordsWatcher:', error?.message)
     } finally {
       watchers.treatmentRecordsWatcher = null
     }
-  }
-
-  if (watchers.refreshTimer) {
-    clearTimeout(watchers.refreshTimer)
-    watchers.refreshTimer = null
   }
 }
 

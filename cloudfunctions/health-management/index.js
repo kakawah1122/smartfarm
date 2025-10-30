@@ -2583,12 +2583,24 @@ async function getDiagnosisHistory(event, wxContext) {
 
     // 映射数据库字段到前端期望的格式
     const mappedRecords = result.data.map(record => {
-      const aiResult = record.aiResult || {}
-      const primaryDiagnosis = aiResult.primaryDiagnosis || {}
-      const treatmentPlan = aiResult.treatmentPlan || {}
-      const medications = treatmentPlan.medications || []
-      const inputData = record.input || {}
-      const animalInfo = inputData.animalInfo || {}
+      // ✅ 修复：支持新旧两种数据结构
+      // 新结构：record.result (从 process-ai-diagnosis 保存)
+      // 旧结构：record.aiResult (从旧版本保存)
+      const aiResult = record.result || record.aiResult || {}
+      
+      // 支持病鹅诊断和死因剖析两种类型
+      const primaryDiagnosis = aiResult.primaryDiagnosis || aiResult.primaryCause || {}
+      const treatmentRecommendation = aiResult.treatmentRecommendation || {}
+      
+      // 处理用药建议（支持多种格式）
+      const medications = treatmentRecommendation.medication || 
+                         treatmentRecommendation.medications || 
+                         []
+      
+      // ✅ 修复：直接从顶层字段读取，而不是从 input.animalInfo
+      const symptoms = record.symptomsText || (Array.isArray(record.symptoms) ? record.symptoms.join('、') : '') || ''
+      const affectedCount = record.affectedCount || 0
+      const dayAge = record.dayAge || 0
       
       return {
         _id: record._id,
@@ -2598,32 +2610,57 @@ async function getDiagnosisHistory(event, wxContext) {
         confidence: primaryDiagnosis.confidence || 0,
         
         // 症状和输入信息
-        symptoms: inputData.symptomsText || inputData.symptoms?.join('、') || '',
-        affectedCount: animalInfo.affectedCount || 0,
-        dayAge: animalInfo.dayAge || 0,
-        temperature: inputData.environmentInfo?.temperature || 0,
+        symptoms: symptoms,
+        affectedCount: affectedCount,
+        dayAge: dayAge,
+        temperature: 0, // 暂不使用
+        
+        // ✅ 诊断图片（症状图片或剖检图片）
+        images: record.images || [],
+        diagnosisType: record.diagnosisType || 'live_diagnosis',
         
         // 治疗方案
-        treatmentDuration: treatmentPlan.followUp?.duration || treatmentPlan.followUp?.estimatedDuration || '未知',
+        // ✅ 修复：治疗周期的获取逻辑
+        treatmentDuration: (() => {
+          if (aiResult.followUp?.reviewInterval) {
+            return aiResult.followUp.reviewInterval
+          } else if (treatmentRecommendation.followUp?.timeline) {
+            return treatmentRecommendation.followUp.timeline
+          } else if (medications.length > 0 && medications[0].duration) {
+            return medications[0].duration
+          }
+          return '未知'
+        })(),
         recommendedMedications: medications.map(med => 
-          typeof med === 'string' ? med : (med.medication || med.name || '')
+          typeof med === 'string' ? med : (med.name || med.medication || '')
         ).filter(m => m),
-        treatmentPlan: treatmentPlan.medications ? 
-          medications.map(med => {
-            if (typeof med === 'string') return med
-            return `${med.medication || med.name || ''} ${med.dosage || ''} ${med.route || ''} ${med.frequency || ''}`
-          }).join('；') : '',
         
         // 其他可能的疾病
-        possibleDiseases: (aiResult.differentialDiagnosis || []).map(dd => ({
+        possibleDiseases: (aiResult.differentialDiagnosis || aiResult.differentialCauses || []).map(dd => ({
           name: dd.disease || '',
           confidence: dd.confidence || 0
         })),
         
-        // 时间和批次信息
-        createTime: record.createTime || '',
-        createdAt: record.createTime || '',
-        diagnosisDate: record.createTime ? record.createTime.substring(0, 16).replace('T', ' ') : '',
+        // ✅ 修复：时间格式处理
+        createTime: (() => {
+          if (record.createdAt) {
+            return typeof record.createdAt === 'string' 
+              ? record.createdAt 
+              : record.createdAt.toISOString()
+          } else if (record.createTime) {
+            return typeof record.createTime === 'string' 
+              ? record.createTime 
+              : record.createTime.toISOString()
+          }
+          return ''
+        })(),
+        diagnosisDate: (() => {
+          const createTimeStr = record.createdAt || record.createTime || ''
+          const timeStr = typeof createTimeStr === 'string' 
+            ? createTimeStr 
+            : (createTimeStr.toISOString ? createTimeStr.toISOString() : '')
+          return timeStr ? timeStr.substring(0, 16).replace('T', ' ') : ''
+        })(),
         batchId: record.batchId || '',
         batchNumber: record.batchNumber || '未知批次',
         
@@ -2631,7 +2668,7 @@ async function getDiagnosisHistory(event, wxContext) {
         operator: record.operatorName || record._openid?.substring(0, 8) || '',
         
         // 状态信息
-        status: record.status || 'pending_confirmation',
+        status: record.status || 'completed',
         reviewed: record.veterinaryReview?.reviewed || false,
         adopted: record.application?.adopted || false
       }
@@ -2654,6 +2691,227 @@ async function getDiagnosisHistory(event, wxContext) {
       success: false,
       error: error.message,
       message: '获取诊断历史失败'
+    }
+  }
+}
+
+/**
+ * 获取批次完整数据（批量查询优化版）
+ * 一次性返回健康概览、预防、治疗、诊断、异常等所有数据
+ * 大幅减少云函数调用次数，提升性能
+ */
+async function getBatchCompleteData(event, wxContext) {
+  try {
+    const { batchId, includes = [], diagnosisLimit = 10, preventionLimit = 20 } = event
+    const openid = wxContext.OPENID
+    
+    // 验证批次ID
+    if (!batchId || batchId === 'all') {
+      throw new Error('此接口不支持全部批次模式，请使用 get_dashboard_snapshot')
+    }
+    
+    // 初始化返回数据
+    const result = {
+      batchId,
+      timestamp: new Date().toISOString()
+    }
+    
+    // 并行查询所有需要的数据
+    const promises = []
+    
+    // 1. 健康统计（基础数据，总是包含）
+    promises.push(
+      (async () => {
+        try {
+          const stats = await getHealthStatistics(batchId, null)
+          result.healthStats = stats
+        } catch (error) {
+          console.error('获取健康统计失败:', error)
+          result.healthStats = null
+        }
+      })()
+    )
+    
+    // 2. 预防数据（如果需要）
+    if (!includes.length || includes.includes('prevention')) {
+      promises.push(
+        (async () => {
+          try {
+            const preventionResult = await dbManager.listPreventionRecords({
+              batchId,
+              pageSize: preventionLimit
+            })
+            
+            // 计算预防统计
+            const records = preventionResult.records || []
+            const preventionStats = {
+              totalPreventions: records.length,
+              vaccineCount: 0,
+              vaccineCoverage: 0,
+              vaccineStats: {},
+              disinfectionCount: 0,
+              totalCost: 0
+            }
+            
+            // 计算疫苗统计
+            const vaccineMap = new Map()
+            records.forEach(record => {
+              if (record.preventionType === 'vaccination' && record.vaccineInfo) {
+                const vaccineName = record.vaccineInfo.vaccineName || '未知疫苗'
+                const targetAnimals = record.vaccineInfo.targetAnimals || 0
+                const doseNumber = record.vaccineInfo.doseNumber || 1
+                
+                // 只统计第一针的覆盖数
+                if (doseNumber === 1 || doseNumber === '1' || doseNumber === '第一针') {
+                  preventionStats.vaccineCoverage += targetAnimals
+                }
+                
+                preventionStats.vaccineCount += targetAnimals
+                preventionStats.vaccineStats[vaccineName] = 
+                  (preventionStats.vaccineStats[vaccineName] || 0) + targetAnimals
+              } else if (record.preventionType === 'disinfection') {
+                preventionStats.disinfectionCount += 1
+              }
+              
+              if (record.costInfo && record.costInfo.totalCost) {
+                preventionStats.totalCost += parseFloat(record.costInfo.totalCost) || 0
+              }
+            })
+            
+            result.preventionStats = preventionStats
+            result.preventionRecords = records.slice(0, 10) // 只返回最近10条
+          } catch (error) {
+            console.error('获取预防数据失败:', error)
+            result.preventionStats = null
+            result.preventionRecords = []
+          }
+        })()
+      )
+    }
+    
+    // 3. 治疗统计（如果需要）
+    if (!includes.length || includes.includes('treatment')) {
+      promises.push(
+        (async () => {
+          try {
+            // 查询治疗记录
+            const treatmentRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+              .where({ 
+                _openid: openid,
+                batchId,
+                isDeleted: false 
+              })
+              .get()
+            
+            // 计算统计
+            const stats = calculateBatchTreatmentStats(treatmentRecords.data)
+            result.treatmentStats = stats
+          } catch (error) {
+            console.error('获取治疗统计失败:', error)
+            result.treatmentStats = null
+          }
+        })()
+      )
+    }
+    
+    // 4. 诊断历史（如果需要）
+    if (!includes.length || includes.includes('diagnosis')) {
+      promises.push(
+        (async () => {
+          try {
+            // 调用ai-diagnosis云函数获取诊断历史
+            const diagnosisResult = await cloud.callFunction({
+              name: 'ai-diagnosis',
+              data: {
+                action: 'get_diagnosis_history',
+                batchId: batchId,
+                page: 1,
+                pageSize: diagnosisLimit
+              }
+            })
+            
+            if (diagnosisResult.result && diagnosisResult.result.success) {
+              const records = diagnosisResult.result.data?.records || []
+              // 过滤图片中的null值
+              result.diagnosisHistory = records.map(record => ({
+                ...record,
+                images: (record.images || []).filter(img => img && typeof img === 'string')
+              }))
+            } else {
+              result.diagnosisHistory = []
+            }
+          } catch (error) {
+            console.error('获取诊断历史失败:', error)
+            result.diagnosisHistory = []
+          }
+        })()
+      )
+    }
+    
+    // 5. 异常记录（如果需要）
+    if (!includes.length || includes.includes('abnormal')) {
+      promises.push(
+        (async () => {
+          try {
+            const abnormalResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+              .where({
+                batchId,
+                recordType: 'ai_diagnosis',
+                status: 'abnormal',
+                isDeleted: _.neq(true)
+              })
+              .orderBy('checkDate', 'desc')
+              .limit(50)
+              .get()
+            
+            result.abnormalRecords = abnormalResult.data
+            result.abnormalCount = abnormalResult.data.length
+          } catch (error) {
+            console.error('获取异常记录失败:', error)
+            result.abnormalRecords = []
+            result.abnormalCount = 0
+          }
+        })()
+      )
+    }
+    
+    // 6. 待诊断数量（如果需要）
+    if (!includes.length || includes.includes('pending_diagnosis')) {
+      promises.push(
+        (async () => {
+          try {
+            const pendingResult = await cloud.callFunction({
+              name: 'ai-diagnosis',
+              data: {
+                action: 'get_pending_diagnosis_count',
+                batchId: batchId
+              }
+            })
+            
+            result.pendingDiagnosisCount = pendingResult.result?.data?.count || 0
+          } catch (error) {
+            console.error('获取待诊断数量失败:', error)
+            result.pendingDiagnosisCount = 0
+          }
+        })()
+      )
+    }
+    
+    // 等待所有查询完成
+    await Promise.all(promises)
+    
+    return {
+      success: true,
+      data: result,
+      message: '批量查询成功'
+    }
+    
+  } catch (error) {
+    console.error('❌ 批量查询失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '批量查询失败'
     }
   }
 }
@@ -2798,6 +3056,9 @@ exports.main = async (event, context) => {
       
       case 'get_diagnosis_history':
         return await getDiagnosisHistory(event, wxContext)
+      
+      case 'get_batch_complete_data':
+        return await getBatchCompleteData(event, wxContext)
 
       default:
         throw new Error(`未知操作: ${action}`)

@@ -42,15 +42,11 @@
 
       <!-- 记录内容 -->
       <view class="record-content">
-        <!-- 第一行：治疗批次 + 治疗数量 -->
+        <!-- 第一行：治疗批次 -->
         <view class="info-row">
-          <view class="info-group">
+          <view class="info-group full-width">
             <text class="info-label">批次：</text>
             <text class="info-value">{{item.batchId}}</text>
-          </view>
-          <view class="info-group">
-            <text class="info-label">治疗数量：</text>
-            <text class="info-value highlight">{{item.outcome.totalTreated || 0}} 只</text>
           </view>
         </view>
 
@@ -68,7 +64,15 @@
           </text>
         </view>
 
-        <!-- 第四行：治疗进展 -->
+        <!-- 第四行：受影响数量 -->
+        <view class="info-row">
+          <view class="info-group">
+            <text class="info-label">受影响数量：</text>
+            <text class="info-value highlight">{{item.outcome.totalTreated || 0}} 只</text>
+          </view>
+        </view>
+
+        <!-- 第五行：治疗进展 -->
         <view class="info-row">
           <view class="info-group" wx:if="{{item.outcome.curedCount > 0}}">
             <text class="info-label">已治愈：</text>
