@@ -168,7 +168,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   async onLoad(options: any) {
-    const { sourceType, sourceId, diagnosisId, batchId, batchNumber, treatmentId, id, abnormalRecordId, diagnosis, mode } = options || {}
+    const { sourceType, sourceId, diagnosisId, batchId, batchNumber: _batchNumber, treatmentId, id, abnormalRecordId, diagnosis, mode } = options || {}
     
     // ✅ 判断是否为查看模式
     const isViewMode = mode === 'view'

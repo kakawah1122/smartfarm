@@ -2347,3 +2347,1005 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-weight: 400;
   margin-left: 8rpx;
 }
+
+/* ==================== 预防管理样式 ==================== */
+
+.prevention-stats {
+  padding: $spacing-lg;
+  background: white;
+  margin: 0 $spacing-lg $spacing-base;
+  border-radius: $radius-md;
+  box-shadow: $shadow-base;
+
+  // 四宫格布局（2行2列）
+  .stats-grid-four-prevention {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-base;
+    margin-top: $spacing-base;
+  }
+
+  .stat-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 24rpx 20rpx;
+    border-radius: $radius-base;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: $shadow-sm;
+    
+    // 左侧装饰条
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4rpx;
+      background: #059669;
+      border-radius: 2rpx 0 0 2rpx;
+    }
+    
+    &:active {
+      transform: scale(0.97);
+      box-shadow: $shadow-sm;
+    }
+    
+    .stat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64rpx;
+      height: 64rpx;
+      border-radius: $radius-base;
+      margin-right: $spacing-base;
+      flex-shrink: 0;
+    }
+    
+    .stat-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+    }
+    
+    .stat-value {
+      font-size: 44rpx;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+    
+    .stat-label {
+      font-size: 24rpx;
+      line-height: 1.2;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+    
+    // 疫苗接种卡片（单独一行，绿色）
+    &.stat-card-vaccine {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      margin-bottom: $spacing-base;
+      flex-direction: row;
+      align-items: center;
+      
+      &::before {
+        background: #059669;
+      }
+      
+      .stat-icon {
+        background: rgba(5, 150, 105, 0.15);
+        width: 80rpx;
+        height: 80rpx;
+        margin-bottom: 0;
+        margin-right: $spacing-base;
+      }
+      
+      .css-icon-vaccine {
+        font-size: 52rpx;
+        line-height: 1;
+      }
+      
+      .stat-content {
+        flex: 1;
+        gap: 6rpx;
+      }
+      
+      .stat-value {
+        color: #059669;
+        font-size: 32rpx;
+        font-weight: 600;
+      }
+      
+      .stat-label {
+        color: #047857;
+        font-size: 24rpx;
+        opacity: 0.85;
+      }
+      
+      .stat-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: $spacing-base;
+      }
+    }
+    
+    // 接种率卡片（绿色）
+    &.stat-card-vaccination {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      
+      &::before {
+        background: #059669;
+      }
+      
+      .stat-icon {
+        background: rgba(5, 150, 105, 0.15);
+      }
+      
+      .stat-value {
+        color: #059669;
+      }
+      
+      .stat-label {
+        color: #047857;
+      }
+    }
+    
+    // 疫苗次数卡片（蓝色）
+    &.stat-card-vaccine-count {
+      background: linear-gradient(135deg, #E6F3FF 0%, #CCE5FF 100%);
+      
+      &::before {
+        background: #0052D9;
+      }
+      
+      .stat-icon {
+        background: rgba(0, 82, 217, 0.15);
+      }
+      
+      .stat-value {
+        color: #0052D9;
+      }
+      
+      .stat-label {
+        color: #003CAB;
+      }
+    }
+    
+    // 预防成本卡片（青色）
+    &.stat-card-prevention-cost {
+      background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+      
+      &::before {
+        background: #0284C7;
+      }
+      
+      .stat-icon {
+        background: rgba(2, 132, 199, 0.15);
+      }
+      
+      .stat-value {
+        color: #0284C7;
+        font-size: 32rpx;
+      }
+      
+      .stat-label {
+        color: #0369A1;
+      }
+    }
+    
+    // 覆盖数卡片（紫色）
+    &.stat-card-coverage {
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+      
+      &::before {
+        background: #7C3AED;
+      }
+      
+      .stat-icon {
+        background: rgba(124, 58, 237, 0.15);
+      }
+      
+      .stat-value {
+        color: #7C3AED;
+      }
+      
+      .stat-label {
+        color: #6B21A8;
+      }
+    }
+  }
+}
+
+/* ==================== 效果分析样式 ==================== */
+
+.analysis-stats {
+  padding: $spacing-lg;
+  background: white;
+  margin: 0 $spacing-lg $spacing-base;
+  border-radius: $radius-md;
+  box-shadow: $shadow-base;
+
+  .stats-grid-four-analysis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-sm;
+    margin-top: $spacing-base;
+  }
+
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24rpx 16rpx;
+    border-radius: $radius-base;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: $shadow-sm;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4rpx;
+      background: #0284C7;
+      border-radius: 2rpx 0 0 2rpx;
+    }
+    
+    &:active {
+      transform: scale(0.97);
+      box-shadow: $shadow-sm;
+    }
+    
+    .stat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64rpx;
+      height: 64rpx;
+      border-radius: $radius-base;
+      margin-bottom: $spacing-sm;
+    }
+    
+    .stat-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+    }
+    
+    .stat-value {
+      font-size: 44rpx;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+    
+    .stat-label {
+      font-size: 24rpx;
+      line-height: 1.2;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+    
+    // 效果分析卡片（单独一行，青色）
+    &.stat-card-analysis {
+      background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+      margin-bottom: $spacing-base;
+      flex-direction: row;
+      align-items: center;
+      
+      &::before {
+        background: #0284C7;
+      }
+      
+      .stat-icon {
+        background: rgba(2, 132, 199, 0.15);
+        width: 80rpx;
+        height: 80rpx;
+        margin-bottom: 0;
+        margin-right: $spacing-base;
+      }
+      
+      .css-icon-chart {
+        font-size: 52rpx;
+        line-height: 1;
+      }
+      
+      .stat-content {
+        flex: 1;
+        gap: 6rpx;
+      }
+      
+      .stat-value {
+        color: #0284C7;
+        font-size: 32rpx;
+        font-weight: 600;
+      }
+      
+      .stat-label {
+        color: #0369A1;
+        font-size: 24rpx;
+        opacity: 0.85;
+      }
+      
+      .stat-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: $spacing-base;
+      }
+    }
+    
+    // 健康改善卡片（绿色）
+    &.stat-card-health-improve {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      
+      &::before {
+        background: #059669;
+      }
+      
+      .stat-icon {
+        background: rgba(5, 150, 105, 0.15);
+      }
+      
+      .stat-value {
+        color: #059669;
+      }
+      
+      .stat-label {
+        color: #047857;
+      }
+    }
+    
+    // 预防效果卡片（蓝色）
+    &.stat-card-prevention-effect {
+      background: linear-gradient(135deg, #E6F3FF 0%, #CCE5FF 100%);
+      
+      &::before {
+        background: #0052D9;
+      }
+      
+      .stat-icon {
+        background: rgba(0, 82, 217, 0.15);
+      }
+      
+      .stat-value {
+        color: #0052D9;
+      }
+      
+      .stat-label {
+        color: #003CAB;
+      }
+    }
+    
+    // 治疗效果卡片（紫色）
+    &.stat-card-treatment-effect {
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+      
+      &::before {
+        background: #7C3AED;
+      }
+      
+      .stat-icon {
+        background: rgba(124, 58, 237, 0.15);
+      }
+      
+      .stat-value {
+        color: #7C3AED;
+      }
+      
+      .stat-label {
+        color: #6B21A8;
+      }
+    }
+    
+    // 死亡率分析卡片（红色）
+    &.stat-card-mortality-analysis {
+      background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+      
+      &::before {
+        background: #EF4444;
+      }
+      
+      .stat-icon {
+        background: rgba(239, 68, 68, 0.15);
+      }
+      
+      .stat-value {
+        color: #EF4444;
+      }
+      
+      .stat-label {
+        color: #DC2626;
+      }
+    }
+  }
+}
+
+/* ==================== CSS图标 - 预防管理 ==================== */
+
+// 百分比图标（接种率）
+.css-icon-percent {
+  position: relative;
+  width: 36rpx;
+  height: 40rpx;
+  
+  // 斜线
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    width: 3rpx;
+    height: 36rpx;
+    background: #059669;
+    border-radius: 2rpx;
+  }
+  
+  // 上圆圈
+  &::after {
+    content: '';
+    position: absolute;
+    left: 6rpx;
+    top: 4rpx;
+    width: 12rpx;
+    height: 12rpx;
+    border: 3rpx solid #059669;
+    border-radius: 50%;
+    box-sizing: border-box;
+  }
+}
+
+// 下圆圈需要用伪元素无法实现，所以使用文本 %
+
+// 检查列表图标（疫苗次数）
+.css-icon-check-list {
+  position: relative;
+  width: 32rpx;
+  height: 36rpx;
+  background: #0052D9;
+  border-radius: 4rpx;
+  
+  // 对勾
+  &::before {
+    content: '';
+    position: absolute;
+    left: 6rpx;
+    top: 10rpx;
+    width: 6rpx;
+    height: 3rpx;
+    border-left: 2rpx solid white;
+    border-bottom: 2rpx solid white;
+    transform: rotate(-45deg);
+  }
+  
+  // 第二个对勾
+  &::after {
+    content: '';
+    position: absolute;
+    left: 16rpx;
+    top: 10rpx;
+    width: 6rpx;
+    height: 3rpx;
+    border-left: 2rpx solid white;
+    border-bottom: 2rpx solid white;
+    transform: rotate(-45deg);
+  }
+}
+
+// 硬币图标（预防成本）
+.css-icon-coin {
+  position: relative;
+  width: 32rpx;
+  height: 32rpx;
+  background: #0284C7;
+  border-radius: 50%;
+  box-shadow: inset 0 -8rpx 0 rgba(255, 255, 255, 0.2),
+              inset 0 8rpx 0 rgba(0, 0, 0, 0.1);
+  
+  // ¥ 符号
+  &::before {
+    content: '¥';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20rpx;
+    color: white;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+// 动物群图标（覆盖数）
+.css-icon-animals {
+  position: relative;
+  width: 40rpx;
+  height: 32rpx;
+  
+  // 第一只动物
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8rpx;
+    width: 20rpx;
+    height: 20rpx;
+    background: #7C3AED;
+    border-radius: 50% 50% 0 0;
+    clip-path: polygon(0 60%, 50% 0, 100% 60%, 100% 100%, 0 100%);
+  }
+  
+  // 第二只动物
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 8rpx;
+    width: 20rpx;
+    height: 20rpx;
+    background: #7C3AED;
+    border-radius: 50% 50% 0 0;
+    clip-path: polygon(0 60%, 50% 0, 100% 60%, 100% 100%, 0 100%);
+    opacity: 0.7;
+  }
+}
+
+/* ==================== CSS图标 - 效果分析 ==================== */
+
+// 上升趋势图标（健康改善）
+.css-icon-trend-up {
+  position: relative;
+  width: 36rpx;
+  height: 32rpx;
+  
+  // 趋势线
+  &::before {
+    content: '';
+    position: absolute;
+    left: 2rpx;
+    bottom: 4rpx;
+    width: 32rpx;
+    height: 3rpx;
+    background: #059669;
+    transform: rotate(-25deg);
+    transform-origin: left bottom;
+    border-radius: 2rpx;
+  }
+  
+  // 箭头
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12rpx 12rpx;
+    border-color: transparent transparent #059669 transparent;
+    transform: rotate(135deg);
+  }
+}
+
+// 盾牌对勾图标（预防效果）
+.css-icon-shield-check {
+  position: relative;
+  width: 32rpx;
+  height: 40rpx;
+  background: #0052D9;
+  border-radius: 4rpx 4rpx 0 0;
+  clip-path: polygon(50% 100%, 0 70%, 0 0, 100% 0, 100% 70%);
+  
+  // 对勾
+  &::before {
+    content: '';
+    position: absolute;
+    left: 8rpx;
+    top: 12rpx;
+    width: 6rpx;
+    height: 3rpx;
+    border-left: 3rpx solid white;
+    border-bottom: 3rpx solid white;
+    transform: rotate(-45deg);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    left: 12rpx;
+    top: 8rpx;
+    width: 12rpx;
+    height: 6rpx;
+    border-left: 3rpx solid white;
+    border-bottom: 3rpx solid white;
+    transform: rotate(-45deg);
+  }
+}
+
+// 心跳图标（治疗效果）
+.css-icon-heartbeat {
+  position: relative;
+  width: 40rpx;
+  height: 32rpx;
+  
+  // 心电图线
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 12rpx;
+    width: 100%;
+    height: 3rpx;
+    background: linear-gradient(
+      to right,
+      #7C3AED 0%,
+      #7C3AED 30%,
+      transparent 30%,
+      transparent 35%,
+      #7C3AED 35%,
+      #7C3AED 45%,
+      transparent 45%,
+      transparent 50%,
+      #7C3AED 50%,
+      #7C3AED 100%
+    );
+    border-radius: 2rpx;
+  }
+  
+  // 心电图波峰
+  &::after {
+    content: '';
+    position: absolute;
+    left: 15rpx;
+    bottom: 8rpx;
+    width: 3rpx;
+    height: 16rpx;
+    background: #7C3AED;
+    border-radius: 2rpx;
+  }
+}
+
+// 比率图标（死亡率）
+.css-icon-rate {
+  position: relative;
+  width: 36rpx;
+  height: 32rpx;
+  
+  // 柱状图第一列
+  &::before {
+    content: '';
+    position: absolute;
+    left: 4rpx;
+    bottom: 0;
+    width: 8rpx;
+    height: 24rpx;
+    background: #EF4444;
+    border-radius: 2rpx 2rpx 0 0;
+    opacity: 0.6;
+  }
+  
+  // 柱状图第二列
+  &::after {
+    content: '';
+    position: absolute;
+    right: 4rpx;
+    bottom: 0;
+    width: 8rpx;
+    height: 16rpx;
+    background: #EF4444;
+    border-radius: 2rpx 2rpx 0 0;
+  }
+}
+
+/* ==================== 成本分析卡片样式 ==================== */
+
+.cost-analysis {
+  padding: $spacing-lg;
+  background: white;
+  margin: 0 $spacing-lg $spacing-base;
+  border-radius: $radius-md;
+  box-shadow: $shadow-base;
+
+  .section-header {
+    margin-bottom: $spacing-base;
+
+    .section-title {
+      font-size: $font-lg;
+      font-weight: 600;
+      color: var(--td-text-color-primary);
+    }
+  }
+
+  // 四宫格布局（2行2列）
+  .stats-grid-four-cost {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-base;
+  }
+
+  .stat-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 24rpx 20rpx;
+    border-radius: $radius-base;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: $shadow-sm;
+    
+    // 左侧装饰条
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4rpx;
+      border-radius: 2rpx 0 0 2rpx;
+    }
+    
+    &:active {
+      transform: scale(0.97);
+      box-shadow: $shadow-sm;
+    }
+    
+    .stat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64rpx;
+      height: 64rpx;
+      border-radius: $radius-base;
+      margin-right: $spacing-base;
+      flex-shrink: 0;
+    }
+    
+    .stat-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+    }
+    
+    .stat-value {
+      font-size: 40rpx;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+    
+    .stat-label {
+      font-size: 24rpx;
+      line-height: 1.2;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+    
+    // 预防成本卡片（绿色）
+    &.stat-card-prevention-cost-analysis {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      
+      &::before {
+        background: #059669;
+      }
+      
+      .stat-icon {
+        background: rgba(5, 150, 105, 0.15);
+      }
+      
+      .stat-value {
+        color: #059669;
+        font-size: 36rpx;
+      }
+      
+      .stat-label {
+        color: #047857;
+      }
+    }
+    
+    // 治疗成本卡片（蓝色）
+    &.stat-card-treatment-cost-analysis {
+      background: linear-gradient(135deg, #E6F3FF 0%, #CCE5FF 100%);
+      
+      &::before {
+        background: #0052D9;
+      }
+      
+      .stat-icon {
+        background: rgba(0, 82, 217, 0.15);
+      }
+      
+      .stat-value {
+        color: #0052D9;
+        font-size: 36rpx;
+      }
+      
+      .stat-label {
+        color: #003CAB;
+      }
+    }
+    
+    // 总成本卡片（橙色）
+    &.stat-card-total-cost {
+      background: linear-gradient(135deg, #FFF7E6 0%, #FFE7BA 100%);
+      
+      &::before {
+        background: #ED7B2F;
+      }
+      
+      .stat-icon {
+        background: rgba(237, 123, 47, 0.15);
+      }
+      
+      .stat-value {
+        color: #D97706;
+        font-size: 36rpx;
+      }
+      
+      .stat-label {
+        color: #B45309;
+      }
+    }
+    
+    // 投入回报率卡片（紫色）
+    &.stat-card-roi {
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+      
+      &::before {
+        background: #7C3AED;
+      }
+      
+      .stat-icon {
+        background: rgba(124, 58, 237, 0.15);
+      }
+      
+      .stat-value {
+        color: #7C3AED;
+        font-size: 36rpx;
+      }
+      
+      .stat-label {
+        color: #6B21A8;
+      }
+    }
+  }
+}
+
+/* ==================== 成本分析图标 ==================== */
+
+// 盾牌图标（预防成本）
+.css-icon-shield {
+  position: relative;
+  width: 32rpx;
+  height: 40rpx;
+  background: #059669;
+  border-radius: 4rpx 4rpx 0 0;
+  clip-path: polygon(50% 100%, 0 70%, 0 0, 100% 0, 100% 70%);
+  
+  // 对勾
+  &::before {
+    content: '';
+    position: absolute;
+    left: 8rpx;
+    top: 12rpx;
+    width: 6rpx;
+    height: 3rpx;
+    border-left: 3rpx solid white;
+    border-bottom: 3rpx solid white;
+    transform: rotate(-45deg);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    left: 12rpx;
+    top: 8rpx;
+    width: 12rpx;
+    height: 6rpx;
+    border-left: 3rpx solid white;
+    border-bottom: 3rpx solid white;
+    transform: rotate(-45deg);
+  }
+}
+
+// 药瓶成本图标（治疗成本）
+.css-icon-medicine-cost {
+  position: relative;
+  width: 28rpx;
+  height: 40rpx;
+  
+  // 瓶口
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 14rpx;
+    height: 8rpx;
+    background: #0052D9;
+    border-radius: 2rpx 2rpx 0 0;
+  }
+  
+  // 瓶身
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8rpx;
+    width: 28rpx;
+    height: 32rpx;
+    background: #0052D9;
+    border-radius: 4rpx;
+    box-shadow: inset 0 -12rpx 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+// 总计图标（总成本）
+.css-icon-total {
+  position: relative;
+  width: 36rpx;
+  height: 36rpx;
+  background: #ED7B2F;
+  border-radius: 50%;
+  box-shadow: inset 0 -8rpx 0 rgba(255, 255, 255, 0.2);
+  
+  // Σ 符号
+  &::before {
+    content: '∑';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24rpx;
+    color: white;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+// 增长图标（投入回报率）
+.css-icon-growth {
+  position: relative;
+  width: 36rpx;
+  height: 36rpx;
+  
+  // 上升曲线
+  &::before {
+    content: '';
+    position: absolute;
+    left: 2rpx;
+    bottom: 4rpx;
+    width: 32rpx;
+    height: 3rpx;
+    background: #7C3AED;
+    transform: rotate(-20deg);
+    transform-origin: left bottom;
+    border-radius: 2rpx;
+  }
+  
+  // 箭头
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 4rpx;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 10rpx 10rpx;
+    border-color: transparent transparent #7C3AED transparent;
+    transform: rotate(135deg);
+  }
+}

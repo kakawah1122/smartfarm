@@ -112,6 +112,8 @@ interface PageData {
   // 弹窗相关
   showDetailPopup: boolean
   selectedRecord: any
+  showDiagnosisDetailPopup: boolean
+  selectedDiagnosisRecord: any
   
   // 各Tab页面数据
   healthOverview: any
@@ -128,7 +130,7 @@ interface PageData {
   }
 }
 
-Page<PageData>({
+Page<PageData, any>({
   data: {
     // 选项卡
     activeTab: 'treatment', // prevention|monitoring|treatment|analysis
@@ -1114,10 +1116,6 @@ Page<PageData>({
       
       // 处理成本和统计数据
       // 3. 获取历史诊断记录（✅ 始终限制为近7天）
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
-      const today = new Date().toISOString().split('T')[0]
       
       // ✅ 修复：使用 ai-diagnosis 云函数，与 diagnosis-history 页面保持一致
       // 🔍 临时测试：先不使用日期筛选，看看能否查询到记录
@@ -1222,7 +1220,7 @@ Page<PageData>({
           
           if (tempUrlResult.fileList) {
             const tempUrlMap = new Map(
-              tempUrlResult.fileList.map(file => [file.fileID, file.tempFileURL])
+              tempUrlResult.fileList.map((file: any) => [file.fileID, file.tempFileURL])
             )
             
             processedImages = processedImages.map((url: string) => 
@@ -1263,7 +1261,8 @@ Page<PageData>({
    */
   onPreviewDiagnosisImage(e: any) {
     const { url } = e.currentTarget.dataset
-    const { images } = this.data.selectedDiagnosisRecord || {}
+    const selectedRecord = this.data.selectedDiagnosisRecord
+    const images = selectedRecord?.images
     
     if (images && images.length > 0) {
       wx.previewImage({
@@ -1304,7 +1303,7 @@ Page<PageData>({
       // ✅ 使用EventChannel监听治疗进展更新
       events: {
         // 监听治疗进展更新事件（治愈、死亡等）
-        treatmentProgressUpdated: (data: any) => {
+        treatmentProgressUpdated: () => {
           // ✅ 完全后台刷新，不阻塞任何操作
           this.backgroundRefreshData()
         }
@@ -1325,7 +1324,7 @@ Page<PageData>({
       url: '/packageHealth/treatment-records-list/treatment-records-list',
       // ✅ 使用EventChannel监听列表页的更新
       events: {
-        treatmentListUpdated: (data: any) => {
+        treatmentListUpdated: () => {
           this.backgroundRefreshData()
         }
       }
@@ -1455,7 +1454,7 @@ Page<PageData>({
   onMenuTap() {
     wx.showActionSheet({
       itemList: ['导出报告', '数据统计', '设置提醒'],
-      success: (res) => {
+      success: () => {
         // 已移除调试日志
       }
     })
@@ -1483,7 +1482,7 @@ Page<PageData>({
       url: '/packageHealth/treatment-records-list/treatment-records-list',
       // ✅ 使用EventChannel监听列表页的更新
       events: {
-        treatmentListUpdated: (data: any) => {
+        treatmentListUpdated: () => {
           this.backgroundRefreshData()
         }
       }
@@ -1504,8 +1503,8 @@ Page<PageData>({
   /**
    * 预警操作事件
    */
-  onAlertAction(e: any) {
-    const { alertId, action } = e.currentTarget.dataset
+  onAlertAction(_e: any) {
+    // 预警操作事件处理
     // 已移除调试日志
   },
 
@@ -1764,7 +1763,7 @@ Page<PageData>({
       url: '/packageHealth/cured-records-list/cured-records-list',
       // ✅ 使用EventChannel监听治愈记录更新
       events: {
-        curedRecordsUpdated: (data: any) => {
+        curedRecordsUpdated: () => {
           this.backgroundRefreshData()
         }
       }
@@ -1784,7 +1783,7 @@ Page<PageData>({
       url: '/packageHealth/death-records-list/death-records-list',
       // ✅ 使用EventChannel监听死亡记录更新
       events: {
-        deathRecordsUpdated: (data: any) => {
+        deathRecordsUpdated: () => {
           this.backgroundRefreshData()
         }
       }
@@ -1804,7 +1803,7 @@ Page<PageData>({
       url: '/packageHealth/death-records-list/death-records-list',
       // ✅ 使用EventChannel监听死亡记录更新
       events: {
-        deathRecordsUpdated: (data: any) => {
+        deathRecordsUpdated: () => {
           this.backgroundRefreshData()
         }
       }
@@ -1823,7 +1822,7 @@ Page<PageData>({
     wx.navigateTo({
       url: '/packageHealth/abnormal-records-list/abnormal-records-list',
       events: {
-        abnormalRecordsUpdated: (data: any) => {
+        abnormalRecordsUpdated: () => {
           this.backgroundRefreshData()
         }
       }

@@ -125,18 +125,64 @@
     <view class="tab-content prevention-content" wx:if="{{activeTab === 'prevention'}}">
       <!-- 预防统计 -->
       <view class="prevention-stats">
-        <view class="stats-header">
-          <text class="stats-title">预防统计</text>
-          <text class="stats-period">本月数据</text>
-        </view>
-        <view class="stats-grid">
-          <view class="stat-item">
-            <text class="stat-value">{{preventionData.stats.vaccinationRate}}%</text>
-            <text class="stat-label">疫苗接种率</text>
+        <!-- 疫苗接种卡片（单独一行） -->
+        <view class="stat-card stat-card-vaccine stat-card-full-width" bind:tap="createPreventionRecord">
+          <view class="stat-icon stat-icon-vaccine">
+            <view class="css-icon-vaccine">💉</view>
           </view>
-          <view class="stat-item">
-            <text class="stat-value">¥{{preventionData.stats.preventionCost}}</text>
-            <text class="stat-label">预防成本</text>
+          <view class="stat-content">
+            <text class="stat-value">疫苗接种</text>
+            <text class="stat-label">快速记录疫苗接种，智能管理免疫计划</text>
+          </view>
+          <view class="stat-arrow">
+            <t-icon name="chevron-right" size="20" color="#059669" />
+          </view>
+        </view>
+        
+        <!-- 统计卡片（四列） -->
+        <view class="stats-grid stats-grid-four-prevention">
+          <!-- 接种率 -->
+          <view class="stat-card stat-card-vaccination">
+            <view class="stat-icon stat-icon-vaccination">
+              <view class="css-icon-percent"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{preventionData.stats.vaccinationRate}}%</text>
+              <text class="stat-label">接种率</text>
+            </view>
+          </view>
+
+          <!-- 疫苗次数 -->
+          <view class="stat-card stat-card-vaccine-count">
+            <view class="stat-icon stat-icon-vaccine-count">
+              <view class="css-icon-check-list"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{preventionStats.vaccineCount || 0}}</text>
+              <text class="stat-label">疫苗次数</text>
+            </view>
+          </view>
+          
+          <!-- 预防成本 -->
+          <view class="stat-card stat-card-prevention-cost">
+            <view class="stat-icon stat-icon-prevention-cost">
+              <view class="css-icon-coin"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">¥{{preventionData.stats.preventionCost || 0}}</text>
+              <text class="stat-label">预防成本</text>
+            </view>
+          </view>
+
+          <!-- 覆盖数 -->
+          <view class="stat-card stat-card-coverage">
+            <view class="stat-icon stat-icon-coverage">
+              <view class="css-icon-animals"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{preventionStats.vaccineCoverage || 0}}</text>
+              <text class="stat-label">覆盖数</text>
+            </view>
           </view>
         </view>
       </view>
@@ -171,7 +217,6 @@
           <text class="empty-hint">完成待办中的疫苗接种任务后，记录会自动关联到这里</text>
         </view>
       </view>
-
 
       <!-- 异常个体列表 -->
       <view class="abnormal-list" wx:if="{{monitoringData.abnormalList.length > 0}}">
@@ -380,23 +425,52 @@
 
       <!-- 成本分析 -->
       <view class="cost-analysis">
-        <text class="section-title">成本分析</text>
-        <view class="cost-overview">
-          <view class="cost-item">
-            <text class="cost-label">预防成本</text>
-            <text class="cost-value">¥{{analysisData.costAnalysis.preventionCost}}</text>
+        <view class="section-header">
+          <text class="section-title">成本分析</text>
+        </view>
+        <view class="stats-grid stats-grid-four-cost">
+          <!-- 预防成本 -->
+          <view class="stat-card stat-card-prevention-cost-analysis">
+            <view class="stat-icon stat-icon-prevention-cost-analysis">
+              <view class="css-icon-shield"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">¥{{analysisData.costAnalysis.preventionCost || 0}}</text>
+              <text class="stat-label">预防成本</text>
+            </view>
           </view>
-          <view class="cost-item">
-            <text class="cost-label">治疗成本</text>
-            <text class="cost-value">¥{{analysisData.costAnalysis.treatmentCost}}</text>
+
+          <!-- 治疗成本 -->
+          <view class="stat-card stat-card-treatment-cost-analysis">
+            <view class="stat-icon stat-icon-treatment-cost-analysis">
+              <view class="css-icon-medicine-cost"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">¥{{analysisData.costAnalysis.treatmentCost || 0}}</text>
+              <text class="stat-label">治疗成本</text>
+            </view>
           </view>
-          <view class="cost-item">
-            <text class="cost-label">总成本</text>
-            <text class="cost-value total">¥{{analysisData.costAnalysis.totalCost}}</text>
+          
+          <!-- 总成本 -->
+          <view class="stat-card stat-card-total-cost">
+            <view class="stat-icon stat-icon-total-cost">
+              <view class="css-icon-total"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">¥{{analysisData.costAnalysis.totalCost || 0}}</text>
+              <text class="stat-label">总成本</text>
+            </view>
           </view>
-          <view class="cost-item">
-            <text class="cost-label">投入回报率</text>
-            <text class="cost-value">{{analysisData.costAnalysis.roi}}:1</text>
+
+          <!-- 投入回报率 -->
+          <view class="stat-card stat-card-roi">
+            <view class="stat-icon stat-icon-roi">
+              <view class="css-icon-growth"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">{{analysisData.costAnalysis.roi || 0}}:1</text>
+              <text class="stat-label">投入回报率</text>
+            </view>
           </view>
         </view>
       </view>
