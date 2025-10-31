@@ -133,10 +133,10 @@ interface PageData {
 Page<PageData, any>({
   data: {
     // 选项卡
-    activeTab: 'treatment', // prevention|monitoring|treatment|analysis
+    activeTab: 'prevention', // prevention|monitoring|treatment|analysis
     
-    // 预防管理子标签
-    preventionSubTab: 'today', // today|timeline|stats|records
+    // 预防管理子标签（与breeding-todo保持一致）
+    preventionSubTab: 'today', // today|upcoming|history|stats
     
     // 健康统计数据
     healthStats: {
@@ -162,6 +162,75 @@ Page<PageData, any>({
     
     // 各批次预防统计列表（全部批次模式使用）
     batchPreventionList: [],
+    
+    // 即将到来的任务（从breeding-todo迁移）
+    upcomingTasks: [] as any[],
+    
+    // 历史任务（从breeding-todo迁移）
+    historyTasks: [] as any[],
+    
+    // 按批次分组的今日待办任务（从breeding-todo迁移）
+    todayTasksByBatch: [] as any[],
+    
+    // 任务详情弹窗（从breeding-todo迁移）
+    selectedTask: null as any,
+    showTaskDetailPopup: false,
+    
+    // 疫苗表单数据（从breeding-todo迁移）
+    showVaccineFormPopup: false,
+    vaccineFormData: {
+      veterinarianName: '',
+      veterinarianContact: '',
+      vaccineName: '',
+      manufacturer: '',
+      batchNumber: '',
+      dosage: '',
+      routeIndex: 0,
+      vaccinationCount: 0,
+      location: '',
+      vaccineCost: '',
+      veterinaryCost: '',
+      otherCost: '',
+      totalCost: 0,
+      totalCostFormatted: '¥0.00',
+      notes: ''
+    },
+    vaccineFormErrors: {} as { [key: string]: string },
+    vaccineFormErrorList: [] as string[],
+    vaccineRouteOptions: ['肌肉注射', '皮下注射', '滴鼻/滴眼', '饮水免疫', '喷雾免疫'],
+    
+    // 用药管理表单数据（从breeding-todo迁移）
+    showMedicationFormPopup: false,
+    availableMedicines: [] as any[],
+    selectedMedicine: null as any,
+    medicationFormData: {
+      medicineId: '',
+      medicineName: '',
+      quantity: 0,
+      unit: '',
+      purpose: '',
+      dosage: '',
+      notes: '',
+      operator: ''
+    },
+    medicationFormErrors: {} as { [key: string]: string },
+    medicationFormErrorList: [] as string[],
+
+    // 营养管理表单数据（从breeding-todo迁移）
+    showNutritionFormPopup: false,
+    availableNutrition: [] as any[],
+    selectedNutrition: null as any,
+    nutritionFormData: {
+      nutritionId: '',
+      nutritionName: '',
+      quantity: 0,
+      unit: '',
+      dosage: '',
+      notes: '',
+      operator: ''
+    },
+    nutritionFormErrors: {} as { [key: string]: string },
+    nutritionFormErrorList: [] as string[],
     
     // 治疗统计数据
     treatmentStats: {
@@ -1008,10 +1077,37 @@ Page<PageData, any>({
           }
         })
       }
+      
+      // 如果当前是"进行中"子标签，加载今日任务（从 task_batch_schedules）
+      if (this.data.preventionSubTab === 'today') {
+        // 先清理孤儿任务（后台执行，不阻塞UI）
+        this.cleanOrphanTasksInBackground()
+        // 加载今日任务
+        await this.loadTodayTasks()
+      }
     } catch (error: any) {
       console.error('加载预防管理数据失败:', error)
       // 加载失败，静默处理
     }
+  },
+
+  /**
+   * 在后台清理孤儿任务（不阻塞UI）
+   */
+  cleanOrphanTasksInBackground() {
+    wx.cloud.callFunction({
+      name: 'breeding-todo',
+      data: {
+        action: 'cleanOrphanTasks'
+      }
+    }).then((result: any) => {
+      const response = result.result as any
+      if (response.success && response.data && response.data.deletedCount > 0) {
+        console.log(`已清理 ${response.data.deletedCount} 个孤儿任务`)
+      }
+    }).catch((error: any) => {
+      console.error('清理孤儿任务失败:', error)
+    })
   },
 
   /**
@@ -1437,7 +1533,7 @@ Page<PageData, any>({
   },
 
   /**
-   * 切换预防管理子标签页
+   * 切换预防管理子标签页（复制自breeding-todo）
    */
   onPreventionSubTabChange(e: any) {
     const { value } = e.detail
@@ -1445,18 +1541,486 @@ Page<PageData, any>({
       preventionSubTab: value
     })
     
-    // 根据子标签加载对应数据
+    // 根据子标签加载对应数据（与breeding-todo保持一致）
     switch (value) {
-      case 'timeline':
-        this.loadPreventionTimeline()
+      case 'today':
+        // 加载今日待办任务（从 task_batch_schedules）
+        this.loadTodayTasks()
+        break
+      case 'upcoming':
+        this.loadUpcomingTasks()
+        break
+      case 'history':
+        this.loadHistoryTasks()
         break
       case 'stats':
         // 统计数据已经在loadPreventionData中加载
         break
-      case 'records':
-        // 记录数据已经在loadPreventionData中加载
-        break
     }
+  },
+
+  /**
+   * 加载今日待办任务（从 task_batch_schedules 数据库）
+   */
+  async loadTodayTasks() {
+    try {
+      this.setData({ loading: true })
+      
+      if (this.data.currentBatchId === 'all') {
+        await this.loadAllBatchesTodayTasks()
+      } else {
+        await this.loadSingleBatchTodayTasks()
+      }
+    } catch (error) {
+      wx.showToast({
+        title: '加载失败',
+        icon: 'error'
+      })
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  /**
+   * 加载单批次今日待办任务
+   */
+  async loadSingleBatchTodayTasks() {
+    if (!this.data.currentBatchId || this.data.currentBatchId === 'all') {
+      this.setData({ 
+        'preventionData.todayTasks': [],
+        todayTasksByBatch: []
+      })
+      return
+    }
+
+    try {
+      // 获取批次信息以计算当前日龄
+      const batchResult = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: {
+          action: 'getBatchDetail',
+          batchId: this.data.currentBatchId
+        }
+      })
+
+      const batch = batchResult.result?.data
+      if (!batch) {
+        throw new Error('批次不存在')
+      }
+
+      // 计算当前日龄
+      const dayAge = this.calculateCurrentAge(batch.entryDate)
+
+      // 调用 breeding-todo 云函数获取任务
+      const result = await wx.cloud.callFunction({
+        name: 'breeding-todo',
+        data: {
+          action: 'getTodos',
+          batchId: this.data.currentBatchId,
+          dayAge: dayAge
+        }
+      })
+
+      const response = result.result as any
+      if (response.success && response.data) {
+        const tasks = Array.isArray(response.data) ? response.data : []
+        
+        // 按批次分组显示（即使只有一个批次）
+        this.setData({
+          todayTasksByBatch: [{
+            batchId: this.data.currentBatchId,
+            batchNumber: batch.batchNumber || this.data.currentBatchId,
+            dayAge: dayAge,
+            tasks: tasks.map((task: any) => ({
+              ...task,
+              batchNumber: batch.batchNumber || this.data.currentBatchId,
+              dayAge: dayAge
+            }))
+          }],
+          'preventionData.todayTasks': tasks
+        })
+      } else {
+        this.setData({
+          todayTasksByBatch: [],
+          'preventionData.todayTasks': []
+        })
+      }
+    } catch (error: any) {
+      console.error('加载单批次今日任务失败:', error)
+      this.setData({
+        todayTasksByBatch: [],
+        'preventionData.todayTasks': []
+      })
+    }
+  },
+
+  /**
+   * 加载所有批次今日待办任务
+   */
+  async loadAllBatchesTodayTasks() {
+    try {
+      // 获取活跃批次
+      const batchResult = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
+
+      const activeBatches = batchResult.result?.data || []
+      
+      if (activeBatches.length === 0) {
+        this.setData({
+          todayTasksByBatch: [],
+          'preventionData.todayTasks': []
+        })
+        return
+      }
+
+      // 为每个活跃批次获取今日任务
+      const batchTasksPromises = activeBatches.map(async (batch: any) => {
+        try {
+          const dayAge = this.calculateCurrentAge(batch.entryDate)
+          
+          const result = await wx.cloud.callFunction({
+            name: 'breeding-todo',
+            data: {
+              action: 'getTodos',
+              batchId: batch._id,
+              dayAge: dayAge
+            }
+          })
+          
+          const response = result.result as any
+          if (response.success && response.data) {
+            return {
+              batchId: batch._id,
+              batchNumber: batch.batchNumber || batch._id,
+              dayAge: dayAge,
+              tasks: response.data.map((task: any) => ({
+                ...task,
+                batchNumber: batch.batchNumber || batch._id,
+                dayAge: dayAge
+              }))
+            }
+          } else {
+            return {
+              batchId: batch._id,
+              batchNumber: batch.batchNumber || batch._id,
+              dayAge: dayAge,
+              tasks: []
+            }
+          }
+        } catch (error) {
+          console.error(`批次 ${batch._id} 任务加载失败:`, error)
+          return {
+            batchId: batch._id,
+            batchNumber: batch.batchNumber || batch._id,
+            dayAge: this.calculateCurrentAge(batch.entryDate),
+            tasks: []
+          }
+        }
+      })
+
+      const batchTasksResults = await Promise.all(batchTasksPromises)
+      
+      // 收集所有任务
+      let allTasks: any[] = []
+      batchTasksResults.forEach((batchData: any) => {
+        allTasks = allTasks.concat(batchData.tasks)
+      })
+
+      this.setData({
+        todayTasksByBatch: batchTasksResults,
+        'preventionData.todayTasks': allTasks
+      })
+    } catch (error: any) {
+      console.error('加载所有批次今日任务失败:', error)
+      this.setData({
+        todayTasksByBatch: [],
+        'preventionData.todayTasks': []
+      })
+    }
+  },
+
+  /**
+   * 加载即将到来的任务（从breeding-todo迁移）
+   */
+  async loadUpcomingTasks() {
+    try {
+      this.setData({ loading: true })
+      
+      if (this.data.currentBatchId === 'all') {
+        await this.loadAllUpcomingTasks()
+      } else {
+        await this.loadSingleBatchUpcomingTasks()
+      }
+    } catch (error) {
+      wx.showToast({
+        title: '加载失败',
+        icon: 'error'
+      })
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  /**
+   * 加载单批次即将到来的任务
+   */
+  async loadSingleBatchUpcomingTasks() {
+    if (!this.data.currentBatchId || this.data.currentBatchId === 'all') {
+      this.setData({ upcomingTasks: [] })
+      return
+    }
+
+    try {
+      // 获取批次信息以计算当前日龄
+      const batchResult = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
+
+      const activeBatches = batchResult.result?.data || []
+      const currentBatch = activeBatches.find((b: any) => b._id === this.data.currentBatchId)
+      
+      if (!currentBatch) {
+        this.setData({ upcomingTasks: [] })
+        return
+      }
+
+      const currentDayAge = this.calculateCurrentAge(currentBatch.entryDate)
+      const nextDayAge = currentDayAge + 1
+      
+      const result = await CloudApi.getWeeklyTodos(this.data.currentBatchId, nextDayAge)
+      
+      if (result.success && result.data) {
+        // 将按日龄分组的数据转换为数组格式，过滤掉当前日龄及之前的任务
+        const upcomingTasksArray = Object.keys(result.data)
+          .map(dayAge => parseInt(dayAge))
+          .filter(dayAge => dayAge > currentDayAge)
+          .map(dayAge => ({
+            dayAge: dayAge,
+            tasks: result.data[dayAge.toString()].map((task: any) => ({
+              ...task,
+              isVaccineTask: this.isVaccineTask(task),
+              batchNumber: currentBatch.batchNumber || this.data.currentBatchId
+            }))
+          }))
+          .sort((a, b) => a.dayAge - b.dayAge)
+
+        this.setData({ upcomingTasks: upcomingTasksArray })
+      } else {
+        this.setData({ upcomingTasks: [] })
+      }
+    } catch (error) {
+      this.setData({ upcomingTasks: [] })
+    }
+  },
+
+  /**
+   * 加载所有批次的即将到来任务
+   */
+  async loadAllUpcomingTasks() {
+    try {
+      // 获取活跃批次
+      const batchResult = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
+
+      const activeBatches = batchResult.result?.data || []
+      
+      if (activeBatches.length === 0) {
+        this.setData({ upcomingTasks: [] })
+        return
+      }
+
+      // 为每个活跃批次加载未来一周的任务
+      const upcomingTasksPromises = activeBatches.map(async (batch: any): Promise<any[]> => {
+        try {
+          const currentDayAge = this.calculateCurrentAge(batch.entryDate)
+          const result = await CloudApi.getWeeklyTodos(batch._id, currentDayAge + 1)
+          
+          if (result.success && result.data) {
+            return Object.keys(result.data)
+              .map(taskDayAge => parseInt(taskDayAge))
+              .filter(dayAge => dayAge > currentDayAge)
+              .map(dayAge => ({
+                dayAge: dayAge,
+                tasks: result.data[dayAge.toString()].map((task: any) => ({
+                  ...task,
+                  batchNumber: batch.batchNumber || batch._id,
+                  isVaccineTask: this.isVaccineTask(task)
+                }))
+              }))
+          }
+          return []
+        } catch (error) {
+          return []
+        }
+      })
+
+      const upcomingTasksResults = await Promise.all(upcomingTasksPromises)
+      
+      // 合并所有批次的任务并按日龄分组
+      const mergedTasks: {[key: number]: any[]} = {}
+      
+      upcomingTasksResults.forEach((batchTasks: any[]) => {
+        batchTasks.forEach((dayGroup: any) => {
+          const dayAge = dayGroup.dayAge
+          if (!mergedTasks[dayAge]) {
+            mergedTasks[dayAge] = []
+          }
+          mergedTasks[dayAge] = mergedTasks[dayAge].concat(dayGroup.tasks)
+        })
+      })
+
+      // 转换为数组格式并排序
+      const sortedUpcomingTasks = Object.keys(mergedTasks).map(dayAge => ({
+        dayAge: parseInt(dayAge),
+        tasks: mergedTasks[parseInt(dayAge)]
+      })).sort((a, b) => a.dayAge - b.dayAge)
+
+      this.setData({ upcomingTasks: sortedUpcomingTasks })
+
+    } catch (error) {
+      this.setData({ upcomingTasks: [] })
+    }
+  },
+
+  /**
+   * 加载历史任务（从breeding-todo迁移）
+   */
+  async loadHistoryTasks() {
+    try {
+      this.setData({ loading: true })
+      
+      if (this.data.currentBatchId === 'all') {
+        // 从所有批次加载已完成任务
+        const batchResult = await wx.cloud.callFunction({
+          name: 'production-entry',
+          data: { action: 'getActiveBatches' }
+        })
+        
+        const activeBatches = batchResult.result?.data || []
+        let allCompletedTasks: any[] = []
+        
+        for (const batch of activeBatches) {
+          try {
+            const dayAge = this.calculateCurrentAge(batch.entryDate)
+            const result = await CloudApi.getTodos(batch._id, dayAge)
+            
+            if (result.success && result.data) {
+              const completedTasks = result.data.filter((task: any) => task.completed === true)
+              const formattedTasks = completedTasks.map((task: any) => ({
+                id: task._id,
+                title: task.title,
+                completedDate: task.completedAt ? new Date(task.completedAt).toLocaleString() : '',
+                completedBy: task.completedBy || '用户',
+                batchNumber: batch.batchNumber || batch._id,
+                dayAge: dayAge,
+                completed: true
+              }))
+              allCompletedTasks = allCompletedTasks.concat(formattedTasks)
+            }
+          } catch (error) {
+            // 批次已完成任务加载失败
+          }
+        }
+        
+        // 按完成时间排序
+        allCompletedTasks.sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime())
+        
+        this.setData({ historyTasks: allCompletedTasks })
+        
+      } else {
+        // 从当前批次加载已完成任务
+        if (!this.data.currentBatchId) {
+          this.setData({ historyTasks: [] })
+          return
+        }
+        
+        const batchResult = await wx.cloud.callFunction({
+          name: 'production-entry',
+          data: { action: 'getActiveBatches' }
+        })
+        
+        const activeBatches = batchResult.result?.data || []
+        const batch = activeBatches.find((b: any) => b._id === this.data.currentBatchId)
+        
+        if (!batch) {
+          this.setData({ historyTasks: [] })
+          return
+        }
+        
+        const dayAge = this.calculateCurrentAge(batch.entryDate)
+        const result = await CloudApi.getTodos(this.data.currentBatchId, dayAge)
+        
+        if (result.success && result.data) {
+          const completedTasks = result.data.filter((task: any) => task.completed === true)
+          const formattedTasks = completedTasks.map((task: any) => ({
+            id: task._id,
+            title: task.title,
+            completedDate: task.completedAt ? new Date(task.completedAt).toLocaleString() : '',
+            completedBy: task.completedBy || '用户',
+            batchNumber: batch.batchNumber || batch._id,
+            dayAge: dayAge,
+            completed: true
+          }))
+          
+          this.setData({ historyTasks: formattedTasks })
+        } else {
+          this.setData({ historyTasks: [] })
+        }
+      }
+
+    } catch (error) {
+      this.setData({ historyTasks: [] })
+      wx.showToast({
+        title: '加载失败',
+        icon: 'error'
+      })
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  /**
+   * 计算日龄（从breeding-todo迁移）
+   */
+  calculateCurrentAge(entryDate: string): number {
+    const entryTime = new Date(entryDate).getTime()
+    const currentTime = new Date().getTime()
+    const dayAge = Math.floor((currentTime - entryTime) / (1000 * 60 * 60 * 24)) + 1
+    return Math.max(1, dayAge)
+  },
+
+  /**
+   * 判断是否为疫苗任务（从breeding-todo迁移）
+   */
+  isVaccineTask(task: any): boolean {
+    // 首先排除用药管理任务
+    if (task.type === 'medication' || task.type === 'medicine') {
+      return false
+    }
+    
+    // 直接根据类型判断
+    if (task.type === 'vaccine') {
+      return true
+    }
+    
+    // 通过类型名称判断
+    const TYPE_NAMES: { [key: string]: string } = {
+      vaccine: '疫苗管理',
+      medication: '用药管理',
+      nutrition: '营养管理',
+      disinfection: '消毒',
+      inspection: '巡检',
+      cleaning: '清洁',
+      feeding: '喂养',
+      other: '其他'
+    }
+    const typeName = TYPE_NAMES[task.type] || '其他'
+    return typeName === '疫苗管理'
   },
 
   /**
@@ -2032,6 +2596,1057 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       }
     })
+  },
+
+  /**
+   * 获取任务类型名称（从breeding-todo迁移）
+   */
+  getTypeName(type: string): string {
+    const TYPE_NAMES: { [key: string]: string } = {
+      vaccine: '疫苗管理',
+      medication: '用药管理',
+      nutrition: '营养管理',
+      disinfection: '消毒',
+      inspection: '巡检',
+      cleaning: '清洁',
+      feeding: '喂养',
+      other: '其他'
+    }
+    return TYPE_NAMES[type] || '其他'
+  },
+
+  /**
+   * 计算指定日龄对应的日期（从breeding-todo迁移）
+   */
+  calculateDate(dayAge: number): string {
+    const today = new Date()
+    const targetDate = new Date(today.getTime() + (dayAge - 1) * 24 * 60 * 60 * 1000)
+    return targetDate.toLocaleDateString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit'
+    })
+  },
+
+  /**
+   * 查看任务详情（从breeding-todo完整迁移）
+   */
+  viewTaskDetail(e: any) {
+    const task = e.currentTarget.dataset.task
+    if (!task) return
+    
+    // 构建增强的任务数据
+    const enhancedTask = {
+      ...task,
+      
+      // 确保ID字段存在
+      id: task._id || task.taskId || task.id || '',
+      
+      title: task.title || task.content || '未命名任务',
+      typeName: this.getTypeName(task.type || ''),
+      statusText: task.completed ? '已完成' : '待完成',
+      
+      // 标记任务类型
+      isVaccineTask: this.isVaccineTask(task),
+      isMedicationTask: this.isMedicationTask(task),
+      isNutritionTask: this.isNutritionTask(task),
+      
+      // 确保其他字段存在
+      description: task.description || '',
+      notes: task.notes || '',
+      estimatedTime: task.estimatedTime || task.estimatedDuration || '',
+      duration: task.duration || '',
+      dayInSeries: task.dayInSeries || '',
+      dosage: task.dosage || '',
+      materials: Array.isArray(task.materials) ? task.materials : [],
+      batchNumber: task.batchNumber || task.batchId || '',
+      dayAge: task.dayAge || '',
+      
+      // 确保completed状态正确
+      completed: task.completed || false,
+      completedDate: task.completedDate || ''
+    }
+
+    this.setData({
+      selectedTask: enhancedTask,
+      showTaskDetailPopup: true
+    })
+  },
+
+  /**
+   * 关闭任务详情弹窗
+   */
+  closeTaskDetailPopup() {
+    this.setData({
+      showTaskDetailPopup: false,
+      selectedTask: null
+    })
+  },
+
+  /**
+   * 任务详情弹窗显示状态变化
+   */
+  onTaskDetailPopupChange(e: any) {
+    const { visible } = e.detail
+    if (!visible) {
+      this.setData({
+        showTaskDetailPopup: false,
+        selectedTask: null
+      })
+    }
+  },
+
+  /**
+   * 任务操作确认
+   */
+  onTaskConfirm() {
+    const task = this.data.selectedTask
+    if (!task) return
+
+    if (task.isVaccineTask) {
+      this.openVaccineForm(task)
+    } else if (task.isMedicationTask) {
+      this.openMedicationForm(task)
+    } else if (task.isNutritionTask) {
+      this.openNutritionForm(task)
+    } else {
+      this.completeNormalTask(task)
+    }
+  },
+
+  /**
+   * 完成普通任务
+   */
+  async completeNormalTask(task: any) {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'breeding-todo',
+        data: {
+          action: 'completeTask',
+          taskId: task._id,
+          batchId: task.batchId,
+          notes: ''
+        }
+      })
+      
+      const response = result.result as any
+      if (response.success) {
+        this.closeTaskDetailPopup()
+        // 刷新任务列表
+        if (this.data.preventionSubTab === 'today') {
+          this.loadTodayTasks()
+        }
+        wx.showToast({
+          title: '任务完成',
+          icon: 'success'
+        })
+      }
+    } catch (error: any) {
+      wx.showToast({
+        title: '操作失败',
+        icon: 'error'
+      })
+    }
+  },
+
+  /**
+   * 打开疫苗表单
+   */
+  openVaccineForm(task: any) {
+    this.initVaccineFormData(task)
+    this.setData({
+      showVaccineFormPopup: true,
+      showTaskDetailPopup: false
+    })
+  },
+
+  /**
+   * 初始化疫苗表单数据
+   */
+  initVaccineFormData(task: any) {
+    const vaccineFormData = {
+      veterinarianName: '',
+      veterinarianContact: '',
+      vaccineName: task.title || '',
+      manufacturer: '',
+      batchNumber: '',
+      dosage: '0.5ml/只',
+      routeIndex: 0,
+      vaccinationCount: 0,
+      location: '',
+      vaccineCost: '',
+      veterinaryCost: '',
+      otherCost: '',
+      totalCost: 0,
+      totalCostFormatted: '¥0.00',
+      notes: task.description || ''
+    }
+
+    this.setData({
+      selectedTask: task,
+      vaccineFormData,
+      vaccineFormErrors: {}
+    })
+  },
+
+  /**
+   * 关闭疫苗表单
+   */
+  closeVaccineFormPopup() {
+    this.setData({
+      showVaccineFormPopup: false
+    })
+  },
+
+  /**
+   * 疫苗表单输入处理
+   */
+  onVaccineFormInput(e: any) {
+    const { field } = e.currentTarget.dataset
+    const { value } = e.detail
+    
+    this.setData({
+      [`vaccineFormData.${field}`]: value
+    })
+
+    // 清除对应字段的错误
+    if (this.data.vaccineFormErrors[field]) {
+      const newErrors = { ...this.data.vaccineFormErrors }
+      delete newErrors[field]
+      this.setData({
+        vaccineFormErrors: newErrors,
+        vaccineFormErrorList: Object.values(newErrors)
+      })
+    }
+  },
+
+  /**
+   * 数值输入处理（费用相关）
+   */
+  onVaccineNumberInput(e: any) {
+    const { field } = e.currentTarget.dataset
+    const { value } = e.detail
+    
+    this.setData({
+      [`vaccineFormData.${field}`]: value
+    }, () => {
+      // 如果是费用相关字段，重新计算总费用
+      if (['vaccineCost', 'veterinaryCost', 'otherCost'].includes(field)) {
+        setTimeout(() => {
+          this.calculateTotalCost()
+        }, 100)
+      }
+    })
+  },
+
+  /**
+   * 路径选择处理
+   */
+  onVaccineRouteChange(e: any) {
+    const { value } = e.detail
+    this.setData({
+      'vaccineFormData.routeIndex': parseInt(value)
+    })
+  },
+
+  /**
+   * 计算总费用
+   */
+  calculateTotalCost() {
+    const { vaccineFormData } = this.data
+    const vaccineCost = parseFloat(vaccineFormData.vaccineCost?.toString() || '0') || 0
+    const veterinaryCost = parseFloat(vaccineFormData.veterinaryCost?.toString() || '0') || 0
+    const otherCost = parseFloat(vaccineFormData.otherCost?.toString() || '0') || 0
+    const totalCost = vaccineCost + veterinaryCost + otherCost
+    
+    const totalCostFormatted = `¥${totalCost.toFixed(2)}`
+    
+    this.setData({
+      vaccineFormData: {
+        ...this.data.vaccineFormData,
+        totalCost: totalCost,
+        totalCostFormatted: totalCostFormatted
+      }
+    })
+  },
+
+  /**
+   * 验证疫苗表单
+   */
+  validateVaccineForm(): boolean {
+    const { vaccineFormData } = this.data
+    const errors: { [key: string]: string } = {}
+
+    // 必填字段验证
+    if (!vaccineFormData.veterinarianName || vaccineFormData.veterinarianName === '') {
+      errors.veterinarianName = '请填写兽医姓名'
+    }
+    if (!vaccineFormData.vaccineName || vaccineFormData.vaccineName === '') {
+      errors.vaccineName = '请填写疫苗名称'
+    }
+    if (!vaccineFormData.vaccinationCount || vaccineFormData.vaccinationCount <= 0) {
+      errors.vaccinationCount = '请填写接种数量'
+    }
+
+    // 数值验证
+    if (vaccineFormData.vaccinationCount <= 0) {
+      errors.vaccinationCount = '接种数量必须大于0'
+    }
+
+    // 联系方式验证（如果填写了）
+    if (vaccineFormData.veterinarianContact && 
+        !/^1[3-9]\d{9}$/.test(vaccineFormData.veterinarianContact)) {
+      errors.veterinarianContact = '请填写正确的手机号码'
+    }
+
+    // 更新错误对象和错误列表
+    const errorList = Object.values(errors)
+    this.setData({ 
+      vaccineFormErrors: errors,
+      vaccineFormErrorList: errorList
+    })
+
+    if (errorList.length > 0) {
+      wx.showToast({
+        title: errorList[0],
+        icon: 'error'
+      })
+      return false
+    }
+
+    return true
+  },
+
+  /**
+   * 提交疫苗表单
+   */
+  async submitVaccineForm() {
+    if (!this.validateVaccineForm()) {
+      return
+    }
+
+    const { selectedTask, vaccineFormData, vaccineRouteOptions } = this.data
+
+    if (!selectedTask) {
+      wx.showToast({
+        title: '任务信息丢失',
+        icon: 'error'
+      })
+      return
+    }
+
+    const batchId = selectedTask.batchId || selectedTask.batchNumber || this.data.selectedBatchId
+    
+    if (!batchId) {
+      wx.showToast({
+        title: '批次信息缺失',
+        icon: 'error'
+      })
+      return
+    }
+
+    // 构建疫苗记录数据
+    const vaccineRecord = {
+      vaccine: {
+        name: vaccineFormData.vaccineName,
+        manufacturer: vaccineFormData.manufacturer,
+        batchNumber: vaccineFormData.batchNumber,
+        dosage: vaccineFormData.dosage
+      },
+      veterinarian: {
+        name: vaccineFormData.veterinarianName,
+        contact: vaccineFormData.veterinarianContact
+      },
+      vaccination: {
+        route: vaccineRouteOptions[vaccineFormData.routeIndex],
+        count: vaccineFormData.vaccinationCount,
+        location: vaccineFormData.location
+      },
+      cost: {
+        vaccine: parseFloat(vaccineFormData.vaccineCost || '0'),
+        veterinary: parseFloat(vaccineFormData.veterinaryCost || '0'),
+        other: parseFloat(vaccineFormData.otherCost || '0'),
+        total: vaccineFormData.totalCost
+      },
+      notes: vaccineFormData.notes
+    }
+
+    try {
+      wx.showLoading({ title: '提交中...' })
+
+      const result = await wx.cloud.callFunction({
+        name: 'health-prevention',
+        data: {
+          action: 'completeVaccineTask',
+          taskId: selectedTask._id,
+          batchId: batchId,
+          vaccineRecord
+        }
+      })
+
+      if (result.result && result.result.success) {
+        wx.hideLoading()
+        wx.showToast({
+          title: '疫苗接种记录已创建',
+          icon: 'success'
+        })
+
+        this.closeVaccineFormPopup()
+        this.loadTodayTasks()
+      } else {
+        throw new Error(result.result?.message || '提交失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showToast({
+        title: error.message || '提交失败，请重试',
+        icon: 'error'
+      })
+    }
+  },
+
+  /**
+   * 打开用药表单
+   */
+  async openMedicationForm(task: any) {
+    // 先加载可用的药品库存
+    await this.loadAvailableMedicines()
+    
+    // 初始化表单数据
+    const userInfo = wx.getStorageSync('userInfo')
+    this.setData({
+      selectedTask: task,
+      medicationFormData: {
+        medicineId: '',
+        medicineName: '',
+        quantity: 0,
+        unit: '',
+        purpose: '',
+        dosage: '',
+        notes: '',
+        operator: userInfo?.nickName || userInfo?.name || '用户'
+      },
+      selectedMedicine: null,
+      medicationFormErrors: {},
+      medicationFormErrorList: [],
+      showMedicationFormPopup: true,
+      showTaskDetailPopup: false
+    })
+  },
+
+  /**
+   * 加载可用的药品库存
+   */
+  async loadAvailableMedicines() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'list_materials',
+          category: '药品'
+        }
+      })
+      
+      if (result.result && result.result.success) {
+        const materials = result.result.data.materials || []
+        const availableMedicines = materials
+          .filter((material: any) => (material.currentStock || 0) > 0)
+          .map((material: any) => ({
+            id: material._id,
+            name: material.name,
+            unit: material.unit || '件',
+            stock: material.currentStock || 0,
+            category: material.category,
+            description: material.description || ''
+          }))
+        
+        this.setData({
+          availableMedicines: Array.isArray(availableMedicines) ? availableMedicines : []
+        })
+      }
+    } catch (error: any) {
+      console.error('加载药品库存失败:', error)
+    }
+  },
+
+  /**
+   * 选择药品
+   */
+  onMedicineSelect(e: any) {
+    const index = e.detail.value
+    const selectedMedicine = this.data.availableMedicines[index]
+    
+    if (selectedMedicine) {
+      this.setData({
+        selectedMedicine: selectedMedicine,
+        'medicationFormData.medicineId': selectedMedicine.id,
+        'medicationFormData.medicineName': selectedMedicine.name,
+        'medicationFormData.unit': selectedMedicine.unit
+      })
+      
+      // 清除相关错误
+      if (this.data.medicationFormErrors.medicineId) {
+        const newErrors = { ...this.data.medicationFormErrors }
+        delete newErrors.medicineId
+        this.setData({
+          medicationFormErrors: newErrors,
+          medicationFormErrorList: Object.values(newErrors)
+        })
+      }
+    }
+  },
+
+  /**
+   * 用药表单输入处理
+   */
+  onMedicationFormInput(e: any) {
+    const { field } = e.currentTarget.dataset
+    const { value } = e.detail
+    
+    this.setData({
+      [`medicationFormData.${field}`]: value
+    })
+
+    // 清除对应字段的错误
+    if (this.data.medicationFormErrors[field]) {
+      const newErrors = { ...this.data.medicationFormErrors }
+      delete newErrors[field]
+      this.setData({
+        medicationFormErrors: newErrors,
+        medicationFormErrorList: Object.values(newErrors)
+      })
+    }
+  },
+
+  /**
+   * 用药数量输入处理
+   */
+  onMedicationQuantityInput(e: any) {
+    const { value } = e.detail
+    const quantity = parseInt(value) || 0
+    
+    this.setData({
+      'medicationFormData.quantity': quantity
+    })
+
+    // 清除错误
+    if (this.data.medicationFormErrors.quantity) {
+      const newErrors = { ...this.data.medicationFormErrors }
+      delete newErrors.quantity
+      this.setData({
+        medicationFormErrors: newErrors,
+        medicationFormErrorList: Object.values(newErrors)
+      })
+    }
+  },
+
+  /**
+   * 关闭用药表单
+   */
+  closeMedicationFormPopup() {
+    this.setData({
+      showMedicationFormPopup: false,
+      selectedMedicine: null,
+      medicationFormData: {
+        medicineId: '',
+        medicineName: '',
+        quantity: 0,
+        unit: '',
+        purpose: '',
+        dosage: '',
+        notes: '',
+        operator: ''
+      },
+      medicationFormErrors: {},
+      medicationFormErrorList: []
+    })
+  },
+
+  /**
+   * 验证用药表单
+   */
+  validateMedicationForm(): boolean {
+    const { medicationFormData, selectedMedicine } = this.data
+    const errors: { [key: string]: string } = {}
+
+    if (!medicationFormData.medicineId || !selectedMedicine) {
+      errors.medicineId = '请选择药品'
+    }
+
+    if (!medicationFormData.quantity || medicationFormData.quantity <= 0) {
+      errors.quantity = '请输入正确的用药数量'
+    }
+
+    if (selectedMedicine && medicationFormData.quantity > selectedMedicine.stock) {
+      errors.quantity = `超出库存量（库存：${selectedMedicine.stock}${selectedMedicine.unit}）`
+    }
+
+    if (!medicationFormData.purpose || medicationFormData.purpose.trim() === '') {
+      errors.purpose = '请输入用药用途'
+    }
+
+    const errorList = Object.values(errors)
+    this.setData({ 
+      medicationFormErrors: errors,
+      medicationFormErrorList: errorList
+    })
+
+    if (errorList.length > 0) {
+      wx.showToast({
+        title: errorList[0],
+        icon: 'error'
+      })
+      return false
+    }
+
+    return true
+  },
+
+  /**
+   * 提交用药表单
+   */
+  async submitMedicationForm() {
+    if (!this.validateMedicationForm()) {
+      return
+    }
+
+    const { selectedTask, medicationFormData } = this.data
+
+    if (!selectedTask) {
+      wx.showToast({
+        title: '任务信息丢失',
+        icon: 'error'
+      })
+      return
+    }
+
+    const batchId = selectedTask.batchId || selectedTask.batchNumber || this.data.selectedBatchId
+
+    try {
+      wx.showLoading({ title: '提交中...' })
+
+      const medicationRecord = {
+        taskId: selectedTask._id,
+        batchId: batchId,
+        materialId: medicationFormData.medicineId,
+        materialName: medicationFormData.medicineName,
+        quantity: medicationFormData.quantity,
+        unit: medicationFormData.unit,
+        purpose: medicationFormData.purpose,
+        dosage: medicationFormData.dosage,
+        notes: medicationFormData.notes,
+        operator: medicationFormData.operator,
+        useDate: new Date().toISOString().split('T')[0],
+        createTime: new Date().toISOString()
+      }
+
+      const result = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'create_record',
+          recordData: {
+            materialId: medicationRecord.materialId,
+            type: 'use',
+            quantity: Number(medicationRecord.quantity),
+            targetLocation: medicationRecord.purpose,
+            operator: medicationRecord.operator || '用户',
+            status: '已完成',
+            notes: `用途：${medicationRecord.purpose}${medicationRecord.dosage ? '，剂量：' + medicationRecord.dosage : ''}${medicationRecord.notes ? '，备注：' + medicationRecord.notes : ''}，任务：${selectedTask.title}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
+            recordDate: medicationRecord.useDate
+          }
+        }
+      })
+
+      if (result.result && result.result.success) {
+        await this.completeMedicationTask(selectedTask._id, batchId)
+        
+        wx.hideLoading()
+        wx.showToast({
+          title: '用药记录已创建',
+          icon: 'success'
+        })
+
+        this.closeMedicationFormPopup()
+        this.loadTodayTasks()
+
+      } else {
+        throw new Error(result.result?.message || '提交失败')
+      }
+
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showToast({
+        title: error.message || '提交失败，请重试',
+        icon: 'error'
+      })
+    }
+  },
+
+  /**
+   * 完成用药管理任务
+   */
+  async completeMedicationTask(taskId: string, batchId: string) {
+    try {
+      await wx.cloud.callFunction({
+        name: 'breeding-todo',
+        data: {
+          action: 'completeTask',
+          taskId: taskId,
+          batchId: batchId,
+          completedAt: new Date().toISOString(),
+          completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
+        }
+      })
+    } catch (error: any) {
+      console.error('完成任务失败:', error)
+    }
+  },
+
+  /**
+   * 打开营养表单
+   */
+  async openNutritionForm(task: any) {
+    // 先加载可用的营养品库存
+    await this.loadAvailableNutrition()
+    
+    // 初始化表单数据
+    const userInfo = wx.getStorageSync('userInfo')
+    this.setData({
+      selectedTask: task,
+      nutritionFormData: {
+        nutritionId: '',
+        nutritionName: '',
+        quantity: 0,
+        unit: '',
+        dosage: '',
+        notes: '',
+        operator: userInfo?.nickName || userInfo?.name || '用户'
+      },
+      selectedNutrition: null,
+      nutritionFormErrors: {},
+      nutritionFormErrorList: [],
+      showNutritionFormPopup: true,
+      showTaskDetailPopup: false
+    })
+  },
+
+  /**
+   * 加载可用的营养品库存
+   */
+  async loadAvailableNutrition() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'list_materials',
+          category: '营养品'
+        }
+      })
+
+      if (result.result && result.result.success) {
+        const materials = result.result.data?.materials || []
+        const availableNutrition = materials
+          .filter((material: any) => (material.currentStock || 0) > 0)
+          .map((material: any) => ({
+            id: material._id,
+            name: material.name,
+            unit: material.unit || '件',
+            stock: material.currentStock || 0,
+            category: material.category,
+            description: material.description || ''
+          }))
+
+        this.setData({
+          availableNutrition: availableNutrition
+        })
+      }
+    } catch (error: any) {
+      console.error('加载营养品库存失败:', error)
+    }
+  },
+
+  /**
+   * 选择营养品
+   */
+  onNutritionSelect(e: any) {
+    const index = e.detail.value
+    const selectedNutrition = this.data.availableNutrition[index]
+    
+    if (selectedNutrition) {
+      this.setData({
+        selectedNutrition: selectedNutrition,
+        'nutritionFormData.nutritionId': selectedNutrition.id,
+        'nutritionFormData.nutritionName': selectedNutrition.name,
+        'nutritionFormData.unit': selectedNutrition.unit
+      })
+      
+      // 清除相关错误
+      if (this.data.nutritionFormErrors.nutritionId) {
+        const newErrors = { ...this.data.nutritionFormErrors }
+        delete newErrors.nutritionId
+        this.setData({
+          nutritionFormErrors: newErrors,
+          nutritionFormErrorList: Object.values(newErrors)
+        })
+      }
+    }
+  },
+
+  /**
+   * 营养表单输入处理
+   */
+  onNutritionFormInput(e: any) {
+    const { field } = e.currentTarget.dataset
+    const { value } = e.detail
+    
+    this.setData({
+      [`nutritionFormData.${field}`]: value
+    })
+
+    // 清除对应字段的错误
+    if (this.data.nutritionFormErrors[field]) {
+      const newErrors = { ...this.data.nutritionFormErrors }
+      delete newErrors[field]
+      this.setData({
+        nutritionFormErrors: newErrors,
+        nutritionFormErrorList: Object.values(newErrors)
+      })
+    }
+  },
+
+  /**
+   * 营养数量输入处理
+   */
+  onNutritionQuantityInput(e: any) {
+    const { value } = e.detail
+    const quantity = parseInt(value) || 0
+    
+    this.setData({
+      'nutritionFormData.quantity': quantity
+    })
+
+    // 验证库存
+    const { selectedNutrition } = this.data
+    if (selectedNutrition && quantity > selectedNutrition.stock) {
+      const newErrors = { ...this.data.nutritionFormErrors }
+      newErrors.quantity = `库存不足，当前库存${selectedNutrition.stock}${selectedNutrition.unit}`
+      this.setData({
+        nutritionFormErrors: newErrors,
+        nutritionFormErrorList: Object.values(newErrors)
+      })
+    } else if (this.data.nutritionFormErrors.quantity) {
+      const newErrors = { ...this.data.nutritionFormErrors }
+      delete newErrors.quantity
+      this.setData({
+        nutritionFormErrors: newErrors,
+        nutritionFormErrorList: Object.values(newErrors)
+      })
+    }
+  },
+
+  /**
+   * 关闭营养管理表单
+   */
+  closeNutritionFormPopup() {
+    this.setData({
+      showNutritionFormPopup: false,
+      selectedNutrition: null,
+      nutritionFormData: {
+        nutritionId: '',
+        nutritionName: '',
+        quantity: 0,
+        unit: '',
+        dosage: '',
+        notes: '',
+        operator: ''
+      },
+      nutritionFormErrors: {},
+      nutritionFormErrorList: []
+    })
+  },
+
+  /**
+   * 验证营养表单
+   */
+  validateNutritionForm(): boolean {
+    const { nutritionFormData, selectedNutrition } = this.data
+    const errors: { [key: string]: string } = {}
+
+    // 必填字段验证
+    if (!nutritionFormData.nutritionId || !selectedNutrition) {
+      errors.nutritionId = '请选择营养品'
+    }
+
+    if (!nutritionFormData.quantity || nutritionFormData.quantity <= 0) {
+      errors.quantity = '请输入正确的使用数量'
+    } else if (selectedNutrition && nutritionFormData.quantity > selectedNutrition.stock) {
+      errors.quantity = `库存不足，当前库存${selectedNutrition.stock}${selectedNutrition.unit}`
+    }
+
+    // 更新错误对象和错误列表
+    const errorList = Object.values(errors)
+    this.setData({ 
+      nutritionFormErrors: errors,
+      nutritionFormErrorList: errorList
+    })
+
+    if (errorList.length > 0) {
+      wx.showToast({
+        title: errorList[0],
+        icon: 'error'
+      })
+      return false
+    }
+
+    return true
+  },
+
+  /**
+   * 提交营养表单
+   */
+  async submitNutritionForm() {
+    if (!this.validateNutritionForm()) {
+      return
+    }
+
+    const selectedTask = this.data.selectedTask
+    const { nutritionFormData } = this.data
+    
+    if (!selectedTask) {
+      wx.showToast({
+        title: '任务信息丢失',
+        icon: 'error'
+      })
+      return
+    }
+
+    const batchId = selectedTask.batchId || selectedTask.batchNumber || this.data.selectedBatchId
+    
+    if (!batchId) {
+      wx.showToast({
+        title: '批次信息缺失',
+        icon: 'error'
+      })
+      return
+    }
+
+    try {
+      wx.showLoading({ title: '提交中...' })
+
+      // 构建营养记录数据
+      const recordData = {
+        materialId: nutritionFormData.nutritionId,
+        type: 'use',
+        quantity: Number(nutritionFormData.quantity),
+        targetLocation: selectedTask.title,
+        operator: nutritionFormData.operator || '用户',
+        status: '已完成',
+        notes: `任务：${selectedTask.title}，批次：${batchId}${nutritionFormData.dosage ? '，剂量：' + nutritionFormData.dosage : ''}${nutritionFormData.notes ? '，备注：' + nutritionFormData.notes : ''}`,
+        recordDate: new Date().toISOString().split('T')[0]
+      }
+
+      const result = await wx.cloud.callFunction({
+        name: 'production-material',
+        data: {
+          action: 'create_record',
+          recordData: recordData
+        }
+      })
+
+      if (result.result && result.result.success) {
+        await this.completeNutritionTask(selectedTask._id, batchId)
+        
+        wx.hideLoading()
+        wx.showToast({
+          title: '营养使用记录已提交',
+          icon: 'success'
+        })
+
+        this.closeNutritionFormPopup()
+        this.loadTodayTasks()
+
+      } else {
+        throw new Error(result.result?.message || '提交失败')
+      }
+
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showToast({
+        title: error.message || '提交失败，请重试',
+        icon: 'error'
+      })
+    }
+  },
+
+  /**
+   * 完成营养管理任务
+   */
+  async completeNutritionTask(taskId: string, batchId: string) {
+    try {
+      await wx.cloud.callFunction({
+        name: 'breeding-todo',
+        data: {
+          action: 'completeTask',
+          taskId: taskId,
+          batchId: batchId,
+          completedAt: new Date().toISOString(),
+          completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
+        }
+      })
+    } catch (error: any) {
+      console.error('完成任务失败:', error)
+    }
+  },
+
+  /**
+   * 判断是否为用药管理任务
+   */
+  isMedicationTask(task: any): boolean {
+    if (!task) return false
+    
+    // 直接根据类型判断
+    if (task.type === 'medication' || task.type === 'medicine') {
+      return true
+    }
+    
+    // 检查任务标题和描述中的关键词
+    const medicationKeywords = [
+      '用药', '药品', '投药', '喂药', '给药', '抗生素',
+      '消炎', '治疗', '药物', '中药', '西药',
+      'medication', 'medicine', 'drug'
+    ]
+    
+    const title = task.title || ''
+    const description = task.description || ''
+    
+    return medicationKeywords.some(keyword => 
+      title.includes(keyword) || description.includes(keyword)
+    )
+  },
+
+  /**
+   * 判断是否为营养管理任务
+   */
+  isNutritionTask(task: any): boolean {
+    if (!task) return false
+    
+    // 直接根据类型判断
+    if (task.type === 'nutrition' || task.type === 'feed') {
+      return true
+    }
+    
+    // 检查任务标题和描述中的关键词
+    const nutritionKeywords = [
+      '营养', '饲料', '喂养', '喂食', '补充', '添加剂',
+      '维生素', '矿物质', '营养品', '保健品',
+      'nutrition', 'feed', 'supplement'
+    ]
+    
+    const title = task.title || ''
+    const description = task.description || ''
+    
+    return nutritionKeywords.some(keyword => 
+      title.includes(keyword) || description.includes(keyword)
+    )
   },
 
   /**

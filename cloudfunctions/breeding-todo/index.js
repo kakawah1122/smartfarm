@@ -634,11 +634,78 @@ exports.main = async (event, context) => {
           data: { taskCount }
         }
       
+      case 'cleanOrphanTasks':
+        return await cleanOrphanTasks(wxContext.OPENID)
+      
       default:
         throw new Error(`未知操作: ${action}`)
     }
   } catch (error) {
     // 已移除调试日志
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 清理孤儿任务（没有对应批次的任务）
+async function cleanOrphanTasks(userId) {
+  try {
+    // 获取所有活跃批次
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).where({
+      isActive: true
+    }).field({ _id: true }).get()
+    
+    const activeBatchIds = batchResult.data.map(b => b._id)
+    
+    if (activeBatchIds.length === 0) {
+      return {
+        success: true,
+        message: '没有活跃批次，无需清理',
+        data: { deletedCount: 0 }
+      }
+    }
+    
+    // 查找所有任务
+    const allTasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
+      userId: userId
+    }).get()
+    
+    // 筛选出孤儿任务（批次不在活跃列表中）
+    const orphanTasks = allTasksResult.data.filter(task => 
+      !activeBatchIds.includes(task.batchId)
+    )
+    
+    if (orphanTasks.length === 0) {
+      return {
+        success: true,
+        message: '没有孤儿任务',
+        data: { deletedCount: 0 }
+      }
+    }
+    
+    // 删除孤儿任务
+    let deletedCount = 0
+    for (const task of orphanTasks) {
+      try {
+        await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).doc(task._id).remove()
+        deletedCount++
+      } catch (error) {
+        console.error('删除孤儿任务失败:', task._id, error)
+      }
+    }
+    
+    return {
+      success: true,
+      message: `成功清理 ${deletedCount} 个孤儿任务`,
+      data: { 
+        deletedCount,
+        orphanTaskIds: orphanTasks.map(t => t._id)
+      }
+    }
+  } catch (error) {
+    console.error('清理孤儿任务失败:', error)
     return {
       success: false,
       error: error.message

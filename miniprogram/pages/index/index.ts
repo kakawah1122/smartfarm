@@ -72,14 +72,6 @@ Page({
       goslingChange: '-0.1'
     },
     
-    // 待办事项
-    todoList: [] as any[],
-    todoLoading: false,
-    
-    // 弹窗相关状态
-    showTaskDetailPopup: false,
-    selectedTask: null as any,
-    
     // 疫苗表单数据
     showVaccineFormPopup: false,
     vaccineFormData: {
@@ -161,8 +153,6 @@ Page({
     
     this.initStatusBar()
     this.loadData()
-    this.loadTodayBreedingTasks()
-    this.loadPreventionTasks()
   },
 
   onShow() {
@@ -173,10 +163,6 @@ Page({
     this.checkAndAutoRefreshWeather()
     // 只刷新价格数据，天气数据使用缓存
     this.refreshPriceData()
-    // 刷新今日养殖任务
-    this.loadTodayBreedingTasks()
-    // 刷新预防待办
-    this.loadPreventionTasks()
   },
 
   // 检查并同步任务状态
@@ -221,7 +207,7 @@ Page({
 
   // 加载数据
   loadData() {
-    this.setData({ todoLoading: true, 'weather.loading': true })
+    this.setData({ 'weather.loading': true })
     
     Promise.all([
       this.getWeatherData(),
@@ -235,7 +221,7 @@ Page({
         icon: 'error'
       })
     }).finally(() => {
-      this.setData({ todoLoading: false, 'weather.loading': false })
+      this.setData({ 'weather.loading': false })
     })
   },
 
@@ -624,29 +610,10 @@ Page({
     }
   },
 
-  // 同步单个任务状态（立即更新UI）
+  // 同步单个任务状态（已移除首页待办列表，无需更新UI）
   syncSingleTaskStatus(taskId: string, completed: boolean) {
-    try {
-      
-      // 立即更新首页待办列表中的任务状态
-      const updatedTodoList = this.data.todoList.map(task => {
-        if (task.id === taskId) {
-          return { 
-            ...task, 
-            completed: completed,
-            completedDate: completed ? new Date().toLocaleString() : ''
-          }
-        }
-        return task
-      })
-      
-      // 立即更新UI
-      this.setData({
-        todoList: updatedTodoList
-      })
-    } catch (error: any) {
-      // 同步单个任务状态失败
-    }
+    // 首页已不再显示待办列表，此方法保留以兼容其他页面调用
+    // 实际同步逻辑已移至全局状态管理
   },
 
   // 全局同步方法（供其他页面调用）
@@ -702,245 +669,6 @@ Page({
     }
   },
 
-  // 加载今日养殖任务 - 与breeding-todo页面保持一致的逻辑
-  async loadTodayBreedingTasks() {
-    // 首页加载今日待办任务
-    
-    this.setData({ todoLoading: true })
-
-    try {
-      // 获取活跃批次
-      const batchResult = await wx.cloud.callFunction({
-        name: 'production-entry',
-        data: { action: 'getActiveBatches' }
-      })
-
-      const activeBatches = batchResult.result?.data || []
-      
-      // 如果没有批次，静默处理，不显示错误
-      if (!activeBatches || activeBatches.length === 0) {
-        this.setData({ 
-          todoList: [],
-          todoLoading: false
-        })
-        return
-      }
-
-      // 获取所有批次的今日任务
-      let allTodos: any[] = []
-      
-      for (const batch of activeBatches) {
-        try {
-          const dayAge = this.calculateCurrentAge(batch.entryDate)
-          // 批次当前日龄
-          
-          // 使用与breeding-todo页面相同的CloudApi方法，但不显示错误（首页静默加载）
-          const result = await CloudApi.getTodos(batch._id, dayAge, { showError: false })
-          
-          if (result.success && result.data) {
-            const tasks = result.data
-            // 批次获取到任务
-            
-            // 转换为首页显示格式 
-            const formattedTasks = tasks.map((task: any) => {
-              const taskId = task._id || task.id || task.taskId
-              
-              // 检查本地和全局的完成状态
-              const localCompletions = this.getLocalTaskCompletions()
-              const globalUpdates = getApp<any>().globalData?.taskStatusUpdates || {}
-              
-              let isCompleted = false
-              let completedDate = ''
-              
-              if (localCompletions[taskId]) {
-                isCompleted = localCompletions[taskId].completed
-                completedDate = localCompletions[taskId].completedDate
-              } else if (globalUpdates[taskId]) {
-                isCompleted = globalUpdates[taskId].completed
-              } else {
-                isCompleted = task.completed || false
-                completedDate = task.completedDate || ''
-              }
-              
-              return {
-                id: taskId,
-                content: task.title,
-                title: task.title,
-                type: task.type,
-                dayAge: dayAge,
-                description: task.description || '',
-                notes: task.notes || '',
-                estimatedTime: task.estimatedDuration || '',
-                duration: task.duration || '',
-                dayInSeries: task.dayInSeries || '',
-                dosage: task.dosage || '',
-                materials: task.materials || [],
-                batchNumber: batch.batchNumber || batch._id,
-                completed: isCompleted,
-                completedDate: completedDate
-              }
-            })
-            
-            allTodos = allTodos.concat(formattedTasks)
-          } else {
-            // 批次任务获取失败
-          }
-        } catch (batchError) {
-          // 批次处理失败
-        }
-      }
-
-      // 按批次分组，然后按任务类型排序
-      allTodos.sort((a, b) => {
-        // 首先按批次编号排序
-        const batchCompare = (a.batchNumber || '').localeCompare(b.batchNumber || '')
-        if (batchCompare !== 0) {
-          return batchCompare
-        }
-        
-        // 同一批次内，按任务类型排序 (疫苗任务优先)
-        const typeOrder: Record<string, number> = {
-          'vaccine': 1,
-          'medication': 2,
-          'inspection': 3,
-          'nutrition': 4,
-          'care': 5,
-          'feeding': 6
-        }
-        return (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99)
-      })
-
-      // 为每个任务添加批次索引，用于背景色区分
-      const batchColors = ['batch-color-1', 'batch-color-2', 'batch-color-3', 'batch-color-4', 'batch-color-5']
-      const batchNumbers = [...new Set(allTodos.map(todo => todo.batchNumber))]
-      
-      // 批次颜色分配信息
-      
-      allTodos = allTodos.map(todo => {
-        const colorIndex = batchNumbers.indexOf(todo.batchNumber) % batchColors.length
-        const colorClass = batchColors[colorIndex]
-        
-        return {
-          ...todo,
-          batchColorIndex: colorIndex,
-          batchColorClass: colorClass
-        }
-      })
-
-      // 首页显示逻辑：优先显示未完成的任务，然后显示最近完成的任务
-      const uncompletedTodos = allTodos.filter(todo => !todo.completed)
-      const recentlyCompletedTodos = allTodos
-        .filter(todo => todo.completed && todo.completedDate)
-        .sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime())
-        .slice(0, 2) // 最多显示2个最近完成的任务
-      
-      // 合并未完成和最近完成的任务，总共不超过6条
-      const displayTodos = [...uncompletedTodos, ...recentlyCompletedTodos].slice(0, 6)
-      
-      // 首页待办加载完成
-      
-      this.setData({
-        todoList: displayTodos,
-        todoLoading: false
-      })
-      
-    } catch (error: any) {
-      this.setData({
-        todoList: [],
-        todoLoading: false
-      })
-      
-      wx.showToast({
-        title: '加载待办失败',
-        icon: 'error',
-        duration: 2000
-      })
-    }
-  },
-
-  // 查看全部待办 - 直接进入全批次今日待办页面
-  async viewAllTodos() {
-    try {
-      // 直接跳转到breeding-todo页面，显示所有批次的今日待办
-      wx.navigateTo({
-        url: `/packageHealth/breeding-todo/breeding-todo?showAllBatches=true`
-      })
-    } catch (error: any) {
-      wx.showToast({
-        title: '跳转失败',
-        icon: 'error'
-      })
-    }
-  },
-
-  // 加载预防待办任务（首页轻量级）
-  async loadPreventionTasks() {
-    this.setData({ preventionLoading: true })
-    
-    try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'getTodayPreventionTasks',
-          limit: 3,
-          batchId: 'all'
-        }
-      })
-      
-      const response = result.result as any
-      if (response.success && response.data) {
-        this.setData({
-          preventionTasks: response.data.tasks || [],
-          preventionLoading: false
-        })
-      } else {
-        this.setData({
-          preventionTasks: [],
-          preventionLoading: false
-        })
-      }
-    } catch (error: any) {
-      console.error('加载预防待办失败:', error)
-      this.setData({
-        preventionTasks: [],
-        preventionLoading: false
-      })
-    }
-  },
-
-  // 跳转到预防管理页面
-  navigateToPreventionManagement() {
-    wx.navigateTo({
-      url: '/pages/health/health?tab=prevention&focus=today'
-    })
-  },
-
-  // 完成预防任务
-  onCompletePreventionTask(e: any) {
-    const task = e.currentTarget.dataset.task
-    if (!task) return
-    
-    let url = ''
-    const params = `taskId=${task.taskId}&batchId=${task.batchId}&dayAge=${task.dayAge}&taskName=${encodeURIComponent(task.taskName || '')}&fromHome=true`
-    
-    switch (task.taskType) {
-      case 'vaccine':
-        url = `/packageHealth/vaccine-record/vaccine-record?${params}`
-        break
-      case 'medication':
-        url = `/packageHealth/vaccine-record/vaccine-record?${params}` // TODO: 创建专门的用药记录页面
-        break
-      case 'disinfection':
-        url = `/packageHealth/disinfection-record/disinfection-record?${params}`
-        break
-      default:
-        wx.showToast({ title: '未知任务类型', icon: 'none' })
-        return
-    }
-    
-    wx.navigateTo({ url })
-  },
-
   /**
    * 判断是否为疫苗接种任务
    */
@@ -972,63 +700,6 @@ Page({
    */
   isNutritionTask(task: any): boolean {
     return isNutritionTask(task)
-  },
-
-  /**
-   * 查看任务详情 - 使用弹窗展示
-   */
-  viewTaskDetail(event: any) {
-    const task = event.currentTarget.dataset.task
-    
-    // 从任务数据中构建详细信息，所有任务都显示详情弹窗
-    const enhancedTask = {
-      ...task,
-      
-      // 确保ID字段存在（支持多种ID字段名）
-      id: task.id || task.taskId || (task as any)._id || '',
-      
-      title: task.content || task.title || '未命名任务',
-      typeName: this.getTypeName(task.type || ''),
-      statusText: task.completed ? '已完成' : '待完成',
-      
-      // 标记是否为疫苗任务，用于弹窗中的按钮显示
-      isVaccineTask: this.isVaccineTask(task),
-      
-      // 标记是否为用药管理任务，用于弹窗中的按钮显示
-      isMedicationTask: this.isMedicationTask(task),
-      
-      // 标记是否为营养管理任务，用于弹窗中的按钮显示
-      isNutritionTask: this.isNutritionTask(task),
-      
-      // 确保其他字段存在
-      description: task.description || '',
-      notes: task.notes || '',
-      estimatedTime: task.estimatedTime || '',
-      duration: task.duration || '',
-      dayInSeries: task.dayInSeries || '',
-      dosage: task.dosage || '',
-      materials: Array.isArray(task.materials) ? task.materials : [],
-      batchNumber: task.batchNumber || '',
-      dayAge: task.dayAge || '',
-      
-      // 确保completed状态正确
-      completed: task.completed || false
-    }
-    
-    this.setData({
-      selectedTask: enhancedTask,
-      showTaskDetailPopup: true
-    })
-  },
-
-  /**
-   * 关闭任务详情弹窗
-   */
-  closeTaskDetailPopup() {
-    this.setData({
-      showTaskDetailPopup: false,
-      selectedTask: null
-    })
   },
 
   /**
@@ -1340,132 +1011,19 @@ Page({
       return
     }
 
-    // 使用页面级loading，避免全局show/hide未配对告警
-    this.setData({ todoLoading: true })
-    try {
-
-      // 检查批次ID字段
-      const batchId = selectedTask.batchNumber || selectedTask.batchId
-      
-      if (!batchId) {
-        wx.showToast({
-          title: '批次ID缺失，无法完成任务',
-          icon: 'error',
-          duration: 2000
-        })
-        this.closeTaskDetailPopup()
-        return
-      }
-
-      // 调用云函数完成任务
-      const result = await wx.cloud.callFunction({
-        name: 'breeding-todo',
-        data: {
-          action: 'completeTask',
-          taskId: taskId,
-          batchId: batchId,
-          dayAge: selectedTask.dayAge,
-          completedAt: new Date().toISOString(),
-          completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
-        }
-      })
-      
-      if (result.result && result.result.success) {
-        
-        // 检查是否为重复完成
-        if (result.result.already_completed) {
-          
-          // 立即更新UI状态显示划线效果
-          this.updateTaskCompletionStatusInUI(taskId, true)
-          
-          // 关闭弹窗
-          this.closeTaskDetailPopup()
-          
-          // 显示友好提示
-          wx.showToast({
-            title: '该任务已完成',
-            icon: 'success',
-            duration: 2000
-          })
-          
-          // 重新加载数据确保同步
-          setTimeout(() => {
-            this.loadTodayBreedingTasks()
-          }, 500)
-          
-          // 仅依赖 finally 统一隐藏，避免未配对告警
-          return
-        }
-        
-        // 任务完成处理
-        
-        // 立即更新UI状态显示划线效果
-        this.updateTaskCompletionStatusInUI(taskId, true)
-
-        // 关闭弹窗
-        this.closeTaskDetailPopup()
-
-        // 显示成功提示
-        wx.showToast({
-          title: '任务完成成功！',
-          icon: 'success',
-          duration: 2000
-        })
-
-        // 重新加载数据以确保UI同步（数据库中的状态已经更新）
-        setTimeout(() => {
-          this.loadTodayBreedingTasks()
-        }, 500)
-
-      } else {
-        throw new Error(result.result?.error || result.result?.message || '完成任务失败')
-      }
-
-    } catch (error: any) {
-      wx.showToast({
-        title: error.message === '任务已经完成' ? '该任务已完成' : '完成失败，请重试',
-        icon: error.message === '任务已经完成' ? 'success' : 'error',
-        duration: 2000
-      })
-    } finally {
-      this.setData({ todoLoading: false })
-    }
+    // 首页已不再显示待办列表，此方法不再需要
+    wx.showToast({
+      title: '请在健康管理页面操作',
+      icon: 'none'
+    })
   },
 
   /**
-   * 简化版本：立即更新首页UI中的任务完成状态
+   * 简化版本：立即更新首页UI中的任务完成状态（已移除首页待办列表）
    */
   updateTaskCompletionStatusInUI(taskId: string, completed: boolean) {
-    let taskFound = false
-    
-    // 🔥 强化ID匹配逻辑
-    const matchTask = (task: any) => {
-      const possibleIds = [task._id, task.id, task.taskId].filter(Boolean)
-      return possibleIds.includes(taskId)
-    }
-    
-    // 更新首页待办列表中的任务状态
-    const updatedTodoList = this.data.todoList.map(task => {
-      if (matchTask(task)) {
-        taskFound = true
-        // 首页找到并更新任务
-        return { 
-          ...task, 
-          completed, 
-          completedDate: completed ? new Date().toLocaleString() : ''
-        }
-      }
-      return task
-    })
-    
-    if (!taskFound) {
-      // 首页未找到匹配的任务ID
-    }
-    
-    // 强制数据更新
-    this.setData({
-      todoList: updatedTodoList
-    })
+    // 首页已不再显示待办列表，此方法保留以兼容其他页面调用
+    // 实际同步逻辑已移至全局状态管理
   },
 
   /**
@@ -2202,44 +1760,11 @@ Page({
     })
   },
   
-  // 添加建议到待办
+  // 添加建议到待办（首页已移除待办列表）
   addAdviceToTodo() {
-    const { result } = this.data.aiAdvice
-    if (!result || !result.keyAdvice) {
-      wx.showToast({
-        title: '没有可添加的建议',
-        icon: 'none'
-      })
-      return
-    }
-    
-    // 获取关键建议
-    const keyAdvice = result.keyAdvice || []
-    if (keyAdvice.length === 0) {
-      wx.showToast({
-        title: '没有重要建议需要添加',
-        icon: 'none'
-      })
-      return
-    }
-    
-    // 添加到待办列表（这里是模拟，实际可以保存到云端）
-    const newTodos = keyAdvice.map((advice: any, index: any) => ({
-      id: Date.now() + index,
-      content: advice.title + '：' + advice.description,
-      typeName: 'AI建议'
-    }))
-    
-    const updatedTodoList = [...newTodos, ...this.data.todoList].slice(0, 10) // 最多保留10条
-    
-    this.setData({
-      todoList: updatedTodoList
-    })
-    
     wx.showToast({
-      title: `已添加${newTodos.length}条建议到待办`,
-      icon: 'success',
-      duration: 2000
+      title: '请在健康管理页面查看待办',
+      icon: 'none'
     })
   },
   
