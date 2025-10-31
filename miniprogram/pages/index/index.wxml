@@ -118,6 +118,56 @@
       </view>
     </view>
 
+    <!-- 预防待办 -->
+    <view class="card prevention-card">
+      <view class="card-header">
+        <text class="card-title">💉 预防待办</text>
+        <text wx:if="{{preventionTasks.length > 0}}" class="todo-count">{{preventionTasks.length}}项任务</text>
+        <t-button theme="light" size="small" bind:tap="navigateToPreventionManagement" class="view-all-btn light-button">
+          全部管理
+        </t-button>
+      </view>
+      
+      <!-- 加载状态 -->
+      <view wx:if="{{preventionLoading}}" class="todo-loading">
+        <t-loading theme="spinner" size="40rpx" />
+        <text class="loading-text">正在加载预防待办...</text>
+      </view>
+      
+      <!-- 预防任务列表 -->
+      <view wx:elif="{{preventionTasks.length > 0}}" class="prevention-list">
+        <view 
+          class="prevention-item {{item.isOverdue ? 'overdue' : ''}}"
+          wx:for="{{preventionTasks}}"
+          wx:key="taskId"
+          bind:tap="onCompletePreventionTask"
+          data-task="{{item}}"
+        >
+          <view class="prevention-icon">
+            <text class="task-emoji">{{item.taskType === 'vaccine' ? '💉' : item.taskType === 'medication' ? '💊' : '🧼'}}</text>
+          </view>
+          <view class="prevention-content">
+            <view class="prevention-header">
+              <text class="prevention-name">{{item.taskName}}</text>
+              <t-tag wx:if="{{item.isOverdue}}" variant="light" theme="danger" size="small">逾期{{item.overdueDays}}天</t-tag>
+            </view>
+            <text class="prevention-info">📦 {{item.batchNumber}} · 第{{item.dayAge}}天</text>
+            <text class="prevention-desc" wx:if="{{item.description}}">{{item.description}}</text>
+          </view>
+          <view class="prevention-action">
+            <t-button size="small" theme="primary" variant="outline">去完成</t-button>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 空状态 -->
+      <view wx:else class="prevention-empty">
+        <text class="empty-icon">🎉</text>
+        <text class="empty-title">今日无预防任务</text>
+        <text class="empty-desc">所有计划任务均已完成</text>
+      </view>
+    </view>
+
     <!-- AI智能建议 -->
     <view class="card ai-advice-card">
       <view class="card-header">

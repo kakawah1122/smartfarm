@@ -30,6 +30,7 @@ $font-2xl: 40rpx;      // 特大字号
 $font-3xl: 48rpx;      // 巨大字号
 
 // 阴影变量
+$shadow-xs: 0 1rpx 4rpx rgba(0, 0, 0, 0.02);    // 极小阴影
 $shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);    // 小阴影
 $shadow-base: 0 2rpx 12rpx rgba(0, 0, 0, 0.06); // 基础阴影
 $shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);   // 中阴影
@@ -63,7 +64,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   margin: 0 $spacing-lg $spacing-base;
   border-radius: $radius-md;
   box-shadow: $shadow-base;
-  overflow: hidden;
+  overflow: hidden;  /* ✅ 恢复hidden，保持卡片裁剪 */
 }
 
 /* 批次筛选区域 */
@@ -104,6 +105,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       border-radius: $radius-lg;
       transition: all 0.3s;
       box-shadow: $shadow-brand-base;
+      cursor: pointer;  /* ✅ 添加指针光标 */
 
       &:active {
         transform: scale(0.95);
@@ -298,17 +300,17 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 
 /* 批次下拉菜单 */
 .batch-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: fixed;  /* ✅ 使用fixed定位，避免被父容器裁剪 */
+  /* top值由JS动态设置 */
+  left: 24rpx;  /* ✅ 与卡片左边距对齐 */
+  right: 24rpx;  /* ✅ 与卡片右边距对齐 */
   background: white;
-  border-radius: 0 0 16rpx 16rpx;
+  border-radius: 16rpx;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 100;
+  z-index: 10000;  /* ✅ 确保在遮罩层之上（比遮罩层的9999大） */
 
   &.show {
     max-height: 600rpx;
@@ -322,6 +324,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     padding: 28rpx 32rpx;
     border-bottom: 1rpx solid #f0f0f0;
     transition: background 0.2s;
+    cursor: pointer;  /* ✅ 添加指针光标 */
 
     &:last-child {
       border-bottom: none;
@@ -386,7 +389,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0);
-  z-index: 99;
+  z-index: 9999;  /* ✅ 大幅提高z-index，确保覆盖所有内容 */
   opacity: 0;
   transition: all 0.3s;
   pointer-events: none;
@@ -407,12 +410,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       transform: rotate(180deg);
     }
   }
-}
-
-/* 批次筛选区域调整 - 添加 relative 定位 */
-.filter-tabs-card {
-  position: relative;
-  z-index: 101;
 }
 
 /* 健康概览卡片 */
@@ -2350,6 +2347,219 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 
 /* ==================== 预防管理样式 ==================== */
 
+/* 今日待办区域 */
+.today-tasks-section {
+  margin: 0 0 $spacing-lg 0;
+  
+  .today-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-base;
+    padding: 0 $spacing-lg;
+  }
+  
+  .task-card {
+    background: white;
+    border-radius: $radius-md;
+    padding: $spacing-lg;
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-base;
+    box-shadow: $shadow-base;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    
+    // 左侧装饰条
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4rpx;
+      border-radius: 2rpx 0 0 2rpx;
+    }
+    
+    &.task-card-normal::before {
+      background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+    }
+    
+    &.task-card-overdue::before {
+      background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
+    }
+    
+    &:active {
+      transform: scale(0.98);
+      box-shadow: $shadow-sm;
+    }
+    
+    .task-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72rpx;
+      height: 72rpx;
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      border-radius: $radius-base;
+      flex-shrink: 0;
+    }
+    
+    .task-emoji {
+      font-size: 40rpx;
+      line-height: 1;
+    }
+    
+    .task-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8rpx;
+      min-width: 0;
+    }
+    
+    .task-header {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      flex-wrap: wrap;
+    }
+    
+    .task-name {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #1F2937;
+      line-height: 1.4;
+    }
+    
+    .task-info {
+      font-size: 26rpx;
+      color: #6B7280;
+      line-height: 1.4;
+    }
+    
+    .task-desc {
+      font-size: 24rpx;
+      color: #9CA3AF;
+      line-height: 1.5;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      line-clamp: 2;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    
+    .task-action {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+/* 无待办提示 */
+.empty-tasks {
+  background: white;
+  border-radius: $radius-md;
+  padding: 80rpx $spacing-lg;
+  margin: 0 $spacing-lg $spacing-lg;
+  box-shadow: $shadow-base;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-base;
+  
+  .empty-icon {
+    font-size: 80rpx;
+    line-height: 1;
+    margin-bottom: $spacing-sm;
+  }
+  
+  .empty-text {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1F2937;
+    line-height: 1.4;
+  }
+  
+  .empty-hint {
+    font-size: 26rpx;
+    color: #9CA3AF;
+    line-height: 1.5;
+    text-align: center;
+  }
+}
+
+/* 近期计划时间线 */
+.upcoming-tasks-section {
+  margin: 0 0 $spacing-lg 0;
+  
+  .timeline {
+    padding: 0 $spacing-lg;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+  
+  .timeline-item {
+    background: white;
+    border-radius: $radius-md;
+    overflow: hidden;
+    box-shadow: $shadow-base;
+    
+    .timeline-date {
+      background: linear-gradient(90deg, #EFF6FF 0%, #DBEAFE 100%);
+      padding: $spacing-base $spacing-lg;
+      border-bottom: 1rpx solid #E5E7EB;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      
+      .date-text {
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #1E40AF;
+      }
+      
+      .date-value {
+        font-size: 24rpx;
+        color: #3B82F6;
+      }
+    }
+    
+    .timeline-tasks {
+      padding: $spacing-base;
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+    
+    .timeline-task {
+      display: flex;
+      align-items: center;
+      gap: $spacing-base;
+      padding: $spacing-base;
+      background: #F9FAFB;
+      border-radius: $radius-sm;
+      
+      .timeline-task-icon {
+        font-size: 32rpx;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      
+      .timeline-task-name {
+        flex: 1;
+        font-size: 28rpx;
+        color: #374151;
+        line-height: 1.4;
+      }
+    }
+  }
+}
+
 .prevention-stats {
   padding: $spacing-lg;
   background: white;
@@ -3347,5 +3557,417 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     border-width: 0 0 10rpx 10rpx;
     border-color: transparent transparent #7C3AED transparent;
     transform: rotate(135deg);
+  }
+}
+
+// ==================== Phase 2: 预防管理新增样式 ====================
+
+/* 预防管理子标签页 */
+/* 预防管理子标签（整合到卡片内） */
+.prevention-sub-tabs {
+  padding: 0;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.prevention-subtab-content {
+  padding-top: $spacing-base;
+}
+
+/* 批次信息卡片 */
+.batch-info-card {
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin: 0 $spacing-lg $spacing-lg;
+  box-shadow: $shadow-sm;
+  border-left: 4rpx solid #10B981;
+  
+  .batch-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-base;
+    
+    .batch-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #059669;
+    }
+  }
+  
+  .batch-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    
+    .batch-detail {
+      font-size: 26rpx;
+      color: #065F46;
+      line-height: 1.4;
+    }
+  }
+}
+
+/* 时间线进度统计 */
+.timeline-progress {
+  background: white;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin: 0 $spacing-lg $spacing-lg;
+  box-shadow: $shadow-sm;
+  
+  .progress-bar-container {
+    position: relative;
+    margin-bottom: $spacing-lg;
+    
+    .progress-bar-bg {
+      width: 100%;
+      height: 20rpx;
+      background: #F3F4F6;
+      border-radius: 10rpx;
+      overflow: hidden;
+      
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+        border-radius: 10rpx;
+        transition: width 0.3s ease;
+      }
+    }
+    
+    .progress-text {
+      position: absolute;
+      right: 0;
+      top: -32rpx;
+      font-size: 24rpx;
+      font-weight: 600;
+      color: #10B981;
+    }
+  }
+  
+  .progress-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-base;
+    
+    .progress-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: $spacing-xs;
+      
+      .stat-label {
+        font-size: 22rpx;
+        color: #6B7280;
+      }
+      
+      .stat-value {
+        font-size: 32rpx;
+        font-weight: 600;
+        color: #111827;
+        
+        &.stat-value-success {
+          color: #10B981;
+        }
+        
+        &.stat-value-warning {
+          color: #F59E0B;
+        }
+        
+        &.stat-value-danger {
+          color: #EF4444;
+        }
+      }
+    }
+  }
+}
+
+/* 全周期时间线 */
+.full-timeline {
+  margin: 0 0 $spacing-lg 0;
+  
+  .timeline-full-list {
+    padding: 0 $spacing-lg;
+  }
+  
+  .timeline-full-item {
+    display: flex;
+    padding: $spacing-lg 0;
+    position: relative;
+    
+    &:not(:last-child) {
+      .timeline-marker .marker-line {
+        display: block;
+      }
+    }
+    
+    .timeline-marker {
+      position: relative;
+      width: 40rpx;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-right: $spacing-base;
+      flex-shrink: 0;
+      
+      .marker-dot {
+        width: 20rpx;
+        height: 20rpx;
+        background: #10B981;
+        border-radius: 50%;
+        border: 4rpx solid #ECFDF5;
+        box-shadow: 0 0 0 2rpx #10B981;
+        z-index: 2;
+      }
+      
+      .marker-line {
+        display: none;
+        position: absolute;
+        top: 28rpx;
+        width: 2rpx;
+        bottom: -$spacing-lg;
+        background: linear-gradient(180deg, #10B981 0%, #D1FAE5 100%);
+        z-index: 1;
+      }
+    }
+    
+    .timeline-date-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+      min-width: 120rpx;
+      margin-right: $spacing-base;
+      
+      .day-age {
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #10B981;
+      }
+      
+      .target-date {
+        font-size: 22rpx;
+        color: #9CA3AF;
+      }
+    }
+    
+    .timeline-task-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+    
+    .timeline-full-task {
+      background: white;
+      border-radius: $radius-base;
+      padding: $spacing-base;
+      box-shadow: $shadow-sm;
+      border: 1rpx solid #F3F4F6;
+      transition: all 0.2s ease;
+      
+      &:active {
+        transform: scale(0.98);
+        box-shadow: $shadow-xs;
+      }
+      
+      &.task-status-completed {
+        background: #F0FDF4;
+        border-color: #DCFCE7;
+        
+        .task-name-text {
+          text-decoration: line-through;
+          opacity: 0.7;
+        }
+      }
+      
+      &.task-status-overdue {
+        background: #FEF2F2;
+        border-color: #FECACA;
+        border-left: 3rpx solid #EF4444;
+      }
+      
+      .task-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: $spacing-sm;
+        
+        .task-left {
+          display: flex;
+          align-items: center;
+          gap: $spacing-sm;
+          flex: 1;
+        }
+        
+        .task-icon-emoji {
+          font-size: 32rpx;
+          line-height: 1;
+        }
+        
+        .task-name-text {
+          font-size: 28rpx;
+          font-weight: 500;
+          color: #111827;
+          flex: 1;
+        }
+      }
+      
+      .task-description {
+        font-size: 24rpx;
+        color: #6B7280;
+        line-height: 1.5;
+        margin-bottom: $spacing-sm;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+      }
+      
+      .task-cost-info {
+        display: flex;
+        gap: $spacing-base;
+        margin-bottom: $spacing-xs;
+        
+        .cost-item {
+          font-size: 22rpx;
+          color: #9CA3AF;
+        }
+      }
+      
+      .completed-time {
+        font-size: 22rpx;
+        color: #10B981;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+/* 空状态 - 时间线 */
+.empty-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx $spacing-lg;
+  
+  .empty-icon {
+    font-size: 96rpx;
+    margin-bottom: $spacing-lg;
+    opacity: 0.5;
+  }
+  
+  .empty-text {
+    font-size: 28rpx;
+    color: #6B7280;
+    margin-bottom: $spacing-sm;
+    font-weight: 500;
+  }
+  
+  .empty-hint {
+    font-size: 24rpx;
+    color: #9CA3AF;
+  }
+}
+
+/* 批次对比 */
+.batch-comparison {
+  background: white;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin: 0 $spacing-lg $spacing-lg;
+  box-shadow: $shadow-sm;
+  
+  .comparison-table {
+    margin-top: $spacing-base;
+  }
+  
+  .comparison-header,
+  .comparison-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 1.2fr;
+    gap: $spacing-sm;
+    padding: $spacing-base;
+    align-items: center;
+  }
+  
+  .comparison-header {
+    background: #F9FAFB;
+    border-radius: $radius-sm;
+    
+    .col-batch,
+    .col-vaccination,
+    .col-completion,
+    .col-cost {
+      font-size: 24rpx;
+      font-weight: 600;
+      color: #6B7280;
+    }
+  }
+  
+  .comparison-row {
+    border-bottom: 1rpx solid #F3F4F6;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .col-batch {
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+      
+      .batch-number {
+        font-size: 26rpx;
+        font-weight: 500;
+        color: #111827;
+      }
+      
+      .batch-date {
+        font-size: 22rpx;
+        color: #9CA3AF;
+      }
+    }
+    
+    .col-vaccination,
+    .col-completion {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-xs;
+      
+      .rate-bar {
+        width: 100%;
+        height: 12rpx;
+        background: #F3F4F6;
+        border-radius: 6rpx;
+        overflow: hidden;
+        
+        .rate-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+          border-radius: 6rpx;
+          transition: width 0.3s ease;
+          
+          &.rate-fill-success {
+            background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+          }
+        }
+      }
+      
+      .rate-value {
+        font-size: 22rpx;
+        color: #6B7280;
+        font-weight: 500;
+      }
+    }
+    
+    .col-cost {
+      .cost-value {
+        font-size: 26rpx;
+        font-weight: 600;
+        color: #F59E0B;
+      }
+    }
   }
 }

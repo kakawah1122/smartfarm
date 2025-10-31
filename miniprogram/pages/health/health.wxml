@@ -37,43 +37,6 @@
             <text class="action-icon {{showBatchDropdown ? 'rotate' : ''}}">▾</text>
           </view>
         </view>
-        
-        <!-- 下拉菜单 -->
-        <view class="batch-dropdown {{showBatchDropdown ? 'show' : ''}}" wx:if="{{showBatchDropdown}}">
-          <!-- 全部批次选项 -->
-          <view 
-            class="dropdown-item {{'all' === currentBatchId ? 'active' : ''}}"
-            bind:tap="selectAllBatches"
-          >
-            <view class="item-content">
-              <text class="item-title">全部批次</text>
-              <text class="item-subtitle">查看所有批次的健康数据汇总</text>
-            </view>
-            <text class="check-mark" wx:if="{{'all' === currentBatchId}}">✓</text>
-          </view>
-          
-          <!-- 分隔线 -->
-          <view class="dropdown-divider" wx:if="{{availableBatches.length > 0}}"></view>
-          
-          <!-- 具体批次列表 -->
-          <view 
-            class="dropdown-item {{item._id === currentBatchId ? 'active' : ''}}"
-            wx:for="{{availableBatches}}"
-            wx:key="_id"
-            bind:tap="selectBatchFromDropdown"
-            data-index="{{index}}"
-          >
-            <view class="item-content">
-              <text class="item-title">{{item.batchNumber}}</text>
-              <text class="item-subtitle">{{item.breed}} · {{item.dayAge}}日龄 · {{item.quantity}}只</text>
-            </view>
-            <text class="check-mark" wx:if="{{item._id === currentBatchId}}">✓</text>
-          </view>
-          
-          <view class="dropdown-empty" wx:if="{{availableBatches.length === 0}}">
-            <text>暂无存栏批次</text>
-          </view>
-        </view>
       </view>
       
       <!-- 主要Tab切换 -->
@@ -82,15 +45,17 @@
         <t-tab-panel value="treatment" label="诊疗管理"></t-tab-panel>
         <t-tab-panel value="analysis" label="效果分析"></t-tab-panel>
       </t-tabs>
+      
+      <!-- 预防管理子标签页（整合到卡片内） -->
+      <view class="prevention-sub-tabs" wx:if="{{activeTab === 'prevention'}}">
+        <t-tabs value="{{preventionSubTab}}" bind:change="onPreventionSubTabChange" theme="line">
+          <t-tab-panel label="今日待办" value="today"></t-tab-panel>
+          <t-tab-panel label="全周期" value="timeline"></t-tab-panel>
+          <t-tab-panel label="统计" value="stats"></t-tab-panel>
+          <t-tab-panel label="记录" value="records"></t-tab-panel>
+        </t-tabs>
+      </view>
     </view>
-  
-    <!-- 遮罩层 -->
-    <view 
-      class="dropdown-mask {{showBatchDropdown ? 'show' : ''}}" 
-      wx:if="{{showBatchDropdown}}"
-      bind:tap="closeBatchDropdown"
-      catchtouchmove="preventTouchMove"
-    ></view>
 
     <!-- 活跃预警 -->
   <view class="active-alerts" wx:if="{{activeAlerts.length > 0}}">
@@ -121,143 +86,319 @@
   <!-- Tab内容区域 -->
   <view class="tab-content-container">
     
-    <!-- 预防管理 Tab (合并了健康监控) -->
+    <!-- 预防管理 Tab (整合待办+计划+统计+记录) -->
     <view class="tab-content prevention-content" wx:if="{{activeTab === 'prevention'}}">
-      <!-- 预防统计 -->
-      <view class="prevention-stats">
-        <!-- 疫苗接种卡片（单独一行） -->
-        <view class="stat-card stat-card-vaccine stat-card-full-width" bind:tap="createPreventionRecord">
-          <view class="stat-icon stat-icon-vaccine">
-            <view class="css-icon-vaccine">💉</view>
+      
+      <!-- 今日待办子标签 -->
+      <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'today'}}">
+        <!-- 今日待办 -->
+        <view class="today-tasks-section" wx:if="{{preventionData.todayTasks && preventionData.todayTasks.length > 0}}">
+          <view class="section-header">
+            <text class="section-title">📋 今日待办 ({{preventionData.todayTasks.length}}项)</text>
           </view>
-          <view class="stat-content">
-            <text class="stat-value">疫苗接种</text>
-            <text class="stat-label">快速记录疫苗接种，智能管理免疫计划</text>
-          </view>
-          <view class="stat-arrow">
-            <t-icon name="chevron-right" size="20" color="#059669" />
+          <view class="today-tasks-list">
+            <view 
+              class="task-card task-card-{{item.isOverdue ? 'overdue' : 'normal'}}"
+              wx:for="{{preventionData.todayTasks}}"
+              wx:key="taskId"
+              bind:tap="onCompleteTask"
+              data-task="{{item}}"
+            >
+              <view class="task-icon">
+                <text class="task-emoji">{{item.taskType === 'vaccine' ? '💉' : item.taskType === 'medication' ? '💊' : '🧼'}}</text>
+              </view>
+              <view class="task-content">
+                <view class="task-header">
+                  <text class="task-name">{{item.taskName}}</text>
+                  <t-tag wx:if="{{item.isOverdue}}" variant="light" theme="danger" size="small">逾期{{item.overdueDays}}天</t-tag>
+                </view>
+                <text class="task-info">📦 批次：{{item.batchNumber}} (第{{item.dayAge}}天)</text>
+                <text class="task-desc" wx:if="{{item.description}}">{{item.description}}</text>
+              </view>
+              <view class="task-action">
+                <t-button size="small" theme="primary" variant="outline">去完成</t-button>
+              </view>
+            </view>
           </view>
         </view>
-        
-        <!-- 统计卡片（四列） -->
-        <view class="stats-grid stats-grid-four-prevention">
-          <!-- 接种率 -->
-          <view class="stat-card stat-card-vaccination">
-            <view class="stat-icon stat-icon-vaccination">
-              <view class="css-icon-percent"></view>
-            </view>
-            <view class="stat-content">
-              <text class="stat-value">{{preventionData.stats.vaccinationRate}}%</text>
-              <text class="stat-label">接种率</text>
+
+        <!-- 无待办提示 -->
+        <view class="empty-tasks" wx:else>
+          <text class="empty-icon">🎉</text>
+          <text class="empty-text">今日无预防任务</text>
+          <text class="empty-hint">所有计划任务均已完成</text>
+        </view>
+
+        <!-- 近期计划时间线 -->
+        <view class="upcoming-tasks-section" wx:if="{{preventionData.upcomingTasks && preventionData.upcomingTasks.length > 0}}">
+          <view class="section-header">
+            <text class="section-title">📅 近期计划 (7天)</text>
+          </view>
+          <view class="timeline">
+            <view 
+              class="timeline-item"
+              wx:for="{{preventionData.upcomingTasks}}"
+              wx:key="date"
+            >
+              <view class="timeline-date">
+                <text class="date-text">第{{item.dayAge}}天</text>
+                <text class="date-value">{{item.date}}</text>
+              </view>
+              <view class="timeline-tasks">
+                <view 
+                  class="timeline-task"
+                  wx:for="{{item.tasks}}"
+                  wx:key="taskId"
+                  wx:for-item="task"
+                >
+                  <text class="timeline-task-icon">{{task.taskType === 'vaccine' ? '💉' : task.taskType === 'medication' ? '💊' : '🧼'}}</text>
+                  <text class="timeline-task-name">{{task.taskName}}</text>
+                  <t-tag variant="light" theme="default" size="small">计划中</t-tag>
+                </view>
+              </view>
             </view>
           </view>
+        </view>
+      </view>
 
-          <!-- 疫苗次数 -->
-          <view class="stat-card stat-card-vaccine-count">
-            <view class="stat-icon stat-icon-vaccine-count">
-              <view class="css-icon-check-list"></view>
+      <!-- 全周期子标签 -->
+      <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'timeline'}}">
+        <!-- 批次信息 -->
+        <view class="batch-info-card" wx:if="{{timelineData.batch}}">
+          <view class="batch-info-header">
+            <text class="batch-title">📦 {{timelineData.batch.batchNumber}}</text>
+            <t-tag variant="light" theme="success" size="small">{{timelineData.batch.status === 'active' ? '活跃' : '已完成'}}</t-tag>
+          </view>
+          <view class="batch-info-content">
+            <text class="batch-detail">📅 入栏日期：{{timelineData.batch.entryDate}}</text>
+            <text class="batch-detail">🐓 数量：{{timelineData.batch.quantity}} 只</text>
+          </view>
+        </view>
+
+        <!-- 进度统计 -->
+        <view class="timeline-progress" wx:if="{{timelineData.progress}}">
+          <view class="progress-bar-container">
+            <view class="progress-bar-bg">
+              <view class="progress-bar-fill" style="width: {{timelineData.progress.percentage}}%"></view>
             </view>
-            <view class="stat-content">
-              <text class="stat-value">{{preventionStats.vaccineCount || 0}}</text>
-              <text class="stat-label">疫苗次数</text>
+            <text class="progress-text">{{timelineData.progress.percentage}}%</text>
+          </view>
+          <view class="progress-stats">
+            <view class="progress-stat">
+              <text class="stat-label">总计</text>
+              <text class="stat-value">{{timelineData.progress.total}}</text>
             </view>
+            <view class="progress-stat">
+              <text class="stat-label">已完成</text>
+              <text class="stat-value stat-value-success">{{timelineData.progress.completed}}</text>
+            </view>
+            <view class="progress-stat">
+              <text class="stat-label">待处理</text>
+              <text class="stat-value stat-value-warning">{{timelineData.progress.pending}}</text>
+            </view>
+            <view class="progress-stat">
+              <text class="stat-label">逾期</text>
+              <text class="stat-value stat-value-danger">{{timelineData.progress.overdue}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 全周期时间线 -->
+        <view class="full-timeline" wx:if="{{timelineData.timeline && timelineData.timeline.length > 0}}">
+          <view class="section-header">
+            <text class="section-title">🗓 预防计划时间线</text>
+          </view>
+          <view class="timeline-full-list">
+            <view 
+              class="timeline-full-item"
+              wx:for="{{timelineData.timeline}}"
+              wx:key="dayAge"
+            >
+              <!-- 日期标记 -->
+              <view class="timeline-marker">
+                <view class="marker-line"></view>
+                <view class="marker-dot"></view>
+              </view>
+              
+              <!-- 日期信息 -->
+              <view class="timeline-date-info">
+                <text class="day-age">第{{item.dayAge}}天</text>
+                <text class="target-date">{{item.date}}</text>
+              </view>
+              
+              <!-- 任务列表 -->
+              <view class="timeline-task-list">
+                <view 
+                  class="timeline-full-task task-status-{{task.status}}"
+                  wx:for="{{item.tasks}}"
+                  wx:key="taskId"
+                  wx:for-item="task"
+                  bind:tap="onCompleteTask"
+                  data-task="{{task}}"
+                >
+                  <view class="task-header-row">
+                    <view class="task-left">
+                      <text class="task-icon-emoji">{{task.taskType === 'vaccine' ? '💉' : task.taskType === 'medication' ? '💊' : '🧼'}}</text>
+                      <text class="task-name-text">{{task.taskName}}</text>
+                    </view>
+                    <t-tag 
+                      variant="light" 
+                      theme="{{task.status === 'completed' ? 'success' : task.status === 'overdue' ? 'danger' : 'default'}}" 
+                      size="small"
+                    >
+                      {{task.status === 'completed' ? '已完成' : task.status === 'overdue' ? '逾期' : '待处理'}}
+                    </t-tag>
+                  </view>
+                  <text class="task-description" wx:if="{{task.description}}">{{task.description}}</text>
+                  <view class="task-cost-info">
+                    <text class="cost-item">💰 预算成本：¥{{task.estimatedCost || 0}}</text>
+                    <text class="cost-item" wx:if="{{task.actualCost}}">💸 实际成本：¥{{task.actualCost}}</text>
+                  </view>
+                  <text class="completed-time" wx:if="{{task.completedAt}}">✅ 完成时间：{{task.completedAt}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 空状态 -->
+        <view class="empty-timeline" wx:else>
+          <text class="empty-icon">📋</text>
+          <text class="empty-text">暂无时间线数据</text>
+          <text class="empty-hint">请选择具体批次查看预防计划时间线</text>
+        </view>
+      </view>
+
+      <!-- 统计子标签 -->
+      <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'stats'}}">
+        <!-- 预防统计 -->
+        <view class="prevention-stats">
+          <view class="section-header">
+            <text class="section-title">📊 预防统计</text>
           </view>
           
-          <!-- 预防成本 -->
-          <view class="stat-card stat-card-prevention-cost">
-            <view class="stat-icon stat-icon-prevention-cost">
-              <view class="css-icon-coin"></view>
-            </view>
-            <view class="stat-content">
-              <text class="stat-value">¥{{preventionData.stats.preventionCost || 0}}</text>
-              <text class="stat-label">预防成本</text>
-            </view>
-          </view>
-
-          <!-- 覆盖数 -->
-          <view class="stat-card stat-card-coverage">
-            <view class="stat-icon stat-icon-coverage">
-              <view class="css-icon-animals"></view>
-            </view>
-            <view class="stat-content">
-              <text class="stat-value">{{preventionStats.vaccineCoverage || 0}}</text>
-              <text class="stat-label">覆盖数</text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 近期预防记录 -->
-      <view class="prevention-records">
-        <view class="section-header">
-          <text class="section-title">近期预防记录</text>
-          <text class="more-link">查看更多 ></text>
-        </view>
-        <view class="record-list" wx:if="{{preventionData.recentRecords && preventionData.recentRecords.length > 0}}">
-          <view 
-            class="record-item"
-            wx:for="{{preventionData.recentRecords}}"
-            wx:key="_id"
-          >
-            <view class="record-info">
-              <view class="record-title-row">
-                <text class="record-title">{{item.preventionType}}</text>
-                <t-tag wx:if="{{item.isFromTask}}" variant="light" theme="primary" size="small">来自待办</t-tag>
+          <!-- 统计卡片（四宫格） -->
+          <view class="stats-grid stats-grid-four-prevention">
+            <!-- 接种率 -->
+            <view class="stat-card stat-card-vaccination">
+              <view class="stat-icon stat-icon-vaccination">
+                <view class="css-icon-percent"></view>
               </view>
-              <text class="record-desc">{{item.location}} · {{item.targetAnimals}}只</text>
+              <view class="stat-content">
+                <text class="stat-value">{{preventionData.stats.vaccinationRate}}%</text>
+                <text class="stat-label">接种率</text>
+              </view>
             </view>
-            <view class="record-meta">
-              <text class="record-date">{{item.createTime}}</text>
-              <t-tag variant="light" theme="success" size="small">已完成</t-tag>
+
+            <!-- 疫苗次数 -->
+            <view class="stat-card stat-card-vaccine-count">
+              <view class="stat-icon stat-icon-vaccine-count">
+                <view class="css-icon-check-list"></view>
+              </view>
+              <view class="stat-content">
+                <text class="stat-value">{{preventionData.stats.vaccineCount || 0}}</text>
+                <text class="stat-label">疫苗次数</text>
+              </view>
+            </view>
+            
+            <!-- 预防成本 -->
+            <view class="stat-card stat-card-prevention-cost">
+              <view class="stat-icon stat-icon-prevention-cost">
+                <view class="css-icon-coin"></view>
+              </view>
+              <view class="stat-content">
+                <text class="stat-value">¥{{preventionData.stats.preventionCost || 0}}</text>
+                <text class="stat-label">预防成本</text>
+              </view>
+            </view>
+
+            <!-- 覆盖数 -->
+            <view class="stat-card stat-card-coverage">
+              <view class="stat-icon stat-icon-coverage">
+                <view class="css-icon-animals"></view>
+              </view>
+              <view class="stat-content">
+                <text class="stat-value">{{preventionData.stats.vaccineCoverage || 0}}</text>
+                <text class="stat-label">覆盖数</text>
+              </view>
             </view>
           </view>
         </view>
-        <view wx:else class="record-empty">
-          <text class="empty-text">暂无预防记录</text>
-          <text class="empty-hint">完成待办中的疫苗接种任务后，记录会自动关联到这里</text>
-        </view>
-      </view>
 
-      <!-- 异常个体列表 -->
-      <view class="abnormal-list" wx:if="{{monitoringData.abnormalList.length > 0}}">
-        <text class="section-title">异常个体 ({{monitoringData.abnormalList.length}})</text>
-        <view class="abnormal-items">
-          <view 
-            class="abnormal-item"
-            wx:for="{{monitoringData.abnormalList}}"
-            wx:key="_id"
-            bind:tap="onMonitoringAction"
-            data-action="view_abnormal"
-            data-data="{{item}}"
-          >
-            <view class="abnormal-info">
-              <text class="animal-id">{{item.animalId}}</text>
-              <text class="symptoms">{{item.symptoms}}</text>
-              <text class="location">{{item.location}}</text>
+        <!-- 批次对比 -->
+        <view class="batch-comparison" wx:if="{{comparisonData.comparison && comparisonData.comparison.length > 0}}">
+          <view class="section-header">
+            <text class="section-title">📈 批次对比</text>
+            <t-button size="small" variant="outline" bind:tap="loadBatchComparison">刷新</t-button>
+          </view>
+          <view class="comparison-table">
+            <view class="comparison-header">
+              <text class="col-batch">批次</text>
+              <text class="col-vaccination">接种率</text>
+              <text class="col-completion">完成度</text>
+              <text class="col-cost">成本</text>
             </view>
-            <view class="severity-indicator severity-{{item.severity}}">
-              {{item.severity === 'high' ? '严重' : item.severity === 'medium' ? '中等' : '轻微'}}
+            <view 
+              class="comparison-row"
+              wx:for="{{comparisonData.comparison}}"
+              wx:key="batchId"
+            >
+              <view class="col-batch">
+                <text class="batch-number">{{item.batchNumber}}</text>
+                <text class="batch-date">{{item.entryDate}}</text>
+              </view>
+              <view class="col-vaccination">
+                <view class="rate-bar">
+                  <view class="rate-fill" style="width: {{item.vaccinationRate}}%"></view>
+                </view>
+                <text class="rate-value">{{item.vaccinationRate}}%</text>
+              </view>
+              <view class="col-completion">
+                <view class="rate-bar">
+                  <view class="rate-fill rate-fill-success" style="width: {{item.completionRate}}%"></view>
+                </view>
+                <text class="rate-value">{{item.completedTasks}}/{{item.totalTasks}}</text>
+              </view>
+              <view class="col-cost">
+                <text class="cost-value">¥{{item.totalCost}}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
 
-      <!-- 疾病分布统计 -->
-      <view class="disease-distribution" wx:if="{{monitoringData.diseaseDistribution.length > 0}}">
-        <text class="section-title">疾病分布</text>
-        <view class="distribution-chart">
-          <view 
-            class="disease-item"
-            wx:for="{{monitoringData.diseaseDistribution}}"
-            wx:key="disease"
-          >
-            <view class="disease-info">
-              <text class="disease-name">{{item.disease}}</text>
-              <text class="case-count">{{item.count}}例</text>
+      <!-- 记录子标签 -->
+      <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'records'}}">
+        <!-- 执行记录 -->
+        <view class="prevention-records">
+          <view class="section-header">
+            <text class="section-title">📝 执行记录</text>
+          </view>
+          <view class="record-list" wx:if="{{preventionData.recentRecords && preventionData.recentRecords.length > 0}}">
+            <view 
+              class="record-item"
+              wx:for="{{preventionData.recentRecords}}"
+              wx:key="recordId"
+              bind:tap="onViewRecord"
+              data-record="{{item}}"
+            >
+              <view class="record-info">
+                <view class="record-title-row">
+                  <text class="record-title">{{item.preventionType === 'vaccine' ? '疫苗接种' : item.preventionType === 'disinfection' ? '消毒' : '用药'}}</text>
+                  <t-tag wx:if="{{item.taskId}}" variant="light" theme="primary" size="small">来自待办</t-tag>
+                </view>
+                <text class="record-desc">📅 {{item.preventionDate}} · 📦 {{item.batchNumber}}</text>
+                <text class="record-cost">💰 成本：¥{{item.cost}} · 👤 {{item.operator}}</text>
+              </view>
+              <view class="record-action">
+                <t-icon name="chevron-right" size="16" color="#c8c9cc" />
+              </view>
             </view>
-            <view class="disease-bar">
-              <view class="bar-fill" style="width: {{item.percentage}}%"></view>
-            </view>
+          </view>
+          <view wx:else class="record-empty">
+            <text class="empty-icon">📋</text>
+            <text class="empty-text">暂无预防记录</text>
+            <text class="empty-hint">完成待办任务后，记录会自动生成</text>
           </view>
         </view>
       </view>
@@ -683,6 +824,51 @@
       </view>
     </view>
   </bottom-popup>
+
+  <!-- 批次筛选下拉菜单（放在最后，确保显示在最上层） -->
+  <view class="batch-dropdown {{showBatchDropdown ? 'show' : ''}}" style="top: {{dropdownTop}}px;" wx:if="{{showBatchDropdown}}">
+    <!-- 全部批次选项 -->
+    <view 
+      class="dropdown-item {{'all' === currentBatchId ? 'active' : ''}}"
+      bind:tap="selectAllBatches"
+    >
+      <view class="item-content">
+        <text class="item-title">全部批次</text>
+        <text class="item-subtitle">查看所有批次的健康数据汇总</text>
+      </view>
+      <text class="check-mark" wx:if="{{'all' === currentBatchId}}">✓</text>
+    </view>
+    
+    <!-- 分隔线 -->
+    <view class="dropdown-divider" wx:if="{{availableBatches.length > 0}}"></view>
+    
+    <!-- 具体批次列表 -->
+    <view 
+      class="dropdown-item {{item._id === currentBatchId ? 'active' : ''}}"
+      wx:for="{{availableBatches}}"
+      wx:key="_id"
+      bind:tap="selectBatchFromDropdown"
+      data-index="{{index}}"
+    >
+      <view class="item-content">
+        <text class="item-title">{{item.batchNumber}}</text>
+        <text class="item-subtitle">{{item.breed}} · {{item.dayAge}}日龄 · {{item.quantity}}只</text>
+      </view>
+      <text class="check-mark" wx:if="{{item._id === currentBatchId}}">✓</text>
+    </view>
+    
+    <view class="dropdown-empty" wx:if="{{availableBatches.length === 0}}">
+      <text>暂无存栏批次</text>
+    </view>
+  </view>
+
+  <!-- 遮罩层（放在最后，确保显示在最上层） -->
+  <view 
+    class="dropdown-mask {{showBatchDropdown ? 'show' : ''}}" 
+    wx:if="{{showBatchDropdown}}"
+    bind:tap="closeBatchDropdown"
+    catchtouchmove="preventTouchMove"
+  ></view>
 
   </view>
   <!-- detail-view 结束 -->

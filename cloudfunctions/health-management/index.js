@@ -19,6 +19,68 @@ function generateRecordId(prefix) {
   return `${prefix}${timestamp}${random}`
 }
 
+// 权限验证辅助函数
+async function checkPermission(openid, module, action, resourceId = null) {
+  try {
+    // 1. 获取用户角色
+    const userRolesResult = await db.collection('user_roles')
+      .where({
+        openid,
+        isActive: true,
+        $or: [
+          { expiryTime: _.eq(null) },
+          { expiryTime: _.gt(new Date()) }
+        ]
+      })
+      .limit(10)
+      .get()
+    
+    if (!userRolesResult.data || userRolesResult.data.length === 0) {
+      console.warn('[权限验证] 用户无有效角色', { openid, module, action })
+      return false
+    }
+    
+    // 2. 遍历角色检查权限
+    for (const userRole of userRolesResult.data) {
+      const roleResult = await db.collection('sys_roles')
+        .where({
+          roleCode: userRole.roleCode,
+          isActive: true
+        })
+        .limit(1)
+        .get()
+      
+      if (!roleResult.data || roleResult.data.length === 0) {
+        continue
+      }
+      
+      const role = roleResult.data[0]
+      const permissions = role.permissions || []
+      
+      // 3. 检查模块权限
+      const modulePermission = permissions.find(p => 
+        p.module === module || p.module === '*'
+      )
+      
+      if (!modulePermission) {
+        continue
+      }
+      
+      // 4. 检查操作权限
+      if (modulePermission.actions.includes(action) || modulePermission.actions.includes('*')) {
+        return true
+      }
+    }
+    
+    return false
+    
+  } catch (error) {
+    console.error('[权限验证] 验证失败', { openid, module, action, error: error.message })
+    // 权限验证失败时，默认拒绝访问
+    return false
+  }
+}
+
 // 创建预防记录（优化版）
 async function createPreventionRecord(event, wxContext) {
   try {
@@ -3059,6 +3121,21 @@ exports.main = async (event, context) => {
       
       case 'get_batch_complete_data':
         return await getBatchCompleteData(event, wxContext)
+      
+      case 'getPreventionDashboard':
+        return await getPreventionDashboard(event, wxContext)
+      
+      case 'getTodayPreventionTasks':
+        return await getTodayPreventionTasks(event, wxContext)
+      
+      case 'getPreventionTimeline':
+        return await getPreventionTimeline(event, wxContext)
+      
+      case 'getBatchPreventionComparison':
+        return await getBatchPreventionComparison(event, wxContext)
+      
+      case 'completePreventionTask':
+        return await completePreventionTask(event, wxContext)
 
       default:
         throw new Error(`未知操作: ${action}`)
@@ -5526,6 +5603,1014 @@ async function correctDeathDiagnosis(event, wxContext) {
       success: false,
       error: error.message,
       message: '修正诊断失败'
+    }
+  }
+}
+
+// 获取今日预防待办（首页用）
+async function getTodayPreventionTasks(event, wxContext) {
+  const startTime = Date.now()
+  const logContext = { action: 'getTodayPreventionTasks', openid: wxContext.OPENID }
+  
+  try {
+    const { limit = 3, batchId } = event
+    const openid = wxContext.OPENID
+    const today = new Date().toISOString().split('T')[0]
+    
+    // ========== 1. 权限验证 ==========
+    console.log('[首页预防待办] 开始权限验证', logContext)
+    const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
+    if (!hasPermission) {
+      console.warn('[首页预防待办] 权限不足', logContext)
+      return {
+        success: false,
+        errorCode: 'PERMISSION_DENIED',
+        message: '您没有查看预防任务的权限'
+      }
+    }
+    
+    // ========== 2. 构建查询条件 ==========
+    const whereCondition = {
+      category: 'health',
+      completed: false,
+      targetDate: _.lte(today)  // 今日及之前（包含逾期）
+    }
+    
+    if (batchId && batchId !== 'all') {
+      whereCondition.batchId = batchId
+    }
+    
+    // ========== 3. 查询任务 ==========
+    console.log('[首页预防待办] 开始查询任务', logContext)
+    const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+      .where(whereCondition)
+      .field({
+        _id: true,
+        taskName: true,
+        title: true,
+        taskType: true,
+        batchId: true,
+        batchNumber: true,
+        dayAge: true,
+        targetDate: true,
+        description: true,
+        estimatedCost: true
+      })
+      .orderBy('targetDate', 'asc')
+      .limit(limit)
+      .get()
+    
+    // ========== 4. 处理任务数据 ==========
+    const tasks = (tasksResult.data || []).map(task => {
+      const isOverdue = task.targetDate < today
+      const overdueDays = isOverdue ? 
+        Math.floor((new Date(today) - new Date(task.targetDate)) / (24 * 60 * 60 * 1000)) : 0
+      
+      return {
+        taskId: task._id,
+        taskName: task.taskName || task.title,
+        taskType: task.taskType,
+        batchId: task.batchId,
+        batchNumber: task.batchNumber,
+        dayAge: task.dayAge,
+        targetDate: task.targetDate,
+        description: task.description || '',
+        isOverdue,
+        overdueDays,
+        priority: isOverdue ? 'high' : (task.targetDate === today ? 'medium' : 'low'),
+        estimatedCost: task.estimatedCost || 0
+      }
+    })
+    
+    // ========== 5. 返回结果 ==========
+    const totalTime = Date.now() - startTime
+    console.log(`[首页预防待办] 查询成功，总耗时: ${totalTime}ms`, {
+      ...logContext,
+      tasksCount: tasks.length
+    })
+    
+    return {
+      success: true,
+      data: {
+        tasks,
+        totalCount: tasks.length,
+        hasMore: tasks.length >= limit
+      },
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+    
+  } catch (error) {
+    const totalTime = Date.now() - startTime
+    console.error('[首页预防待办] 查询失败', {
+      ...logContext,
+      error: error.message,
+      stack: error.stack,
+      totalTime
+    })
+    
+    return {
+      success: false,
+      errorCode: error.code || 'UNKNOWN_ERROR',
+      message: '获取今日待办失败，请稍后重试',
+      error: error.message,
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+  }
+}
+
+// 获取预防管理全周期时间线
+async function getPreventionTimeline(event, wxContext) {
+  const startTime = Date.now()
+  const logContext = { action: 'getPreventionTimeline', openid: wxContext.OPENID }
+  
+  try {
+    const { batchId } = event
+    const openid = wxContext.OPENID
+    
+    // ========== 1. 参数验证 ==========
+    if (!batchId || batchId === 'all') {
+      return {
+        success: false,
+        errorCode: 'INVALID_PARAMS',
+        message: '请选择具体批次查看时间线'
+      }
+    }
+    
+    // ========== 2. 权限验证 ==========
+    console.log('[时间线] 开始权限验证', logContext)
+    const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
+    if (!hasPermission) {
+      console.warn('[时间线] 权限不足', logContext)
+      return {
+        success: false,
+        errorCode: 'PERMISSION_DENIED',
+        message: '您没有查看该批次预防时间线的权限'
+      }
+    }
+    
+    // ========== 3. 获取批次信息 ==========
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .doc(batchId)
+      .field({
+        batchNumber: true,
+        entryDate: true,
+        quantity: true,
+        status: true
+      })
+      .get()
+    
+    if (!batchResult.data) {
+      return {
+        success: false,
+        errorCode: 'BATCH_NOT_FOUND',
+        message: '批次不存在'
+      }
+    }
+    
+    const batch = batchResult.data
+    
+    // ========== 4. 查询该批次的所有预防任务 ==========
+    const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+      .where({
+        batchId: batchId,
+        category: 'health'
+      })
+      .field({
+        _id: true,
+        taskName: true,
+        title: true,
+        taskType: true,
+        dayAge: true,
+        targetDate: true,
+        completed: true,
+        completedAt: true,
+        description: true,
+        estimatedCost: true
+      })
+      .orderBy('dayAge', 'asc')
+      .limit(100)
+      .get()
+    
+    // ========== 5. 查询预防记录 ==========
+    const recordsResult = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+      .where({
+        batchId: batchId,
+        isDeleted: _.neq(true)
+      })
+      .field({
+        taskId: true,
+        preventionType: true,
+        preventionDate: true,
+        'costInfo.totalCost': true
+      })
+      .orderBy('preventionDate', 'asc')
+      .limit(100)
+      .get()
+    
+    // ========== 6. 处理时间线数据 ==========
+    const tasks = tasksResult.data || []
+    const records = recordsResult.data || []
+    
+    // 创建任务ID到记录的映射
+    const taskRecordMap = {}
+    records.forEach(record => {
+      if (record.taskId) {
+        taskRecordMap[record.taskId] = record
+      }
+    })
+    
+    // 按日龄分组
+    const timelineMap = {}
+    tasks.forEach(task => {
+      const dayAge = task.dayAge || 0
+      const record = taskRecordMap[task._id]
+      
+      if (!timelineMap[dayAge]) {
+        timelineMap[dayAge] = {
+          dayAge: dayAge,
+          date: task.targetDate,
+          tasks: []
+        }
+      }
+      
+      timelineMap[dayAge].tasks.push({
+        taskId: task._id,
+        taskName: task.taskName || task.title,
+        taskType: task.taskType,
+        targetDate: task.targetDate,
+        completed: task.completed || false,
+        completedAt: task.completedAt || null,
+        description: task.description || '',
+        estimatedCost: task.estimatedCost || 0,
+        actualCost: record ? (record.costInfo?.totalCost || 0) : 0,
+        status: task.completed ? 'completed' : 
+                (task.targetDate < new Date().toISOString().split('T')[0] ? 'overdue' : 'pending')
+      })
+    })
+    
+    // 转换为数组并排序
+    const timeline = Object.values(timelineMap).sort((a, b) => a.dayAge - b.dayAge)
+    
+    // ========== 7. 计算进度统计 ==========
+    const totalTasks = tasks.length
+    const completedTasks = tasks.filter(t => t.completed).length
+    const today = new Date().toISOString().split('T')[0]
+    const overdueTasks = tasks.filter(t => !t.completed && t.targetDate < today).length
+    const pendingTasks = totalTasks - completedTasks - overdueTasks
+    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+    
+    // ========== 8. 返回数据 ==========
+    const totalTime = Date.now() - startTime
+    console.log(`[时间线] 操作成功，总耗时: ${totalTime}ms`, {
+      ...logContext,
+      batchId,
+      timelineCount: timeline.length,
+      totalTasks
+    })
+    
+    return {
+      success: true,
+      data: {
+        batch: {
+          batchId: batch._id,
+          batchNumber: batch.batchNumber,
+          entryDate: batch.entryDate,
+          quantity: batch.quantity,
+          status: batch.status
+        },
+        timeline,
+        progress: {
+          total: totalTasks,
+          completed: completedTasks,
+          pending: pendingTasks,
+          overdue: overdueTasks,
+          percentage
+        }
+      },
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+    
+  } catch (error) {
+    const totalTime = Date.now() - startTime
+    console.error('[时间线] 获取时间线失败', {
+      ...logContext,
+      error: error.message,
+      stack: error.stack,
+      totalTime
+    })
+    
+    return {
+      success: false,
+      errorCode: error.code || 'UNKNOWN_ERROR',
+      message: '获取预防时间线失败，请稍后重试',
+      error: error.message,
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+  }
+}
+
+// 获取批次预防对比数据
+async function getBatchPreventionComparison(event, wxContext) {
+  const startTime = Date.now()
+  const logContext = { action: 'getBatchPreventionComparison', openid: wxContext.OPENID }
+  
+  try {
+    const openid = wxContext.OPENID
+    
+    // ========== 1. 权限验证 ==========
+    console.log('[批次对比] 开始权限验证', logContext)
+    const hasPermission = await checkPermission(openid, 'health', 'view', null)
+    if (!hasPermission) {
+      console.warn('[批次对比] 权限不足', logContext)
+      return {
+        success: false,
+        errorCode: 'PERMISSION_DENIED',
+        message: '您没有查看批次对比的权限'
+      }
+    }
+    
+    // ========== 2. 获取活跃批次 ==========
+    const batchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .where({
+        status: 'active',
+        isDeleted: _.neq(true)
+      })
+      .field({
+        _id: true,
+        batchNumber: true,
+        entryDate: true,
+        quantity: true
+      })
+      .orderBy('entryDate', 'desc')
+      .limit(10)
+      .get()
+    
+    const batches = batchesResult.data || []
+    
+    if (batches.length === 0) {
+      return {
+        success: true,
+        data: {
+          batches: [],
+          comparison: []
+        }
+      }
+    }
+    
+    // ========== 3. 并发获取每个批次的预防数据 ==========
+    const batchIds = batches.map(b => b._id)
+    
+    const [tasksResult, recordsResult] = await Promise.all([
+      // 获取所有批次的任务
+      db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+        .where({
+          batchId: _.in(batchIds),
+          category: 'health'
+        })
+        .field({
+          batchId: true,
+          taskType: true,
+          completed: true
+        })
+        .limit(1000)
+        .get(),
+      
+      // 获取所有批次的预防记录
+      db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+        .where({
+          batchId: _.in(batchIds),
+          isDeleted: _.neq(true)
+        })
+        .field({
+          batchId: true,
+          preventionType: true,
+          'costInfo.totalCost': true
+        })
+        .limit(1000)
+        .get()
+    ])
+    
+    const tasks = tasksResult.data || []
+    const records = recordsResult.data || []
+    
+    // ========== 4. 按批次统计数据 ==========
+    const batchStats = {}
+    
+    batches.forEach(batch => {
+      const batchId = batch._id
+      const batchTasks = tasks.filter(t => t.batchId === batchId)
+      const batchRecords = records.filter(r => r.batchId === batchId)
+      
+      const totalTasks = batchTasks.length
+      const completedTasks = batchTasks.filter(t => t.completed).length
+      const vaccineCount = batchRecords.filter(r => r.preventionType === 'vaccine').length
+      const totalCost = batchRecords.reduce((sum, r) => sum + (r.costInfo?.totalCost || 0), 0)
+      
+      // 计算接种率（已完成疫苗任务 / 总疫苗任务）
+      const vaccineTasks = batchTasks.filter(t => t.taskType === 'vaccine')
+      const completedVaccineTasks = vaccineTasks.filter(t => t.completed).length
+      const vaccinationRate = vaccineTasks.length > 0 ? 
+        Math.round((completedVaccineTasks / vaccineTasks.length) * 100) : 0
+      
+      // 计算完成度
+      const completionRate = totalTasks > 0 ? 
+        Math.round((completedTasks / totalTasks) * 100) : 0
+      
+      batchStats[batchId] = {
+        batchId: batch._id,
+        batchNumber: batch.batchNumber,
+        entryDate: batch.entryDate,
+        quantity: batch.quantity,
+        vaccinationRate,
+        vaccineCount,
+        totalCost: Math.round(totalCost),
+        completionRate,
+        totalTasks,
+        completedTasks
+      }
+    })
+    
+    // 转换为数组
+    const comparison = Object.values(batchStats)
+    
+    // ========== 5. 返回数据 ==========
+    const totalTime = Date.now() - startTime
+    console.log(`[批次对比] 操作成功，总耗时: ${totalTime}ms`, {
+      ...logContext,
+      batchCount: batches.length
+    })
+    
+    return {
+      success: true,
+      data: {
+        batches,
+        comparison
+      },
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+    
+  } catch (error) {
+    const totalTime = Date.now() - startTime
+    console.error('[批次对比] 获取对比数据失败', {
+      ...logContext,
+      error: error.message,
+      stack: error.stack,
+      totalTime
+    })
+    
+    return {
+      success: false,
+      errorCode: error.code || 'UNKNOWN_ERROR',
+      message: '获取批次对比数据失败，请稍后重试',
+      error: error.message,
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+  }
+}
+
+// 获取预防管理仪表盘数据
+async function getPreventionDashboard(event, wxContext) {
+  const startTime = Date.now()
+  const logContext = { action: 'getPreventionDashboard', openid: wxContext.OPENID }
+  
+  try {
+    const { batchId } = event
+    const openid = wxContext.OPENID
+    
+    // ========== 1. 权限验证 ==========
+    console.log('[预防管理] 开始权限验证', logContext)
+    const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
+    if (!hasPermission) {
+      console.warn('[预防管理] 权限不足', logContext)
+      return {
+        success: false,
+        errorCode: 'PERMISSION_DENIED',
+        message: '您没有查看预防管理数据的权限'
+      }
+    }
+    
+    const today = new Date().toISOString().split('T')[0]
+    const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    
+    // ========== 2. 构建查询条件（带批次权限） ==========
+    const baseTaskWhere = {
+      completed: false,
+      category: 'health'
+    }
+    if (batchId && batchId !== 'all') {
+      baseTaskWhere.batchId = batchId
+    }
+    
+    // ========== 3. 并发查询（带limit限制） ==========
+    console.log('[预防管理] 开始数据查询', logContext)
+    
+    // 今日待办（限制50条）
+    const todayTasksQuery = db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+      .where(baseTaskWhere)
+      .orderBy('targetDate', 'asc')
+      .limit(50)
+      .get()
+    
+    // 近期计划（限制30条）
+    const upcomingTasksQuery = db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+      .where({
+        ...baseTaskWhere,
+        targetDate: _.gte(today)
+      })
+      .orderBy('targetDate', 'asc')
+      .limit(30)
+      .get()
+    
+    // 预防记录查询条件
+    const baseRecordWhere = {
+      isDeleted: _.neq(true)
+    }
+    if (batchId && batchId !== 'all') {
+      baseRecordWhere.batchId = batchId
+    }
+    
+    // 使用聚合查询计算统计数据（优化性能）
+    const statsAggregateQuery = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+      .aggregate()
+      .match(baseRecordWhere)
+      .group({
+        _id: null,
+        vaccineCount: _.sum(
+          _.cond([
+            [_.eq(['$preventionType', 'vaccine']), 1],
+            [true, 0]
+          ])
+        ),
+        totalCost: _.sum('$costInfo.totalCost'),
+        vaccineCoverage: _.sum(
+          _.cond([
+            [_.eq(['$preventionType', 'vaccine']), '$vaccineInfo.count'],
+            [true, 0]
+          ])
+        ),
+        vaccinatedBatches: _.addToSet(
+          _.cond([
+            [_.eq(['$preventionType', 'vaccine']), '$batchId'],
+            [true, null]
+          ])
+        )
+      })
+      .end()
+    
+    // 最近10条预防记录（限制返回字段）
+    const recentRecordsQuery = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+      .where(baseRecordWhere)
+      .field({
+        preventionType: true,
+        preventionDate: true,
+        batchId: true,
+        batchNumber: true,
+        taskId: true,
+        'costInfo.totalCost': true,
+        operator: true,
+        operatorName: true
+      })
+      .orderBy('preventionDate', 'desc')
+      .limit(10)
+      .get()
+    
+    // 批次信息（用于计算接种率）
+    const batchesQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .where({
+        status: 'active',
+        isDeleted: _.neq(true)
+      })
+      .field({ _id: true }) // 只需要计数
+      .limit(100) // 限制最多100个批次
+      .get()
+    
+    // ========== 4. 并发执行所有查询 ==========
+    const queryStartTime = Date.now()
+    const [todayTasksResult, upcomingTasksResult, statsResult, recentRecordsResult, batchesResult] = await Promise.all([
+      todayTasksQuery,
+      upcomingTasksQuery,
+      statsAggregateQuery,
+      recentRecordsQuery,
+      batchesQuery
+    ])
+    console.log(`[预防管理] 数据查询完成，耗时: ${Date.now() - queryStartTime}ms`, logContext)
+    
+    // ========== 5. 处理今日待办 ==========
+    const todayTasks = (todayTasksResult.data || [])
+      .filter(task => task.targetDate <= today)
+      .map(task => {
+        const isOverdue = task.targetDate < today
+        const overdueDays = isOverdue ? 
+          Math.floor((new Date(today) - new Date(task.targetDate)) / (24 * 60 * 60 * 1000)) : 0
+        
+        return {
+          taskId: task._id,
+          taskName: task.taskName || task.title,
+          taskType: task.taskType,
+          batchId: task.batchId,
+          batchNumber: task.batchNumber,
+          dayAge: task.dayAge,
+          targetDate: task.targetDate,
+          isOverdue,
+          overdueDays,
+          description: task.description || '',
+          estimatedCost: task.estimatedCost || 0
+        }
+      })
+    
+    // ========== 6. 处理近期计划（按日期分组） ==========
+    const upcomingTasksGrouped = {}
+    const upcomingTasks = upcomingTasksResult.data || []
+    
+    upcomingTasks.forEach(task => {
+      if (!upcomingTasksGrouped[task.targetDate]) {
+        upcomingTasksGrouped[task.targetDate] = {
+          date: task.targetDate,
+          dayAge: task.dayAge,
+          tasks: []
+        }
+      }
+      upcomingTasksGrouped[task.targetDate].tasks.push({
+        taskId: task._id,
+        taskName: task.taskName || task.title,
+        taskType: task.taskType,
+        description: task.description
+      })
+    })
+    
+    const upcomingTasksList = Object.values(upcomingTasksGrouped).slice(0, 7)
+    
+    // ========== 7. 处理聚合统计数据 ==========
+    const statsData = statsResult.list && statsResult.list.length > 0 ? statsResult.list[0] : {
+      vaccineCount: 0,
+      totalCost: 0,
+      vaccineCoverage: 0,
+      vaccinatedBatches: []
+    }
+    
+    const vaccineCount = statsData.vaccineCount || 0
+    const preventionCost = Math.round(statsData.totalCost || 0)
+    const vaccineCoverage = statsData.vaccineCoverage || 0
+    
+    // 接种率（已接种批次数 / 在栏批次数）
+    const totalBatches = batchesResult.data?.length || 0
+    const vaccinatedBatchesCount = (statsData.vaccinatedBatches || []).filter(id => id !== null).length
+    const vaccinationRate = totalBatches > 0 ? 
+      parseFloat(((vaccinatedBatchesCount / totalBatches) * 100).toFixed(1)) : 0
+    
+    // ========== 8. 处理最近记录 ==========
+    const recentRecordsFormatted = (recentRecordsResult.data || []).map(record => ({
+      recordId: record._id,
+      preventionType: record.preventionType,
+      preventionDate: record.preventionDate,
+      batchNumber: record.batchNumber,
+      cost: record.costInfo?.totalCost || 0,
+      operator: record.operatorName || '未知',
+      taskId: record.taskId || null,
+      details: {
+        vaccineInfo: record.vaccineInfo,
+        medicationInfo: record.medicationInfo,
+        disinfectionInfo: record.disinfectionInfo
+      }
+    }))
+    
+    // ========== 9. 计算任务完成情况 ==========
+    const allTasks = [...todayTasks, ...upcomingTasks]
+    const total = allTasks.length
+    const completed = allTasks.filter(t => t.completed).length
+    const overdue = todayTasks.filter(t => t.isOverdue).length
+    const pending = total - completed - overdue
+    
+    // ========== 10. 返回数据 ==========
+    const totalTime = Date.now() - startTime
+    console.log(`[预防管理] 操作成功，总耗时: ${totalTime}ms`, {
+      ...logContext,
+      todayTasksCount: todayTasks.length,
+      upcomingTasksCount: upcomingTasksList.length,
+      recordsCount: recentRecordsFormatted.length
+    })
+    
+    return {
+      success: true,
+      data: {
+        todayTasks,
+        upcomingTasks: upcomingTasksList,
+        stats: {
+          vaccinationRate,
+          vaccineCount,
+          preventionCost,
+          vaccineCoverage
+        },
+        recentRecords: recentRecordsFormatted,
+        taskCompletion: {
+          total,
+          completed,
+          pending,
+          overdue
+        }
+      },
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+    
+  } catch (error) {
+    const totalTime = Date.now() - startTime
+    console.error('[预防管理] 获取仪表盘数据失败', {
+      ...logContext,
+      error: error.message,
+      stack: error.stack,
+      totalTime
+    })
+    
+    return {
+      success: false,
+      errorCode: error.code || 'UNKNOWN_ERROR',
+      message: '获取预防管理数据失败，请稍后重试',
+      error: error.message,
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+  }
+}
+
+// 完成预防任务（优化版）
+async function completePreventionTask(event, wxContext) {
+  const startTime = Date.now()
+  const logContext = { action: 'completePreventionTask', openid: wxContext.OPENID }
+  
+  try {
+    const { taskId, batchId, preventionData } = event
+    const openid = wxContext.OPENID
+    
+    // ========== 1. 参数验证 ==========
+    if (!taskId) {
+      return {
+        success: false,
+        errorCode: 'INVALID_PARAMS',
+        message: '任务ID不能为空'
+      }
+    }
+    if (!batchId) {
+      return {
+        success: false,
+        errorCode: 'INVALID_PARAMS',
+        message: '批次ID不能为空'
+      }
+    }
+    if (!preventionData) {
+      return {
+        success: false,
+        errorCode: 'INVALID_PARAMS',
+        message: '预防数据不能为空'
+      }
+    }
+    
+    // ========== 2. 权限验证 ==========
+    console.log('[预防任务] 开始权限验证', { ...logContext, taskId, batchId })
+    const hasPermission = await checkPermission(openid, 'health', 'create', batchId)
+    if (!hasPermission) {
+      console.warn('[预防任务] 权限不足', logContext)
+      return {
+        success: false,
+        errorCode: 'PERMISSION_DENIED',
+        message: '您没有完成预防任务的权限'
+      }
+    }
+    
+    // ========== 3. 验证任务存在且未完成 ==========
+    console.log('[预防任务] 验证任务状态', { ...logContext, taskId })
+    const taskResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+      .doc(taskId)
+      .field({
+        _id: true,
+        taskName: true,
+        taskType: true,
+        completed: true,
+        batchId: true,
+        dayAge: true,
+        farmId: true
+      })
+      .get()
+    
+    if (!taskResult.data) {
+      console.warn('[预防任务] 任务不存在', { ...logContext, taskId })
+      return {
+        success: false,
+        errorCode: 'TASK_NOT_FOUND',
+        message: '任务不存在'
+      }
+    }
+    
+    const task = taskResult.data
+    if (task.completed) {
+      console.warn('[预防任务] 任务已完成', { ...logContext, taskId })
+      return {
+        success: false,
+        errorCode: 'TASK_COMPLETED',
+        message: '任务已完成，请勿重复提交'
+      }
+    }
+    
+    // ========== 4. 获取用户信息 ==========
+    let userName = '未知用户'
+    try {
+      const userResult = await db.collection(COLLECTIONS.WX_USERS)
+        .where({ _openid: openid })
+        .field({ nickName: true, nickname: true, farmName: true, position: true })
+        .limit(1)
+        .get()
+      
+      if (userResult.data && userResult.data.length > 0) {
+        const user = userResult.data[0]
+        userName = user.nickName || user.nickname || user.farmName || user.position || '未知用户'
+      }
+    } catch (userError) {
+      console.error('[预防任务] 获取用户信息失败', { ...logContext, error: userError.message })
+    }
+    
+    // ========== 5. 创建预防记录 ==========
+    console.log('[预防任务] 创建预防记录', { ...logContext, taskId, batchId })
+    const recordData = {
+      ...preventionData,
+      taskId,
+      batchId,
+      taskSource: 'breeding_schedule',
+      batchAge: task.dayAge,
+      actualDate: preventionData.preventionDate,
+      deviation: 0, // TODO: 计算实际日期与计划日期的偏差
+      operator: openid,
+      operatorName: userName,
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    const recordResult = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+      .add({
+        data: recordData
+      })
+    
+    if (!recordResult._id) {
+      console.error('[预防任务] 创建预防记录失败', logContext)
+      return {
+        success: false,
+        errorCode: 'CREATE_RECORD_FAILED',
+        message: '创建预防记录失败，请重试'
+      }
+    }
+    
+    console.log('[预防任务] 预防记录创建成功', { ...logContext, recordId: recordResult._id })
+    
+    // ========== 6. 标记任务完成 ==========
+    console.log('[预防任务] 更新任务状态', { ...logContext, taskId })
+    await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+      .doc(taskId)
+      .update({
+        data: {
+          completed: true,
+          completedAt: new Date(),
+          completedBy: openid,
+          recordId: recordResult._id,
+          updateTime: new Date()
+        }
+      })
+    
+    // ========== 7. 创建财务成本记录（如果有成本） ==========
+    let costRecordId = null
+    if (preventionData.costInfo && preventionData.costInfo.totalCost > 0) {
+      console.log('[预防任务] 创建成本记录', { 
+        ...logContext, 
+        amount: preventionData.costInfo.totalCost 
+      })
+      
+      try {
+        const costResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+          .add({
+            data: {
+              farmId: task.farmId || '',
+              batchId,
+              category: preventionData.preventionType === 'vaccine' ? 'vaccine' : 
+                       preventionData.preventionType === 'disinfection' ? 'disinfection' : 'medicine',
+              amount: preventionData.costInfo.totalCost,
+              costDate: preventionData.preventionDate,
+              description: `预防任务：${task.taskName}`,
+              relatedRecordId: recordResult._id,
+              userId: openid,
+              isDeleted: false,
+              createdAt: new Date()
+            }
+          })
+        
+        costRecordId = costResult._id
+        console.log('[预防任务] 成本记录创建成功', { ...logContext, costRecordId })
+      } catch (costError) {
+        // 成本记录创建失败不影响主流程
+        console.error('[预防任务] 创建成本记录失败', { 
+          ...logContext, 
+          error: costError.message 
+        })
+      }
+    }
+    
+    // ========== 8. 记录审计日志 ==========
+    try {
+      await dbManager.createAuditLog(
+        openid,
+        'complete_prevention_task',
+        COLLECTIONS.HEALTH_PREVENTION_RECORDS,
+        recordResult._id,
+        {
+          taskId,
+          batchId,
+          preventionType: preventionData.preventionType,
+          cost: preventionData.costInfo?.totalCost || 0,
+          costRecordId,
+          result: 'success'
+        }
+      )
+    } catch (auditError) {
+      // 审计日志失败不影响主流程
+      console.error('[预防任务] 创建审计日志失败', { 
+        ...logContext, 
+        error: auditError.message 
+      })
+    }
+    
+    // ========== 9. 返回成功结果 ==========
+    const totalTime = Date.now() - startTime
+    console.log('[预防任务] 任务完成成功', {
+      ...logContext,
+      recordId: recordResult._id,
+      costRecordId,
+      totalTime
+    })
+    
+    return {
+      success: true,
+      recordId: recordResult._id,
+      costRecordId,
+      message: '任务完成成功',
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
+    }
+    
+  } catch (error) {
+    const totalTime = Date.now() - startTime
+    console.error('[预防任务] 完成任务失败', {
+      ...logContext,
+      error: error.message,
+      stack: error.stack,
+      totalTime
+    })
+    
+    // 根据错误类型返回不同的错误码
+    let errorCode = 'UNKNOWN_ERROR'
+    let message = '完成预防任务失败，请稍后重试'
+    
+    if (error.message.includes('权限')) {
+      errorCode = 'PERMISSION_DENIED'
+      message = '权限不足，无法完成任务'
+    } else if (error.message.includes('网络')) {
+      errorCode = 'NETWORK_ERROR'
+      message = '网络连接失败，请检查网络后重试'
+    } else if (error.message.includes('数据库')) {
+      errorCode = 'DATABASE_ERROR'
+      message = '数据库操作失败，请稍后重试'
+    }
+    
+    return {
+      success: false,
+      errorCode,
+      message,
+      error: error.message,
+      _performance: {
+        totalTime,
+        timestamp: new Date().toISOString()
+      }
     }
   }
 }

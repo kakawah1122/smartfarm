@@ -135,6 +135,9 @@ Page<PageData, any>({
     // 选项卡
     activeTab: 'treatment', // prevention|monitoring|treatment|analysis
     
+    // 预防管理子标签
+    preventionSubTab: 'today', // today|timeline|stats|records
+    
     // 健康统计数据
     healthStats: {
       totalChecks: 0,
@@ -182,6 +185,7 @@ Page<PageData, any>({
     // 批次数据
     showBatchDropdown: false,
     availableBatches: [],
+    dropdownTop: 0,  // 下拉菜单的top位置（px）
     
     // 弹窗相关
     showDetailPopup: false,
@@ -196,11 +200,40 @@ Page<PageData, any>({
       preventionScore: 0
     },
     preventionData: {
+      todayTasks: [],
+      upcomingTasks: [],
       stats: {
         vaccinationRate: 0,
-        preventionCost: 0
+        vaccineCount: 0,
+        preventionCost: 0,
+        vaccineCoverage: 0
       },
-      recentRecords: []
+      recentRecords: [],
+      taskCompletion: {
+        total: 0,
+        completed: 0,
+        pending: 0,
+        overdue: 0
+      }
+    },
+    
+    // 时间线数据
+    timelineData: {
+      batch: null,
+      timeline: [],
+      progress: {
+        total: 0,
+        completed: 0,
+        pending: 0,
+        overdue: 0,
+        percentage: 0
+      }
+    },
+    
+    // 批次对比数据
+    comparisonData: {
+      batches: [],
+      comparison: []
     },
     monitoringData: {
       realTimeStatus: {
@@ -264,10 +297,18 @@ Page<PageData, any>({
    */
   async onLoad(options: any) {
     const batchId = options.batchId
+    const tab = options.tab
     
     this.dataWatchers = createWatcherManager()
     
     this.initDateRange()
+    
+    // 处理从首页跳转过来的情况
+    if (tab === 'prevention') {
+      this.setData({
+        activeTab: 'prevention'
+      })
+    }
     
     // 如果传入了批次ID，使用传入的；否则默认显示全部批次
     if (batchId) {
@@ -921,73 +962,54 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载预防管理数据
+   * 加载预防管理数据（使用新的仪表盘API）
    */
   async loadPreventionData() {
     try {
-      
-      const result = await CloudApi.listPreventionRecords({
-        batchId: this.data.currentBatchId,
-        pageSize: 20,
-        dateRange: this.data.dateRange
+      // 调用新的预防管理仪表盘云函数
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'getPreventionDashboard',
+          batchId: this.data.currentBatchId || 'all'
+        }
       })
 
+      const response = result.result as any
 
-      if (result.success && result.data) {
-        const records = result.data.records || []
+      if (response.success && response.data) {
+        const dashboardData = response.data
         
-        // 格式化记录，映射字段
-        const formattedRecords = records.map((record: any) => HealthStatsCalculator.formatPreventionRecord(record))
-        
-        // 计算预防统计
-        const preventionStats = HealthStatsCalculator.calculatePreventionStats(records)
-        
-        // 🔥 修复：从批次列表中获取当前批次的总动物数
-        let totalAnimals = 1
-        if (this.data.currentBatchId && this.data.currentBatchId !== 'all') {
-          const currentBatch = this.data.availableBatches.find((b: any) => 
-            b._id === this.data.currentBatchId || b.batchId === this.data.currentBatchId
-          )
-          totalAnimals = currentBatch?.totalCount || currentBatch?.currentCount || this.data.healthStats.totalChecks || 1
-        } else {
-          totalAnimals = this.data.healthStats.totalChecks || 1
-        }
-        
-        // 计算接种率（基于第一针覆盖数），添加上限约束
-        let vaccinationRate = totalAnimals > 0 
-          ? ((preventionStats.vaccineCoverage / totalAnimals) * 100)
-          : 0
-        
-        // 🔥 添加约束：接种率不应超过合理范围
-        if (vaccinationRate > 100) {
-          // 限制在 100% 以内
-          vaccinationRate = 100
-        }
-        
-        const vaccinationRateStr = vaccinationRate.toFixed(1)
-        
-        // ✅ 优化：合并为一次 setData 调用，减少渲染次数
+        // 更新页面数据
         this.setData({
-          // 基础数据
-          vaccineCoverage: preventionStats.vaccineCoverage,
-          totalAnimals: totalAnimals,
-          vaccinationRate: vaccinationRateStr,
-          batchId: this.data.currentBatchId,
-          recordsCount: formattedRecords.length,
-          preventionCost: preventionStats.totalCost,
-          
-          // 预防统计和记录
-          preventionStats,
-          recentPreventionRecords: formattedRecords.slice(0, 10),
-          'preventionData.stats': {
-            vaccinationRate: vaccinationRateStr,
-            preventionCost: preventionStats.totalCost
+          'preventionData.todayTasks': dashboardData.todayTasks || [],
+          'preventionData.upcomingTasks': dashboardData.upcomingTasks || [],
+          'preventionData.stats': dashboardData.stats || {
+            vaccinationRate: 0,
+            vaccineCount: 0,
+            preventionCost: 0,
+            vaccineCoverage: 0
           },
-          'preventionData.recentRecords': formattedRecords.slice(0, 10)
+          'preventionData.recentRecords': dashboardData.recentRecords || [],
+          'preventionData.taskCompletion': dashboardData.taskCompletion || {
+            total: 0,
+            completed: 0,
+            pending: 0,
+            overdue: 0
+          }
         })
-      } else {
+        
+        // 兼容旧代码，保留preventionStats
+        this.setData({
+          preventionStats: {
+            vaccineCount: dashboardData.stats?.vaccineCount || 0,
+            vaccineCoverage: dashboardData.stats?.vaccineCoverage || 0,
+            totalCost: dashboardData.stats?.preventionCost || 0
+          }
+        })
       }
     } catch (error: any) {
+      console.error('加载预防管理数据失败:', error)
       // 加载失败，静默处理
     }
   },
@@ -1380,6 +1402,163 @@ Page<PageData, any>({
   },
 
   /**
+   * 完成待办任务
+   */
+  onCompleteTask(e: any) {
+    const task = e.currentTarget.dataset.task
+    if (!task) return
+    
+    // 根据任务类型跳转到不同的记录页面
+    let url = ''
+    const params = `taskId=${task.taskId}&batchId=${task.batchId}&dayAge=${task.dayAge}&taskName=${encodeURIComponent(task.taskName || '')}&fromTask=true`
+    
+    switch (task.taskType) {
+      case 'vaccine':
+        url = `/packageHealth/vaccine-record/vaccine-record?${params}`
+        break
+      case 'medication':
+        // 暂时跳转到疫苗记录页面，后续可以添加独立的用药页面
+        url = `/packageHealth/vaccine-record/vaccine-record?${params}`
+        break
+      case 'disinfection':
+        url = `/packageHealth/disinfection-record/disinfection-record?${params}`
+        break
+      default:
+        wx.showToast({
+          title: '未知任务类型',
+          icon: 'none'
+        })
+        return
+    }
+    
+    wx.navigateTo({
+      url
+    })
+  },
+
+  /**
+   * 切换预防管理子标签页
+   */
+  onPreventionSubTabChange(e: any) {
+    const { value } = e.detail
+    this.setData({
+      preventionSubTab: value
+    })
+    
+    // 根据子标签加载对应数据
+    switch (value) {
+      case 'timeline':
+        this.loadPreventionTimeline()
+        break
+      case 'stats':
+        // 统计数据已经在loadPreventionData中加载
+        break
+      case 'records':
+        // 记录数据已经在loadPreventionData中加载
+        break
+    }
+  },
+
+  /**
+   * 加载预防时间线
+   */
+  async loadPreventionTimeline() {
+    const batchId = this.data.currentBatchId
+    
+    if (!batchId || batchId === 'all') {
+      wx.showToast({
+        title: '请选择具体批次查看时间线',
+        icon: 'none'
+      })
+      return
+    }
+    
+    wx.showLoading({ title: '加载中...' })
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'getPreventionTimeline',
+          batchId: batchId
+        }
+      })
+      
+      const response = result.result as any
+      if (response.success && response.data) {
+        this.setData({
+          timelineData: response.data
+        })
+      } else {
+        throw new Error(response.message || '加载失败')
+      }
+    } catch (error: any) {
+      console.error('加载预防时间线失败:', error)
+      wx.showToast({
+        title: error.message || '加载失败',
+        icon: 'none'
+      })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  /**
+   * 加载批次对比数据
+   */
+  async loadBatchComparison() {
+    wx.showLoading({ title: '加载中...' })
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'getBatchPreventionComparison'
+        }
+      })
+      
+      const response = result.result as any
+      if (response.success && response.data) {
+        this.setData({
+          comparisonData: response.data
+        })
+      } else {
+        throw new Error(response.message || '加载失败')
+      }
+    } catch (error: any) {
+      console.error('加载批次对比数据失败:', error)
+      wx.showToast({
+        title: error.message || '加载失败',
+        icon: 'none'
+      })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  /**
+   * 查看预防记录详情
+   */
+  onViewRecord(e: any) {
+    const record = e.currentTarget.dataset.record
+    if (!record) return
+    
+    // 显示记录详情弹窗
+    wx.showModal({
+      title: '预防记录详情',
+      content: `
+类型：${record.preventionType === 'vaccine' ? '疫苗接种' : record.preventionType === 'disinfection' ? '消毒' : '用药'}
+日期：${record.preventionDate}
+批次：${record.batchNumber}
+成本：¥${record.cost}
+操作人：${record.operator}
+${record.taskId ? '\n来源：待办任务' : ''}
+      `.trim(),
+      showCancel: false
+    })
+  },
+
+  /**
    * 创建新的治疗记录
    */
   createTreatmentRecord() {
@@ -1701,9 +1880,35 @@ Page<PageData, any>({
    * 切换下拉菜单显示状态
    */
   toggleBatchDropdown() {
-    this.setData({
-      showBatchDropdown: !this.data.showBatchDropdown
-    })
+    const willShow = !this.data.showBatchDropdown
+    
+    if (willShow) {
+      // 打开下拉菜单时，动态计算位置
+      const query = wx.createSelectorQuery()
+      query.select('.batch-filter-section').boundingClientRect()
+      query.exec((res) => {
+        if (res && res[0]) {
+          const rect = res[0]
+          // 下拉菜单显示在筛选区域下方，加一点间距
+          const dropdownTop = rect.bottom + 8
+          
+          this.setData({
+            dropdownTop: dropdownTop,
+            showBatchDropdown: true
+          })
+        } else {
+          // 如果查询失败，使用默认位置
+          this.setData({
+            showBatchDropdown: true
+          })
+        }
+      })
+    } else {
+      // 关闭下拉菜单
+      this.setData({
+        showBatchDropdown: false
+      })
+    }
   },
 
   /**

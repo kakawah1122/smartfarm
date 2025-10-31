@@ -162,6 +162,7 @@ Page({
     this.initStatusBar()
     this.loadData()
     this.loadTodayBreedingTasks()
+    this.loadPreventionTasks()
   },
 
   onShow() {
@@ -174,6 +175,8 @@ Page({
     this.refreshPriceData()
     // 刷新今日养殖任务
     this.loadTodayBreedingTasks()
+    // 刷新预防待办
+    this.loadPreventionTasks()
   },
 
   // 检查并同步任务状态
@@ -868,6 +871,74 @@ Page({
         icon: 'error'
       })
     }
+  },
+
+  // 加载预防待办任务（首页轻量级）
+  async loadPreventionTasks() {
+    this.setData({ preventionLoading: true })
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'getTodayPreventionTasks',
+          limit: 3,
+          batchId: 'all'
+        }
+      })
+      
+      const response = result.result as any
+      if (response.success && response.data) {
+        this.setData({
+          preventionTasks: response.data.tasks || [],
+          preventionLoading: false
+        })
+      } else {
+        this.setData({
+          preventionTasks: [],
+          preventionLoading: false
+        })
+      }
+    } catch (error: any) {
+      console.error('加载预防待办失败:', error)
+      this.setData({
+        preventionTasks: [],
+        preventionLoading: false
+      })
+    }
+  },
+
+  // 跳转到预防管理页面
+  navigateToPreventionManagement() {
+    wx.navigateTo({
+      url: '/pages/health/health?tab=prevention&focus=today'
+    })
+  },
+
+  // 完成预防任务
+  onCompletePreventionTask(e: any) {
+    const task = e.currentTarget.dataset.task
+    if (!task) return
+    
+    let url = ''
+    const params = `taskId=${task.taskId}&batchId=${task.batchId}&dayAge=${task.dayAge}&taskName=${encodeURIComponent(task.taskName || '')}&fromHome=true`
+    
+    switch (task.taskType) {
+      case 'vaccine':
+        url = `/packageHealth/vaccine-record/vaccine-record?${params}`
+        break
+      case 'medication':
+        url = `/packageHealth/vaccine-record/vaccine-record?${params}` // TODO: 创建专门的用药记录页面
+        break
+      case 'disinfection':
+        url = `/packageHealth/disinfection-record/disinfection-record?${params}`
+        break
+      default:
+        wx.showToast({ title: '未知任务类型', icon: 'none' })
+        return
+    }
+    
+    wx.navigateTo({ url })
   },
 
   /**
