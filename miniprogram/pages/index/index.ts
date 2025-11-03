@@ -431,30 +431,24 @@ Page({
       actualWeatherData = weatherData.data
     }
     
+    // ✅ 优化：合并setData调用，避免重复设置location
+    const updateData: any = {}
+    
     // 详细检查位置信息
     const locationInfo = actualWeatherData.locationInfo
     
     if (locationInfo) {
-      
-      // 立即更新位置信息
-      this.setData({
-        location: {
+      updateData.location = {
           province: locationInfo.province || '当前位置',
           city: locationInfo.city || '实时定位', 
           district: locationInfo.district || '周边区域'
         }
-      })
     } else {
-      // 位置信息为空分析
-      
-      // 显示详细错误信息
-      this.setData({
-        location: {
+      updateData.location = {
           province: '位置解析失败',
           city: '请查看控制台',
           district: new Date().toLocaleTimeString()
         }
-      })
       
       // 在真机上显示错误信息
       wx.showModal({
@@ -473,8 +467,16 @@ Page({
                      (conditionInfo.text && conditionInfo.text.includes('API调用失败')) ||
                      (locationInfo && locationInfo.city && locationInfo.city.includes('API调用失败'))
     
-    this.setData({
-      weather: {
+    // 如果有错误，更新位置信息
+    if (hasError) {
+      updateData.location = {
+        province: '网络错误',
+        city: '请检查网络连接',
+        district: '或重试获取'
+      }
+    }
+    
+    updateData.weather = {
         temperature: currentWeather.temperature || this.data.weather.temperature,
         humidity: currentWeather.humidity || this.data.weather.humidity,
         condition: hasError ? '天气数据获取失败' : (conditionInfo.text || this.data.weather.condition),
@@ -485,14 +487,10 @@ Page({
         updateTime: hasError ? '获取失败' : (this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新'),
         loading: false,
         hasError: hasError
-      },
-      // 强制更新位置信息
-      location: locationInfo && !hasError ? locationInfo : {
-        province: hasError ? '网络错误' : '位置获取中',
-        city: hasError ? '请检查网络连接' : '...',
-        district: hasError ? '或重试获取' : '...'
-      }
-    })
+    }
+    
+    // ✅ 一次性更新所有数据
+    this.setData(updateData)
   },
 
   // 格式化更新时间
@@ -1542,7 +1540,7 @@ Page({
 🏥 **健康数据**：
 - 健康个体：${healthData?.healthyCount || 432} 只
 - 异常个体：${healthData?.abnormalCount || 18} 只
-- 疫苗接种率：${healthData?.vaccinationRate || 95}%
+- 防疫用药：${healthData?.vaccinationRate || 95}%
 - 近期疾病：${healthData?.recentDiseases?.join('、') || '禽流感、肠道感染'}
 - 治疗成功率：${healthData?.treatmentSuccess || 88}%
 

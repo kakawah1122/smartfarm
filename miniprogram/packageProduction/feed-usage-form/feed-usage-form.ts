@@ -27,9 +27,8 @@ const pageConfig = {
       notes: ''
     } as FeedUsageFormData,
     
-    // 日期选择器相关
-    showDate: false,
-    dateValue: '',
+    // 最大日期（今天）
+    maxDate: '',
     
     // 批次选择相关
     availableBatches: [] as any[],
@@ -69,7 +68,7 @@ const pageConfig = {
     
     this.setData({
       'formData.recordDate': dateString,
-      dateValue: today.getTime()
+      maxDate: dateString
     })
   },
 
@@ -79,6 +78,20 @@ const pageConfig = {
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
+  },
+
+  // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
+  onDateConfirm(e: any) {
+    const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
+    
+    this.setData({
+      'formData.recordDate': dateString
+    })
+    
+    // 如果已选择批次，重新计算存栏数
+    if (this.data.formData.batchId) {
+      this.updateStockInfo()
+    }
   },
 
   // 加载可选批次（活跃批次）
@@ -95,7 +108,6 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const batches = result.result.data || []
-        console.log('加载的批次数据:', batches)  // 调试日志
         this.setData({
           availableBatches: batches
         })
@@ -143,46 +155,6 @@ const pageConfig = {
     }
   },
 
-  // 显示日期选择器
-  showDatePicker() {
-    this.setData({
-      showDate: true
-    })
-  },
-
-  // 隐藏日期选择器
-  hideDatePicker() {
-    this.setData({
-      showDate: false
-    })
-  },
-
-  // 日期选择变化
-  onDateChange(e: any) {
-    const { value } = e.detail
-    this.setData({
-      dateValue: value
-    })
-  },
-
-  // 确认选择日期
-  onDateConfirm(e: any) {
-    const { value } = e.detail
-    const date = new Date(value)
-    const dateString = this.formatDate(date)
-    
-    this.setData({
-      'formData.recordDate': dateString,
-      dateValue: value,
-      showDate: false
-    })
-    
-    // 如果已选择批次，重新计算存栏数
-    if (this.data.formData.batchId) {
-      this.updateStockInfo()
-    }
-  },
-
   // 显示批次选择器
   showBatchPicker() {
     if (this.data.availableBatches.length === 0) {
@@ -211,13 +183,10 @@ const pageConfig = {
     
     if (selectedBatch) {
       // 直接使用批次数据中的当前存栏数
-      console.log('选中的批次:', selectedBatch)  // 调试日志
       const currentStock = selectedBatch.currentStock || 
                           selectedBatch.currentQuantity || 
                           selectedBatch.currentCount || 
                           0
-      
-      console.log('存栏数:', currentStock)  // 调试日志
       
       this.setData({
         'formData.batchId': selectedBatch._id,
@@ -394,19 +363,19 @@ const pageConfig = {
       })
 
       if (result.result && result.result.success) {
-        // 提交成功
+        // 提交成功，快速返回上一页
         wx.showToast({
-          title: '饲料投喂记录成功',
+          title: '提交成功',
           icon: 'success',
-          duration: 2000
+          duration: 1500
         })
 
-        // 延迟返回上一页
+        // 缩短延迟，快速返回上一页
         setTimeout(() => {
           wx.navigateBack({
             delta: 1
           })
-        }, 2000)
+        }, 800)
       } else {
         throw new Error(result.result?.error || '提交失败')
       }

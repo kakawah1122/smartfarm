@@ -132,18 +132,18 @@
   }
   
   &.status-ongoing {
-    border-left: 6rpx solid #0052d9;
-    background: rgba(0, 82, 217, 0.02);
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+    box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.08);
   }
   
   &.status-completed {
-    border-left: 6rpx solid #00a870;
-    background: rgba(0, 168, 112, 0.02);
+    background: linear-gradient(135deg, #f0faf5 0%, #e6f7f0 100%);
+    box-shadow: 0 2rpx 8rpx rgba(0, 168, 112, 0.08);
   }
   
   &.status-discontinued {
-    border-left: 6rpx solid #e34d59;
-    background: rgba(227, 77, 89, 0.02);
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8ea 100%);
+    box-shadow: 0 2rpx 8rpx rgba(227, 77, 89, 0.08);
     opacity: 0.8;
   }
   
@@ -725,8 +725,10 @@
     font-weight: 600;
     color: #333;
     margin-bottom: 24rpx;
-    padding-left: 20rpx;
-    border-left: 6rpx solid #0052d9;
+    padding: 12rpx 20rpx;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+    border-radius: 8rpx;
+    color: #0052d9;
   }
 }
 
@@ -1063,9 +1065,9 @@
     .dialog-hint {
       margin-bottom: 24rpx;
       padding: 16rpx 20rpx;
-      background: #fff7e6;
+      background: linear-gradient(135deg, #fff7e6 0%, #ffe8cc 100%);
       border-radius: 12rpx;
-      border-left: 6rpx solid #faad14;
+      box-shadow: 0 2rpx 8rpx rgba(250, 173, 20, 0.15);
       box-sizing: border-box;
       
       .hint-text {

@@ -327,31 +327,39 @@ page {
 }
 
 .record-detail-content .info-row {
-  margin-bottom: 20rpx;
-  padding: 0 8rpx;
+  margin-bottom: 0;
+  padding: 20rpx 8rpx;
+  display: flex !important;
   justify-content: space-between;
+  align-items: center !important;
   flex-wrap: nowrap;
   gap: 16rpx;
+  border-bottom: 1rpx dashed var(--td-border-level-2-color, #e0e0e0);
+}
+
+.record-detail-content .info-row:last-child {
+  border-bottom: none;
 }
 
 .record-detail-content .info-label {
-  font-size: 26rpx;
-  color: #6c757d;
-  font-weight: 500;
-  min-width: 120rpx;
+  font-size: 22rpx !important;
+  color: #6c757d !important;
+  font-weight: 500 !important;
+  min-width: 120rpx !important;
   text-align: left;
   flex-shrink: 0;
 }
 
 .record-detail-content .info-value {
-  font-size: 28rpx;
-  color: #1a1a1a;
-  font-weight: 400;
+  font-size: 24rpx !important;
+  color: #1a1a1a !important;
+  font-weight: 400 !important;
   text-align: right;
   flex: 1;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
+  line-height: 1.5;
 }
 
 .status-value {

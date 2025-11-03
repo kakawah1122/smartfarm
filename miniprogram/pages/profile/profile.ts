@@ -745,7 +745,6 @@ const pageConfig = {
           
           if (uploadResult.fileID) {
             cloudAvatarUrl = uploadResult.fileID
-            console.log('头像上传成功，云存储路径：', cloudAvatarUrl)
           } else {
             throw new Error('上传失败，未获取到文件ID')
           }

@@ -401,7 +401,6 @@ Page<PageData, any>({
     // 📝 优化：统一使用 loadPreventionData，不再回退到 loadTodayTasks
     if (this.data.activeTab === 'prevention' && this.data.preventionSubTab === 'today') {
       if (!this.data.todayTasksByBatch || this.data.todayTasksByBatch.length === 0) {
-        console.log('[onLoad] 今日任务数据为空，重新加载...')
         await this.loadPreventionData()
       }
     }
@@ -1054,8 +1053,6 @@ Page<PageData, any>({
     // ✅ 使用循环实现重试，避免递归调用导致的作用域问题
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-        console.log('[loadPreventionData] 开始加载预防管理数据，批次ID:', this.data.currentBatchId || 'all', attempt > 0 ? `(重试 ${attempt}/${MAX_RETRIES})` : '')
-      
       // 调用新的预防管理仪表盘云函数
       const result = await wx.cloud.callFunction({
         name: 'health-management',
@@ -1066,7 +1063,6 @@ Page<PageData, any>({
       })
 
       const response = result.result as any
-      console.log('[loadPreventionData] 云函数返回:', response?.success, '今日任务数:', response?.data?.todayTasks?.length || 0)
 
         // 🔍 详细错误日志
         if (!response.success) {
@@ -1080,7 +1076,6 @@ Page<PageData, any>({
           // ✅ 重试机制：非权限错误时自动重试（最多2次）
           if (attempt < MAX_RETRIES && response?.errorCode !== 'PERMISSION_DENIED') {
             const delay = (attempt + 1) * 1000 // 递增延迟：1s, 2s
-            console.log(`[loadPreventionData] ${delay}ms 后重试...`)
             await new Promise(resolve => setTimeout(resolve, delay))
             continue // 继续下一次循环
           } else {
@@ -1094,8 +1089,6 @@ Page<PageData, any>({
         const dashboardData = response.data
         const todayTasks = dashboardData.todayTasks || []
         const todayTasksByBatch = groupTasksByBatch(todayTasks)
-        
-        console.log('[loadPreventionData] 今日任务分组结果:', todayTasksByBatch.length, '个批次')
         
         // 更新页面数据（合并两次setData为一次）
         this.setData({
@@ -1142,7 +1135,6 @@ Page<PageData, any>({
         // 如果不是最后一次尝试，继续重试
         if (attempt < MAX_RETRIES) {
           const delay = (attempt + 1) * 1000
-          console.log(`[loadPreventionData] ${delay}ms 后重试...`)
           await new Promise(resolve => setTimeout(resolve, delay))
           continue
         }
@@ -1150,8 +1142,6 @@ Page<PageData, any>({
     }
     
     // ✅ 所有重试都失败，设置默认值并显示详细错误
-    console.warn('[loadPreventionData] 所有重试均失败，设置默认值', lastError)
-    
     // 显示详细错误信息
     const errorMsg = lastError?.message || lastError?.error || '未知错误'
     const errorCode = lastError?.errorCode || 'UNKNOWN'
@@ -1201,38 +1191,43 @@ Page<PageData, any>({
    * 加载今日待办任务（统一入口）
    */
   async loadTodayTasks() {
-    console.log('[loadTodayTasks] 开始加载今日任务，批次ID:', this.data.currentBatchId)
     if (this.data.currentBatchId === 'all') {
       await this.loadAllBatchesTodayTasks()
     } else {
       await this.loadSingleBatchTodayTasks()
     }
-    console.log('[loadTodayTasks] 加载完成，任务分组数:', this.data.todayTasksByBatch?.length || 0)
   },
 
   /**
-   * 分组历史任务
+   * 分组历史任务（按批次和日龄组合分组）
    */
   groupHistoryTasksByBatch(tasks: any[] = []) {
     const batchMap: Record<string, any> = {}
     
     tasks.forEach((task: any) => {
       const batchKey = task.batchNumber || task.batchId || 'unknown'
+      const taskDayAge = task.dayAge || 0
+      // 使用批次号和日龄组合作为唯一键
+      const groupKey = `${batchKey}_${taskDayAge}`
       
-      if (!batchMap[batchKey]) {
-        batchMap[batchKey] = {
+      if (!batchMap[groupKey]) {
+        batchMap[groupKey] = {
           batchId: task.batchId || batchKey,
           batchNumber: task.batchNumber || batchKey,
-          dayAge: task.dayAge || 0,
+          dayAge: taskDayAge,
           tasks: []
         }
       }
       
-      batchMap[batchKey].tasks.push(task)
+      batchMap[groupKey].tasks.push(task)
     })
     
     return Object.values(batchMap).sort((a, b) => {
-      return (b.tasks[0]?.completedDate || '').localeCompare(a.tasks[0]?.completedDate || '')
+      // 先按批次号排序
+      const batchCompare = (a.batchNumber || '').localeCompare(b.batchNumber || '')
+      if (batchCompare !== 0) return batchCompare
+      // 再按日龄倒序排序
+      return b.dayAge - a.dayAge
     })
   },
 
@@ -1247,8 +1242,9 @@ Page<PageData, any>({
       }
     }).then((result: any) => {
       const response = result.result as any
+      // 后台清理孤儿任务，不显示日志
       if (response.success && response.data && response.data.deletedCount > 0) {
-        console.log(`已清理 ${response.data.deletedCount} 个孤儿任务`)
+        // 静默清理完成
       }
     }).catch((error: any) => {
       console.error('清理孤儿任务失败:', error)
@@ -1742,10 +1738,7 @@ Page<PageData, any>({
    * 加载单批次今日待办任务
    */
   async loadSingleBatchTodayTasks() {
-    console.log('[loadSingleBatchTodayTasks] 开始加载单批次任务')
-    
     if (!this.data.currentBatchId || this.data.currentBatchId === 'all') {
-      console.log('[loadSingleBatchTodayTasks] 批次ID无效，设置空数据')
       this.setData({ 
         'preventionData.todayTasks': [],
         todayTasksByBatch: []
@@ -1765,46 +1758,58 @@ Page<PageData, any>({
 
       const batch = batchResult.result?.data
       if (!batch) {
-        console.warn('[loadSingleBatchTodayTasks] 批次不存在')
         throw new Error('批次不存在')
       }
 
       // 计算当前日龄
       const dayAge = calculateCurrentAge(batch.entryDate)
-      console.log('[loadSingleBatchTodayTasks] 批次日龄:', dayAge)
+      
+      // 调试日志：检查日龄计算
+      console.log(`[健康管理] 批次 ${batch.batchNumber} (${batch.entryDate}) 当前日龄: ${dayAge}`)
 
-      // 调用 breeding-todo 云函数获取任务
+      // 调用 breeding-todo 云函数获取任务（只查询当日日龄的任务）
       const result = await wx.cloud.callFunction({
         name: 'breeding-todo',
         data: {
           action: 'getTodos',
           batchId: this.data.currentBatchId,
-          dayAge: dayAge
+          dayAge: dayAge  // 只查询当日日龄的任务
         }
       })
 
       const response = result.result as any
-      console.log('[loadSingleBatchTodayTasks] 云函数返回:', response?.success, '任务数:', response?.data?.length || 0)
       
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.length > 0) {
         const tasks = Array.isArray(response.data) ? response.data : []
+        
+        // 验证任务的实际日龄是否匹配
+        const mismatchedTasks = tasks.filter((task: any) => task.dayAge !== dayAge)
+        if (mismatchedTasks.length > 0) {
+          console.warn(`[健康管理] 警告：批次 ${batch.batchNumber} 有 ${mismatchedTasks.length} 个任务日龄不匹配`, {
+            expectedDayAge: dayAge,
+            mismatchedTasks: mismatchedTasks.map((t: any) => ({ id: t._id, dayAge: t.dayAge }))
+          })
+        }
+        
         const normalizedTasks = tasks.map((task: any) => this.normalizeTask(task, {
           batchNumber: batch.batchNumber || this.data.currentBatchId,
-          dayAge
+          // 使用任务本身的dayAge字段，确保显示正确的日龄
+          dayAge: task.dayAge || dayAge
         }))
         
+        // 使用计算出的日龄显示批次头部（因为这是当日日龄）
         // 按批次分组显示（即使只有一个批次）
         this.setData({
           todayTasksByBatch: [{
             batchId: this.data.currentBatchId,
             batchNumber: batch.batchNumber || this.data.currentBatchId,
-            dayAge: dayAge,
+            dayAge: dayAge,  // 使用计算出的当日日龄
             tasks: normalizedTasks
           }],
           'preventionData.todayTasks': normalizedTasks
         })
       } else {
-        console.log('[loadSingleBatchTodayTasks] 无任务数据，设置空数据')
+        // 当日没有任务，显示空列表
         this.setData({
           todayTasksByBatch: [],
           'preventionData.todayTasks': []
@@ -1823,8 +1828,6 @@ Page<PageData, any>({
    * 加载所有批次今日待办任务
    */
   async loadAllBatchesTodayTasks() {
-    console.log('[loadAllBatchesTodayTasks] 开始加载所有批次任务')
-    
     try {
       // 获取活跃批次
       const batchResult = await wx.cloud.callFunction({
@@ -1833,10 +1836,8 @@ Page<PageData, any>({
       })
 
       const activeBatches = batchResult.result?.data || []
-      console.log('[loadAllBatchesTodayTasks] 活跃批次数:', activeBatches.length)
       
       if (activeBatches.length === 0) {
-        console.log('[loadAllBatchesTodayTasks] 无活跃批次，设置空数据')
         this.setData({
           todayTasksByBatch: [],
           'preventionData.todayTasks': []
@@ -1847,62 +1848,73 @@ Page<PageData, any>({
       // 为每个活跃批次获取今日任务
       const batchTasksPromises = activeBatches.map(async (batch: any) => {
         try {
+          // 计算当前日龄（基于入栏日期）
           const dayAge = calculateCurrentAge(batch.entryDate)
           
+          // 调试日志：检查日龄计算
+          console.log(`[健康管理] 批次 ${batch.batchNumber} (${batch.entryDate}) 当前日龄: ${dayAge}`)
+          
+          // 只查询当日日龄的任务
           const result = await wx.cloud.callFunction({
             name: 'breeding-todo',
             data: {
               action: 'getTodos',
               batchId: batch._id,
-              dayAge: dayAge
+              dayAge: dayAge  // 只查询当日日龄的任务
             }
           })
           
           const response = result.result as any
-          if (response.success && response.data) {
-            const normalizedTasks = (Array.isArray(response.data) ? response.data : []).map((task: any) =>
+          if (response.success && response.data && response.data.length > 0) {
+            // 验证任务的实际日龄是否匹配
+            const tasks = Array.isArray(response.data) ? response.data : []
+            const mismatchedTasks = tasks.filter((task: any) => task.dayAge !== dayAge)
+            
+            if (mismatchedTasks.length > 0) {
+              console.warn(`[健康管理] 警告：批次 ${batch.batchNumber} 有 ${mismatchedTasks.length} 个任务日龄不匹配`, {
+                expectedDayAge: dayAge,
+                mismatchedTasks: mismatchedTasks.map((t: any) => ({ id: t._id, dayAge: t.dayAge }))
+              })
+            }
+            
+            const normalizedTasks = tasks.map((task: any) =>
               this.normalizeTask(task, {
                 batchNumber: batch.batchNumber || batch._id,
-                dayAge
+                // 使用任务本身的dayAge字段，确保显示正确的日龄
+                dayAge: task.dayAge || dayAge
               })
             )
+            
+            // 使用计算出的日龄显示批次头部（因为这是当日日龄）
             return {
               batchId: batch._id,
               batchNumber: batch.batchNumber || batch._id,
-              dayAge: dayAge,
+              dayAge: dayAge,  // 使用计算出的当日日龄
               tasks: normalizedTasks
             }
           } else {
-            return {
-              batchId: batch._id,
-              batchNumber: batch.batchNumber || batch._id,
-              dayAge: dayAge,
-              tasks: []
-            }
+            // 当日没有任务，不显示该批次
+            return null
           }
         } catch (error) {
           console.error(`批次 ${batch._id} 任务加载失败:`, error)
-          return {
-            batchId: batch._id,
-            batchNumber: batch.batchNumber || batch._id,
-            dayAge: calculateCurrentAge(batch.entryDate),
-            tasks: []
-          }
+          return null
         }
       })
 
       const batchTasksResults = await Promise.all(batchTasksPromises)
       
+      // 过滤掉空结果（当日没有任务的批次）
+      const validBatchTasks = batchTasksResults.filter((item: any) => item !== null && item.tasks.length > 0)
+      
       // 收集所有任务
       let allTasks: any[] = []
-      batchTasksResults.forEach((batchData: any) => {
+      validBatchTasks.forEach((batchData: any) => {
         allTasks = allTasks.concat(batchData.tasks)
       })
 
-      console.log('[loadAllBatchesTodayTasks] 任务加载完成，批次数:', batchTasksResults.length, '总任务数:', allTasks.length)
-
       this.setData({
-        todayTasksByBatch: batchTasksResults,
+        todayTasksByBatch: validBatchTasks,
         'preventionData.todayTasks': allTasks
       })
     } catch (error: any) {
@@ -2031,9 +2043,10 @@ Page<PageData, any>({
                 dayAge: dayAge,
                 tasks: (result.data[dayAge.toString()] || []).map((task: any) =>
                   this.normalizeTask(task, {
-                  batchNumber: batch.batchNumber || batch._id,
+                    batchNumber: batch.batchNumber || batch._id,
                     isVaccineTask: isVaccineTask(task),
-                    dayAge
+                    // 使用任务本身的dayAge字段，如果没有则使用分组日龄
+                    dayAge: task.dayAge || dayAge
                   })
                 )
               }))
@@ -2065,19 +2078,25 @@ Page<PageData, any>({
         tasks: mergedTasks[parseInt(dayAge)]
       })).sort((a, b) => a.dayAge - b.dayAge)
 
-      // 转换为批次分组格式
+      // 转换为批次分组格式，按批次和日龄分组
       const upcomingTasksByBatch: any[] = []
       
       sortedUpcomingTasks.forEach(dayGroup => {
         dayGroup.tasks.forEach((task: any) => {
           const batchId = task.batchId || task.batchNumber
-          let batchGroup = upcomingTasksByBatch.find(g => g.batchId === batchId)
+          // 使用任务本身的dayAge字段，如果没有则使用分组日龄
+          const taskDayAge = task.dayAge || dayGroup.dayAge
+          
+          // 按批次和日龄组合查找分组
+          let batchGroup = upcomingTasksByBatch.find(g => 
+            g.batchId === batchId && g.dayAge === taskDayAge
+          )
           
           if (!batchGroup) {
             batchGroup = {
               batchId: batchId,
               batchNumber: task.batchNumber || batchId,
-              dayAge: dayGroup.dayAge,
+              dayAge: taskDayAge,
               tasks: []
             }
             upcomingTasksByBatch.push(batchGroup)
@@ -2085,6 +2104,14 @@ Page<PageData, any>({
           
           batchGroup.tasks.push(task)
         })
+      })
+      
+      // 按批次号和日龄排序
+      upcomingTasksByBatch.sort((a, b) => {
+        if (a.batchNumber !== b.batchNumber) {
+          return (a.batchNumber || '').localeCompare(b.batchNumber || '')
+        }
+        return a.dayAge - b.dayAge
       })
       
       this.setData({ upcomingTasksByBatch })
@@ -2114,7 +2141,6 @@ Page<PageData, any>({
           })
           if (batchResult.result?.success) {
             validBatchIds = (batchResult.result.data || []).map((b: any) => b._id)
-            console.log('[历史任务] 有效批次ID列表:', validBatchIds)
           }
         } catch (error) {
           console.error('[历史任务] 获取批次列表失败:', error)
@@ -2125,7 +2151,6 @@ Page<PageData, any>({
       
       // 如果没有有效批次，直接返回
       if (validBatchIds.length === 0) {
-        console.log('[历史任务] 没有有效批次')
         this.setData({ historyTasksByBatch: [] })
         return
       }
@@ -2139,14 +2164,11 @@ Page<PageData, any>({
         batchId: _.in(validBatchIds)
       }
       
-      console.log('[历史任务] 查询条件:', whereCondition)
       const result = await db.collection('task_batch_schedules')
         .where(whereCondition)
         .orderBy('dayAge', 'desc')  // ✅ 使用索引中的字段排序
         .limit(100)  // 限制返回100条
         .get()
-      
-      console.log('[历史任务] 查询结果:', result.data?.length || 0, '条记录')
       
       if (result.data && result.data.length > 0) {
         const completedTasks = result.data.map((task: any) => ({
@@ -2175,7 +2197,6 @@ Page<PageData, any>({
         
         // 按批次分组
         const historyTasksByBatch = this.groupHistoryTasksByBatch(completedTasks)
-        console.log('[历史任务] 分组结果:', historyTasksByBatch.length, '个批次')
         this.setData({ historyTasksByBatch })
       } else {
         this.setData({ historyTasksByBatch: [] })
@@ -2574,11 +2595,13 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       if (result.result && result.result.success) {
         const batches = result.result.data || []
         
-        // 计算日龄
+        // 使用云函数返回的dayAge，如果不存在则重新计算
         const batchesWithDayAge = batches.map((batch: any) => {
-          const entryDate = new Date(batch.entryDate)
-          const today = new Date()
-          const dayAge = Math.floor((today.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+          // 如果云函数已经返回了dayAge，直接使用；否则重新计算
+          let dayAge = batch.dayAge
+          if (!dayAge && batch.entryDate) {
+            dayAge = calculateCurrentAge(batch.entryDate)
+          }
           
           return {
             ...batch,

@@ -1,6 +1,7 @@
 // cloudfunctions/ai-diagnosis/index.js
 // AI诊断云函数 - 专门处理AI智能诊断功能
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -32,9 +33,9 @@ function getLiveDiagnosisSystemPrompt() {
    • 临床症状与体征：精神、采食、呼吸、肠道、神经、姿势、羽毛、皮肤等；
    • 图片线索：逐张说明羽毛、粘膜、肢体、姿势、分泌物等特征；
    • 环境与饲养信息：温湿度、密度、饲料、应激、免疫记录；
-   • 批次动态：近期异常记录、治疗/隔离/死亡案例及AI修正反馈。
+   • 批次动态：近期异常记录、治疗/死亡案例及AI修正反馈。
 3. 差异诊断：给出至少2项易混病的排除依据（结合日龄、病变特征、实验室结果或缺失信息）；
-4. 治疗建议：明确药物剂量、途径、频次、疗程；标注支持性护理和批次管理措施（隔离、消毒、饲养调整等）；
+4. 治疗建议：明确药物剂量、途径、频次、疗程；标注支持性护理和批次管理措施（消毒、饲养调整等）；
 5. 预防/复评：根据日龄阶段和历史风险，制定监测指标、随访周期、二次检测建议；
 6. 若信息不足，列出必须补充的狮头鹅数据或更清晰照片，不得臆测；
 7. 输出仅限狮头鹅相关内容，禁止扩展到其他禽类。
@@ -56,7 +57,7 @@ function getLiveDiagnosisSystemPrompt() {
   "severity": "mild|moderate|severe",
   "urgency": "low|medium|high|critical",
   "treatmentRecommendation": {
-    "immediate": ["现场紧急措施，含隔离/支持性处理"],
+    "immediate": ["现场紧急措施，含支持性处理"],
     "medication": [
       {
         "name": "药物名称",
@@ -89,7 +90,7 @@ function getAutopsySystemPrompt() {
 2. 系统比对生前症状与剖检特征（肝脏、脾脏、肠系膜、呼吸道、神经系统等）逐条论证；
 3. 按照片信息逐张描述病变部位的颜色、质地、渗出、坏死、充血等特征；
 4. 提供死因置信度，并给出至少2项鉴别死因及排除理由；
-5. 结合批次现有隔离/治疗措施，提出针对性的预防与复盘建议，包括生物安全、营养、密度、消毒流程；
+5. 结合批次现有治疗措施，提出针对性的预防与复盘建议，包括生物安全、营养、密度、消毒流程；
 6. 明确列出后续需要的实验室检查或新增样品采集；
 7. 若信息不足，请指出缺失项（如缺少肝脏切面照片、胆管情况等），不要猜测；
 8. 输出仅限狮头鹅相关内容。
@@ -169,7 +170,7 @@ ${historyCases.map((c, i) => `
  */
 async function getTopAccuracyCases(limit = 5) {
   try {
-    const result = await db.collection('health_death_records')
+    const result = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({
         isCorrected: true,
         aiAccuracyRating: _.gte(4) // 评分≥4星
@@ -270,7 +271,7 @@ function buildBatchContextSection(batchPromptData) {
     return ''
   }
 
-  const { batch = {}, stats = {}, diagnosisTrend = [], treatmentHistory = [], isolationHistory = [], deathHistory = [], correctionFeedback = [] } = batchPromptData
+  const { batch = {}, stats = {}, diagnosisTrend = [], treatmentHistory = [], deathHistory = [], correctionFeedback = [] } = batchPromptData
 
   const batchLines = []
   
@@ -337,15 +338,6 @@ function buildBatchContextSection(batchPromptData) {
         ? record.medications.map(m => m.name).join('、')
         : '未记录药物'
       batchLines.push(`  💊 ${record.treatmentDate || '未知'} | ${record.diagnosis || '未知'} | 用药：${medications}`)
-    })
-  }
-
-  // === 隔离观察（仅显示进行中的）===
-  const ongoingIsolations = isolationHistory.filter(i => i.status === 'ongoing' || !i.endDate)
-  if (ongoingIsolations.length > 0) {
-    batchLines.push('\n【隔离观察中】')
-    ongoingIsolations.slice(0, 2).forEach(record => {
-      batchLines.push(`  🔒 ${record.startDate || '未知'} | 原因：${record.reason || '未记录'}`)
     })
   }
 
@@ -507,7 +499,7 @@ function parseTextResponse(textResponse, aiResult) {
       severity: severity || 'moderate',
       urgency: 'medium',
       treatmentRecommendation: {
-        immediate: ['隔离观察', '保持环境清洁'],
+        immediate: ['保持环境清洁', '观察症状变化'],
         medication: [{
           name: '广谱抗生素',
           dosage: '按体重计算',
@@ -577,7 +569,7 @@ function getFallbackDiagnosis(inputData) {
       severity,
       urgency: severity === 'severe' ? 'high' : 'medium',
       treatmentRecommendation: {
-        immediate: ['立即隔离', '改善环境条件'],
+        immediate: ['改善环境条件', '加强监测'],
         medication: [{
           name: '根据具体症状选择药物',
           dosage: '请咨询兽医',
@@ -693,7 +685,7 @@ async function saveAIDiagnosisRecord(inputData, aiResult, openid) {
       isDeleted: false
     }
     
-    await db.collection('health_ai_diagnosis').add({
+    await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS).add({
       data: diagnosisRecord
     })
     
@@ -797,7 +789,7 @@ async function performAIDiagnosis(event, openid) {
     }
 
     // 保存到数据库
-    const addResult = await db.collection('health_ai_diagnosis').add({
+    const addResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS).add({
       data: taskData
     })
 
@@ -860,10 +852,10 @@ async function getDiagnosisHistory(event, openid) {
       dateRange 
     } = event
 
-    let query = db.collection('health_ai_diagnosis')
+    let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({
         _openid: openid,
-        isDeleted: _.neq(true)
+        isDeleted: false  // ✅ 使用 false 替代 neq(true)，索引性能最优
       })
 
     if (batchId) {
@@ -895,7 +887,7 @@ async function getDiagnosisHistory(event, openid) {
     
     if (batchIds.length > 0) {
       try {
-        const batchResult = await db.collection('production_batches')
+        const batchResult = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
           .where({
             _id: _.in(batchIds)
           })
@@ -917,10 +909,10 @@ async function getDiagnosisHistory(event, openid) {
     
     if (diagnosisIds.length > 0) {
       try {
-        const treatmentResult = await db.collection('health_treatment_records')
+        const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
           .where({
             diagnosisId: _.in(diagnosisIds),
-            isDeleted: _.neq(true)
+            isDeleted: false  // ✅ 使用 false 替代 neq(true)，索引性能最优
           })
           .field({
             diagnosisId: true,
@@ -1098,7 +1090,7 @@ async function getDiagnosisResult(event, openid) {
       throw new Error('诊断ID不能为空')
     }
 
-    const record = await db.collection('health_ai_diagnosis')
+    const record = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .doc(diagnosisId)
       .get()
 
@@ -1120,7 +1112,7 @@ async function getDiagnosisResult(event, openid) {
     let batchNumber = record.data.batchNumber || '未知批次'
     if (record.data.batchId && !record.data.batchNumber) {
       try {
-        const batchResult = await db.collection('production_batches')
+        const batchResult = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
           .doc(record.data.batchId)
           .field({ batchNumber: true })
           .get()
@@ -1191,7 +1183,7 @@ async function updateDiagnosisReview(event, openid) {
       updateTime: new Date().toISOString()
     }
 
-    await db.collection('health_ai_diagnosis')
+    await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .doc(recordId)
       .update({
         data: updateData
@@ -1223,7 +1215,7 @@ async function adoptDiagnosis(event, openid) {
       updateTime: new Date().toISOString()
     }
 
-    await db.collection('health_ai_diagnosis')
+    await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .doc(recordId)
       .update({
         data: updateData
@@ -1259,7 +1251,7 @@ async function feedbackDiagnosis(event, openid) {
       updateTime: new Date().toISOString()
     }
 
-    await db.collection('health_ai_diagnosis')
+    await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .doc(recordId)
       .update({
         data: updateData
@@ -1283,10 +1275,10 @@ async function getDiagnosisStats(event, openid) {
   try {
     const { dateRange } = event
 
-    let query = db.collection('health_ai_diagnosis')
+    let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({
         _openid: openid,
-        isDeleted: _.neq(true)
+        isDeleted: false  // ✅ 使用 false 替代 neq(true)，索引性能最优
       })
 
     if (dateRange && dateRange.start && dateRange.end) {

@@ -18,6 +18,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 表单数据
     formData: {
       batchId: '',
+      batchNumber: '',  // ✅ 批次号用于显示
       animalIds: [] as string[],
       treatmentDate: '',
       treatmentType: 'medication', // medication
@@ -168,7 +169,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   async onLoad(options: any) {
-    const { sourceType, sourceId, diagnosisId, batchId, batchNumber: _batchNumber, treatmentId, id, abnormalRecordId, diagnosis, mode } = options || {}
+    const { sourceType, sourceId, diagnosisId, batchId, batchNumber: _batchNumber, treatmentId, id, abnormalRecordId, diagnosis, mode, affectedCount } = options || {}
     
     // ✅ 判断是否为查看模式
     const isViewMode = mode === 'view'
@@ -200,10 +201,24 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         'formData.batchId': batchId || '',  // ✅ 使用批次对象ID
         'formData.diagnosis': diagnosis ? decodeURIComponent(diagnosis) : ''
       })
+    } else if (sourceType === 'vaccine_tracking') {
+      // 如果来自疫苗追踪，设置相关数据
+      this.setData({
+        'formData.batchId': batchId || '',  // ✅ 使用批次对象ID
+        'formData.diagnosis': diagnosis ? decodeURIComponent(diagnosis) : '',
+        'formData.affectedCount': affectedCount ? parseInt(affectedCount) : 0  // ✅ 设置受影响数量
+      })
+      // 查找批次号用于显示
+      if (batchId) {
+        this.loadBatchNumberForDisplay(batchId)
+      }
     } else if (batchId) {
       this.setData({
-        'formData.batchId': batchId  // ✅ 使用批次对象ID
+        'formData.batchId': batchId,  // ✅ 使用批次对象ID
+        'formData.affectedCount': affectedCount ? parseInt(affectedCount) : 0  // ✅ 设置受影响数量
       })
+      // 查找批次号用于显示
+      this.loadBatchNumberForDisplay(batchId)
     }
     
     // 如果有治疗记录ID，说明是编辑模式，需要加载治疗记录详情
@@ -293,11 +308,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           'formData.treatmentType': record.treatmentType,
           'formData.diagnosis': record.diagnosis?.confirmed || record.diagnosis?.preliminary || '',
           'formData.diagnosisConfidence': record.diagnosis?.confidence || 0,
+          'formData.affectedCount': record.affectedCount || 0,  // ✅ 加载受影响数量
           'formData.notes': record.notes || '',
           'treatmentPlan.primary': record.treatmentPlan?.primary || '',
           'treatmentPlan.followUpSchedule': record.treatmentPlan?.followUpSchedule || [],
           medications: record.medications || []
         })
+        
+        // 加载批次号用于显示
+        if (record.batchId) {
+          this.loadBatchNumberForDisplay(record.batchId)
+        }
       }
     } catch (error: any) {
       wx.hideLoading()
@@ -326,7 +347,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       if (result.result && result.result.success) {
         const aiResult = result.result.data
         
-        // ✅ 填充完整的诊断信息
+        // ✅ 合并所有setData调用，提升性能
         const updateData: any = {
           'formData.diagnosis': aiResult.primaryDiagnosis || '',
           'formData.diagnosisConfidence': aiResult.confidence || 0,
@@ -339,39 +360,32 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           updateData['formData.batchId'] = aiResult.batchId
         }
         
-        this.setData(updateData)
-        
         // ✅ 预填充AI建议的治疗措施
         if (aiResult.treatmentRecommendation) {
           const recommendation = aiResult.treatmentRecommendation
           
           // 预填充立即措施
           if (recommendation.immediate && recommendation.immediate.length > 0) {
-            this.setData({
-              'treatmentPlan.primary': recommendation.immediate.join('；'),
-              treatmentPlanSource: 'ai'
-            })
+            updateData['treatmentPlan.primary'] = recommendation.immediate.join('；')
+            updateData.treatmentPlanSource = 'ai'
           }
           
           // ✅ 保存AI建议的用药信息（仅供参考显示）
           if (recommendation.medication && recommendation.medication.length > 0) {
-            this.setData({
-              aiMedicationSuggestions: recommendation.medication
-            })
-            
+            updateData.aiMedicationSuggestions = recommendation.medication
+          }
+        }
+        
+        // ✅ 一次性更新所有数据
+        this.setData(updateData)
+        
+        if (aiResult.treatmentRecommendation?.medication?.length > 0) {
             wx.showToast({
               title: '已加载AI用药建议',
               icon: 'success',
               duration: 2000
             })
-          }
         }
-        
-        console.log('✅ 诊断信息加载成功:', {
-          diagnosis: aiResult.primaryDiagnosis,
-          batchId: aiResult.batchId,
-          affectedCount: aiResult.affectedCount
-        })
       } else {
         throw new Error(result.result?.message || '加载诊断信息失败')
       }
@@ -481,6 +495,36 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       }
     } catch (error) {
       // 已移除调试日志
+    }
+  },
+
+  // 根据批次ID查找批次号用于显示
+  loadBatchNumberForDisplay: async function(batchId: string) {
+    try {
+      // 先从已加载的批次列表中查找
+      const batch = this.data.activeBatches.find((b: any) => b._id === batchId)
+      if (batch && batch.batchNumber) {
+        this.setData({
+          'formData.batchNumber': batch.batchNumber
+        })
+        return
+      }
+      
+      // 如果没找到，从数据库查询
+      const db = wx.cloud.database()
+      const batchResult = await db.collection('prod_batch_entries')
+        .doc(batchId)
+        .field({ batchNumber: true })
+        .get()
+      
+      if (batchResult.data && batchResult.data.batchNumber) {
+        this.setData({
+          'formData.batchNumber': batchResult.data.batchNumber
+        })
+      }
+    } catch (error) {
+      // 查询失败，保持使用 batchId
+      console.error('加载批次号失败:', error)
     }
   },
 
@@ -1150,6 +1194,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       } : {
         action,
         ...treatmentRecord,
+        affectedCount: formData.affectedCount || 1,  // ✅ 传递受影响的动物数量
         sourceType: this.data.sourceType,
         sourceId: this.data.sourceId,
         diagnosisId: this.data.diagnosisId,
@@ -1334,6 +1379,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           medications: treatment.medications || [],
           treatmentProgress: progress
         })
+        
+        // 加载批次号用于显示
+        if (treatment.batchId) {
+          this.loadBatchNumberForDisplay(treatment.batchId)
+        }
       } else {
         throw new Error(result.result?.error || '加载失败')
       }

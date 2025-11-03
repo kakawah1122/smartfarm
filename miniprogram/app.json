@@ -39,6 +39,7 @@
         "death-record-detail/death-record-detail",
         "abnormal-records-list/abnormal-records-list",
         "abnormal-record-detail/abnormal-record-detail",
+        "vaccine-records-list/vaccine-records-list",
         "survival-analysis/survival-analysis",
         "breeding-todo/breeding-todo"
       ]
@@ -78,7 +79,7 @@
   "preloadRule": {
     "pages/index/index": {
       "network": "all",
-      "packages": ["production", "health", "ai"]
+      "packages": ["production"]
     },
     "pages/production/production": {
       "network": "all",

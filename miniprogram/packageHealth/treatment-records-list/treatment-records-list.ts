@@ -5,7 +5,7 @@ interface TreatmentRecord {
   batchId: string
   abnormalRecordId?: string
   treatmentDate: string
-  treatmentType: string  // 'medication' | 'isolation'
+  treatmentType: string  // 'medication'
   diagnosis: {
     preliminary: string
     confirmed: string
@@ -145,8 +145,7 @@ Page({
    */
   getTreatmentTypeText(type: string): string {
     const typeMap: Record<string, string> = {
-      'medication': '药物治疗',
-      'isolation': '隔离观察'
+      'medication': '药物治疗'
     }
     return typeMap[type] || type
   }

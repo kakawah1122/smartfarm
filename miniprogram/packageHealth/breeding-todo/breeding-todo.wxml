@@ -280,9 +280,7 @@
           <view class="info-row" wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
             <text class="info-label">所需物料：</text>
             <text class="info-value materials-text">
-              <block wx:for="{{selectedTask.materials}}" wx:key="index">
-                {{item}}{{index < selectedTask.materials.length - 1 ? '、' : ''}}
-              </block>
+              <text wx:for="{{selectedTask.materials}}" wx:key="index">{{item}}<text wx:if="{{index < selectedTask.materials.length - 1}}">、</text></text>
             </text>
           </view>
           <view class="info-row" wx:if="{{selectedTask.batchNumber}}">
@@ -451,7 +449,8 @@
                     value=""
                     data-field="notes"
                     bindinput="onVaccineFormInput"
-                    maxlength="200" />
+                    maxlength="200"
+                    auto-height />
         </view>
       </view>
 
@@ -511,7 +510,8 @@
                     value="{{adverseReactionData.treatment}}"
                     data-field="treatment"
                     bindinput="onAdverseReactionInput"
-                    maxlength="200" />
+                    maxlength="200"
+                    auto-height />
         </view>
         <view class="form-row">
           <text class="form-label">后续观察</text>
@@ -520,7 +520,8 @@
                     value="{{adverseReactionData.followUp}}"
                     data-field="followUp"
                     bindinput="onAdverseReactionInput"
-                    maxlength="200" />
+                    maxlength="200"
+                    auto-height />
         </view>
       </view>
     </view>
@@ -611,7 +612,8 @@
                     value="{{medicationFormData.notes}}"
                     data-field="notes"
                     bindinput="onMedicationFormInput"
-                    maxlength="200" />
+                    maxlength="200"
+                    auto-height />
         </view>
       </view>
 
@@ -700,7 +702,8 @@
                     value="{{nutritionFormData.notes}}"
                     data-field="notes"
                     bindinput="onNutritionFormInput"
-                    maxlength="200" />
+                    maxlength="200"
+                    auto-height />
         </view>
       </view>
 

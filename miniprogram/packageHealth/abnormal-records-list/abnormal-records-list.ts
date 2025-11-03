@@ -19,7 +19,7 @@ interface AbnormalRecord {
   }
   severity: string
   urgency: string
-  status: string  // 'abnormal' | 'treating' | 'isolated'
+  status: string  // 'abnormal' | 'treating'
   aiRecommendation: any
   images: string[]
   diagnosisId: string

@@ -35,14 +35,21 @@
           <text class="section-title">基础信息</text>
         </view>
         <view class="form-card">
-          <!-- 采购日期 -->
-          <view class="form-item" bind:tap="showDatePicker">
-            <view class="item-label required">采购日期</view>
-            <view class="item-input date-input">
-              <text class="date-text">{{formData.purchaseDate || '请选择采购日期'}}</text>
-              <t-icon name="calendar" size="32" color="#c8c9cc" />
+          <!-- 采购日期（使用原生 picker）-->
+          <picker 
+            mode="date" 
+            value="{{formData.purchaseDate}}" 
+            start="2020-01-01"
+            end="{{maxDate}}"
+            bind:change="onDateConfirm"
+          >
+            <view class="form-item">
+              <view class="item-label required">采购日期</view>
+              <view class="item-input date-input">
+                <text class="date-text">{{formData.purchaseDate || '请选择采购日期'}}</text>
+              </view>
             </view>
-          </view>
+          </picker>
 
           <!-- 物料名称 -->
           <view class="form-item">
@@ -200,15 +207,5 @@
     </view>
   </view>
 
-  <!-- 日期选择器 -->
-  <t-date-time-picker 
-    visible="{{showDate}}"
-    mode="date"
-    value="{{dateValue}}"
-    format="YYYY-MM-DD"
-    bind:change="onDateChange"
-    bind:cancel="hideDatePicker"
-    bind:confirm="onDateConfirm"
-  />
 
 </view>

@@ -1,0 +1,306 @@
+<!-- miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.wxml -->
+<view class="vaccine-records-page">
+  
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="疫苗记录" 
+    showBack="{{true}}" 
+    fallbackUrl="/pages/health/health" 
+  />
+  
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
+
+  <!-- 内容区 -->
+  <view class="page-content" wx:else>
+    
+    <!-- 统计卡片 -->
+    <view class="stats-section">
+      <view class="stats-grid">
+        <view class="stat-card primary">
+          <view class="stat-info">
+            <text class="stat-label">总次数</text>
+            <text class="stat-value">{{stats.totalCount}}</text>
+          </view>
+        </view>
+
+        <view class="stat-card warning">
+          <view class="stat-info">
+            <text class="stat-label">总成本</text>
+            <text class="stat-value">¥{{stats.totalCost}}</text>
+          </view>
+        </view>
+
+        <view class="stat-card success">
+          <view class="stat-info">
+            <text class="stat-label">总覆盖</text>
+            <text class="stat-value">{{stats.totalCoverage}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-container" wx:if="{{recordsByBatch.length === 0}}">
+      <t-empty 
+        icon="info-circle" 
+        description="暂无疫苗记录"
+      >
+        <view slot="description" class="empty-tip">
+          <text class="tip-title">暂无疫苗记录</text>
+          <text class="tip-subtitle">完成疫苗任务后，记录将在此处显示</text>
+        </view>
+      </t-empty>
+    </view>
+
+    <!-- 按批次分组的记录列表 -->
+    <view class="records-list" wx:if="{{recordsByBatch.length > 0}}">
+      <view 
+        wx:for="{{recordsByBatch}}" 
+        wx:key="batchNumber" 
+        class="batch-group"
+      >
+        <!-- 批次组头部 -->
+        <view class="batch-group-header">
+          <view class="batch-group-info">
+            <text class="batch-group-title">{{item.batchNumber}}</text>
+          </view>
+          <view class="batch-record-count">{{item.records.length}}条记录</view>
+        </view>
+        
+        <!-- 该批次的记录列表 -->
+        <view class="batch-records-list">
+          <view 
+            class="record-card"
+            wx:for="{{item.records}}"
+            wx:for-item="record"
+            wx:key="_id"
+            bind:tap="onRecordTap"
+            data-id="{{record._id}}"
+          >
+            <!-- 记录头部 -->
+            <view class="record-header">
+              <view class="record-title-row">
+                <text class="record-name">{{record.vaccineInfo.name || '疫苗'}}</text>
+                <t-tag 
+                  theme="primary" 
+                  size="small" 
+                  class="status-tag"
+                >
+                  疫苗接种
+                </t-tag>
+              </view>
+            </view>
+
+            <!-- 记录内容 -->
+            <view class="record-content">
+              <!-- 第一行：批次 + 数量 -->
+              <view class="info-row">
+                <view class="info-group info-group-batch">
+                  <text class="info-label">批次：</text>
+                  <text class="info-value">{{record.batchNumber || record.batchId}}</text>
+                </view>
+                <view class="info-group info-group-count">
+                  <text class="info-label">数量：</text>
+                  <text class="info-value vaccine-count">{{record.vaccineInfo.count || 0}} 只</text>
+                </view>
+              </view>
+
+              <!-- 第二行：成本 + 剂量 -->
+              <view class="info-row">
+                <view class="info-group info-group-cost">
+                  <text class="info-label">成本：</text>
+                  <text class="info-value cost-value">¥{{record.formattedTotalCost || '0.00'}}</text>
+                </view>
+                <view class="info-group info-group-dosage" wx:if="{{record.vaccineInfo.dosage}}">
+                  <text class="info-label">剂量：</text>
+                  <text class="info-value">{{record.vaccineInfo.dosage}}</text>
+                </view>
+              </view>
+
+              <!-- 第三行：防疫用药 -->
+              <view class="info-row" wx:if="{{record.currentStock > 0 && record.vaccinationRate}}">
+                <view class="info-group info-group-rate">
+                  <text class="info-label">防疫用药：</text>
+                  <text class="info-value rate-value">{{record.vaccinationRate}}</text>
+                </view>
+                <view class="info-group info-group-stock">
+                  <text class="info-label">存栏：</text>
+                  <text class="info-value">{{record.currentStock}} 只</text>
+                </view>
+              </view>
+
+              <!-- 底部：日期 + 操作者 -->
+              <view class="record-footer">
+                <view class="footer-left">
+                  <text class="date-text">{{record.preventionDate}}</text>
+                  <text class="operator-text" wx:if="{{record.operatorName}}">{{record.operatorName}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ========== 疫苗详情底部弹窗 ========== -->
+  <!-- 遮罩层 -->
+  <view 
+    class="detail-mask" 
+    wx:if="{{showDetailDialog}}"
+    bind:tap="closeDetailDialog"
+    catchtouchmove="preventTouchMove"
+  ></view>
+  
+  <!-- 弹窗内容 -->
+  <view class="detail-popup {{showDetailDialog ? 'show' : ''}}" wx:if="{{showDetailDialog && selectedRecord}}">
+    <!-- 标题栏 -->
+    <view class="popup-header">
+      <text class="popup-title">疫苗详情</text>
+      <view class="close-btn" bind:tap="closeDetailDialog">
+        <text class="icon-close">×</text>
+      </view>
+    </view>
+    
+    <!-- 内容区域 -->
+    <scroll-view class="popup-content" scroll-y>
+      <!-- 基本信息 -->
+      <view class="detail-section">
+        <view class="section-title">基本信息</view>
+        <view class="info-card">
+          <view class="info-row">
+            <text class="info-label">疫苗名称</text>
+            <text class="info-value">{{selectedRecord.vaccineInfo.name || '未知'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">接种批次</text>
+            <text class="info-value">{{selectedRecord.batchNumber || selectedRecord.batchId}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">接种日期</text>
+            <text class="info-value">{{selectedRecord.preventionDate}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedRecord.vaccineInfo.manufacturer}}">
+            <text class="info-label">生产厂家</text>
+            <text class="info-value">{{selectedRecord.vaccineInfo.manufacturer}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedRecord.vaccineInfo.batchNumber}}">
+            <text class="info-label">疫苗批号</text>
+            <text class="info-value">{{selectedRecord.vaccineInfo.batchNumber}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 接种信息 -->
+      <view class="detail-section">
+        <view class="section-title">接种信息</view>
+        <view class="vaccine-summary">
+          <view class="vaccine-stat-item primary">
+            <text class="stat-label">接种数量</text>
+            <text class="stat-value">{{selectedRecord.vaccineInfo.count || 0}} 只</text>
+          </view>
+          <view class="vaccine-stat-item success" wx:if="{{selectedRecord.vaccineInfo.dosage}}">
+            <text class="stat-label">接种剂量</text>
+            <text class="stat-value">{{selectedRecord.vaccineInfo.dosage}}</text>
+          </view>
+          <view class="vaccine-stat-item primary" wx:if="{{selectedRecord.currentStock > 0}}">
+            <text class="stat-label">存栏数</text>
+            <text class="stat-value">{{selectedRecord.currentStock}} 只</text>
+          </view>
+          <view class="vaccine-stat-item success" wx:if="{{selectedRecord.currentStock > 0 && selectedRecord.vaccinationRate}}">
+            <text class="stat-label">防疫用药</text>
+            <text class="stat-value">{{selectedRecord.vaccinationRate}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 费用信息 -->
+      <view class="detail-section" wx:if="{{selectedRecord.costInfo && selectedRecord.formattedTotalCost !== '0.00'}}">
+        <view class="section-title">费用信息</view>
+        <view class="cost-grid">
+          <view class="cost-item">
+            <text class="cost-label">总费用</text>
+            <text class="cost-value primary">¥{{selectedRecord.formattedTotalCost}}</text>
+          </view>
+          <view class="cost-item" wx:if="{{selectedRecord.formattedVaccineCost !== '0.00'}}">
+            <text class="cost-label">疫苗费用</text>
+            <text class="cost-value">¥{{selectedRecord.formattedVaccineCost}}</text>
+          </view>
+          <view class="cost-item" wx:if="{{selectedRecord.formattedLaborCost !== '0.00'}}">
+            <text class="cost-label">人工费用</text>
+            <text class="cost-value">¥{{selectedRecord.formattedLaborCost}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 兽医信息 -->
+      <view class="detail-section" wx:if="{{selectedRecord.veterinarianInfo && selectedRecord.veterinarianInfo.name}}">
+        <view class="section-title">兽医信息</view>
+        <view class="info-card">
+          <view class="info-row">
+            <text class="info-label">执行兽医</text>
+            <text class="info-value">{{selectedRecord.veterinarianInfo.name}}</text>
+          </view>
+          <view class="info-row" wx:if="{{selectedRecord.veterinarianInfo.contact}}">
+            <text class="info-label">联系电话</text>
+            <text class="info-value">{{selectedRecord.veterinarianInfo.contact}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 备注说明 -->
+      <view class="detail-section" wx:if="{{selectedRecord.notes}}">
+        <view class="section-title">备注说明</view>
+        <view class="description-card">
+          <text class="description-text">{{selectedRecord.notes}}</text>
+        </view>
+      </view>
+
+      <!-- 疫苗追踪 -->
+      <view class="detail-section">
+        <view class="section-title">疫苗追踪</view>
+        <view class="tracking-actions">
+          <view class="tracking-button tracking-button-warning" bind:tap="onTrackAbnormal">
+            <text class="button-text">异常用药</text>
+          </view>
+          <view class="tracking-button tracking-button-danger" bind:tap="onTrackDeath">
+            <text class="button-text">记录死亡</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- ========== 受影响数量输入对话框 ========== -->
+  <view class="count-input-mask" wx:if="{{showCountInputDialog}}" bind:tap="onCancelCountInput" catchtouchmove="preventTouchMove"></view>
+  <view class="count-input-popup {{showCountInputDialog ? 'show' : ''}}" wx:if="{{showCountInputDialog}}">
+    <view class="count-input-header">
+      <text class="count-input-title">{{countInputType === 'abnormal' ? '异常用药' : '记录死亡'}}</text>
+      <view class="count-input-close" bind:tap="onCancelCountInput">×</view>
+    </view>
+    <view class="count-input-content">
+      <view class="count-input-hint">
+        <text>请输入受影响的数量（接种数量：{{selectedRecord.vaccineInfo.count || 0}} 只）</text>
+      </view>
+      <view class="count-input-field">
+        <input 
+          type="number" 
+          class="count-input"
+          placeholder="请输入数量"
+          value="{{countInputValue}}"
+          bindinput="onCountInput"
+          maxlength="10"
+        />
+        <text class="count-input-unit">只</text>
+      </view>
+    </view>
+    <view class="count-input-footer">
+      <view class="count-input-btn count-input-btn-cancel" bind:tap="onCancelCountInput">取消</view>
+      <view class="count-input-btn count-input-btn-confirm" bind:tap="onConfirmCountInput">确认</view>
+    </view>
+  </view>
+</view>
+

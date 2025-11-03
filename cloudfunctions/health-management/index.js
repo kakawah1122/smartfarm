@@ -3860,6 +3860,11 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
     const treatment = treatmentRecord.data
     const actualDiedCount = diedCount || treatment.initialCount
     
+    // ✅ 修复：计算每只动物的摊销治疗成本（用于财务损失计算）
+    const totalTreated = treatment.outcome?.totalTreated || treatment.initialCount || 1
+    const treatmentCostPerAnimal = totalTreated > 0 ? (treatment.totalCost || 0) / totalTreated : 0
+    const amortizedTreatmentCost = treatmentCostPerAnimal * actualDiedCount
+    
     // ✅ 2. 查询是否已存在该治疗记录的死亡记录
     const existingDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({
@@ -3897,7 +3902,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       
       if (batch) {
         const avgCost = await calculateBatchCost({ batchId: batchDocId }, wxContext)
-        costPerAnimal = avgCost.data?.averageCost || 0
+        costPerAnimal = parseFloat(avgCost.data?.avgCost || avgCost.data?.avgBreedingCost || 0)
       }
     } catch (costError) {
       console.error('计算财务损失失败:', costError.message)
@@ -3917,11 +3922,11 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       const newDeathCount = oldDeathCount + actualDiedCount
       
       const oldTotalLoss = existingRecord.financialLoss?.totalLoss || 0
-      const incrementLoss = (costPerAnimal * actualDiedCount) + (treatment.totalCost || 0)
+      const incrementLoss = (costPerAnimal * actualDiedCount) + amortizedTreatmentCost
       const newTotalLoss = oldTotalLoss + incrementLoss
       
       const oldTreatmentCost = existingRecord.financialLoss?.treatmentCost || 0
-      const newTreatmentCost = oldTreatmentCost + (treatment.totalCost || 0)
+      const newTreatmentCost = oldTreatmentCost + amortizedTreatmentCost
       
       await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).doc(deathRecordId).update({
         data: {
@@ -3937,7 +3942,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       
     } else {
       // 不存在，创建新记录
-      const totalLoss = (costPerAnimal * actualDiedCount) + (treatment.totalCost || 0)
+      const totalLoss = (costPerAnimal * actualDiedCount) + amortizedTreatmentCost
       
       const deathRecordData = {
         batchId: treatment.batchId,
@@ -3957,7 +3962,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
         financialLoss: {
           costPerAnimal,
           totalLoss,
-          treatmentCost: treatment.totalCost || 0,
+          treatmentCost: amortizedTreatmentCost,
           currency: 'CNY'
         },
         createdAt: new Date(),
@@ -3989,7 +3994,8 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
     })
     
     // 5. 调用财务云函数记录损失（仅新增的损失）
-    const incrementLoss = (costPerAnimal * actualDiedCount) + (treatment.totalCost || 0)
+    // ✅ 修复：使用已计算的摊销治疗成本
+    const incrementLoss = (costPerAnimal * actualDiedCount) + amortizedTreatmentCost
     if (incrementLoss > 0) {
       try {
         await cloud.callFunction({
@@ -4000,7 +4006,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
             batchId: treatment.batchId,
             deathCount: actualDiedCount,
             totalLoss: incrementLoss,
-            treatmentCost: treatment.totalCost || 0,
+            treatmentCost: amortizedTreatmentCost,
             description: `死亡损失 - ${treatment.diagnosis} - ${actualDiedCount}只`
           }
         })

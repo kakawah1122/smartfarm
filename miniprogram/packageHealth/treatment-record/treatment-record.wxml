@@ -17,7 +17,7 @@
         <view class="info-card">
           <view class="info-row">
             <text class="info-label">治疗批次</text>
-            <text class="info-value">{{formData.batchId}}</text>
+            <text class="info-value">{{formData.batchNumber || formData.batchId}}</text>
           </view>
           <view class="info-row">
             <text class="info-label">诊断结果</text>
@@ -115,7 +115,7 @@
       <view class="form-item">
         <view class="form-label required">治疗批次</view>
         <t-cell 
-          title="{{formData.batchId || '请选择治疗批次'}}"
+          title="{{formData.batchNumber || formData.batchId || '请选择治疗批次'}}"
           arrow
           bind:click="showBatchSelector"
           t-class="{{formErrors.batchId ? 'form-cell-error' : ''}}"
@@ -248,7 +248,7 @@
           bindchange="onInitialMedicationChange"
         >
           <view class="native-picker">
-            {{formData.treatmentType === 'isolation' ? '请选择营养品' : '请选择药品或营养品'}}
+            {{formData.treatmentType === 'medication' ? '请选择药品或营养品' : '请选择营养品'}}
             <text class="picker-arrow">▼</text>
           </view>
         </picker>

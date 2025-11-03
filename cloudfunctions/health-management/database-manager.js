@@ -9,6 +9,32 @@ class DatabaseManager {
     this._ = db.command
   }
 
+  // ============ 通用工具方法 ============
+  
+  // 构建未删除条件（用于查询条件）
+  // @param {boolean} filterDeleted - true表示过滤已删除记录（默认），false表示包含所有记录
+  buildNotDeletedCondition(filterDeleted = true) {
+    try {
+      if (filterDeleted) {
+        // 过滤已删除的记录（只查询未删除的）
+        // ✅ 确保 this._ 已正确初始化
+        if (!this._) {
+          console.error('[DatabaseManager] db.command 未初始化')
+          return {}
+        }
+        return {
+          isDeleted: this._.neq(true)
+        }
+      }
+      // 包含所有记录（包括已删除的），返回空对象
+      return {}
+    } catch (error) {
+      console.error('[DatabaseManager] buildNotDeletedCondition 错误:', error)
+      // 发生错误时返回空对象，避免查询失败
+      return {}
+    }
+  }
+
   // ============ 用户管理相关操作 ============
   
   // 获取用户信息

@@ -35,7 +35,7 @@
             size="small" 
             class="type-tag"
           >
-            {{item.treatmentType === 'medication' ? '药物治疗' : '隔离观察'}}
+            {{item.treatmentType === 'medication' ? '药物治疗' : '观察记录'}}
           </t-tag>
         </view>
       </view>
@@ -60,7 +60,7 @@
         <view class="info-row medication-row" wx:if="{{item.medications && item.medications.length > 0}}">
           <text class="info-label">用药：</text>
           <text class="info-value medication-value">
-            <block wx:for="{{item.medications}}" wx:for-item="med" wx:key="materialId">{{med.name}}{{med.quantity}}{{med.unit}}<text wx:if="{{index < item.medications.length - 1}}">、</text></block>
+            <text wx:for="{{item.medications}}" wx:for-item="med" wx:key="materialId">{{med.name}}{{med.quantity}}{{med.unit}}<text wx:if="{{index < item.medications.length - 1}}">、</text></text>
           </text>
         </view>
 

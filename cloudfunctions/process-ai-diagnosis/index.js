@@ -5,6 +5,7 @@
  */
 
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -28,7 +29,7 @@ exports.main = async (event, context) => {
     }
     
     // ✨ 模式2：自动扫描处理所有待处理任务（定时触发器）
-    const tasksResult = await db.collection('health_ai_diagnosis')
+    const tasksResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({
         status: 'processing',
         createdAt: db.command.gte(new Date(Date.now() - 10 * 60 * 1000)) // 只处理10分钟内的任务
@@ -165,7 +166,7 @@ async function processTask(diagnosisId) {
   try {
     
     // 1. 从数据库获取任务
-    const taskResult = await db.collection('health_ai_diagnosis')
+    const taskResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({ _id: diagnosisId })
       .get()
     
@@ -239,7 +240,7 @@ async function processTask(diagnosisId) {
     }
     
     // 5. 更新数据库中的诊断任务为completed状态
-    const updateResult = await db.collection('health_ai_diagnosis')
+    const updateResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({ _id: diagnosisId })
       .update({
         data: {
@@ -277,7 +278,7 @@ async function processTask(diagnosisId) {
     
     try {
       // 更新为失败状态
-      await db.collection('health_ai_diagnosis')
+      await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
         .where({ _id: diagnosisId })
         .update({
           data: {

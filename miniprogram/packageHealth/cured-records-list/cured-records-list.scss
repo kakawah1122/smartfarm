@@ -7,7 +7,7 @@
 }
 
 .page-content {
-  padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
+  padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏总高度 + 适当间距 */
   padding-bottom: 40rpx;
 }
 
@@ -343,10 +343,11 @@
   .section-title {
     font-size: 28rpx;
     font-weight: 600;
-    color: #333;
+    color: #0052d9;
     margin-bottom: 16rpx;
-    padding-left: 16rpx;
-    border-left: 6rpx solid #0052d9;
+    padding: 12rpx 16rpx;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+    border-radius: 8rpx;
     word-break: break-all;
   }
 }

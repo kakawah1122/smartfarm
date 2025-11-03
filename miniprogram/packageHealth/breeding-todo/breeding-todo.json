@@ -12,7 +12,6 @@
     "t-tag": "tdesign-miniprogram/tag/tag",
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-checkbox": "tdesign-miniprogram/checkbox/checkbox",
     "t-dialog": "tdesign-miniprogram/dialog/dialog",
     "t-overlay": "tdesign-miniprogram/overlay/overlay",
     "t-loading": "tdesign-miniprogram/loading/loading",

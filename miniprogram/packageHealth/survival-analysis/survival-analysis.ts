@@ -34,7 +34,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
     // 影响因素分析
     factors: [
-      { name: '疫苗接种率', impact: 'high', value: 96.8, correlation: 0.85 },
+      { name: '防疫用药', impact: 'high', value: 96.8, correlation: 0.85 },
       { name: '环境消毒频率', impact: 'medium', value: 12, correlation: 0.73 },
       { name: '饲料质量', impact: 'high', value: 95, correlation: 0.79 },
       { name: '密度控制', impact: 'medium', value: 88, correlation: 0.65 }

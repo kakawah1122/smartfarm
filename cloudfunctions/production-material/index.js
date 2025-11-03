@@ -1,6 +1,7 @@
 // cloudfunctions/production-material/index.js
 // 物料管理云函数
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -131,7 +132,7 @@ async function listMaterials(event, wxContext) {
     isActive = true 
   } = event
   
-  let query = db.collection('prod_materials')
+  let query = db.collection(COLLECTIONS.PROD_MATERIALS)
   
   // 构建查询条件
   const where = { isActive }
@@ -183,7 +184,7 @@ async function createMaterial(event, wxContext) {
   }
   
   // 检查物料名称是否重复
-  const existingMaterial = await db.collection('prod_materials')
+  const existingMaterial = await db.collection(COLLECTIONS.PROD_MATERIALS)
     .where({ 
       name: materialData.name,
       category: materialData.category,
@@ -214,7 +215,7 @@ async function createMaterial(event, wxContext) {
     updateTime: now
   }
   
-  const result = await db.collection('prod_materials').add({
+  const result = await db.collection(COLLECTIONS.PROD_MATERIALS).add({
     data: newMaterial
   })
   
@@ -238,7 +239,7 @@ async function updateMaterial(event, wxContext) {
   }
   
   // 检查物料是否存在
-  const existingMaterial = await db.collection('prod_materials').doc(materialId).get()
+  const existingMaterial = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(materialId).get()
   
   if (!existingMaterial.data.length) {
     throw new Error('物料不存在')
@@ -261,7 +262,7 @@ async function updateMaterial(event, wxContext) {
     }
   })
   
-  await db.collection('prod_materials').doc(materialId).update({
+  await db.collection(COLLECTIONS.PROD_MATERIALS).doc(materialId).update({
     data: updateFields
   })
   
@@ -280,7 +281,7 @@ async function deleteMaterial(event, wxContext) {
   }
   
   // 检查是否有库存
-  const material = await db.collection('prod_materials').doc(materialId).get()
+  const material = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(materialId).get()
   
   if (!material.data.length) {
     throw new Error('物料不存在')
@@ -291,7 +292,7 @@ async function deleteMaterial(event, wxContext) {
   }
   
   // 软删除
-  await db.collection('prod_materials').doc(materialId).update({
+  await db.collection(COLLECTIONS.PROD_MATERIALS).doc(materialId).update({
     data: {
       isActive: false,
       updateTime: new Date()
@@ -322,7 +323,7 @@ async function listMaterialRecords(event, wxContext) {
   
   try {
     // 1. 查询物料记录（采购和领用）
-    let materialQuery = db.collection('prod_material_records')
+    let materialQuery = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
     const materialWhere = {}
     
     if (type) {
@@ -350,7 +351,8 @@ async function listMaterialRecords(event, wxContext) {
     // 2. 查询饲料投喂记录
     let feedRecords = { data: [] }
     if (includeFeedRecords) {
-      let feedQuery = db.collection('feed_usage_records')
+      // TODO: 已修复 - feed_usage_records 已添加到标准集合列表
+      let feedQuery = db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
       const feedWhere = {}
       
       if (materialId) {
@@ -380,7 +382,7 @@ async function listMaterialRecords(event, wxContext) {
     const materials = {}
     
     if (allMaterialIds.length > 0) {
-      const materialQuery = await db.collection('prod_materials')
+      const materialQuery = await db.collection(COLLECTIONS.PROD_MATERIALS)
         .where({ _id: _.in(allMaterialIds) })
         .get()
       
@@ -394,7 +396,7 @@ async function listMaterialRecords(event, wxContext) {
     const batches = {}
     
     if (batchIds.length > 0) {
-      const batchQuery = await db.collection('prod_batch_entries')
+      const batchQuery = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .where({ _id: _.in(batchIds) })
         .get()
       
@@ -408,7 +410,7 @@ async function listMaterialRecords(event, wxContext) {
       let operator = record.operator
       if (!operator || operator === '未知' || operator === '系统用户') {
         try {
-          const user = await db.collection('wx_users').where({ _openid: record.userId }).get()
+          const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: record.userId }).get()
           if (user.data && user.data.length > 0) {
             const u = user.data[0]
             operator = u.name || u.nickname || u.nickName || operator || '未知'
@@ -516,7 +518,7 @@ async function createMaterialRecord(event, wxContext) {
   
   try {
     // 首先尝试通过ID直接查找
-    material = await db.collection('prod_materials').doc(recordData.materialId).get()
+    material = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(recordData.materialId).get()
     
     if (material.data) {
       materialInfo = material.data
@@ -527,7 +529,7 @@ async function createMaterialRecord(event, wxContext) {
   
   // 如果通过ID查找失败，尝试通过遍历查找
   if (!materialInfo) {
-    const allMaterials = await db.collection('prod_materials').where({ isActive: true }).get()
+    const allMaterials = await db.collection(COLLECTIONS.PROD_MATERIALS).where({ isActive: true }).get()
     
     // 尝试通过ID匹配找到正确的物料
     const foundMaterial = allMaterials.data.find(m => m._id === recordData.materialId)
@@ -552,7 +554,7 @@ async function createMaterialRecord(event, wxContext) {
     // 解析当前用户姓名
     let operatorName = '未知'
     try {
-      const res = await db.collection('wx_users').where({ _openid: wxContext.OPENID }).get()
+      const res = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: wxContext.OPENID }).get()
       if (res.data && res.data.length > 0) {
         const u = res.data[0]
         operatorName = u.name || u.nickname || u.nickName || '未知'
@@ -578,7 +580,7 @@ async function createMaterialRecord(event, wxContext) {
     }
     
     // 添加记录
-    const recordResult = await transaction.collection('prod_material_records').add({
+    const recordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
       data: newRecord
     })
     
@@ -586,7 +588,7 @@ async function createMaterialRecord(event, wxContext) {
     const stockChange = recordData.type === 'purchase' ? recordData.quantity : -recordData.quantity
     const newStock = materialInfo.currentStock + stockChange
     
-    await transaction.collection('prod_materials').doc(recordData.materialId).update({
+    await transaction.collection(COLLECTIONS.PROD_MATERIALS).doc(recordData.materialId).update({
       data: {
         currentStock: newStock,
         updateTime: now
@@ -605,7 +607,7 @@ async function createMaterialRecord(event, wxContext) {
       operationTime: now
     }
     
-    await transaction.collection('prod_inventory_logs').add({
+    await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
       data: inventoryLog
     })
     
@@ -631,7 +633,7 @@ async function updateMaterialRecord(event, wxContext) {
   }
   
   // 检查记录是否存在
-  const existingRecord = await db.collection('prod_material_records').doc(recordId).get()
+  const existingRecord = await db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).doc(recordId).get()
   
   if (!existingRecord.data.length) {
     throw new Error('记录不存在')
@@ -642,7 +644,7 @@ async function updateMaterialRecord(event, wxContext) {
   // 若更新operator，强制替换为当前用户名
   if (updateData.operator !== undefined) {
     try {
-      const res = await db.collection('wx_users').where({ _openid: wxContext.OPENID }).get()
+      const res = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: wxContext.OPENID }).get()
       if (res.data && res.data.length > 0) {
         const u = res.data[0]
         updateData.operator = u.name || u.nickname || u.nickName || '未知'
@@ -663,7 +665,7 @@ async function updateMaterialRecord(event, wxContext) {
     updateFields.notes = updateData.notes
   }
   
-  await db.collection('prod_material_records').doc(recordId).update({
+  await db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).doc(recordId).update({
     data: updateFields
   })
   
@@ -682,7 +684,7 @@ async function deleteMaterialRecord(event, wxContext) {
   }
   
   // 检查记录是否存在
-  const record = await db.collection('prod_material_records').doc(recordId).get()
+  const record = await db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).doc(recordId).get()
   
   if (!record.data.length) {
     throw new Error('记录不存在')
@@ -691,7 +693,7 @@ async function deleteMaterialRecord(event, wxContext) {
   const recordData = record.data[0]
   
   // 获取物料信息
-  const material = await db.collection('prod_materials').doc(recordData.materialId).get()
+  const material = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(recordData.materialId).get()
   
   if (!material.data.length) {
     throw new Error('关联物料不存在')
@@ -700,14 +702,14 @@ async function deleteMaterialRecord(event, wxContext) {
   // 开始事务处理
   return await db.runTransaction(async transaction => {
     // 删除记录
-    await transaction.collection('prod_material_records').doc(recordId).remove()
+    await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).doc(recordId).remove()
     
     // 恢复库存
     const materialInfo = material.data[0]
     const stockChange = recordData.type === 'purchase' ? -recordData.quantity : recordData.quantity
     const newStock = materialInfo.currentStock + stockChange
     
-    await transaction.collection('prod_materials').doc(recordData.materialId).update({
+    await transaction.collection(COLLECTIONS.PROD_MATERIALS).doc(recordData.materialId).update({
       data: {
         currentStock: Math.max(0, newStock),  // 确保库存不为负
         updateTime: new Date()
@@ -715,12 +717,12 @@ async function deleteMaterialRecord(event, wxContext) {
     })
     
     // 删除相关库存流水
-    const logs = await transaction.collection('prod_inventory_logs')
+    const logs = await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS)
       .where({ recordId })
       .get()
     
     for (const log of logs.data) {
-      await transaction.collection('prod_inventory_logs').doc(log._id).remove()
+      await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).doc(log._id).remove()
     }
     
     return {
@@ -736,7 +738,7 @@ async function deleteMaterialRecord(event, wxContext) {
 
 // 获取库存统计
 async function getInventoryStats(event, wxContext) {
-  const materials = await db.collection('prod_materials')
+  const materials = await db.collection(COLLECTIONS.PROD_MATERIALS)
     .where({ isActive: true })
     .get()
   
@@ -798,7 +800,7 @@ async function getInventoryLogs(event, wxContext) {
     dateRange = null 
   } = event
   
-  let query = db.collection('prod_inventory_logs')
+  let query = db.collection(COLLECTIONS.PROD_INVENTORY_LOGS)
   
   // 构建查询条件
   const where = {}
@@ -841,7 +843,7 @@ async function getInventoryLogs(event, wxContext) {
 
 // 获取低库存预警
 async function getLowStockAlert(event, wxContext) {
-  const materials = await db.collection('prod_materials')
+  const materials = await db.collection(COLLECTIONS.PROD_MATERIALS)
     .where({ 
       isActive: true,
       currentStock: _.lte(db.command.field('safetyStock'))
@@ -864,7 +866,7 @@ async function getLowStockAlert(event, wxContext) {
 async function getUsageAnalysis(event, wxContext) {
   const { dateRange, materialId } = event
   
-  let query = db.collection('prod_material_records').where({ type: 'use' })
+  let query = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).where({ type: 'use' })
   
   if (materialId) {
     query = query.where({ materialId })
@@ -927,7 +929,7 @@ async function getUsageAnalysis(event, wxContext) {
 async function getMaterialStats(event, wxContext) {
   const { dateRange } = event
   
-  let recordQuery = db.collection('prod_material_records')
+  let recordQuery = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
   
   if (dateRange && dateRange.start && dateRange.end) {
     recordQuery = recordQuery.where({
@@ -999,7 +1001,7 @@ async function purchaseInbound(event, wxContext) {
       let material = null
       
       // 1. 查找现有物料
-      const existingMaterials = await transaction.collection('prod_materials')
+      const existingMaterials = await transaction.collection(COLLECTIONS.PROD_MATERIALS)
         .where({ 
           name: materialData.name,
           category: materialData.category,
@@ -1031,7 +1033,7 @@ async function purchaseInbound(event, wxContext) {
           updateTime: now
         }
         
-        const materialResult = await transaction.collection('prod_materials').add({
+        const materialResult = await transaction.collection(COLLECTIONS.PROD_MATERIALS).add({
           data: newMaterial
         })
         
@@ -1064,13 +1066,13 @@ async function purchaseInbound(event, wxContext) {
         updateTime: now
       }
       
-      const recordResult = await transaction.collection('prod_material_records').add({
+      const recordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
         data: newRecord
       })
       
       // 4. 更新库存
       const newStock = material.currentStock + quantity
-      await transaction.collection('prod_materials').doc(materialId).update({
+      await transaction.collection(COLLECTIONS.PROD_MATERIALS).doc(materialId).update({
         data: {
           currentStock: newStock,
           unitPrice: unitPrice, // 更新最新单价
@@ -1091,7 +1093,7 @@ async function purchaseInbound(event, wxContext) {
         operationTime: now
       }
       
-      await transaction.collection('prod_inventory_logs').add({
+      await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
         data: inventoryLog
       })
       
@@ -1127,9 +1129,9 @@ async function getQuickStats(event, wxContext) {
     // 并行查询以提高性能
     const [recordsCount, recentRecords] = await Promise.all([
       // 获取总记录数
-      db.collection('prod_material_records').count(),
+      db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).count(),
       // 获取最新的几条记录用于预览
-      db.collection('prod_material_records')
+      db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
         .orderBy('createTime', 'desc')
         .limit(3)
         .get()
@@ -1148,7 +1150,7 @@ async function getQuickStats(event, wxContext) {
     
     // 按类型统计（可选）
     if (recordsCount.total > 0) {
-      const typeStats = await db.collection('prod_material_records')
+      const typeStats = await db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
         .aggregate()
         .group({
           _id: '$type',
@@ -1192,7 +1194,7 @@ async function getFinancialStats(event, wxContext) {
       groupBy = 'month' // 'month', 'week', 'day'
     } = event
     
-    let query = db.collection('prod_material_records')
+    let query = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
     
     // 构建查询条件
     const where = {}
@@ -1381,7 +1383,7 @@ function getMostActiveCategory(purchaseStats, useStats) {
 async function getCurrentStockCount(batchId, recordDate) {
   try {
     // 1. 查询批次入栏数量
-    const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+    const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
     
     if (!batchEntry.data) {
       throw new Error('批次不存在')
@@ -1390,11 +1392,11 @@ async function getCurrentStockCount(batchId, recordDate) {
     const initialQuantity = batchEntry.data.quantity || 0
     
     // 2. 查询截至recordDate的累计死亡数
-    const deathRecords = await db.collection('health_death_records')
+    const deathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({
         batchId: batchId,
         deathDate: _.lte(recordDate),
-        isDeleted: _.neq(true)  // 排除已删除的记录
+        isDeleted: false  // ✅ 使用 false 替代 neq(true)，索引性能最优
       })
       .get()
     
@@ -1404,11 +1406,11 @@ async function getCurrentStockCount(batchId, recordDate) {
     }, 0)
     
     // 3. 查询截至recordDate的出栏数（如果有）
-    const exitRecords = await db.collection('prod_batch_exits')
+    const exitRecords = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({
         batchId: batchId,
         exitDate: _.lte(recordDate),
-        isDeleted: _.neq(true)  // 排除已删除的记录
+        isDeleted: false  // ✅ 使用 false 替代 neq(true)，索引性能最优
       })
       .get()
     
@@ -1473,7 +1475,7 @@ async function recordFeedUsage(event, wxContext) {
       const recordDate = feedData.recordDate || now.toISOString().split('T')[0]
       
       // 1. 获取批次信息
-      const batchEntry = await transaction.collection('prod_batch_entries').doc(feedData.batchId).get()
+      const batchEntry = await transaction.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(feedData.batchId).get()
       if (!batchEntry.data) {
         throw new Error('批次不存在')
       }
@@ -1487,7 +1489,7 @@ async function recordFeedUsage(event, wxContext) {
       }
       
       // 3. 获取饲料信息
-      const material = await transaction.collection('prod_materials').doc(feedData.materialId).get()
+      const material = await transaction.collection(COLLECTIONS.PROD_MATERIALS).doc(feedData.materialId).get()
       if (!material.data) {
         throw new Error('饲料不存在')
       }
@@ -1510,7 +1512,7 @@ async function recordFeedUsage(event, wxContext) {
       // 6. 获取操作员信息
       let operatorName = feedData.operator || '未知'
       try {
-        const user = await db.collection('wx_users').where({ _openid: wxContext.OPENID }).get()
+        const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: wxContext.OPENID }).get()
         if (user.data && user.data.length > 0) {
           const u = user.data[0]
           operatorName = u.name || u.nickname || u.nickName || operatorName
@@ -1524,7 +1526,7 @@ async function recordFeedUsage(event, wxContext) {
       
       // 8. 扣减饲料库存
       const newStock = materialInfo.currentStock - quantity
-      await transaction.collection('prod_materials').doc(feedData.materialId).update({
+      await transaction.collection(COLLECTIONS.PROD_MATERIALS).doc(feedData.materialId).update({
         data: {
           currentStock: newStock,
           updateTime: now
@@ -1532,7 +1534,7 @@ async function recordFeedUsage(event, wxContext) {
       })
       
       // 9. 记录库存变动日志
-      await transaction.collection('prod_inventory_logs').add({
+      await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
         data: {
           materialId: feedData.materialId,
           materialName: materialInfo.name,
@@ -1573,7 +1575,8 @@ async function recordFeedUsage(event, wxContext) {
         updateTime: now
       }
       
-      const result = await transaction.collection('feed_usage_records').add({
+      // TODO: 已修复 - feed_usage_records 已添加到标准集合列表
+      const result = await transaction.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS).add({
         data: feedRecord
       })
       
@@ -1607,7 +1610,7 @@ async function listFeedUsage(event, wxContext) {
     dateRange = null
   } = event
   
-  let query = db.collection('feed_usage_records')
+  let query = db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
   
   // 构建查询条件
   const where = {}
@@ -1663,7 +1666,7 @@ async function getBatchFeedCost(event, wxContext) {
   
   try {
     // 1. 获取批次信息
-    const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+    const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
     if (!batchEntry.data) {
       throw new Error('批次不存在')
     }
@@ -1674,7 +1677,7 @@ async function getBatchFeedCost(event, wxContext) {
     const stockInfo = await getCurrentStockCount(batchId, today)
     
     // 3. 获取所有投喂记录
-    const feedRecords = await db.collection('feed_usage_records')
+    const feedRecords = await db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
       .where({ batchId: batchId })
       .orderBy('recordDate', 'asc')
       .get()
@@ -1763,7 +1766,7 @@ async function getFeedCostAnalysis(event, wxContext) {
   } = event
   
   try {
-    let query = db.collection('feed_usage_records')
+    let query = db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
     const where = {}
     
     // 构建查询条件
@@ -1950,7 +1953,7 @@ async function updateFeedUsage(event, wxContext) {
   }
   
   // 检查记录是否存在
-  const existingRecord = await db.collection('feed_usage_records').doc(recordId).get()
+  const existingRecord = await db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS).doc(recordId).get()
   
   if (!existingRecord.data) {
     throw new Error('记录不存在')
@@ -1965,7 +1968,7 @@ async function updateFeedUsage(event, wxContext) {
     updateFields.notes = updateData.notes
   }
   
-  await db.collection('feed_usage_records').doc(recordId).update({
+  await db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS).doc(recordId).update({
     data: updateFields
   })
   
@@ -1986,7 +1989,7 @@ async function deleteFeedUsage(event, wxContext) {
   try {
     return await db.runTransaction(async transaction => {
       // 1. 检查记录是否存在
-      const record = await transaction.collection('feed_usage_records').doc(recordId).get()
+      const record = await transaction.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS).doc(recordId).get()
       
       if (!record.data) {
         throw new Error('记录不存在')
@@ -1995,7 +1998,7 @@ async function deleteFeedUsage(event, wxContext) {
       const recordData = record.data
       
       // 2. 获取饲料信息
-      const material = await transaction.collection('prod_materials').doc(recordData.materialId).get()
+      const material = await transaction.collection(COLLECTIONS.PROD_MATERIALS).doc(recordData.materialId).get()
       
       if (!material.data) {
         throw new Error('关联的饲料不存在')
@@ -2006,7 +2009,7 @@ async function deleteFeedUsage(event, wxContext) {
       
       // 3. 回退库存
       const newStock = materialInfo.currentStock + recordData.quantity
-      await transaction.collection('prod_materials').doc(recordData.materialId).update({
+      await transaction.collection(COLLECTIONS.PROD_MATERIALS).doc(recordData.materialId).update({
         data: {
           currentStock: newStock,
           updateTime: now
@@ -2014,7 +2017,7 @@ async function deleteFeedUsage(event, wxContext) {
       })
       
       // 4. 记录库存变动日志
-      await transaction.collection('prod_inventory_logs').add({
+      await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
         data: {
           materialId: recordData.materialId,
           materialName: recordData.materialName,
@@ -2034,7 +2037,7 @@ async function deleteFeedUsage(event, wxContext) {
       })
       
       // 5. 删除投喂记录
-      await transaction.collection('feed_usage_records').doc(recordId).remove()
+      await transaction.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS).doc(recordId).remove()
       
       return {
         success: true,

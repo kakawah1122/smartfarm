@@ -143,7 +143,7 @@
           </view>
           <view class="info-row">
             <text class="info-label">治疗类型</text>
-            <text class="info-value">{{selectedRecord.treatmentType === 'medication' ? '药物治疗' : '隔离观察'}}</text>
+            <text class="info-value">{{selectedRecord.treatmentType === 'medication' ? '药物治疗' : '观察记录'}}</text>
           </view>
           <view class="info-row">
             <text class="info-label">治疗日期</text>

@@ -29,9 +29,8 @@ const pageConfig = {
       remarks: ''
     } as PurchaseFormData,
     
-    // 日期选择器相关
-    showDate: false,
-    dateValue: '',
+    // 最大日期（今天）
+    maxDate: '',
     
     // 分类选择器相关
     categoryLabels: ['饲料', '营养品', '药品', '设备', '耗材', '其他'],
@@ -61,7 +60,7 @@ const pageConfig = {
     this.setData({
       'formData.purchaseDate': dateString,
       'formData.batchId': batchId,
-      dateValue: today.getTime()
+      maxDate: dateString
     })
   },
 
@@ -79,40 +78,14 @@ const pageConfig = {
     return `${year}-${month}-${day}`
   },
 
-  // 显示日期选择器
-  showDatePicker() {
-    this.setData({
-      showDate: true
-    })
-  },
-
-  // 隐藏日期选择器
-  hideDatePicker() {
-    this.setData({
-      showDate: false
-    })
-  },
-
-  // 日期选择变化
-  onDateChange(e: any) {
-    const { value } = e.detail
-    this.setData({
-      dateValue: value
-    })
-  },
-
-  // 确认选择日期
+  // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
   onDateConfirm(e: any) {
-    const { value } = e.detail
-    const date = new Date(value)
-    const dateString = this.formatDate(date)
+    const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     const batchId = this.generateBatchId(dateString)
     
     this.setData({
       'formData.purchaseDate': dateString,
-      'formData.batchId': batchId,
-      dateValue: value,
-      showDate: false
+      'formData.batchId': batchId
     })
   },
 
@@ -259,19 +232,19 @@ const pageConfig = {
       // 调用云函数提交物料数据
       await this.submitToCloudFunction(submitData)
 
-      // 提交成功
+      // 提交成功，快速返回上一页
       wx.showToast({
-        title: '采购入库记录提交成功',
+        title: '提交成功',
         icon: 'success',
-        duration: 2000
+        duration: 1500
       })
 
-      // 延迟返回上一页
+      // 缩短延迟，快速返回上一页
       setTimeout(() => {
         wx.navigateBack({
           delta: 1
         })
-      }, 2000)
+      }, 800)
 
     } catch (error) {
       wx.showToast({

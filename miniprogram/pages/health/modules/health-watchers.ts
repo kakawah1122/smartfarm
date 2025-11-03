@@ -66,7 +66,6 @@ export function startDataWatcher(
   manager.initTimer = setTimeout(() => {
     // ✅ 双重检查：在初始化前再次确认是否还处于活跃状态
     if (!manager.isActive) {
-      console.log('Watcher initialization cancelled - manager is not active')
       return
     }
 
@@ -75,7 +74,6 @@ export function startDataWatcher(
       try {
         // 最后一次检查活跃状态
         if (!manager.isActive) {
-          console.log(`Skipping ${collectionName} watcher - manager is not active`)
           return
         }
         
@@ -93,9 +91,7 @@ export function startDataWatcher(
               const errorMsg = err?.message || err?.errMsg || String(err)
               
               // 忽略已知的非致命错误
-              if (errorMsg.includes('CLOSED') || errorMsg.includes('closed')) {
-                console.log(`${collectionName} watcher closed normally`)
-              } else {
+              if (!(errorMsg.includes('CLOSED') || errorMsg.includes('closed'))) {
                 console.warn(`${collectionName} watcher error:`, errorMsg)
               }
               
@@ -110,9 +106,7 @@ export function startDataWatcher(
         const errorMsg = error?.message || error?.errMsg || String(error)
         
         // ✅ 静默处理已知的状态错误
-        if (errorMsg.includes('CLOSED') || errorMsg.includes('closed') || errorMsg.includes('initWatchFail')) {
-          console.log(`${collectionName} watcher init skipped - connection closed`)
-        } else {
+        if (!(errorMsg.includes('CLOSED') || errorMsg.includes('closed') || errorMsg.includes('initWatchFail'))) {
           console.warn(`Failed to init ${collectionName} watcher:`, errorMsg)
         }
         
@@ -160,8 +154,14 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
     try {
       watchers.healthRecordsWatcher.close()
     } catch (error: any) {
-      // 忽略 WebSocket 连接已断开的非致命错误
-      console.warn('Error closing healthRecordsWatcher:', error?.message)
+      // ✅ 静默处理已知的非致命错误（WebSocket 已断开等）
+      const errorMsg = error?.message || error?.errMsg || String(error || '')
+      // 只记录真正的异常错误，忽略已知的连接状态错误
+      if (!errorMsg.includes('websocket not connected') && 
+          !errorMsg.includes('not connected') &&
+          !errorMsg.includes('CLOSED')) {
+        console.warn('Error closing healthRecordsWatcher:', errorMsg)
+      }
     } finally {
       watchers.healthRecordsWatcher = null
     }
@@ -172,8 +172,14 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
     try {
       watchers.deathRecordsWatcher.close()
     } catch (error: any) {
-      // 忽略 WebSocket 连接已断开的非致命错误
-      console.warn('Error closing deathRecordsWatcher:', error?.message)
+      // ✅ 静默处理已知的非致命错误（WebSocket 已断开等）
+      const errorMsg = error?.message || error?.errMsg || String(error || '')
+      // 只记录真正的异常错误，忽略已知的连接状态错误
+      if (!errorMsg.includes('websocket not connected') && 
+          !errorMsg.includes('not connected') &&
+          !errorMsg.includes('CLOSED')) {
+        console.warn('Error closing deathRecordsWatcher:', errorMsg)
+      }
     } finally {
       watchers.deathRecordsWatcher = null
     }
@@ -184,8 +190,14 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
     try {
       watchers.treatmentRecordsWatcher.close()
     } catch (error: any) {
-      // 忽略 WebSocket 连接已断开的非致命错误
-      console.warn('Error closing treatmentRecordsWatcher:', error?.message)
+      // ✅ 静默处理已知的非致命错误（WebSocket 已断开等）
+      const errorMsg = error?.message || error?.errMsg || String(error || '')
+      // 只记录真正的异常错误，忽略已知的连接状态错误
+      if (!errorMsg.includes('websocket not connected') && 
+          !errorMsg.includes('not connected') &&
+          !errorMsg.includes('CLOSED')) {
+        console.warn('Error closing treatmentRecordsWatcher:', errorMsg)
+      }
     } finally {
       watchers.treatmentRecordsWatcher = null
     }

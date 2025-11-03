@@ -5,7 +5,7 @@
 
 .detail-content {
   padding: 20rpx;
-  padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
+  padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏总高度 + 适当间距 */
 }
 
 .loading-container {

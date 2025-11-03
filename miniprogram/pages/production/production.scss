@@ -1,7 +1,4 @@
 /* production.scss - TDesign原生设计规范 */
-page {
-  background-color: var(--td-bg-color-page, #f5f5f5);
-}
 
 .page-container {
   min-height: 100vh;
@@ -777,9 +774,8 @@ page {
       display: flex;
       gap: 16rpx;
       background: #f8faff;
-    }
     
-    .photo-actions ::deep .t-button {
+      .t-button {
       flex: 1;
       height: 72rpx;
       font-size: 26rpx;
@@ -788,6 +784,7 @@ page {
       align-items: center;
       justify-content: center;
       text-align: center;
+      }
     }
   }
 }
@@ -1110,33 +1107,39 @@ page {
 }
 
 .record-detail-content .info-row {
-  margin-bottom: 20rpx;
-  padding: 0 8rpx;
+  margin-bottom: 0 !important;
+  padding: 20rpx 8rpx;
+  display: flex !important;
   justify-content: space-between;
+  align-items: center !important;
   flex-wrap: nowrap;
   gap: 16rpx;
-  display: flex;
-  align-items: center;
+  border-bottom: 1rpx dashed var(--td-border-level-2-color, #e0e0e0);
+}
+
+.record-detail-content .info-row:last-child {
+  border-bottom: none;
 }
 
 .record-detail-content .info-label {
-  font-size: 26rpx;
-  color: #6c757d;
-  font-weight: 500;
-  min-width: 120rpx;
+  font-size: 22rpx !important;
+  color: #6c757d !important;
+  font-weight: 500 !important;
+  min-width: 120rpx !important;
   text-align: left;
   flex-shrink: 0;
 }
 
 .record-detail-content .info-value {
-  font-size: 28rpx;
-  color: #1a1a1a;
-  font-weight: 400;
+  font-size: 24rpx !important;
+  color: #1a1a1a !important;
+  font-weight: 400 !important;
   text-align: right;
   flex: 1;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
+  line-height: 1.5;
 }
 
 .status-value {
@@ -1150,4 +1153,93 @@ page {
   white-space: pre-wrap;
   line-height: 1.5;
   text-align: left !important;
+}
+
+/* ========== 弹窗优化样式 ========== */
+
+/* 弹窗内容容器 - 添加安全边距 */
+.popup-content-wrapper {
+  padding: 8rpx 24rpx 16rpx; /* 减少顶部间距，标题下方不需要太多空白 */
+}
+
+/* 信息卡片 - 卡片形式 */
+.info-section {
+  background: #ffffff;
+  border: 1rpx solid #e7e7e7;
+  border-radius: 16rpx;
+  padding: 32rpx 24rpx;
+  margin-bottom: 20rpx; /* 减少卡片之间的间距 */
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* 优化信息行样式 */
+.info-section .info-row {
+  margin-bottom: 0 !important;
+  padding: 20rpx 8rpx;
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center !important;
+  flex-wrap: nowrap;
+  gap: 16rpx;
+  border-bottom: 1rpx dashed var(--td-border-level-2-color, #e0e0e0);
+  
+  &:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+  
+  /* 优化字体大小 - 与健康管理任务详情保持一致 */
+  .info-label {
+    font-size: 22rpx !important;
+    color: #6c757d !important;
+    font-weight: 500 !important;
+    min-width: 120rpx !important;
+    text-align: left;
+    flex-shrink: 0;
+  }
+  
+  .info-value {
+    font-size: 24rpx !important;
+    color: #1a1a1a !important;
+    font-weight: 400 !important;
+    text-align: right;
+    flex: 1;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.5;
+  }
+}
+
+/* 状态标签居右对齐 */
+.info-section .status-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* 备注文本左对齐 */
+.info-section .note-text {
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  text-align: left !important;
+}
+
+/* 详情按钮区域 */
+.detail-actions {
+  margin-top: 20rpx; /* 减少顶部间距 */
+  padding: 0 24rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom)); /* 减少底部间距 */
+  
+  .t-button {
+    border-radius: 12rpx;
+    height: 88rpx;
+    font-size: 32rpx;
+    font-weight: 500;
+  }
 }

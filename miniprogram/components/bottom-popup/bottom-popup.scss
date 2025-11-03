@@ -18,9 +18,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 40rpx 40rpx 32rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-  background: #ffffff;
+  padding: 24rpx 32rpx 8rpx; /* 进一步减少底部内边距，避免标题下方空白过大 */
+  border-bottom: none; /* 移除边框线 */
+  background: transparent; /* 移除背景色 */
   border-radius: 32rpx 32rpx 0 0;
   position: sticky;
   top: 0;
@@ -28,28 +28,28 @@
 }
 
 .popup-title {
-  font-size: 36rpx;
+  font-size: 32rpx; /* 调整字体大小以适配新的高度 */
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.2;
 }
 
 .close-btn {
-  width: 64rpx;
-  height: 64rpx;
+  width: 56rpx; /* 调小关闭按钮以适配新标题高度 */
+  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
-  border-radius: 32rpx;
+  background: transparent; /* 移除背景色，保持简洁 */
+  border-radius: 28rpx;
   
   &:active {
-    background: #e9ecef;
+    background: rgba(0, 0, 0, 0.05); /* 点击时显示淡淡的背景 */
   }
 }
 
 .close-text {
-  font-size: 48rpx;
+  font-size: 40rpx; /* 调小关闭图标 */
   color: #6c757d;
   line-height: 1;
   font-weight: 300;
@@ -64,18 +64,13 @@
 
 /* 操作按钮 */
 .popup-actions {
-  border-top: 1rpx solid #f0f0f0;
   background: #ffffff;
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .action-buttons {
   display: flex;
   gap: 24rpx;
-  padding: 32rpx 40rpx;
+  padding: 24rpx 40rpx 40rpx;
 }
 
 .secondary-button {

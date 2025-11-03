@@ -64,14 +64,21 @@
           <text class="section-title">基础信息</text>
         </view>
         <view class="form-card">
-          <!-- 出栏日期 -->
-          <view class="form-item" bind:tap="showDatePicker">
-            <view class="item-label required">出栏日期</view>
-            <view class="item-input date-input">
-              <text class="date-text">{{formData.exitDate || '请选择出栏日期'}}</text>
-              <t-icon name="calendar" size="32" color="#c8c9cc" />
+          <!-- 出栏日期（使用原生 picker）-->
+          <picker 
+            mode="date" 
+            value="{{formData.exitDate}}" 
+            start="2020-01-01"
+            end="{{maxDate}}"
+            bind:change="onDateConfirm"
+          >
+            <view class="form-item">
+              <view class="item-label required">出栏日期</view>
+              <view class="item-input date-input">
+                <text class="date-text">{{formData.exitDate || '请选择出栏日期'}}</text>
+              </view>
             </view>
-          </view>
+          </picker>
 
           <!-- 鹅的类型（从入栏批次自动获取） -->
           <view class="form-item">
@@ -217,17 +224,6 @@
       </view>
     </view>
   </view>
-
-  <!-- 日期选择器 -->
-  <t-date-time-picker 
-    visible="{{showDate}}"
-    mode="date"
-    value="{{dateValue}}"
-    format="YYYY-MM-DD"
-    bind:change="onDateChange"
-    bind:cancel="hideDatePicker"
-    bind:confirm="onDateConfirm"
-  />
 
   <!-- 批次选择器已改为使用原生wx.showActionSheet -->
 </view>

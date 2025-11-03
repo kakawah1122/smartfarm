@@ -18,16 +18,15 @@ const pageConfig = {
     formData: {
       batchId: '',
       entryDate: '',
-      breed: '',
+      breed: '狮头鹅',
       supplier: '',
       quantity: '',
       unitPrice: '',
       remarks: ''
     } as EntryFormData,
     
-    // 日期选择器相关
-    showDate: false,
-    dateValue: '',
+    // 最大日期（今天）
+    maxDate: '',
     
     // 计算总金额
     totalAmount: '0.00',
@@ -56,7 +55,7 @@ const pageConfig = {
     this.setData({
       'formData.entryDate': dateString,
       'formData.batchId': batchId,
-      dateValue: today.getTime()
+      maxDate: dateString
     })
   },
 
@@ -74,40 +73,14 @@ const pageConfig = {
     return `${year}-${month}-${day}`
   },
 
-  // 显示日期选择器
-  showDatePicker() {
-    this.setData({
-      showDate: true
-    })
-  },
-
-  // 隐藏日期选择器
-  hideDatePicker() {
-    this.setData({
-      showDate: false
-    })
-  },
-
-  // 日期选择变化
-  onDateChange(e: any) {
-    const { value } = e.detail
-    this.setData({
-      dateValue: value
-    })
-  },
-
-  // 确认选择日期
+  // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
   onDateConfirm(e: any) {
-    const { value } = e.detail
-    const date = new Date(value)
-    const dateString = this.formatDate(date)
+    const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     const batchId = this.generateBatchId(dateString)
     
     this.setData({
       'formData.entryDate': dateString,
-      'formData.batchId': batchId,
-      dateValue: value,
-      showDate: false
+      'formData.batchId': batchId
     })
   },
 
@@ -224,19 +197,19 @@ const pageConfig = {
         throw new Error(result.result.message || '提交失败')
       }
 
-      // 提交成功
+      // 提交成功，立即返回上一页
       wx.showToast({
-        title: '入栏记录提交成功',
+        title: '提交成功',
         icon: 'success',
-        duration: 2000
+        duration: 1500
       })
 
-      // 延迟返回上一页
+      // 缩短延迟，快速返回上一页
       setTimeout(() => {
         wx.navigateBack({
           delta: 1
         })
-      }, 2000)
+      }, 800)
 
     } catch (error) {
       wx.showToast({
@@ -268,7 +241,7 @@ const pageConfig = {
       formData: {
         batchId: currentBatchId,
         entryDate: currentDate,
-        breed: '',
+        breed: '狮头鹅',
         supplier: '',
         quantity: '',
         unitPrice: '',

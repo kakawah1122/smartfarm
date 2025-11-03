@@ -56,6 +56,7 @@ const pageConfig = {
     // 加载状态
     loading: false,
     isEmpty: false,  // 用于显示空状态
+    isDataLoaded: false,  // 标记数据是否已加载，避免重复加载
     
     // 弹窗相关
     showEntryDetailPopup: false,
@@ -79,28 +80,40 @@ const pageConfig = {
   onLoad() {
     // 确保 aiCount 数据结构完整
     this.setData({
-      'aiCount.history': []
+      'aiCount.history': [],
+      isDataLoaded: false
     })
+    // 只在 onLoad 时加载一次初始数据
     this.loadData()
   },
 
   onReady() {
-    // 页面初次渲染完成时加载数据
-    this.refreshData()
+    // 页面渲染完成，不再重复加载数据
   },
 
   onShow() {
-    // 每次页面显示时刷新数据，确保数据最新
-    // 特别是从其他页面返回时，需要刷新物料状态
+    // 只在数据已经加载过的情况下才刷新（从其他页面返回时）
+    if (this.data.isDataLoaded) {
     this.refreshData()
+    }
   },
 
   // 加载数据
-  loadData() {
-    this.loadDashboardData()
-    this.loadEntryData()
-    this.loadExitData()
+  async loadData() {
+    try {
+      // 并行加载所有数据
+      await Promise.all([
+        this.loadDashboardData(),
+        this.loadEntryData(),
+        this.loadExitData(),
     this.loadMaterialData()
+      ])
+      
+      // 标记数据已加载
+      this.setData({ isDataLoaded: true })
+    } catch (error) {
+      console.error('加载数据失败:', error)
+    }
   },
 
   // 加载仪表盘数据
@@ -409,6 +422,9 @@ const pageConfig = {
         this.loadExitData(),
         this.loadMaterialData()
       ])
+      
+      // 标记数据已加载
+      this.setData({ isDataLoaded: true })
       
     } catch (error) {
       // 数据刷新失败时静默处理
@@ -955,6 +971,7 @@ const pageConfig = {
       selectedEntryRecord: null
     })
   },
+
 
   // 关闭出栏详情弹窗
   closeExitDetailPopup() {

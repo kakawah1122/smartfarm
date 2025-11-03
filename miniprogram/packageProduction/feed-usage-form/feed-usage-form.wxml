@@ -20,14 +20,23 @@
         <text class="tip-text">建议每周记录一次，填写本周投喂总量</text>
       </view>
       
-      <view class="form-item" bindtap="showDatePicker">
-        <view class="item-label required">投喂日期</view>
-        <view class="item-value">
-          <view class="value-text {{formData.recordDate ? '' : 'placeholder'}}">
-            {{formData.recordDate || '请选择日期'}}
+      <!-- 投喂日期（使用原生 picker）-->
+      <picker 
+        mode="date" 
+        value="{{formData.recordDate}}" 
+        start="2020-01-01"
+        end="{{maxDate}}"
+        bindchange="onDateConfirm"
+      >
+        <view class="form-item">
+          <view class="item-label required">投喂日期</view>
+          <view class="item-value">
+            <view class="value-text {{formData.recordDate ? '' : 'placeholder'}}">
+              {{formData.recordDate || '请选择日期'}}
+            </view>
           </view>
         </view>
-      </view>
+      </picker>
       
       <!-- 选择批次 -->
       <view class="form-item" bindtap="showBatchPicker">
@@ -133,15 +142,5 @@
     </view>
   </view>
   
-  <!-- 日期选择器 -->
-  <t-date-time-picker
-    visible="{{showDate}}"
-    mode="date"
-    title="选择投喂日期"
-    value="{{dateValue}}"
-    bindchange="onDateChange"
-    bindconfirm="onDateConfirm"
-    bindcancel="hideDatePicker"
-  />
 </view>
 

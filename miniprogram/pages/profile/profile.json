@@ -3,7 +3,6 @@
     "navigation-bar": "../../components/navigation-bar/navigation-bar",
     "bottom-popup": "../../components/bottom-popup/bottom-popup",
     "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-navbar": "tdesign-miniprogram/navbar/navbar",
     "t-button": "tdesign-miniprogram/button/button",
     "t-tag": "tdesign-miniprogram/tag/tag",
     "t-cell": "tdesign-miniprogram/cell/cell",

@@ -61,7 +61,7 @@ const pageConfig = {
     // 来源信息
     diagnosisId: '', // 从AI诊断创建
     treatmentId: '', // 从治疗失败创建
-    sourceType: 'manual', // manual|diagnosis|treatment
+    sourceType: 'manual', // manual|diagnosis|treatment|vaccine_tracking
     
     // 解剖分析
     autopsyImages: [] as string[], // 解剖照片
@@ -80,7 +80,7 @@ const pageConfig = {
   },
 
   onLoad(options: any) {
-    const { diagnosisId, treatmentId, affectedCount, batchId } = options || {}
+    const { diagnosisId, treatmentId, affectedCount, batchId, batchNumber, sourceType } = options || {}
     
     // 初始化日期为今天
     const today = new Date().toISOString().split('T')[0]
@@ -88,22 +88,33 @@ const pageConfig = {
     this.setData({
       diagnosisId: diagnosisId || '',
       treatmentId: treatmentId || '',
+      sourceType: sourceType || 'manual',  // ✅ 设置来源类型
       'formData.deathDate': today,
       'formData.deathCount': parseInt(affectedCount) || 0,
-      'formData.batchId': batchId || wx.getStorageSync('currentBatchId') || ''
+      'formData.batchId': batchId || wx.getStorageSync('currentBatchId') || '',
+      'formData.batchNumber': batchNumber || ''  // ✅ 直接设置批次号（如果有）
     })
     
-    // 确定来源类型
-    if (diagnosisId) {
-      this.setData({ sourceType: 'diagnosis' })
-      this.loadDiagnosisInfo(diagnosisId)
-    } else if (treatmentId) {
-      this.setData({ sourceType: 'treatment' })
-      this.loadTreatmentInfo(treatmentId)
+    // ✅ 如果来自疫苗追踪，自动设置死亡原因为"疫苗后反应"
+    if (sourceType === 'vaccine_tracking') {
+      this.setData({
+        'formData.deathCause': '疫苗后反应'
+      })
     }
     
-    // 加载批次信息
-    if (this.data.formData.batchId) {
+    // 确定来源类型（如果已设置则不需要重新设置）
+    if (!sourceType) {
+      if (diagnosisId) {
+        this.setData({ sourceType: 'diagnosis' })
+        this.loadDiagnosisInfo(diagnosisId)
+      } else if (treatmentId) {
+        this.setData({ sourceType: 'treatment' })
+        this.loadTreatmentInfo(treatmentId)
+      }
+    }
+    
+    // 如果没有批次号但有批次ID，则加载批次信息
+    if (this.data.formData.batchId && !this.data.formData.batchNumber) {
       this.loadBatchInfo()
     }
     
@@ -161,6 +172,14 @@ const pageConfig = {
           'formData.batchId': treatment.batchId || this.data.formData.batchId,
           'financialLoss.treatmentCost': treatment.totalCost || 0
         })
+        
+        // 如果还没有批次号，加载批次号
+        if (!this.data.formData.batchNumber && treatment.batchId) {
+          await this.loadBatchInfo()
+        } else {
+          // 如果有批次信息，计算财务损失
+          await this.calculateFinancialLossWithBatch({})
+        }
       }
     } catch (error) {
       wx.hideLoading()
@@ -171,30 +190,35 @@ const pageConfig = {
   // 加载批次信息
   async loadBatchInfo() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'production-entry',
-        data: {
-          action: 'list',
-          batchId: this.data.formData.batchId
-        }
-      })
+      const batchId = this.data.formData.batchId
+      if (!batchId) return
       
-      if (result.result && result.result.success && result.result.data.batches.length > 0) {
-        const batch = result.result.data.batches[0]
+      // 直接使用数据库查询批次号
+      const db = wx.cloud.database()
+      const batchResult = await db.collection('prod_batch_entries')
+        .doc(batchId)
+        .field({ batchNumber: true, quantity: true })
+        .get()
+      
+      if (batchResult.data && batchResult.data.batchNumber) {
         this.setData({
-          'formData.batchNumber': batch.batchNumber
+          'formData.batchNumber': batchResult.data.batchNumber
         })
         
         // 计算财务损失
-        this.calculateFinancialLoss(batch)
+        if (batchResult.data.quantity) {
+          // 使用批次信息计算财务损失
+          await this.calculateFinancialLossWithBatch(batchResult.data)
+        }
       }
     } catch (error) {
-      // 加载失败，静默处理
+      // 查询失败，静默处理
+      console.error('加载批次信息失败:', error)
     }
   },
 
-  // 计算财务损失
-  async calculateFinancialLoss(batch: any) {
+  // 使用批次信息计算财务损失
+  async calculateFinancialLossWithBatch(batch: any) {
     try {
       const result = await wx.cloud.callFunction({
         name: 'health-management',

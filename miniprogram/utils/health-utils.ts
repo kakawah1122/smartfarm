@@ -160,16 +160,31 @@ export function groupTasksByBatch(tasks: any[] = []) {
 
 /**
  * 计算当前日龄
+ * 入栏当天为第1日龄
  */
 export function calculateCurrentAge(entryDate: string): number {
   if (!entryDate) return 0
   
-  const entry = new Date(entryDate)
+  // 使用本地时区的日期，避免时区问题
   const today = new Date()
-  const diffTime = Math.abs(today.getTime() - entry.getTime())
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const todayYear = today.getFullYear()
+  const todayMonth = today.getMonth()
+  const todayDay = today.getDate()
   
-  return diffDays
+  // 解析入栏日期
+  const entryDateStr = entryDate.split('T')[0] // YYYY-MM-DD
+  const [entryYear, entryMonth, entryDay] = entryDateStr.split('-').map(Number)
+  
+  // 创建本地时区的日期对象（忽略时间部分）
+  const todayDate = new Date(todayYear, todayMonth, todayDay)
+  const startDate = new Date(entryYear, entryMonth - 1, entryDay) // 月份从0开始
+  
+  // 计算日期差异
+  const diffTime = todayDate.getTime() - startDate.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  const dayAge = diffDays + 1 // 入栏当天为第1日龄
+  
+  return Math.max(1, dayAge) // 至少为1
 }
 
 /**

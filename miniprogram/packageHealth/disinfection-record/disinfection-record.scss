@@ -6,7 +6,7 @@
   
   .content-container {
     padding: 20rpx;
-    padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
+    padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏总高度 + 适当间距 */
   }
 
   .form-container {
@@ -21,8 +21,8 @@
     font-weight: 600;
     color: #333;
     padding: 30rpx 30rpx 20rpx;
-    background: #f8f9fa;
-    border-left: 6rpx solid #0052d9;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+    border-radius: 12rpx;
   }
 
   .form-item {
@@ -128,7 +128,8 @@
   }
 
   .validation-error {
-    border-left: 4rpx solid #e34d59;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8ea 100%);
+    border-radius: 12rpx;
     
     .form-label {
       color: #e34d59;
@@ -136,7 +137,8 @@
   }
 
   .success-indicator {
-    border-left: 4rpx solid #00a870;
+    background: linear-gradient(135deg, #f0faf5 0%, #e6f7f0 100%);
+    border-radius: 12rpx;
   }
 
   .loading-container {

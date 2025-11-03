@@ -129,9 +129,9 @@ class CloudApi {
   }
 
   /**
-   * 获取一周任务
+   * 获取一周任务（优化版：移除重复加载提示）
    */
-  static async getWeeklyTodos(batchId: string, currentDayAge: number): Promise<CloudApiResponse> {
+  static async getWeeklyTodos(batchId: string, currentDayAge: number, options?: { showLoading?: boolean }): Promise<CloudApiResponse> {
     return this.callFunction(
       'breeding-todo',
       {
@@ -140,7 +140,7 @@ class CloudApi {
         currentDayAge
       },
       {
-        loading: true,
+        loading: options?.showLoading ?? false, // 默认不显示加载提示，由调用方统一控制
         loadingText: '加载任务列表...',
         showError: true
       }

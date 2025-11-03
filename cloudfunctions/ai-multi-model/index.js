@@ -1,5 +1,6 @@
 const cloud = require('wx-server-sdk')
 const axios = require('axios')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -274,7 +275,7 @@ class DailyCostController {
     const today = new Date().toISOString().split('T')[0]
     
     try {
-      const { data } = await this.db.collection('sys_ai_usage')
+      const { data } = await this.db.collection(COLLECTIONS.SYS_AI_USAGE)
         .where({
           date: today,
           modelId: this.db.command.in(['qwen-vl-max', 'qwen-vl-plus', 'qwen-plus', 'qwen-turbo'])
@@ -422,7 +423,7 @@ class DailyCostController {
     const today = new Date().toISOString().split('T')[0]
     
     try {
-      await this.db.collection('sys_ai_usage').add({
+      await this.db.collection(COLLECTIONS.SYS_AI_USAGE).add({
         data: {
           modelId,
           cost: cost || 0,
@@ -441,8 +442,8 @@ class DailyCostController {
 class AIModelManager {
   constructor() {
     this.db = cloud.database()
-    this.usageCollection = this.db.collection('sys_ai_usage')
-    this.cacheCollection = this.db.collection('sys_ai_cache')
+    this.usageCollection = this.db.collection(COLLECTIONS.SYS_AI_USAGE)
+    this.cacheCollection = this.db.collection(COLLECTIONS.SYS_AI_CACHE)
     this.costController = new DailyCostController(this.db)  // ✨ 成本控制器
   }
 
