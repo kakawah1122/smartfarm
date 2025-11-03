@@ -19,6 +19,32 @@ function generateRecordId(prefix) {
   return `${prefix}${timestamp}${random}`
 }
 
+// 计算批次当前日龄
+function calculateDayAge(entryDate) {
+  if (!entryDate) return 1
+  
+  // 使用本地时区的日期，避免时区问题
+  const today = new Date()
+  const todayYear = today.getFullYear()
+  const todayMonth = today.getMonth()
+  const todayDay = today.getDate()
+  
+  // 解析入栏日期
+  const entryDateStr = entryDate.split('T')[0] // YYYY-MM-DD
+  const [entryYear, entryMonth, entryDay] = entryDateStr.split('-').map(Number)
+  
+  // 创建本地时区的日期对象（忽略时间部分）
+  const todayDate = new Date(todayYear, todayMonth, todayDay)
+  const startDate = new Date(entryYear, entryMonth - 1, entryDay) // 月份从0开始
+  
+  // 计算日期差异
+  const diffTime = todayDate.getTime() - startDate.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  const dayAge = diffDays + 1 // 入栏当天为第1日龄
+  
+  return Math.max(1, dayAge) // 至少为1
+}
+
 // 权限验证辅助函数
 async function checkPermission(openid, module, action, resourceId = null) {
   try {
@@ -5542,11 +5568,48 @@ async function getTodayPreventionTasks(event, wxContext) {
       .limit(limit)
       .get()
     
+    // ========== 3.5. 获取批次信息以计算当前日龄 ==========
+    // 🔥 获取所有涉及的批次信息，用于重新计算当前日龄
+    const allTaskBatchIds = [...new Set((tasksResult.data || []).map(t => t.batchId).filter(Boolean))]
+    
+    const batchInfoMap = {}
+    if (allTaskBatchIds.length > 0) {
+      const batchesInfoResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          _id: _.in(allTaskBatchIds)
+        })
+        .field({ _id: true, entryDate: true, batchNumber: true })
+        .get()
+      
+      batchesInfoResult.data.forEach(batch => {
+        // 计算当前日龄 - 使用本地时区
+        const todayDate = new Date()
+        const todayYear = todayDate.getFullYear()
+        const todayMonth = todayDate.getMonth()
+        const todayDay = todayDate.getDate()
+        
+        const entryDateStr = batch.entryDate.split('T')[0]
+        const [entryYear, entryMonth, entryDay] = entryDateStr.split('-').map(Number)
+        
+        const today = new Date(todayYear, todayMonth, todayDay)
+        const startDate = new Date(entryYear, entryMonth - 1, entryDay)
+        
+        const diffTime = today.getTime() - startDate.getTime()
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+        const currentDayAge = diffDays + 1
+        
+        batchInfoMap[batch._id] = currentDayAge
+      })
+    }
+    
     // ========== 4. 处理任务数据 ==========
     const tasks = (tasksResult.data || []).map(task => {
       const isOverdue = task.targetDate < today
       const overdueDays = isOverdue ? 
         Math.floor((new Date(today) - new Date(task.targetDate)) / (24 * 60 * 60 * 1000)) : 0
+      
+      // 🔥 使用批次的当前日龄
+      const currentDayAge = batchInfoMap[task.batchId] || task.dayAge
       
       return {
         taskId: task._id,
@@ -5554,7 +5617,7 @@ async function getTodayPreventionTasks(event, wxContext) {
         taskType: task.taskType,
         batchId: task.batchId,
         batchNumber: task.batchNumber,
-        dayAge: task.dayAge,
+        dayAge: currentDayAge,  // 🔥 使用当前日龄
         targetDate: task.targetDate,
         description: task.description || '',
         isOverdue,
@@ -6000,39 +6063,127 @@ async function getPreventionDashboard(event, wxContext) {
     const today = new Date().toISOString().split('T')[0]
     const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     
-    // ========== 2. 构建查询条件（带批次权限） ==========
-    // ✅ 修复：使用正确的 category 值（中文）
+    // ========== 2. 获取批次信息以确定当前日龄 ==========
+    let batchInfoMap = {}
+    
+    if (batchId && batchId !== 'all') {
+      // 单个批次：获取该批次信息
+      const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .doc(batchId)
+        .get()
+      
+      if (batchResult.data) {
+        const batch = batchResult.data
+        const currentDayAge = calculateDayAge(batch.entryDate)
+        batchInfoMap[batch._id] = {
+          batchNumber: batch.batchNumber,
+          entryDate: batch.entryDate,
+          currentDayAge: currentDayAge
+        }
+      }
+    } else {
+      // 全部批次：获取所有活跃批次（不过滤status，因为批次可能有多种状态值）
+      const batchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          ...dbManager.buildNotDeletedCondition(true)
+        })
+        .get()
+      
+      batchesResult.data.forEach(batch => {
+        const currentDayAge = calculateDayAge(batch.entryDate)
+        batchInfoMap[batch._id] = {
+          batchNumber: batch.batchNumber,
+          entryDate: batch.entryDate,
+          currentDayAge: currentDayAge
+        }
+      })
+    }
+    
+    // ========== 3. 构建查询条件（带批次权限） ==========
+    // 🔥 修复：只查询当前日龄的任务
     const baseTaskWhere = {
       completed: false,
       category: _.in(['健康管理', '营养管理', '疫苗接种', '用药管理'])
     }
+    
+    // ========== 4. 分批次查询当日任务 ==========
+    
+    let todayTasksResult = { data: [] }
+    let upcomingTasksResult = { data: [] }
+    
     if (batchId && batchId !== 'all') {
-      baseTaskWhere.batchId = batchId
+      // 单个批次：查询该批次当前日龄的任务
+      const batchInfo = batchInfoMap[batchId]
+      if (batchInfo) {
+        todayTasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+          .where({
+            ...baseTaskWhere,
+            batchId: batchId,
+            dayAge: batchInfo.currentDayAge  // 🔥 只查询当前日龄的任务
+          })
+          .limit(50)
+          .get()
+        
+        // 近期计划：查询未来7天的任务（日龄+1到+7）
+        const futureDayAges = []
+        for (let i = 1; i <= 7; i++) {
+          futureDayAges.push(batchInfo.currentDayAge + i)
+        }
+        
+        upcomingTasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+          .where({
+            ...baseTaskWhere,
+            batchId: batchId,
+            dayAge: _.in(futureDayAges)
+          })
+          .limit(30)
+          .get()
+      }
+    } else {
+      // 全部批次：分别查询每个批次的当前日龄任务
+      const batchIds = Object.keys(batchInfoMap)
+      
+      if (batchIds.length > 0) {
+        // 并发查询所有批次的当日任务
+        const todayTasksPromises = batchIds.map(async (bId) => {
+          const batchInfo = batchInfoMap[bId]
+          return await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+            .where({
+              ...baseTaskWhere,
+              batchId: bId,
+              dayAge: batchInfo.currentDayAge  // 🔥 只查询当前日龄的任务
+            })
+            .limit(20)  // 每个批次最多20条
+            .get()
+        })
+        
+        const todayTasksResults = await Promise.all(todayTasksPromises)
+        todayTasksResult.data = todayTasksResults.flatMap(r => r.data || [])
+        
+        // 近期计划：查询未来7天的任务
+        const upcomingTasksPromises = batchIds.map(async (bId) => {
+          const batchInfo = batchInfoMap[bId]
+          const futureDayAges = []
+          for (let i = 1; i <= 7; i++) {
+            futureDayAges.push(batchInfo.currentDayAge + i)
+          }
+          
+          return await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+            .where({
+              ...baseTaskWhere,
+              batchId: bId,
+              dayAge: _.in(futureDayAges)
+            })
+            .limit(10)  // 每个批次最多10条
+            .get()
+        })
+        
+        const upcomingTasksResults = await Promise.all(upcomingTasksPromises)
+        upcomingTasksResult.data = upcomingTasksResults.flatMap(r => r.data || [])
+      }
     }
     
-    // ========== 3. 并发查询（带limit限制） ==========
-    console.log('[预防管理] 开始数据查询', logContext)
-    
-    // 今日待办（限制50条）- ✅ 添加 targetDate 过滤条件
-    const todayTasksQuery = db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
-      .where({
-        ...baseTaskWhere,
-        targetDate: _.lte(today)  // 今日及之前的任务（包含逾期）
-      })
-      .orderBy('targetDate', 'asc')
-      .limit(50)
-      .get()
-    
-    // 近期计划（限制30条）
-    const upcomingTasksQuery = db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
-      .where({
-        ...baseTaskWhere,
-        targetDate: _.gte(today)
-      })
-      .orderBy('targetDate', 'asc')
-      .limit(30)
-      .get()
-    
+    // ========== 5. 查询预防记录和统计信息 ==========
     // 预防记录查询条件
     const baseRecordWhere = {
       ...dbManager.buildNotDeletedCondition(true)
@@ -6041,100 +6192,117 @@ async function getPreventionDashboard(event, wxContext) {
       baseRecordWhere.batchId = batchId
     }
     
-    // ✅ 修复：改用普通查询后计算统计数据（避免聚合查询语法问题）
-    const preventionRecordsQuery = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
-      .where(baseRecordWhere)
-      .get()
-    
-    // 最近10条预防记录（限制返回字段）
-    const recentRecordsQuery = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
-      .where(baseRecordWhere)
-      .field({
-        preventionType: true,
-        preventionDate: true,
-        batchId: true,
-        batchNumber: true,
-        taskId: true,
-        'costInfo.totalCost': true,
-        operator: true,
-        operatorName: true
-      })
-      .orderBy('preventionDate', 'desc')
-      .limit(10)
-      .get()
-    
-    // 批次信息（用于计算接种率）
-    const batchesQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
-      .where({
-        status: 'active',
-        ...dbManager.buildNotDeletedCondition(true)
-      })
-      .field({ _id: true }) // 只需要计数
-      .limit(100) // 限制最多100个批次
-      .get()
-    
-    // ========== 4. 并发执行所有查询 ==========
-    const queryStartTime = Date.now()
-    console.log('[预防管理] 开始执行并发查询...')
-    
-    const [todayTasksResult, upcomingTasksResult, preventionRecordsResult, recentRecordsResult, batchesResult] = await Promise.all([
-      todayTasksQuery,
-      upcomingTasksQuery,
-      preventionRecordsQuery,
-      recentRecordsQuery,
-      batchesQuery
+    // 并发查询预防记录和批次信息
+    const [preventionRecordsResult, recentRecordsResult, batchesResult] = await Promise.all([
+      // 所有预防记录（用于统计）
+      db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+        .where(baseRecordWhere)
+        .get(),
+      
+      // 最近10条预防记录
+      db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+        .where(baseRecordWhere)
+        .field({
+          preventionType: true,
+          preventionDate: true,
+          batchId: true,
+          batchNumber: true,
+          taskId: true,
+          'costInfo.totalCost': true,
+          operator: true,
+          operatorName: true
+        })
+        .orderBy('preventionDate', 'desc')
+        .limit(10)
+        .get(),
+      
+      // 批次信息（用于计算接种率，不过滤status）
+      db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          ...dbManager.buildNotDeletedCondition(true)
+        })
+        .field({ _id: true })
+        .limit(100)
+        .get()
     ])
     
-    console.log(`[预防管理] 数据查询完成，耗时: ${Date.now() - queryStartTime}ms`)
-    console.log('[预防管理] 查询结果统计:', {
-      todayTasks: todayTasksResult.data?.length || 0,
-      upcomingTasks: upcomingTasksResult.data?.length || 0,
-      preventionRecords: preventionRecordsResult.data?.length || 0,
-      recentRecords: recentRecordsResult.data?.length || 0,
-      batches: batchesResult.data?.length || 0
-    })
+    // ========== 6. 获取任务涉及的批次信息（用于显示日龄） ==========
+    // 🔥 获取所有涉及的批次信息，用于在返回时显示正确的当前日龄
+    const allTaskBatchIds = [...new Set([
+      ...(todayTasksResult.data || []).map(t => t.batchId),
+      ...(upcomingTasksResult.data || []).map(t => t.batchId)
+    ].filter(Boolean))]
     
-    // ========== 5. 处理今日待办 ==========
-    // ✅ 查询条件已包含 targetDate <= today，无需再次过滤
-    // ✅ 返回完整的任务对象，保留所有字段用于前端渲染
+    // 为任务涉及的批次计算当前日龄（用于显示）
+    const taskBatchInfoMap = {}
+    if (allTaskBatchIds.length > 0) {
+      const batchesInfoResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          _id: _.in(allTaskBatchIds)
+        })
+        .field({ _id: true, entryDate: true, batchNumber: true })
+        .get()
+      
+      batchesInfoResult.data.forEach(batch => {
+        const currentDayAge = calculateDayAge(batch.entryDate)
+        taskBatchInfoMap[batch._id] = {
+          batchNumber: batch.batchNumber,
+          entryDate: batch.entryDate,
+          currentDayAge: currentDayAge
+        }
+      })
+    }
+    
+    // ========== 7. 处理今日待办 ==========
+    // 🔥 使用批次的当前日龄，覆盖任务创建时的固定日龄
     const todayTasks = (todayTasksResult.data || [])
       .map(task => {
         const isOverdue = task.targetDate < today
         const overdueDays = isOverdue ? 
           Math.floor((new Date(today) - new Date(task.targetDate)) / (24 * 60 * 60 * 1000)) : 0
         
+        // 🔥 使用批次的当前日龄（用于显示）
+        const batchInfo = taskBatchInfoMap[task.batchId]
+        const currentDayAge = batchInfo ? batchInfo.currentDayAge : task.dayAge
+        
         return {
           ...task,  // ✅ 保留完整任务数据
           _id: task._id,
           taskId: task._id,
+          dayAge: currentDayAge,  // 🔥 使用当前日龄用于显示
           isOverdue,
           overdueDays
         }
       })
     
-    // ========== 6. 处理近期计划（按日期分组） ==========
-    // ✅ 返回完整的任务对象，与 todayTasks 保持一致
+    // ========== 8. 处理近期计划（按日期分组） ==========
+    // 🔥 使用批次的当前日龄（用于显示）
     const upcomingTasksGrouped = {}
     const upcomingTasks = upcomingTasksResult.data || []
     
     upcomingTasks.forEach(task => {
+      // 🔥 使用批次的当前日龄（用于显示）
+      const batchInfo = taskBatchInfoMap[task.batchId]
+      const currentDayAge = batchInfo ? batchInfo.currentDayAge : task.dayAge
+      
       if (!upcomingTasksGrouped[task.targetDate]) {
         upcomingTasksGrouped[task.targetDate] = {
           date: task.targetDate,
-          dayAge: task.dayAge,
+          dayAge: task.dayAge,  // 使用任务自己的日龄（近期任务的日龄是未来的）
           tasks: []
         }
       }
       upcomingTasksGrouped[task.targetDate].tasks.push({
         ...task,  // ✅ 保留完整任务数据
         _id: task._id,
-        taskId: task._id
+        taskId: task._id,
+        dayAge: task.dayAge  // 近期任务保留原始日龄（未来的日龄）
       })
     })
     
     const upcomingTasksList = Object.values(upcomingTasksGrouped).slice(0, 7)
     
-    // ========== 7. 计算统计数据（从查询结果手动计算） ==========
+    // ========== 9. 计算统计数据（从查询结果手动计算） ==========
     const preventionRecords = preventionRecordsResult.data || []
     
     // 计算疫苗相关统计
@@ -6169,7 +6337,7 @@ async function getPreventionDashboard(event, wxContext) {
     const vaccinationRate = totalBatches > 0 ? 
       parseFloat(((vaccinatedBatchesCount / totalBatches) * 100).toFixed(1)) : 0
     
-    // ========== 8. 处理最近记录 ==========
+    // ========== 10. 处理最近记录 ==========
     const recentRecordsFormatted = (recentRecordsResult.data || []).map(record => ({
       recordId: record._id,
       preventionType: record.preventionType,
@@ -6185,14 +6353,14 @@ async function getPreventionDashboard(event, wxContext) {
       }
     }))
     
-    // ========== 9. 计算任务完成情况 ==========
+    // ========== 11. 计算任务完成情况 ==========
     const allTasks = [...todayTasks, ...upcomingTasks]
     const total = allTasks.length
     const completed = allTasks.filter(t => t.completed).length
     const overdue = todayTasks.filter(t => t.isOverdue).length
     const pending = total - completed - overdue
     
-    // ========== 10. 返回数据 ==========
+    // ========== 12. 返回数据 ==========
     const totalTime = Date.now() - startTime
     console.log(`[预防管理] 操作成功，总耗时: ${totalTime}ms`, {
       ...logContext,

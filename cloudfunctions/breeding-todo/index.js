@@ -315,14 +315,47 @@ async function getTodos(event, wxContext) {
       completed: _.neq(true) // 过滤掉已完成的任务
     }).get()
 
-    // ✅ 如果没有任务，直接返回空数组，不自动创建
-    // 任务应该在批次入栏时统一创建，避免产生孤儿任务
+    // 如果没有任务，直接返回空数组
     if (tasksResult.data.length === 0) {
-      console.log('[getTodos] 未找到任务，批次:', batchId, '日龄:', dayAge)
       return {
         success: true,
         data: [],
         message: '暂无任务'
+      }
+    }
+
+    // 验证返回的任务日龄是否匹配
+    const mismatchedTasks = tasksResult.data.filter(task => task.dayAge !== dayAge)
+    if (mismatchedTasks.length > 0) {
+      console.warn(`[getTodos] 警告：查询日龄 ${dayAge} 的任务，但返回了 ${mismatchedTasks.length} 个日龄不匹配的任务`, {
+        batchId,
+        expectedDayAge: dayAge,
+        mismatchedTasks: mismatchedTasks.map(t => ({ id: t._id, title: t.title, dayAge: t.dayAge }))
+      })
+      
+        // 只返回日龄匹配的任务
+        const matchedTasks = tasksResult.data.filter(task => task.dayAge === dayAge)
+        if (matchedTasks.length === 0) {
+          return {
+            success: true,
+            data: [],
+            message: '暂无任务'
+          }
+        }
+      
+      const todos = matchedTasks.map(task => {
+        const isCompleted = task.completed === true
+        
+        return {
+          ...task,
+          completed: isCompleted,
+          isVaccineTask: isVaccineTask(task)
+        }
+      })
+      
+      return {
+        success: true,
+        data: todos
       }
     }
 
@@ -337,8 +370,6 @@ async function getTodos(event, wxContext) {
       }
     })
 
-    const completedCount = todos.filter(t => t.completed).length
-    // 已移除调试日志
     return {
       success: true,
       data: todos
@@ -500,6 +531,12 @@ async function createMissingTasks(batchId, userId) {
 // 识别疫苗任务（优化版）
 function isVaccineTask(task) {
   if (!task) return false
+  
+  // 🔥 优先排除明确的非疫苗任务类型
+  const nonVaccineTypes = ['medication', 'medicine', 'nutrition', 'care', 'feeding', 'environment']
+  if (nonVaccineTypes.includes(task.type)) {
+    return false
+  }
   
   // 检查任务类型
   if (task.type === 'vaccine') return true

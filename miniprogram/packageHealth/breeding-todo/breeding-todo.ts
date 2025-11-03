@@ -113,7 +113,6 @@ Page({
       medicineName: '',
       quantity: 0,
       unit: '',
-      purpose: '',
       dosage: '',
       notes: '',
       operator: ''
@@ -1725,9 +1724,7 @@ Page({
       errors.quantity = `库存不足，当前库存${selectedMedicine.stock}${selectedMedicine.unit}`
     }
 
-    if (!medicationFormData.purpose) {
-      errors.purpose = '请填写用药用途'
-    }
+    // ✅ 用药用途不需要用户填写，任务本身已经明确定义
 
     // 更新错误对象和错误列表
     const errorList = Object.values(errors)
@@ -1779,6 +1776,9 @@ Page({
     try {
       wx.showLoading({ title: '提交中...' })
 
+      // ✅ 用途字段使用任务标题，不需要用户重复填写
+      const purpose = selectedTask.title || '用药任务'
+
       // 构建用药记录数据
       const medicationRecord = {
         taskId: selectedTask._id,
@@ -1787,7 +1787,7 @@ Page({
         materialName: medicationFormData.medicineName,
         quantity: medicationFormData.quantity,
         unit: medicationFormData.unit,
-        purpose: medicationFormData.purpose,
+        purpose: purpose,
         dosage: medicationFormData.dosage,
         notes: medicationFormData.notes,
         operator: medicationFormData.operator,
@@ -1803,10 +1803,10 @@ Page({
           materialId: medicationRecord.materialId,
           type: 'use',
           quantity: Number(medicationRecord.quantity),
-          targetLocation: medicationRecord.purpose,
+          targetLocation: purpose,
           operator: medicationRecord.operator || '用户',
           status: '已完成',
-          notes: `用途：${medicationRecord.purpose}${medicationRecord.dosage ? '，剂量：' + medicationRecord.dosage : ''}${medicationRecord.notes ? '，备注：' + medicationRecord.notes : ''}，任务：${selectedTask.title}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
+          notes: `用途：${purpose}${medicationRecord.dosage ? '，剂量：' + medicationRecord.dosage : ''}${medicationRecord.notes ? '，备注：' + medicationRecord.notes : ''}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
           recordDate: medicationRecord.useDate
         }
       }
@@ -1893,7 +1893,6 @@ Page({
         nutritionName: '',
         quantity: 0,
         unit: '',
-        purpose: '',
         dosage: '',
         notes: '',
         operator: userInfo?.nickName || userInfo?.name || '用户'

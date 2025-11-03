@@ -109,7 +109,6 @@ Page({
       medicineName: '',
       quantity: 0,
       unit: '',
-      purpose: '',
       dosage: '',
       notes: '',
       operator: ''
@@ -1796,7 +1795,6 @@ Page({
         medicineName: '',
         quantity: 0,
         unit: '',
-        purpose: '',
         dosage: '',
         notes: '',
         operator: userInfo?.nickName || userInfo?.name || '用户'
@@ -2123,7 +2121,6 @@ Page({
         medicineName: '',
         quantity: 0,
         unit: '',
-        purpose: '',
         dosage: '',
         notes: '',
         operator: ''
@@ -2178,10 +2175,7 @@ Page({
       // 已移除调试日志
     }
 
-    if (!medicationFormData.purpose) {
-      errors.purpose = '请填写用药用途'
-      // 已移除调试日志
-    }
+    // ✅ 用药用途不需要用户填写，任务本身已经明确定义
 
     // 更新错误对象和错误列表
     const errorList = Object.values(errors)
@@ -2273,15 +2267,18 @@ Page({
       // 首页提交用药表单
       wx.showLoading({ title: '提交中...' })
 
+      // ✅ 用途字段使用任务标题，不需要用户重复填写
+      const purpose = selectedTask.title || '用药任务'
+
       // 构建用药记录数据 - 使用简化的API格式
       const recordData = {
         materialId: medicationFormData.medicineId,
         type: 'use',
         quantity: Number(medicationFormData.quantity),
-        targetLocation: medicationFormData.purpose,
+        targetLocation: purpose,
         operator: medicationFormData.operator || '用户',
         status: '已完成',
-        notes: `用途：${medicationFormData.purpose}${medicationFormData.dosage ? '，剂量：' + medicationFormData.dosage : ''}${medicationFormData.notes ? '，备注：' + medicationFormData.notes : ''}，任务：${selectedTask.title}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
+        notes: `用途：${purpose}${medicationFormData.dosage ? '，剂量：' + medicationFormData.dosage : ''}${medicationFormData.notes ? '，备注：' + medicationFormData.notes : ''}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
         recordDate: new Date().toISOString().split('T')[0]
       }
 

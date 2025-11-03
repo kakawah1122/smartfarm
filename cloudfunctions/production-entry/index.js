@@ -668,7 +668,6 @@ async function getActiveBatches(event, wxContext) {
       return isNotDeleted && isNotArchived && hasStock
     })
 
-    // 已移除调试日志
     // 转换数据格式，增加批次信息
     const activeBatches = activeRecords.map(record => {
       // 计算当前日龄 - 使用本地时区，避免时区问题
@@ -694,8 +693,6 @@ async function getActiveBatches(event, wxContext) {
       const totalExited = exitQuantityMap[record.batchNumber] || 0
       const totalDeath = deathQuantityMap[record.batchNumber] || 0
       const currentStock = record.quantity - totalExited - totalDeath
-
-      console.log(`批次 ${record.batchNumber}: 入栏=${record.quantity}, 出栏=${totalExited}, 死亡=${totalDeath}, 存栏=${currentStock}, 日龄=${dayAge}`)
       
       return {
         _id: record._id,  // 使用标准的 _id 字段
@@ -768,9 +765,31 @@ async function getBatchDetail(event, wxContext) {
       }
     }
     
+    // 🔥 计算当前日龄 - 使用本地时区，与 getActiveBatches 保持一致
+    const today = new Date()
+    const todayYear = today.getFullYear()
+    const todayMonth = today.getMonth()
+    const todayDay = today.getDate()
+    
+    // 解析入栏日期
+    const entryDateStr = batch.entryDate.split('T')[0] // YYYY-MM-DD
+    const [entryYear, entryMonth, entryDay] = entryDateStr.split('-').map(Number)
+    
+    // 创建本地时区的日期对象（忽略时间部分）
+    const todayDate = new Date(todayYear, todayMonth, todayDay)
+    const startDate = new Date(entryYear, entryMonth - 1, entryDay) // 月份从0开始
+    
+    // 计算日期差异
+    const diffTime = todayDate.getTime() - startDate.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    const dayAge = diffDays + 1 // 入栏当天为第1日龄
+    
     return {
       success: true,
-      data: batch
+      data: {
+        ...batch,
+        dayAge: dayAge
+      }
     }
   } catch (error) {
     console.error('获取批次详情失败:', error)

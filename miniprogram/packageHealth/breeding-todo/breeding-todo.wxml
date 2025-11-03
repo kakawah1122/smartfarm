@@ -581,15 +581,6 @@
           <text wx:if="{{medicationFormErrors.quantity}}" class="error-text">{{medicationFormErrors.quantity}}</text>
         </view>
         <view class="form-row">
-          <text class="form-label required">用药用途</text>
-          <input class="form-input" 
-                 placeholder="请输入用药用途"
-                 value="{{medicationFormData.purpose}}"
-                 data-field="purpose"
-                 bindinput="onMedicationFormInput" />
-          <text wx:if="{{medicationFormErrors.purpose}}" class="error-text">{{medicationFormErrors.purpose}}</text>
-        </view>
-        <view class="form-row">
           <text class="form-label">用药剂量</text>
           <input class="form-input" 
                  placeholder="请输入用药剂量"

@@ -9,6 +9,12 @@
 export function isVaccineTask(task: any): boolean {
   if (!task) return false
   
+  // 🔥 优先排除明确的非疫苗任务类型
+  const nonVaccineTypes = ['medication', 'medicine', 'nutrition', 'care', 'feeding', 'environment']
+  if (nonVaccineTypes.includes(task.type)) {
+    return false
+  }
+  
   if (task.type === 'vaccine') return true
   
   const vaccineKeywords = [
