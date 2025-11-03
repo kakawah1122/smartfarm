@@ -1,7 +1,7 @@
 // health-management/index.js - 健康管理云函数（优化版）
 const cloud = require('wx-server-sdk')
 const DatabaseManager = require('./database-manager')
-const { COLLECTIONS } = require('./collections')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -22,56 +22,62 @@ function generateRecordId(prefix) {
 // 权限验证辅助函数
 async function checkPermission(openid, module, action, resourceId = null) {
   try {
-    // 1. 获取用户角色
-    const userRolesResult = await db.collection('user_roles')
-      .where({
-        openid,
-        isActive: true,
-        $or: [
-          { expiryTime: _.eq(null) },
-          { expiryTime: _.gt(new Date()) }
-        ]
-      })
-      .limit(10)
+    // 1. 获取用户信息（从wx_users获取角色）
+    const userResult = await db.collection(COLLECTIONS.WX_USERS)
+      .where({ _openid: openid })
+      .limit(1)
       .get()
     
-    if (!userRolesResult.data || userRolesResult.data.length === 0) {
-      console.warn('[权限验证] 用户无有效角色', { openid, module, action })
+    if (!userResult.data || userResult.data.length === 0) {
+      console.warn('[权限验证] 用户不存在', { openid, module, action })
       return false
     }
     
-    // 2. 遍历角色检查权限
-    for (const userRole of userRolesResult.data) {
-      const roleResult = await db.collection('sys_roles')
+    const user = userResult.data[0]
+    const userRole = user.role || 'employee'
+    console.log('[权限验证] 用户角色:', { openid: openid.substring(0, 8) + '...', userRole, module, action })
+    
+    // 2. 直接从wx_users获取角色（简化权限检查）
+    // 超级管理员拥有所有权限
+    if (userRole === 'super_admin') {
+      return true
+    }
+    
+    // 3. 获取角色权限定义（从sys_roles）
+    const roleResult = await db.collection(COLLECTIONS.SYS_ROLES)
         .where({
-          roleCode: userRole.roleCode,
+        roleCode: userRole,
           isActive: true
         })
         .limit(1)
         .get()
       
       if (!roleResult.data || roleResult.data.length === 0) {
-        continue
+      // 如果角色定义不存在，使用默认权限
+      console.warn('[权限验证] 角色定义不存在', { userRole, module, action })
+      return false
       }
       
       const role = roleResult.data[0]
       const permissions = role.permissions || []
       
-      // 3. 检查模块权限
+    // 4. 检查模块权限
       const modulePermission = permissions.find(p => 
         p.module === module || p.module === '*'
       )
       
       if (!modulePermission) {
-        continue
+      console.warn('[权限验证] 无模块权限', { userRole, module, action, availableModules: permissions.map(p => p.module) })
+      return false
       }
       
-      // 4. 检查操作权限
+    // 5. 检查操作权限
       if (modulePermission.actions.includes(action) || modulePermission.actions.includes('*')) {
+        console.log('[权限验证] 验证通过', { userRole, module, action })
         return true
-      }
     }
     
+    console.warn('[权限验证] 无操作权限', { userRole, module, action, availableActions: modulePermission.actions })
     return false
     
   } catch (error) {
@@ -481,7 +487,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
           const transaction = await db.startTransaction()
           
           // 1. 查询当前库存
-          const materialResult = await transaction.collection('prod_materials')
+          const materialResult = await transaction.collection(COLLECTIONS.PROD_MATERIALS)
             .doc(med.materialId)
             .get()
           
@@ -505,7 +511,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
           totalMedicationCost += medicationCost
           
           // 2. 扣减库存
-          await transaction.collection('prod_materials')
+          await transaction.collection(COLLECTIONS.PROD_MATERIALS)
             .doc(med.materialId)
             .update({
               data: {
@@ -515,7 +521,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
             })
           
           // 3. 创建物资领用记录（主记录）
-          const materialRecordResult = await transaction.collection('prod_material_records').add({
+          const materialRecordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
             data: {
               type: 'use',
               materialId: med.materialId,
@@ -535,7 +541,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
           })
           
           // 4. 创建库存流水（追踪记录）
-          await transaction.collection('prod_inventory_logs').add({
+          await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
             data: {
               materialId: med.materialId,
               recordId: materialRecordResult._id,  // ✅ 关联物资记录
@@ -638,106 +644,12 @@ async function createTreatmentFromAbnormal(event, wxContext) {
   }
 }
 
-// 从异常记录创建隔离记录
-async function createIsolationFromAbnormal(event, wxContext) {
-  try {
-    const {
-      abnormalRecordId,
-      batchId,
-      affectedCount,
-      diagnosis
-    } = event
-    const openid = wxContext.OPENID
-    const db = cloud.database()
-    
-    
-    // ✅ 如果没有 affectedCount，从异常记录中获取
-    let finalAffectedCount = affectedCount
-    if (!finalAffectedCount) {
-      const abnormalRecord = await db.collection(COLLECTIONS.HEALTH_RECORDS)
-        .doc(abnormalRecordId)
-        .get()
-      
-      if (abnormalRecord.data) {
-        finalAffectedCount = abnormalRecord.data.affectedCount || 1
-      }
-    } else {
-    }
-    
-    
-    // 创建隔离记录
-    const isolationData = {
-      batchId,
-      abnormalRecordId,  // 关联异常记录
-      isolationDate: new Date().toISOString().split('T')[0],
-      isolatedCount: finalAffectedCount || 0,
-      diagnosis: diagnosis || '',
-      isolationLocation: '',  // 隔离位置
-      isolationReason: diagnosis || '',
-      status: 'ongoing',  // ongoing | completed
-      dailyRecords: [],  // 每日观察记录
-      outcome: {
-        recoveredCount: 0,
-        diedCount: 0,
-        stillIsolatedCount: finalAffectedCount || 0
-      },
-      notes: '',
-      isDeleted: false,  // ✅ 添加删除标记字段，确保统计时能查询到
-      createdBy: openid,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-    
-    const isolationResult = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS).add({
-      data: isolationData
-    })
-    
-    // 更新异常记录状态为isolated（隔离中）
-    await db.collection(COLLECTIONS.HEALTH_RECORDS)
-      .doc(abnormalRecordId)
-      .update({
-        data: {
-          status: 'isolated',
-          isolationRecordId: isolationResult._id,
-          updatedAt: new Date()
-        }
-      })
-    
-    // 记录审计日志
-    await dbManager.createAuditLog(
-      openid,
-      'create_isolation_from_abnormal',
-      COLLECTIONS.HEALTH_ISOLATION_RECORDS,
-      isolationResult._id,
-      {
-        abnormalRecordId,
-        batchId,
-        affectedCount: finalAffectedCount,  // ✅ 使用最终确定的数量
-        result: 'success'
-      }
-    )
-    
-    return {
-      success: true,
-      data: { isolationId: isolationResult._id },
-      message: '隔离记录创建成功'
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      message: '创建隔离记录失败'
-    }
-  }
-}
-
 // 提交治疗计划（用户填写完治疗表单后调用）
 async function submitTreatmentPlan(event, wxContext) {
   try {
     const {
       treatmentId,
-      abnormalRecordId,
-      treatmentType  // 'medication' | 'isolation'
+      abnormalRecordId
     } = event
     const openid = wxContext.OPENID
     const db = cloud.database()
@@ -753,14 +665,12 @@ async function submitTreatmentPlan(event, wxContext) {
         }
       })
     
-    // 2. 根据治疗类型，更新异常记录的状态
-    const newStatus = treatmentType === 'isolation' ? 'isolated' : 'treating'
-    
+    // 2. 更新异常记录的状态为治疗中
     await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .doc(abnormalRecordId)
       .update({
         data: {
-          status: newStatus,  // treating 或 isolated
+          status: 'treating',
           updatedAt: new Date()
         }
       })
@@ -773,8 +683,6 @@ async function submitTreatmentPlan(event, wxContext) {
       treatmentId,
       {
         abnormalRecordId,
-        treatmentType,
-        newStatus,
         result: 'success'
       }
     )
@@ -799,11 +707,11 @@ async function getAbnormalRecords(event, wxContext) {
     const db = cloud.database()
     
     
-    // ✅ 只查询真正的异常记录（待处理状态），已流转到治疗中或隔离的不计入异常数
+    // ✅ 只查询真正的异常记录（待处理状态），已流转到治疗中的不计入异常数
     let whereCondition = {
       recordType: 'ai_diagnosis',
-      status: 'abnormal',  // ✅ 只查询 abnormal 状态，不包括 treating 和 isolated
-      isDeleted: _.neq(true)
+      status: 'abnormal',  // ✅ 只查询 abnormal 状态，不包括 treating
+      ...dbManager.buildNotDeletedCondition(true)
     }
     
     if (batchId && batchId !== 'all') {
@@ -833,10 +741,10 @@ async function getAbnormalRecords(event, wxContext) {
   }
 }
 
-// 查询各状态的健康记录（待处理/治疗中/隔离）
+// 查询各状态的健康记录（待处理/治疗中）
 async function getHealthRecordsByStatus(event, wxContext) {
   try {
-    const { batchId, status, limit = 20 } = event  // status: 'abnormal' | 'treating' | 'isolated'
+    const { batchId, status, limit = 20 } = event  // status: 'abnormal' | 'treating'
     const db = cloud.database()
 
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50)
@@ -844,7 +752,7 @@ async function getHealthRecordsByStatus(event, wxContext) {
     let whereCondition = {
       recordType: 'ai_diagnosis',
       status: status || 'abnormal',
-      isDeleted: _.neq(true)
+      ...dbManager.buildNotDeletedCondition(true)
     }
     
     if (batchId && batchId !== 'all') {
@@ -888,11 +796,11 @@ async function listAbnormalRecords(event, wxContext) {
     const { batchId, page = 1, pageSize = 20 } = event
     const db = cloud.database()
     
-    // 查询所有异常记录（包括待处理、治疗中、已隔离）
+    // 查询所有异常记录（包括待处理、治疗中）
     let whereCondition = {
       recordType: 'ai_diagnosis',
-      status: _.in(['abnormal', 'treating', 'isolated']),  // 显示所有状态的记录
-      isDeleted: _.neq(true)
+      status: _.in(['abnormal', 'treating']),  // 显示所有状态的记录
+      ...dbManager.buildNotDeletedCondition(true)
     }
     
     if (batchId && batchId !== 'all') {
@@ -985,7 +893,7 @@ async function getBatchPromptData(event, wxContext) {
       .where({
         batchId,
         recordType: 'ai_diagnosis',
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .orderBy('checkDate', 'desc')
       .limit(5)
@@ -1002,12 +910,29 @@ async function getBatchPromptData(event, wxContext) {
       aiRecommendation: record.aiRecommendation
     }))
 
-    // 4. 最近治疗与隔离记录
-    const recentTreatmentRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-      .where({ batchId, isDeleted: _.neq(true) })
+    // ✅ 优化：并行查询所有历史数据（治疗、死亡、修正反馈）
+    const [recentTreatmentRecords, recentDeathRecords, recentCorrections] = await Promise.all([
+      db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+        .where({ batchId, ...dbManager.buildNotDeletedCondition(true) })
       .orderBy('treatmentDate', 'desc')
       .limit(3)
+        .get(),
+      db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+        .where({ batchId, ...dbManager.buildNotDeletedCondition(true) })
+        .orderBy('deathDate', 'desc')
+        .limit(5)
+        .get(),
+      db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .where({
+          batchId,
+          recordType: 'ai_diagnosis',
+          isCorrected: true,
+          ...dbManager.buildNotDeletedCondition(true)
+        })
+        .orderBy('correctedAt', 'desc')
+        .limit(10)
       .get()
+    ])
 
     const treatmentHistory = recentTreatmentRecords.data.map(record => ({
       recordId: record._id,
@@ -1019,34 +944,6 @@ async function getBatchPromptData(event, wxContext) {
       notes: record.notes
     }))
 
-    // 查询隔离记录（如果集合不存在则跳过）
-    let isolationHistory = []
-    try {
-      const recentIsolationRecords = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
-        .where({ batchId, isDeleted: _.neq(true) })
-        .orderBy('startDate', 'desc')
-        .limit(3)
-        .get()
-
-      isolationHistory = recentIsolationRecords.data.map(record => ({
-        recordId: record._id,
-        startDate: record.startDate,
-        endDate: record.endDate,
-        reason: record.reason,
-        status: record.status,
-        notes: record.notes
-      }))
-    } catch (isolationError) {
-      // 隔离记录集合可能不存在，跳过
-    }
-
-    // 5. 最近死亡记录
-    const recentDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
-      .where({ batchId, isDeleted: _.neq(true) })
-      .orderBy('deathDate', 'desc')
-      .limit(5)
-      .get()
-
     const deathHistory = recentDeathRecords.data.map(record => ({
       recordId: record._id,
       deathDate: record.deathDate,
@@ -1056,18 +953,6 @@ async function getBatchPromptData(event, wxContext) {
       correctionReason: record.correctionReason,
       aiAccuracyRating: record.aiAccuracyRating
     }))
-
-    // 6. 最近AI准确率/修正数据
-    const recentCorrections = await db.collection(COLLECTIONS.HEALTH_RECORDS)
-      .where({
-        batchId,
-        recordType: 'ai_diagnosis',
-        isCorrected: true,
-        isDeleted: _.neq(true)
-      })
-      .orderBy('correctedAt', 'desc')
-      .limit(10)
-      .get()
 
     const correctionFeedback = recentCorrections.data.map(record => ({
       recordId: record._id,
@@ -1085,7 +970,6 @@ async function getBatchPromptData(event, wxContext) {
         stats: currentStats,
         diagnosisTrend,
         treatmentHistory,
-        isolationHistory,
         deathHistory,
         correctionFeedback
       }
@@ -1175,7 +1059,7 @@ async function correctAbnormalDiagnosis(event, wxContext) {
     // ✅ 同步更新原始的 AI 诊断记录（如果存在）
     if (recordResult.data.diagnosisId) {
       try {
-        await db.collection('health_ai_diagnosis')
+        await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
           .doc(recordResult.data.diagnosisId)
           .update({
             data: {
@@ -1292,7 +1176,7 @@ async function createTreatmentRecord(event, wxContext) {
     // ✅ 如果有关联的AI诊断记录，同步更新治疗信息
     if (diagnosisId) {
       try {
-        await db.collection('health_ai_diagnosis')
+        await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
           .doc(diagnosisId)
           .update({
             data: {
@@ -1425,7 +1309,7 @@ async function updateTreatmentRecord(event, wxContext) {
           .get()
         
         if (treatmentRecord.data && treatmentRecord.data.diagnosisId) {
-          await db.collection('health_ai_diagnosis')
+          await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
             .doc(treatmentRecord.data.diagnosisId)
             .update({
               data: {
@@ -1571,7 +1455,7 @@ async function getHealthOverview(event, wxContext) {
 async function getHealthStatistics(batchId, dateRange) {
   try {
     // 获取批次信息
-    const batchResult = await db.collection('prod_batch_entries')
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .doc(batchId)
       .get()
     
@@ -1584,7 +1468,7 @@ async function getHealthStatistics(batchId, dateRange) {
     
     // 查询健康记录
     let query = db.collection(COLLECTIONS.HEALTH_RECORDS)
-      .where({ batchId, isDeleted: _.neq(true) })
+      .where({ batchId, ...dbManager.buildNotDeletedCondition(true) })
 
     if (dateRange && dateRange.start && dateRange.end) {
       query = query.where({
@@ -1609,7 +1493,7 @@ async function getHealthStatistics(batchId, dateRange) {
         batchId,
         recordType: 'ai_diagnosis',
         status: 'abnormal',
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .get()
     
@@ -1623,7 +1507,7 @@ async function getHealthStatistics(batchId, dateRange) {
     const treatingRecordsResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
         batchId,
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .get()
     
@@ -1664,7 +1548,7 @@ async function getHealthStatistics(batchId, dateRange) {
       let recordSickCount = latestRecord.sickCount || 0
       
       // ✅ 如果健康记录的健康数和生病数都是0，说明没有填写
-      // 应该用 总存栏数 - 异常数 - 治疗中数 - 隔离中数 来计算健康数
+      // 应该用 总存栏数 - 异常数 - 治疗中数 来计算健康数
       if (recordHealthyCount === 0 && recordSickCount === 0) {
         healthyCount = totalAnimals - abnormalCount - treatingCount
         sickCount = abnormalCount + treatingCount
@@ -1720,7 +1604,7 @@ async function getActiveHealthAlerts(batchId) {
       .where({
         batchId,
         status: 'active',
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .orderBy('createdAt', 'desc')
       .limit(10)
@@ -1738,7 +1622,7 @@ async function getActiveHealthAlerts(batchId) {
 async function getTreatmentStatistics(batchId, dateRange) {
   try {
     let query = db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-      .where({ batchId, isDeleted: _.neq(true) })
+      .where({ batchId, ...dbManager.buildNotDeletedCondition(true) })
 
     if (dateRange && dateRange.start && dateRange.end) {
       query = query.where({
@@ -1775,7 +1659,7 @@ async function updateAiUsageStats(usageType, userId) {
     // 查找今日的使用记录
     const existingResult = await db.collection(COLLECTIONS.SYS_AI_USAGE)
       .where({
-        userId,
+        _openid: userId,
         usageType,
         date: today
       })
@@ -1796,7 +1680,7 @@ async function updateAiUsageStats(usageType, userId) {
       // 创建新记录
       await db.collection(COLLECTIONS.SYS_AI_USAGE).add({
         data: {
-          userId,
+          _openid: userId,
           usageType,
           date: today,
           count: 1,
@@ -1828,7 +1712,7 @@ function calculateSeverity(sickCount, deadCount, totalCount) {
 async function getAllBatchesHealthSummary(event, wxContext) {
   try {
     // 获取该用户的所有入栏批次
-    const allBatchesResult = await db.collection('prod_batch_entries')
+    const allBatchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where({
         userId: wxContext.OPENID
       })
@@ -1836,7 +1720,7 @@ async function getAllBatchesHealthSummary(event, wxContext) {
       .get()
     
     // 获取所有出栏记录
-    const exitRecordsResult = await db.collection('prod_batch_exits')
+    const exitRecordsResult = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({
         userId: wxContext.OPENID
       })
@@ -1875,48 +1759,80 @@ async function getAllBatchesHealthSummary(event, wxContext) {
       }
     }
     
-    // 为每个批次获取健康汇总
-    const batchHealthSummaries = []
-    
-    for (const batch of batches) {
+    // ✅ 优化：并行处理所有批次的健康汇总
+    const batchHealthSummaries = await Promise.all(
+      batches.map(async (batch) => {
       try {
         // 计算日龄
         const entryDate = new Date(batch.entryDate)
         const today = new Date()
         const dayAge = Math.floor((today.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
         
-        // 获取该批次最近的健康记录
-        const recentHealthResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+          const originalQuantity = batch.quantity || 0  // 原始入栏数
+          const exitedCount = exitQuantityMap[batch.batchNumber] || 0
+          
+          // ✅ 优化：并行查询该批次的所有相关数据
+          const [
+            recentHealthResult,
+            deathRecordsByIdResult,
+            deathRecordsByNumberResult,
+            abnormalRecordsResult,
+            allTreatmentRecordsResult,
+            abnormalAnimalsResult
+          ] = await Promise.all([
+            // 最近的健康记录
+            db.collection(COLLECTIONS.HEALTH_RECORDS)
           .where({
             batchId: batch._id,
-            isDeleted: _.neq(true)
+                ...dbManager.buildNotDeletedCondition(true)
           })
           .orderBy('checkDate', 'desc')
           .limit(5)
-          .get()
-        
-        const healthRecords = recentHealthResult.data
-        
-        // 计算健康指标
-        let originalQuantity = batch.quantity || 0  // 原始入栏数
-        
-        // ✅ 实时统计死亡数（从死亡记录表查询）
-        // 尝试同时使用批次ID和批次号查询（因为治疗记录可能存储的是批次号）
-        const deathRecordsByIdResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+              .get(),
+            // 死亡记录（按批次ID）
+            db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
           .where({
             batchId: batch._id,
             isDeleted: false
           })
-          .get()
-        
-        const deathRecordsByNumberResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+              .get(),
+            // 死亡记录（按批次号）
+            db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
           .where({
             batchId: batch.batchNumber,
             isDeleted: false
           })
+              .get(),
+            // 异常记录数量
+            db.collection(COLLECTIONS.HEALTH_RECORDS)
+              .where({
+                batchId: batch._id,
+                recordType: 'ai_diagnosis',
+                status: 'abnormal',
+                ...dbManager.buildNotDeletedCondition(true)
+              })
+              .count(),
+            // 所有治疗记录
+            db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+              .where({
+                batchId: batch._id,
+                ...dbManager.buildNotDeletedCondition(true)
+              })
+              .get(),
+            // 异常动物记录
+            db.collection(COLLECTIONS.HEALTH_RECORDS)
+              .where({
+                batchId: batch._id,
+                recordType: 'ai_diagnosis',
+                status: 'abnormal',
+                ...dbManager.buildNotDeletedCondition(true)
+              })
           .get()
+          ])
         
-        // 合并两次查询结果（去重）
+          const healthRecords = recentHealthResult.data
+          
+          // 合并死亡记录（去重）
         const allDeathRecords = [...deathRecordsByIdResult.data]
         const existingIds = new Set(allDeathRecords.map(r => r._id))
         deathRecordsByNumberResult.data.forEach(record => {
@@ -1931,35 +1847,9 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         })
         
         // ✅ 当前存栏数 = 原始数量 - 实时死亡数 - 出栏数
-        const exitedCount = exitQuantityMap[batch.batchNumber] || 0
         let totalCount = originalQuantity - deadCount - exitedCount
         
-        let healthyCount = 0
-        let sickCount = 0
-        let healthyRate = 100
-        let lastCheckDate = null
-        let recentIssues = []
-        
-        // ✅ 查询待处理记录条数（用于界面显示）
-        const abnormalRecordsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
-          .where({
-            batchId: batch._id,
-            recordType: 'ai_diagnosis',
-            status: 'abnormal',
-            isDeleted: _.neq(true)
-          })
-          .count()
-        
         const abnormalRecordCount = abnormalRecordsResult.total || 0
-        
-        // ✅ 查询所有治疗记录（包括药物治疗和隔离）
-        // ⚠️ 不在查询中过滤 outcome.status，因为微信云数据库嵌套字段查询可能失败
-        const allTreatmentRecordsResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-          .where({
-            batchId: batch._id,
-            isDeleted: _.neq(true)
-          })
-          .get()
         
         // ✅ 在代码中过滤进行中的治疗记录（包含 ongoing 和旧的 pending 记录）
         const ongoingTreatmentRecords = allTreatmentRecordsResult.data.filter(r => {
@@ -1969,25 +1859,21 @@ async function getAllBatchesHealthSummary(event, wxContext) {
         
         // 统计进行中的治疗数量
         let treatingCount = 0
-        
         ongoingTreatmentRecords.forEach(record => {
           const count = record.outcome?.totalTreated || 0
           treatingCount += count
         })
         
-        // ✅ 查询待处理的动物数量（从 health_records，累加 affectedCount）
-        const abnormalAnimalsResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
-          .where({
-            batchId: batch._id,
-            recordType: 'ai_diagnosis',
-            status: 'abnormal',
-            isDeleted: _.neq(true)
-          })
-          .get()
-        
+          // 计算异常动物数量
         const abnormalCount = abnormalAnimalsResult.data.reduce((sum, record) => {
           return sum + (record.affectedCount || 0)
         }, 0)
+          
+          let healthyCount = 0
+          let sickCount = 0
+          let healthyRate = 100
+          let lastCheckDate = null
+          let recentIssues = []
         
         // ✅ 计算健康数和异常数
         // 异常数 = 待处理 + 治疗中
@@ -2043,14 +1929,19 @@ async function getAllBatchesHealthSummary(event, wxContext) {
           entryDate: batch.entryDate
         }
         
-        batchHealthSummaries.push(batchData)
+          return batchData
       } catch (batchError) {
         // 已移除调试日志
+          return null  // 返回 null 以便后续过滤
       }
-    }
+      })
+    )
+    
+    // 过滤掉失败的批次（返回 null 的）
+    const validSummaries = batchHealthSummaries.filter(summary => summary !== null)
     
     // 按预警级别和健康率排序
-    batchHealthSummaries.sort((a, b) => {
+    validSummaries.sort((a, b) => {
       const alertPriority = { danger: 0, warning: 1, normal: 2 }
       const priorityDiff = alertPriority[a.alertLevel] - alertPriority[b.alertLevel]
       if (priorityDiff !== 0) return priorityDiff
@@ -2060,8 +1951,8 @@ async function getAllBatchesHealthSummary(event, wxContext) {
     return {
       success: true,
       data: {
-        batches: batchHealthSummaries,
-        totalBatches: batchHealthSummaries.length,
+        batches: validSummaries,
+        totalBatches: validSummaries.length,
         _version: '2025-10-28-v6'  // ✅ 新记录始终为 ongoing，统计兼容旧 pending 记录
       }
     }
@@ -2232,7 +2123,7 @@ async function getHomepageHealthOverview(event, wxContext) {
     
     // 获取待办健康任务数（疫苗、用药、检查等类型）
     const healthTaskTypes = ['vaccine', 'medication', 'health_check', 'inspection', 'disinfection']
-    const taskResult = await db.collection('task_batch_schedules')
+    const taskResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
       .where({
         userId: wxContext.OPENID,
         type: _.in(healthTaskTypes),
@@ -2379,7 +2270,7 @@ async function addTreatmentMedication(event, wxContext) {
     }
     
     // 检查库存
-    const materialResult = await db.collection('prod_materials')
+    const materialResult = await db.collection(COLLECTIONS.PROD_MATERIALS)
       .doc(medication.materialId)
       .get()
     
@@ -2401,7 +2292,7 @@ async function addTreatmentMedication(event, wxContext) {
     
     try {
       // 1. 扣减库存
-      await transaction.collection('prod_materials')
+      await transaction.collection(COLLECTIONS.PROD_MATERIALS)
         .doc(medication.materialId)
         .update({
           data: {
@@ -2411,7 +2302,7 @@ async function addTreatmentMedication(event, wxContext) {
         })
       
       // 2. ✅ 创建物资领用记录（主记录）
-      const materialRecordResult = await transaction.collection('prod_material_records').add({
+      const materialRecordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
         data: {
           type: 'use',  // 领用类型
           materialId: medication.materialId,
@@ -2431,7 +2322,7 @@ async function addTreatmentMedication(event, wxContext) {
       })
       
       // 3. 创建库存流水（追踪记录）
-      await transaction.collection('prod_inventory_logs').add({
+      await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
         data: {
           materialId: medication.materialId,
           recordId: materialRecordResult._id,  // ✅ 关联物资记录
@@ -2606,7 +2497,7 @@ async function getDiagnosisHistory(event, wxContext) {
     // 构建查询条件
     let whereCondition = {
       _openid: openid,
-      isDeleted: _.neq(true)
+      ...dbManager.buildNotDeletedCondition(true)
     }
 
     // 如果指定了批次，添加批次过滤
@@ -2627,7 +2518,7 @@ async function getDiagnosisHistory(event, wxContext) {
       openid
     })
 
-    let query = db.collection('health_ai_diagnosis').where(whereCondition)
+    let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS).where(whereCondition)
 
     // 查询数据
     const skip = (page - 1) * limit
@@ -2920,7 +2811,7 @@ async function getBatchCompleteData(event, wxContext) {
                 batchId,
                 recordType: 'ai_diagnosis',
                 status: 'abnormal',
-                isDeleted: _.neq(true)
+                ...dbManager.buildNotDeletedCondition(true)
               })
               .orderBy('checkDate', 'desc')
               .limit(50)
@@ -3002,9 +2893,6 @@ exports.main = async (event, context) => {
       
       case 'create_treatment_from_abnormal':
         return await createTreatmentFromAbnormal(event, wxContext)
-      
-      case 'create_isolation_from_abnormal':
-        return await createIsolationFromAbnormal(event, wxContext)
       
       case 'submit_treatment_plan':
         return await submitTreatmentPlan(event, wxContext)
@@ -3167,16 +3055,16 @@ async function calculateBatchCost(event, wxContext) {
     
     try {
       // 先尝试作为文档ID查询
-      const batchEntry = await db.collection('prod_batch_entries')
+      const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .doc(batchId)
         .get()
       batch = batchEntry.data
     } catch (err) {
       // 如果文档不存在，尝试通过批次号查询
-      const batchQueryResult = await db.collection('prod_batch_entries')
+      const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .where({
           batchNumber: batchId,
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .limit(1)
         .get()
@@ -3194,7 +3082,7 @@ async function calculateBatchCost(event, wxContext) {
     const currentCount = batch.currentCount || 1
     
     // 2. 计算物料成本
-    const materialRecords = await db.collection('prod_material_records')
+    const materialRecords = await db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
       .where({
         batchId: batchId,
         type: 'use',
@@ -3207,7 +3095,7 @@ async function calculateBatchCost(event, wxContext) {
     }, 0)
     
     // 3. 计算预防成本
-    const preventionRecords = await db.collection('health_prevention_records')
+    const preventionRecords = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
       .where({
         batchId: batchId,
         isDeleted: false
@@ -3219,7 +3107,7 @@ async function calculateBatchCost(event, wxContext) {
     }, 0)
     
     // 4. 计算治疗成本
-    const treatmentRecords = await db.collection('health_treatment_records')
+    const treatmentRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
         batchId: batchId,
         isDeleted: false
@@ -3280,7 +3168,7 @@ async function createDeathRecord(event, wxContext) {
       batchId,
       batchNumber,
       deathCount,
-      recordDate,
+      deathDate,
       deathCause,
       deathCauseCategory,
       customCauseTags,
@@ -3306,16 +3194,16 @@ async function createDeathRecord(event, wxContext) {
     let batchDocId = batchId  // ✅ 批次文档的真实_id
     
     try {
-      const batchEntry = await db.collection('prod_batch_entries')
+      const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .doc(batchId).get()
       batch = batchEntry.data
       batchDocId = batchId  // 文档ID就是传入的batchId
     } catch (err) {
       // 如果文档不存在，尝试通过批次号查询
-      const batchQueryResult = await db.collection('prod_batch_entries')
+      const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .where({
           batchNumber: batchId,
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .limit(1)
         .get()
@@ -3345,7 +3233,7 @@ async function createDeathRecord(event, wxContext) {
     const totalLoss = (unitCost * deathCount).toFixed(2)
     
     // 4. 获取用户信息
-    const userInfo = await db.collection('wx_users')
+    const userInfo = await db.collection(COLLECTIONS.WX_USERS)
       .where({ _openid: openid }).get()
     const operatorName = userInfo.data[0]?.name || '未知'
     
@@ -3353,7 +3241,7 @@ async function createDeathRecord(event, wxContext) {
     const deathRecord = {
       batchId,
       batchNumber: batchNumber || batch.batchNumber,
-      recordDate: recordDate || new Date().toISOString().split('T')[0],
+      deathDate: deathDate || new Date().toISOString().split('T')[0],
       deathList: deathList || [],
       deathCause,
       deathCauseCategory,
@@ -3378,7 +3266,7 @@ async function createDeathRecord(event, wxContext) {
       updatedAt: new Date()
     }
     
-    const deathResult = await db.collection('health_death_records').add({
+    const deathResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).add({
       data: deathRecord
     })
     
@@ -3397,7 +3285,7 @@ async function createDeathRecord(event, wxContext) {
           unitCost: unitCost.toFixed(2),
           totalLoss,
           deathCause,
-          recordDate: recordDate || new Date().toISOString().split('T')[0],
+          recordDate: deathDate || new Date().toISOString().split('T')[0],
           operator: openid
         }
       })
@@ -3410,7 +3298,7 @@ async function createDeathRecord(event, wxContext) {
     }
     
     // 7. 更新批次数量
-    await db.collection('prod_batch_entries').doc(batchId).update({
+    await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).update({
       data: {
         currentCount: _.inc(-deathCount),
         deadCount: _.inc(deathCount),
@@ -3463,7 +3351,7 @@ async function listDeathRecords(event, wxContext) {
       pageSize = 20
     } = event
     
-    let query = db.collection('health_death_records')
+    let query = db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({ isDeleted: false })
     
     // 按批次筛选
@@ -3474,7 +3362,7 @@ async function listDeathRecords(event, wxContext) {
     // 按日期范围筛选
     if (dateRange && dateRange.start && dateRange.end) {
       query = query.where({
-        recordDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+        deathDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
       })
     }
     
@@ -3515,7 +3403,7 @@ async function getDeathStats(event, wxContext) {
   try {
     const { batchId, dateRange } = event
     
-    let query = db.collection('health_death_records')
+    let query = db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({ isDeleted: false })
     
     if (batchId) {
@@ -3524,7 +3412,7 @@ async function getDeathStats(event, wxContext) {
     
     if (dateRange && dateRange.start && dateRange.end) {
       query = query.where({
-        recordDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
+        deathDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
       })
     }
     
@@ -3651,7 +3539,7 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
           const transaction = await db.startTransaction()
           
           // 1. 查询当前库存
-          const materialResult = await transaction.collection('prod_materials')
+          const materialResult = await transaction.collection(COLLECTIONS.PROD_MATERIALS)
             .doc(medication.materialId)
             .get()
           
@@ -3674,7 +3562,7 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
           totalMedicationCost += medicationCost
           
           // 2. 扣减库存
-          await transaction.collection('prod_materials')
+          await transaction.collection(COLLECTIONS.PROD_MATERIALS)
             .doc(medication.materialId)
             .update({
               data: {
@@ -3684,7 +3572,7 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
             })
           
           // 3. 创建物资领用记录（主记录）
-          const materialRecordResult = await transaction.collection('prod_material_records').add({
+          const materialRecordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
             data: {
               type: 'use',
               materialId: medication.materialId,
@@ -3704,7 +3592,7 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
           })
           
           // 4. 创建库存流水（追踪记录）
-          await transaction.collection('prod_inventory_logs').add({
+          await transaction.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
             data: {
               materialId: medication.materialId,
               recordId: materialRecordResult._id,
@@ -3806,7 +3694,7 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
           recordType: 'ai_diagnosis',
           status: 'abnormal',
           relatedDiagnosisId: diagnosisId,
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .get()
       
@@ -3976,7 +3864,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
     const existingDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({
         treatmentRecordId: treatmentId,
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .limit(1)
       .get()
@@ -3988,15 +3876,15 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
     
     try {
       try {
-        const batchEntry = await db.collection('prod_batch_entries')
+        const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
           .doc(treatment.batchId).get()
         batch = batchEntry.data
         batchDocId = treatment.batchId
       } catch (err) {
-        const batchQueryResult = await db.collection('prod_batch_entries')
+        const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
           .where({
             batchNumber: treatment.batchId,
-            isDeleted: _.neq(true)
+            ...dbManager.buildNotDeletedCondition(true)
           })
           .limit(1)
           .get()
@@ -4122,7 +4010,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
     }
     
     // 6. 更新批次存栏数和死亡数
-    await db.collection('prod_batch_entries').doc(batchDocId).update({
+    await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchDocId).update({
       data: {
         currentCount: _.inc(-actualDiedCount),
         deadCount: _.inc(actualDiedCount),
@@ -4176,14 +4064,14 @@ async function updateBatchHealthStatus(batchId, updateData) {
     let batch = null
     
     try {
-      const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+      const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
       batch = batchEntry.data
     } catch (err) {
       // 如果文档不存在，尝试通过批次号查询
-      const batchQueryResult = await db.collection('prod_batch_entries')
+      const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .where({
           batchNumber: batchId,
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .limit(1)
         .get()
@@ -4233,14 +4121,14 @@ async function calculateHealthRate(batchId) {
     let batch = null
     
     try {
-      const batchEntry = await db.collection('prod_batch_entries').doc(batchId).get()
+      const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
       batch = batchEntry.data
     } catch (err) {
       // 如果文档不存在，尝试通过批次号查询
-      const batchQueryResult = await db.collection('prod_batch_entries')
+      const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .where({
           batchNumber: batchId,
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .limit(1)
         .get()
@@ -4598,7 +4486,7 @@ async function getTreatmentHistory(event, wxContext) {
     // 构建查询条件
     const where = {
       _openid: openid,
-      isDeleted: _.neq(true)
+      ...dbManager.buildNotDeletedCondition(true)
     }
     
     // 如果指定了批次ID，添加批次条件
@@ -4606,32 +4494,19 @@ async function getTreatmentHistory(event, wxContext) {
       where.batchId = batchId
     }
     
-    // 查询治疗记录（包括药物治疗和隔离记录）
+    // 查询治疗记录
     const treatmentRecordsResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where(where)
       .orderBy('createdAt', 'desc')
       .limit(limit)
       .get()
     
-    const isolationRecordsResult = await db.collection(COLLECTIONS.HEALTH_ISOLATION_RECORDS)
-      .where(where)
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get()
-    
-    // 合并两种记录
-    const allRecords = [
-      ...treatmentRecordsResult.data.map(r => ({
+    // 处理治疗记录
+    const allRecords = treatmentRecordsResult.data.map(r => ({
         ...r,
         treatmentType: 'medication',
         diagnosis: r.diagnosisDisease || r.diagnosis || '未知疾病'
-      })),
-      ...isolationRecordsResult.data.map(r => ({
-        ...r,
-        treatmentType: 'isolation',
-        diagnosis: r.diagnosisDisease || r.diagnosis || '隔离观察'
       }))
-    ]
     
     // 按创建时间排序
     allRecords.sort((a, b) => {
@@ -4647,10 +4522,10 @@ async function getTreatmentHistory(event, wxContext) {
     for (const record of records) {
       if (record.batchId) {
         try {
-          const batchResult = await db.collection('prod_batch_entries')
+          const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
             .where({
               _id: record.batchId,
-              isDeleted: _.neq(true)
+              ...dbManager.buildNotDeletedCondition(true)
             })
             .limit(1)
             .get()
@@ -4659,10 +4534,10 @@ async function getTreatmentHistory(event, wxContext) {
             record.batchNumber = batchResult.data[0].batchNumber
           } else {
             // 尝试用批次号查询
-            const batchByNumberResult = await db.collection('prod_batch_entries')
+            const batchByNumberResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
               .where({
                 batchNumber: record.batchId,
-                isDeleted: _.neq(true)
+                ...dbManager.buildNotDeletedCondition(true)
               })
               .limit(1)
               .get()
@@ -4790,7 +4665,7 @@ async function updateTreatmentProgress(event, wxContext) {
       
       try {
         // 先尝试作为文档ID查询
-        const batchResult = await db.collection('prod_batch_entries')
+        const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
           .doc(treatment.batchId)
           .get()
         batch = batchResult.data
@@ -4800,10 +4675,10 @@ async function updateTreatmentProgress(event, wxContext) {
         // 如果文档不存在，尝试通过批次号查询
         console.log('批次ID查询失败，尝试通过批次号查询:', treatment.batchId)
         try {
-          const batchQueryResult = await db.collection('prod_batch_entries')
+          const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
             .where({
               batchNumber: treatment.batchId,
-              isDeleted: _.neq(true)
+              ...dbManager.buildNotDeletedCondition(true)
             })
             .limit(1)
             .get()
@@ -4907,7 +4782,7 @@ async function updateTreatmentProgress(event, wxContext) {
       const existingDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
         .where({
           treatmentRecordId: treatmentId,
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .limit(1)
         .get()
@@ -5022,10 +4897,10 @@ async function updateTreatmentProgress(event, wxContext) {
         // 文档不存在或查询失败（可能 batchId 是 batchNumber）
         
         try {
-          const entryResult = await db.collection('prod_batch_entries')
+          const entryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
             .where({
               batchNumber: treatment.batchId,
-              isDeleted: _.neq(true)
+              ...dbManager.buildNotDeletedCondition(true)
             })
             .limit(1)
             .get()
@@ -5182,7 +5057,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
       const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .where({
           batchNumber: batchId,
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .limit(1)
         .get()
@@ -5302,7 +5177,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
             recordType: 'ai_diagnosis',
             status: 'abnormal',
             relatedDiagnosisId: diagnosisId,
-            isDeleted: _.neq(true)
+            ...dbManager.buildNotDeletedCondition(true)
           })
           .get()
         
@@ -5428,7 +5303,7 @@ async function getDeathRecordDetail(event, wxContext) {
     // 如果有AI诊断ID，获取完整的诊断信息
     if (record.aiDiagnosisId) {
       try {
-        const diagnosisResult = await db.collection('health_ai_diagnosis')
+        const diagnosisResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
           .doc(record.aiDiagnosisId)
           .get()
         
@@ -5511,7 +5386,7 @@ async function correctDeathDiagnosis(event, wxContext) {
     // 获取用户信息（用于记录修正人姓名）
     let userName = '未知用户'
     try {
-      const userResult = await db.collection('wx_users')
+      const userResult = await db.collection(COLLECTIONS.WX_USERS)
         .where({ _openid: openid })
         .limit(1)
         .get()
@@ -5558,7 +5433,7 @@ async function correctDeathDiagnosis(event, wxContext) {
     // ✅ 如果有AI诊断ID，同步更新AI诊断记录（与异常记录保持一致）
     if (record.aiDiagnosisId) {
       try {
-        await db.collection('health_ai_diagnosis')
+        await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
           .doc(record.aiDiagnosisId)
           .update({
             data: {
@@ -5630,8 +5505,9 @@ async function getTodayPreventionTasks(event, wxContext) {
     }
     
     // ========== 2. 构建查询条件 ==========
+    // ✅ 修复：使用正确的 category 值（中文）
     const whereCondition = {
-      category: 'health',
+      category: _.in(['健康管理', '营养管理', '疫苗接种', '用药管理']),
       completed: false,
       targetDate: _.lte(today)  // 今日及之前（包含逾期）
     }
@@ -5776,10 +5652,11 @@ async function getPreventionTimeline(event, wxContext) {
     const batch = batchResult.data
     
     // ========== 4. 查询该批次的所有预防任务 ==========
+    // ✅ 修复：使用正确的 category 值（中文）
     const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
       .where({
         batchId: batchId,
-        category: 'health'
+        category: _.in(['健康管理', '营养管理', '疫苗接种', '用药管理'])
       })
       .field({
         _id: true,
@@ -5801,7 +5678,7 @@ async function getPreventionTimeline(event, wxContext) {
     const recordsResult = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
       .where({
         batchId: batchId,
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .field({
         taskId: true,
@@ -5945,7 +5822,7 @@ async function getBatchPreventionComparison(event, wxContext) {
     const batchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where({
         status: 'active',
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .field({
         _id: true,
@@ -5974,10 +5851,11 @@ async function getBatchPreventionComparison(event, wxContext) {
     
     const [tasksResult, recordsResult] = await Promise.all([
       // 获取所有批次的任务
+      // ✅ 修复：使用正确的 category 值（中文）
       db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
         .where({
           batchId: _.in(batchIds),
-          category: 'health'
+          category: _.in(['健康管理', '营养管理', '疫苗接种', '用药管理'])
         })
         .field({
           batchId: true,
@@ -5991,7 +5869,7 @@ async function getBatchPreventionComparison(event, wxContext) {
       db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
         .where({
           batchId: _.in(batchIds),
-          isDeleted: _.neq(true)
+          ...dbManager.buildNotDeletedCondition(true)
         })
         .field({
           batchId: true,
@@ -6097,7 +5975,12 @@ async function getPreventionDashboard(event, wxContext) {
     
     // ========== 1. 权限验证 ==========
     console.log('[预防管理] 开始权限验证', logContext)
+    console.log('[预防管理] 批次ID:', batchId, '类型:', typeof batchId)
+    console.log('[预防管理] OpenID:', openid ? openid.substring(0, 8) + '...' : 'null')
+    
     const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
+    console.log('[预防管理] 权限验证结果:', hasPermission)
+    
     if (!hasPermission) {
       console.warn('[预防管理] 权限不足', logContext)
       return {
@@ -6106,14 +5989,16 @@ async function getPreventionDashboard(event, wxContext) {
         message: '您没有查看预防管理数据的权限'
       }
     }
+    console.log('[预防管理] 权限验证通过')
     
     const today = new Date().toISOString().split('T')[0]
     const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     
     // ========== 2. 构建查询条件（带批次权限） ==========
+    // ✅ 修复：使用正确的 category 值（中文）
     const baseTaskWhere = {
       completed: false,
-      category: 'health'
+      category: _.in(['健康管理', '营养管理', '疫苗接种', '用药管理'])
     }
     if (batchId && batchId !== 'all') {
       baseTaskWhere.batchId = batchId
@@ -6122,9 +6007,12 @@ async function getPreventionDashboard(event, wxContext) {
     // ========== 3. 并发查询（带limit限制） ==========
     console.log('[预防管理] 开始数据查询', logContext)
     
-    // 今日待办（限制50条）
+    // 今日待办（限制50条）- ✅ 添加 targetDate 过滤条件
     const todayTasksQuery = db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
-      .where(baseTaskWhere)
+      .where({
+        ...baseTaskWhere,
+        targetDate: _.lte(today)  // 今日及之前的任务（包含逾期）
+      })
       .orderBy('targetDate', 'asc')
       .limit(50)
       .get()
@@ -6141,39 +6029,16 @@ async function getPreventionDashboard(event, wxContext) {
     
     // 预防记录查询条件
     const baseRecordWhere = {
-      isDeleted: _.neq(true)
+      ...dbManager.buildNotDeletedCondition(true)
     }
     if (batchId && batchId !== 'all') {
       baseRecordWhere.batchId = batchId
     }
     
-    // 使用聚合查询计算统计数据（优化性能）
-    const statsAggregateQuery = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
-      .aggregate()
-      .match(baseRecordWhere)
-      .group({
-        _id: null,
-        vaccineCount: _.sum(
-          _.cond([
-            [_.eq(['$preventionType', 'vaccine']), 1],
-            [true, 0]
-          ])
-        ),
-        totalCost: _.sum('$costInfo.totalCost'),
-        vaccineCoverage: _.sum(
-          _.cond([
-            [_.eq(['$preventionType', 'vaccine']), '$vaccineInfo.count'],
-            [true, 0]
-          ])
-        ),
-        vaccinatedBatches: _.addToSet(
-          _.cond([
-            [_.eq(['$preventionType', 'vaccine']), '$batchId'],
-            [true, null]
-          ])
-        )
-      })
-      .end()
+    // ✅ 修复：改用普通查询后计算统计数据（避免聚合查询语法问题）
+    const preventionRecordsQuery = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+      .where(baseRecordWhere)
+      .get()
     
     // 最近10条预防记录（限制返回字段）
     const recentRecordsQuery = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
@@ -6196,7 +6061,7 @@ async function getPreventionDashboard(event, wxContext) {
     const batchesQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where({
         status: 'active',
-        isDeleted: _.neq(true)
+        ...dbManager.buildNotDeletedCondition(true)
       })
       .field({ _id: true }) // 只需要计数
       .limit(100) // 限制最多100个批次
@@ -6204,39 +6069,45 @@ async function getPreventionDashboard(event, wxContext) {
     
     // ========== 4. 并发执行所有查询 ==========
     const queryStartTime = Date.now()
-    const [todayTasksResult, upcomingTasksResult, statsResult, recentRecordsResult, batchesResult] = await Promise.all([
+    console.log('[预防管理] 开始执行并发查询...')
+    
+    const [todayTasksResult, upcomingTasksResult, preventionRecordsResult, recentRecordsResult, batchesResult] = await Promise.all([
       todayTasksQuery,
       upcomingTasksQuery,
-      statsAggregateQuery,
+      preventionRecordsQuery,
       recentRecordsQuery,
       batchesQuery
     ])
-    console.log(`[预防管理] 数据查询完成，耗时: ${Date.now() - queryStartTime}ms`, logContext)
+    
+    console.log(`[预防管理] 数据查询完成，耗时: ${Date.now() - queryStartTime}ms`)
+    console.log('[预防管理] 查询结果统计:', {
+      todayTasks: todayTasksResult.data?.length || 0,
+      upcomingTasks: upcomingTasksResult.data?.length || 0,
+      preventionRecords: preventionRecordsResult.data?.length || 0,
+      recentRecords: recentRecordsResult.data?.length || 0,
+      batches: batchesResult.data?.length || 0
+    })
     
     // ========== 5. 处理今日待办 ==========
+    // ✅ 查询条件已包含 targetDate <= today，无需再次过滤
+    // ✅ 返回完整的任务对象，保留所有字段用于前端渲染
     const todayTasks = (todayTasksResult.data || [])
-      .filter(task => task.targetDate <= today)
       .map(task => {
         const isOverdue = task.targetDate < today
         const overdueDays = isOverdue ? 
           Math.floor((new Date(today) - new Date(task.targetDate)) / (24 * 60 * 60 * 1000)) : 0
         
         return {
+          ...task,  // ✅ 保留完整任务数据
+          _id: task._id,
           taskId: task._id,
-          taskName: task.taskName || task.title,
-          taskType: task.taskType,
-          batchId: task.batchId,
-          batchNumber: task.batchNumber,
-          dayAge: task.dayAge,
-          targetDate: task.targetDate,
           isOverdue,
-          overdueDays,
-          description: task.description || '',
-          estimatedCost: task.estimatedCost || 0
+          overdueDays
         }
       })
     
     // ========== 6. 处理近期计划（按日期分组） ==========
+    // ✅ 返回完整的任务对象，与 todayTasks 保持一致
     const upcomingTasksGrouped = {}
     const upcomingTasks = upcomingTasksResult.data || []
     
@@ -6249,30 +6120,46 @@ async function getPreventionDashboard(event, wxContext) {
         }
       }
       upcomingTasksGrouped[task.targetDate].tasks.push({
-        taskId: task._id,
-        taskName: task.taskName || task.title,
-        taskType: task.taskType,
-        description: task.description
+        ...task,  // ✅ 保留完整任务数据
+        _id: task._id,
+        taskId: task._id
       })
     })
     
     const upcomingTasksList = Object.values(upcomingTasksGrouped).slice(0, 7)
     
-    // ========== 7. 处理聚合统计数据 ==========
-    const statsData = statsResult.list && statsResult.list.length > 0 ? statsResult.list[0] : {
-      vaccineCount: 0,
-      totalCost: 0,
-      vaccineCoverage: 0,
-      vaccinatedBatches: []
-    }
+    // ========== 7. 计算统计数据（从查询结果手动计算） ==========
+    const preventionRecords = preventionRecordsResult.data || []
     
-    const vaccineCount = statsData.vaccineCount || 0
-    const preventionCost = Math.round(statsData.totalCost || 0)
-    const vaccineCoverage = statsData.vaccineCoverage || 0
+    // 计算疫苗相关统计
+    let vaccineCount = 0
+    let vaccineCoverage = 0
+    const vaccinatedBatchesSet = new Set()
+    let totalCost = 0
+    
+    preventionRecords.forEach(record => {
+      // 计算总成本
+      if (record.costInfo && record.costInfo.totalCost) {
+        totalCost += record.costInfo.totalCost
+      }
+      
+      // 疫苗相关统计
+      if (record.preventionType === 'vaccine') {
+        vaccineCount++
+        if (record.batchId) {
+          vaccinatedBatchesSet.add(record.batchId)
+        }
+        if (record.vaccineInfo && record.vaccineInfo.count) {
+          vaccineCoverage += record.vaccineInfo.count
+        }
+      }
+    })
+    
+    const preventionCost = Math.round(totalCost)
+    const vaccinatedBatchesCount = vaccinatedBatchesSet.size
     
     // 接种率（已接种批次数 / 在栏批次数）
     const totalBatches = batchesResult.data?.length || 0
-    const vaccinatedBatchesCount = (statsData.vaccinatedBatches || []).filter(id => id !== null).length
     const vaccinationRate = totalBatches > 0 ? 
       parseFloat(((vaccinatedBatchesCount / totalBatches) * 100).toFixed(1)) : 0
     

@@ -7,12 +7,14 @@ function getTypeName(type) {
   var TYPE_NAMES = {
     'vaccine': '疫苗',
     'medication': '用药',
+    'medicine': '用药',
     'nutrition': '营养',
     'disinfection': '消毒',
     'inspection': '巡检',
     'cleaning': '清洁',
     'feeding': '喂养',
     'care': '护理',
+    'health': '检查',
     'other': '其他'
   }
   

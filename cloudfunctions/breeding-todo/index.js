@@ -1,7 +1,7 @@
 // breeding-todo/index.js - 任务管理云函数（优化版）
 const cloud = require('wx-server-sdk')
 const DatabaseManager = require('./database-manager')
-const { COLLECTIONS } = require('./collections')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -10,6 +10,7 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 const dbManager = new DatabaseManager(db)
+
 
 // 生成任务记录ID
 function generateTaskRecordId() {
@@ -306,47 +307,22 @@ async function getTodos(event, wxContext) {
     }
 
     // 直接获取任务，任务记录本身就包含完成状态
+    // ✅ 只查询未完成的任务（进行中）
+    // ⚠️ 移除 userId 过滤，让所有用户共享批次任务，避免任务重复
     const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
       batchId,
       dayAge,
-      userId: openid
+      completed: _.neq(true) // 过滤掉已完成的任务
     }).get()
 
-    // 已移除调试日志
-    // 如果没有任务，尝试为该批次创建任务
+    // ✅ 如果没有任务，直接返回空数组，不自动创建
+    // 任务应该在批次入栏时统一创建，避免产生孤儿任务
     if (tasksResult.data.length === 0) {
-      // 已移除调试日志
-      try {
-        await createMissingTasks(batchId, openid)
-        
-        // 重新查询任务
-        const retryTasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
-          batchId,
-          dayAge,
-          userId: openid
-        }).get()
-        
-        // 已移除调试日志
-        // 使用重新查询的结果
-        const todos = retryTasksResult.data.map(task => ({
-          ...task,
-          completed: task.completed || false, // 确保有completed字段
-          isVaccineTask: isVaccineTask(task)
-        }))
-
-        // 已移除调试日志
-        
-        return {
-          success: true,
-          data: todos
-        }
-        
-      } catch (createError) {
-        // 已移除调试日志
-        return {
-          success: true,
-          data: []
-        }
+      console.log('[getTodos] 未找到任务，批次:', batchId, '日龄:', dayAge)
+      return {
+        success: true,
+        data: [],
+        message: '暂无任务'
       }
     }
 
@@ -354,7 +330,6 @@ async function getTodos(event, wxContext) {
     const todos = tasksResult.data.map(task => {
       const isCompleted = task.completed === true
       
-      // 已移除调试日志
       return {
         ...task,
         completed: isCompleted,
@@ -393,10 +368,10 @@ async function getWeeklyTodos(event, wxContext) {
     }
 
     // 获取一周内的任务
+    // ⚠️ 移除 userId 过滤，让所有用户共享批次任务
     const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
       batchId,
-      dayAge: _.gte(currentDayAge).and(_.lte(endDayAge)),
-      userId: openid
+      dayAge: _.gte(currentDayAge).and(_.lte(endDayAge))
     }).get()
 
     // 获取已完成的任务
@@ -417,7 +392,7 @@ async function getWeeklyTodos(event, wxContext) {
       }
       todosByDay[day].push({
         ...task,
-        completed: completedTaskIds.includes(task._id),
+        completed: completedTaskIds.includes(task._id || task.taskId),
         isVaccineTask: isVaccineTask(task)
       })
     })
@@ -448,7 +423,7 @@ async function createMissingTasks(batchId, userId) {
 
     const batch = batchResult.data
     
-    // 导入任务模板（需要重新导入或移动到公共位置）
+    // 导入任务模板
     const { BREEDING_SCHEDULE, getTasksByAge, getAllTaskDays } = require('../production-entry/breeding-schedule')
     
     // 创建任务计划
@@ -488,7 +463,8 @@ async function createMissingTasks(batchId, userId) {
           completedAt: null,
           completedBy: null,
           completionNotes: '',
-          userId,
+          // ⚠️ userId 改为 createdBy，仅记录创建者
+          createdBy: userId,
           createTime: now,
           updateTime: now
         })
@@ -496,9 +472,9 @@ async function createMissingTasks(batchId, userId) {
     }
     
     // 删除现有的任务（防止重复）
+    // ⚠️ 移除 userId 过滤，删除该批次的所有任务
     await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
-      batchId,
-      userId
+      batchId
     }).remove()
     
     // 批量插入新任务
@@ -637,6 +613,9 @@ exports.main = async (event, context) => {
       case 'cleanOrphanTasks':
         return await cleanOrphanTasks(wxContext.OPENID)
       
+      case 'cleanAllOrphanTasks':
+        return await cleanAllOrphanTasksForce()
+      
       default:
         throw new Error(`未知操作: ${action}`)
     }
@@ -704,6 +683,120 @@ async function cleanOrphanTasks(userId) {
         orphanTaskIds: orphanTasks.map(t => t._id)
       }
     }
+  } catch (error) {
+    console.error('清理孤儿任务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+/**
+ * 强制清理所有孤儿任务（不限用户，用于数据维护）
+ * 适用于清理历史遗留的孤儿任务数据
+ */
+async function cleanAllOrphanTasksForce() {
+  console.log('===== 开始强制清理所有孤儿任务 =====')
+  
+  try {
+    // 1. 获取所有存在的批次ID（包括已归档但未删除的）
+    const batchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .field({ _id: true, batchNumber: true, isArchived: true })
+      .get()
+    
+    const validBatchIds = batchesResult.data.map(b => b._id)
+    console.log(`有效批次数量: ${validBatchIds.length}`)
+    console.log('有效批次:', batchesResult.data.map(b => `${b.batchNumber}${b.isArchived ? '(已归档)' : ''}`).join(', '))
+    
+    if (validBatchIds.length === 0) {
+      console.log('警告：没有找到任何批次')
+      return {
+        success: true,
+        message: '没有找到任何批次',
+        deletedCount: 0
+      }
+    }
+    
+    // 2. 查询所有任务（分批查询避免超出限制）
+    let allTasks = []
+    const pageSize = 100
+    let hasMore = true
+    let skip = 0
+    
+    while (hasMore) {
+      const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+        .field({ _id: true, batchId: true, batchNumber: true, title: true })
+        .skip(skip)
+        .limit(pageSize)
+        .get()
+      
+      allTasks = allTasks.concat(tasksResult.data)
+      hasMore = tasksResult.data.length === pageSize
+      skip += pageSize
+      
+      console.log(`已查询 ${allTasks.length} 个任务...`)
+    }
+    
+    console.log(`任务总数: ${allTasks.length}`)
+    
+    // 3. 筛选出孤儿任务
+    const orphanTasks = allTasks.filter(task => 
+      !validBatchIds.includes(task.batchId)
+    )
+    
+    console.log(`孤儿任务数量: ${orphanTasks.length}`)
+    
+    if (orphanTasks.length === 0) {
+      console.log('没有孤儿任务需要清理')
+      return {
+        success: true,
+        message: '没有孤儿任务',
+        deletedCount: 0
+      }
+    }
+    
+    // 按批次号统计
+    const batchStats = {}
+    orphanTasks.forEach(task => {
+      const batchNumber = task.batchNumber || task.batchId || 'unknown'
+      batchStats[batchNumber] = (batchStats[batchNumber] || 0) + 1
+    })
+    
+    console.log('孤儿任务按批次统计:')
+    Object.entries(batchStats).forEach(([batchNumber, count]) => {
+      console.log(`  ${batchNumber}: ${count} 个任务`)
+    })
+    
+    // 4. 批量删除孤儿任务
+    let deletedCount = 0
+    const batchSize = 20 // 每批删除20个
+    
+    for (let i = 0; i < orphanTasks.length; i += batchSize) {
+      const batch = orphanTasks.slice(i, i + batchSize)
+      const deletePromises = batch.map(task => 
+        db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).doc(task._id).remove()
+      )
+      
+      try {
+        await Promise.all(deletePromises)
+        deletedCount += batch.length
+        console.log(`已删除 ${deletedCount}/${orphanTasks.length} 个孤儿任务`)
+      } catch (error) {
+        console.error('删除批次任务失败:', error)
+      }
+    }
+    
+    console.log('===== 清理完成 =====')
+    console.log(`总删除数量: ${deletedCount}`)
+    
+    return {
+      success: true,
+      message: `成功清理 ${deletedCount} 个孤儿任务`,
+      deletedCount,
+      batchStats
+    }
+    
   } catch (error) {
     console.error('清理孤儿任务失败:', error)
     return {
