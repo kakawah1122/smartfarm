@@ -44,10 +44,7 @@
 
     <!-- 空状态 -->
     <view class="empty-container" wx:if="{{recordsByBatch.length === 0}}">
-      <t-empty 
-        icon="info-circle" 
-        description="暂无疫苗记录"
-      >
+      <t-empty icon="info-circle">
         <view slot="description" class="empty-tip">
           <text class="tip-title">暂无疫苗记录</text>
           <text class="tip-subtitle">完成疫苗任务后，记录将在此处显示</text>

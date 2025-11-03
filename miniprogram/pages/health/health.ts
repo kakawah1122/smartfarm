@@ -209,8 +209,8 @@ Page<PageData, any>({
       medicineName: '',
       quantity: 0,
       unit: '',
-      purpose: '',
       dosage: '',
+      animalCount: 0,
       notes: '',
       operator: ''
     },
@@ -1747,7 +1747,7 @@ Page<PageData, any>({
     }
 
     try {
-      // 获取批次信息以计算当前日龄
+      // 获取批次信息以获取云函数计算的日龄
       const batchResult = await wx.cloud.callFunction({
         name: 'production-entry',
         data: {
@@ -1761,11 +1761,8 @@ Page<PageData, any>({
         throw new Error('批次不存在')
       }
 
-      // 计算当前日龄
-      const dayAge = calculateCurrentAge(batch.entryDate)
-      
-      // 调试日志：检查日龄计算
-      console.log(`[健康管理] 批次 ${batch.batchNumber} (${batch.entryDate}) 当前日龄: ${dayAge}`)
+      // 使用云函数返回的日龄，如果没有则本地计算
+      const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
 
       // 调用 breeding-todo 云函数获取任务（只查询当日日龄的任务）
       const result = await wx.cloud.callFunction({
@@ -1782,28 +1779,16 @@ Page<PageData, any>({
       if (response.success && response.data && response.data.length > 0) {
         const tasks = Array.isArray(response.data) ? response.data : []
         
-        // 验证任务的实际日龄是否匹配
-        const mismatchedTasks = tasks.filter((task: any) => task.dayAge !== dayAge)
-        if (mismatchedTasks.length > 0) {
-          console.warn(`[健康管理] 警告：批次 ${batch.batchNumber} 有 ${mismatchedTasks.length} 个任务日龄不匹配`, {
-            expectedDayAge: dayAge,
-            mismatchedTasks: mismatchedTasks.map((t: any) => ({ id: t._id, dayAge: t.dayAge }))
-          })
-        }
-        
         const normalizedTasks = tasks.map((task: any) => this.normalizeTask(task, {
           batchNumber: batch.batchNumber || this.data.currentBatchId,
-          // 使用任务本身的dayAge字段，确保显示正确的日龄
           dayAge: task.dayAge || dayAge
         }))
         
-        // 使用计算出的日龄显示批次头部（因为这是当日日龄）
-        // 按批次分组显示（即使只有一个批次）
         this.setData({
           todayTasksByBatch: [{
             batchId: this.data.currentBatchId,
             batchNumber: batch.batchNumber || this.data.currentBatchId,
-            dayAge: dayAge,  // 使用计算出的当日日龄
+            dayAge: dayAge,
             tasks: normalizedTasks
           }],
           'preventionData.todayTasks': normalizedTasks
@@ -1848,11 +1833,8 @@ Page<PageData, any>({
       // 为每个活跃批次获取今日任务
       const batchTasksPromises = activeBatches.map(async (batch: any) => {
         try {
-          // 计算当前日龄（基于入栏日期）
-          const dayAge = calculateCurrentAge(batch.entryDate)
-          
-          // 调试日志：检查日龄计算
-          console.log(`[健康管理] 批次 ${batch.batchNumber} (${batch.entryDate}) 当前日龄: ${dayAge}`)
+          // 使用云函数返回的日龄
+          const dayAge = batch.dayAge
           
           // 只查询当日日龄的任务
           const result = await wx.cloud.callFunction({
@@ -1865,35 +1847,24 @@ Page<PageData, any>({
           })
           
           const response = result.result as any
+          
           if (response.success && response.data && response.data.length > 0) {
-            // 验证任务的实际日龄是否匹配
             const tasks = Array.isArray(response.data) ? response.data : []
-            const mismatchedTasks = tasks.filter((task: any) => task.dayAge !== dayAge)
-            
-            if (mismatchedTasks.length > 0) {
-              console.warn(`[健康管理] 警告：批次 ${batch.batchNumber} 有 ${mismatchedTasks.length} 个任务日龄不匹配`, {
-                expectedDayAge: dayAge,
-                mismatchedTasks: mismatchedTasks.map((t: any) => ({ id: t._id, dayAge: t.dayAge }))
-              })
-            }
             
             const normalizedTasks = tasks.map((task: any) =>
               this.normalizeTask(task, {
                 batchNumber: batch.batchNumber || batch._id,
-                // 使用任务本身的dayAge字段，确保显示正确的日龄
                 dayAge: task.dayAge || dayAge
               })
             )
             
-            // 使用计算出的日龄显示批次头部（因为这是当日日龄）
             return {
               batchId: batch._id,
               batchNumber: batch.batchNumber || batch._id,
-              dayAge: dayAge,  // 使用计算出的当日日龄
+              dayAge: dayAge,
               tasks: normalizedTasks
             }
           } else {
-            // 当日没有任务，不显示该批次
             return null
           }
         } catch (error) {
@@ -2595,17 +2566,11 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       if (result.result && result.result.success) {
         const batches = result.result.data || []
         
-        // 使用云函数返回的dayAge，如果不存在则重新计算
+        // 使用云函数返回的dayAge
         const batchesWithDayAge = batches.map((batch: any) => {
-          // 如果云函数已经返回了dayAge，直接使用；否则重新计算
-          let dayAge = batch.dayAge
-          if (!dayAge && batch.entryDate) {
-            dayAge = calculateCurrentAge(batch.entryDate)
-          }
-          
           return {
             ...batch,
-            dayAge
+            dayAge: batch.dayAge
           }
         })
         
@@ -2786,6 +2751,25 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       url: '/packageHealth/abnormal-records-list/abnormal-records-list',
       events: {
         abnormalRecordsUpdated: () => {
+          this.backgroundRefreshData()
+        }
+      }
+    })
+  },
+
+  /**
+   * 疫苗追踪卡片点击 - 跳转到疫苗记录列表
+   */
+  onVaccineCountTap() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
+    wx.navigateTo({
+      url: '/packageHealth/vaccine-records-list/vaccine-records-list',
+      events: {
+        vaccineRecordsUpdated: () => {
           this.backgroundRefreshData()
         }
       }
@@ -3304,8 +3288,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         medicineName: '',
         quantity: 0,
         unit: '',
-        purpose: '',
         dosage: '',
+        animalCount: 0,
         notes: '',
         operator: userInfo?.nickName || userInfo?.name || '用户'
       },
@@ -3466,8 +3450,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         medicineName: '',
         quantity: 0,
         unit: '',
-        purpose: '',
         dosage: '',
+        animalCount: 0,
         notes: '',
         operator: ''
       },
@@ -3495,9 +3479,11 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       errors.quantity = `超出库存量（库存：${selectedMedicine.stock}${selectedMedicine.unit}）`
     }
 
-    if (!medicationFormData.purpose || medicationFormData.purpose.trim() === '') {
-      errors.purpose = '请输入用药用途'
+    if (!medicationFormData.animalCount || medicationFormData.animalCount <= 0) {
+      errors.animalCount = '请输入鹅只数量'
     }
+
+    // ✅ 用药用途不需要用户填写，任务本身已经明确定义
 
     const errorList = Object.values(errors)
     this.setData({ 
@@ -3539,6 +3525,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     try {
       wx.showLoading({ title: '提交中...' })
 
+      // ✅ 用途字段使用任务标题，不需要用户重复填写
+      const purpose = selectedTask.title || '用药任务'
+
       const medicationRecord = {
         taskId: selectedTask._id,
         batchId: batchId,
@@ -3546,7 +3535,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         materialName: medicationFormData.medicineName,
         quantity: medicationFormData.quantity,
         unit: medicationFormData.unit,
-        purpose: medicationFormData.purpose,
+        purpose: purpose,
         dosage: medicationFormData.dosage,
         notes: medicationFormData.notes,
         operator: medicationFormData.operator,
@@ -3562,10 +3551,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
             materialId: medicationRecord.materialId,
             type: 'use',
             quantity: Number(medicationRecord.quantity),
-            targetLocation: medicationRecord.purpose,
+            targetLocation: purpose,
             operator: medicationRecord.operator || '用户',
             status: '已完成',
-            notes: `用途：${medicationRecord.purpose}${medicationRecord.dosage ? '，剂量：' + medicationRecord.dosage : ''}${medicationRecord.notes ? '，备注：' + medicationRecord.notes : ''}，任务：${selectedTask.title}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
+            notes: `用途：${purpose}，鹅只数量：${medicationFormData.animalCount}只${medicationRecord.dosage ? '，剂量：' + medicationRecord.dosage : ''}${medicationRecord.notes ? '，备注：' + medicationRecord.notes : ''}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
             recordDate: medicationRecord.useDate
           }
         }
