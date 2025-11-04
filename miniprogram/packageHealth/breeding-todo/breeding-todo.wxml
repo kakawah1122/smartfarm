@@ -259,20 +259,20 @@
         <view class="card-content">
           <view class="info-row">
             <text class="info-label">任务名称：</text>
-            <text class="info-value">{{selectedTask.title || '未命名任务'}}</text>
+            <text class="info-value auto-align {{taskFieldMultiline.title ? 'multiline' : ''}}" id="info-value-title">{{selectedTask.title || '未命名任务'}}</text>
           </view>
           <view class="divider-line"></view>
           
           <view class="info-row">
             <text class="info-label">任务类型：</text>
-            <text class="info-value">{{selectedTask.typeName || '未分类'}}</text>
+            <text class="info-value auto-align {{taskFieldMultiline.type ? 'multiline' : ''}}" id="info-value-type">{{selectedTask.typeName || '未分类'}}</text>
           </view>
           <view class="divider-line"></view>
           
           <block wx:if="{{selectedTask.estimatedTime}}">
             <view class="info-row">
               <text class="info-label">预计用时：</text>
-              <text class="info-value">{{selectedTask.estimatedTime}}分钟</text>
+              <text class="info-value auto-align {{taskFieldMultiline.time ? 'multiline' : ''}}" id="info-value-time">{{selectedTask.estimatedTime}}分钟</text>
             </view>
             <view class="divider-line"></view>
           </block>
@@ -280,7 +280,7 @@
           <block wx:if="{{selectedTask.duration && selectedTask.dayInSeries}}">
             <view class="info-row">
               <text class="info-label">连续任务：</text>
-              <text class="info-value">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
+              <text class="info-value auto-align {{taskFieldMultiline.duration ? 'multiline' : ''}}" id="info-value-duration">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
             </view>
             <view class="divider-line"></view>
           </block>
@@ -288,7 +288,7 @@
           <block wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
             <view class="info-row">
               <text class="info-label">所需物料：</text>
-              <text class="info-value materials-text">
+              <text class="info-value materials-text auto-align {{taskFieldMultiline.materials ? 'multiline' : ''}}" id="info-value-materials">
                 <text wx:for="{{selectedTask.materials}}" wx:key="index">{{item}}<text wx:if="{{index < selectedTask.materials.length - 1}}">、</text></text>
               </text>
             </view>
@@ -298,7 +298,7 @@
           <block wx:if="{{selectedTask.batchNumber}}">
             <view class="info-row">
               <text class="info-label">批次编号：</text>
-              <text class="info-value">{{selectedTask.batchNumber}}</text>
+              <text class="info-value auto-align {{taskFieldMultiline.batch ? 'multiline' : ''}}" id="info-value-batch">{{selectedTask.batchNumber}}</text>
             </view>
             <view class="divider-line"></view>
           </block>
@@ -306,7 +306,7 @@
           <block wx:if="{{selectedTask.dayAge}}">
             <view class="info-row">
               <text class="info-label">日龄：</text>
-              <text class="info-value">第{{selectedTask.dayAge}}日龄</text>
+              <text class="info-value auto-align {{taskFieldMultiline.age ? 'multiline' : ''}}" id="info-value-age">第{{selectedTask.dayAge}}日龄</text>
             </view>
             <view class="divider-line"></view>
           </block>
@@ -314,7 +314,7 @@
           <block wx:if="{{selectedTask.description}}">
             <view class="info-row info-row-description">
               <text class="info-label">任务描述：</text>
-              <text class="info-value note-text">{{selectedTask.description}}</text>
+              <text class="info-value note-text auto-align {{taskFieldMultiline.description ? 'multiline' : ''}}" id="info-value-description">{{selectedTask.description}}</text>
             </view>
             <view class="divider-line"></view>
           </block>
@@ -332,14 +332,14 @@
           <block wx:if="{{selectedTask.dosage}}">
             <view class="info-row info-row-dosage">
               <text class="info-label">用量：</text>
-              <text class="info-value dosage-text">{{selectedTask.dosage}}</text>
+              <text class="info-value dosage-text auto-align {{taskFieldMultiline.dosage ? 'multiline' : ''}}" id="info-value-dosage">{{selectedTask.dosage}}</text>
             </view>
             <view class="divider-line" wx:if="{{selectedTask.notes}}"></view>
           </block>
           
           <view class="info-row info-row-notes" wx:if="{{selectedTask.notes}}">
             <text class="info-label">注意事项：</text>
-            <text class="info-value note-text important-text">{{selectedTask.notes}}</text>
+            <text class="info-value note-text important-text auto-align {{taskFieldMultiline.notes ? 'multiline' : ''}}" id="info-value-notes">{{selectedTask.notes}}</text>
           </view>
         </view>
       </view>

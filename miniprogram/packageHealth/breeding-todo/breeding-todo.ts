@@ -1,5 +1,6 @@
 // breeding-todo/breeding-todo.ts - 待办任务页面（优化版）
 import CloudApi from '../../utils/cloud-api'
+import { formatTime } from '../../utils/util'
 import { TYPE_NAMES, isMedicationTask, isNutritionTask } from '../../utils/breeding-schedule'
 
 interface Task {
@@ -61,6 +62,20 @@ Page({
     selectedTask: null as Task | null,
     showTaskDetail: false,
     showTaskDetailPopup: false,
+    
+    // 任务详情字段多行状态
+    taskFieldMultiline: {
+      title: false,
+      type: false,
+      time: false,
+      duration: false,
+      materials: false,
+      batch: false,
+      age: false,
+      description: false,
+      dosage: false,
+      notes: false
+    } as Record<string, boolean>,
     
     // 多批次任务数据
     showAllBatches: false,
@@ -1138,7 +1153,7 @@ Page({
               const formattedTasks = completedTasks.map((task: any) => ({
                 id: task._id,
                 title: task.title,
-                completedDate: task.completedAt ? new Date(task.completedAt).toLocaleString() : '',
+                completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
                 completedBy: task.completedBy || '用户',
                 batchNumber: batch.batchNumber || batch._id,
                 dayAge: dayAge,
@@ -1178,7 +1193,7 @@ Page({
           const formattedTasks = completedTasks.map((task: any) => ({
             id: task._id,
             title: task.title,
-            completedDate: task.completedAt ? new Date(task.completedAt).toLocaleString() : '',
+            completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
             completedBy: task.completedBy || '用户',
             batchNumber: batch.batchNumber || batch._id,
             dayAge: dayAge,
@@ -1238,7 +1253,60 @@ Page({
   onTaskDetailPopupChange(event: any) {
     if (!event.detail.visible) {
       this.closeTaskDetailPopup()
+    } else {
+      // 弹窗显示时，检测文本换行并应用对齐样式
+      setTimeout(() => {
+        this.checkTextAlignment()
+      }, 100)
     }
+  },
+
+  /**
+   * 检测文本是否换行，自动应用对齐样式
+   */
+  checkTextAlignment() {
+    const query = wx.createSelectorQuery().in(this)
+    const fieldMap = {
+      'info-value-title': 'title',
+      'info-value-type': 'type',
+      'info-value-time': 'time',
+      'info-value-duration': 'duration',
+      'info-value-materials': 'materials',
+      'info-value-batch': 'batch',
+      'info-value-age': 'age',
+      'info-value-description': 'description',
+      'info-value-dosage': 'dosage',
+      'info-value-notes': 'notes'
+    }
+
+    const ids = Object.keys(fieldMap)
+    
+    ids.forEach(id => {
+      query.select(`#${id}`).boundingClientRect()
+    })
+
+    query.exec((res) => {
+      if (!res) return
+
+      const updates: Record<string, boolean> = {}
+      
+      res.forEach((rect: any, index: number) => {
+        if (!rect) return
+
+        const id = ids[index]
+        const field = fieldMap[id as keyof typeof fieldMap]
+        
+        // 通过对比高度判断是否换行
+        // 单行高度约为 42rpx (28rpx * 1.5行高)，换行后高度会明显增大
+        const singleLineHeight = 42 // rpx
+        const isMultiline = rect.height > singleLineHeight
+
+        updates[`taskFieldMultiline.${field}`] = isMultiline
+      })
+
+      // 批量更新状态
+      this.setData(updates)
+    })
   },
 
   /**

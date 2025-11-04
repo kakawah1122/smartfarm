@@ -1,5 +1,6 @@
 // health/health.ts - 健康管理页面（模块化优化版）
 import CloudApi from '../../utils/cloud-api'
+import { formatTime } from '../../utils/util'
 import * as HealthStatsCalculator from './modules/health-stats-calculator'
 import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopDataWatcher as stopHealthDataWatcher } from './modules/health-watchers'
 import { clearAllHealthCache, clearBatchCache } from './modules/health-data-loader'
@@ -137,7 +138,7 @@ Page<PageData, any>({
     activeTab: 'prevention', // prevention|monitoring|treatment|analysis
     
     // 预防管理子标签（与breeding-todo保持一致）
-    preventionSubTab: 'today', // today|upcoming|history|stats
+    preventionSubTab: 'today', // today|upcoming|history
     
     // 健康统计数据
     healthStats: {
@@ -145,8 +146,8 @@ Page<PageData, any>({
       healthyCount: 0,
       sickCount: 0,
       deadCount: 0,
-      healthyRate: '0%',
-      mortalityRate: '0%',
+      healthyRate: '-',
+      mortalityRate: '-',
       abnormalCount: 0,
       treatingCount: 0
     },
@@ -176,6 +177,20 @@ Page<PageData, any>({
     // 任务详情弹窗（从breeding-todo迁移）
     selectedTask: null as any,
     showTaskDetailPopup: false,
+    
+    // 任务详情字段多行状态
+    taskFieldMultiline: {
+      title: false,
+      type: false,
+      time: false,
+      duration: false,
+      materials: false,
+      batch: false,
+      age: false,
+      description: false,
+      dosage: false,
+      notes: false
+    } as Record<string, boolean>,
     
     // 疫苗表单数据（从breeding-todo迁移）
     showVaccineFormPopup: false,
@@ -326,7 +341,7 @@ Page<PageData, any>({
     },
     analysisData: {
       survivalAnalysis: {
-        rate: 0,
+        rate: '-',
         trend: 'stable',
         byStage: []
       },
@@ -334,7 +349,7 @@ Page<PageData, any>({
         preventionCost: 0,
         treatmentCost: 0,
         totalCost: 0,
-        roi: 0
+        roi: '-'
       }
     },
     activeAlerts: [],
@@ -781,8 +796,9 @@ Page<PageData, any>({
           healthyCount: healthData.actualHealthyCount,
           sickCount: healthData.sickCount,
           deadCount: healthData.deadCount,
-          healthyRate: healthData.healthyRate + '%',
-          mortalityRate: healthData.mortalityRate + '%',
+          // 没有入栏数据时显示 "-"
+          healthyRate: healthData.totalAnimals > 0 ? (healthData.healthyRate + '%') : '-',
+          mortalityRate: healthData.totalAnimals > 0 ? (healthData.mortalityRate + '%') : '-',
           abnormalCount: healthData.abnormalRecordCount,
           treatingCount: healthData.totalOngoingRecords
         },
@@ -874,7 +890,8 @@ Page<PageData, any>({
       const healthData = await this._fetchAllBatchesHealthData({ useCache: false, forceRefresh: true })
       
       // ✅ 差异对比：只在数据有显著变化时更新（避免不必要的重绘）
-      const currentHealthyRate = parseFloat(this.data.healthStats.healthyRate)
+      const currentHealthyRateStr = this.data.healthStats.healthyRate
+      const currentHealthyRate = currentHealthyRateStr === '-' ? 0 : parseFloat(currentHealthyRateStr)
       const newHealthyRate = parseFloat(healthData.healthyRate)
       
       if (Math.abs(currentHealthyRate - newHealthyRate) < 0.01) {
@@ -888,8 +905,9 @@ Page<PageData, any>({
         'healthStats.healthyCount': healthData.actualHealthyCount,
         'healthStats.sickCount': healthData.sickCount,
         'healthStats.deadCount': healthData.deadCount,
-        'healthStats.healthyRate': healthData.healthyRate + '%',
-        'healthStats.mortalityRate': healthData.mortalityRate + '%',
+        // 没有入栏数据时显示 "-"
+        'healthStats.healthyRate': healthData.totalAnimals > 0 ? (healthData.healthyRate + '%') : '-',
+        'healthStats.mortalityRate': healthData.totalAnimals > 0 ? (healthData.mortalityRate + '%') : '-',
         'healthStats.abnormalCount': healthData.abnormalRecordCount,
         'healthStats.treatingCount': healthData.totalOngoingRecords,
         'treatmentStats.totalTreatments': healthData.totalTreated,
@@ -990,8 +1008,9 @@ Page<PageData, any>({
           healthyCount: healthStats.healthyCount || 0,
           sickCount: healthStats.sickCount || 0,
           deadCount: healthStats.deadCount || 0,
-          healthyRate: (healthStats.healthyRate || 0) + '%',
-          mortalityRate: (healthStats.mortalityRate || 0) + '%',
+          // 没有入栏数据时显示 "-"
+          healthyRate: (healthStats.totalChecks > 0) ? ((healthStats.healthyRate || 0) + '%') : '-',
+          mortalityRate: (healthStats.totalChecks > 0) ? ((healthStats.mortalityRate || 0) + '%') : '-',
           abnormalCount: abnormalCount,
           treatingCount: treatmentStats.ongoingCount || 0
         },
@@ -1053,8 +1072,9 @@ Page<PageData, any>({
         this.setData({
           healthStats: {
             ...healthStats,
-            healthyRate: healthStats.healthyRate + '%',
-            mortalityRate: healthStats.mortalityRate + '%',
+            // 没有入栏数据时显示 "-"
+            healthyRate: (healthStats.totalChecks > 0) ? (healthStats.healthyRate + '%') : '-',
+            mortalityRate: (healthStats.totalChecks > 0) ? (healthStats.mortalityRate + '%') : '-',
             abnormalCount: healthStats.abnormalCount || 0,
             treatingCount: healthStats.treatingCount || 0
           },
@@ -1627,14 +1647,28 @@ Page<PageData, any>({
    */
   async loadAnalysisData() {
     try {
-      // 计算存活率（基于健康数据）
-      // mortalityRate格式为 "0.4%" 需要去掉百分号后解析
-      const mortalityRateStr = this.data.healthStats.mortalityRate || '0%'
-      const mortalityRate = parseFloat(mortalityRateStr.replace('%', '')) || 0
-      const survivalRate = (100 - mortalityRate).toFixed(1)
+      // 检查是否有有效的入栏数据
+      const totalAnimals = this.data.healthStats.totalChecks || 0
+      const hasData = totalAnimals > 0
       
-      // 判断趋势（这里简化处理，可以后续根据历史数据对比）
-      const trend = mortalityRate < 1 ? 'improving' : 'stable'
+      // 计算存活率（基于健康数据）
+      let survivalRate: string | number = '-'
+      let trend = 'stable'
+      
+      if (hasData) {
+        // mortalityRate格式为 "0.4%" 或 "-"，需要去掉百分号后解析
+        const mortalityRateStr = this.data.healthStats.mortalityRate || '0%'
+        // 如果是"-"，说明没有数据，此时hasData应该为false，但这里做个双重保护
+        if (mortalityRateStr === '-') {
+          survivalRate = '-'
+          trend = 'stable'
+        } else {
+          const mortalityRate = parseFloat(mortalityRateStr.replace('%', '')) || 0
+          survivalRate = (100 - mortalityRate).toFixed(1)
+          // 判断趋势（这里简化处理，可以后续根据历史数据对比）
+          trend = mortalityRate < 1 ? 'improving' : 'stable'
+        }
+      }
       
       // 计算成本分析数据
       const preventionCost = this.data.preventionStats?.totalCost || 0
@@ -1642,34 +1676,37 @@ Page<PageData, any>({
       const totalCost = preventionCost + treatmentCost
       
       // 计算投入回报率（ROI）
-      // ROI = (医疗投入产生的回报 / 总投入成本)
-      const totalAnimals = this.data.healthStats.totalChecks || 0
-      const deadAnimals = this.data.healthStats.deadCount || 0
-      const curedAnimals = this.data.treatmentStats?.recoveredCount || 0 // 治愈动物数量
+      let roi: string | number = '-'
       
-      // 每只动物的平均价值估算（元）
-      const animalValue = 100
-      
-      // 方案1: 基于治愈数量计算回报
-      // 治愈的动物如果没有治疗就会死亡，通过治疗避免了损失
-      const curedValue = curedAnimals * animalValue
-      
-      // 方案2: 基于与行业平均对比，计算避免的额外损失
-      // 假设行业平均死亡率为3%
-      const industryAvgMortalityRate = 3.0
-      const expectedDeaths = totalAnimals * (industryAvgMortalityRate / 100)
-      const actualDeaths = deadAnimals
-      const avoidedDeaths = Math.max(0, expectedDeaths - actualDeaths)
-      const avoidedLoss = avoidedDeaths * animalValue
-      
-      // 综合两种方案：优先使用避免损失，如果为0则使用治愈价值
-      const benefit = avoidedLoss > 0 ? avoidedLoss : curedValue
-      const roi = totalCost > 0 ? (benefit / totalCost).toFixed(1) : 0
+      if (hasData) {
+        // ROI = (医疗投入产生的回报 / 总投入成本)
+        const deadAnimals = this.data.healthStats.deadCount || 0
+        const curedAnimals = this.data.treatmentStats?.recoveredCount || 0 // 治愈动物数量
+        
+        // 每只动物的平均价值估算（元）
+        const animalValue = 100
+        
+        // 方案1: 基于治愈数量计算回报
+        // 治愈的动物如果没有治疗就会死亡，通过治疗避免了损失
+        const curedValue = curedAnimals * animalValue
+        
+        // 方案2: 基于与行业平均对比，计算避免的额外损失
+        // 假设行业平均死亡率为3%
+        const industryAvgMortalityRate = 3.0
+        const expectedDeaths = totalAnimals * (industryAvgMortalityRate / 100)
+        const actualDeaths = deadAnimals
+        const avoidedDeaths = Math.max(0, expectedDeaths - actualDeaths)
+        const avoidedLoss = avoidedDeaths * animalValue
+        
+        // 综合两种方案：优先使用避免损失，如果为0则使用治愈价值
+        const benefit = avoidedLoss > 0 ? avoidedLoss : curedValue
+        roi = totalCost > 0 ? (benefit / totalCost).toFixed(1) : 0
+      }
       
       // 更新分析数据
       this.setData({
         'analysisData.survivalAnalysis': {
-          rate: parseFloat(survivalRate),
+          rate: survivalRate,
           trend: trend,
           byStage: []
         },
@@ -1677,7 +1714,7 @@ Page<PageData, any>({
           preventionCost: preventionCost,
           treatmentCost: treatmentCost,
           totalCost: totalCost,
-          roi: parseFloat(roi as string)
+          roi: roi
         }
       })
     } catch (error: any) {
@@ -1788,9 +1825,6 @@ Page<PageData, any>({
         break
       case 'history':
         this.loadHistoryTasks()
-        break
-      case 'stats':
-        // 统计数据已经在loadPreventionData中加载
         break
     }
   },
@@ -2236,7 +2270,7 @@ Page<PageData, any>({
           title: task.title || task.taskName,
           taskName: task.title || task.taskName,
           type: task.type || task.taskType,
-          completedDate: task.completedAt ? new Date(task.completedAt).toLocaleString('zh-CN') : '',
+          completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
           completedBy: task.completedBy || '用户',
           batchNumber: task.batchNumber || task.batchId,
           batchId: task.batchId,
@@ -3020,7 +3054,60 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         showTaskDetailPopup: false,
         selectedTask: null
       })
+    } else {
+      // 弹窗显示时，检测文本换行并应用对齐样式
+      setTimeout(() => {
+        this.checkTextAlignment()
+      }, 100)
     }
+  },
+
+  /**
+   * 检测文本是否换行，自动应用对齐样式
+   */
+  checkTextAlignment() {
+    const query = wx.createSelectorQuery().in(this)
+    const fieldMap = {
+      'info-value-title': 'title',
+      'info-value-type': 'type',
+      'info-value-time': 'time',
+      'info-value-duration': 'duration',
+      'info-value-materials': 'materials',
+      'info-value-batch': 'batch',
+      'info-value-age': 'age',
+      'info-value-description': 'description',
+      'info-value-dosage': 'dosage',
+      'info-value-notes': 'notes'
+    }
+
+    const ids = Object.keys(fieldMap)
+    
+    ids.forEach(id => {
+      query.select(`#${id}`).boundingClientRect()
+    })
+
+    query.exec((res) => {
+      if (!res) return
+
+      const updates: Record<string, boolean> = {}
+      
+      res.forEach((rect: any, index: number) => {
+        if (!rect) return
+
+        const id = ids[index]
+        const field = fieldMap[id as keyof typeof fieldMap]
+        
+        // 通过对比高度判断是否换行
+        // 单行高度约为 42rpx (28rpx * 1.5行高)，换行后高度会明显增大
+        const singleLineHeight = 42 // rpx
+        const isMultiline = rect.height > singleLineHeight
+
+        updates[`taskFieldMultiline.${field}`] = isMultiline
+      })
+
+      // 批量更新状态
+      this.setData(updates)
+    })
   },
 
   /**
