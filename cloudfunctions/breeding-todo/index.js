@@ -27,6 +27,95 @@ function getFollowUpDate(daysAfter) {
   return date.toISOString().split('T')[0]
 }
 
+// 根据任务类型自动创建预防记录
+async function createPreventionRecordFromTask(task, taskId, batchId, openid, notes) {
+  try {
+    // 根据任务分类映射到预防类型
+    const categoryToPreventionType = {
+      '用药管理': 'medication',
+      '营养管理': 'nutrition',
+      '健康管理': 'inspection'
+      // 疫苗接种有专门的 completeVaccineTask 处理
+    }
+    
+    const preventionType = categoryToPreventionType[task.category]
+    
+    // 如果任务分类不需要创建预防记录，直接返回
+    if (!preventionType) {
+      return
+    }
+    
+    // 构建预防记录数据（直接创建，不通过 dbManager）
+    const preventionData = {
+      batchId,
+      batchNumber: task.batchNumber || '',
+      preventionType,
+      preventionDate: new Date().toISOString().split('T')[0],
+      notes: notes || task.description || '',
+      operator: openid,
+      operatorName: '',
+      relatedTaskId: taskId,
+      autoCreated: true,
+      creationSource: 'task',
+      effectiveness: 'pending',
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    // 根据不同类型添加特定信息
+    if (preventionType === 'medication') {
+      preventionData.medicationInfo = {
+        name: task.title || task.taskName || '用药',
+        dosage: task.dosage || '',
+        method: task.method || '',
+        duration: task.duration || 1
+      }
+    } else if (preventionType === 'nutrition') {
+      preventionData.nutritionRecord = {
+        supplement: task.title || task.taskName || '营养补充',
+        dosage: task.dosage || '',
+        method: task.method || '',
+        purpose: task.description || ''
+      }
+    } else if (preventionType === 'inspection') {
+      preventionData.inspectionRecord = {
+        inspector: task.operator || '',
+        notes: notes || task.description || ''
+      }
+    }
+    
+    // 添加成本信息（如果有）
+    if (task.estimatedCost && task.estimatedCost > 0) {
+      preventionData.costInfo = {
+        totalCost: parseFloat(task.estimatedCost) || 0
+      }
+    }
+    
+    // 直接使用数据库操作创建预防记录
+    const result = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS).add({
+      data: preventionData
+    })
+    
+    console.log('[自动创建预防记录成功]', { 
+      preventionType, 
+      taskId, 
+      batchId,
+      recordId: result._id 
+    })
+    
+    return result
+  } catch (error) {
+    console.error('[创建预防记录失败]', {
+      error: error.message,
+      stack: error.stack,
+      taskId,
+      batchId
+    })
+    // 不抛出错误，避免影响主流程
+  }
+}
+
 // 完成任务（全新简化版本）
 async function completeTask(taskId, openid, batchId, notes = '') {
   try {
@@ -91,6 +180,9 @@ async function completeTask(taskId, openid, batchId, notes = '') {
         updateTime: new Date()
       }
     })
+
+    // 🔥 新增：根据任务分类自动创建预防记录
+    await createPreventionRecordFromTask(task, taskId, batchId, openid, notes)
 
     // 已移除调试日志
     // 同时保留历史记录（可选）

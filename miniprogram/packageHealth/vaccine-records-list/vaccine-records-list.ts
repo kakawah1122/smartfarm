@@ -166,7 +166,7 @@ Page({
                   // 查询截至疫苗接种日期的出栏数
                   const exitRecords = await db.collection('prod_batch_exits')
                     .where({
-                      batchId: record.batchId,
+                      batchNumber: batchNumber,  // ✅ 修正：使用 batchNumber 而不是 batchId
                       exitDate: _.lte(preventionDate),
                       ...buildNotDeletedCondition(db, true)
                     })
@@ -227,7 +227,7 @@ Page({
                     // 查询截至疫苗接种日期的出栏数
                     const exitRecords = await db.collection('prod_batch_exits')
                       .where({
-                        batchId: batchData._id,
+                        batchNumber: batchData.batchNumber,  // ✅ 修正：使用 batchNumber 而不是 batchId
                         exitDate: _.lte(preventionDate),
                         ...buildNotDeletedCondition(db, true)
                       })

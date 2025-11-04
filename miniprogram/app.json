@@ -40,6 +40,7 @@
         "abnormal-records-list/abnormal-records-list",
         "abnormal-record-detail/abnormal-record-detail",
         "vaccine-records-list/vaccine-records-list",
+        "medication-records-list/medication-records-list",
         "survival-analysis/survival-analysis",
         "breeding-todo/breeding-todo"
       ]

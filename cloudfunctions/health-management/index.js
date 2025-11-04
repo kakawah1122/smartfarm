@@ -2729,7 +2729,8 @@ async function getBatchCompleteData(event, wxContext) {
               vaccineCoverage: 0,
               vaccineStats: {},
               disinfectionCount: 0,
-              totalCost: 0
+              totalCost: 0,
+              medicationCount: 0  // 新增：用药类型的记录数量
             }
             
             // 计算疫苗统计
@@ -2754,6 +2755,11 @@ async function getBatchCompleteData(event, wxContext) {
               
               if (record.costInfo && record.costInfo.totalCost) {
                 preventionStats.totalCost += parseFloat(record.costInfo.totalCost) || 0
+              }
+              
+              // 统计用药类型的记录（用于防疫用药）
+              if (record.preventionType === 'medication') {
+                preventionStats.medicationCount++
               }
             })
             
@@ -3049,7 +3055,11 @@ exports.main = async (event, context) => {
         return await getBatchPreventionComparison(event, wxContext)
       
       case 'completePreventionTask':
+      case 'complete_prevention_task':
         return await completePreventionTask(event, wxContext)
+      
+      case 'update_prevention_effectiveness':
+        return await updatePreventionEffectiveness(event, wxContext)
 
       default:
         throw new Error(`未知操作: ${action}`)
@@ -6308,6 +6318,7 @@ async function getPreventionDashboard(event, wxContext) {
     // 计算疫苗相关统计
     let vaccineCount = 0
     let vaccineCoverage = 0
+    let medicationCount = 0  // 新增：统计用药类型的记录数量
     const vaccinatedBatchesSet = new Set()
     let totalCost = 0
     
@@ -6326,6 +6337,11 @@ async function getPreventionDashboard(event, wxContext) {
         if (record.vaccineInfo && record.vaccineInfo.count) {
           vaccineCoverage += record.vaccineInfo.count
         }
+      }
+      
+      // 统计用药类型的记录（用于防疫用药）
+      if (record.preventionType === 'medication') {
+        medicationCount++
       }
     })
     
@@ -6378,7 +6394,8 @@ async function getPreventionDashboard(event, wxContext) {
           vaccinationRate,
           vaccineCount,
           preventionCost,
-          vaccineCoverage
+          vaccineCoverage,
+          medicationCount  // 新增：返回所有预防记录数量
         },
         recentRecords: recentRecordsFormatted,
         taskCompletion: {
@@ -6672,6 +6689,69 @@ async function completePreventionTask(event, wxContext) {
         totalTime,
         timestamp: new Date().toISOString()
       }
+    }
+  }
+}
+
+/**
+ * 更新预防记录的效果评估
+ */
+async function updatePreventionEffectiveness(event, wxContext) {
+  try {
+    const { recordId, effectiveness, effectivenessNote, evaluationDate } = event
+    const openid = wxContext.OPENID
+
+    if (!recordId) {
+      return {
+        success: false,
+        message: '记录ID不能为空'
+      }
+    }
+
+    if (!effectiveness) {
+      return {
+        success: false,
+        message: '评估结果不能为空'
+      }
+    }
+
+    // 更新预防记录
+    await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+      .doc(recordId)
+      .update({
+        data: {
+          effectiveness: effectiveness,
+          effectivenessNote: effectivenessNote || '',
+          evaluationDate: evaluationDate || new Date().toLocaleString('zh-CN'),
+          evaluatedBy: openid,
+          updatedAt: new Date()
+        }
+      })
+
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'update_prevention_effectiveness',
+      COLLECTIONS.HEALTH_PREVENTION_RECORDS,
+      recordId,
+      {
+        effectiveness,
+        effectivenessNote,
+        result: 'success'
+      }
+    )
+
+    return {
+      success: true,
+      message: '效果评估已更新'
+    }
+
+  } catch (error) {
+    console.error('[updatePreventionEffectiveness] 错误:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '更新效果评估失败'
     }
   }
 }

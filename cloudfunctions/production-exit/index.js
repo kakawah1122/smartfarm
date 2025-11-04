@@ -229,6 +229,7 @@ async function createExitRecord(event, wxContext) {
     status: recordData.status || '待出栏',
     notes: recordData.notes || '',
     qualityCheck: recordData.qualityCheck || {},
+    isDeleted: false,  // ✅ 添加软删除标记
     createTime: now,
     updateTime: now
   }
