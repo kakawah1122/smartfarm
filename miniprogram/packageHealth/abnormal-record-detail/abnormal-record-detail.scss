@@ -198,13 +198,15 @@
   gap: 16rpx;
 
   .section-subtitle {
-    display: flex;
-    align-items: center;
-    gap: 12rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12rpx;
     padding: 12rpx 16rpx;
     background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
     border-radius: 8rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.08);
+    color: #0052d9;
+    word-break: break-all;
 
     .subtitle-icon {
       font-size: 32rpx;

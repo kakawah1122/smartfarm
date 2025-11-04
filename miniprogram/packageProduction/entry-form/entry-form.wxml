@@ -139,18 +139,22 @@
         <view class="section-header">
           <text class="section-title">备注</text>
         </view>
-        <!-- 备注输入框 - 左右满屏 -->
-        <view class="fullwidth-textarea-container">
-          <t-textarea
-            placeholder="请输入备注信息（可选）"
-            value="{{formData.remarks}}"
-            bind:change="onFieldChange"
-            data-field="remarks"
-            maxlength="200"
-            indicator
-            autosize
-            class="fullwidth-textarea"
-          />
+        <!-- ✅ 修复：使用 form-card 容器，与上方卡片框保持一致的安全边界 -->
+        <view class="form-card">
+          <view class="textarea-item">
+            <view class="item-textarea">
+              <t-textarea
+                placeholder="请输入备注信息（可选）"
+                value="{{formData.remarks}}"
+                bind:change="onFieldChange"
+                data-field="remarks"
+                maxlength="200"
+                indicator
+                autosize
+                class="item-textarea-input"
+              />
+            </view>
+          </view>
         </view>
       </view>
 

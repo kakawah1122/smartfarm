@@ -134,13 +134,6 @@ Page({
             }
           }
           
-          // 调试：打印 medicationInfo
-          if (record.medicationInfo) {
-            console.log('[用药记录] medicationInfo:', record.medicationInfo)
-          } else {
-            console.log('[用药记录] medicationInfo 为空:', record._id)
-          }
-          
           return {
             ...record,
             batchNumber: batchNumber || record.batchId,
@@ -201,10 +194,6 @@ Page({
     const { id } = e.currentTarget.dataset
     const record = this.data.records.find(r => r._id === id)
     if (record) {
-      console.log('[详情弹窗] 选中的记录:', record)
-      console.log('[详情弹窗] medicationInfo:', record.medicationInfo)
-      console.log('[详情弹窗] effectiveness:', record.effectiveness)
-      
       this.setData({
         selectedRecord: record,
         showDetailDialog: true

@@ -13,44 +13,46 @@
   background: #ffffff;
 }
 
-/* 弹窗头部 */
+/* 弹窗头部 - 应用统一样式 */
 .popup-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24rpx 32rpx 8rpx; /* 进一步减少底部内边距，避免标题下方空白过大 */
-  border-bottom: none; /* 移除边框线 */
-  background: transparent; /* 移除背景色 */
+  padding: 40rpx 32rpx 24rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   border-radius: 32rpx 32rpx 0 0;
   position: sticky;
   top: 0;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .popup-title {
-  font-size: 32rpx; /* 调整字体大小以适配新的高度 */
+  font-size: 36rpx;
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.2;
+  letter-spacing: 0.5rpx;
 }
 
 .close-btn {
-  width: 56rpx; /* 调小关闭按钮以适配新标题高度 */
+  width: 56rpx;
   height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent; /* 移除背景色，保持简洁 */
-  border-radius: 28rpx;
+  background: #f5f5f5;
+  border-radius: 50%;
   
   &:active {
-    background: rgba(0, 0, 0, 0.05); /* 点击时显示淡淡的背景 */
+    background: #e8e8e8;
   }
 }
 
 .close-text {
-  font-size: 40rpx; /* 调小关闭图标 */
-  color: #6c757d;
+  font-size: 56rpx;
+  color: #999;
   line-height: 1;
   font-weight: 300;
 }
@@ -60,6 +62,7 @@
   min-height: 200rpx;
   max-height: calc(80vh - 200rpx);
   overflow-y: auto;
+  padding: 24rpx 32rpx;
 }
 
 /* 操作按钮 */
@@ -106,11 +109,12 @@
 }
 
 .info-card {
-  background: #ffffff;
-  margin: 24rpx 32rpx;
-  border-radius: 20rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  background: #fafafa;
+  margin: 0;
+  border-radius: 12rpx;
+  box-shadow: none;
   overflow: hidden;
+  padding: 20rpx;
 }
 
 .card-header {
@@ -129,29 +133,63 @@
 }
 
 .card-content {
-  padding: 32rpx;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .info-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
-  
+  padding: 12rpx 0;
+  gap: 24rpx;
+  margin-bottom: 0;
+  border-bottom: 2rpx dashed #d0d0d0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
 }
 
 .info-label {
-  font-size: 28rpx;
-  color: #6c757d;
-  margin-right: 24rpx;
+  font-size: 26rpx;
+  color: #666;
+  margin-right: 0;
   flex-shrink: 0;
+  min-width: 120rpx;
 }
 
 .info-value {
   font-size: 28rpx;
-  color: #1a1a1a;
+  color: #333;
+  font-weight: 500;
   text-align: right;
   flex: 1;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* 状态标签容器 */
+.status-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+/* 分割线样式 */
+.divider-line {
+  height: 2rpx;
+  min-height: 2rpx;
+  width: 100%;
+  border: none;
+  border-top: 2rpx dashed #999;
+  margin: 10rpx 0;
+  padding: 0;
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 /* 头像区域 */

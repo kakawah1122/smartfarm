@@ -670,6 +670,331 @@ async function createTreatmentFromAbnormal(event, wxContext) {
   }
 }
 
+// 从疫苗追踪创建治疗记录
+async function createTreatmentFromVaccine(event, wxContext) {
+  try {
+    const {
+      vaccineRecordId,
+      batchId,
+      batchNumber,
+      affectedCount,
+      diagnosis,
+      vaccineName,
+      preventionDate
+    } = event
+    const openid = wxContext.OPENID
+    const db = cloud.database()
+    
+    // 创建治疗记录
+    const treatmentData = {
+      batchId,
+      batchNumber: batchNumber || batchId,  // ✅ 保存批次编号用于显示
+      vaccineRecordId,  // 关联疫苗记录
+      animalIds: [],
+      treatmentDate: new Date().toISOString().split('T')[0],
+      treatmentType: 'medication',
+      diagnosis: {
+        preliminary: diagnosis || '疫苗接种后异常反应',
+        confirmed: diagnosis || '疫苗接种后异常反应',
+        confidence: 0,
+        diagnosisMethod: 'manual'
+      },
+      treatmentPlan: {
+        primary: `疫苗名称：${vaccineName}，接种日期：${preventionDate}，需观察并制定治疗方案`,
+        followUpSchedule: []
+      },
+      medications: [],
+      progress: [{
+        date: new Date().toISOString().split('T')[0],
+        type: 'record_created',
+        content: `疫苗接种后异常反应记录已创建，异常数量：${affectedCount}只`,
+        operator: openid,
+        createdAt: new Date()
+      }],
+      outcome: {
+        status: 'ongoing',
+        curedCount: 0,
+        improvedCount: 0,
+        deathCount: 0,
+        totalTreated: affectedCount || 1
+      },
+      cost: {
+        medication: 0,
+        veterinary: 0,
+        supportive: 0,
+        total: 0
+      },
+      notes: `疫苗：${vaccineName}，接种日期：${preventionDate}`,
+      isDraft: false,
+      isDeleted: false,
+      createdBy: openid,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS).add({
+      data: treatmentData
+    })
+    
+    // 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'create_treatment_from_vaccine',
+      COLLECTIONS.HEALTH_TREATMENT_RECORDS,
+      treatmentResult._id,
+      {
+        vaccineRecordId,
+        batchId,
+        affectedCount,
+        result: 'success'
+      }
+    )
+    
+    return {
+      success: true,
+      data: { treatmentId: treatmentResult._id },
+      message: '治疗记录创建成功'
+    }
+  } catch (error) {
+    console.error('创建疫苗追踪治疗记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '创建治疗记录失败'
+    }
+  }
+}
+
+// 从疫苗追踪创建死亡记录
+async function createDeathFromVaccine(event, wxContext) {
+  try {
+    const {
+      vaccineRecordId,
+      batchId,
+      batchNumber,
+      deathCount,
+      deathCause,
+      vaccineName,
+      preventionDate
+    } = event
+    const openid = wxContext.OPENID
+    
+    // 1. 验证必填项
+    if (!batchId) throw new Error('批次ID不能为空')
+    if (!deathCount || deathCount <= 0) throw new Error('死亡数量必须大于0')
+    
+    // 2. 获取批次信息
+    let batch = null
+    let batchDocId = batchId
+    
+    try {
+      const batchEntry = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .doc(batchId).get()
+      batch = batchEntry.data
+      batchDocId = batchId
+    } catch (err) {
+      // 如果文档不存在，尝试通过批次号查询
+      const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          batchNumber: batchId,
+          ...dbManager.buildNotDeletedCondition(true)
+        })
+        .limit(1)
+        .get()
+      
+      if (batchQueryResult.data && batchQueryResult.data.length > 0) {
+        batch = batchQueryResult.data[0]
+        batchDocId = batch._id
+      }
+    }
+    
+    if (!batch) {
+      throw new Error(`批次不存在: ${batchId}`)
+    }
+    
+    // 3. 计算平均成本
+    console.log('[疫苗死亡] 开始计算批次成本:', {
+      batchId: batchId,
+      batchDocId: batchDocId,
+      batchNumber: batch.batchNumber
+    })
+    
+    const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
+    
+    console.log('[疫苗死亡] 成本计算结果:', {
+      success: costResult.success,
+      avgCost: costResult.data?.avgCost,
+      avgTotalCost: costResult.data?.avgTotalCost,
+      entryUnitCost: costResult.data?.entryUnitCost,
+      hasData: !!costResult.data
+    })
+    
+    if (!costResult.success) {
+      throw new Error('计算成本失败: ' + (costResult.message || '未知错误'))
+    }
+    
+    // ✅ 使用综合成本（包含入栏价）而不是饲养成本
+    // avgTotalCost = (入栏成本 + 物料成本 + 预防成本 + 治疗成本) / 当前数量
+    let unitCost = parseFloat(costResult.data.avgTotalCost) || 0
+    
+    // 如果综合成本为0，尝试使用入栏单价
+    if (unitCost === 0) {
+      unitCost = parseFloat(costResult.data.entryUnitCost) || 0
+      console.log('[疫苗死亡] 综合成本为0，使用入栏单价:', unitCost)
+    }
+    
+    const totalLoss = (unitCost * deathCount).toFixed(2)
+    
+    console.log('[疫苗死亡] 财务计算:', {
+      deathCount: deathCount,
+      unitCost: unitCost,
+      totalLoss: totalLoss,
+      isZero: unitCost === 0,
+      costBreakdown: costResult.data?.breakdown
+    })
+    
+    // 4. 获取用户信息
+    let operatorName = '未知'
+    try {
+      const userInfo = await db.collection(COLLECTIONS.WX_USERS)
+        .where({ _openid: openid })
+        .limit(1)
+        .get()
+      
+      console.log('[疫苗死亡] 用户查询结果:', {
+        openid: openid.substring(0, 8) + '...',
+        found: userInfo.data.length > 0,
+        userName: userInfo.data[0]?.name
+      })
+      
+      if (userInfo.data.length > 0) {
+        operatorName = userInfo.data[0].name || userInfo.data[0].nickName || '未知'
+      } else {
+        console.warn('[疫苗死亡] 未找到用户信息, openid:', openid.substring(0, 8) + '...')
+      }
+    } catch (userError) {
+      console.error('[疫苗死亡] 获取用户信息失败:', userError)
+    }
+    
+    // 5. 创建死亡记录
+    const deathRecord = {
+      _openid: openid,  // ✅ 添加_openid字段用于查询
+      batchId,
+      batchNumber: batchNumber || batch.batchNumber,
+      vaccineRecordId,  // 关联疫苗记录
+      deathDate: new Date().toISOString().split('T')[0],
+      deathList: [],
+      deathCause: deathCause || '疫苗接种后死亡',
+      deathCauseCategory: 'vaccine_reaction',
+      customCauseTags: ['疫苗反应'],
+      description: `疫苗名称：${vaccineName}，接种日期：${preventionDate}，接种后出现死亡情况`,
+      symptoms: '',
+      photos: [],
+      environmentFactors: {},
+      financialLoss: {
+        unitCost: unitCost.toFixed(2),
+        totalLoss: totalLoss,
+        calculationMethod: 'batch_average',
+        financeRecordId: ''
+      },
+      disposalMethod: '待处理',
+      preventiveMeasures: '',
+      totalDeathCount: deathCount,
+      deathCount: deathCount,  // ✅ 添加deathCount字段（与totalDeathCount保持一致）
+      operator: openid,
+      operatorName,
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    const deathResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).add({
+      data: deathRecord
+    })
+    
+    const deathRecordId = deathResult._id
+    
+    // 6. 调用财务云函数创建损失记录
+    try {
+      console.log('[疫苗死亡] 准备创建财务记录:', {
+        deathRecordId,
+        deathCount,
+        unitCost: unitCost.toFixed(2),
+        totalLoss
+      })
+      
+      const financeResult = await cloud.callFunction({
+        name: 'finance-management',
+        data: {
+          action: 'createDeathLoss',
+          batchId,
+          batchNumber: batchNumber || batch.batchNumber,
+          deathRecordId,
+          deathCount,
+          unitCost: unitCost.toFixed(2),
+          totalLoss,
+          deathCause: deathCause || '疫苗接种后死亡',
+          recordDate: new Date().toISOString().split('T')[0],
+          operator: openid
+        }
+      })
+      
+      console.log('[疫苗死亡] 财务记录创建结果:', financeResult.result)
+      
+      // ✅ 如果财务记录创建成功，更新死亡记录中的财务记录ID
+      if (financeResult.result && financeResult.result.success && financeResult.result.data?.financeRecordId) {
+        await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+          .doc(deathRecordId)
+          .update({
+            data: {
+              'financialLoss.financeRecordId': financeResult.result.data.financeRecordId
+            }
+          })
+        console.log('[疫苗死亡] 已更新财务记录ID到死亡记录')
+      }
+    } catch (financeError) {
+      console.error('[疫苗死亡] 创建财务记录失败:', financeError)
+      // 不影响主流程
+    }
+    
+    // 7. 更新批次数量
+    await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchDocId).update({
+      data: {
+        currentCount: _.inc(-deathCount),
+        deadCount: _.inc(deathCount),
+        updatedAt: new Date()
+      }
+    })
+    
+    // 8. 记录审计日志
+    await dbManager.createAuditLog(
+      openid,
+      'create_death_from_vaccine',
+      COLLECTIONS.HEALTH_DEATH_RECORDS,
+      deathRecordId,
+      {
+        vaccineRecordId,
+        batchId,
+        deathCount,
+        result: 'success'
+      }
+    )
+    
+    return {
+      success: true,
+      data: { deathRecordId },
+      message: '死亡记录创建成功'
+    }
+  } catch (error) {
+    console.error('创建疫苗追踪死亡记录失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '创建死亡记录失败'
+    }
+  }
+}
+
 // 提交治疗计划（用户填写完治疗表单后调用）
 async function submitTreatmentPlan(event, wxContext) {
   try {
@@ -1137,18 +1462,23 @@ async function correctAbnormalDiagnosis(event, wxContext) {
   }
 }
 
-// 创建死亡记录
+// 创建死亡记录（旧版，保留兼容）
 async function createDeathRecord(data, wxContext) {
   try {
     const recordData = {
+      _openid: wxContext.OPENID,  // ✅ 添加_openid字段用于查询
       batchId: data.batchId,
       healthRecordId: data.healthRecordId,
       deathDate: new Date().toISOString().split('T')[0],
       deadCount: data.deadCount,
+      deathCount: data.deadCount,  // ✅ 添加标准字段
+      totalDeathCount: data.deadCount,  // ✅ 添加标准字段
       cause: data.diagnosis || '待确定',
+      deathCause: data.diagnosis || '待确定',  // ✅ 添加标准字段
       symptoms: data.symptoms || [],
       notes: data.notes || '',
       reportedBy: wxContext.OPENID,
+      operator: wxContext.OPENID,  // ✅ 添加标准字段
       isDeleted: false
     }
 
@@ -2926,6 +3256,12 @@ exports.main = async (event, context) => {
       case 'create_treatment_from_abnormal':
         return await createTreatmentFromAbnormal(event, wxContext)
       
+      case 'create_treatment_from_vaccine':
+        return await createTreatmentFromVaccine(event, wxContext)
+      
+      case 'create_death_from_vaccine':
+        return await createDeathFromVaccine(event, wxContext)
+      
       case 'submit_treatment_plan':
         return await submitTreatmentPlan(event, wxContext)
       
@@ -3260,21 +3596,71 @@ async function createDeathRecord(event, wxContext) {
     }
     
     // 3. 计算平均成本（✅ 使用批次文档的真实_id而不是批次号）
+    console.log('[标准死亡] 开始计算批次成本:', {
+      batchId: batchId,
+      batchDocId: batchDocId,
+      batchNumber: batch.batchNumber
+    })
+    
     const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
+    
+    console.log('[标准死亡] 成本计算结果:', {
+      success: costResult.success,
+      avgCost: costResult.data?.avgCost,
+      avgTotalCost: costResult.data?.avgTotalCost,
+      entryUnitCost: costResult.data?.entryUnitCost,
+      hasData: !!costResult.data
+    })
+    
     if (!costResult.success) {
-      throw new Error('计算成本失败')
+      throw new Error('计算成本失败: ' + (costResult.message || '未知错误'))
     }
     
-    const unitCost = parseFloat(costResult.data.avgCost)
+    // ✅ 使用综合成本（包含入栏价）而不是饲养成本
+    let unitCost = parseFloat(costResult.data.avgTotalCost) || 0
+    
+    // 如果综合成本为0，尝试使用入栏单价
+    if (unitCost === 0) {
+      unitCost = parseFloat(costResult.data.entryUnitCost) || 0
+      console.log('[标准死亡] 综合成本为0，使用入栏单价:', unitCost)
+    }
+    
     const totalLoss = (unitCost * deathCount).toFixed(2)
     
+    console.log('[标准死亡] 财务计算:', {
+      deathCount: deathCount,
+      unitCost: unitCost,
+      totalLoss: totalLoss,
+      isZero: unitCost === 0,
+      costBreakdown: costResult.data?.breakdown
+    })
+    
     // 4. 获取用户信息
-    const userInfo = await db.collection(COLLECTIONS.WX_USERS)
-      .where({ _openid: openid }).get()
-    const operatorName = userInfo.data[0]?.name || '未知'
+    let operatorName = '未知'
+    try {
+      const userInfo = await db.collection(COLLECTIONS.WX_USERS)
+        .where({ _openid: openid })
+        .limit(1)
+        .get()
+      
+      console.log('[标准死亡] 用户查询结果:', {
+        openid: openid.substring(0, 8) + '...',
+        found: userInfo.data.length > 0,
+        userName: userInfo.data[0]?.name
+      })
+      
+      if (userInfo.data.length > 0) {
+        operatorName = userInfo.data[0].name || userInfo.data[0].nickName || '未知'
+      } else {
+        console.warn('[标准死亡] 未找到用户信息, openid:', openid.substring(0, 8) + '...')
+      }
+    } catch (userError) {
+      console.error('[标准死亡] 获取用户信息失败:', userError)
+    }
     
     // 5. 创建死亡记录
     const deathRecord = {
+      _openid: openid,  // ✅ 添加_openid字段用于查询
       batchId,
       batchNumber: batchNumber || batch.batchNumber,
       deathDate: deathDate || new Date().toISOString().split('T')[0],
@@ -3295,6 +3681,7 @@ async function createDeathRecord(event, wxContext) {
       disposalMethod,
       preventiveMeasures: preventiveMeasures || '',
       totalDeathCount: deathCount,
+      deathCount: deathCount,  // ✅ 添加deathCount字段（与totalDeathCount保持一致）
       operator: openid,
       operatorName,
       isDeleted: false,
@@ -3310,7 +3697,14 @@ async function createDeathRecord(event, wxContext) {
     
     // 6. 调用财务云函数创建损失记录
     try {
-      await cloud.callFunction({
+      console.log('[标准死亡] 准备创建财务记录:', {
+        deathRecordId,
+        deathCount,
+        unitCost: unitCost.toFixed(2),
+        totalLoss
+      })
+      
+      const financeResult = await cloud.callFunction({
         name: 'finance-management',
         data: {
           action: 'createDeathLoss',
@@ -3326,10 +3720,21 @@ async function createDeathRecord(event, wxContext) {
         }
       })
       
-      // 更新死亡记录中的财务记录ID
-      // (财务云函数会返回记录ID，这里简化处理)
+      console.log('[标准死亡] 财务记录创建结果:', financeResult.result)
+      
+      // ✅ 如果财务记录创建成功，更新死亡记录中的财务记录ID
+      if (financeResult.result && financeResult.result.success && financeResult.result.data?.financeRecordId) {
+        await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+          .doc(deathRecordId)
+          .update({
+            data: {
+              'financialLoss.financeRecordId': financeResult.result.data.financeRecordId
+            }
+          })
+        console.log('[标准死亡] 已更新财务记录ID到死亡记录')
+      }
     } catch (financeError) {
-      console.error('创建财务记录失败:', financeError)
+      console.error('[标准死亡] 创建财务记录失败:', financeError)
       // 不影响主流程，继续执行
     }
     
@@ -3938,7 +4343,13 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       
       if (batch) {
         const avgCost = await calculateBatchCost({ batchId: batchDocId }, wxContext)
-        costPerAnimal = parseFloat(avgCost.data?.avgCost || avgCost.data?.avgBreedingCost || 0)
+        // ✅ 使用综合成本（包含入栏价）
+        costPerAnimal = parseFloat(avgCost.data?.avgTotalCost) || 0
+        
+        // 如果综合成本为0，尝试使用入栏单价
+        if (costPerAnimal === 0) {
+          costPerAnimal = parseFloat(avgCost.data?.entryUnitCost) || 0
+        }
       }
     } catch (costError) {
       console.error('计算财务损失失败:', costError.message)
@@ -3981,6 +4392,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       const totalLoss = (costPerAnimal * actualDiedCount) + amortizedTreatmentCost
       
       const deathRecordData = {
+        _openid: openid,  // ✅ 添加_openid字段用于查询
         batchId: treatment.batchId,
         batchNumber: batch?.batchNumber || treatment.batchId,
         treatmentRecordId: treatmentId,
@@ -4758,9 +5170,16 @@ async function updateTreatmentProgress(event, wxContext) {
           console.log('calculateBatchCost 返回结果:', JSON.stringify(costResult))
           
           if (costResult.success) {
-            unitCost = parseFloat(costResult.data.entryUnitCost || 0)
+            // ✅ 使用综合成本（包含入栏价）
+            unitCost = parseFloat(costResult.data.avgTotalCost || 0)
             breedingCostPerAnimal = parseFloat(costResult.data.avgBreedingCost || 0)
-            console.log('从成本计算结果获取 - 入栏单价:', unitCost, '饲养成本:', breedingCostPerAnimal)
+            console.log('从成本计算结果获取 - 综合成本:', unitCost, '饲养成本:', breedingCostPerAnimal)
+            
+            // 如果综合成本为0，尝试使用入栏单价
+            if (unitCost === 0) {
+              unitCost = parseFloat(costResult.data.entryUnitCost || 0)
+              console.log('综合成本为0，使用入栏单价:', unitCost)
+            }
           }
         } catch (costError) {
           console.error('❌ 计算成本失败:', costError)
@@ -5122,8 +5541,14 @@ async function createDeathRecordWithFinance(event, wxContext) {
     try {
       const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
       if (costResult.success) {
-        unitCost = parseFloat(costResult.data.entryUnitCost || 0)
+        // ✅ 使用综合成本（包含入栏价）
+        unitCost = parseFloat(costResult.data.avgTotalCost || 0)
         breedingCostPerAnimal = parseFloat(costResult.data.avgBreedingCost || 0)
+        
+        // 如果综合成本为0，尝试使用入栏单价
+        if (unitCost === 0) {
+          unitCost = parseFloat(costResult.data.entryUnitCost || 0)
+        }
       }
     } catch (costError) {
       console.error('计算成本失败:', costError.message)
@@ -5283,16 +5708,22 @@ async function getDeathRecordsList(event, wxContext) {
   try {
     const openid = wxContext.OPENID
     
-    // 查询用户的所有死亡记录，按日期倒序
+    // ✅ 查询用户的所有死亡记录，兼容 _openid 和 operator 字段
     const result = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
-      .where({
-        _openid: openid,
-        isDeleted: false
-      })
+      .where(_.or([
+        { _openid: openid, isDeleted: false },
+        { operator: openid, isDeleted: false },
+        { createdBy: openid, isDeleted: false },  // ✅ 兼容 createdBy 字段
+        { reportedBy: openid, isDeleted: false }  // ✅ 兼容 reportedBy 字段（旧版）
+      ]))
       .orderBy('deathDate', 'desc')
-      .orderBy('createdAt', 'desc')
       .limit(100)
       .get()
+    
+    console.log('[死亡记录列表] 查询到的记录数:', result.data.length)
+    if (result.data.length > 0) {
+      console.log('[死亡记录列表] 第一条记录字段:', Object.keys(result.data[0]))
+    }
     
     return {
       success: true,
@@ -5301,6 +5732,7 @@ async function getDeathRecordsList(event, wxContext) {
     }
     
   } catch (error) {
+    console.error('[死亡记录列表] 查询失败:', error)
     return {
       success: false,
       error: error.message,

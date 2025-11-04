@@ -95,10 +95,17 @@ Page({
           let loss = 0
           let treatmentCost = 0
           if (record.financialLoss && typeof record.financialLoss === 'object') {
-            loss = record.financialLoss.totalLoss || 0
-            treatmentCost = record.financialLoss.treatmentCost || 0
+            // ✅ 转换为数字（可能是字符串）
+            const totalLoss = record.financialLoss.totalLoss
+            loss = typeof totalLoss === 'string' ? parseFloat(totalLoss) || 0 : (totalLoss || 0)
+            
+            const tCost = record.financialLoss.treatmentCost
+            treatmentCost = typeof tCost === 'string' ? parseFloat(tCost) || 0 : (tCost || 0)
           } else if (typeof record.financeLoss === 'number') {
             loss = record.financeLoss
+          } else if (typeof record.financeLoss === 'string') {
+            // ✅ 兼容字符串类型的 financeLoss
+            loss = parseFloat(record.financeLoss) || 0
           }
           totalLoss += loss
           

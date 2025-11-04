@@ -261,36 +261,64 @@
             <text class="info-label">任务名称：</text>
             <text class="info-value">{{selectedTask.title || '未命名任务'}}</text>
           </view>
+          <view class="divider-line"></view>
+          
           <view class="info-row">
             <text class="info-label">任务类型：</text>
             <text class="info-value">{{selectedTask.typeName || '未分类'}}</text>
           </view>
-          <view class="info-row" wx:if="{{selectedTask.estimatedTime}}">
-            <text class="info-label">预计用时：</text>
-            <text class="info-value">{{selectedTask.estimatedTime}}分钟</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.duration && selectedTask.dayInSeries}}">
-            <text class="info-label">连续任务：</text>
-            <text class="info-value">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.dosage}}">
-            <text class="info-label">用量：</text>
-            <text class="info-value">{{selectedTask.dosage}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
-            <text class="info-label">所需物料：</text>
-            <text class="info-value materials-text">
-              <text wx:for="{{selectedTask.materials}}" wx:key="index">{{item}}<text wx:if="{{index < selectedTask.materials.length - 1}}">、</text></text>
-            </text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.batchNumber}}">
-            <text class="info-label">批次编号：</text>
-            <text class="info-value">{{selectedTask.batchNumber}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.dayAge}}">
-            <text class="info-label">日龄：</text>
-            <text class="info-value">第{{selectedTask.dayAge}}日龄</text>
-          </view>
+          <view class="divider-line"></view>
+          
+          <block wx:if="{{selectedTask.estimatedTime}}">
+            <view class="info-row">
+              <text class="info-label">预计用时：</text>
+              <text class="info-value">{{selectedTask.estimatedTime}}分钟</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
+          <block wx:if="{{selectedTask.duration && selectedTask.dayInSeries}}">
+            <view class="info-row">
+              <text class="info-label">连续任务：</text>
+              <text class="info-value">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
+          <block wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
+            <view class="info-row">
+              <text class="info-label">所需物料：</text>
+              <text class="info-value materials-text">
+                <text wx:for="{{selectedTask.materials}}" wx:key="index">{{item}}<text wx:if="{{index < selectedTask.materials.length - 1}}">、</text></text>
+              </text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
+          <block wx:if="{{selectedTask.batchNumber}}">
+            <view class="info-row">
+              <text class="info-label">批次编号：</text>
+              <text class="info-value">{{selectedTask.batchNumber}}</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
+          <block wx:if="{{selectedTask.dayAge}}">
+            <view class="info-row">
+              <text class="info-label">日龄：</text>
+              <text class="info-value">第{{selectedTask.dayAge}}日龄</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
+          <block wx:if="{{selectedTask.description}}">
+            <view class="info-row info-row-description">
+              <text class="info-label">任务描述：</text>
+              <text class="info-value note-text">{{selectedTask.description}}</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
           <view class="info-row">
             <text class="info-label">完成状态：</text>
             <view class="status-value">
@@ -299,10 +327,16 @@
               </t-tag>
             </view>
           </view>
-          <view class="info-row info-row-description" wx:if="{{selectedTask.description}}">
-            <text class="info-label">任务描述：</text>
-            <text class="info-value note-text">{{selectedTask.description}}</text>
-          </view>
+          <view class="divider-line" wx:if="{{selectedTask.dosage || selectedTask.notes}}"></view>
+          
+          <block wx:if="{{selectedTask.dosage}}">
+            <view class="info-row info-row-dosage">
+              <text class="info-label">用量：</text>
+              <text class="info-value dosage-text">{{selectedTask.dosage}}</text>
+            </view>
+            <view class="divider-line" wx:if="{{selectedTask.notes}}"></view>
+          </block>
+          
           <view class="info-row info-row-notes" wx:if="{{selectedTask.notes}}">
             <text class="info-label">注意事项：</text>
             <text class="info-value note-text important-text">{{selectedTask.notes}}</text>

@@ -147,8 +147,11 @@ Page({
 
       const avgCostPerAnimal = totalCured > 0 ? (totalCost / totalCured) : 0
 
+      // 批量获取批次号
+      const enrichedRecords = await this.enrichRecordsWithBatchNumbers(records)
+
       this.setData({
-        records,
+        records: enrichedRecords,
         stats: {
           totalCured,
           totalCost: parseFloat(totalCost.toFixed(2)),
@@ -165,6 +168,49 @@ Page({
         icon: 'none'
       })
       this.setData({ loading: false })
+    }
+  },
+
+  /**
+   * 批量获取批次号
+   */
+  async enrichRecordsWithBatchNumbers(records: any[]): Promise<any[]> {
+    if (!records || records.length === 0) return []
+    
+    try {
+      const db = wx.cloud.database()
+      
+      // 提取所有唯一的批次ID
+      const batchIds = [...new Set(records.map(r => r.batchId).filter(Boolean))]
+      
+      if (batchIds.length === 0) return records
+      
+      // 批量查询批次信息
+      const batchMap = new Map()
+      
+      // 每次查询最多20个（数据库限制）
+      for (let i = 0; i < batchIds.length; i += 20) {
+        const batch = batchIds.slice(i, i + 20)
+        const batchResult = await db.collection('prod_batch_entries')
+          .where({
+            _id: db.command.in(batch)
+          })
+          .field({ _id: true, batchNumber: true })
+          .get()
+        
+        batchResult.data.forEach((b: any) => {
+          batchMap.set(b._id, b.batchNumber)
+        })
+      }
+      
+      // 为每条记录添加批次号
+      return records.map(record => ({
+        ...record,
+        batchNumber: batchMap.get(record.batchId) || record.batchId
+      }))
+    } catch (error) {
+      // 查询失败时返回原始数据
+      return records
     }
   },
 

@@ -324,17 +324,30 @@ page {
 .record-detail-content {
   max-height: 60vh;
   overflow-y: auto;
+  padding: 24rpx 32rpx;
+}
+
+/* 信息卡片 */
+.info-card {
+  background: #fafafa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .record-detail-content .info-row {
   margin-bottom: 0;
-  padding: 20rpx 8rpx;
+  padding: 12rpx 0;
   display: flex !important;
   justify-content: space-between;
   align-items: center !important;
   flex-wrap: nowrap;
-  gap: 16rpx;
-  border-bottom: 1rpx dashed var(--td-border-level-2-color, #e0e0e0);
+  gap: 24rpx;
+  border-bottom: 2rpx dashed #d0d0d0;
 }
 
 .record-detail-content .info-row:last-child {
@@ -342,8 +355,8 @@ page {
 }
 
 .record-detail-content .info-label {
-  font-size: 22rpx !important;
-  color: #6c757d !important;
+  font-size: 26rpx !important;
+  color: #666 !important;
   font-weight: 500 !important;
   min-width: 120rpx !important;
   text-align: left;
@@ -351,9 +364,9 @@ page {
 }
 
 .record-detail-content .info-value {
-  font-size: 24rpx !important;
-  color: #1a1a1a !important;
-  font-weight: 400 !important;
+  font-size: 28rpx !important;
+  color: #333 !important;
+  font-weight: 500 !important;
   text-align: right;
   flex: 1;
   white-space: normal;

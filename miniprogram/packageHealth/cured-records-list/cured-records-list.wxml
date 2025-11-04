@@ -7,6 +7,9 @@
     fallbackUrl="/pages/health/health" 
   />
 
+  <!-- 占位区域 - 增加安全边距 -->
+  <view style="height: calc(var(--navbar-height, 132rpx) + 32rpx);"></view>
+
   <!-- 加载状态 -->
   <view class="loading-container" wx:if="{{loading}}">
     <t-loading theme="circular" size="60rpx" text="加载中..." />

@@ -1627,8 +1627,63 @@ Page<PageData, any>({
    * 加载分析数据
    */
   async loadAnalysisData() {
-    // 实现健康分析数据加载
-    // 已移除调试日志
+    try {
+      // 计算存活率（基于健康数据）
+      // mortalityRate格式为 "0.4%" 需要去掉百分号后解析
+      const mortalityRateStr = this.data.healthStats.mortalityRate || '0%'
+      const mortalityRate = parseFloat(mortalityRateStr.replace('%', '')) || 0
+      const survivalRate = (100 - mortalityRate).toFixed(1)
+      
+      // 判断趋势（这里简化处理，可以后续根据历史数据对比）
+      const trend = mortalityRate < 1 ? 'improving' : 'stable'
+      
+      // 计算成本分析数据
+      const preventionCost = this.data.preventionStats?.totalCost || 0
+      const treatmentCost = this.data.treatmentData?.stats?.totalTreatmentCost || 0
+      const totalCost = preventionCost + treatmentCost
+      
+      // 计算投入回报率（ROI）
+      // ROI = (医疗投入产生的回报 / 总投入成本)
+      const totalAnimals = this.data.healthStats.totalChecks || 0
+      const deadAnimals = this.data.healthStats.deadCount || 0
+      const curedAnimals = this.data.treatmentStats?.recoveredCount || 0 // 治愈动物数量
+      
+      // 每只动物的平均价值估算（元）
+      const animalValue = 100
+      
+      // 方案1: 基于治愈数量计算回报
+      // 治愈的动物如果没有治疗就会死亡，通过治疗避免了损失
+      const curedValue = curedAnimals * animalValue
+      
+      // 方案2: 基于与行业平均对比，计算避免的额外损失
+      // 假设行业平均死亡率为3%
+      const industryAvgMortalityRate = 3.0
+      const expectedDeaths = totalAnimals * (industryAvgMortalityRate / 100)
+      const actualDeaths = deadAnimals
+      const avoidedDeaths = Math.max(0, expectedDeaths - actualDeaths)
+      const avoidedLoss = avoidedDeaths * animalValue
+      
+      // 综合两种方案：优先使用避免损失，如果为0则使用治愈价值
+      const benefit = avoidedLoss > 0 ? avoidedLoss : curedValue
+      const roi = totalCost > 0 ? (benefit / totalCost).toFixed(1) : 0
+      
+      // 更新分析数据
+      this.setData({
+        'analysisData.survivalAnalysis': {
+          rate: parseFloat(survivalRate),
+          trend: trend,
+          byStage: []
+        },
+        'analysisData.costAnalysis': {
+          preventionCost: preventionCost,
+          treatmentCost: treatmentCost,
+          totalCost: totalCost,
+          roi: parseFloat(roi as string)
+        }
+      })
+    } catch (error: any) {
+      console.error('加载分析数据失败:', error)
+    }
   },
 
   /**
@@ -1719,17 +1774,14 @@ Page<PageData, any>({
     switch (value) {
       case 'today':
         // ✅ 确保今日任务已加载
-        // 📝 优化：统一使用 loadPreventionData 作为唯一数据源，移除回退逻辑
+        // 📝 优化：统一使用 loadPreventionData 作为唯一数据源
+        // ✅ 修复：空数组是正常状态（没有任务），不应该显示错误提示
+        // loadPreventionData 内部已经处理了错误情况并显示提示
         if (!this.data.todayTasksByBatch || this.data.todayTasksByBatch.length === 0) {
           await this.loadPreventionData()
-          // 如果加载失败，显示错误提示（不再回退到 loadTodayTasks）
-          if (!this.data.todayTasksByBatch || this.data.todayTasksByBatch.length === 0) {
-            wx.showToast({
-              title: '数据加载失败，请下拉刷新',
-              icon: 'none',
-              duration: 2000
-            })
-          }
+          // 不再检查 todayTasksByBatch 是否为空，因为：
+          // 1. 如果加载成功但为空，这是正常状态（会显示"暂无进行中的任务"）
+          // 2. 如果加载失败，loadPreventionData 内部已经显示了错误提示
         }
         break
       case 'upcoming':
@@ -2864,12 +2916,76 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 查看任务详情（从breeding-todo完整迁移）
    */
-  viewTaskDetail(e: any) {
+  async viewTaskDetail(e: any) {
     const task = e.currentTarget.dataset.task
     if (!task) return
     
     // ✅ 判断任务是否为即将到来的任务（来自 upcoming 标签）
     const isUpcomingTask = this.data.preventionSubTab === 'upcoming'
+    
+    // 处理完成人员字段：如果是 OpenID，尝试查询用户名
+    let completedBy = task.completedBy || ''
+    const originalCompletedBy = completedBy // 保存原始值用于缓存 key
+    if (completedBy) {
+      // 判断是否是 OpenID 格式（通常以 'o' 开头，长度约 28 个字符）
+      const isOpenId = /^o[a-zA-Z0-9]{27}$/.test(completedBy)
+      if (isOpenId) {
+        try {
+          // 先尝试从本地缓存查找
+          try {
+            const cachedUsers = wx.getStorageSync('cached_users') || {}
+            if (cachedUsers[originalCompletedBy]?.nickName) {
+              completedBy = cachedUsers[originalCompletedBy].nickName
+            } else {
+              // 缓存中没有，通过云函数查询用户信息
+              const result = await wx.cloud.callFunction({
+                name: 'user-management',
+                data: {
+                  action: 'get_user_by_openid',
+                  openid: originalCompletedBy
+                }
+              })
+              if (result.result?.success && result.result?.data?.nickName) {
+                completedBy = result.result.data.nickName
+                // 缓存用户信息以便下次使用（使用 OpenID 作为 key）
+                try {
+                  const cachedUsers = wx.getStorageSync('cached_users') || {}
+                  cachedUsers[originalCompletedBy] = {
+                    nickName: result.result.data.nickName,
+                    timestamp: Date.now()
+                  }
+                  wx.setStorageSync('cached_users', cachedUsers)
+                } catch (cacheError) {
+                  // 缓存失败不影响主流程
+                }
+              } else {
+                completedBy = '用户'
+              }
+            }
+          } catch (cacheError) {
+            // 缓存读取失败，直接查询
+            try {
+              const result = await wx.cloud.callFunction({
+                name: 'user-management',
+                data: {
+                  action: 'get_user_by_openid',
+                  openid: originalCompletedBy
+                }
+              })
+              if (result.result?.success && result.result?.data?.nickName) {
+                completedBy = result.result.data.nickName
+              } else {
+                completedBy = '用户'
+              }
+            } catch (error) {
+              completedBy = '用户'
+            }
+          }
+        } catch (error) {
+          completedBy = '用户'
+        }
+      }
+    }
     
     // 构建增强的任务数据
     const enhancedTask = {
@@ -2903,7 +3019,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       
       // 确保completed状态正确
       completed: task.completed || false,
-      completedDate: task.completedDate || ''
+      completedDate: task.completedDate || '',
+      completedBy: completedBy
     }
 
     this.setData({

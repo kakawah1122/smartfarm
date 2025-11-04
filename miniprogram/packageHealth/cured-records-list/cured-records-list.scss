@@ -7,7 +7,7 @@
 }
 
 .page-content {
-  padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏总高度 + 适当间距 */
+  padding-top: 24rpx; /* 顶部间距 */
   padding-bottom: 40rpx;
 }
 
@@ -16,7 +16,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80vh;
+  min-height: calc(100vh - var(--navbar-height, 132rpx));
+  padding-top: 24rpx;
 }
 
 // ============ 统计卡片 ============

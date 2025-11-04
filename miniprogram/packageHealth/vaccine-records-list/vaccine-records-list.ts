@@ -407,7 +407,7 @@ Page({
   /**
    * 确认数量输入并跳转
    */
-  onConfirmCountInput() {
+  async onConfirmCountInput() {
     const { selectedRecord, countInputType, countInputValue } = this.data
     if (!selectedRecord) return
     
@@ -439,35 +439,133 @@ Page({
       countInputValue: ''
     })
     
-    // 构建URL参数
-    const params: string[] = []
-    if (selectedRecord.batchId) {
-      params.push(`batchId=${encodeURIComponent(selectedRecord.batchId)}`)
-    }
-    params.push(`affectedCount=${count}`)
-    
     if (countInputType === 'abnormal') {
-      // 异常用药：跳转到治疗记录页面
-      if (selectedRecord.batchNumber) {
-        params.push(`batchNumber=${encodeURIComponent(selectedRecord.batchNumber)}`)
-      }
-      params.push(`sourceType=vaccine_tracking`)
-      params.push(`sourceId=${encodeURIComponent(selectedRecord._id)}`)
-      params.push(`diagnosis=${encodeURIComponent('疫苗接种后异常反应')}`)
-      
-      wx.navigateTo({
-        url: `/packageHealth/treatment-record/treatment-record?${params.join('&')}`
-      })
+      // 异常用药：创建治疗记录
+      await this.createTreatmentRecord(selectedRecord, count)
     } else {
-      // 记录死亡：跳转到死亡记录页面
-      if (selectedRecord.batchNumber) {
-        params.push(`batchNumber=${encodeURIComponent(selectedRecord.batchNumber)}`)
+      // 记录死亡：创建死亡记录
+      await this.createDeathRecord(selectedRecord, count)
+    }
+  },
+
+  /**
+   * 创建治疗记录（异常用药追踪）
+   */
+  async createTreatmentRecord(vaccineRecord: VaccineRecord, affectedCount: number) {
+    try {
+      wx.showLoading({ title: '创建治疗记录...' })
+
+      // 调用云函数创建治疗记录
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'create_treatment_from_vaccine',
+          vaccineRecordId: vaccineRecord._id,
+          batchId: vaccineRecord.batchId,
+          batchNumber: vaccineRecord.batchNumber || vaccineRecord.batchId,  // ✅ 传递批次编号
+          affectedCount: affectedCount,
+          diagnosis: '疫苗接种后异常反应',
+          vaccineName: vaccineRecord.vaccineInfo?.name || '',
+          preventionDate: vaccineRecord.preventionDate
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.result && result.result.success) {
+        const treatmentId = result.result.data?.treatmentId
+        
+        wx.showToast({
+          title: '治疗记录已创建',
+          icon: 'success',
+          duration: 2000
+        })
+
+        // 延迟跳转到健康管理中心，让用户看到成功提示
+        setTimeout(() => {
+          wx.switchTab({
+            url: '/pages/health/health',
+            success: () => {
+              // 通知健康页面切换到"治疗管理"标签
+              const pages = getCurrentPages()
+              const healthPage = pages.find((page: any) => page.route === 'pages/health/health')
+              if (healthPage) {
+                healthPage.setData({
+                  activeCategory: 'treatment'
+                })
+              }
+            }
+          })
+        }, 2000)
+      } else {
+        throw new Error(result.result?.error || result.result?.message || '创建失败')
       }
-      params.push(`sourceType=vaccine_tracking`)
-      params.push(`sourceId=${encodeURIComponent(selectedRecord._id)}`)
-      
-      wx.navigateTo({
-        url: `/packageHealth/death-record/death-record?${params.join('&')}`
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showModal({
+        title: '创建失败',
+        content: error.message || '创建治疗记录失败，请重试',
+        showCancel: false
+      })
+    }
+  },
+
+  /**
+   * 创建死亡记录（疫苗追踪）
+   */
+  async createDeathRecord(vaccineRecord: VaccineRecord, deathCount: number) {
+    try {
+      wx.showLoading({ title: '创建死亡记录...' })
+
+      // 调用云函数创建死亡记录
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'create_death_from_vaccine',
+          vaccineRecordId: vaccineRecord._id,
+          batchId: vaccineRecord.batchId,
+          batchNumber: vaccineRecord.batchNumber || vaccineRecord.batchId,
+          deathCount: deathCount,
+          deathCause: '疫苗接种后死亡',
+          vaccineName: vaccineRecord.vaccineInfo?.name || '',
+          preventionDate: vaccineRecord.preventionDate
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.result && result.result.success) {
+        wx.showToast({
+          title: '死亡记录已创建',
+          icon: 'success',
+          duration: 2000
+        })
+
+        // 延迟跳转到健康管理中心
+        setTimeout(() => {
+          wx.switchTab({
+            url: '/pages/health/health',
+            success: () => {
+              // 通知健康页面切换到"治疗管理"标签（查看死亡统计）
+              const pages = getCurrentPages()
+              const healthPage = pages.find((page: any) => page.route === 'pages/health/health')
+              if (healthPage) {
+                healthPage.setData({
+                  activeCategory: 'treatment'
+                })
+              }
+            }
+          })
+        }, 2000)
+      } else {
+        throw new Error(result.result?.error || result.result?.message || '创建失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showModal({
+        title: '创建失败',
+        content: error.message || '创建死亡记录失败，请重试',
+        showCancel: false
       })
     }
   },

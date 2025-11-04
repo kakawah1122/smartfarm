@@ -37,8 +37,13 @@
 
 /* 搜索框样式通过WXML内联样式设置 */
 
-/* 筛选按钮样式 */
+/* 筛选按钮样式 - 与搜索框高度一致 */
 .filter-button {
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 14px !important;
+  padding: 0 16px !important;
+  min-width: auto !important;
   border: 1rpx solid var(--td-component-stroke, #e7e7e7) !important;
   box-shadow: none !important;
   background: var(--td-bg-color-container, #ffffff) !important;
@@ -148,68 +153,80 @@
 .material-detail-content {
   max-height: 60vh;
   overflow-y: auto;
+  padding: 24rpx 32rpx;
+}
+
+/* 信息卡片 */
+.detail-card {
+  background: #fafafa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .material-detail-content .info-row {
-  margin-bottom: 20rpx;
-  padding: 0 8rpx;
+  margin-bottom: 0;
+  padding: 12rpx 0;
+  display: flex !important;
   justify-content: space-between;
+  align-items: center !important;
   flex-wrap: nowrap;
-  gap: 16rpx;
-  display: flex;
-  align-items: center;
+  gap: 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.material-detail-content .info-row:last-child {
+  border-bottom: none;
 }
 
 .material-detail-content .info-label {
-  font-size: 26rpx;
-  color: #6c757d;
-  font-weight: 500;
-  min-width: 140rpx;
+  font-size: 26rpx !important;
+  color: #666 !important;
+  font-weight: 500 !important;
+  min-width: 120rpx !important;
   text-align: left;
   flex-shrink: 0;
 }
 
 .material-detail-content .info-value {
-  font-size: 28rpx;
-  color: #1a1a1a;
-  font-weight: 400;
+  font-size: 28rpx !important;
+  color: #333 !important;
+  font-weight: 500 !important;
   text-align: right;
   flex: 1;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
+  line-height: 1.5;
 }
 
-.stock-value {
-  font-weight: 600;
+.material-detail-content .stock-value {
+  font-weight: 600 !important;
   color: #0052d9 !important;
 }
 
-.price-value {
-  font-weight: 600;
+.material-detail-content .price-value {
+  font-weight: 600 !important;
   color: #e3711e !important;
 }
 
-.status-value {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.status-text {
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  font-weight: 500;
+.material-detail-content .status-badge {
+  padding: 4rpx 12rpx !important;
+  border-radius: 4rpx;
+  font-size: 24rpx !important;
   
   &.low-stock {
-    background: #fff2f0;
-    color: #ff4d4f;
+    background: #fff2f0 !important;
+    color: #ff4d4f !important;
   }
   
   &.normal-stock {
-    background: #f6ffed;
-    color: #52c41a;
+    background: #f6ffed !important;
+    color: #52c41a !important;
   }
 }
 

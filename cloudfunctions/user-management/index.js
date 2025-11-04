@@ -211,6 +211,8 @@ exports.main = async (event, context) => {
       // 用户管理
       case 'get_user_info':
         return await getUserInfo(event, wxContext)
+      case 'get_user_by_openid':
+        return await getUserByOpenId(event, wxContext)
       case 'update_user_profile':
       case 'update_profile': // 兼容旧版本调用
         return await updateUserProfile(event, wxContext)
@@ -323,6 +325,51 @@ async function getUserInfo(event, wxContext) {
   } catch (error) {
     // 已移除调试日志
     throw new Error('获取用户信息失败')
+  }
+}
+
+// 通过 OpenID 获取用户信息（用于查询其他用户）
+async function getUserByOpenId(event, wxContext) {
+  const { openid } = event
+  
+  if (!openid) {
+    return {
+      success: false,
+      error: '缺少 openid 参数'
+    }
+  }
+  
+  try {
+    const user = await db.collection('wx_users').where({ _openid: openid }).get()
+    
+    if (user.data.length === 0) {
+      return {
+        success: false,
+        error: '用户不存在'
+      }
+    }
+    
+    const userData = user.data[0]
+    
+    return {
+      success: true,
+      data: {
+        _id: userData._id,
+        openid: userData._openid,
+        nickName: userData.nickName || userData.nickname || '用户',
+        nickname: userData.nickName || userData.nickname || '用户',
+        avatarUrl: userData.avatarUrl || '',
+        phone: userData.phone || '',
+        farmName: userData.farmName || userData.department || '',
+        department: userData.department || userData.farmName || '',
+        role: userData.role || 'employee'
+      }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || '查询用户信息失败'
+    }
   }
 }
 

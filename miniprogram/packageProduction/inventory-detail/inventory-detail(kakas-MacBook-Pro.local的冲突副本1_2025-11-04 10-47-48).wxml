@@ -13,6 +13,12 @@
   <view class="content">
     <!-- 库存列表 -->
     <view class="materials-section">
+      <view wx:if="{{filterCategory}}" class="filter-info">
+        <t-tag theme="primary" size="small">
+          {{filterCategory === 'feed' ? '饲料分类' : filterCategory === 'medicine' ? '药品分类' : filterCategory === 'equipment' ? '设备分类' : '全部分类'}}
+        </t-tag>
+      </view>
+      
       <!-- 搜索和筛选 -->
       <view class="search-bar">
         <view class="search-input-wrapper">
@@ -20,6 +26,7 @@
             placeholder="搜索物料名称" 
             value="{{searchKeyword}}"
             bind:change="onSearchChange"
+            prefixIcon="search"
             style="height: 28px; line-height: 28px; font-size: 13px; padding: 4px 10px;"
           />
         </view>
@@ -103,7 +110,9 @@
           </view>
           <view class="info-row">
             <text class="info-label">库存状态：</text>
-            <text class="info-value status-badge {{selectedMaterial.isLowStock ? 'low-stock' : 'normal-stock'}}">{{selectedMaterial.isLowStock ? '库存不足' : '库存正常'}}</text>
+            <text class="info-value status-text {{selectedMaterial.isLowStock ? 'low-stock' : 'normal-stock'}}">
+              {{selectedMaterial.isLowStock ? '库存不足' : '库存正常'}}
+            </text>
           </view>
           <view class="info-row">
             <text class="info-label">供应商：</text>

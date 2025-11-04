@@ -14,6 +14,7 @@ interface AppOption {
   setStatusBarHeight(): void;
   checkLoginStatus(): void;
   login(): Promise<void>;
+  onError(error: string): void;
 }
 
 // 登录白名单页面（不需要登录就能访问的页面）
@@ -78,7 +79,32 @@ App<AppOption>({
     }, 100)
   },
   
-
+  /**
+   * 全局错误处理
+   * 过滤掉已知的非致命错误，避免干扰用户
+   */
+  onError(error: string) {
+    // 已知的非致命数据库 watch 状态机错误
+    const knownWatchErrors = [
+      'current state (CLOSED) does not accept',
+      'current state (CONNECTED) does not accept',
+      'initWatchFail',
+      'connectionSuccess',
+      'does not accept'
+    ]
+    
+    // 检查是否为已知的 watch 状态错误
+    const isKnownWatchError = knownWatchErrors.some(keyword => error.includes(keyword))
+    
+    if (isKnownWatchError) {
+      // 静默处理，不输出错误日志
+      // 这些错误通常在页面快速切换或网络不稳定时出现，不影响功能
+      return
+    }
+    
+    // 其他未知错误，记录到控制台
+    console.error('App Error:', error)
+  },
 
   // 设置状态栏高度
   setStatusBarHeight() {

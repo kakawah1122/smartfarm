@@ -7,6 +7,9 @@
     fallbackUrl="/pages/health/health" 
   />
 
+  <!-- 占位区域 -->
+  <view style="height: var(--navbar-height, 132rpx);"></view>
+
   <!-- 加载状态 -->
   <view class="loading-container" wx:if="{{loading}}">
     <t-loading theme="circular" size="60rpx" text="加载中..." />
@@ -46,7 +49,7 @@
         <view class="info-row">
           <view class="info-group full-width">
             <text class="info-label">批次：</text>
-            <text class="info-value">{{item.batchId}}</text>
+            <text class="info-value">{{item.batchNumber || item.batchId}}</text>
           </view>
         </view>
 

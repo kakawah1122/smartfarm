@@ -18,9 +18,9 @@
           <text class="stat-value">{{healthStats.healthyRate}}</text>
           <text class="stat-label">健康率</text>
         </view>
-        <view class="stat-card stat-mortality clickable" bind:tap="navigateToDeathRecords">
+        <view class="stat-card stat-mortality">
           <text class="stat-value">{{healthStats.mortalityRate}}</text>
-          <text class="stat-label">死亡率 ›</text>
+          <text class="stat-label">死亡率</text>
         </view>
       </view>
     </view>
@@ -284,7 +284,7 @@
         <!-- 预防统计 -->
         <view class="prevention-stats">
           <view class="section-header">
-            <text class="section-title">📊 预防统计</text>
+            <text class="section-title">预防统计</text>
           </view>
           
           <!-- 统计卡片（四宫格） -->
@@ -517,22 +517,17 @@
     <view class="tab-content analysis-content" wx:if="{{activeTab === 'analysis'}}">
       <!-- 存活率分析 -->
       <view class="survival-analysis">
-        <text class="section-title">存活率分析</text>
-        <view class="analysis-card">
-          <view class="analysis-header">
-            <text class="analysis-value">{{analysisData.survivalAnalysis.rate}}%</text>
-            <text class="analysis-trend trend-{{analysisData.survivalAnalysis.trend}}">
-              {{analysisData.survivalAnalysis.trend === 'improving' ? '↗ 改善中' : '→ 稳定'}}
-            </text>
+        <view class="survival-cards-grid">
+          <!-- 存活率卡片 -->
+          <view class="stat-card stat-card-survival-rate">
+            <view class="stat-icon stat-icon-survival-rate">
+              <view class="css-icon-heart-pulse"></view>
           </view>
-          <view class="stage-breakdown">
-            <view 
-              class="stage-item"
-              wx:for="{{analysisData.survivalAnalysis.byStage}}"
-              wx:key="stage"
-            >
-              <text class="stage-name">{{item.stage}}</text>
-              <text class="stage-rate">{{item.rate}}%</text>
+            <view class="stat-content">
+              <text class="stat-label">存活率</text>
+            </view>
+            <view class="stat-value-wrapper">
+              <text class="stat-value">{{analysisData.survivalAnalysis.rate}}%</text>
             </view>
           </view>
         </view>
@@ -861,40 +856,64 @@
             <text class="info-label">任务名称：</text>
             <text class="info-value">{{selectedTask.title || '未命名任务'}}</text>
           </view>
+          <view class="divider-line"></view>
+
           <view class="info-row">
             <text class="info-label">任务类型：</text>
             <text class="info-value">{{selectedTask.typeName || '未分类'}}</text>
           </view>
-          <view class="info-row" wx:if="{{selectedTask.estimatedTime}}">
-            <text class="info-label">预计用时：</text>
-            <text class="info-value">{{selectedTask.estimatedTime}}分钟</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.duration && selectedTask.dayInSeries}}">
-            <text class="info-label">连续任务：</text>
-            <text class="info-value">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.dosage}}">
-            <text class="info-label">用量：</text>
-            <text class="info-value">{{selectedTask.dosage}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
-            <text class="info-label">所需物料：</text>
-            <text class="info-value materials-text">
-              <text wx:for="{{selectedTask.materials}}" wx:key="index">{{item}}<text wx:if="{{index < selectedTask.materials.length - 1}}">、</text></text>
-            </text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.batchNumber}}">
-            <text class="info-label">批次编号：</text>
-            <text class="info-value">{{selectedTask.batchNumber}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedTask.dayAge}}">
-            <text class="info-label">日龄：</text>
-            <text class="info-value">第{{selectedTask.dayAge}}日龄</text>
-          </view>
-          <view class="info-row info-row-description" wx:if="{{selectedTask.description}}">
-            <text class="info-label">任务描述：</text>
-            <text class="info-value note-text">{{selectedTask.description}}</text>
-          </view>
+          <view class="divider-line"></view>
+
+          <block wx:if="{{selectedTask.estimatedTime}}">
+            <view class="info-row">
+              <text class="info-label">预计用时：</text>
+              <text class="info-value">{{selectedTask.estimatedTime}}分钟</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+
+          <block wx:if="{{selectedTask.duration && selectedTask.dayInSeries}}">
+            <view class="info-row">
+              <text class="info-label">连续任务：</text>
+              <text class="info-value">第{{selectedTask.dayInSeries}}/{{selectedTask.duration}}天</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+
+          <block wx:if="{{selectedTask.materials && selectedTask.materials.length > 0}}">
+            <view class="info-row">
+              <text class="info-label">所需物料：</text>
+              <text class="info-value materials-text">
+                <text wx:for="{{selectedTask.materials}}" wx:key="index">{{item}}<text wx:if="{{index < selectedTask.materials.length - 1}}">、</text></text>
+              </text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+
+          <block wx:if="{{selectedTask.batchNumber}}">
+            <view class="info-row">
+              <text class="info-label">批次编号：</text>
+              <text class="info-value">{{selectedTask.batchNumber}}</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+
+          <block wx:if="{{selectedTask.dayAge}}">
+            <view class="info-row">
+              <text class="info-label">日龄：</text>
+              <text class="info-value">第{{selectedTask.dayAge}}日龄</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+
+          <block wx:if="{{selectedTask.description}}">
+            <view class="info-row info-row-description">
+              <text class="info-label">任务描述：</text>
+              <text class="info-value note-text">{{selectedTask.description}}</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+
           <view class="info-row">
             <text class="info-label">完成状态：</text>
             <view class="status-value">
@@ -903,13 +922,27 @@
               </t-tag>
             </view>
           </view>
+          <!-- ✅ 修复：只在有后续内容时显示分割线，且不在已完成时显示（已完成部分会自己处理） -->
+          <view class="divider-line" wx:if="{{(selectedTask.dosage || selectedTask.notes) && !selectedTask.completed}}"></view>
+
+          <block wx:if="{{selectedTask.dosage}}">
+            <view class="info-row info-row-dosage">
+              <text class="info-label">用量：</text>
+              <text class="info-value dosage-text">{{selectedTask.dosage}}</text>
+            </view>
+            <!-- ✅ 修复：只在有notes且任务未完成时显示，已完成任务的分割线由已完成部分统一处理 -->
+            <view class="divider-line" wx:if="{{selectedTask.notes && !selectedTask.completed}}"></view>
+          </block>
           
           <!-- 已完成任务的额外信息 -->
           <view wx:if="{{selectedTask.completed}}">
+            <!-- ✅ 修复：已完成任务部分开始前统一显示一条分割线 -->
+            <view class="divider-line"></view>
             <view class="info-row" wx:if="{{selectedTask.completedDate}}">
               <text class="info-label">完成时间：</text>
               <text class="info-value">{{selectedTask.completedDate}}</text>
             </view>
+            <view class="divider-line" wx:if="{{selectedTask.completedDate && selectedTask.completedBy}}"></view>
             <view class="info-row" wx:if="{{selectedTask.completedBy}}">
               <text class="info-label">完成人员：</text>
               <text class="info-value">{{selectedTask.completedBy}}</text>

@@ -16,6 +16,7 @@
     <view class="search-section">
       <t-search 
         placeholder="搜索品种或批次号"
+        left-icon=""
         bind:change="onSearch"
         bind:submit="onSearch"
         class="search-bar"

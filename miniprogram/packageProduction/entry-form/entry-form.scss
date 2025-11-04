@@ -178,27 +178,27 @@
 
 /* 文本域特殊样式 */
 .textarea-item {
+  display: flex;
   align-items: flex-start;
   min-height: 100rpx; /* 减少最小高度 */
-  padding-top: 24rpx; /* 减少内边距 */
-  padding-bottom: 24rpx; /* 减少内边距 */
+  padding: 24rpx; /* 统一内边距，与 form-item 保持一致 */
 }
 
 .item-textarea {
   flex: 1;
-  margin-left: 24rpx;
+  width: 100%;
 }
 
 .item-textarea ::deep .t-textarea__control {
   font-size: 30rpx;
   color: var(--td-text-color-primary, #000000);
-  text-align: right;
+  text-align: left; /* 备注框左对齐 */
   min-height: 80rpx;
 }
 
 .item-textarea ::deep .t-textarea__placeholder {
   color: var(--td-text-color-placeholder, #bbbbbb);
-  text-align: right;
+  text-align: left; /* 备注框左对齐 */
 }
 
 /* 表单操作按钮 - 现代化样式 */
@@ -358,66 +358,47 @@
   background-clip: padding-box !important;
 }
 
-/* 满屏备注框样式 */
-.fullwidth-textarea-container {
-  margin: 0 -24rpx; /* 负边距来抵消父容器的内边距 */
-  background: var(--td-bg-color-container, #ffffff);
-  border-radius: 0;
+/* ✅ 修复：备注框样式 - 与上方卡片框保持一致 */
+.item-textarea-input {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+}
+
+.item-textarea-input ::deep .t-textarea {
+  border: none !important;
+  background: transparent !important;
+}
+
+.item-textarea-input ::deep .t-textarea__control {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  text-align: left;
+  line-height: 1.6;
+  min-height: 120rpx;
+  background: transparent;
   border: none;
-  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  padding: 0;
+  width: 100%;
 }
 
-.fullwidth-textarea {
-  padding: 24rpx !important; /* 减少内边距 */
-  border: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+.item-textarea-input ::deep .t-textarea__placeholder {
+  color: var(--td-text-color-placeholder, #bbbbbb);
+  text-align: left;
 }
 
-.fullwidth-textarea ::deep .t-textarea {
-  border: none !important;
-  background: transparent !important;
-  border-radius: 0 !important;
+.item-textarea-input ::deep .t-textarea__indicator {
+  color: var(--td-text-color-placeholder, #bbbbbb);
+  font-size: 24rpx;
+  text-align: right;
+  margin-top: 16rpx;
 }
 
-.fullwidth-textarea ::deep .t-textarea__control {
-  font-size: 30rpx !important;
-  color: var(--td-text-color-primary, #000000) !important;
-  text-align: left !important;
-  line-height: 1.6 !important;
-  min-height: 120rpx !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-.fullwidth-textarea ::deep .t-textarea__placeholder {
-  color: var(--td-text-color-placeholder, #bbbbbb) !important;
-  text-align: left !important;
-}
-
-.fullwidth-textarea ::deep .t-textarea__indicator {
-  color: var(--td-text-color-placeholder, #bbbbbb) !important;
-  font-size: 24rpx !important;
-  text-align: right !important;
-  margin-top: 16rpx !important;
-}
-
-/* 响应式满屏备注框 */
+/* 响应式备注框 */
 @media screen and (max-width: 480px) {
-  .fullwidth-textarea-container {
-    margin: 0 -16rpx; /* 适应小屏幕的边距 */
-  }
-  
-  .fullwidth-textarea {
-    padding: 20rpx !important; /* 减少内边距 */
-  }
-  
-  .fullwidth-textarea ::deep .t-textarea__control {
-    font-size: 28rpx !important;
-    min-height: 80rpx !important; /* 减少最小高度 */
+  .item-textarea-input ::deep .t-textarea__control {
+    font-size: 28rpx;
+    min-height: 100rpx;
   }
 }
 

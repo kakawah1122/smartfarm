@@ -1360,6 +1360,67 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     margin-bottom: 24rpx;
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   }
+  
+  // 存活率卡片容器 - 全宽显示
+  .survival-cards-grid {
+    // 移除了标题栏，不需要上边距
+  }
+  
+  // 存活率卡片样式 - 左中右三栏布局
+  .stat-card-survival-rate {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 24rpx;
+    padding: 28rpx 24rpx;
+    border-radius: 20rpx;
+    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+    overflow: hidden;
+    box-shadow: 0 4rpx 20rpx rgba(79, 70, 229, 0.12);
+    
+    // 左：图标
+    .stat-icon {
+      flex-shrink: 0;
+      width: 88rpx;
+      height: 88rpx;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    // 中：文字标签
+    .stat-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .stat-label {
+      font-size: 40rpx;
+      color: #4F46E5;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+    
+    // 右：数值
+    .stat-value-wrapper {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    
+    .stat-value {
+      font-size: 56rpx;
+      font-weight: 700;
+      color: #6366F1;
+      line-height: 1;
+    }
+  }
+  
   .analysis-card {
     margin-top: 16rpx;
   }
@@ -1536,6 +1597,28 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     grid-template-columns: 1fr;
     gap: 12rpx;
   }
+  
+  // 存活率卡片在小屏幕的适配
+  .analysis-content {
+    .stat-card-survival-rate {
+      gap: 16rpx;
+      padding: 24rpx 20rpx;
+      
+      .stat-icon {
+        width: 72rpx;
+        height: 72rpx;
+      }
+      
+      .stat-label {
+        font-size: 36rpx;
+      }
+      
+      .stat-value {
+        font-size: 48rpx;
+      }
+    }
+  }
+  
   .overview-grid,
   .status-overview {
     flex-direction: column;
@@ -2139,16 +2222,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: $shadow-sm;
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4rpx;
-      background: #059669;
-      border-radius: 2rpx 0 0 2rpx;
-    }
     &:active {
       transform: scale(0.97);
       box-shadow: $shadow-sm;
@@ -2223,9 +2296,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-vaccination {
       background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
-      &::before {
-        background: #059669;
-      }
       .stat-icon {
         background: rgba(5, 150, 105, 0.15);
       }
@@ -2238,9 +2308,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-vaccine-count {
       background: linear-gradient(135deg, #E6F3FF 0%, #CCE5FF 100%);
-      &::before {
-        background: #0052D9;
-      }
       .stat-icon {
         background: rgba(0, 82, 217, 0.15);
       }
@@ -2253,9 +2320,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-prevention-cost {
       background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
-      &::before {
-        background: #0284C7;
-      }
       .stat-icon {
         background: rgba(2, 132, 199, 0.15);
       }
@@ -2269,9 +2333,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-coverage {
       background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
-      &::before {
-        background: #7C3AED;
-      }
       .stat-icon {
         background: rgba(124, 58, 237, 0.15);
       }
@@ -2679,12 +2740,8 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   }
 }
 /* ==================== 成本分析卡片样式 ==================== */
-.cost-analysis {
-  padding: $spacing-lg;
-  background: white;
-  margin: 0 $spacing-lg $spacing-base;
-  border-radius: $radius-md;
-  box-shadow: $shadow-base;
+.analysis-content .cost-analysis {
+  // 统一样式已在 .analysis-content 中定义，这里只定义子元素样式
   .section-header {
     margin-bottom: $spacing-base;
     .section-title {
@@ -2708,15 +2765,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: $shadow-sm;
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4rpx;
-      border-radius: 2rpx 0 0 2rpx;
-    }
     &:active {
       transform: scale(0.97);
       box-shadow: $shadow-sm;
@@ -2751,9 +2799,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-prevention-cost-analysis {
       background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
-      &::before {
-        background: #059669;
-      }
       .stat-icon {
         background: rgba(5, 150, 105, 0.15);
       }
@@ -2767,9 +2812,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-treatment-cost-analysis {
       background: linear-gradient(135deg, #E6F3FF 0%, #CCE5FF 100%);
-      &::before {
-        background: #0052D9;
-      }
       .stat-icon {
         background: rgba(0, 82, 217, 0.15);
       }
@@ -2783,9 +2825,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-total-cost {
       background: linear-gradient(135deg, #FFF7E6 0%, #FFE7BA 100%);
-      &::before {
-        background: #ED7B2F;
-      }
       .stat-icon {
         background: rgba(237, 123, 47, 0.15);
       }
@@ -2799,9 +2838,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
     &.stat-card-roi {
       background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
-      &::before {
-        background: #7C3AED;
-      }
       .stat-icon {
         background: rgba(124, 58, 237, 0.15);
       }
@@ -2816,6 +2852,60 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   }
 }
 /* ==================== 成本分析图标 ==================== */
+// 心跳图标（存活率）
+.css-icon-heart-pulse {
+  position: relative;
+  width: 40rpx;
+  height: 36rpx;
+  
+  // 心形
+  &::before {
+    content: '';
+    position: absolute;
+    top: 8rpx;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32rpx;
+    height: 28rpx;
+    background: #6366F1;
+    border-radius: 16rpx 16rpx 0 0;
+    transform-origin: center bottom;
+    clip-path: polygon(
+      50% 100%, 
+      0 40%, 
+      0 25%, 
+      0 15%, 
+      10% 5%, 
+      20% 0, 
+      30% 0, 
+      40% 5%, 
+      50% 15%, 
+      60% 5%, 
+      70% 0, 
+      80% 0, 
+      90% 5%, 
+      100% 15%, 
+      100% 25%, 
+      100% 40%
+    );
+  }
+  
+  // 心电图线条
+  &::after {
+    content: '';
+    position: absolute;
+    left: 8rpx;
+    top: 16rpx;
+    width: 24rpx;
+    height: 2rpx;
+    background: white;
+    box-shadow: 
+      4rpx -4rpx 0 white,
+      8rpx 6rpx 0 white,
+      12rpx -2rpx 0 white;
+  }
+}
+
 .css-icon-shield {
   position: relative;
   width: 32rpx;
@@ -3359,18 +3449,37 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 }
 .record-detail-content .info-card .card-content {
   padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
-.record-detail-content .info-row {
-  margin-bottom: 20rpx !important;
-  padding: 0 8rpx;
+.record-detail-content .info-row,
+.record-detail-content .info-row-description,
+.record-detail-content .info-row-notes {
+  padding: 12rpx 0;
   justify-content: space-between;
   flex-wrap: nowrap;
-  gap: 16rpx;
+  gap: 24rpx;
   display: flex !important;
   align-items: center !important;
+  margin: 0;
 }
-.record-detail-content .info-row:last-child {
-  margin-bottom: 0 !important;
+.record-detail-content .divider-line {
+  height: 2rpx;
+  min-height: 2rpx;
+  width: 100%;
+  border: none;
+  border-top: 2rpx dashed #999;
+  margin: 10rpx 0;
+  display: block;
+  flex-shrink: 0;
+}
+.record-detail-content .info-row-dosage {
+  align-items: flex-start !important;
+}
+.record-detail-content .info-row-dosage .info-label {
+  margin-top: 2rpx !important;
+  align-self: flex-start !important;
 }
 /* 疫苗接种信息卡片 */
 .record-detail-content .vaccine-info-card {
@@ -3456,6 +3565,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   overflow: visible;
   text-overflow: unset;
   line-height: 1.5;
+}
+.record-detail-content .dosage-text {
+  text-align: left !important;
+  word-break: break-all !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
 }
 /* 状态标签居右对齐优化 */
 .record-detail-content .status-value {

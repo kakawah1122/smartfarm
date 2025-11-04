@@ -16,6 +16,7 @@
     <view class="search-section">
       <t-search 
         placeholder="搜索物料名称或单据号"
+        left-icon=""
         bind:change="onSearch"
         bind:submit="onSearch"
         class="search-bar"
@@ -39,9 +40,6 @@
     <!-- 统计信息 -->
     <view class="stats-section">
       <text class="stats-text">共{{totalRecords}}条记录</text>
-      <text wx:if="{{activeFilter !== 'all'}}" class="filter-text">
-        ({{activeFilter === 'purchase' ? '采购入库' : '物料领用'}})
-      </text>
     </view>
 
     <!-- 记录列表 -->

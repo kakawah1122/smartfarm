@@ -47,13 +47,7 @@
       <t-empty 
         icon="info-circle" 
         description="暂无死亡记录"
-      >
-        <view slot="description" class="empty-tip">
-          <text class="tip-title">暂无死亡记录</text>
-          <text class="tip-subtitle">请在治疗记录中点击"记录死亡"按钮</text>
-          <text class="tip-subtitle">死亡记录将在此处显示</text>
-        </view>
-      </t-empty>
+      />
     </view>
 
     <!-- 记录列表 -->
