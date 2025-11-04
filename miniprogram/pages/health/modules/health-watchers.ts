@@ -6,7 +6,13 @@ export interface WatcherManager {
   treatmentRecordsWatcher: WechatMiniprogram.DBRealtimeListener | null
   refreshTimer: ReturnType<typeof setTimeout> | null
   initTimer: ReturnType<typeof setTimeout> | null
+  readyTimer: ReturnType<typeof setTimeout> | null
   isActive: boolean
+  watcherStates: {
+    healthRecordsWatcher: boolean
+    deathRecordsWatcher: boolean
+    treatmentRecordsWatcher: boolean
+  }
 }
 
 export interface StartWatcherOptions {
@@ -24,7 +30,13 @@ export function createWatcherManager(): WatcherManager {
     treatmentRecordsWatcher: null,
     refreshTimer: null,
     initTimer: null,
-    isActive: false
+    readyTimer: null,
+    isActive: false,
+    watcherStates: {
+      healthRecordsWatcher: false,
+      deathRecordsWatcher: false,
+      treatmentRecordsWatcher: false
+    }
   }
 }
 
@@ -61,6 +73,11 @@ export function startDataWatcher(
   // 标记为活跃状态
   manager.isActive = true
 
+  // 重置watcher状态为未就绪
+  manager.watcherStates.healthRecordsWatcher = false
+  manager.watcherStates.deathRecordsWatcher = false
+  manager.watcherStates.treatmentRecordsWatcher = false
+
   // ✅ 增加延迟时间到300ms，给页面更多时间稳定
   // 延迟初始化监听器，避免过于频繁的初始化
   manager.initTimer = setTimeout(() => {
@@ -81,6 +98,14 @@ export function startDataWatcher(
           .where(query)
           .watch({
             onChange: () => {
+              // ✅ 关键：onChange触发说明WebSocket已连接，标记为可安全关闭
+              // 只有在watcher真正连接并接收到数据时才标记为就绪
+              if (watcherKey === 'healthRecordsWatcher' || 
+                  watcherKey === 'deathRecordsWatcher' || 
+                  watcherKey === 'treatmentRecordsWatcher') {
+                manager.watcherStates[watcherKey] = true
+              }
+              
               // 每次onChange时都检查活跃状态
               if (manager.isActive) {
                 scheduleRefresh()
@@ -90,13 +115,27 @@ export function startDataWatcher(
               // ✅ 区分不同类型的错误
               const errorMsg = err?.message || err?.errMsg || String(err)
               
-              // 忽略已知的非致命错误
-              if (!(errorMsg.includes('CLOSED') || errorMsg.includes('closed'))) {
+              // 忽略已知的非致命状态机错误
+              const knownErrors = [
+                'CLOSED',
+                'closed',
+                'CONNECTED',
+                'initWatchFail',
+                'connectionSuccess',
+                'does not accept'
+              ]
+              
+              const isKnownError = knownErrors.some(keyword => errorMsg.includes(keyword))
+              
+              if (!isKnownError) {
                 console.warn(`${collectionName} watcher error:`, errorMsg)
               }
               
-              // 清除watcher引用
+              // 清除watcher引用和状态
               manager[watcherKey] = null
+              if (watcherKey === 'healthRecordsWatcher' || watcherKey === 'deathRecordsWatcher' || watcherKey === 'treatmentRecordsWatcher') {
+                manager.watcherStates[watcherKey] = false
+              }
             }
           })
         
@@ -105,8 +144,19 @@ export function startDataWatcher(
       } catch (error: any) {
         const errorMsg = error?.message || error?.errMsg || String(error)
         
-        // ✅ 静默处理已知的状态错误
-        if (!(errorMsg.includes('CLOSED') || errorMsg.includes('closed') || errorMsg.includes('initWatchFail'))) {
+        // ✅ 静默处理已知的状态机错误
+        const knownErrors = [
+          'CLOSED',
+          'closed',
+          'CONNECTED',
+          'initWatchFail',
+          'connectionSuccess',
+          'does not accept'
+        ]
+        
+        const isKnownError = knownErrors.some(keyword => errorMsg.includes(keyword))
+        
+        if (!isKnownError) {
           console.warn(`Failed to init ${collectionName} watcher:`, errorMsg)
         }
         
@@ -121,7 +171,11 @@ export function startDataWatcher(
     if (includeTreatmentWatcher) {
       safeInitWatcher('health_treatment_records', 'treatmentRecordsWatcher')
     }
-  }, 300) // ✅ 增加到300ms，更稳定
+
+    // ✅ 不再使用固定延迟来标记就绪状态
+    // 改为在onChange回调中标记，确保只有真正连接的watcher才会被标记为可关闭
+    // 这样可以彻底避免在WebSocket未连接时调用close()导致的错误
+  }, 300) // ✅ 延迟初始化，给页面稳定时间
 
   return manager
 }
@@ -143,64 +197,76 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
     watchers.initTimer = null
   }
 
+  // ✅ 清除就绪状态定时器（关键：防止在停止后还标记为就绪）
+  if (watchers.readyTimer) {
+    clearTimeout(watchers.readyTimer)
+    watchers.readyTimer = null
+  }
+
   // 清除刷新定时器
   if (watchers.refreshTimer) {
     clearTimeout(watchers.refreshTimer)
     watchers.refreshTimer = null
   }
 
-  // 关闭健康记录监听器
-  if (watchers.healthRecordsWatcher) {
+  // ✅ 定义所有已知的WebSocket相关非致命错误模式
+  const isNonFatalError = (errorMsg: string): boolean => {
+    const knownErrorPatterns = [
+      'websocket not connected',
+      'not connected',
+      'ws readyState invalid',
+      'WebSocket is closed',
+      'connection is established',
+      'CLOSED',
+      'closed',
+      'CONNECTED',
+      'connectionSuccess',
+      'does not accept',
+      'initWatchFail'
+    ]
+    return knownErrorPatterns.some(pattern => errorMsg.includes(pattern))
+  }
+
+  // ✅ 安全关闭watcher的辅助函数
+  const safeCloseWatcher = (
+    watcher: WechatMiniprogram.DBRealtimeListener | null,
+    watcherName: 'healthRecordsWatcher' | 'deathRecordsWatcher' | 'treatmentRecordsWatcher'
+  ): void => {
+    if (!watcher) {
+      return
+    }
+
+    // ✅ 关键：只对已就绪的watcher调用close()，未就绪的直接置空
+    if (!watchers.watcherStates[watcherName]) {
+      // watcher还未就绪（WebSocket可能还在连接中），直接置空引用
+      // 不调用close()，避免"ws readyState invalid"等错误
+      watchers[watcherName] = null
+      watchers.watcherStates[watcherName] = false
+      return
+    }
+
+    // watcher已就绪，可以安全关闭
     try {
-      watchers.healthRecordsWatcher.close()
+      watcher.close()
     } catch (error: any) {
-      // ✅ 静默处理已知的非致命错误（WebSocket 已断开等）
+      // ✅ 增强的错误过滤：完全静默已知的非致命错误
       const errorMsg = error?.message || error?.errMsg || String(error || '')
-      // 只记录真正的异常错误，忽略已知的连接状态错误
-      if (!errorMsg.includes('websocket not connected') && 
-          !errorMsg.includes('not connected') &&
-          !errorMsg.includes('CLOSED')) {
-        console.warn('Error closing healthRecordsWatcher:', errorMsg)
+      
+      if (!isNonFatalError(errorMsg)) {
+        // 只记录未知的、可能真正有问题的错误
+        console.warn(`Error closing ${watcherName}:`, errorMsg)
       }
+      // 对于已知的非致命错误，完全静默处理
     } finally {
-      watchers.healthRecordsWatcher = null
+      watchers[watcherName] = null
+      watchers.watcherStates[watcherName] = false
     }
   }
 
-  // 关闭死亡记录监听器
-  if (watchers.deathRecordsWatcher) {
-    try {
-      watchers.deathRecordsWatcher.close()
-    } catch (error: any) {
-      // ✅ 静默处理已知的非致命错误（WebSocket 已断开等）
-      const errorMsg = error?.message || error?.errMsg || String(error || '')
-      // 只记录真正的异常错误，忽略已知的连接状态错误
-      if (!errorMsg.includes('websocket not connected') && 
-          !errorMsg.includes('not connected') &&
-          !errorMsg.includes('CLOSED')) {
-        console.warn('Error closing deathRecordsWatcher:', errorMsg)
-      }
-    } finally {
-      watchers.deathRecordsWatcher = null
-    }
-  }
-
-  // 关闭治疗记录监听器
-  if (watchers.treatmentRecordsWatcher) {
-    try {
-      watchers.treatmentRecordsWatcher.close()
-    } catch (error: any) {
-      // ✅ 静默处理已知的非致命错误（WebSocket 已断开等）
-      const errorMsg = error?.message || error?.errMsg || String(error || '')
-      // 只记录真正的异常错误，忽略已知的连接状态错误
-      if (!errorMsg.includes('websocket not connected') && 
-          !errorMsg.includes('not connected') &&
-          !errorMsg.includes('CLOSED')) {
-        console.warn('Error closing treatmentRecordsWatcher:', errorMsg)
-      }
-    } finally {
-      watchers.treatmentRecordsWatcher = null
-    }
-  }
+  // 使用安全关闭函数处理所有watcher
+  safeCloseWatcher(watchers.healthRecordsWatcher, 'healthRecordsWatcher')
+  safeCloseWatcher(watchers.deathRecordsWatcher, 'deathRecordsWatcher')
+  safeCloseWatcher(watchers.treatmentRecordsWatcher, 'treatmentRecordsWatcher')
 }
+
 
