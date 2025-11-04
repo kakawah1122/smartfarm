@@ -335,8 +335,7 @@ Page<PageData, any>({
         treatmentCost: 0,
         totalCost: 0,
         roi: 0
-      },
-      performanceMetrics: []
+      }
     },
     activeAlerts: [],
     
@@ -2566,19 +2565,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 分析操作事件
-   */
-  onAnalysisAction(e: any) {
-    const { action } = e.currentTarget.dataset
-    // 已移除调试日志
-    switch (action) {
-      case 'export_report':
-        this.exportHealthReport()
-        break
-    }
-  },
-
-  /**
    * 关闭详情弹窗
    */
   onCloseDetail() {
@@ -2609,21 +2595,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       showDetailPopup: true,
       selectedRecord: data
     })
-  },
-
-  /**
-   * 导出健康报告
-   */
-  exportHealthReport() {
-    wx.showLoading({ title: '生成报告中...' })
-    
-    setTimeout(() => {
-      wx.hideLoading()
-      wx.showToast({
-        title: '报告已生成',
-        icon: 'success'
-      })
-    }, 2000)
   },
 
   /**

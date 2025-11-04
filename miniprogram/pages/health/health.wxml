@@ -584,42 +584,6 @@
           </view>
         </view>
       </view>
-
-      <!-- 性能指标 -->
-      <view class="performance-metrics">
-        <text class="section-title">性能指标</text>
-        <view class="metrics-list">
-          <view 
-            class="metric-item"
-            wx:for="{{analysisData.performanceMetrics}}"
-            wx:key="name"
-          >
-            <view class="metric-info">
-              <text class="metric-name">{{item.name}}</text>
-              <text class="metric-progress">{{item.value}}% / 目标{{item.target}}%</text>
-            </view>
-            <view class="metric-indicator">
-              <view class="progress-bar">
-                <view class="progress-fill" style="width: {{item.value / item.target * 100}}%"></view>
-              </view>
-              <text class="metric-trend trend-{{item.trend}}">
-                {{item.trend === 'up' ? '↗' : item.trend === 'down' ? '↘' : '→'}}
-              </text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 分析操作 -->
-      <view class="analysis-actions">
-        <t-button 
-          theme="primary" 
-          size="large" 
-          block
-          bind:tap="onAnalysisAction"
-          data-action="export_report"
-        >导出健康报告</t-button>
-      </view>
     </view>
 
     <!-- 底部安全区域 -->
