@@ -725,6 +725,38 @@ Page<PageData, any>({
   async loadAllBatchesData() {
     try {
       const healthData = await this._fetchAllBatchesHealthData()
+      
+      // ✅ 获取预防统计数据
+      const preventionResult = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'getPreventionDashboard',
+          batchId: 'all'
+        }
+      })
+      
+      const preventionResponse = preventionResult.result as any
+      let preventionStats = {
+        totalPreventions: 0,
+        vaccineCount: 0,
+        vaccineCoverage: 0,
+        medicationCount: 0,
+        vaccineStats: {},
+        disinfectionCount: 0,
+        totalCost: 0
+      }
+      
+      if (preventionResponse?.success && preventionResponse.data?.stats) {
+        preventionStats = {
+          totalPreventions: 0,
+          vaccineCount: preventionResponse.data.stats.vaccineCount || 0,
+          vaccineCoverage: preventionResponse.data.stats.vaccineCoverage || 0,
+          medicationCount: preventionResponse.data.stats.medicationCount || 0,
+          vaccineStats: {},
+          disinfectionCount: 0,
+          totalCost: preventionResponse.data.stats.preventionCost || 0
+        }
+      }
 
       const batchesWithPrevention = healthData.batches.map((batch: any) => ({
         ...batch,
@@ -739,15 +771,6 @@ Page<PageData, any>({
         vaccinationRate: '0',
         recentRecords: []
       }))
-
-      const preventionStats = {
-        totalPreventions: 0,
-        vaccineCount: 0,
-        vaccineCoverage: 0,
-        vaccineStats: {},
-        disinfectionCount: 0,
-        totalCost: 0
-      }
 
       const vaccinationRate = healthData.totalAnimals > 0
         ? ((preventionStats.vaccineCoverage / healthData.totalAnimals) * 100).toFixed(1)
@@ -767,6 +790,9 @@ Page<PageData, any>({
         preventionStats,
         'preventionData.stats': {
           vaccinationRate,
+          vaccineCount: preventionStats.vaccineCount,
+          medicationCount: preventionStats.medicationCount,
+          vaccineCoverage: preventionStats.vaccineCoverage,
           preventionCost: preventionStats.totalCost
         },
         'preventionData.recentRecords': [],
@@ -918,7 +944,8 @@ Page<PageData, any>({
         vaccineCoverage: 0,
         vaccineStats: {},
         disinfectionCount: 0,
-        totalCost: 0
+        totalCost: 0,
+        medicationCount: 0  // 新增：用药类型的记录数量
       }
       
       // 计算疫苗接种率
@@ -975,7 +1002,10 @@ Page<PageData, any>({
         recentPreventionRecords: preventionRecords.slice(0, 10),
         'preventionData.stats': {
           vaccinationRate: vaccinationRate.toFixed(1),
-          preventionCost: preventionStats.totalCost
+          preventionCost: preventionStats.totalCost,
+          vaccineCount: preventionStats.vaccineCount || 0,
+          vaccineCoverage: preventionStats.vaccineCoverage || 0,
+          medicationCount: preventionStats.medicationCount || 0
         },
         'preventionData.recentRecords': preventionRecords.slice(0, 10),
         
@@ -1098,7 +1128,8 @@ Page<PageData, any>({
             vaccinationRate: 0,
             vaccineCount: 0,
             preventionCost: 0,
-            vaccineCoverage: 0
+            vaccineCoverage: 0,
+            medicationCount: 0
           },
           'preventionData.recentRecords': dashboardData.recentRecords || [],
           'preventionData.taskCompletion': dashboardData.taskCompletion || {
@@ -1111,7 +1142,8 @@ Page<PageData, any>({
           preventionStats: {
             vaccineCount: dashboardData.stats?.vaccineCount || 0,
             vaccineCoverage: dashboardData.stats?.vaccineCoverage || 0,
-            totalCost: dashboardData.stats?.preventionCost || 0
+            totalCost: dashboardData.stats?.preventionCost || 0,
+            medicationCount: dashboardData.stats?.medicationCount || 0
           }
         })
       
@@ -1212,6 +1244,7 @@ Page<PageData, any>({
       
       if (!batchMap[groupKey]) {
         batchMap[groupKey] = {
+          id: groupKey, // 添加唯一ID
           batchId: task.batchId || batchKey,
           batchNumber: task.batchNumber || batchKey,
           dayAge: taskDayAge,
@@ -1859,6 +1892,7 @@ Page<PageData, any>({
             )
             
             return {
+              id: `${batch._id}_${dayAge}`, // 添加唯一ID
               batchId: batch._id,
               batchNumber: batch.batchNumber || batch._id,
               dayAge: dayAge,
@@ -1967,6 +2001,7 @@ Page<PageData, any>({
 
         // 转换为批次分组格式
         const upcomingTasksByBatch = upcomingTasksArray.map(group => ({
+          id: `${this.data.currentBatchId}_${group.dayAge}`, // 添加唯一ID
           batchId: this.data.currentBatchId,
           batchNumber: currentBatch.batchNumber || this.data.currentBatchId,
           dayAge: group.dayAge,
@@ -2065,6 +2100,7 @@ Page<PageData, any>({
           
           if (!batchGroup) {
             batchGroup = {
+              id: `${batchId}_${taskDayAge}`, // 添加唯一ID
               batchId: batchId,
               batchNumber: task.batchNumber || batchId,
               dayAge: taskDayAge,
@@ -2777,6 +2813,25 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
+   * 点击防疫用药卡片，跳转到用药记录列表页面
+   */
+  onMedicationCountTap() {
+    // ✅ 防重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 500) return
+    this.lastClickTime = now
+    
+    wx.navigateTo({
+      url: '/packageHealth/medication-records-list/medication-records-list',
+      events: {
+        medicationRecordsUpdated: () => {
+          this.backgroundRefreshData()
+        }
+      }
+    })
+  },
+
+  /**
    * 获取任务类型名称（从breeding-todo迁移）
    */
   getTypeName(type: string): string {
@@ -3183,28 +3238,29 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       return
     }
 
-    // 构建疫苗记录数据
-    const vaccineRecord = {
-      vaccine: {
+    // 构建预防数据（符合云函数期望的格式）
+    const now = new Date()
+    const preventionData = {
+      preventionType: 'vaccine',
+      preventionDate: now.toISOString().split('T')[0], // 格式: YYYY-MM-DD
+      vaccineInfo: {
         name: vaccineFormData.vaccineName,
         manufacturer: vaccineFormData.manufacturer,
         batchNumber: vaccineFormData.batchNumber,
-        dosage: vaccineFormData.dosage
-      },
-      veterinarian: {
-        name: vaccineFormData.veterinarianName,
-        contact: vaccineFormData.veterinarianContact
-      },
-      vaccination: {
+        dosage: vaccineFormData.dosage,
         route: vaccineRouteOptions[vaccineFormData.routeIndex],
         count: vaccineFormData.vaccinationCount,
         location: vaccineFormData.location
       },
-      cost: {
-        vaccine: parseFloat(vaccineFormData.vaccineCost || '0'),
-        veterinary: parseFloat(vaccineFormData.veterinaryCost || '0'),
-        other: parseFloat(vaccineFormData.otherCost || '0'),
-        total: vaccineFormData.totalCost
+      veterinarianInfo: {
+        name: vaccineFormData.veterinarianName,
+        contact: vaccineFormData.veterinarianContact
+      },
+      costInfo: {
+        vaccineCost: parseFloat(vaccineFormData.vaccineCost || '0'),
+        veterinaryCost: parseFloat(vaccineFormData.veterinaryCost || '0'),
+        otherCost: parseFloat(vaccineFormData.otherCost || '0'),
+        totalCost: vaccineFormData.totalCost
       },
       notes: vaccineFormData.notes
     }
@@ -3213,12 +3269,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       wx.showLoading({ title: '提交中...' })
 
       const result = await wx.cloud.callFunction({
-        name: 'health-prevention',
+        name: 'health-management',
         data: {
-          action: 'completeVaccineTask',
+          action: 'completePreventionTask',
           taskId: selectedTask._id,
           batchId: batchId,
-          vaccineRecord
+          preventionData
         }
       })
 
@@ -3323,6 +3379,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
             name: material.name,
             unit: material.unit || '件',
             stock: material.currentStock || 0,
+            unitPrice: material.unitPrice || 0,
             category: material.category,
             description: material.description || ''
           }))
@@ -3561,6 +3618,40 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       })
 
       if (result.result && result.result.success) {
+        // 计算成本：数量 × 单价
+        const unitPrice = this.data.selectedMedicine?.unitPrice || 0
+        const quantity = Number(medicationRecord.quantity) || 0
+        const totalCost = unitPrice * quantity
+        
+        // ✅ 创建健康预防记录
+        await wx.cloud.callFunction({
+          name: 'health-management',
+          data: {
+            action: 'complete_prevention_task',
+            taskId: selectedTask._id,
+            batchId: batchId,
+            preventionData: {
+              preventionType: 'medication',
+              preventionDate: medicationRecord.useDate,
+              medicationInfo: {
+                name: medicationRecord.materialName,
+                dosage: medicationRecord.dosage || '',
+                method: '口服/拌料/饮水',
+                duration: 1,
+                animalCount: medicationFormData.animalCount
+              },
+              costInfo: {
+                totalCost: totalCost,
+                unitPrice: unitPrice,
+                quantity: quantity,
+                unit: medicationRecord.unit
+              },
+              notes: medicationRecord.notes,
+              effectiveness: 'pending'
+            }
+          }
+        })
+        
         await this.completeMedicationTask(selectedTask._id, batchId)
         
         wx.hideLoading()

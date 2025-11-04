@@ -95,7 +95,7 @@
       <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'today'}}">
         <!-- 按批次分组的任务列表 -->
         <view wx:if="{{todayTasksByBatch.length > 0}}" class="batch-task-groups">
-          <view wx:for="{{todayTasksByBatch}}" wx:key="batchId" class="batch-group">
+          <view wx:for="{{todayTasksByBatch}}" wx:key="id" class="batch-group">
             <!-- 批次组头部 -->
             <view class="batch-group-header">
               <view class="batch-group-info">
@@ -157,7 +157,7 @@
       <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'upcoming'}}">
         <!-- 按批次分组的即将到来任务列表 -->
         <view wx:if="{{upcomingTasksByBatch.length > 0}}" class="batch-task-groups">
-          <view wx:for="{{upcomingTasksByBatch}}" wx:key="batchId" class="batch-group">
+          <view wx:for="{{upcomingTasksByBatch}}" wx:key="id" class="batch-group">
             <!-- 批次组头部 -->
             <view class="batch-group-header">
               <view class="batch-group-info">
@@ -222,7 +222,7 @@
       <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'history'}}">
         <!-- 按批次分组的已完成任务列表 -->
         <view wx:if="{{historyTasksByBatch.length > 0}}" class="batch-task-groups">
-          <view wx:for="{{historyTasksByBatch}}" wx:key="batchId" class="batch-group">
+          <view wx:for="{{historyTasksByBatch}}" wx:key="id" class="batch-group">
             <!-- 批次组头部 -->
             <view class="batch-group-header">
               <view class="batch-group-info">
@@ -290,12 +290,12 @@
           <!-- 统计卡片（四宫格） -->
           <view class="stats-grid stats-grid-four-prevention">
             <!-- 防疫用药 -->
-            <view class="stat-card stat-card-vaccination">
+            <view class="stat-card stat-card-vaccination clickable" bind:tap="onMedicationCountTap">
               <view class="stat-icon stat-icon-vaccination">
-                <view class="css-icon-percent"></view>
+                <view class="css-icon-check-list"></view>
               </view>
               <view class="stat-content">
-                <text class="stat-value">{{preventionData.stats.vaccinationRate}}%</text>
+                <text class="stat-value">{{preventionData.stats.medicationCount || 0}}</text>
                 <text class="stat-label">防疫用药</text>
               </view>
             </view>
