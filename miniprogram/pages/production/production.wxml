@@ -51,7 +51,7 @@
 
         <!-- 快速操作 -->
         <view class="quick-action">
-          <t-button theme="primary" size="medium" block icon="add" bind:tap="addEntry" class="action-button primary-button">
+          <t-button theme="primary" size="medium" block bind:tap="addEntry" class="action-button primary-button">
             新增入栏记录
           </t-button>
         </view>
@@ -164,25 +164,26 @@
               <!-- 拍照区域 -->
               <view class="camera-section">
                 <view wx:if="{{!aiCount.imageUrl}}" class="camera-placeholder" bind:tap="takePhoto">
-                  <t-icon name="camera" size="80rpx" color="#0052D9" />
-                  <text class="placeholder-text">点击拍照</text>
+                  <text class="placeholder-text">点击拍照或选择照片</text>
                   <text class="placeholder-desc">请对准待出栏鹅群拍摄清晰照片</text>
                 </view>
                 
                 <view wx:else class="photo-preview">
-                  <image src="{{aiCount.imageUrl}}" mode="aspectFit" class="preview-image" />
-                  <view class="photo-actions">
-                    <t-button size="small" theme="light" bind:tap="retakePhoto" class="light-button">重新拍照</t-button>
-                    <t-button size="small" theme="primary" bind:tap="analyzeImage" loading="{{aiCount.loading}}" disabled="{{aiCount.loading}}" class="primary-button ai-button">
-                      {{aiCount.loading ? 'AI分析中...' : '开始识别'}}
-                    </t-button>
-                  </view>
+                  <image src="{{aiCount.imageUrl}}" mode="aspectFit" class="preview-image" bind:tap="retakePhoto" />
+                  <view class="photo-close-btn" catchtap="deletePhoto"></view>
                 </view>
+              </view>
+              
+              <!-- 识别按钮区域 -->
+              <view wx:if="{{aiCount.imageUrl && !aiCount.result}}" class="analyze-button-section">
+                <t-button size="large" theme="primary" bind:tap="analyzeImage" loading="{{aiCount.loading}}" disabled="{{aiCount.loading}}" class="analyze-button" block>
+                  {{aiCount.loading ? 'AI分析中...' : '开始识别'}}
+                </t-button>
               </view>
               
               <!-- 拍摄建议 -->
               <view class="shooting-tips">
-                <text class="tips-title">📸 出栏盘点建议</text>
+                <text class="tips-title">出栏盘点建议</text>
                 <view class="tips-list">
                   <text class="tip-item">• 选择光线充足的环境</text>
                   <text class="tip-item">• 尽量包含待出栏的完整鹅群</text>
@@ -193,29 +194,49 @@
               </view>
             </view>
             
-            <!-- 识别结果 -->
+            <!-- 识别结果（支持单次和累加模式） -->
             <view wx:if="{{aiCount.result}}" class="count-result">
               <view class="result-header">
                 <t-icon name="check-circle" size="32rpx" color="#52c41a" />
-                <text class="result-title">出栏盘点完成</text>
+                <text class="result-title">{{aiCount.rounds.length === 1 ? '识别完成' : '累计盘点'}}</text>
                 <text class="confidence-badge">置信度 {{aiCount.result.confidence}}%</text>
               </view>
               
               <view class="result-content">
-                <!-- 主要结果 -->
-                <view class="main-result">
-                  <view class="count-display">
-                    <text class="count-number">{{aiCount.result.totalCount}}</text>
-                    <text class="count-unit">只</text>
+                <!-- 单次识别结果 -->
+                <view wx:if="{{aiCount.rounds.length === 1}}" class="single-result">
+                  <view class="main-result">
+                    <view class="count-display">
+                      <text class="count-number">{{aiCount.result.totalCount}}</text>
+                      <text class="count-unit">只</text>
+                    </view>
+                    <text class="count-label">可出栏数量</text>
                   </view>
-                  <text class="count-label">可出栏数量</text>
                 </view>
                 
-                <!-- 详细信息 -->
-                <view wx:if="{{aiCount.result.regions && aiCount.result.regions.length > 0}}" class="result-details">
-                  <view class="detail-item">
-                    <text class="detail-label">检测区域：</text>
-                    <text class="detail-value">{{aiCount.result.regions.length}} 个</text>
+                <!-- 累加模式结果 -->
+                <view wx:else class="cumulative-result">
+                  <view class="current-count">
+                    <text class="label">本次识别：</text>
+                    <text class="value">{{aiCount.result.totalCount}}只</text>
+                    <text class="confidence-text">（置信度{{aiCount.result.confidence}}%）</text>
+                  </view>
+                  <view class="total-count highlight">
+                    <t-icon name="chart-bar" size="32rpx" color="#0052D9" />
+                    <text class="label">累计总数：</text>
+                    <text class="value">{{aiCount.cumulativeTotal}}只</text>
+                  </view>
+                  
+                  <!-- 历史记录 -->
+                  <view class="rounds-history">
+                    <text class="history-title">已识别记录</text>
+                    <view wx:for="{{aiCount.rounds}}" wx:key="roundId" class="round-item">
+                      <view class="round-info">
+                        <text class="round-label">第{{item.roundId}}次：</text>
+                        <text class="round-count">{{item.count}}只</text>
+                      </view>
+                      <text class="round-time">{{item.timestamp}}</text>
+                    </view>
                   </view>
                 </view>
                 
@@ -223,37 +244,51 @@
                 <view wx:if="{{aiCount.result.abnormalDetection && aiCount.result.abnormalDetection.suspiciousAnimals > 0}}" class="abnormal-alert">
                   <view class="alert-content">
                     <t-icon name="error-circle" size="24rpx" color="#ff4d4f" />
-                    <text class="alert-text">发现 {{aiCount.result.abnormalDetection.suspiciousAnimals}} 只疑似不宜出栏个体</text>
+                    <text class="alert-text">发现 {{aiCount.result.abnormalDetection.suspiciousAnimals}} 只疑似异常个体</text>
                   </view>
                   <view wx:if="{{aiCount.result.abnormalDetection.healthConcerns.length > 0}}" class="health-concerns">
-                    <text wx:for="{{aiCount.result.abnormalDetection.healthConcerns}}" wx:key="index" class="concern-item">
-                      • {{item}}
+                    <text wx:for="{{aiCount.result.abnormalDetection.healthConcerns}}" wx:for-item="concern" wx:key="index" class="concern-item">
+                      • {{concern}}
                     </text>
                   </view>
                 </view>
                 
                 <!-- 补充建议 -->
                 <view wx:if="{{aiCount.result.suggestions && aiCount.result.suggestions.length > 0}}" class="suggestions">
-                  <text class="suggestions-title">💡 出栏建议</text>
-                  <view wx:for="{{aiCount.result.suggestions}}" wx:key="index" class="suggestion-item">
-                    • {{item}}
+                  <text class="suggestions-title">💡 建议</text>
+                  <view wx:for="{{aiCount.result.suggestions}}" wx:for-item="suggestion" wx:key="index" class="suggestion-item">
+                    • {{suggestion}}
                   </view>
                 </view>
               </view>
               
-              <!-- 操作按钮 -->
+              <!-- 操作按钮（统一简化） -->
               <view class="result-actions">
-                <t-button theme="primary" size="medium" bind:tap="createExitFromAI" class="action-btn primary-action-btn primary-button">
-                  直接创建出栏记录
-                </t-button>
-                <view class="secondary-actions">
-                  <t-button theme="light" variant="outline" size="small" bind:tap="saveCountRecord" class="action-btn secondary-action-btn light-button">
-                    保存盘点记录
-                  </t-button>
-                  <t-button theme="light" variant="outline" size="small" bind:tap="restartCount" class="action-btn secondary-action-btn light-button">
-                    重新盘点
-                  </t-button>
-                </view>
+                <t-row gutter="16">
+                  <t-col span="12">
+                    <t-button 
+                      theme="primary" 
+                      variant="outline" 
+                      size="medium" 
+                      block
+                      bind:tap="continueRecognition"
+                      class="continue-btn primary-button"
+                    >
+                      继续识别
+                    </t-button>
+                  </t-col>
+                  <t-col span="12">
+                    <t-button 
+                      theme="success" 
+                      size="medium" 
+                      block
+                      bind:tap="finishCounting"
+                      class="finish-btn"
+                    >
+                      结束盘点({{aiCount.cumulativeTotal || aiCount.result.totalCount}}只)
+                    </t-button>
+                  </t-col>
+                </t-row>
               </view>
             </view>
           </view>
