@@ -47,5 +47,6 @@
         </t-button>
       </view>
     </view>
+    <view class="tabbar-safe-area"></view>
   </view>
 </t-popup>
