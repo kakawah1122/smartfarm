@@ -138,7 +138,6 @@
       <!-- 空状态 -->
       <view wx:if="{{!loading && isEmpty}}" class="empty-state">
         <t-empty 
-          icon="file" 
           description="{{activeFilter === 'all' ? '暂无物料记录' : (activeFilter === 'purchase' ? '暂无采购记录' : '暂无领用记录')}}"
         >
           <t-button theme="primary" size="small" bind:tap="goBack" class="primary-button">
@@ -168,30 +167,48 @@
             <text class="info-label">物料：</text>
             <text class="info-value">{{selectedRecord.name}}</text>
           </view>
+          <view class="divider-line"></view>
+          
           <view class="info-row">
             <text class="info-label">分类：</text>
             <text class="info-value">{{selectedRecord.category}}</text>
           </view>
+          <view class="divider-line"></view>
+          
           <view class="info-row">
             <text class="info-label">数量：</text>
             <text class="info-value">{{selectedRecord.displayQuantity}}</text>
           </view>
-          <view class="info-row" wx:if="{{selectedRecord.supplier}}">
-            <text class="info-label">供应商：</text>
-            <text class="info-value">{{selectedRecord.supplier}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedRecord.targetLocation}}">
-            <text class="info-label">用途：</text>
-            <text class="info-value">{{selectedRecord.targetLocation}}</text>
-          </view>
+          <view class="divider-line"></view>
+          
+          <block wx:if="{{selectedRecord.supplier}}">
+            <view class="info-row">
+              <text class="info-label">供应商：</text>
+              <text class="info-value">{{selectedRecord.supplier}}</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
+          <block wx:if="{{selectedRecord.targetLocation}}">
+            <view class="info-row">
+              <text class="info-label">用途：</text>
+              <text class="info-value">{{selectedRecord.targetLocation}}</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
           <view class="info-row">
             <text class="info-label">操作员：</text>
             <text class="info-value">{{selectedRecord.operator}}</text>
           </view>
+          <view class="divider-line"></view>
+          
           <view class="info-row">
             <text class="info-label">时间：</text>
             <text class="info-value">{{selectedRecord.date}}</text>
           </view>
+          <view class="divider-line"></view>
+          
           <view class="info-row">
             <text class="info-label">状态：</text>
             <view class="status-value">
@@ -200,10 +217,14 @@
               </t-tag>
             </view>
           </view>
-          <view class="info-row" wx:if="{{selectedRecord.notes}}">
-            <text class="info-label">备注：</text>
-            <text class="info-value note-text">{{selectedRecord.notes}}</text>
-          </view>
+          
+          <block wx:if="{{selectedRecord.notes}}">
+            <view class="divider-line"></view>
+            <view class="info-row">
+              <text class="info-label">备注：</text>
+              <text class="info-value note-text">{{selectedRecord.notes}}</text>
+            </view>
+          </block>
         </view>
       </view>
     </view>

@@ -24,7 +24,6 @@
   
   <!-- 无数据 -->
   <view wx:elif="{{!hasData}}" class="empty-container">
-    <t-icon name="info-circle" size="80rpx" color="#ccc" />
     <text class="empty-text">该批次暂无投喂记录</text>
     <t-button theme="primary" size="medium" bindtap="addFeedRecord">
       添加投喂记录

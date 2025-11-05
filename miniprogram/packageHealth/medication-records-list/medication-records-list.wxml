@@ -37,7 +37,7 @@
 
     <!-- 空状态 -->
     <view class="empty-container" wx:if="{{recordsByBatch.length === 0}}">
-      <t-empty icon="info-circle">
+      <t-empty>
         <view slot="description" class="empty-tip">
           <text class="tip-title">暂无用药记录</text>
           <text class="tip-subtitle">完成用药任务后，记录将在此处显示</text>

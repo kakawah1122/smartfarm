@@ -27,15 +27,31 @@ function generateMaterialCode(category) {
   return `${prefix}${year}${random}`
 }
 
-// 生成单据号
-function generateRecordNumber(type) {
+// 生成单据号（根据物料分类）
+function generateRecordNumber(type, category) {
   const now = new Date()
-  const year = now.getFullYear().toString().slice(-2)
   const month = (now.getMonth() + 1).toString().padStart(2, '0')
   const day = now.getDate().toString().padStart(2, '0')
-  const prefix = type === 'purchase' ? 'P' : 'U'  // P=采购, U=领用
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-  return `${prefix}${year}${month}${day}${random}`
+  
+  // 根据物料分类生成前缀
+  let categoryPrefix = 'MAT' // 默认物料
+  if (category) {
+    const categoryMap = {
+      '饲料': 'FEED',
+      '药品': 'MED',
+      '设备': 'EQP',
+      '营养品': 'NUT',
+      '疫苗': 'VAC',
+      '消毒剂': 'DIS',
+      '其他': 'OTH'
+    }
+    categoryPrefix = categoryMap[category] || 'MAT'
+  }
+  
+  // 生成5位随机数
+  const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0')
+  
+  return `${categoryPrefix}-${month}${day}${random}`
 }
 
 exports.main = async (event, context) => {
@@ -407,20 +423,37 @@ async function listMaterialRecords(event, wxContext) {
     
     // 5. 转换物料记录格式
     const formattedMaterialRecords = await Promise.all(materialRecords.data.map(async record => {
-      let operator = record.operator
-      if (!operator || operator === '未知' || operator === '系统用户') {
+      let operatorName = record.operator
+      
+      // 如果操作员是openid或未知，则查询用户信息
+      const isOpenId = operatorName && operatorName.startsWith('o') && operatorName.length > 20
+      if (!operatorName || operatorName === '未知' || operatorName === '系统用户' || isOpenId) {
         try {
-          const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: record.userId }).get()
-          if (user.data && user.data.length > 0) {
-            const u = user.data[0]
-            operator = u.name || u.nickname || u.nickName || operator || '未知'
+          // 尝试多个可能的字段来查找用户openid
+          const operatorOpenid = record._openid || record.userId || record.operator || record.createdBy
+          
+          if (operatorOpenid) {
+            const user = await db.collection(COLLECTIONS.WX_USERS)
+              .where({ _openid: operatorOpenid })
+              .limit(1)
+              .get()
+            
+            if (user.data && user.data.length > 0) {
+              const u = user.data[0]
+              operatorName = u.name || u.nickName || u.userName || '未命名用户'
+            } else {
+              operatorName = '未知用户'
+            }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('[物料记录] 查询用户信息失败:', e)
+          operatorName = operatorName || '查询失败'
+        }
       }
       
       return {
         ...record,
-        operator,
+        operator: operatorName,
         material: materials[record.materialId] || null,
         recordType: 'material', // 标记为物料记录
         displayType: record.type // purchase 或 usage
@@ -428,12 +461,38 @@ async function listMaterialRecords(event, wxContext) {
     }))
     
     // 6. 转换饲料投喂记录格式（统一为物料记录格式）
-    const formattedFeedRecords = feedRecords.data.map(record => {
+    const formattedFeedRecords = await Promise.all(feedRecords.data.map(async record => {
       const batch = batches[record.batchId]
+      
+      // 关联操作员信息
+      let operatorName = record.operator
+      const isOpenId = operatorName && operatorName.startsWith('o') && operatorName.length > 20
+      if (!operatorName || operatorName === '未知' || operatorName === '系统用户' || isOpenId) {
+        try {
+          const operatorOpenid = record._openid || record.userId || record.operator || record.createdBy
+          
+          if (operatorOpenid) {
+            const user = await db.collection(COLLECTIONS.WX_USERS)
+              .where({ _openid: operatorOpenid })
+              .limit(1)
+              .get()
+            
+            if (user.data && user.data.length > 0) {
+              const u = user.data[0]
+              operatorName = u.name || u.nickName || u.userName || '未命名用户'
+            } else {
+              operatorName = '未知用户'
+            }
+          }
+        } catch (e) {
+          console.error('[饲料投喂] 查询用户信息失败:', e)
+          operatorName = operatorName || '查询失败'
+        }
+      }
       
       return {
         _id: record._id,
-        recordNumber: `FEED-${record._id.slice(-8)}`, // 生成记录编号
+        recordNumber: `FEED-${record._id.slice(-7)}`, // 生成简短记录编号
         userId: record.userId,
         materialId: record.materialId,
         type: 'feed', // 标记为投喂类型
@@ -441,7 +500,7 @@ async function listMaterialRecords(event, wxContext) {
         unitPrice: record.unitPrice,
         totalAmount: record.totalCost,
         supplier: '',
-        operator: record.operator,
+        operator: operatorName,
         status: '已完成',
         notes: record.notes || '',
         relatedBatch: record.batchId,
@@ -458,7 +517,7 @@ async function listMaterialRecords(event, wxContext) {
         recordType: 'feed', // 标记为饲料投喂记录
         displayType: 'feed' // 显示类型
       }
-    })
+    }))
     
     // 7. 合并并排序所有记录
     const allRecords = [...formattedMaterialRecords, ...formattedFeedRecords]
@@ -547,8 +606,8 @@ async function createMaterialRecord(event, wxContext) {
   
   // 开始事务处理
   return await db.runTransaction(async transaction => {
-    // 生成单据号
-    const recordNumber = generateRecordNumber(recordData.type)
+    // 生成单据号（传入物料分类）
+    const recordNumber = generateRecordNumber(recordData.type, materialInfo.category)
     
     const now = new Date()
     // 解析当前用户姓名
@@ -1041,8 +1100,8 @@ async function purchaseInbound(event, wxContext) {
         material = { _id: materialId, ...newMaterial }
       }
       
-      // 3. 创建采购记录
-      const recordNumber = generateRecordNumber('purchase')
+      // 3. 创建采购记录（传入物料分类）
+      const recordNumber = generateRecordNumber('purchase', materialData.category || material.category)
       const now = new Date()
       const quantity = Number(materialData.quantity)
       const unitPrice = Number(materialData.unitPrice)

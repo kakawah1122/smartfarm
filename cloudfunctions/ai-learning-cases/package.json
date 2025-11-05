@@ -1,0 +1,9 @@
+{
+  "name": "ai-learning-cases",
+  "version": "1.0.0",
+  "description": "AI学习案例管理云函数（多特征融合版）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

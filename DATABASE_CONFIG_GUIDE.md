@@ -1423,6 +1423,81 @@
 
 ---
 
+## 八、AI学习模块（1个集合）
+
+### 41. ai_learning_cases
+**用途**：AI识别学习案例库（多特征融合版）
+
+#### 📝 创建集合
+- **集合名称**：`ai_learning_cases`
+- **权限类型**：选择"所有用户可读、创建者可读写"
+  - 学习案例可供所有养殖场成员查看学习，创建者可修改
+
+#### 📊 添加索引
+
+**索引1：相似场景查询索引**
+- 索引名称：`sceneFeatures.crowding_1_sceneFeatures.occlusion_level_1_accuracy_-1`
+- 索引属性：非唯一
+- 索引字段：
+  - 字段：`sceneFeatures.crowding`，排序：升序
+  - 字段：`sceneFeatures.occlusion_level`，排序：升序
+  - 字段：`accuracy`，排序：降序
+
+**索引2：时间排序索引**
+- 索引名称：`createTime_-1`
+- 索引属性：非唯一
+- 索引字段：
+  - 字段：`createTime`，排序：降序
+
+**索引3：准确率过滤索引**
+- 索引名称：`accuracy_-1_used_1`
+- 索引属性：非唯一
+- 索引字段：
+  - 字段：`accuracy`，排序：降序
+  - 字段：`used`，排序：升序
+
+**索引4：偏差类型统计索引**
+- 索引名称：`deviationType_1_createTime_-1`
+- 索引属性：非唯一
+- 索引字段：
+  - 字段：`deviationType`，排序：升序
+  - 字段：`createTime`，排序：降序
+
+#### 🔑 关键字段
+- `imageFileID`：图片云存储ID
+- `aiCount`：AI识别数量
+- `correctCount`：用户标记的正确数量
+- `accuracy`：准确率（0-1）
+- `deviation`：偏差（aiCount - correctCount）
+- `deviationType`：偏差类型（over_count/under_count/accurate）
+- `sceneFeatures`：场景特征对象
+  - `lighting`：光线质量（excellent/good/fair/poor）
+  - `crowding`：密集程度（sparse/moderate/dense）
+  - `occlusion_level`：遮挡程度（low/medium/high）
+  - `imageQuality`：图像质量（excellent/good/fair/poor）
+- `featureBreakdown`：特征分布对象（多特征融合）
+  - `tier1_complete`：一级特征识别数量
+  - `tier2_partial`：二级特征识别数量
+  - `tier3_inferred`：三级特征推断数量
+  - `excluded_lowConfidence`：排除的低置信度数量
+- `errorAnalysis`：错误分析对象
+  - `tier1_ratio`：一级特征占比
+  - `tier2_ratio`：二级特征占比
+  - `tier3_ratio`：三级特征占比
+  - `possible_reason`：可能的错误原因
+- `operator`：操作人员名称
+- `createTime`：创建时间（服务器时间）
+- `used`：是否已用作学习样本
+- `useCount`：使用次数
+
+#### 💡 索引说明
+- **索引1**：用于Few-shot Learning的相似场景查询，根据密度、遮挡程度、准确率查找最佳案例
+- **索引2**：按时间降序排列，获取最新案例
+- **索引3**：筛选高准确率且未使用的案例，避免重复使用
+- **索引4**：统计不同偏差类型的案例，用于动态阈值调整
+
+---
+
 ## 附录：权限类型说明
 
 ### 1. 所有用户可读、创建者可读写
@@ -1431,6 +1506,7 @@
 - 健康管理记录
 - 财务记录
 - 任务记录
+- AI学习案例
 
 ### 2. 仅创建者可读写
 **适用场景**：个人敏感信息，只能本人和管理员访问
@@ -1467,10 +1543,11 @@
 - [ ] 任务管理模块（4个集合）
 - [ ] 系统管理模块（11个集合）
 - [ ] 文件管理模块（2个集合）
+- [ ] AI学习模块（1个集合）
 
 ### ✅ 权限配置检查
 - [ ] 仅创建者可读写：4个集合
-- [ ] 所有用户可读、创建者可读写：20个集合
+- [ ] 所有用户可读、创建者可读写：21个集合
 - [ ] 所有用户可读：10个集合
 - [ ] 所有用户不可读写：6个集合
 
@@ -1505,13 +1582,16 @@ A：本项目采用标准化命名规范（如 `health_ai_diagnosis`），所有
 - [shared-config/collections.js](./shared-config/collections.js) - 统一集合配置文件
 - [COMPLIANCE_REPORT.md](./COMPLIANCE_REPORT.md) - 合规优化报告
 - [SUBPACKAGE_COMPLETE.md](./SUBPACKAGE_COMPLETE.md) - 分包配置完成报告
+- [多特征融合识别方案-最终版.md](./多特征融合识别方案-最终版.md) - AI多特征融合技术方案
+- [AI自学习系统说明.md](./AI自学习系统说明.md) - AI学习案例系统说明
 - [微信云开发文档](https://developers.weixin.qq.com/miniprogram/dev/wxcloud/basis/getting-started.html)
 
 ---
 
-**文档版本**：v1.0  
-**更新时间**：2025年10月24日  
-**适用项目**：鹅数通智慧养鹅小程序
+**文档版本**：v1.1  
+**更新时间**：2025年11月5日  
+**适用项目**：鹅数通智慧养鹅小程序  
+**最新更新**：新增AI学习模块（ai_learning_cases集合）
 
 ---
 
@@ -1522,7 +1602,7 @@ A：本项目采用标准化命名规范（如 `health_ai_diagnosis`），所有
 3. **记录进度**：在检查清单中勾选已完成的集合
 4. **备份配置**：完成配置后，导出集合列表作为备份
 
-**预计配置时间**：2-3小时（40个集合 × 约3-5分钟/集合）
+**预计配置时间**：2-3小时（41个集合 × 约3-5分钟/集合）
 
 ---
 

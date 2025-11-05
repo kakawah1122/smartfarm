@@ -5578,10 +5578,15 @@ async function createDeathRecordWithFinance(event, wxContext) {
       throw new Error(`批次 ${batch.batchNumber} 缺少入栏单价，请先在入栏记录中补充单价`)
     }
     
-    // 计算财务损失 = 入栏单价 + 物料成本
-    const entryCostLoss = unitCost * deathCount
-    const breedingCostLoss = breedingCostPerAnimal * deathCount
-    const financeLoss = entryCostLoss + breedingCostLoss
+    // ✅ 修正：财务损失 = 综合成本（已包含所有成本，无需重复计算）
+    // unitCost = avgTotalCost（已包含：入栏成本 + 物料成本 + 预防成本 + 治疗成本）
+    const financeLoss = unitCost * deathCount
+    
+    console.log('[AI死因剖析] 成本计算:', {
+      deathCount,
+      unitCost: unitCost.toFixed(2),
+      totalLoss: financeLoss.toFixed(2)
+    })
     
     // 获取用户信息
     let userName = 'KAKA'
@@ -5607,6 +5612,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
       batchNumber: batch.batchNumber || '',
       deathDate: new Date().toISOString().split('T')[0],
       deathCount: deathCount,
+      totalDeathCount: deathCount,  // ✅ 添加标准字段
       deathCause: deathCause || '待确定',
       deathCategory: deathCategory,
       source: 'ai_diagnosis',  // ✅ 标记来源为AI死因剖析（需要兽医确认和修正）
@@ -5615,10 +5621,15 @@ async function createDeathRecordWithFinance(event, wxContext) {
       photos: images || [],
       aiDiagnosisId: diagnosisId || null,
       diagnosisResult: diagnosisResult || null,
-      financeLoss: parseFloat(financeLoss.toFixed(2)),
-      unitCost: parseFloat(unitCost.toFixed(2)),
-      breedingCost: parseFloat(breedingCostLoss.toFixed(2)),
+      // ✅ 修正：使用标准的financialLoss结构（对象格式）
+      financialLoss: {
+        unitCost: parseFloat(unitCost.toFixed(2)),
+        totalLoss: parseFloat(financeLoss.toFixed(2)),
+        calculationMethod: 'batch_average',
+        treatmentCost: 0
+      },
       operator: openid,
+      operatorName: userName,  // ✅ 使用标准字段名
       reporterName: userName,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -5741,9 +5752,56 @@ async function getDeathRecordsList(event, wxContext) {
       console.log('[死亡记录列表] 第一条记录字段:', Object.keys(result.data[0]))
     }
     
+    // ✅ 关联操作员信息
+    const records = await Promise.all(result.data.map(async (record) => {
+      // 如果已经有operatorName，直接使用
+      if (record.operatorName && record.operatorName !== '未知') {
+        return record
+      }
+      
+      // 否则，根据各种可能的字段查询用户信息
+      const operatorOpenid = record._openid || record.operator || record.createdBy || record.reportedBy
+      
+      if (!operatorOpenid) {
+        console.warn('[死亡记录列表] 记录缺少操作员openid:', record._id)
+        return {
+          ...record,
+          operatorName: '系统记录'
+        }
+      }
+      
+      try {
+        const userInfo = await db.collection(COLLECTIONS.WX_USERS)
+          .where({ _openid: operatorOpenid })
+          .limit(1)
+          .get()
+        
+        if (userInfo.data.length > 0) {
+          const user = userInfo.data[0]
+          const operatorName = user.name || user.nickName || user.userName || '未命名用户'
+          return {
+            ...record,
+            operatorName
+          }
+        } else {
+          console.warn('[死亡记录列表] 未找到用户信息, openid:', operatorOpenid.substring(0, 8) + '...')
+          return {
+            ...record,
+            operatorName: '未知用户'
+          }
+        }
+      } catch (userError) {
+        console.error('[死亡记录列表] 查询用户信息失败:', userError)
+        return {
+          ...record,
+          operatorName: '查询失败'
+        }
+      }
+    }))
+    
     return {
       success: true,
-      data: result.data || [],
+      data: records || [],
       message: '获取死亡记录列表成功'
     }
     

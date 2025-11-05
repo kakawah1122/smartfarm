@@ -541,10 +541,9 @@ class AIModelManager {
       return messages
     }
 
-    
     const modelConfig = MODEL_CONFIGS[modelId]
     
-    // ✅ 检查模型是否支持视觉
+    // 检查模型是否支持视觉
     const supportsVision = modelConfig?.supportVision === true
     
     if (!supportsVision) {
@@ -561,10 +560,10 @@ class AIModelManager {
       return enhancedMessages
     }
     
-    // ✅ 通义千问使用HTTPS URL（支持OpenAI兼容格式）
-
+    // 通义千问使用HTTPS URL（支持OpenAI兼容格式）
     let imageData = []
     
+    try {
     // 获取HTTPS临时URL
     const tempResult = await cloud.getTempFileURL({
       fileList: imageFileIDs
@@ -573,13 +572,14 @@ class AIModelManager {
     tempResult.fileList.forEach((item, index) => {
       if (item.status === 0) {
         imageData.push(item.tempFileURL)
-      } else {
-        console.error(`❌ 图片${index + 1} 失败:`, item.errmsg)
       }
     })
     
     if (imageData.length === 0) {
-      return messages
+        throw new Error('所有图片获取临时URL失败')
+      }
+    } catch (error) {
+      throw new Error(`图片处理失败: ${error.message}`)
     }
 
 
@@ -805,6 +805,9 @@ exports.main = async (event, context) => {
       case 'chat_completion':
         return await handleChatCompletion(event, manager)
       
+      case 'image_recognition':
+        return await handleImageRecognition(event, manager)
+      
       case 'get_usage_stats':
         return await getUsageStats(event, manager)
       
@@ -820,6 +823,397 @@ exports.main = async (event, context) => {
       success: false,
       error: error.message,
       fallback: true
+    }
+  }
+}
+
+// ========== 狮头鹅智能计数提示词（多特征融合版）==========
+const GOOSE_COUNTING_PROMPT = `你是专业的狮头鹅计数专家。使用科学的多特征融合识别方法。
+
+【狮头鹅专业特征库】
+品种特点：中国最大鹅种，成年公鹅10-15kg，母鹅9-12kg
+- 头部：成年公鹅有发达肉瘤（形似狮子头），母鹅肉瘤较平，喙橙黄色
+- 颈部：长而粗壮，呈S形曲线，灵活
+- 身体：体型大，体长60-80cm，体宽30-40cm
+- 羽毛：棕色或灰棕色，腹部白色
+- 腿脚：橙黄色，粗壮有力
+
+【多特征权重识别系统】
+
+━━━ 一级特征（确认性特征，权重100%）━━━
+✓ 头部肉瘤+喙+眼睛（公鹅独有，最可靠）
+✓ 完整身体轮廓：长60-80cm，宽30-40cm，棕灰色羽毛
+→ 出现任一特征 = 直接确认1只（置信度95-100%）
+
+━━━ 二级特征（强暗示特征，权重70-90%）━━━
+✓ 头部轮廓（无明显肉瘤，可能是母鹅/幼鹅）+ 颈部
+✓ 大片棕灰色羽毛区域（符合体型比例）+ 完整边界轮廓
+✓ 腹部白色羽毛 + 身体侧面轮廓
+→ 单个二级特征 ≥ 70% = 可确认1只
+
+━━━ 三级特征（弱暗示特征，权重30-50%）━━━
+✓ S形颈部曲线（但无头部可见）：40%
+✓ 翅膀轮廓 + 羽毛颜色：35%
+✓ 腿部（橙黄色粗壮）+ 部分身体：30%
+✓ 局部羽毛（大片，符合颜色）：20%
+→ 多个三级特征累加 ≥ 70% = 可确认1只
+
+━━━ 禁用特征（单独不计数，权重0%）━━━
+✗ 单独的腿（一只鹅有2条腿！）
+✗ 单独的羽毛碎片
+✗ 单独的喙或眼睛（无头部轮廓）
+✗ 不明物体或阴影
+
+【置信度累加计算规则】
+
+规则1：一级特征直接确认
+IF 检测到"头部肉瘤"OR"完整身体轮廓" THEN 确认1只
+
+规则2：二级特征单独确认
+IF 单个二级特征置信度 ≥ 70% THEN 确认1只
+
+规则3：三级特征组合确认
+IF 多个三级特征累加 ≥ 70% AND 特征数量 ≥ 2 THEN 确认1只
+示例：颈部(40%) + 翅膀(35%) = 75% ✓ 确认
+示例：腿部(30%) + 羽毛(20%) = 50% ✗ 不确认
+
+规则4：空间关联检测（防重复计数）
+识别每个特征组的空间位置，确保不同特征组之间距离 > 20cm
+
+【遮挡场景处理策略】
+
+场景A：头部被遮挡，身体可见
+→ 检测：大片棕灰色羽毛（二级特征70%）
+→ 验证尺寸：长60-80cm，宽30-40cm
+→ 结论：尺寸合理 → 确认1只
+
+场景B：身体被遮挡，头部可见
+→ 检测：头部肉瘤+喙（一级特征100%）
+→ 结论：直接确认1只
+
+场景C：部分身体+颈部，无头部
+→ 检测：S形颈部(40%) + 翅膀轮廓(35%) = 75%
+→ 验证：检查空间位置，避免重复
+→ 结论：确认1只
+
+场景D：密集重叠（多只鹅紧密排列）
+→ 策略：优先数可见头部（一级特征）
+→ 遮挡区域：根据身体轮廓边界推断（二级特征）
+→ 不确定区域：保守估计，置信度标注为"中等"
+
+【典型错误案例（必须避免）】
+
+❌ 错误1：看到4条腿 → 计为2只
+分析：腿(30%) × 2 = 60%，未达到70%阈值
+✅ 正确：检查是否有颈部或身体，无 → 不计数
+
+❌ 错误2：看到一大片白色 → 计为1只
+分析：腹部白色羽毛需配合身体轮廓
+✅ 正确：检查轮廓，无明确边界 → 不计数
+
+❌ 错误3：同一只鹅的头部+身体分别计数
+分析：空间关联检测失败
+✅ 正确：检测到头部和身体距离<20cm → 合并为1只
+
+【快速识别流程】
+
+Step 1：全局扫描 - 定位所有一级特征（头部肉瘤、完整身体）
+Step 2：区域分析 - 对遮挡区域寻找二级特征（头部轮廓、大片羽毛）
+Step 3：局部推断 - 对剩余区域三级特征组合推断
+Step 4：空间校验 - 检查所有识别个体间距离，排除重复
+Step 5：置信度评估 - 计算每个个体的综合置信度
+Step 6：输出结果 - 生成结构化JSON
+
+【输出格式（详细JSON）】
+{
+  "totalCount": <最终识别数量>,
+  "confidence": <整体置信度 0-1>,
+  "detectionMethod": "multi-feature-fusion",
+  
+  "featureBreakdown": {
+    "tier1_complete": <一级特征识别数量>,
+    "tier2_partial": <二级特征识别数量>,
+    "tier3_inferred": <三级特征推断数量>,
+    "excluded_lowConfidence": <排除的低置信度数量>
+  },
+  
+  "individualAnalysis": [
+    {
+      "id": <序号>,
+      "features": [<检测到的特征列表>],
+      "confidence": <该个体置信度>,
+      "tier": <1|2|3>,
+      "note": "<说明>"
+    }
+  ],
+  
+  "sceneAnalysis": {
+    "lighting": "excellent|good|fair|poor",  // ⚠️ 必须分析：根据图片明暗判断
+    "crowding": "sparse|moderate|dense",     // ⚠️ 必须分析：根据鹅群密度判断
+    "occlusion_level": "low|medium|high",    // ⚠️ 必须分析：根据遮挡程度判断
+    "imageQuality": "excellent|good|fair|poor"  // ⚠️ 必须分析：根据图片清晰度判断
+  },
+  
+  "abnormalDetection": {
+    "suspiciousAnimals": <异常个体数>,
+    "healthConcerns": [<健康问题列表>]
+  },
+  
+  "suggestions": [<改进建议>],
+  "reasoning": "<详细说明识别过程和结果>"
+}
+
+【质量控制标准】
+- 整体置信度 ≥ 85%：高质量识别
+- 整体置信度 60-85%：中等质量，建议人工复核
+- 整体置信度 < 60%：低质量，建议重新拍照
+
+【场景分析要求】⚠️ 重要
+你必须分析图片的以下场景特征，不能返回 "unknown"：
+1. lighting（光线）：观察图片明暗度
+   - excellent: 光线充足明亮
+   - good: 光线正常
+   - fair: 光线略暗但可见
+   - poor: 光线很暗
+2. crowding（密集度）：观察鹅群分布
+   - sparse: 鹅之间距离较远
+   - moderate: 鹅群中等密集
+   - dense: 鹅群非常密集
+3. occlusion_level（遮挡程度）：观察鹅之间的遮挡
+   - low: 遮挡少，鹅大多可见
+   - medium: 部分鹅有遮挡
+   - high: 鹅群密集，遮挡严重
+4. imageQuality（图片质量）：观察清晰度
+   - excellent: 非常清晰
+   - good: 清晰
+   - fair: 略模糊
+   - poor: 很模糊
+
+现在请使用多特征融合方法分析这张狮头鹅照片。`
+
+// ========== 图像识别处理函数 ==========
+async function handleImageRecognition(event, manager) {
+  const { imageData, images, expectedRange, location, sceneHint } = event
+  
+  try {
+    // 验证是否有图片
+    if (!images || images.length === 0) {
+      throw new Error('缺少图片参数，请传递云存储文件ID数组')
+    }
+    
+    // 1. 构建鹅群计数消息
+    const messages = [{
+      role: 'system',
+      content: GOOSE_COUNTING_PROMPT
+    }, {
+      role: 'user',
+      content: '请分析这张鹅群照片并进行精准计数。'
+    }]
+    
+    // 2. 如果有预期范围，添加参考信息
+    if (expectedRange && expectedRange.min && expectedRange.max) {
+      messages[1].content += `\n\n参考信息：该区域（${location || '未知位置'}）通常存栏${expectedRange.min}-${expectedRange.max}只鹅。`
+    }
+    
+    // 3. 尝试加载学习案例（Few-shot Learning）
+    try {
+      const learningCases = await cloud.callFunction({
+        name: 'ai-learning-cases',
+        data: {
+          action: 'get_similar_cases',
+          sceneFeatures: sceneHint || { crowding: 'moderate' },
+          limit: 2
+        }
+      })
+      
+      if (learningCases.result.success && learningCases.result.examples.length > 0) {
+        const examplesText = learningCases.result.examples.map(ex => 
+          `案例${ex.exampleId}：${ex.scene}，AI识别${ex.aiRecognized}只，实际${ex.actualCount}只。教训：${ex.lesson}`
+        ).join('\n')
+        
+        messages[1].content += `\n\n【学习案例参考】\n${examplesText}\n根据这些案例，调整你的识别策略。`
+      }
+    } catch (learningError) {
+      // 学习案例加载失败不影响主流程
+    }
+    
+    // 4. 调用 Qwen-VL-Max 视觉模型（快速精准）
+    const result = await handleChatCompletion({
+      messages,
+      taskType: 'health_diagnosis_vision',
+      images: images,
+      options: {
+        temperature: 0.1, // 极低温度，精确推理
+        maxTokens: 2000  // 简化输出，提高速度
+      }
+    }, manager)
+    
+    if (!result.success) {
+      throw new Error(result.error || 'AI模型调用失败')
+    }
+    
+    // 4. 解析JSON结果
+    let aiResponse
+    try {
+      // 尝试从响应中提取JSON
+      const content = result.data.content
+      
+      // 如果响应被包裹在代码块中，提取JSON
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || 
+                       content.match(/```\s*([\s\S]*?)\s*```/) ||
+                       [null, content]
+      
+      aiResponse = JSON.parse(jsonMatch[1] || content)
+      
+    } catch (parseError) {
+      console.error('❌ JSON解析失败，尝试文本解析:', parseError.message)
+      // 兜底：使用文本解析
+      return parseFallbackResult(result.data.content, expectedRange, result.data.modelInfo)
+    }
+    
+    // 5. 数据验证和后处理
+    const processedResult = {
+      totalCount: validateCount(aiResponse.totalCount, expectedRange),
+      confidence: aiResponse.confidence || 0.75,
+      detectionMethod: aiResponse.detectionMethod || 'multi-feature-fusion',
+      countingMethod: aiResponse.countingMethod || '智能识别',
+      
+      // 特征分布（多特征融合）
+      featureBreakdown: aiResponse.featureBreakdown || {
+        tier1_complete: aiResponse.totalCount || 0,  // 默认全部算作一级特征
+        tier2_partial: 0,
+        tier3_inferred: 0,
+        excluded_lowConfidence: 0
+      },
+      
+      // 个体分析
+      individualAnalysis: aiResponse.individualAnalysis || [],
+      
+      // 场景分析（确保所有字段都有值）
+      sceneAnalysis: {
+        lighting: aiResponse.sceneAnalysis?.lighting || 'good',
+        crowding: aiResponse.sceneAnalysis?.crowding || 'moderate',
+        occlusion_level: aiResponse.sceneAnalysis?.occlusion_level || 'medium',
+        imageQuality: aiResponse.sceneAnalysis?.imageQuality || 'good'
+      },
+      
+      regions: aiResponse.regions || [],
+      environmentAnalysis: aiResponse.environmentAnalysis || {
+        lighting: 'moderate',
+        crowding: 'moderate',
+        imageQuality: 'good',
+        challenges: []
+      },
+      abnormalDetection: aiResponse.abnormalDetection || {
+        suspiciousAnimals: 0,
+        healthConcerns: [],
+        exclusionReason: []
+      },
+      suggestions: aiResponse.suggestions || [],
+      reasoning: aiResponse.reasoning || '基于AI视觉识别',
+      modelInfo: result.data.modelInfo || {}
+    }
+    
+    return {
+      success: true,
+      data: processedResult
+    }
+    
+  } catch (error) {
+    
+    // 详细的错误信息
+    let errorMessage = error.message
+    let suggestions = ['识别失败，请重新拍摄', '确保图像清晰、光线充足']
+    
+    if (error.message.includes('API')) {
+      errorMessage = 'API调用失败，请检查配置'
+      suggestions = ['请检查QWEN_API_KEY是否正确配置', '检查网络连接是否正常']
+    } else if (error.message.includes('timeout')) {
+      errorMessage = '请求超时，请重试'
+      suggestions = ['网络较慢，请稍后重试', '尝试使用更小的图片']
+    } else if (error.message.includes('图片')) {
+      errorMessage = '图片处理失败'
+      suggestions = ['请重新拍照', '确保图片大小不超过5MB']
+    }
+    
+    // 返回兜底结果
+    return {
+      success: false,
+      error: errorMessage,
+      errorDetail: error.message,
+      data: {
+        totalCount: 0,
+        confidence: 0,
+        suggestions: suggestions,
+        reasoning: `识别失败：${error.message}`
+      }
+    }
+  }
+}
+
+// 计数验证函数
+function validateCount(count, expectedRange) {
+  if (!expectedRange || !expectedRange.max) return count
+  
+  // 如果计数远超预期范围（>150%），记录警告但仍返回
+  if (count > expectedRange.max * 1.5) {
+    console.warn(`⚠️ 计数异常：${count}只（预期${expectedRange.min}-${expectedRange.max}）`)
+  }
+  
+  // 如果计数为负数或0，返回默认值
+  if (!count || count < 0) {
+    console.warn('⚠️ 计数无效，返回0')
+    return 0
+  }
+  
+  return Math.floor(count) // 确保返回整数
+}
+
+// 文本响应解析器（兜底方案）
+function parseFallbackResult(textResponse, expectedRange, modelInfo) {
+  console.log('📝 使用文本解析兜底方案')
+  
+  // 尝试从文本中提取数字
+  const numberMatches = textResponse.match(/(\d+)\s*只/g) || 
+                       textResponse.match(/总数[：:]\s*(\d+)/g) ||
+                       textResponse.match(/识别[到得出]*\s*(\d+)/g)
+  
+  let totalCount = 0
+  if (numberMatches && numberMatches.length > 0) {
+    // 提取最大的数字作为总数
+    const numbers = numberMatches.map(m => parseInt(m.match(/\d+/)[0]))
+    totalCount = Math.max(...numbers)
+  } else if (expectedRange && expectedRange.min && expectedRange.max) {
+    // 如果无法提取数字，使用预期范围的中间值
+    totalCount = Math.floor((expectedRange.min + expectedRange.max) / 2)
+  }
+  
+  return {
+    success: true,
+    data: {
+      totalCount: totalCount,
+      confidence: 0.65, // 文本解析置信度较低
+      countingMethod: '文本解析（兜底）',
+      regions: [],
+      environmentAnalysis: {
+        lighting: 'unknown',
+        crowding: 'unknown',
+        imageQuality: 'unknown',
+        challenges: ['AI返回格式异常，使用文本解析']
+      },
+      abnormalDetection: {
+        suspiciousAnimals: 0,
+        healthConcerns: ['建议人工复核'],
+        exclusionReason: []
+      },
+      suggestions: [
+        '图像分析结果格式异常，建议重新拍摄',
+        '确保图像清晰、光线充足',
+        '建议人工复核识别结果'
+      ],
+      reasoning: `文本解析结果：${textResponse.substring(0, 200)}...`,
+      modelInfo: modelInfo || {},
+      isFallback: true
     }
   }
 }

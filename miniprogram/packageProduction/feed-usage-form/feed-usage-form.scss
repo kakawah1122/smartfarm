@@ -6,7 +6,7 @@
 }
 
 .form-container {
-  padding: 24rpx;
+  padding: 20rpx; // 优化：缩小内边距
   padding-bottom: 120rpx; // 为底部按钮留出空间
   // padding-top 在 WXML 中动态设置，避免被导航栏遮挡
   box-sizing: border-box;
@@ -14,35 +14,44 @@
 
 // 表单区块
 .form-section {
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx; // 优化：缩小间距
   background-color: #fff;
-  border-radius: 16rpx;
+  border-radius: 12rpx; // 优化：缩小圆角
   overflow: hidden;
 }
 
+// 标题和提示容器（同一行）
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20rpx 20rpx 12rpx; // 外边距
+  padding: 12rpx 16rpx; // 内边距
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); // 蓝色渐变背景
+  border-radius: 8rpx;
+  gap: 12rpx; // 元素间距
+}
+
 .section-title {
-  padding: 20rpx 24rpx 12rpx;
-  font-size: 30rpx;
+  font-size: 28rpx; // 优化：缩小字体
   font-weight: 600;
-  color: #333;
+  color: #0052d9; // 优化：蓝色文字
+  flex-shrink: 0; // 标题不缩小
 }
 
 // 使用提示
 .usage-tip {
   display: flex;
   align-items: center;
-  padding: 12rpx 20rpx;
-  margin: 0 24rpx 12rpx;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border-radius: 8rpx;
-  border-left: 4rpx solid #0052d9;
+  gap: 6rpx; // 图标和文字间距
+  flex-shrink: 1; // 允许缩小
 }
 
 .tip-text {
-  margin-left: 10rpx;
-  font-size: 24rpx;
-  color: #0052d9;
-  line-height: 1.5;
+  font-size: 22rpx;
+  color: #999; // 浅灰色文字
+  line-height: 1.4;
+  white-space: nowrap; // 不换行
 }
 
 // 表单项
@@ -50,7 +59,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16rpx 24rpx;
+  padding: 12rpx 20rpx; // 优化：缩小内边距
   border-bottom: 1rpx solid #f0f0f0;
   min-height: 60rpx;
   
@@ -61,9 +70,9 @@
 
 .item-label {
   flex-shrink: 0;
-  font-size: 28rpx;
+  font-size: 26rpx; // 优化：缩小字体
   color: #333;
-  margin-right: 24rpx;
+  margin-right: 16rpx; // 优化：缩小间距
   line-height: 44rpx;
   
   &.required::before {
@@ -85,7 +94,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  font-size: 28rpx;
+  font-size: 26rpx; // 优化：缩小字体
   color: #333;
   line-height: 44rpx;
   width: 100%;
@@ -104,43 +113,43 @@
   
   input {
     flex: 1;
-    font-size: 28rpx;
+    font-size: 26rpx; // 优化：缩小字体
     color: #333;
     text-align: right;
   }
   
   .unit {
     flex-shrink: 0;
-    margin-left: 16rpx;
-    font-size: 26rpx;
+    margin-left: 12rpx; // 优化：缩小间距
+    font-size: 24rpx; // 优化：缩小字体
     color: #666;
   }
 }
 
 // 存栏信息卡片
 .stock-info-card {
-  margin: 12rpx 24rpx;
-  padding: 16rpx;
-  background: linear-gradient(135deg, #0052d9 0%, #0066ff 100%);
-  border-radius: 12rpx;
+  margin: 8rpx 20rpx 16rpx; // 优化：缩小间距
+  padding: 12rpx 16rpx; // 优化：缩小内边距
+  background: #ffffff; // 优化：白色背景
+  border: 2rpx solid #0052d9; // 优化：蓝色边框
+  border-radius: 8rpx; // 优化：缩小圆角
 }
 
 .stock-info-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10rpx;
 }
 
 .stock-label {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 24rpx; // 优化：缩小字体
+  color: #666; // 优化：深灰色文字
 }
 
 .stock-value {
-  font-size: 36rpx;
+  font-size: 32rpx; // 优化：缩小字体
   font-weight: 600;
-  color: #fff;
+  color: #0052d9; // 优化：蓝色文字
 }
 
 .stock-details {
@@ -158,45 +167,53 @@
 
 // 成本预览卡片
 .cost-preview-card {
-  margin: 12rpx 24rpx;
-  padding: 16rpx;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  border-radius: 12rpx;
+  margin: 8rpx 20rpx 16rpx; // 优化：缩小间距
+  padding: 12rpx 16rpx; // 优化：缩小内边距
+  background: #fafafa; // 优化：浅灰背景
+  border: 1rpx solid #f0f0f0; // 优化：浅灰边框
+  border-radius: 8rpx; // 优化：缩小圆角
 }
 
 .cost-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10rpx;
+  padding: 8rpx 0; // 优化：添加垂直内边距
+  border-bottom: 1rpx solid #f0f0f0; // 优化：添加分隔线
   
   &:last-child {
-    margin-bottom: 0;
+    border-bottom: none; // 优化：最后一项无分隔线
+    padding-bottom: 0;
+  }
+  
+  &:first-child {
+    padding-top: 0;
   }
 }
 
 .cost-label {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 24rpx; // 优化：缩小字体
+  color: #666; // 优化：深灰色文字
 }
 
 .cost-value {
-  font-size: 28rpx;
+  font-size: 26rpx; // 优化：缩小字体
   font-weight: 600;
-  color: #fff;
+  color: #0052d9; // 优化：蓝色文字
   
   &.primary {
-    font-size: 32rpx;
+    font-size: 30rpx; // 优化：缩小主要数值字体
   }
 }
 
 // 文本域
 .textarea-input {
   width: 100%;
-  min-height: 140rpx;
-  padding: 20rpx;
-  font-size: 28rpx;
+  min-height: 120rpx; // 优化：缩小最小高度
+  padding: 12rpx 16rpx; // 优化：缩小内边距
+  font-size: 26rpx; // 优化：缩小字体
   color: #333;
+  line-height: 1.6;
   box-sizing: border-box;
 }
 

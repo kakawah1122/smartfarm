@@ -17,7 +17,7 @@
 
   <!-- 空状态 -->
   <view class="empty-container" wx:if="{{!loading && records.length === 0}}">
-    <t-empty icon="info-circle" description="暂无进行中的治疗" />
+    <t-empty description="暂无进行中的治疗" />
   </view>
 
   <!-- 记录列表 -->

@@ -45,7 +45,6 @@
     <!-- 空状态 -->
     <view class="empty-container" wx:if="{{records.length === 0}}">
       <t-empty 
-        icon="info-circle" 
         description="暂无死亡记录"
       />
     </view>
@@ -77,28 +76,28 @@
 
         <!-- 记录内容 -->
         <view class="record-content">
-          <!-- 第一行：批次 + 死亡数量 + 损失 -->
+          <!-- 批次信息 -->
           <view class="info-row">
-            <view class="info-group">
-              <text class="info-label">批次：</text>
-              <text class="info-value">{{item.batchNumber || item.batchId}}</text>
-            </view>
-            <view class="info-group">
-              <text class="info-label">死亡：</text>
-              <text class="info-value death-count">{{item.deathCount}} 只</text>
-            </view>
-            <view class="info-group">
-              <text class="info-label">损失：</text>
-              <text class="info-value loss-value">¥{{item.formattedTotalLoss}}</text>
-            </view>
+            <text class="info-label">批次：</text>
+            <text class="info-value">{{item.batchNumber || item.batchId}}</text>
           </view>
 
-          <!-- 底部：日期 + 记录者 -->
+          <!-- 死亡数量 -->
+          <view class="info-row">
+            <text class="info-label">死亡：</text>
+            <text class="info-value death-count">{{item.deathCount}} 只</text>
+          </view>
+
+          <!-- 损失金额 -->
+          <view class="info-row">
+            <text class="info-label">损失：</text>
+            <text class="info-value loss-value">¥{{item.formattedTotalLoss}}</text>
+          </view>
+
+          <!-- 底部：日期 + 操作员 -->
           <view class="record-footer">
-            <view class="footer-left">
-              <text class="date-text">{{item.deathDate}}</text>
-              <text class="operator-text" wx:if="{{item.operatorName}}">{{item.operatorName}}</text>
-            </view>
+            <text class="date-text">{{item.deathDate}}</text>
+            <text class="operator-text">{{item.operatorName}}</text>
           </view>
         </view>
       </view>

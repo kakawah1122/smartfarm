@@ -145,7 +145,6 @@
         <!-- 无任务状态 -->
         <view wx:else class="modern-empty-state">
           <view class="empty-content">
-            <t-icon name="check-circle" size="120rpx" color="#10B981" />
             <text class="empty-title">暂无进行中的任务</text>
             <text class="empty-description">所有计划任务均已完成</text>
           </view>
@@ -210,7 +209,6 @@
         <!-- 无即将到来的任务 -->
         <view wx:else class="modern-empty-state">
           <view class="empty-content">
-            <t-icon name="time" size="120rpx" color="#6B7280" />
             <text class="empty-title">暂无即将到来的任务</text>
             <text class="empty-description">当前没有即将到来的计划任务</text>
           </view>
@@ -271,7 +269,6 @@
 
         <view wx:else class="modern-empty-state">
           <view class="empty-content">
-            <t-icon name="file-copy" size="120rpx" color="#6B7280" />
             <text class="empty-title">暂无已完成的任务</text>
             <text class="empty-description">当前没有已完成的任务记录</text>
           </view>

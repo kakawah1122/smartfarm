@@ -9,9 +9,11 @@
 .bottom-popup-container {
   padding: 0;
   max-height: 80vh;
+  height: auto;
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* 防止整个容器滚动，只允许内容区滚动 */
 }
 
 /* 弹窗头部 */
@@ -58,9 +60,11 @@
 /* 内容区域（可滚动） */
 .popup-content {
   flex: 1;
-  padding: 24rpx 32rpx;
+  padding: 24rpx 32rpx calc(env(safe-area-inset-bottom) + 24rpx) 32rpx;
   box-sizing: border-box;
   min-height: 0; /* 修复 flex 滚动问题 */
+  max-height: calc(80vh - 120rpx); /* 确保有足够的滚动空间 */
+  overflow-y: auto;
 }
 
 /* 操作按钮 */

@@ -229,9 +229,14 @@ const pageConfig = {
       })
       
       if (result.result && result.result.success) {
-        const costPerAnimal = result.result.data.averageCost || 0
+        // ✅ 修正：使用 avgTotalCost（综合成本）而不是 averageCost（只包含物料成本）
+        // avgTotalCost = (入栏成本 + 物料成本 + 预防成本 + 治疗成本) / 当前数量
+        const costPerAnimal = parseFloat(result.result.data.avgTotalCost || 0)
         const deathCount = this.data.formData.deathCount
         const treatmentCost = this.data.financialLoss.treatmentCost || 0
+        
+        // ✅ 注意：avgTotalCost 已包含治疗成本，这里的 treatmentCost 是本次治疗的额外成本
+        // 对于从治疗记录创建的死亡，treatmentCost会被设置；其他情况为0
         const totalLoss = (costPerAnimal * deathCount) + treatmentCost
         
         this.setData({

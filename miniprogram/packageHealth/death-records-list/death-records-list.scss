@@ -152,38 +152,16 @@
   padding: 24rpx 32rpx;
 }
 
-// 信息行布局
+// 信息行布局 - 分行显示
 .info-row {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
-  margin-bottom: 16rpx;
-  flex-wrap: nowrap;
+  padding: 10rpx 0;
   
   &:last-child {
-    margin-bottom: 0;
+    padding-bottom: 0;
   }
-}
-
-.info-group {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 0;
   
-  // 第一个info-group（批次号）占更多空间
-  &:first-child {
-    flex: 1 1 auto;
-    min-width: 180rpx;
-    max-width: 300rpx;
-  }
-
-  // 其他info-group固定宽度
-  &:not(:first-child) {
-    flex: 0 0 auto;
-    margin-left: 16rpx;
-  }
-
   .info-label {
     font-size: 26rpx;
     color: #999;
@@ -191,25 +169,27 @@
     flex-shrink: 0;
     line-height: 1.6;
     white-space: nowrap;
+    min-width: 80rpx;
   }
 
   .info-value {
     font-size: 28rpx;
     color: #333;
     font-weight: 500;
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.6;
+    flex: 1;
+    word-wrap: break-word;
     
     &.death-count {
       color: #e34d59;
       font-weight: 600;
+      font-size: 30rpx;
     }
 
     &.loss-value {
       color: #ed7b2f;
       font-weight: 600;
+      font-size: 30rpx;
     }
   }
 }
@@ -222,22 +202,21 @@
   margin-top: 20rpx;
   padding-top: 20rpx;
   border-top: 1rpx solid #f0f0f0;
-}
-
-.footer-left {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
 
   .date-text {
     font-size: 26rpx;
     color: #999;
+    flex: 1;
   }
 
   .operator-text {
-    font-size: 26rpx;
-    color: #666;
+    font-size: 24rpx;
+    color: #0052d9;
+    background: #e6f0ff;
+    padding: 6rpx 16rpx;
+    border-radius: 8rpx;
     font-weight: 500;
+    flex-shrink: 0;
   }
 }
 

@@ -342,43 +342,43 @@
 .record-content {
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  gap: 4rpx;
 }
 
-/* 信息行 */
+/* 信息行 - 分行显示 */
 .info-row {
   display: flex;
   align-items: center;
-  gap: 32rpx;
-  flex-wrap: wrap;
-  margin-bottom: 4rpx;
-}
-
-.info-group {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  min-width: 0;
-  flex: 0 1 auto;
-  max-width: 45%;
+  padding: 6rpx 0;
+  
+  &:last-child {
+    padding-bottom: 0;
+  }
 }
 
 .info-label {
-  font-size: 24rpx;
-  color: var(--td-text-color-secondary, #666666);
-  font-weight: 500;
-  white-space: nowrap;
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary, #999);
+  margin-right: 8rpx;
   flex-shrink: 0;
+  line-height: 1.6;
+  white-space: nowrap;
+  min-width: 80rpx;
 }
 
 .info-value {
-  font-size: 26rpx;
-  color: var(--td-text-color-primary, #000000);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 28rpx;
+  color: var(--td-text-color-primary, #333);
+  font-weight: 500;
+  line-height: 1.6;
   flex: 1;
+  word-wrap: break-word;
+  
+  &.quantity-value {
+    color: #0052d9;
+    font-weight: 600;
+    font-size: 30rpx;
+  }
 }
 
 /* 记录底部 */
@@ -387,9 +387,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  margin-top: 8rpx;
-  padding-top: 12rpx;
-  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
 }
 
 .footer-left {
@@ -400,20 +400,20 @@
   overflow: hidden;
 }
 
-.operator-text {
-  font-size: 24rpx;
-  color: var(--td-text-color-secondary, #666666);
-  font-weight: 400;
-  flex-shrink: 0;
+.date-text {
+  font-size: 26rpx;
+  color: var(--td-text-color-placeholder, #999);
+  flex: 1;
 }
 
-.date-text {
+.operator-text {
   font-size: 24rpx;
-  color: var(--td-text-color-placeholder, #bbbbbb);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #0052d9;
+  background: #e6f0ff;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 .status-tag {
@@ -775,6 +775,8 @@
     border-radius: 16rpx;
     overflow: hidden;
     box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.1);
+    position: relative;
+    margin-bottom: 24rpx;
     
     .preview-image {
       width: 100%;
@@ -782,22 +784,53 @@
       display: block;
     }
     
-    .photo-actions {
-      padding: 20rpx;
-      display: flex;
-      gap: 16rpx;
-      background: #f8faff;
-    
-      .t-button {
-      flex: 1;
-      height: 72rpx;
-      font-size: 26rpx;
-      line-height: 72rpx;
+    .photo-close-btn {
+      position: absolute;
+      top: 12rpx;
+      right: 12rpx;
+      width: 48rpx;
+      height: 48rpx;
       display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      
+      // 用CSS绘制X图标
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        width: 20rpx;
+        height: 2rpx;
+        background-color: #fff;
       }
+      
+      &::before {
+        transform: rotate(45deg);
+      }
+      
+      &::after {
+        transform: rotate(-45deg);
+      }
+      
+      &:active {
+        background: rgba(0, 0, 0, 0.7);
+        transform: scale(0.92);
+      }
+    }
+  }
+  
+  .analyze-button-section {
+    margin-bottom: 24rpx;
+    
+    .analyze-button {
+      height: 88rpx;
+      font-size: 30rpx;
+      font-weight: 600;
+      border-radius: 12rpx;
     }
   }
 }
@@ -807,7 +840,8 @@
   background: #ffffff;
   border-radius: 12rpx;
   padding: 24rpx;
-  border-left: 4rpx solid #0052D9;
+  border: 2rpx dashed #e34d59;
+  margin-top: 32rpx;
   
   .tips-title {
     font-size: 26rpx;
@@ -1113,59 +1147,85 @@
   animation: count-pulse 1.5s ease-in-out infinite;
 }
 
-/* 记录详情弹窗样式 */
+/* 记录详情弹窗样式 - 与健康管理任务详情保持一致 */
 .record-detail-content {
-  max-height: 60vh;
-  overflow-y: auto;
+  padding: 0 !important;
 }
 
-.record-detail-content .info-row {
-  margin-bottom: 0 !important;
-  padding: 20rpx 8rpx;
+.record-detail-content .info-card {
+  background: #ffffff !important;
+  border-radius: 12rpx !important;
+  padding: 20rpx !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: 2rpx solid #0052d9 !important;
+}
+
+.record-detail-content .card-content {
   display: flex !important;
-  justify-content: space-between;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* 信息行样式 */
+.record-detail-content .info-row {
+  display: flex !important;
+  justify-content: space-between !important;
   align-items: center !important;
-  flex-wrap: nowrap;
-  gap: 16rpx;
-  border-bottom: 1rpx dashed var(--td-border-level-2-color, #e0e0e0);
+  padding: 12rpx 0 !important;
+  gap: 24rpx !important;
+  margin-bottom: 0 !important;
 }
 
-.record-detail-content .info-row:last-child {
-  border-bottom: none;
+/* 虚线分隔符 */
+.record-detail-content .divider-line {
+  height: 2rpx !important;
+  min-height: 2rpx !important;
+  width: 100% !important;
+  border: none !important;
+  border-top: 2rpx dashed #999 !important;
+  margin: 10rpx 0 !important;
+  padding: 0 !important;
+  display: block !important;
 }
 
+/* 标签样式 */
 .record-detail-content .info-label {
-  font-size: 22rpx !important;
-  color: #6c757d !important;
-  font-weight: 500 !important;
+  font-size: 26rpx !important;
+  color: #666 !important;
+  flex-shrink: 0 !important;
   min-width: 120rpx !important;
-  text-align: left;
-  flex-shrink: 0;
-}
-
-.record-detail-content .info-value {
-  font-size: 24rpx !important;
-  color: #1a1a1a !important;
+  margin-right: 0 !important;
   font-weight: 400 !important;
-  text-align: right;
-  flex: 1;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  line-height: 1.5;
 }
 
-.status-value {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+/* 值样式 */
+.record-detail-content .info-value {
+  font-size: 28rpx !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+  flex: 1 !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.5 !important;
 }
 
-.note-text {
-  word-break: break-all;
-  white-space: pre-wrap;
-  line-height: 1.5;
+/* 状态标签容器 */
+.record-detail-content .status-value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex: 1 !important;
+}
+
+/* 备注文本 */
+.record-detail-content .note-text {
   text-align: left !important;
+  word-break: break-all !important;
+  white-space: pre-wrap !important;
+  line-height: 1.5 !important;
 }
 
 /* ========== 弹窗优化样式 ========== */

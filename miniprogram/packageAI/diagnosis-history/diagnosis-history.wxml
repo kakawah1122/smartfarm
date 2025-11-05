@@ -17,12 +17,11 @@
     <!-- 空状态 -->
     <view class="empty-container" wx:elif="{{records.length === 0}}">
       <t-empty 
-        icon="medical-record" 
         description="暂无诊断记录"
       >
         <t-button 
           theme="primary" 
-          size="medium"
+          size="medium" 
           bind:tap="goBack"
         >去诊断</t-button>
       </t-empty>

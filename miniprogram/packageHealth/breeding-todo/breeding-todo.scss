@@ -5,13 +5,22 @@
   padding: 0 !important;
 }
 
-.record-detail-content .info-card {
-  background: #fafafa !important;
+.record-detail-content > .info-card {
+  background: #ffffff !important;
   border-radius: 12rpx !important;
   padding: 20rpx !important;
   margin: 0 !important;
   box-shadow: none !important;
-  border: none !important;
+  border: 2rpx solid #0052d9 !important;
+}
+
+.record-detail-content .info-card {
+  background: #ffffff !important;
+  border-radius: 12rpx !important;
+  padding: 20rpx !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: 2rpx solid #0052d9 !important;
 }
 
 .record-detail-content .card-content {
@@ -1386,8 +1395,8 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl, 64rpx) var(--spacing-lg, 24rpx);
-  min-height: 400rpx;
+  padding: var(--spacing-lg, 24rpx) var(--spacing-base, 16rpx);
+  min-height: 200rpx;
 }
 
 .empty-content {
@@ -1396,10 +1405,10 @@ page {
 }
 
 .empty-title {
-  font-size: var(--font-size-lg, 32rpx);
+  font-size: 28rpx;
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-sm, 8rpx);
+  color: var(--color-text-secondary);
+  margin-bottom: 0;
 }
 
 .empty-desc {
@@ -1902,32 +1911,26 @@ page {
   will-change: scroll-position;
   
   .form-section {
-    margin-bottom: 32rpx;
+    margin-bottom: 20rpx; // 优化：从32rpx减小到20rpx
     
     .section-title {
-      font-size: 30rpx;
+      font-size: 28rpx; // 优化：从30rpx减小到28rpx
       font-weight: 600;
-      color: var(--td-text-color-primary, #000000);
-      margin-bottom: 8rpx;
-      padding: 24rpx 32rpx 16rpx 32rpx;
-      background: linear-gradient(135deg, rgba(22, 163, 74, 0.06) 0%, rgba(22, 163, 74, 0.02) 100%);
-      border: 1rpx solid rgba(22, 163, 74, 0.15);
-      border-radius: 8rpx 8rpx 0 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10rpx);
-      -webkit-backdrop-filter: blur(10rpx);
-      box-shadow: 0 2rpx 8rpx rgba(22, 163, 74, 0.08);
+      color: #0052d9; // 蓝色文字
+      margin-bottom: 12rpx; // 优化：从8rpx增加到12rpx
+      padding: 12rpx 16rpx; // 优化：统一内边距
+      background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); // 蓝色渐变背景
+      border-radius: 8rpx; // 优化：移除顶部圆角限制
+      word-break: break-all;
     }
     
     .form-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20rpx 32rpx;
-      min-height: 88rpx;
-      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      padding: 16rpx 20rpx; // 优化：减小内边距
+      min-height: 80rpx; // 优化：从88rpx减小
+      border-bottom: 1rpx solid #f0f0f0; // 优化：统一边框颜色
       
       &:last-child {
         border-bottom: none;
@@ -1935,34 +1938,35 @@ page {
       
       .form-label {
         flex-shrink: 0;
-        font-size: 28rpx;
-        color: var(--td-text-color-secondary, #666666);
+        font-size: 26rpx; // 优化：从28rpx减小
+        color: #666;
         line-height: 1.4;
-        margin-right: 24rpx;
-        width: 180rpx;
+        margin-right: 16rpx; // 优化：从24rpx减小
+        width: 160rpx; // 优化：从180rpx减小
         
         &.required::after {
           content: " *";
-          color: var(--td-error-color, #e34d59);
+          color: #e34d59;
           font-weight: 600;
         }
       }
       
       .form-input, .form-textarea {
         flex: 1;
-        padding: 8rpx 12rpx !important;
+        padding: 10rpx 12rpx !important; // 优化：增加内边距
         border: 1rpx solid #e5e5e5;
         border-radius: 8rpx;
         font-size: 28rpx !important;
-        color: var(--td-text-color-primary, #000000);
-        background: #ffffff;
+        color: #333;
+        background: #fafafa; // 优化：浅灰背景
         text-align: right;
         min-height: 44rpx !important;
         
         &:focus {
-          border-color: #16a34a;
-          box-shadow: 0 0 0 2rpx rgba(22, 163, 74, 0.1);
+          border-color: #0052d9; // 蓝色边框
+          box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1); // 蓝色阴影
           outline: none;
+          background: #ffffff; // 聚焦时白色背景
         }
         
         &::placeholder {
@@ -2040,12 +2044,11 @@ page {
   }
   
   .medicine-info {
-    margin: 24rpx 32rpx;
-    padding: 20rpx;
-    background: linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(22, 163, 74, 0.04) 100%);
+    margin: 16rpx 20rpx; // 优化：减小外边距
+    padding: 16rpx; // 优化：从20rpx减小
+    background: #fafafa; // 优化：简洁的浅灰背景
     border-radius: 12rpx;
-    border: 1rpx solid rgba(22, 163, 74, 0.2);
-    box-shadow: 0 2rpx 8rpx rgba(22, 163, 74, 0.1);
+    border: 1rpx solid #f0f0f0; // 优化：统一边框颜色
     
     .info-item {
       display: flex;
@@ -2525,4 +2528,15 @@ page {
       font-size: 22rpx;
     }
   }
+}
+
+/* ========== 强制应用蓝色边框样式（最高优先级）========== */
+.record-detail-content .info-card,
+.record-detail-content > .info-card {
+  background: #ffffff !important;
+  border: 2rpx solid #0052d9 !important;
+  border-radius: 12rpx !important;
+  padding: 20rpx !important;
+  margin: 0 !important;
+  box-shadow: none !important;
 }
