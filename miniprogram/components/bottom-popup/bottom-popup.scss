@@ -9,11 +9,12 @@
 .bottom-popup-container {
   padding: 0;
   max-height: 80vh;
-  overflow-y: auto;
   background: #ffffff;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 弹窗头部 - 应用统一样式 */
+/* 弹窗头部 */
 .popup-header {
   display: flex;
   justify-content: space-between;
@@ -22,9 +23,6 @@
   border-bottom: 2rpx solid #f0f0f0;
   background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   border-radius: 32rpx 32rpx 0 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
   flex-shrink: 0;
 }
 
@@ -57,30 +55,25 @@
   font-weight: 300;
 }
 
-/* 内容区域 */
+/* 内容区域（可滚动） */
 .popup-content {
-  min-height: 200rpx;
-  max-height: calc(80vh - 200rpx);
-  overflow-y: auto;
+  flex: 1;
   padding: 24rpx 32rpx;
+  box-sizing: border-box;
+  min-height: 0; /* 修复 flex 滚动问题 */
 }
 
 /* 操作按钮 */
 .popup-actions {
   background: #ffffff;
+  border-top: 1rpx solid #f0f0f0;
+  padding: 24rpx 40rpx 40rpx;
+  flex-shrink: 0;
 }
 
 .action-buttons {
   display: flex;
   gap: 24rpx;
-  padding: 24rpx 40rpx 40rpx;
-}
-
-.tabbar-safe-area {
-  flex-shrink: 0;
-  height: calc(133rpx + constant(safe-area-inset-bottom));
-  height: calc(133rpx + env(safe-area-inset-bottom));
-  pointer-events: none;
 }
 
 .secondary-button {
@@ -111,32 +104,12 @@
 }
 
 /* 自定义内容区域常用样式 */
-.content-section {
-  padding: 32rpx;
-}
-
 .info-card {
   background: #fafafa;
   margin: 0;
   border-radius: 12rpx;
-  box-shadow: none;
   overflow: hidden;
   padding: 20rpx;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 32rpx;
-  background: #f8f9fa;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.card-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
 }
 
 .card-content {
@@ -151,7 +124,6 @@
   justify-content: space-between;
   padding: 12rpx 0;
   gap: 24rpx;
-  margin-bottom: 0;
   border-bottom: 2rpx dashed #d0d0d0;
 }
 
@@ -162,7 +134,6 @@
 .info-label {
   font-size: 26rpx;
   color: #666;
-  margin-right: 0;
   flex-shrink: 0;
   min-width: 120rpx;
 }
@@ -177,7 +148,6 @@
   line-height: 1.5;
 }
 
-/* 状态标签容器 */
 .status-value {
   display: flex;
   align-items: center;
@@ -185,49 +155,9 @@
   flex: 1;
 }
 
-/* 分割线样式 */
 .divider-line {
   height: 2rpx;
-  min-height: 2rpx;
   width: 100%;
-  border: none;
   border-top: 2rpx dashed #999;
   margin: 10rpx 0;
-  padding: 0;
-  display: block;
-  flex-shrink: 0;
-  overflow: visible;
-}
-
-/* 头像区域 */
-.profile-section {
-  padding: 32rpx;
-  background: #f8f9fa;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.profile-info {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-}
-
-.profile-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-right: 16rpx;
-}
-
-.profile-tag {
-  padding: 8rpx 16rpx;
-  border-radius: 16rpx;
-  font-size: 24rpx;
-  font-weight: 500;
-  border: 2rpx solid;
-}
-
-/* 小程序组件适配 - 使用rpx单位自适应 */
-.info-row-last {
-  margin-bottom: 0;
 }

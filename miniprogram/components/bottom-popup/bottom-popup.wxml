@@ -18,9 +18,9 @@
     </view>
 
     <!-- 自定义内容区域 -->
-    <view class="popup-content">
+    <scroll-view class="popup-content" scroll-y enhanced show-scrollbar="{{false}}">
       <slot></slot>
-    </view>
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
     <view class="popup-actions" wx:if="{{showActions}}">
@@ -47,6 +47,5 @@
         </t-button>
       </view>
     </view>
-    <view class="tabbar-safe-area"></view>
   </view>
 </t-popup>
