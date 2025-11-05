@@ -15,9 +15,6 @@
       
       <!-- 诊断头部 -->
       <view class="result-header-card">
-        <view class="header-icon">
-          <t-icon name="check-circle" size="48" color="#00a870" />
-        </view>
         <view class="header-content">
           <view class="header-title">AI诊断完成</view>
           <view class="header-subtitle">基于症状分析的智能诊断结果</view>
@@ -287,7 +284,10 @@
         
         <!-- 病鹅诊断：受影响数量 -->
         <view class="form-row" wx:if="{{diagnosisType === 'live_diagnosis'}}">
-          <text class="form-label">受影响数量<text class="required-mark">*</text></text>
+          <view class="form-label">
+            <text class="label-text">受影响数量</text>
+            <text class="required-mark">*</text>
+          </view>
           <input 
             class="form-input"
             type="number"
@@ -300,7 +300,10 @@
         
         <!-- 死因剖析：死亡数量 -->
         <view class="form-row" wx:if="{{diagnosisType === 'autopsy_analysis'}}">
-          <text class="form-label">死亡数量<text class="required-mark">*</text></text>
+          <view class="form-label">
+            <text class="label-text">死亡数量</text>
+            <text class="required-mark">*</text>
+          </view>
           <input 
             class="form-input"
             type="number"

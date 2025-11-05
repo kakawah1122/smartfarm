@@ -7,7 +7,7 @@
 
 .page-content {
   padding: 24rpx;
-  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 68rpx); /* 状态栏 + 导航栏 + 安全间距 */
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 安全间距 */
   padding-bottom: 120rpx;
 }
 
@@ -17,6 +17,7 @@
   display: flex;
   flex-direction: column;
   gap: 24rpx;
+  padding-top: 40rpx; /* 增加诊断结果页面顶部间距 */
   padding-bottom: 40rpx;
 }
 
@@ -27,16 +28,16 @@
   padding: 32rpx 28rpx;
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  justify-content: center;
   box-shadow: 0 8rpx 24rpx rgba(0, 168, 112, 0.15);
 }
 
-.header-icon {
-  flex-shrink: 0;
-}
-
 .header-content {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .header-title {
@@ -44,12 +45,14 @@
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 8rpx;
+  text-align: center;
 }
 
 .header-subtitle {
   font-size: 26rpx;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
+  text-align: center;
 }
 
 /* 诊断卡片通用样式 */
@@ -367,10 +370,13 @@
 }
 
 .section-title {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
-  color: var(--td-text-color-primary);
-  margin-bottom: 20rpx;
+  color: #0052d9; /* 蓝色文字 */
+  padding: 12rpx 16rpx;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); /* 蓝色渐变背景 */
+  border-radius: 8rpx;
+  margin: -24rpx -16rpx 8rpx -16rpx; /* 负margin抵消form-section的padding，保持与出栏页面一致的视觉位置 */
   display: block;
 }
 
@@ -384,6 +390,7 @@
   align-items: center;
   margin-bottom: 20rpx;
   gap: 12rpx;
+  min-height: 72rpx;
   
   &:last-child {
     margin-bottom: 0;
@@ -392,50 +399,61 @@
 
 .form-label {
   width: 160rpx;
-  font-size: 26rpx;
-  color: var(--td-text-color-secondary);
   flex-shrink: 0;
-  line-height: 1;
-  height: 44rpx;
   display: flex;
+  flex-direction: row;
   align-items: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.label-text {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .required-mark {
   color: #e34d59;
   margin-left: 4rpx;
   font-weight: 700;
+  font-size: 30rpx;
+  line-height: 1.2;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 .form-input {
   flex: 1;
-  padding: 12rpx 16rpx;
-  background: var(--td-bg-color-container);
-  border-radius: 8rpx;
-  border: 2rpx solid transparent;
-  font-size: 26rpx;
+  padding: 12rpx 0;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  border-bottom: 2rpx solid #e0e0e0;
+  font-size: 30rpx;
   color: var(--td-text-color-primary);
-  height: 44rpx;
+  height: auto;
   line-height: 1.5;
   box-sizing: border-box;
   margin: 0;
+  text-align: right;
   transition: all 0.3s ease;
   
   &:focus {
-    border-color: var(--td-brand-color);
-    background: white;
+    border-bottom-color: var(--td-brand-color);
     outline: none;
   }
 }
 
 .form-unit {
   width: 60rpx;
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: var(--td-text-color-secondary);
   text-align: center;
   flex-shrink: 0;
-  line-height: 1;
-  height: 44rpx;
+  line-height: 1.2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -452,10 +470,13 @@
   background: white;
   border-radius: 8rpx;
   border: 2rpx solid var(--td-border-level-1-color);
-  font-size: 26rpx;
+  font-size: 30rpx;
   color: var(--td-text-color-primary);
   position: relative;
   transition: all 0.3s ease;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   
   &.placeholder {
     color: var(--td-text-color-placeholder);
@@ -478,10 +499,11 @@
   display: flex;
   align-items: center;
   gap: 8rpx;
+  box-sizing: border-box;
 }
 
 .value-text {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: var(--td-brand-color);
 }
@@ -501,17 +523,17 @@
   display: flex;
   align-items: center;
   gap: 4rpx;
-  padding: 8rpx 16rpx;
+  padding: 10rpx 18rpx;
   background: white;
   border: 2rpx solid var(--td-border-level-2-color);
   border-radius: 24rpx;
-  font-size: 24rpx;
+  font-size: 28rpx;
   color: var(--td-text-color-primary);
   transition: all 0.2s ease;
   cursor: pointer;
   
   .tag-icon {
-    font-size: 20rpx;
+    font-size: 24rpx;
     color: var(--td-brand-color);
     font-weight: bold;
   }
@@ -539,7 +561,7 @@
   background: var(--td-bg-color-container);
   border-radius: 12rpx;
   border: 2rpx solid transparent;
-  font-size: 26rpx;
+  font-size: 30rpx;
   color: var(--td-text-color-primary);
   line-height: 1.6;
   box-sizing: border-box;
@@ -555,7 +577,7 @@
 // 字数统计
 .char-count {
   text-align: right;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--td-text-color-placeholder);
   margin-top: 8rpx;
 }
@@ -580,7 +602,7 @@
 }
 
 .benefit-text {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #0052d9;
   font-weight: 500;
 }
@@ -601,7 +623,7 @@
 }
 
 .tips-title-text {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #1a1a1a;
 }
@@ -620,20 +642,20 @@
 
 .tip-number {
   flex-shrink: 0;
-  width: 36rpx;
-  height: 36rpx;
-  line-height: 36rpx;
+  width: 38rpx;
+  height: 38rpx;
+  line-height: 38rpx;
   text-align: center;
   background: #ed7b2f;
   color: #ffffff;
-  font-size: 22rpx;
+  font-size: 24rpx;
   font-weight: 600;
   border-radius: 50%;
 }
 
 .tip-text {
   flex: 1;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #333333;
   line-height: 1.6;
   padding-top: 4rpx;
@@ -729,7 +751,7 @@
 
 .upload-text {
   display: block;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: var(--td-text-color-secondary);
   margin-top: 8rpx;
   text-align: center;
@@ -738,13 +760,13 @@
   &.upload-text-primary {
     color: #0052d9;
     font-weight: 600;
-    font-size: 26rpx;
+    font-size: 28rpx;
   }
 }
 
 .upload-hint {
   display: block;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #999999;
   margin-top: 4rpx;
   text-align: center;
@@ -795,7 +817,7 @@
 }
 
 .upload-text-small {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #0052d9;
   font-weight: 600;
   text-align: center;
@@ -806,7 +828,7 @@
 }
 
 .upload-hint-small {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #999999;
   text-align: center;
   line-height: 1.4;
@@ -827,7 +849,7 @@
 }
 
 .status-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #00a870;
   line-height: 1.5;
 }
@@ -851,7 +873,7 @@
 }
 
 .hint-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: var(--td-brand-color);
   line-height: 1.6;
 }
@@ -877,7 +899,7 @@
 
 .hint-title {
   display: block;
-  font-size: 26rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #ed7b2f;
   margin-bottom: 12rpx;
@@ -891,7 +913,7 @@
 
 .hint-item {
   display: block;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #666666;
   line-height: 1.6;
 }
@@ -907,7 +929,7 @@
 }
 
 .link-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: var(--td-brand-color);
   
   &:active {
@@ -916,7 +938,7 @@
 }
 
 .link-divider {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: var(--td-text-color-placeholder);
 }
 
@@ -937,7 +959,7 @@
 
 .tips-text {
   flex: 1;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #ed7b2f;
   line-height: 1.4; // 减小行高
 }
