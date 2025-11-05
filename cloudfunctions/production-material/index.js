@@ -492,7 +492,7 @@ async function listMaterialRecords(event, wxContext) {
       
       return {
         _id: record._id,
-        recordNumber: `FEED-${record._id.slice(-7)}`, // 生成简短记录编号
+        recordNumber: record.recordNumber || `FEED-${record._id.slice(-7)}`, // 优先使用数据库中的单据号，旧数据回退到生成编号
         userId: record.userId,
         materialId: record.materialId,
         type: 'feed', // 标记为投喂类型
@@ -1613,11 +1613,15 @@ async function recordFeedUsage(event, wxContext) {
       })
       
       // 10. 创建投喂记录
+      // 生成饲料投喂单据号（使用饲料类型）
+      const recordNumber = generateRecordNumber('use', '饲料')
+      
       const feedRecord = {
         batchId: feedData.batchId,
         batchNumber: batchInfo.batchNumber,
         materialId: feedData.materialId,
         materialName: materialInfo.name,
+        recordNumber: recordNumber, // 添加单据号
         recordDate: recordDate,
         quantity: quantity,
         unit: materialInfo.unit,

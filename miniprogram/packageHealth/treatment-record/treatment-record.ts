@@ -17,6 +17,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 表单数据
     formData: {
+      treatmentNumber: '',  // ✅ 治疗记录编号
       batchId: '',
       batchNumber: '',  // ✅ 批次号用于显示
       animalIds: [] as string[],
@@ -201,6 +202,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         'formData.batchId': batchId || '',  // ✅ 使用批次对象ID
         'formData.diagnosis': diagnosis ? decodeURIComponent(diagnosis) : ''
       })
+      // 查找批次号用于显示
+      if (batchId) {
+        this.loadBatchNumberForDisplay(batchId)
+      }
     } else if (sourceType === 'vaccine_tracking') {
       // 如果来自疫苗追踪，设置相关数据
       this.setData({
@@ -1204,6 +1209,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     
     if (result.result && result.result.success) {
+      // ✅ 保存治疗记录编号到页面数据
+      if (result.result.data && result.result.data.treatmentNumber) {
+        this.setData({
+          'formData.treatmentNumber': result.result.data.treatmentNumber
+        })
+      }
+      
       wx.showToast({
         title: '治疗记录创建成功',
         icon: 'success'

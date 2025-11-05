@@ -1079,12 +1079,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           font-size: 24rpx;
           opacity: 0.85;
         }
-        .stat-arrow {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-left: 16rpx;
-        }
       }
       &.stat-card-full-width {
         grid-column: 1 / -1;
@@ -2238,12 +2232,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         font-size: 24rpx;
         opacity: 0.85;
       }
-      .stat-arrow {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: $spacing-base;
-      }
     }
     &.stat-card-vaccination {
       background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
@@ -2484,12 +2472,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         color: #0369A1;
         font-size: 24rpx;
         opacity: 0.85;
-      }
-      .stat-arrow {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: $spacing-base;
       }
     }
     &.stat-card-health-improve {

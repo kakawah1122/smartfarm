@@ -15,8 +15,12 @@
       <view class="view-section">
         <view class="section-title">基本信息</view>
         <view class="info-card">
+          <view class="info-row" wx:if="{{formData.treatmentNumber}}">
+            <text class="info-label">治疗编号</text>
+            <text class="info-value">{{formData.treatmentNumber}}</text>
+          </view>
           <view class="info-row">
-            <text class="info-label">治疗批次</text>
+            <text class="info-label">鹅群批次</text>
             <text class="info-value">{{formData.batchNumber || formData.batchId}}</text>
           </view>
           <view class="info-row">
@@ -111,11 +115,20 @@
     <view class="form-section">
       <view class="section-title">基本信息</view>
       
-      <!-- 治疗批次 -->
-      <view class="form-item">
-        <view class="form-label required">治疗批次</view>
+      <!-- 治疗编号（创建后显示） -->
+      <view class="form-item" wx:if="{{formData.treatmentNumber}}">
+        <view class="form-label">治疗编号</view>
         <t-cell 
-          title="{{formData.batchNumber || formData.batchId || '请选择治疗批次'}}"
+          title="{{formData.treatmentNumber}}"
+          t-class="readonly-cell"
+        />
+      </view>
+      
+      <!-- 鹅群批次 -->
+      <view class="form-item">
+        <view class="form-label required">鹅群批次</view>
+        <t-cell 
+          title="{{formData.batchNumber || formData.batchId || '请选择鹅群批次'}}"
           arrow
           bind:click="showBatchSelector"
           t-class="{{formErrors.batchId ? 'form-cell-error' : ''}}"

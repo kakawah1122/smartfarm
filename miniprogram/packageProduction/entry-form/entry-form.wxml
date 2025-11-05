@@ -11,22 +11,6 @@
 
   <!-- 表单内容区域 -->
   <view class="form-content">
-    <!-- 表单顶部信息卡片 -->
-    <view class="form-header">
-      <view class="form-card">
-        <view class="header-info">
-          <view class="batch-id-section">
-            <view class="batch-label">批次ID</view>
-            <view class="batch-id">{{formData.batchId}}</view>
-            <t-tag theme="primary" size="small">自动生成</t-tag>
-          </view>
-          <view class="date-info">
-            <text class="date-text">{{formData.entryDate || '请选择入栏日期'}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
     <!-- 主要表单 -->
     <view class="entry-form">
       <!-- 基础信息卡片 -->
@@ -35,6 +19,15 @@
           <text class="section-title">基础信息</text>
         </view>
         <view class="form-card">
+          <!-- 批次ID显示 -->
+          <view class="form-item">
+            <view class="item-label">批次ID</view>
+            <view class="item-input batch-id-display">
+              <text class="batch-id-text">{{formData.batchId}}</text>
+              <t-tag theme="primary" size="small" class="batch-tag">自动生成</t-tag>
+            </view>
+          </view>
+
           <!-- 入栏日期（使用原生 picker）-->
           <picker 
             mode="date" 
@@ -42,6 +35,7 @@
             start="2020-01-01"
             end="{{maxDate}}"
             bind:change="onDateConfirm"
+            class="picker-wrapper"
           >
             <view class="form-item">
               <view class="item-label required">入栏日期</view>

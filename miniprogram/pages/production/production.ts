@@ -373,7 +373,7 @@ const pageConfig = {
           }
           
           return {
-            id: record._id || record.recordNumber,
+            id: record.recordNumber || record._id, // 优先使用短单据号
             recordNumber: record.recordNumber || record._id,
             name: record.material?.name || '未知物料',
             category: record.material?.category || '未分类',

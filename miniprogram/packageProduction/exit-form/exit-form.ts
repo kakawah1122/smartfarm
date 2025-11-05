@@ -5,7 +5,6 @@ import { createPageWithNavbar } from '../../utils/navigation'
 interface ExitFormData {
   batchId: string;          // 批次ID
   exitDate: string;         // 出栏日期
-  type: string;             // 鹅的类型
   customer: string;         // 客户信息
   quantity: string;         // 出栏数量
   avgWeight: string;        // 平均重量
@@ -19,7 +18,6 @@ const pageConfig = {
     formData: {
       batchId: '',
       exitDate: '',
-      type: '',
       customer: '',
       quantity: '',
       avgWeight: '',
@@ -255,7 +253,6 @@ const pageConfig = {
     if (selectedBatch) {
       this.setData({
         'formData.batchId': selectedBatch.batchId,
-        'formData.type': selectedBatch.breed, // 自动填充鹅的类型
         selectedBatchAvailable: Number(selectedBatch.availableQuantity) || 0
       })
     }
@@ -283,27 +280,78 @@ const pageConfig = {
       })
     }
 
-    // 如果是数量、重量或单价变化，重新计算总重量和总收入
+    // 当输入平均重量时，自动计算总重量
+    if (field === 'avgWeight') {
+      this.calculateTotalWeightFromAvg()
+    }
+    // 当输入数量时，根据现有数据计算
+    else if (field === 'quantity') {
+      if (this.data.formData.avgWeight) {
+        this.calculateTotalWeightFromAvg()
+      } else if (this.data.totalWeight && this.data.totalWeight !== '0.00') {
+        this.calculateAvgWeightFromTotal()
+      }
+    }
+    
+    // 重新计算总收入
     if (field === 'quantity' || field === 'avgWeight' || field === 'unitPrice') {
-      this.calculateTotals()
+      this.calculateRevenue()
     }
   },
 
-  // 计算总重量和总收入
-  calculateTotals() {
-    const { quantity, avgWeight, unitPrice } = this.data.formData
+  // 总重量输入变化
+  onTotalWeightChange(e: any) {
+    const { value } = e.detail
+    this.setData({
+      totalWeight: value
+    })
+    
+    // 根据总重量自动计算平均重量
+    this.calculateAvgWeightFromTotal()
+    // 重新计算总收入
+    this.calculateRevenue()
+  },
+
+  // 根据平均重量计算总重量
+  calculateTotalWeightFromAvg() {
+    const { quantity, avgWeight } = this.data.formData
     const quantityNum = parseFloat(quantity) || 0
-    const weightNum = parseFloat(avgWeight) || 0
+    const avgWeightNum = parseFloat(avgWeight) || 0
+    
+    if (quantityNum > 0 && avgWeightNum > 0) {
+      const totalWeight = (quantityNum * avgWeightNum).toFixed(2)
+      this.setData({
+        totalWeight
+      })
+    }
+  },
+
+  // 根据总重量计算平均重量
+  calculateAvgWeightFromTotal() {
+    const { quantity } = this.data.formData
+    const totalWeight = this.data.totalWeight
+    const quantityNum = parseFloat(quantity) || 0
+    const totalWeightNum = parseFloat(totalWeight) || 0
+    
+    if (quantityNum > 0 && totalWeightNum > 0) {
+      const avgWeight = (totalWeightNum / quantityNum).toFixed(2)
+      this.setData({
+        'formData.avgWeight': avgWeight
+      })
+    }
+  },
+
+  // 计算总收入
+  calculateRevenue() {
+    const { unitPrice } = this.data.formData
+    const totalWeight = this.data.totalWeight
+    const totalWeightNum = parseFloat(totalWeight) || 0
     const priceNum = parseFloat(unitPrice) || 0
     
-    // 总重量 = 数量 × 平均重量
-    const totalWeight = (quantityNum * weightNum).toFixed(2)
-    
     // 总收入 = 总重量 × 单价
-    const totalRevenue = (parseFloat(totalWeight) * priceNum).toFixed(2)
+    const totalRevenue = (totalWeightNum * priceNum).toFixed(2)
     
     this.setData({
-      totalWeight,
       totalRevenue
     })
   },
@@ -332,20 +380,21 @@ const pageConfig = {
     if (!formData.exitDate) {
       errors.push('请选择出栏日期')
     }
-    if (!formData.type.trim()) {
-      errors.push('请输入鹅的类型')
-    }
     if (!formData.customer.trim()) {
       errors.push('请输入客户信息')
     }
     if (!formData.quantity.trim()) {
       errors.push('请输入出栏数量')
     }
-    if (!formData.avgWeight.trim()) {
-      errors.push('请输入平均重量')
-    }
     if (!formData.unitPrice.trim()) {
       errors.push('请输入单价')
+    }
+
+    // 验证平均重量和总重量至少要填一个
+    const avgWeightNum = parseFloat(formData.avgWeight) || 0
+    const totalWeightNum = parseFloat(this.data.totalWeight) || 0
+    if (avgWeightNum <= 0 && totalWeightNum <= 0) {
+      errors.push('请输入平均重量或总重量')
     }
 
     // 验证数值字段
@@ -354,6 +403,9 @@ const pageConfig = {
     }
     if (formData.avgWeight && (isNaN(Number(formData.avgWeight)) || Number(formData.avgWeight) <= 0)) {
       errors.push('平均重量必须为正数')
+    }
+    if (this.data.totalWeight && (isNaN(Number(this.data.totalWeight)) || Number(this.data.totalWeight) <= 0)) {
+      errors.push('总重量必须为正数')
     }
     if (formData.unitPrice && (isNaN(Number(formData.unitPrice)) || Number(formData.unitPrice) <= 0)) {
       errors.push('单价必须为正数')
@@ -407,10 +459,9 @@ const pageConfig = {
           recordData: {
             batchNumber: this.getBatchNumberForSubmission(submitData.batchId), // 修复：获取正确的批次号
             exitDate: submitData.exitDate,
-            type: submitData.type,
             customer: submitData.customer,
             quantity: submitData.quantity,
-            avgWeight: submitData.avgWeight,
+            avgWeight: submitData.avgWeight || '',
             unitPrice: submitData.unitPrice,
             notes: submitData.remarks,
             totalWeight: submitData.totalWeight,
@@ -467,7 +518,6 @@ const pageConfig = {
             formData: {
               batchId: currentBatchId,
               exitDate: currentDate,
-              type: '',
               customer: '',
               quantity: '',
               avgWeight: '',

@@ -15,6 +15,7 @@
   justify-content: center;
   min-height: calc(100vh - var(--navbar-height, 132rpx) - 100rpx);
   padding: 40rpx 24rpx;
+  padding-top: 120rpx; /* 增加顶部间距，避免被导航栏遮挡 */
 }
 
 .empty-container {
@@ -23,10 +24,12 @@
   justify-content: center;
   min-height: calc(100vh - var(--navbar-height, 132rpx) - 100rpx);
   padding: 40rpx 24rpx;
+  padding-top: 120rpx; /* 增加顶部间距，避免被导航栏遮挡 */
 }
 
 .records-list {
   padding: 24rpx;
+  padding-top: 100rpx; /* 增加顶部间距，避免被导航栏遮挡 */
 }
 
 .record-card {

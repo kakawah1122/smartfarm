@@ -150,7 +150,8 @@ Page({
       this.updateCompleteWeatherData(cachedData)
     } else {
       // 已移除调试日志
-      await this.getWeatherData()
+      // 首次加载时静默获取，不显示toast
+      await this.getWeatherData(false)
     }
   },
 

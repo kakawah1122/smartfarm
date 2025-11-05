@@ -10,80 +10,15 @@
 /* 表单内容区域 - 优化顶部安全间距 */
 .form-content {
   flex: 1;
-  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx); /* 状态栏 + 导航栏 + 安全间距 */
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 48rpx); /* 状态栏 + 导航栏 + 安全间距（增加间距） */
   padding-bottom: calc(32rpx + var(--safe-area-inset-bottom, 0));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* 表单头部信息卡片 - 优化顶部间距 */
-.form-header {
-  margin: 24rpx 24rpx 16rpx 24rpx; /* 增加顶部安全间距 */
-}
-
-.form-card {
-  background: var(--td-bg-color-container, #ffffff);
-  border-radius: 16rpx;
-  padding: 24rpx 20rpx; /* 减少内边距 */
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-}
-
-/* 批次ID区域 */
-.header-info {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.batch-id-section {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.batch-label {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  font-weight: 500;
-}
-
-.batch-id {
-  font-size: 32rpx;
-  color: var(--td-success-color, #00a870);
-  font-weight: 600;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12rpx 16rpx;
-  border-radius: 8rpx;
-  border: 1rpx solid var(--td-border-level-2-color, #ddd);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  /* 注意：组件WXSS不支持:hover伪类选择器，已移除悬停效果 */
-}
-
-.batch-text {
-  color: var(--td-text-color-primary, #000000);
-  font-weight: 500;
-}
-
-/* 日期信息 */
-.date-info {
-  padding: 16rpx 0;
-  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-}
-
-.date-text {
-  font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-}
-
 /* AI盘点信息卡片样式 - 紧凑间距 */
 .ai-info-section {
-  margin: 0rpx 24rpx 16rpx 24rpx; /* 与其他卡片保持一致的紧凑间距 */
+  margin: 24rpx 24rpx 16rpx 24rpx; /* 与其他卡片保持一致的紧凑间距 */
 }
 
 .ai-info-card {
@@ -242,13 +177,17 @@
 
 .section-header {
   margin-bottom: 8rpx; /* 减少标题与内容间距 */
-  padding: 0 8rpx;
+  padding: 0;
 }
 
 .section-title {
   font-size: 28rpx;
-  color: var(--td-text-color-secondary, #555555);
-  font-weight: 500;
+  font-weight: 600;
+  color: #0052d9; /* 蓝色文字 */
+  padding: 12rpx 16rpx;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); /* 蓝色渐变背景 */
+  border-radius: 8rpx;
+  margin: 0 8rpx;
 }
 
 /* 表单卡片样式 */
@@ -259,14 +198,25 @@
   overflow: hidden;
 }
 
+/* Picker包裹器样式 */
+.picker-wrapper {
+  display: block;
+  border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7); /* 虚线分隔 */
+}
+
 /* 表单项样式 */
 .form-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 88rpx;
-  padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  min-height: 72rpx; /* 减少高度，更紧凑 */
+  padding: 16rpx 24rpx; /* 减少内边距，更紧凑 */
+  border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7); /* 虚线分隔 */
+}
+
+/* picker内的form-item不需要底部边框 */
+.picker-wrapper .form-item {
+  border-bottom: none;
 }
 
 .form-item:last-child {
@@ -335,6 +285,25 @@
   display: block;
 }
 
+/* 批次选择器输入样式 */
+.batch-picker-input {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16rpx;
+}
+
+.picker-text {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  flex: 1;
+  text-align: right;
+  
+  &.placeholder {
+    color: var(--td-text-color-placeholder, #bbbbbb);
+  }
+}
+
 /* 日期输入特殊样式 */
 .date-input {
   display: flex;
@@ -394,51 +363,52 @@
   text-align: right;
 }
 
-/* 满屏备注框样式 - 调整边距 */
-.fullwidth-textarea-container {
-  margin: 0 -24rpx; /* 负边距来抵消父容器的内边距 */
-  background: var(--td-bg-color-container, #ffffff);
-  border-radius: 0;
+/* 文本域特殊样式 */
+.textarea-item {
+  display: flex;
+  align-items: flex-start;
+  min-height: 120rpx;
+  padding: 24rpx;
+}
+
+.item-textarea {
+  flex: 1;
+  width: 100%;
+}
+
+.item-textarea-input {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+}
+
+.item-textarea-input ::deep .t-textarea {
+  border: none !important;
+  background: transparent !important;
+}
+
+.item-textarea-input ::deep .t-textarea__control {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  text-align: left;
+  line-height: 1.6;
+  min-height: 120rpx;
+  background: transparent;
   border: none;
-  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  padding: 0;
+  width: 100%;
 }
 
-.fullwidth-textarea {
-  padding: 32rpx !important;
-  border: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+.item-textarea-input ::deep .t-textarea__placeholder {
+  color: var(--td-text-color-placeholder, #bbbbbb);
+  text-align: left;
 }
 
-.fullwidth-textarea ::deep .t-textarea {
-  border: none !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-}
-
-.fullwidth-textarea ::deep .t-textarea__control {
-  font-size: 30rpx !important;
-  color: var(--td-text-color-primary, #000000) !important;
-  text-align: left !important;
-  line-height: 1.6 !important;
-  min-height: 120rpx !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-.fullwidth-textarea ::deep .t-textarea__placeholder {
-  color: var(--td-text-color-placeholder, #bbbbbb) !important;
-  text-align: left !important;
-}
-
-.fullwidth-textarea ::deep .t-textarea__indicator {
-  color: var(--td-text-color-placeholder, #bbbbbb) !important;
-  font-size: 24rpx !important;
-  text-align: right !important;
-  margin-top: 16rpx !important;
+.item-textarea-input ::deep .t-textarea__indicator {
+  color: var(--td-text-color-placeholder, #bbbbbb);
+  font-size: 24rpx;
+  text-align: right;
+  margin-top: 16rpx;
 }
 
 /* 表单操作按钮 - 现代化样式 */
@@ -473,19 +443,11 @@
 /* 响应式设计 - 优化顶部安全间距 */
 @media screen and (max-width: 480px) {
   .form-content {
-    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 安全间距（小屏幕稍小） */
-  }
-  
-  .form-header {
-    margin: 16rpx 16rpx 12rpx 16rpx; /* 小屏幕的顶部安全间距 */
+    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx); /* 状态栏 + 导航栏 + 安全间距（小屏幕稍小，但增加间距） */
   }
   
   .ai-info-section {
-    margin: 0rpx 16rpx 12rpx 16rpx; /* AI信息卡片也要调整 */
-  }
-  
-  .form-card {
-    padding: 20rpx 16rpx; /* 进一步减少小屏幕的内边距 */
+    margin: 24rpx 16rpx 12rpx 16rpx; /* AI信息卡片也要调整 */
   }
   
   .form-section {
@@ -509,8 +471,8 @@
   
   /* 表单项响应式 */
   .form-item {
-    padding: 20rpx 24rpx;
-    min-height: 80rpx;
+    padding: 14rpx 20rpx; /* 小屏幕上更紧凑 */
+    min-height: 64rpx; /* 小屏幕上更紧凑 */
   }
   
   .item-label {
@@ -534,8 +496,12 @@
     font-size: 28rpx;
   }
   
-  .batch-id {
+  .picker-text {
     font-size: 28rpx;
+    
+    &.placeholder {
+      color: var(--td-text-color-placeholder, #bbbbbb);
+    }
   }
   
   .date-text {
@@ -544,20 +510,19 @@
   
   .section-title {
     font-size: 26rpx;
+    padding: 10rpx 14rpx;
+    margin: 0 4rpx;
   }
   
-  /* 满屏备注框响应式 */
-  .fullwidth-textarea-container {
-    margin: 0 -16rpx; /* 适应小屏幕的边距 */
+  /* 响应式备注框 */
+  .textarea-item {
+    padding: 20rpx;
+    min-height: 100rpx;
   }
   
-  .fullwidth-textarea {
-    padding: 24rpx !important;
-  }
-  
-  .fullwidth-textarea ::deep .t-textarea__control {
-    font-size: 28rpx !important;
-    min-height: 100rpx !important;
+  .item-textarea-input ::deep .t-textarea__control {
+    font-size: 28rpx;
+    min-height: 100rpx;
   }
 }
 

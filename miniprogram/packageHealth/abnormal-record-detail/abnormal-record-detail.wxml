@@ -18,7 +18,6 @@
     <!-- 基本信息 -->
     <view class="info-section">
       <view class="section-title">
-        <t-icon name="folder" size="32rpx" color="#0052d9" />
         <text class="title-text">基本信息</text>
       </view>
       <view class="info-rows">
@@ -49,7 +48,6 @@
     <!-- AI诊断 -->
     <view class="info-section">
       <view class="section-title">
-        <t-icon name="chart-bubble" size="32rpx" color="#00a870" />
         <text class="title-text">AI诊断</text>
         <t-tag theme="success" size="small">置信度 {{record.diagnosisConfidence}}%</t-tag>
       </view>
@@ -63,7 +61,6 @@
           <!-- 诊断依据 -->
           <view class="detail-item" wx:if="{{record.diagnosisDetails.reasoning}}">
             <view class="detail-label">
-              <t-icon name="check-circle" size="24rpx" color="#0052d9" />
               <text class="label-text">诊断依据</text>
             </view>
             <text class="detail-value" user-select="true">{{record.diagnosisDetails.reasoning}}</text>
@@ -72,7 +69,6 @@
           <!-- 病原体 -->
           <view class="detail-item" wx:if="{{record.diagnosisDetails.pathogen}}">
             <view class="detail-label">
-              <t-icon name="info-circle" size="24rpx" color="#ed7b2f" />
               <text class="label-text">病原体</text>
             </view>
             <text class="detail-value" user-select="true">{{record.diagnosisDetails.pathogen}}</text>
@@ -81,7 +77,6 @@
           <!-- 传播途径 -->
           <view class="detail-item" wx:if="{{record.diagnosisDetails.transmission}}">
             <view class="detail-label">
-              <t-icon name="arrow-triangle-down" size="24rpx" color="#00a870" />
               <text class="label-text">传播途径</text>
             </view>
             <text class="detail-value" user-select="true">{{record.diagnosisDetails.transmission}}</text>
@@ -93,7 +88,6 @@
     <!-- 症状描述 -->
     <view class="info-section" wx:if="{{record.symptoms}}">
       <view class="section-title">
-        <t-icon name="file-icon" size="32rpx" color="#ed7b2f" />
         <text class="title-text">症状描述</text>
       </view>
       <view class="symptoms-content">
@@ -104,7 +98,6 @@
     <!-- AI建议 -->
     <view class="info-section" wx:if="{{record.aiRecommendation}}">
       <view class="section-title">
-        <t-icon name="lightbulb" size="32rpx" color="#0052d9" />
         <text class="title-text">AI治疗建议</text>
       </view>
       <view class="recommendation-content">
@@ -112,7 +105,6 @@
         <!-- 立即措施 -->
         <view class="recommendation-section" wx:if="{{record.aiRecommendation.immediate}}">
           <view class="section-subtitle">
-            <text class="subtitle-icon">🚨</text>
             <text class="subtitle-text">立即措施</text>
           </view>
           <view class="measure-list">
@@ -126,7 +118,6 @@
         <!-- 用药方案 -->
         <view class="recommendation-section" wx:if="{{record.aiRecommendation.medication}}">
           <view class="section-subtitle">
-            <text class="subtitle-icon">💊</text>
             <text class="subtitle-text">用药方案</text>
           </view>
           <view class="medication-list">
@@ -157,7 +148,6 @@
         <!-- 支持性措施 -->
         <view class="recommendation-section" wx:if="{{record.aiRecommendation.supportive}}">
           <view class="section-subtitle">
-            <text class="subtitle-icon">🩹</text>
             <text class="subtitle-text">支持性措施</text>
           </view>
           <view class="measure-list">
@@ -171,7 +161,6 @@
         <!-- 跟进观察 -->
         <view class="recommendation-section" wx:if="{{record.aiRecommendation.followUp}}">
           <view class="section-subtitle">
-            <text class="subtitle-icon">📋</text>
             <text class="subtitle-text">跟进观察</text>
           </view>
           <view class="followup-content">
@@ -196,7 +185,6 @@
     <!-- 修正记录卡片 -->
     <view class="info-card correction-card" wx:if="{{record.isCorrected}}">
       <view class="card-title">
-        <t-icon name="check-circle" size="32rpx" color="#00a870" />
         <text class="title-text">诊断修正记录</text>
         <t-tag theme="success" size="small">已确认</t-tag>
       </view>
@@ -239,7 +227,6 @@
     <!-- 图片 -->
     <view class="info-section" wx:if="{{record.images && record.images.length > 0}}">
       <view class="section-title">
-        <t-icon name="image" size="32rpx" color="#0052d9" />
         <text class="title-text">相关图片</text>
       </view>
       <view class="images-grid">
@@ -380,7 +367,6 @@
           </view>
 
           <view class="form-tip">
-            <t-icon name="info-circle" size="28rpx" color="#0052d9" />
             <text class="tip-text">您的修正将帮助AI系统学习和改进诊断能力</text>
           </view>
 

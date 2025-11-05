@@ -291,9 +291,6 @@
             <text class="stat-value">AI智能诊断</text>
             <text class="stat-label">快速识别疾病，智能推荐治疗方案</text>
           </view>
-          <view class="stat-arrow">
-            <t-icon name="chevron-right" size="20" color="#7C3AED" />
-          </view>
         </view>
         
         <!-- 统计卡片（四列） -->

@@ -37,6 +37,14 @@
   font-weight: 600;
   color: #0052d9; // 优化：蓝色文字
   flex-shrink: 0; // 标题不缩小
+  
+  // 当 section-title 不在 section-header 内时，添加完整的样式
+  .form-section > & {
+    margin: 20rpx 20rpx 12rpx; // 与卡片保持一致的间距
+    padding: 12rpx 16rpx; // 内边距
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); // 蓝色渐变背景
+    border-radius: 8rpx;
+  }
 }
 
 // 使用提示

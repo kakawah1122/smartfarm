@@ -80,6 +80,14 @@
 
         <!-- 记录内容 -->
         <view class="record-content">
+          <!-- 第一行：治疗编号 -->
+          <view class="info-row" wx:if="{{item.treatmentNumber}}">
+            <view class="info-group full-width">
+              <text class="info-label">编号：</text>
+              <text class="info-value">{{item.treatmentNumber}}</text>
+            </view>
+          </view>
+          
           <!-- 信息行：批次 + 治愈数量 + 治疗数量 -->
           <view class="info-row">
             <view class="info-group">
@@ -133,12 +141,16 @@
       <view class="detail-section">
         <view class="section-title">诊断信息</view>
         <view class="info-card">
+          <view class="info-row" wx:if="{{selectedRecord.treatmentNumber}}">
+            <text class="info-label">治疗编号</text>
+            <text class="info-value">{{selectedRecord.treatmentNumber}}</text>
+          </view>
           <view class="info-row">
             <text class="info-label">诊断结果</text>
             <text class="info-value">{{selectedRecord.diagnosis.confirmed || selectedRecord.diagnosis.preliminary}}</text>
           </view>
           <view class="info-row">
-            <text class="info-label">治疗批次</text>
+            <text class="info-label">鹅群批次</text>
             <text class="info-value">{{selectedRecord.batchNumber || selectedRecord.batchId}}</text>
           </view>
           <view class="info-row">

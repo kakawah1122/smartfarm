@@ -1328,14 +1328,9 @@ Page({
       // 检查缓存是否超过1小时
       if (now - cacheTime > oneHour) {
         
-        // 静默刷新，不显示loading
+        // 静默刷新，不显示loading和toast
         this.getWeatherData(true).then(() => {
-          // 可以显示一个轻量提示
-          wx.showToast({
-            title: '天气已更新',
-            icon: 'none',
-            duration: 1000
-          })
+          // 静默更新成功，不显示任何提示
         }).catch((error: any) => {
           // 已移除调试日志
           // 静默失败，不干扰用户体验

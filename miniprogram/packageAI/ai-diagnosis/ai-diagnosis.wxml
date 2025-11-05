@@ -94,7 +94,6 @@
       <!-- 病鹅诊断：立即措施卡片 -->
       <view class="diagnosis-card action-card" wx:if="{{diagnosisType === 'live_diagnosis' && diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.immediate}}">
         <view class="card-header">
-          <t-icon name="notification" size="20" color="#e34d59" />
           <view class="card-title">立即措施</view>
         </view>
         <view class="card-body">
@@ -114,7 +113,6 @@
       <!-- 病鹅诊断：药物治疗卡片 -->
       <view class="diagnosis-card medication-card" wx:if="{{diagnosisType === 'live_diagnosis' && diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.medication}}">
         <view class="card-header">
-          <t-icon name="edit" size="20" color="#0052d9" />
           <view class="card-title">药物治疗方案</view>
         </view>
         <view class="card-body">
@@ -124,7 +122,6 @@
             wx:key="index"
           >
             <view class="med-name-row">
-              <t-icon name="check-circle" size="18" color="#0052d9" />
               <text class="med-name-text">{{item.name}}</text>
             </view>
             <view class="med-info-grid">
@@ -152,7 +149,6 @@
       <!-- 病鹅诊断：支持性治疗卡片 -->
       <view class="diagnosis-card" wx:if="{{diagnosisType === 'live_diagnosis' && diagnosisResult.treatmentRecommendation && diagnosisResult.treatmentRecommendation.supportive}}">
         <view class="card-header">
-          <t-icon name="heart" size="20" color="#ed7b2f" />
           <view class="card-title">支持性治疗</view>
         </view>
         <view class="card-body">
@@ -172,7 +168,6 @@
       <!-- 预防建议卡片（两种类型都显示） -->
       <view class="diagnosis-card" wx:if="{{diagnosisResult.preventionAdvice || diagnosisResult.preventionMeasures}}">
         <view class="card-header">
-          <t-icon name="secured" size="20" color="#00a870" />
           <view class="card-title">预防建议</view>
         </view>
         <view class="card-body">
@@ -192,7 +187,6 @@
       <!-- 死因剖析：生物安全建议 -->
       <view class="diagnosis-card" wx:if="{{diagnosisType === 'autopsy_analysis' && diagnosisResult.biosecurityAdvice}}">
         <view class="card-header">
-          <t-icon name="error-circle" size="20" color="#e34d59" />
           <view class="card-title">生物安全建议</view>
         </view>
         <view class="card-body">

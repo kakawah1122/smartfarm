@@ -19,11 +19,13 @@
   overflow: hidden;
   
   .section-title {
-    padding: 32rpx 32rpx 16rpx;
-    font-size: 32rpx;
+    font-size: 28rpx;
     font-weight: 600;
-    color: #1a1a1a;
-    border-bottom: 2rpx solid #f0f0f0;
+    color: #0052d9; /* 蓝色文字 */
+    padding: 12rpx 16rpx;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); /* 蓝色渐变背景 */
+    border-radius: 8rpx;
+    margin: 8rpx 8rpx 16rpx 8rpx;
   }
   
   .section-header {

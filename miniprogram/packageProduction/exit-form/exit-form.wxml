@@ -11,25 +11,6 @@
 
   <!-- 表单内容区域 -->
   <view class="form-content">
-    <!-- 表单顶部信息卡片 -->
-    <view class="form-header">
-      <view class="form-card">
-        <view class="header-info">
-          <view class="batch-id-section">
-            <view class="batch-label">批次ID</view>
-            <view class="batch-id" bind:tap="showBatchPicker">
-              <text class="batch-text">{{formData.batchId || '请选择入栏批次'}}</text>
-              <t-icon name="chevron-down" size="24" color="#666" />
-            </view>
-            <t-tag theme="primary" size="small">从入栏批次选择</t-tag>
-          </view>
-          <view class="date-info">
-            <text class="date-text">{{formData.exitDate || '请选择出栏日期'}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
     <!-- AI盘点信息卡片 -->
     <view wx:if="{{showAIInfo}}" class="ai-info-section">
       <view class="ai-info-card">
@@ -64,6 +45,15 @@
           <text class="section-title">基础信息</text>
         </view>
         <view class="form-card">
+          <!-- 批次ID选择 -->
+          <view class="form-item" bind:tap="showBatchPicker">
+            <view class="item-label required">批次ID</view>
+            <view class="item-input batch-picker-input">
+              <text class="picker-text {{formData.batchId ? '' : 'placeholder'}}">{{formData.batchId || '请选择入栏批次（从入栏批次选择）'}}</text>
+              <t-icon name="chevron-down" size="32" color="#c8c9cc" />
+            </view>
+          </view>
+
           <!-- 出栏日期（使用原生 picker）-->
           <picker 
             mode="date" 
@@ -71,6 +61,7 @@
             start="2020-01-01"
             end="{{maxDate}}"
             bind:change="onDateConfirm"
+            class="picker-wrapper"
           >
             <view class="form-item">
               <view class="item-label required">出栏日期</view>
@@ -79,14 +70,6 @@
               </view>
             </view>
           </picker>
-
-          <!-- 鹅的类型（从入栏批次自动获取） -->
-          <view class="form-item">
-            <view class="item-label non-required">鹅的品种</view>
-            <view class="item-input">
-              <text class="auto-fill-text-right">{{formData.type || '请先选择入栏批次'}}</text>
-            </view>
-          </view>
 
           <!-- 客户信息 -->
           <view class="form-item">
@@ -128,23 +111,6 @@
           <text class="section-title">重量与价格</text>
         </view>
         <view class="form-card">
-          <!-- 平均重量 -->
-          <view class="form-item">
-            <view class="item-label required">平均重量</view>
-            <view class="item-input">
-              <t-input
-                placeholder="请输入平均重量"
-                value="{{formData.avgWeight}}"
-                type="digit"
-                bind:change="onFieldChange"
-                data-field="avgWeight"
-                suffix="斤/羽"
-                borderless
-                align="right"
-              />
-            </view>
-          </view>
-
           <!-- 单价（按重量） -->
           <view class="form-item">
             <view class="item-label required">单价</view>
@@ -162,11 +128,36 @@
             </view>
           </view>
 
+          <!-- 平均重量 -->
+          <view class="form-item">
+            <view class="item-label non-required">平均重量</view>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入平均重量"
+                value="{{formData.avgWeight}}"
+                type="digit"
+                bind:change="onFieldChange"
+                data-field="avgWeight"
+                suffix="斤/羽"
+                borderless
+                align="right"
+              />
+            </view>
+          </view>
+
           <!-- 总重量 -->
           <view class="form-item">
             <view class="item-label non-required">总重量</view>
-            <view class="item-value">
-              <text class="weight-value">{{totalWeight}}斤</text>
+            <view class="item-input">
+              <t-input
+                placeholder="请输入总重量"
+                value="{{totalWeight}}"
+                type="digit"
+                bind:change="onTotalWeightChange"
+                suffix="斤"
+                borderless
+                align="right"
+              />
             </view>
           </view>
 
@@ -185,18 +176,22 @@
         <view class="section-header">
           <text class="section-title">备注</text>
         </view>
-        <!-- 备注输入框 - 左右满屏 -->
-        <view class="fullwidth-textarea-container">
-          <t-textarea
-            placeholder="请输入备注信息（可选）"
-            value="{{formData.remarks}}"
-            bind:change="onFieldChange"
-            data-field="remarks"
-            maxlength="200"
-            indicator
-            autosize
-            class="fullwidth-textarea"
-          />
+        <!-- 备注输入框 - 与上方卡片宽度一致 -->
+        <view class="form-card">
+          <view class="textarea-item">
+            <view class="item-textarea">
+              <t-textarea
+                placeholder="请输入备注信息（可选）"
+                value="{{formData.remarks}}"
+                bind:change="onFieldChange"
+                data-field="remarks"
+                maxlength="200"
+                indicator
+                autosize
+                class="item-textarea-input"
+              />
+            </view>
+          </view>
         </view>
       </view>
 
