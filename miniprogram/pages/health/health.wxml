@@ -407,7 +407,6 @@
         </view>
         <view class="empty-placeholder" wx:else>
           <t-empty 
-            icon="chart-bubble" 
             description="近7天暂无诊断记录"
           />
         </view>

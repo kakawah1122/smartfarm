@@ -1172,6 +1172,13 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   .empty-placeholder {
     padding: 60rpx 0;
     text-align: center;
+    
+    // 移除 t-empty 默认的图标占位
+    t-empty {
+      --td-empty-icon-size: 0;
+      --td-empty-image-height: 0;
+    }
+    
     .empty-text {
       font-size: 28rpx;
       color: var(--td-text-color-placeholder);
@@ -1346,6 +1353,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     .empty-placeholder {
       padding: $spacing-2xl 0;
       text-align: center;
+      
+      // 移除 t-empty 默认的图标占位
+      t-empty {
+        --td-empty-icon-size: 0;
+        --td-empty-image-height: 0;
+      }
     }
   }
 }
