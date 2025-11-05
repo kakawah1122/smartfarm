@@ -126,7 +126,6 @@
       <!-- 空状态 -->
       <view wx:if="{{!loading && isEmpty}}" class="empty-state">
         <t-empty 
-          icon="file" 
           description="暂无出栏记录"
         >
           <t-button theme="primary" size="small" bind:tap="addExit" class="primary-button">

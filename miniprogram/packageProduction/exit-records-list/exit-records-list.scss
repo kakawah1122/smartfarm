@@ -239,6 +239,12 @@ page {
   padding: 80rpx 40rpx;
   text-align: center;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  
+  // 移除 t-empty 默认的图标占位
+  t-empty {
+    --td-empty-icon-size: 0;
+    --td-empty-image-height: 0;
+  }
 }
 
 /* 响应式设计 */
