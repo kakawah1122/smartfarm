@@ -1600,6 +1600,15 @@
       margin-top: 16rpx;
     }
   }
+  
+  // ========== 治疗笔记 textarea 自定义样式 ==========
+  :global(.treatment-note-textarea) {
+    min-height: 80rpx !important;
+    
+    textarea {
+      min-height: 80rpx !important;
+    }
+  }
 }
 
 .form-hint-inline {

@@ -450,26 +450,9 @@
     </view>
     
     <scroll-view scroll-y class="sheet-scroll">
-      <!-- 治疗笔记 -->
-      <view class="form-section-inline">
-        <view class="section-title-inline">
-          <text class="title-icon">📝</text>
-          <text class="title-text">治疗笔记</text>
-          <text class="title-optional">（可选）</text>
-        </view>
-        <t-textarea
-          value="{{noteForm.content}}"
-          placeholder="记录治疗观察、病情变化、食欲情况等"
-          maxlength="500"
-          data-field="content"
-          bind:change="onNoteFormInput"
-        />
-      </view>
-      
       <!-- 追加用药 -->
       <view class="form-section-inline">
         <view class="section-title-inline">
-          <text class="title-icon">💊</text>
           <text class="title-text">追加用药</text>
           <text class="title-optional">（可选，支持联合用药）</text>
         </view>
@@ -542,9 +525,21 @@
         </view>
       </view>
       
-      <view class="form-hint-inline">
-        <text class="hint-icon">💡</text>
-        <text class="hint-text">至少填写一项内容，会记录在治疗历史中</text>
+      <!-- 治疗笔记 -->
+      <view class="form-section-inline">
+        <view class="section-title-inline">
+          <text class="title-text">治疗笔记</text>
+          <text class="title-optional">（可选）</text>
+        </view>
+        <t-textarea
+          value="{{noteForm.content}}"
+          placeholder="记录治疗观察、病情变化、食欲情况等"
+          maxlength="500"
+          autosize="{{true}}"
+          data-field="content"
+          bind:change="onNoteFormInput"
+          t-class="treatment-note-textarea"
+        />
       </view>
     </scroll-view>
     
