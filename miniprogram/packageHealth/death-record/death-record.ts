@@ -220,32 +220,21 @@ const pageConfig = {
   // 使用批次信息计算财务损失
   async calculateFinancialLossWithBatch(batch: any) {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'calculateBatchCost',
-          batchId: this.data.formData.batchId
-        }
-      })
+      // ✅ 直接使用批次的入栏单价（unitPrice），不分摊饲养成本
+      const costPerAnimal = parseFloat(batch.unitPrice) || 0
+      const deathCount = this.data.formData.deathCount
+      const treatmentCost = this.data.financialLoss.treatmentCost || 0
       
-      if (result.result && result.result.success) {
-        // ✅ 修正：使用 avgTotalCost（综合成本）而不是 averageCost（只包含物料成本）
-        // avgTotalCost = (入栏成本 + 物料成本 + 预防成本 + 治疗成本) / 当前数量
-        const costPerAnimal = parseFloat(result.result.data.avgTotalCost || 0)
-        const deathCount = this.data.formData.deathCount
-        const treatmentCost = this.data.financialLoss.treatmentCost || 0
-        
-        // ✅ 注意：avgTotalCost 已包含治疗成本，这里的 treatmentCost 是本次治疗的额外成本
-        // 对于从治疗记录创建的死亡，treatmentCost会被设置；其他情况为0
-        const totalLoss = (costPerAnimal * deathCount) + treatmentCost
-        
-        this.setData({
-          'financialLoss.costPerAnimal': costPerAnimal,
-          'financialLoss.totalLoss': totalLoss
-        })
-      }
+      // 总损失 = 入栏单价 × 死亡数量 + 治疗成本
+      const totalLoss = (costPerAnimal * deathCount) + treatmentCost
+      
+      this.setData({
+        'financialLoss.costPerAnimal': costPerAnimal,
+        'financialLoss.totalLoss': totalLoss
+      })
     } catch (error) {
       // 计算失败，静默处理
+      console.error('计算财务损失失败:', error)
     }
   },
 

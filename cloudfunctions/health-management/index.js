@@ -19,6 +19,38 @@ function generateRecordId(prefix) {
   return `${prefix}${timestamp}${random}`
 }
 
+// 生成治疗记录编号 ZL-YYYYMMDD-001
+async function generateTreatmentNumber() {
+  try {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const dateStr = `${year}${month}${day}`
+    const prefix = `ZL-${dateStr}-`
+    
+    // 查询今天已有的治疗记录数量
+    const todayStart = `${year}-${month}-${day}T00:00:00.000Z`
+    const todayEnd = `${year}-${month}-${day}T23:59:59.999Z`
+    
+    const countResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where({
+        createdAt: _.gte(new Date(todayStart)).and(_.lte(new Date(todayEnd)))
+      })
+      .count()
+    
+    const todayCount = countResult.total || 0
+    const sequenceNumber = String(todayCount + 1).padStart(3, '0')
+    
+    return `${prefix}${sequenceNumber}`
+  } catch (error) {
+    console.error('生成治疗记录编号失败:', error)
+    // 如果生成失败，使用时间戳作为备选方案
+    const timestamp = Date.now().toString().slice(-6)
+    return `ZL-${timestamp}`
+  }
+}
+
 // 计算批次当前日龄
 function calculateDayAge(entryDate) {
   if (!entryDate) return 1
@@ -453,8 +485,12 @@ async function createTreatmentFromAbnormal(event, wxContext) {
     const hasMedicationsEvent = !!event.hasMedications
     const hasMedications = hasMedicationsPayload || hasMedicationsEvent
     
+    // 生成治疗记录编号
+    const treatmentNumber = await generateTreatmentNumber()
+    
     // 创建治疗记录
     const treatmentData = {
+      treatmentNumber,  // ✅ 新增：治疗记录编号
       batchId,
       abnormalRecordId,  // 关联异常记录
       animalIds: [],
@@ -658,7 +694,10 @@ async function createTreatmentFromAbnormal(event, wxContext) {
     
     return {
       success: true,
-      data: { treatmentId: treatmentResult._id },
+      data: { 
+        treatmentId: treatmentResult._id,
+        treatmentNumber: treatmentNumber  // ✅ 返回治疗记录编号
+      },
       message: '治疗记录创建成功'
     }
   } catch (error) {
@@ -812,45 +851,19 @@ async function createDeathFromVaccine(event, wxContext) {
       throw new Error(`批次不存在: ${batchId}`)
     }
     
-    // 3. 计算平均成本
-    console.log('[疫苗死亡] 开始计算批次成本:', {
-      batchId: batchId,
-      batchDocId: batchDocId,
-      batchNumber: batch.batchNumber
-    })
-    
-    const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
-    
-    console.log('[疫苗死亡] 成本计算结果:', {
-      success: costResult.success,
-      avgCost: costResult.data?.avgCost,
-      avgTotalCost: costResult.data?.avgTotalCost,
-      entryUnitCost: costResult.data?.entryUnitCost,
-      hasData: !!costResult.data
-    })
-    
-    if (!costResult.success) {
-      throw new Error('计算成本失败: ' + (costResult.message || '未知错误'))
-    }
-    
-    // ✅ 使用综合成本（包含入栏价）而不是饲养成本
-    // avgTotalCost = (入栏成本 + 物料成本 + 预防成本 + 治疗成本) / 当前数量
-    let unitCost = parseFloat(costResult.data.avgTotalCost) || 0
-    
-    // 如果综合成本为0，尝试使用入栏单价
-    if (unitCost === 0) {
-      unitCost = parseFloat(costResult.data.entryUnitCost) || 0
-      console.log('[疫苗死亡] 综合成本为0，使用入栏单价:', unitCost)
-    }
-    
-    const totalLoss = (unitCost * deathCount).toFixed(2)
+    // 3. 计算死亡损失 = 入栏单价 × 死亡数量（不分摊饲养成本）
+    const entryUnitPrice = parseFloat(batch.unitPrice) || 0
+    const totalLoss = (entryUnitPrice * deathCount).toFixed(2)
     
     console.log('[疫苗死亡] 财务计算:', {
       deathCount: deathCount,
-      unitCost: unitCost,
+      entryUnitPrice: entryUnitPrice,
       totalLoss: totalLoss,
-      isZero: unitCost === 0,
-      costBreakdown: costResult.data?.breakdown
+      batchInfo: {
+        batchNumber: batch.batchNumber,
+        initialQuantity: batch.quantity,
+        currentCount: batch.currentCount
+      }
     })
     
     // 4. 获取用户信息
@@ -892,9 +905,9 @@ async function createDeathFromVaccine(event, wxContext) {
       photos: [],
       environmentFactors: {},
       financialLoss: {
-        unitCost: unitCost.toFixed(2),
+        unitCost: entryUnitPrice.toFixed(2),
         totalLoss: totalLoss,
-        calculationMethod: 'batch_average',
+        calculationMethod: 'entry_unit_price',
         financeRecordId: ''
       },
       disposalMethod: '待处理',
@@ -919,7 +932,7 @@ async function createDeathFromVaccine(event, wxContext) {
       console.log('[疫苗死亡] 准备创建财务记录:', {
         deathRecordId,
         deathCount,
-        unitCost: unitCost.toFixed(2),
+        entryUnitPrice: entryUnitPrice.toFixed(2),
         totalLoss
       })
       
@@ -931,7 +944,7 @@ async function createDeathFromVaccine(event, wxContext) {
           batchNumber: batchNumber || batch.batchNumber,
           deathRecordId,
           deathCount,
-          unitCost: unitCost.toFixed(2),
+          unitCost: entryUnitPrice.toFixed(2),
           totalLoss,
           deathCause: deathCause || '疫苗接种后死亡',
           recordDate: new Date().toISOString().split('T')[0],
@@ -1510,7 +1523,11 @@ async function createTreatmentRecord(event, wxContext) {
     } = event
     const openid = wxContext.OPENID
 
+    // 生成治疗记录编号
+    const treatmentNumber = await generateTreatmentNumber()
+
     const recordData = {
+      treatmentNumber,  // ✅ 新增：治疗记录编号
       batchId,
       healthRecordId,
       diagnosisId: diagnosisId || '',  // ✅ 新增：关联AI诊断记录ID
@@ -1584,7 +1601,10 @@ async function createTreatmentRecord(event, wxContext) {
 
     return {
       success: true,
-      data: { recordId: result._id },
+      data: { 
+        recordId: result._id,
+        treatmentNumber: treatmentNumber  // ✅ 返回治疗记录编号
+      },
       message: '治疗记录创建成功'
     }
 
@@ -3611,44 +3631,19 @@ async function createDeathRecord(event, wxContext) {
       throw new Error(`死亡数量不能超过当前存栏数(${batch.currentCount})`)
     }
     
-    // 3. 计算平均成本（✅ 使用批次文档的真实_id而不是批次号）
-    console.log('[标准死亡] 开始计算批次成本:', {
-      batchId: batchId,
-      batchDocId: batchDocId,
-      batchNumber: batch.batchNumber
-    })
-    
-    const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
-    
-    console.log('[标准死亡] 成本计算结果:', {
-      success: costResult.success,
-      avgCost: costResult.data?.avgCost,
-      avgTotalCost: costResult.data?.avgTotalCost,
-      entryUnitCost: costResult.data?.entryUnitCost,
-      hasData: !!costResult.data
-    })
-    
-    if (!costResult.success) {
-      throw new Error('计算成本失败: ' + (costResult.message || '未知错误'))
-    }
-    
-    // ✅ 使用综合成本（包含入栏价）而不是饲养成本
-    let unitCost = parseFloat(costResult.data.avgTotalCost) || 0
-    
-    // 如果综合成本为0，尝试使用入栏单价
-    if (unitCost === 0) {
-      unitCost = parseFloat(costResult.data.entryUnitCost) || 0
-      console.log('[标准死亡] 综合成本为0，使用入栏单价:', unitCost)
-    }
-    
-    const totalLoss = (unitCost * deathCount).toFixed(2)
+    // 3. 计算死亡损失 = 入栏单价 × 死亡数量（不分摊饲养成本）
+    const entryUnitPrice = parseFloat(batch.unitPrice) || 0
+    const totalLoss = (entryUnitPrice * deathCount).toFixed(2)
     
     console.log('[标准死亡] 财务计算:', {
       deathCount: deathCount,
-      unitCost: unitCost,
+      entryUnitPrice: entryUnitPrice,
       totalLoss: totalLoss,
-      isZero: unitCost === 0,
-      costBreakdown: costResult.data?.breakdown
+      batchInfo: {
+        batchNumber: batch.batchNumber,
+        initialQuantity: batch.quantity,
+        currentCount: batch.currentCount
+      }
     })
     
     // 4. 获取用户信息
@@ -3689,9 +3684,9 @@ async function createDeathRecord(event, wxContext) {
       photos: photos || [],
       environmentFactors: environmentFactors || {},
       financialLoss: {
-        unitCost: unitCost.toFixed(2),
+        unitCost: entryUnitPrice.toFixed(2),
         totalLoss: totalLoss,
-        calculationMethod: 'batch_average',
+        calculationMethod: 'entry_unit_price',
         financeRecordId: ''
       },
       disposalMethod,
@@ -3716,7 +3711,7 @@ async function createDeathRecord(event, wxContext) {
       console.log('[标准死亡] 准备创建财务记录:', {
         deathRecordId,
         deathCount,
-        unitCost: unitCost.toFixed(2),
+        entryUnitPrice: entryUnitPrice.toFixed(2),
         totalLoss
       })
       
@@ -3728,7 +3723,7 @@ async function createDeathRecord(event, wxContext) {
           batchNumber: batchNumber || batch.batchNumber,
           deathRecordId,
           deathCount,
-          unitCost: unitCost.toFixed(2),
+          unitCost: entryUnitPrice.toFixed(2),
           totalLoss,
           deathCause,
           recordDate: deathDate || new Date().toISOString().split('T')[0],
@@ -3754,8 +3749,8 @@ async function createDeathRecord(event, wxContext) {
       // 不影响主流程，继续执行
     }
     
-    // 7. 更新批次数量
-    await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).update({
+    // 7. 更新批次数量（✅ 修复：使用批次文档ID而不是传入的batchId）
+    await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchDocId).update({
       data: {
         currentCount: _.inc(-deathCount),
         deadCount: _.inc(deathCount),
@@ -4358,14 +4353,8 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       }
       
       if (batch) {
-        const avgCost = await calculateBatchCost({ batchId: batchDocId }, wxContext)
-        // ✅ 使用综合成本（包含入栏价）
-        costPerAnimal = parseFloat(avgCost.data?.avgTotalCost) || 0
-        
-        // 如果综合成本为0，尝试使用入栏单价
-        if (costPerAnimal === 0) {
-          costPerAnimal = parseFloat(avgCost.data?.entryUnitCost) || 0
-        }
+        // ✅ 直接使用入栏单价，不分摊饲养成本
+        costPerAnimal = parseFloat(batch.unitPrice) || 0
       }
     } catch (costError) {
       console.error('计算财务损失失败:', costError.message)
@@ -5180,44 +5169,15 @@ async function updateTreatmentProgress(event, wxContext) {
       console.log('批次数据:', JSON.stringify(batch))
       
       if (batch) {
-        try {
-          console.log('调用 calculateBatchCost，传入 batchId:', batchDocId)
-          const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
-          console.log('calculateBatchCost 返回结果:', JSON.stringify(costResult))
-          
-          if (costResult.success) {
-            // ✅ 使用综合成本（包含入栏价）
-            unitCost = parseFloat(costResult.data.avgTotalCost || 0)
-            breedingCostPerAnimal = parseFloat(costResult.data.avgBreedingCost || 0)
-            console.log('从成本计算结果获取 - 综合成本:', unitCost, '饲养成本:', breedingCostPerAnimal)
-            
-            // 如果综合成本为0，尝试使用入栏单价
-            if (unitCost === 0) {
-              unitCost = parseFloat(costResult.data.entryUnitCost || 0)
-              console.log('综合成本为0，使用入栏单价:', unitCost)
-            }
-          }
-        } catch (costError) {
-          console.error('❌ 计算成本失败:', costError)
-          console.error('错误详情:', costError.message, costError.stack)
-        }
-        
-        // 如果成本计算失败，尝试直接使用批次入栏单价
-        if ((unitCost === 0 || isNaN(unitCost)) && batch) {
-          unitCost = batch.unitPrice || 0  // ✅ 修正：数据库字段名是 unitPrice
-          console.log('使用批次文档中的入栏单价:', unitCost)
-          console.log('批次对象的 unitPrice 字段:', batch.unitPrice)
-        }
+        // ✅ 直接使用入栏单价，不分摊饲养成本
+        unitCost = parseFloat(batch.unitPrice) || 0
+        console.log('使用批次入栏单价:', unitCost)
       } else {
         console.error('❌ 批次数据为空')
       }
       
-      console.log('最终获取的入栏单价:', unitCost)
-      console.log('========== 批次成本计算结束 ==========')
-      
       if (unitCost === 0) {
         console.warn(`❌ 批次 ${batchNumber} (文档ID: ${batchDocId}) 缺少入栏单价`)
-        console.warn('批次完整数据:', JSON.stringify(batch, null, 2))
         throw new Error(`批次 ${batchNumber} 缺少入栏单价，请先补充批次入栏单价`)
       }
       
@@ -5250,10 +5210,9 @@ async function updateTreatmentProgress(event, wxContext) {
       const deathTreatmentCost = treatmentCostPerAnimal * count
       const deathMedicationCost = medicationCostPerAnimal * count
       
-      // 计算财务损失 = 入栏单价 + 物料成本 + 治疗成本
+      // ✅ 计算财务损失 = 入栏单价 × 死亡数量 + 治疗成本（不分摊饲养成本）
       const entryCostLoss = unitCost * count
-      const breedingCostLoss = breedingCostPerAnimal * count
-      const financeLoss = entryCostLoss + breedingCostLoss + deathTreatmentCost
+      const financeLoss = entryCostLoss + deathTreatmentCost
       
       // ✅ 先查找是否已存在该治疗记录的死亡记录
       const existingDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
@@ -5284,9 +5243,6 @@ async function updateTreatmentProgress(event, wxContext) {
         const oldMedicationCost = existingRecord.financialLoss?.medicationCost || existingRecord.medicationCost || 0
         const newMedicationCost = oldMedicationCost + deathMedicationCost
         
-        const oldBreedingCost = existingRecord.financialLoss?.breedingCost || existingRecord.breedingCost || 0
-        const newBreedingCost = oldBreedingCost + breedingCostLoss
-        
         await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).doc(deathRecordId).update({
           data: {
             deathCount: newDeathCount,
@@ -5294,11 +5250,9 @@ async function updateTreatmentProgress(event, wxContext) {
             totalCost: parseFloat(newFinanceLoss.toFixed(2)),
             treatmentCost: parseFloat(newTreatmentCost.toFixed(2)),
             medicationCost: parseFloat(newMedicationCost.toFixed(2)),
-            breedingCost: parseFloat(newBreedingCost.toFixed(2)),
             // ✅ 同时更新结构化的 financialLoss 对象
             'financialLoss.totalLoss': parseFloat(newFinanceLoss.toFixed(2)),
             'financialLoss.treatmentCost': parseFloat(newTreatmentCost.toFixed(2)),
-            'financialLoss.breedingCost': parseFloat(newBreedingCost.toFixed(2)),
             updatedAt: new Date()
           }
         })
@@ -5319,7 +5273,6 @@ async function updateTreatmentProgress(event, wxContext) {
           source: 'treatment',
           financeLoss: parseFloat(financeLoss.toFixed(2)),
           unitCost: parseFloat(unitCost.toFixed(2)),
-          breedingCost: parseFloat(breedingCostLoss.toFixed(2)),
           costPerAnimal: parseFloat(unitCost.toFixed(2)),
           totalCost: parseFloat(financeLoss.toFixed(2)),
           treatmentCost: parseFloat(deathTreatmentCost.toFixed(2)),
@@ -5335,9 +5288,9 @@ async function updateTreatmentProgress(event, wxContext) {
           // ✅ 新增结构化财务损失字段，兼容死亡记录列表页面
           financialLoss: {
             totalLoss: parseFloat(financeLoss.toFixed(2)),
-            costPerAnimal: parseFloat(unitCost.toFixed(2)),
+            unitCost: parseFloat(unitCost.toFixed(2)),
             treatmentCost: parseFloat(deathTreatmentCost.toFixed(2)),
-            breedingCost: parseFloat(breedingCostLoss.toFixed(2)),
+            calculationMethod: 'entry_unit_price',
             currency: 'CNY'
           }
         }
@@ -5550,36 +5503,13 @@ async function createDeathRecordWithFinance(event, wxContext) {
       throw new Error(`批次不存在: ${batchId}`)
     }
     
-    // 计算成本数据（✅ 使用批次文档的真实_id而不是批次号）
-    let unitCost = 0
-    let breedingCostPerAnimal = 0
-    
-    try {
-      const costResult = await calculateBatchCost({ batchId: batchDocId }, wxContext)
-      if (costResult.success) {
-        // ✅ 使用综合成本（包含入栏价）
-        unitCost = parseFloat(costResult.data.avgTotalCost || 0)
-        breedingCostPerAnimal = parseFloat(costResult.data.avgBreedingCost || 0)
-        
-        // 如果综合成本为0，尝试使用入栏单价
-        if (unitCost === 0) {
-          unitCost = parseFloat(costResult.data.entryUnitCost || 0)
-        }
-      }
-    } catch (costError) {
-      console.error('计算成本失败:', costError.message)
-    }
-    
-    if (unitCost === 0 || isNaN(unitCost)) {
-      unitCost = batch.unitPrice || 0  // ✅ 修正：数据库字段名是 unitPrice
-    }
+    // 计算死亡损失 = 入栏单价 × 死亡数量（不分摊饲养成本）
+    const unitCost = parseFloat(batch.unitPrice) || 0
     
     if (unitCost === 0) {
       throw new Error(`批次 ${batch.batchNumber} 缺少入栏单价，请先在入栏记录中补充单价`)
     }
     
-    // ✅ 修正：财务损失 = 综合成本（已包含所有成本，无需重复计算）
-    // unitCost = avgTotalCost（已包含：入栏成本 + 物料成本 + 预防成本 + 治疗成本）
     const financeLoss = unitCost * deathCount
     
     console.log('[AI死因剖析] 成本计算:', {
@@ -5625,7 +5555,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
       financialLoss: {
         unitCost: parseFloat(unitCost.toFixed(2)),
         totalLoss: parseFloat(financeLoss.toFixed(2)),
-        calculationMethod: 'batch_average',
+        calculationMethod: 'entry_unit_price',
         treatmentCost: 0
       },
       operator: openid,
