@@ -68,7 +68,7 @@
             <view class="records-container">
               <!-- 空状态显示 -->
               <view wx:if="{{entryRecords.length === 0 && !loading}}" class="empty-state">
-                <t-empty icon="file" description="暂无入栏记录">
+                <t-empty description="暂无入栏记录">
                   <t-button theme="primary" size="small" bind:tap="addEntry" class="primary-button">
                     立即添加
                   </t-button>
@@ -271,7 +271,7 @@
             <view class="records-container">
               <!-- 空状态显示 -->
               <view wx:if="{{exitRecords.length === 0 && !loading}}" class="empty-state">
-                <t-empty icon="file" description="暂无出栏记录">
+                <t-empty description="暂无出栏记录">
                   <t-button theme="primary" size="small" bind:tap="addExit" class="primary-button">
                     立即添加
                   </t-button>
@@ -495,7 +495,7 @@
               
               <!-- 空状态显示 -->
               <view wx:if="{{!loading && (!materialRecords || materialRecords.length === 0)}}" class="empty-state">
-                <t-empty icon="file" description="暂无物料记录">
+                <t-empty description="暂无物料记录">
                   <t-button theme="light" size="small" bind:tap="purchaseMaterial" class="success-button">
                     采购物料
                   </t-button>

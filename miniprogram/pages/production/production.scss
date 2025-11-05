@@ -284,6 +284,19 @@
   gap: 16rpx;
 }
 
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80rpx 0;
+  
+  // 移除 t-empty 默认的图标占位
+  t-empty {
+    --td-empty-icon-size: 0;
+    --td-empty-image-height: 0;
+  }
+}
+
 .record-item {
   padding: 24rpx;
   background: var(--td-bg-color-container, #ffffff);

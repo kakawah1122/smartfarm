@@ -2345,13 +2345,25 @@ async function getDashboardSnapshot(event, wxContext) {
     const summaryData = summaryResult.data || {}
     const batches = summaryData.batches || []
 
+    // ✅ 需要获取原始入栏数量，用于正确计算死亡率
+    const batchIds = batches.map(batch => batch.batchId || batch._id).filter(Boolean)
+    let originalTotalQuantity = 0
+    
+    if (batchIds.length > 0) {
+      const batchEntriesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          _id: _.in(batchIds),
+          ...dbManager.buildNotDeletedCondition(true)
+        })
+        .field({ quantity: true })
+        .get()
+      
+      originalTotalQuantity = batchEntriesResult.data.reduce((sum, batch) => sum + (batch.quantity || 0), 0)
+    }
+
     const totalAnimals = batches.reduce((sum, batch) => sum + (batch.totalCount || 0), 0)
     const deadCount = batches.reduce((sum, batch) => sum + (batch.deadCount || 0), 0)
     const sickCount = batches.reduce((sum, batch) => sum + (batch.sickCount || 0), 0)
-
-    const batchIds = batches
-      .map(batch => batch.batchId || batch._id)
-      .filter(Boolean)
 
     let totalOngoing = 0
     let totalOngoingRecords = 0
@@ -2404,9 +2416,12 @@ async function getDashboardSnapshot(event, wxContext) {
     const abnormalRecordCount = abnormalData.recordCount || 0
     const abnormalRecords = abnormalData.records || []
 
-    const actualHealthyCount = Math.max(0, totalAnimals - deadCount - totalOngoing - abnormalCount)
+    // ✅ 修复：totalAnimals 已经是当前存栏数（原始数量 - 死亡数），不应再减去 deadCount
+    // 健康数 = 当前存栏数 - 治疗中数 - 异常数
+    const actualHealthyCount = Math.max(0, totalAnimals - totalOngoing - abnormalCount)
     const healthyRate = totalAnimals > 0 ? ((actualHealthyCount / totalAnimals) * 100).toFixed(1) : '100'
-    const mortalityRate = totalAnimals > 0 ? ((deadCount / totalAnimals) * 100).toFixed(1) : '0'
+    // ✅ 修复：死亡率应该基于原始入栏数量计算，而不是当前存栏数
+    const mortalityRate = originalTotalQuantity > 0 ? ((deadCount / originalTotalQuantity) * 100).toFixed(1) : '0'
     const cureRate = totalTreated > 0 ? ((totalCured / totalTreated) * 100).toFixed(1) : '0'
 
     return {
@@ -2414,7 +2429,8 @@ async function getDashboardSnapshot(event, wxContext) {
       data: {
         batches,
         totalBatches: summaryData.totalBatches || batches.length,
-        totalAnimals,
+        originalTotalQuantity,  // ✅ 原始入栏总数
+        totalAnimals,           // 当前存栏总数
         deadCount,
         sickCount,
         actualHealthyCount,
