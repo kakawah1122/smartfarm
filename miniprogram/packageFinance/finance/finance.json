@@ -10,5 +10,6 @@
     "t-picker": "tdesign-miniprogram/picker/picker"
   },
   "navigationStyle": "custom",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "styleIsolation": "apply-shared"
 }

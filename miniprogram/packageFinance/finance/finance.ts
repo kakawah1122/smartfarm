@@ -2,6 +2,9 @@
 import { createPageWithNavbar } from '../../utils/navigation'
 
 const pageConfig = {
+  options: {
+    styleIsolation: 'shared'
+  },
   data: {
     selectedMonth: '2024年3月',
     monthOptions: [
