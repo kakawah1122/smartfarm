@@ -1,6 +1,7 @@
 // finance-management/index.js - 财务管理云函数
 const cloud = require('wx-server-sdk')
 const { COLLECTIONS } = require('./collections.js')
+const reimbursementHandler = require('./reimbursement-handler.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -208,6 +209,24 @@ exports.main = async (event, context) => {
         return await generateFinancialReport(event, wxContext)
       case 'get_cost_breakdown':
         return await getCostBreakdown(event, wxContext)
+      
+      // ========== 报销管理（新增） ==========
+      case 'create_reimbursement':
+        return await reimbursementHandler.createReimbursement(db, _, event, wxContext)
+      case 'get_my_reimbursements':
+        return await reimbursementHandler.getMyReimbursements(db, _, event, wxContext)
+      case 'get_reimbursement_detail':
+        return await reimbursementHandler.getReimbursementDetail(db, _, event, wxContext)
+      case 'get_pending_reimbursements':
+        return await reimbursementHandler.getPendingReimbursements(db, _, event, wxContext)
+      case 'approve_reimbursement':
+        return await reimbursementHandler.approveReimbursement(db, _, event, wxContext)
+      case 'reject_reimbursement':
+        return await reimbursementHandler.rejectReimbursement(db, _, event, wxContext)
+      case 'get_finance_overview':
+        return await reimbursementHandler.getFinanceOverview(db, _, event, wxContext)
+      case 'get_my_reimbursement_stats':
+        return await reimbursementHandler.getMyReimbursementStats(db, _, event, wxContext)
       
       default:
         throw new Error('无效的操作类型')

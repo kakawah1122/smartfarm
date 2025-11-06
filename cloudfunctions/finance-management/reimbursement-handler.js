@@ -1,0 +1,720 @@
+/**
+ * 报销管理模块
+ * 
+ * 功能：
+ * - 创建报销申请
+ * - 查询报销记录
+ * - 审批报销
+ * - 统计报销数据
+ */
+
+const { COLLECTIONS } = require('./collections.js')
+
+// 报销类型配置
+const REIMBURSEMENT_TYPES = {
+  TRAVEL: {
+    code: 'travel',
+    name: '差旅费',
+    description: '出差产生的交通、住宿等费用'
+  },
+  MEAL: {
+    code: 'meal',
+    name: '餐费',
+    description: '工作餐、招待餐等费用'
+  },
+  PURCHASE: {
+    code: 'purchase',
+    name: '采购费用',
+    description: '采购物料、设备等费用'
+  },
+  ENTERTAINMENT: {
+    code: 'entertainment',
+    name: '招待费',
+    description: '商务招待产生的费用'
+  },
+  OTHER: {
+    code: 'other',
+    name: '其他',
+    description: '其他类型的报销'
+  }
+}
+
+// 审批状态
+const APPROVAL_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected'
+}
+
+// 根据角色获取报销金额限制
+function getAmountLimitByRole(role) {
+  const limits = {
+    'employee': 1000,
+    'veterinarian': 1000,
+    'manager': 5000,
+    'super_admin': Infinity
+  }
+  return limits[role] || 1000
+}
+
+// 获取报销类型显示名称
+function getReimbursementTypeName(type) {
+  const typeConfig = Object.values(REIMBURSEMENT_TYPES).find(t => t.code === type)
+  return typeConfig ? typeConfig.name : '其他'
+}
+
+// 获取用户信息
+async function getUserInfo(db, openid) {
+  const result = await db.collection(COLLECTIONS.WX_USERS)
+    .where({ _openid: openid })
+    .get()
+  
+  return result.data[0] || null
+}
+
+// 检查是否是管理员
+function isAdmin(role) {
+  return ['manager', 'super_admin'].includes(role)
+}
+
+/**
+ * 创建报销申请
+ */
+async function createReimbursement(db, _, event, wxContext) {
+  const { data } = event
+  const { amount, description, date, reimbursementType, detail, remark, vouchers } = data
+  
+  // 1. 参数验证
+  if (!amount || amount <= 0) {
+    throw new Error('报销金额必须大于0')
+  }
+  if (!description || !description.trim()) {
+    throw new Error('请填写报销描述')
+  }
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error('日期格式不正确')
+  }
+  if (!reimbursementType) {
+    throw new Error('请选择报销类型')
+  }
+  
+  // 2. 获取当前用户信息
+  const userInfo = await getUserInfo(db, wxContext.OPENID)
+  if (!userInfo) {
+    throw new Error('用户信息获取失败')
+  }
+  
+  // 3. 检查金额限制
+  const amountLimit = getAmountLimitByRole(userInfo.role)
+  if (amount > amountLimit) {
+    throw new Error(`单笔报销金额不能超过 ¥${amountLimit}`)
+  }
+  
+  // 4. 构造报销记录
+  const now = new Date().toISOString()
+  const reimbursementId = `RMB${Date.now()}`
+  
+  const record = {
+    _id: reimbursementId,
+    _openid: wxContext.OPENID,
+    
+    // 基础财务信息
+    costType: 'other',
+    amount: parseFloat(amount),
+    description: description,
+    date: date,
+    operator: userInfo.nickname || userInfo.nickName || '未知',
+    
+    // 记录类型
+    recordType: 'reimbursement',
+    isReimbursement: true,
+    
+    // 报销详细信息
+    reimbursement: {
+      type: reimbursementType,
+      typeName: getReimbursementTypeName(reimbursementType),
+      
+      applicant: {
+        openid: wxContext.OPENID,
+        name: userInfo.nickname || userInfo.nickName || '未知',
+        role: userInfo.role || 'employee',
+        phone: userInfo.phone || ''
+      },
+      
+      status: APPROVAL_STATUS.PENDING,
+      approver: null,
+      approvalTime: null,
+      rejectionReason: null,
+      
+      vouchers: (vouchers || []).map(v => ({
+        ...v,
+        uploadTime: now
+      })),
+      
+      detail: detail || '',
+      remark: remark || ''
+    },
+    
+    createTime: now,
+    updateTime: now,
+    isDeleted: false
+  }
+  
+  // 5. 保存到数据库
+  await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).add({
+    data: record
+  })
+  
+  // 6. 发送通知给管理员
+  await notifyAdminsNewReimbursement(db, record)
+  
+  return {
+    success: true,
+    message: '报销申请已提交',
+    data: {
+      reimbursementId: reimbursementId,
+      status: APPROVAL_STATUS.PENDING,
+      createTime: now
+    }
+  }
+}
+
+/**
+ * 获取我的报销记录
+ */
+async function getMyReimbursements(db, _, event, wxContext) {
+  const { status, page = 1, pageSize = 10 } = event
+  const skip = (page - 1) * pageSize
+  
+  // 构建查询条件
+  const whereConditions = {
+    _openid: wxContext.OPENID,
+    isReimbursement: true,
+    isDeleted: _.neq(true)
+  }
+  
+  // 如果指定了状态，添加状态过滤
+  if (status && status !== 'all') {
+    whereConditions['reimbursement.status'] = status
+  }
+  
+  // 查询总数
+  const countResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where(whereConditions)
+    .count()
+  
+  // 查询记录
+  const result = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where(whereConditions)
+    .orderBy('createTime', 'desc')
+    .skip(skip)
+    .limit(pageSize)
+    .get()
+  
+  return {
+    success: true,
+    data: {
+      records: result.data,
+      total: countResult.total,
+      page: page,
+      pageSize: pageSize,
+      hasMore: skip + result.data.length < countResult.total
+    }
+  }
+}
+
+/**
+ * 获取报销详情
+ */
+async function getReimbursementDetail(db, _, event, wxContext) {
+  const { reimbursementId } = event
+  
+  if (!reimbursementId) {
+    throw new Error('报销记录ID不能为空')
+  }
+  
+  const result = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .doc(reimbursementId)
+    .get()
+  
+  if (!result.data) {
+    throw new Error('报销记录不存在')
+  }
+  
+  // 权限检查：只能查看自己的报销或者管理员可以查看所有
+  const userInfo = await getUserInfo(db, wxContext.OPENID)
+  const isOwner = result.data._openid === wxContext.OPENID
+  const isManager = isAdmin(userInfo.role)
+  
+  if (!isOwner && !isManager) {
+    throw new Error('无权限查看此报销记录')
+  }
+  
+  return {
+    success: true,
+    data: result.data
+  }
+}
+
+/**
+ * 获取待审批报销（管理员）
+ */
+async function getPendingReimbursements(db, _, event, wxContext) {
+  const { page = 1, pageSize = 20 } = event
+  const skip = (page - 1) * pageSize
+  
+  // 权限检查
+  const userInfo = await getUserInfo(db, wxContext.OPENID)
+  if (!isAdmin(userInfo.role)) {
+    throw new Error('无权限查看待审批报销')
+  }
+  
+  // 查询待审批报销
+  const result = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      isReimbursement: true,
+      'reimbursement.status': APPROVAL_STATUS.PENDING,
+      isDeleted: _.neq(true)
+    })
+    .orderBy('createTime', 'asc')
+    .skip(skip)
+    .limit(pageSize)
+    .get()
+  
+  // 获取总数
+  const countResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      isReimbursement: true,
+      'reimbursement.status': APPROVAL_STATUS.PENDING,
+      isDeleted: _.neq(true)
+    })
+    .count()
+  
+  return {
+    success: true,
+    data: {
+      records: result.data,
+      total: countResult.total,
+      page: page,
+      pageSize: pageSize
+    }
+  }
+}
+
+/**
+ * 审批报销（通过）
+ */
+async function approveReimbursement(db, _, event, wxContext) {
+  const { reimbursementId, remark } = event
+  
+  if (!reimbursementId) {
+    throw new Error('报销记录ID不能为空')
+  }
+  
+  // 权限检查
+  const userInfo = await getUserInfo(db, wxContext.OPENID)
+  if (!isAdmin(userInfo.role)) {
+    throw new Error('无权限审批报销')
+  }
+  
+  // 获取报销记录
+  const record = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .doc(reimbursementId)
+    .get()
+  
+  if (!record.data) {
+    throw new Error('报销记录不存在')
+  }
+  
+  if (record.data.reimbursement.status !== APPROVAL_STATUS.PENDING) {
+    throw new Error('该报销已审批，无法重复操作')
+  }
+  
+  // 更新审批状态
+  const now = new Date().toISOString()
+  await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .doc(reimbursementId)
+    .update({
+      data: {
+        'reimbursement.status': APPROVAL_STATUS.APPROVED,
+        'reimbursement.approver': {
+          openid: wxContext.OPENID,
+          name: userInfo.nickname || userInfo.nickName || '管理员',
+          role: userInfo.role
+        },
+        'reimbursement.approvalTime': now,
+        'reimbursement.remark': remark || '',
+        updateTime: now
+      }
+    })
+  
+  // 发送通知给申请人
+  await notifyApplicant(db, record.data, 'approved', userInfo)
+  
+  return {
+    success: true,
+    message: '已通过报销申请',
+    data: {
+      reimbursementId: reimbursementId,
+      status: APPROVAL_STATUS.APPROVED,
+      approvalTime: now
+    }
+  }
+}
+
+/**
+ * 拒绝报销
+ */
+async function rejectReimbursement(db, _, event, wxContext) {
+  const { reimbursementId, reason } = event
+  
+  if (!reimbursementId) {
+    throw new Error('报销记录ID不能为空')
+  }
+  
+  if (!reason || !reason.trim()) {
+    throw new Error('请填写拒绝原因')
+  }
+  
+  // 权限检查
+  const userInfo = await getUserInfo(db, wxContext.OPENID)
+  if (!isAdmin(userInfo.role)) {
+    throw new Error('无权限审批报销')
+  }
+  
+  // 获取报销记录
+  const record = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .doc(reimbursementId)
+    .get()
+  
+  if (!record.data) {
+    throw new Error('报销记录不存在')
+  }
+  
+  if (record.data.reimbursement.status !== APPROVAL_STATUS.PENDING) {
+    throw new Error('该报销已审批，无法重复操作')
+  }
+  
+  // 更新审批状态
+  const now = new Date().toISOString()
+  await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .doc(reimbursementId)
+    .update({
+      data: {
+        'reimbursement.status': APPROVAL_STATUS.REJECTED,
+        'reimbursement.approver': {
+          openid: wxContext.OPENID,
+          name: userInfo.nickname || userInfo.nickName || '管理员',
+          role: userInfo.role
+        },
+        'reimbursement.approvalTime': now,
+        'reimbursement.rejectionReason': reason,
+        updateTime: now
+      }
+    })
+  
+  // 发送通知给申请人
+  await notifyApplicant(db, record.data, 'rejected', userInfo, reason)
+  
+  return {
+    success: true,
+    message: '已拒绝报销申请',
+    data: {
+      reimbursementId: reimbursementId,
+      status: APPROVAL_STATUS.REJECTED,
+      approvalTime: now
+    }
+  }
+}
+
+/**
+ * 获取财务总览（管理员）
+ */
+async function getFinanceOverview(db, _, event, wxContext) {
+  const { month } = event
+  
+  // 权限检查
+  const userInfo = await getUserInfo(db, wxContext.OPENID)
+  if (!isAdmin(userInfo.role)) {
+    throw new Error('无权限查看财务总览')
+  }
+  
+  // 获取月份范围
+  const { startDate, endDate } = getMonthRange(month)
+  const { startDate: lastStartDate, endDate: lastEndDate } = getLastMonthRange(month)
+  
+  // 并行查询本月和上月数据
+  const [
+    currentIncome,
+    currentExpense,
+    lastIncome,
+    lastExpense,
+    reimbursementStats
+  ] = await Promise.all([
+    getRevenueSumByDateRange(db, _, startDate, endDate),
+    getCostSumByDateRange(db, _, startDate, endDate),
+    getRevenueSumByDateRange(db, _, lastStartDate, lastEndDate),
+    getCostSumByDateRange(db, _, lastStartDate, lastEndDate),
+    getReimbursementStatsByMonth(db, _, month)
+  ])
+  
+  // 计算增长率
+  const incomeGrowth = calculateGrowthRate(currentIncome, lastIncome)
+  const expenseGrowth = calculateGrowthRate(currentExpense, lastExpense)
+  const currentProfit = currentIncome - currentExpense
+  const lastProfit = lastIncome - lastExpense
+  const profitGrowth = calculateGrowthRate(currentProfit, lastProfit)
+  
+  return {
+    success: true,
+    data: {
+      income: {
+        total: currentIncome,
+        growth: incomeGrowth,
+        compareLastMonth: currentIncome - lastIncome
+      },
+      expense: {
+        total: currentExpense,
+        growth: expenseGrowth,
+        compareLastMonth: currentExpense - lastExpense
+      },
+      profit: {
+        total: currentProfit,
+        growth: profitGrowth,
+        compareLastMonth: currentProfit - lastProfit
+      },
+      reimbursement: reimbursementStats
+    }
+  }
+}
+
+/**
+ * 获取个人报销统计
+ */
+async function getMyReimbursementStats(db, _, event, wxContext) {
+  const now = new Date()
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const { startDate, endDate } = getMonthRange(currentMonth)
+  
+  // 查询本月已通过的报销
+  const monthlyResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      _openid: wxContext.OPENID,
+      isReimbursement: true,
+      'reimbursement.status': APPROVAL_STATUS.APPROVED,
+      date: _.gte(startDate).and(_.lte(endDate)),
+      isDeleted: _.neq(true)
+    })
+    .get()
+  
+  const monthlyAmount = monthlyResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  
+  // 查询累计已通过的报销
+  const totalResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      _openid: wxContext.OPENID,
+      isReimbursement: true,
+      'reimbursement.status': APPROVAL_STATUS.APPROVED,
+      isDeleted: _.neq(true)
+    })
+    .get()
+  
+  const totalAmount = totalResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  
+  return {
+    success: true,
+    data: {
+      monthlyAmount: monthlyAmount,
+      totalAmount: totalAmount,
+      monthlyCount: monthlyResult.data.length,
+      totalCount: totalResult.data.length
+    }
+  }
+}
+
+// ========== 辅助函数 ==========
+
+/**
+ * 获取当前月份
+ */
+function getCurrentMonth() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+/**
+ * 获取月份日期范围
+ */
+function getMonthRange(month) {
+  const monthStr = month || getCurrentMonth()
+  const [year, mon] = monthStr.split('-').map(Number)
+  const startDate = `${year}-${String(mon).padStart(2, '0')}-01`
+  const endDate = new Date(year, mon, 0).toISOString().split('T')[0]
+  return { startDate, endDate }
+}
+
+/**
+ * 获取上月日期范围
+ */
+function getLastMonthRange(month) {
+  const monthStr = month || getCurrentMonth()
+  const [year, mon] = monthStr.split('-').map(Number)
+  const lastMonth = mon === 1 ? 12 : mon - 1
+  const lastYear = mon === 1 ? year - 1 : year
+  const startDate = `${lastYear}-${String(lastMonth).padStart(2, '0')}-01`
+  const endDate = new Date(lastYear, lastMonth, 0).toISOString().split('T')[0]
+  return { startDate, endDate }
+}
+
+/**
+ * 按日期范围统计收入
+ */
+async function getRevenueSumByDateRange(db, _, startDate, endDate) {
+  const result = await db.collection(COLLECTIONS.FINANCE_REVENUE_RECORDS)
+    .where({
+      date: _.gte(startDate).and(_.lte(endDate)),
+      isDeleted: _.neq(true)
+    })
+    .get()
+  
+  return result.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+}
+
+/**
+ * 按日期范围统计支出
+ */
+async function getCostSumByDateRange(db, _, startDate, endDate) {
+  const result = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      date: _.gte(startDate).and(_.lte(endDate)),
+      isDeleted: _.neq(true)
+    })
+    .get()
+  
+  return result.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+}
+
+/**
+ * 统计月度报销数据
+ */
+async function getReimbursementStatsByMonth(db, _, month) {
+  const { startDate, endDate } = getMonthRange(month)
+  
+  const result = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      isReimbursement: true,
+      date: _.gte(startDate).and(_.lte(endDate)),
+      isDeleted: _.neq(true)
+    })
+    .get()
+  
+  const stats = {
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    totalAmount: 0,
+    avgAmount: 0
+  }
+  
+  result.data.forEach(record => {
+    const status = record.reimbursement?.status
+    if (status === APPROVAL_STATUS.PENDING) stats.pending++
+    if (status === APPROVAL_STATUS.APPROVED) {
+      stats.approved++
+      stats.totalAmount += record.amount || 0
+    }
+    if (status === APPROVAL_STATUS.REJECTED) stats.rejected++
+  })
+  
+  stats.avgAmount = stats.approved > 0 ? 
+    Math.round(stats.totalAmount / stats.approved) : 0
+  
+  return stats
+}
+
+/**
+ * 计算增长率
+ */
+function calculateGrowthRate(current, previous) {
+  if (previous === 0) return current > 0 ? 100 : 0
+  return parseFloat(((current - previous) / previous * 100).toFixed(2))
+}
+
+/**
+ * 通知管理员有新的报销申请
+ */
+async function notifyAdminsNewReimbursement(db, record) {
+  try {
+    // 查询所有管理员
+    const admins = await db.collection(COLLECTIONS.WX_USERS)
+      .where({
+        role: _.in(['manager', 'super_admin']),
+        isActive: true
+      })
+      .get()
+    
+    // 为每个管理员创建通知
+    const promises = admins.data.map(admin => {
+      return db.collection(COLLECTIONS.USER_NOTIFICATIONS).add({
+        data: {
+          _openid: admin._openid,
+          type: 'reimbursement',
+          title: '新的报销申请',
+          content: `${record.reimbursement.applicant.name} 提交了 ¥${record.amount} 的${record.reimbursement.typeName}报销`,
+          relatedId: record._id,
+          read: false,
+          createTime: new Date().toISOString()
+        }
+      })
+    })
+    
+    await Promise.all(promises)
+  } catch (error) {
+    console.error('发送通知失败:', error)
+    // 通知失败不影响主流程
+  }
+}
+
+/**
+ * 通知申请人审批结果
+ */
+async function notifyApplicant(db, record, action, approver, reason) {
+  try {
+    const isApproved = action === 'approved'
+    const title = isApproved ? '报销申请已通过' : '报销申请已拒绝'
+    const content = isApproved 
+      ? `您的 ¥${record.amount} ${record.reimbursement.typeName}报销申请已由${approver.nickname || approver.nickName}审批通过`
+      : `您的 ¥${record.amount} ${record.reimbursement.typeName}报销申请被拒绝。原因：${reason}`
+    
+    await db.collection(COLLECTIONS.USER_NOTIFICATIONS).add({
+      data: {
+        _openid: record._openid,
+        type: 'reimbursement',
+        title: title,
+        content: content,
+        relatedId: record._id,
+        read: false,
+        createTime: new Date().toISOString()
+      }
+    })
+  } catch (error) {
+    console.error('发送通知失败:', error)
+    // 通知失败不影响主流程
+  }
+}
+
+// 导出模块
+module.exports = {
+  createReimbursement,
+  getMyReimbursements,
+  getReimbursementDetail,
+  getPendingReimbursements,
+  approveReimbursement,
+  rejectReimbursement,
+  getFinanceOverview,
+  getMyReimbursementStats,
+  REIMBURSEMENT_TYPES,
+  APPROVAL_STATUS
+}
+
+
