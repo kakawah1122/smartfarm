@@ -14,7 +14,7 @@
     <view class="card overview-card" style="margin-bottom: 0 !important;">
       <view class="card-content" style="padding-bottom: 0 !important;">
         <view class="overview-header">
-          <text class="overview-title">本月财务概览</text>
+          <text class="overview-title">财务概览</text>
           <t-dropdown-menu bind:change="onMonthChange">
             <t-dropdown-item 
               value="{{selectedMonth}}" 
@@ -26,10 +26,6 @@
         
         <!-- 收支对比 -->
         <view class="comparison-section">
-          <view class="comparison-header">
-            <text class="comparison-label">收支对比</text>
-            <text class="growth-rate">+{{overview.growthRate}}% ↗</text>
-          </view>
           <view class="comparison-data">
             <view class="data-item">
               <text class="data-value success">¥{{overview.income}}万</text>
