@@ -6,28 +6,31 @@ const pageConfig = {
     styleIsolation: 'shared'
   },
   data: {
-    selectedMonth: '2024年3月',
-    monthOptions: [
-      {label: '2024年3月', value: '2024年3月'},
-      {label: '2024年2月', value: '2024年2月'},
-      {label: '2024年1月', value: '2024年1月'}
-    ],
     activeTab: 'records',
+    
+    // 批次筛选
+    selectedBatchId: '', // 空字符串表示所有批次
+    selectedBatchLabel: '所有批次', // 当前选中的批次标签
+    selectedBatchIndex: 0, // 当前选中的批次索引
+    batchOptions: [
+      {label: '所有批次', value: ''}
+    ],
     
     // 财务概览
     overview: {
-      income: '21.2',
-      expense: '16.8',
-      profit: '4.4',
-      growthRate: '32.1',
-      feedCost: '8.2',
-      feedPercent: '48.8',
-      laborCost: '4.5',
-      laborPercent: '26.8',
-      medicalCost: '2.1',
-      medicalPercent: '12.5',
-      otherCost: '2.0',
-      otherPercent: '11.9'
+      income: '0',
+      expense: '0',
+      profit: '0',
+      profitColorClass: 'danger', // 净利润颜色类：负数为success(绿色)，正数为danger(红色)
+      growthRate: '0',
+      feedCost: '0',
+      feedPercent: '0',
+      laborCost: '0',
+      laborPercent: '0',
+      medicalCost: '0',
+      medicalPercent: '0',
+      otherCost: '0',
+      otherPercent: '0'
     },
     
   // AI财务分析
@@ -160,6 +163,9 @@ const pageConfig = {
     this.setData({
       filteredRecords: this.data.records
     })
+    // 加载批次列表和财务数据
+    this.loadBatchList()
+    this.loadFinanceData()
   },
 
   // 返回上一页
@@ -173,12 +179,53 @@ const pageConfig = {
     })
   },
 
-  // 月份选择
-  onMonthChange(e: any) {
+  // 批次选择（使用原生 picker）
+  onBatchPickerChange(e: any) {
+    const selectedIndex = e.detail.value || 0
+    const selectedOption = this.data.batchOptions[selectedIndex]
+    
+    if (selectedOption) {
     this.setData({
-      selectedMonth: e.detail.value
+        selectedBatchId: selectedOption.value,
+        selectedBatchLabel: selectedOption.label,
+        selectedBatchIndex: selectedIndex
     })
     this.loadFinanceData()
+    }
+  },
+
+  // 加载批次列表
+  async loadBatchList() {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'production-entry',
+        data: {
+          action: 'getActiveBatches'
+        }
+      })
+
+      if (result.result && result.result.success) {
+        const batches = result.result.data || []
+        const batchOptions = [
+          {label: '所有批次', value: ''}
+        ]
+        
+        batches.forEach((batch: any) => {
+          batchOptions.push({
+            label: batch.batchNumber || `批次${batch._id}`,
+            value: batch._id
+          })
+        })
+
+        this.setData({
+          batchOptions: batchOptions,
+          selectedBatchIndex: 0, // 默认选中"所有批次"
+          selectedBatchLabel: '所有批次'
+        })
+      }
+    } catch (error) {
+      console.error('加载批次列表失败:', error)
+    }
   },
 
   // Tab切换 - TDesign 格式
@@ -233,33 +280,75 @@ const pageConfig = {
   },
 
   // 加载财务数据
-  loadFinanceData() {
+  async loadFinanceData() {
     wx.showLoading({
       title: '加载中...'
     })
     
+    try {
+      // 获取当前月份
+      const now = new Date()
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    
     // 调用云函数加载财务数据
-    wx.cloud.callFunction({
+      const result = await wx.cloud.callFunction({
       name: 'finance-management',
       data: {
-        action: 'getFinanceData',
-        month: this.data.selectedMonth
+          action: 'get_finance_overview',
+          month: monthStr,
+          batchId: this.data.selectedBatchId || null
       }
-    }).then(result => {
+      })
+
       wx.hideLoading()
+
       if (result.result && result.result.success) {
         // 处理财务数据
         this.processFinanceData(result.result.data)
+      } else {
+        throw new Error(result.result?.error || '加载失败')
       }
-    }).catch(error => {
+    } catch (error: any) {
       wx.hideLoading()
-      // 已移除调试日志
+      wx.showToast({
+        title: error.message || '加载数据失败',
+        icon: 'none'
     })
+    }
   },
   
   // 处理财务数据
   processFinanceData(data: any) {
-    // 根据选择的月份处理对应数据
+    const income = data.income?.total || 0
+    const expense = data.expense?.total || 0
+    const profit = data.profit?.total || 0
+    const costBreakdown = data.costBreakdown || {}
+
+    // 转换为万元单位显示
+    const formatToWan = (value: number) => {
+      return (value / 10000).toFixed(1)
+    }
+
+    // 计算净利润颜色类：负数为绿色(success)，正数为红色(danger)
+    const profitColorClass = parseFloat(formatToWan(profit)) < 0 ? 'success' : 'danger'
+
+    this.setData({
+      overview: {
+        income: formatToWan(income),
+        expense: formatToWan(expense),
+        profit: formatToWan(profit),
+        profitColorClass: profitColorClass,
+        growthRate: data.profit?.growth || '0',
+        feedCost: formatToWan(costBreakdown.feedCost || 0),
+        feedPercent: costBreakdown.feedPercent || '0',
+        laborCost: formatToWan(costBreakdown.laborCost || 0),
+        laborPercent: costBreakdown.laborPercent || '0',
+        medicalCost: formatToWan(costBreakdown.medicalCost || 0),
+        medicalPercent: costBreakdown.medicalPercent || '0',
+        otherCost: formatToWan(costBreakdown.otherCost || 0),
+        otherPercent: costBreakdown.otherPercent || '0'
+      }
+    })
   },
 
   // ========== AI财务分析功能 ==========
@@ -586,6 +675,24 @@ ${Object.entries(financialData.expenseCategories).map(([category, amount]: [stri
       title: '交易详情',
       content: `${item.title}\n\n${item.description}\n\n金额：¥${item.amount}\n时间：${item.date}`,
       showCancel: false
+    })
+  },
+
+  // 查看审批详情
+  viewApprovalDetail(e: any) {
+    const { item } = e.currentTarget.dataset
+    wx.showModal({
+      title: '审批详情',
+      content: `申请人：${item.applicant}\n\n${item.title}\n\n${item.description}\n\n金额：¥${item.amount}\n提交时间：${item.submitTime}`,
+      confirmText: '通过',
+      cancelText: '拒绝',
+      success: (res) => {
+        if (res.confirm) {
+          this.approveApproval({ currentTarget: { dataset: { id: item.id } } })
+        } else if (res.cancel) {
+          this.rejectApproval({ currentTarget: { dataset: { id: item.id } } })
+        }
+      }
     })
   },
 
