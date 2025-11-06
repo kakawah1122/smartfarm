@@ -160,6 +160,23 @@
       </view>
     </view>
 
+    <!-- 养殖知识卡片 -->
+    <view class="card knowledge-card" bind:tap="navigateToKnowledge">
+      <view class="card-header">
+        <text class="card-title">📚 养殖知识</text>
+        <text class="view-all-link">查看更多 ›</text>
+      </view>
+      <view wx:if="{{knowledgeList.length > 0}}" class="knowledge-preview">
+        <view wx:for="{{knowledgeList}}" wx:key="id" class="knowledge-item">
+          <view class="knowledge-dot"></view>
+          <text class="knowledge-title">{{item.title}}</text>
+        </view>
+      </view>
+      <view wx:else class="knowledge-empty">
+        <text class="empty-hint">点击查看养殖知识库</text>
+      </view>
+    </view>
+
   </scroll-view>
 
   <!-- 任务详情弹窗 -->

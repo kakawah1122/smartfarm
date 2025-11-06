@@ -40,6 +40,9 @@ Page({
     statusBarHeight: 44,
     statusBarText: '9:41 AM • 中国移动 • 100%',
     
+    // 知识库预览
+    knowledgeList: [],
+    
     // 天气数据
     weather: {
       temperature: 22,
@@ -211,7 +214,8 @@ Page({
     Promise.all([
       this.getWeatherData(),
       this.getGoosePriceData(),
-      this.getTodoListData()
+      this.getTodoListData(),
+      this.loadKnowledgePreview()
     ]).then(() => {
       // no-op
     }).catch(() => {
@@ -2614,6 +2618,43 @@ Page({
         showCancel: false
       })
     }
+  },
+
+  /**
+   * 加载知识库预览数据
+   */
+  async loadKnowledgePreview() {
+    try {
+      // 模拟数据，实际应该从云数据库获取最新的知识
+      const mockKnowledge = [
+        { id: 1, title: '秋季防疫要点及疫苗接种指南' },
+        { id: 2, title: '鹅舍温湿度控制最佳实践' },
+        { id: 3, title: '饲料配比优化提升成长速度' }
+      ]
+      
+      this.setData({
+        knowledgeList: mockKnowledge
+      })
+      
+      // TODO: 实际实现应该从云数据库获取
+      // const result = await wx.cloud.database().collection('knowledge')
+      //   .orderBy('createTime', 'desc')
+      //   .limit(3)
+      //   .get()
+      // this.setData({ knowledgeList: result.data })
+      
+    } catch (error) {
+      console.error('加载知识库预览失败:', error)
+    }
+  },
+
+  /**
+   * 导航到知识库页面
+   */
+  navigateToKnowledge() {
+    wx.navigateTo({
+      url: '/pages/knowledge/knowledge'
+    })
   }
 })
 

@@ -2178,3 +2178,64 @@ page {
     pointer-events: none;
   }
 }
+
+/* ========== 知识库卡片 ========== */
+.knowledge-card {
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24rpx;
+  }
+  
+  .view-all-link {
+    font-size: 26rpx;
+    color: #0052d9;
+    font-weight: 500;
+  }
+}
+
+.knowledge-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.knowledge-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  transition: background 0.2s;
+  
+  &:active {
+    background: #f0f2f5;
+  }
+}
+
+.knowledge-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: #0052d9;
+  flex-shrink: 0;
+}
+
+.knowledge-title {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.knowledge-empty {
+  text-align: center;
+  padding: 40rpx 0;
+  
+  .empty-hint {
+    font-size: 26rpx;
+    color: #999;
+  }
+}

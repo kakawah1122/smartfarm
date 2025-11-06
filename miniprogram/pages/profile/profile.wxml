@@ -1,259 +1,234 @@
-<!--profile.wxml - 重新设计的个人中心页面-->
+<!--profile.wxml - 个人中心页面-->
 <view class="page profile-page">
-  <!-- 新式导航栏 -->
+  <!-- 导航栏 -->
   <navigation-bar 
     title="个人中心"
     show-back="{{false}}"
   />
   
-  <scroll-view class="profile-content" scroll-y>
-    <!-- 完善信息提示条 -->
-    <view wx:if="{{showProfileSetupTip}}" class="profile-setup-tip">
-      <view class="tip-content">
-        <view class="tip-icon">⚠️</view>
-        <view class="tip-text">
-          <view class="tip-title">请完善个人信息</view>
-          <view class="tip-subtitle">完善后可享受更好的服务体验</view>
-        </view>
-        <view class="tip-action" bind:tap="editProfile">
-          <text class="action-text">立即完善</text>
-          <text class="action-arrow">›</text>
-        </view>
-      </view>
-      <view class="tip-close" bind:tap="closeProfileSetupTip">✕</view>
+  <scroll-view class="scroll-container" scroll-y>
+    <!-- 开发调试：角色切换按钮 -->
+    <view class="role-switch-container">
+      <button class="role-switch-btn" bind:tap="toggleAdminRole">
+        <text class="role-switch-icon">{{isAdmin ? '👨‍💼' : '👤'}}</text>
+        <text class="role-switch-text">{{isAdmin ? '管理员模式' : '普通用户模式'}}</text>
+      </button>
     </view>
     
-    <!-- 用户信息卡片 - 保留原设计 -->
-    <view class="user-info-section">
-      <view class="user-card">
-        <view class="user-info">
-          <view class="user-avatar">
-            <!-- 直接使用微信头像获取按钮，覆盖整个头像区域 -->
-            <button 
-              class="avatar-button-invisible" 
-              open-type="chooseAvatar" 
-              bind:chooseavatar="onChooseAvatar"
-            >
-              <image 
-                wx:if="{{userInfo.avatarUrl}}"
-                class="avatar-image" 
-                src="{{userInfo.avatarUrl}}"
-                mode="aspectFill"
-              />
-              <text wx:else class="default-avatar">👤</text>
-            </button>
-            
-            <!-- 头像编辑提示 -->
-            <view class="avatar-edit-tip">点击更换头像</view>
-            <!-- 开发环境提示 -->
-            <view class="dev-tip" wx:if="{{!userInfo.avatarUrl || userInfo.avatarUrl.includes('assets')}}">
-              <text class="dev-tip-text">💡 开发环境请在真机上测试头像功能</text>
-            </view>
+    <!-- 个人信息卡片 -->
+    <view class="profile-card">
+      <view class="profile-header">
+        <!-- 头像 -->
+        <view class="avatar-container">
+          <button 
+            class="avatar-button" 
+            open-type="chooseAvatar" 
+            bind:chooseavatar="onChooseAvatar"
+          >
+            <image 
+              wx:if="{{userInfo.avatarUrl}}"
+              class="avatar-image" 
+              src="{{userInfo.avatarUrl}}"
+              mode="aspectFill"
+            />
+            <view wx:else class="avatar-placeholder"></view>
+          </button>
+        </view>
+        
+        <!-- 用户信息 -->
+        <view class="profile-info">
+          <view class="profile-name-row">
+            <text class="profile-name">{{userInfo.name}}</text>
+            <text class="role-badge">{{userInfo.role}}</text>
           </view>
-          <view class="user-details">
-            <view class="user-name-row">
-              <text class="user-name" bind:tap="editProfile" bind:longpress="onLongPressUserName">{{userInfo.name}}</text>
-              <text class="user-role-badge">{{userInfo.role}}</text>
-            </view>
-            <text class="user-farm">{{userInfo.farm}}</text>
-          </view>
-          <view wx:if="{{notificationStats.unreadCount > 0}}" class="notification-area" bind:tap="showNotifications">
-            <view class="notification-badge">{{notificationStats.unreadCount}}</view>
-            <view class="notification-icon">🔔</view>
-          </view>
+          <text class="profile-farm">{{userInfo.farm}}</text>
+          <text class="profile-contact">{{userInfo.phone}}</text>
         </view>
       </view>
     </view>
-
-    <!-- 功能菜单 -->
-    <view class="menu-section">
-      <view class="section-title">功能菜单</view>
-      <view class="tdesign-card-grid">
-        <t-card 
-          wx:for="{{menuItems || []}}" 
-          wx:key="id"
-          class="tdesign-menu-card"
-          bind:tap="navigateToMenu"
-          data-item="{{item}}">
-          <view class="tdesign-card-content">
-            <view class="tdesign-card-info">
-              <view class="tdesign-card-title-wrapper">
-                <view class="tdesign-card-title">{{item.title}}</view>
-                <view wx:if="{{item.badge}}" class="tdesign-card-badge-inline">{{item.badge}}</view>
-              </view>
-              <view class="tdesign-card-description">{{item.description}}</view>
-            </view>
-            <view class="tdesign-card-arrow">›</view>
-          </view>
-        </t-card>
+    
+    <!-- 我的报销 - 所有用户可见 -->
+    <view class="card">
+      <view class="card-title-row">
+        <text class="card-title">我的报销</text>
+        <text class="view-all-btn" bind:tap="viewAllReimbursements">查看全部</text>
       </view>
-    </view>
-
-
-
-    <!-- 登录/退出登录 -->
-    <view class="auth-section">
-      <t-button 
-        wx:if="{{!isLoggedIn}}"
-        theme="primary" 
-        size="large" 
-        block 
-        bind:tap="goToLogin"
-        class="login-btn"
-      >
-        登录
-      </t-button>
       
-      <t-button 
-        wx:else
-        theme="danger" 
-        size="large" 
-        block 
-        bind:tap="logout"
-        class="logout-btn"
-      >
-        退出登录
-      </t-button>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-value">¥{{reimbursementStats.monthlyAmount}}</text>
+          <text class="stat-label">本月报销</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">¥{{reimbursementStats.totalAmount}}</text>
+          <text class="stat-label">累计报销</text>
+        </view>
+      </view>
+      
+      <button class="btn-primary" bind:tap="createReimbursement">
+        新建报销申请
+      </button>
     </view>
-
-    <!-- 底部安全区域 -->
+    
+    <!-- 功能区域整合卡片 -->
+    <view class="card function-group-card">
+      <!-- 管理功能 - 仅管理员可见 -->
+      <view wx:if="{{isAdmin}}" class="function-section">
+        <view class="section-title">
+          <text>管理功能</text>
+        </view>
+        
+        <view class="function-list">
+          <view 
+            wx:for="{{adminFunctions}}" 
+            wx:key="id"
+            class="function-list-item"
+            bind:tap="navigateToFunction"
+            data-page="{{item.page}}"
+          >
+            <text class="function-list-label">{{item.label}}</text>
+            <text class="function-list-arrow">›</text>
+          </view>
+        </view>
+      </view>
+      
+      <view wx:if="{{isAdmin}}" class="section-divider"></view>
+      
+      <!-- 系统设置 -->
+      <view class="function-section">
+        <view class="section-title">
+          <text>系统设置</text>
+        </view>
+        
+        <view class="function-list">
+          <view 
+            wx:for="{{systemSettings}}" 
+            wx:key="id"
+            class="function-list-item"
+            bind:tap="handleSystemSetting"
+            data-action="{{item.action}}"
+          >
+            <text class="function-list-label">{{item.label}}</text>
+            <text class="function-list-arrow">›</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="section-divider"></view>
+      
+      <!-- 退出登录按钮 -->
+      <button class="btn-logout" bind:tap="logout">
+        退出登录
+      </button>
+    </view>
+    
+    <!-- 安全区域 -->
     <view class="safe-area-bottom"></view>
   </scroll-view>
-
-  <!-- 编辑个人信息弹窗 -->
-  <bottom-popup
-    visible="{{showEditProfilePopup}}"
-    title="编辑个人信息"
-    show-close="{{true}}"
-    show-actions="{{true}}"
-    cancel-text="取消"
-    confirm-text="保存"
-    bind:close="closeEditProfilePopup"
-    bind:cancel="closeEditProfilePopup"
-    bind:confirm="confirmEditProfile"
-    bind:visiblechange="onEditProfilePopupChange"
-  >
-    <view class="edit-profile-content">
-      <view class="form-group">
-        <text class="form-label">昵称 *</text>
-        <view class="input-container">
-          <input 
-            class="form-input" 
-            type="nickname"
-            placeholder="请输入您的昵称" 
-            value="{{editNickname}}" 
-            bind:input="onEditNicknameInput"
-            maxlength="20"
-          />
-        </view>
+  
+  <!-- 报销申请弹窗 - 使用原生实现 -->
+  <view wx:if="{{showReimbursementDialog}}" class="popup-mask" catchtap="closeReimbursementDialog">
+    <view class="popup-container reimbursement-popup" catchtap="stopPropagation">
+      <!-- 弹窗头部 -->
+      <view class="popup-header">
+        <text class="header-title">新建报销申请</text>
+        <text class="header-close" catchtap="closeReimbursementDialog">✕</text>
       </view>
       
-      <view class="form-group">
-        <text class="form-label">手机号 *</text>
-        <view class="input-container">
-          <input 
-            class="form-input" 
-            type="number"
-            placeholder="请输入手机号" 
-            value="{{editPhone}}" 
-            bind:input="onEditPhoneInput"
-            maxlength="11"
-          />
-        </view>
+      <!-- 弹窗内容 -->
+      <scroll-view class="popup-content" scroll-y>
+        <view class="reimbursement-form">
+      <view class="form-item">
+        <text class="form-label">报销类型 *</text>
+        <picker 
+          mode="selector" 
+          range="{{reimbursementTypes}}" 
+          range-key="name"
+          value="{{reimbursementForm.typeIndex}}"
+          bind:change="onReimbursementTypeChange"
+        >
+          <view class="picker-value">
+            {{reimbursementTypes[reimbursementForm.typeIndex].name}}
+          </view>
+        </picker>
       </view>
       
-      <view class="form-group">
-        <text class="form-label">养殖场名称 *</text>
-        <view class="input-container">
-          <input 
-            class="form-input" 
-            placeholder="请输入养殖场名称" 
-            value="{{editFarmName}}" 
-            bind:input="onEditFarmNameInput"
-            maxlength="30"
-          />
+      <view class="form-item">
+        <text class="form-label">报销金额 *</text>
+        <input 
+          class="form-input" 
+          type="digit"
+          placeholder="请输入金额" 
+          value="{{reimbursementForm.amount}}" 
+          bind:input="onAmountInput"
+        />
+      </view>
+      
+      <view class="form-item">
+        <text class="form-label">报销日期 *</text>
+        <picker 
+          mode="date" 
+          value="{{reimbursementForm.date}}"
+          bind:change="onDateChange"
+        >
+          <view class="picker-value">{{reimbursementForm.date}}</view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <text class="form-label">报销说明 *</text>
+        <textarea 
+          class="form-textarea" 
+          placeholder="请填写报销说明" 
+          value="{{reimbursementForm.description}}" 
+          bind:input="onDescriptionInput"
+          maxlength="200"
+        />
+      </view>
+      
+      <view class="form-item">
+        <text class="form-label">详细说明</text>
+        <textarea 
+          class="form-textarea" 
+          placeholder="选填" 
+          value="{{reimbursementForm.detail}}" 
+          bind:input="onDetailInput"
+          maxlength="500"
+        />
+      </view>
+      
+      <view class="form-item">
+        <text class="form-label">上传凭证（最多5张）</text>
+        <view class="voucher-upload">
+          <view 
+            wx:for="{{reimbursementForm.vouchers}}" 
+            wx:key="index"
+            class="voucher-item"
+          >
+            <image class="voucher-image" src="{{item.tempPath}}" mode="aspectFill" />
+            <view class="voucher-remove" bind:tap="removeVoucher" data-index="{{index}}">×</view>
+          </view>
+          <view 
+            wx:if="{{reimbursementForm.vouchers.length < 5}}"
+            class="voucher-add"
+            bind:tap="chooseVoucher"
+          >
+            <text class="add-icon">+</text>
+            <text class="add-text">添加凭证</text>
+          </view>
         </view>
       </view>
-    </view>
-  </bottom-popup>
-
-  <!-- 编辑昵称弹窗 -->
-  <bottom-popup
-    visible="{{showEditNicknamePopup}}"
-    title="{{popupData.title}}"
-    show-close="{{true}}"
-    show-actions="{{true}}"
-    cancel-text="取消"
-    confirm-text="保存"
-    bind:close="closeEditNicknamePopup"
-    bind:cancel="closeEditNicknamePopup"
-    bind:confirm="confirmEditNickname"
-  >
-    <view class="edit-content">
-      <view class="content-section">
-        <view class="info-text">{{popupData.content}}</view>
-        <view class="input-group">
-          <text class="input-label">新昵称</text>
-          <input 
-            class="input-field" 
-            type="nickname"
-            placeholder="请输入新的昵称" 
-            value="{{popupData.inputValue}}" 
-            bind:input="onNicknameInput"
-            maxlength="20"
-          />
         </view>
+      </scroll-view>
+      
+      <!-- 弹窗底部操作按钮 -->
+      <view class="popup-footer">
+        <button class="btn-cancel" catchtap="closeReimbursementDialog">取消</button>
+        <button class="btn-confirm" catchtap="submitReimbursement">提交申请</button>
       </view>
     </view>
-  </bottom-popup>
-
-  <!-- 编辑养殖场名称弹窗 -->
-  <bottom-popup
-    visible="{{showEditFarmPopup}}"
-    title="{{popupData.title}}"
-    show-close="{{true}}"
-    show-actions="{{true}}"
-    cancel-text="取消"
-    confirm-text="保存"
-    bind:close="closeEditFarmPopup"
-    bind:cancel="closeEditFarmPopup"
-    bind:confirm="confirmEditFarm"
-  >
-    <view class="edit-content">
-      <view class="content-section">
-        <view class="info-text">{{popupData.content}}</view>
-        <view class="input-group">
-          <text class="input-label">新名称</text>
-          <input 
-            class="input-field" 
-            placeholder="请输入新的养殖场名称" 
-            value="{{popupData.inputValue}}" 
-            bind:input="onFarmNameInput"
-            maxlength="30"
-          />
-        </view>
-      </view>
-    </view>
-  </bottom-popup>
-
-  <!-- 退出登录确认弹窗 -->
-  <bottom-popup
-    visible="{{showLogoutConfirmPopup}}"
-    title="{{popupData.title}}"
-    show-close="{{true}}"
-    show-actions="{{true}}"
-    cancel-text="取消"
-    confirm-text="确认退出"
-    bind:close="closeLogoutPopup"
-    bind:cancel="closeLogoutPopup"
-    bind:confirm="confirmLogout"
-  >
-    <view class="confirm-content">
-      <view class="content-section">
-        <view class="warning-icon">⚠️</view>
-        <view class="warning-text">{{popupData.content}}</view>
-      </view>
-    </view>
-  </bottom-popup>
-
+  </view>
+  
 </view>
+
+

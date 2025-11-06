@@ -17,8 +17,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     page: 1,
     pageSize: 20,
     
-    // 搜索和筛选
-    searchKeyword: '',
+    // 筛选
     activeTab: 'all',
     
     // 统计数据
@@ -32,17 +31,16 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 用户详情弹窗
     showUserDetail: false,
     selectedUser: null as any,
+    originalRole: '', // 原始角色，用于判断是否有变更
+    roleChanged: false, // 角色是否变更
     
-    // 角色修改弹窗
-    showRoleDialog: false,
-    newRole: '',
-    selectedRoleIndex: [0], // picker需要数组格式
-    roleChangeReason: '',
+    // 角色选择
+    selectedRoleIndex: [0],
     roleOptions: [
-      { label: '普通用户', value: 'user' },
-      { label: '操作员', value: 'operator' },
-      { label: '管理员', value: 'admin' },
-      { label: '经理', value: 'manager' }
+      { label: '员工', value: 'employee' },
+      { label: '兽医', value: 'veterinarian' },
+      { label: '经理', value: 'manager' },
+      { label: '超级管理员', value: 'super_admin' }
     ]
   },
 
@@ -129,6 +127,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         const newUsers = result.result.data.users
         const pagination = result.result.data.pagination
 
+        // 临时调试：查看用户数据
+        if (newUsers.length > 0) {
+          console.log('用户数据示例:', JSON.stringify(newUsers[0], null, 2))
+        }
+
         this.setData({
           userList: reset ? newUsers : [...this.data.userList, ...newUsers],
           page: currentPage,
@@ -162,91 +165,35 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
-  // 搜索用户
-  async searchUsers() {
-    if (!this.data.searchKeyword.trim()) {
-      this.loadUserList()
-      return
-    }
-
-    try {
-      this.setData({ loading: true })
-
-      const result = await wx.cloud.callFunction({
-        name: 'user-management',
-        data: {
-          action: 'search_users',
-          keyword: this.data.searchKeyword.trim(),
-          searchType: 'all',
-          page: 1,
-          pageSize: this.data.pageSize
-        }
-      })
-
-      if (result.result && result.result.success) {
-        this.setData({
-          userList: result.result.data.users,
-          hasMore: false,
-          loading: false
-        })
-      }
-    } catch (error) {
-      // 已移除调试日志
-      this.setData({ loading: false })
-      wx.showToast({
-        title: '搜索失败',
-        icon: 'none'
-      })
-    }
+  // 显示用户详情弹窗
+  openUserDetail(user: any) {
+    console.log('准备显示用户详情:', user.nickName, user.role)
+    
+    const currentRoleIndex = this.data.roleOptions.findIndex(
+      option => option.value === user.role
+    )
+    
+    console.log('当前角色索引:', currentRoleIndex)
+    
+    this.setData({
+      selectedUser: user,
+      originalRole: user.role,
+      selectedRoleIndex: [Math.max(0, currentRoleIndex)],
+      roleChanged: false,
+      showUserDetail: true
+    }, () => {
+      console.log('弹窗状态已更新:', this.data.showUserDetail)
+    })
   },
 
-  // 获取用户详情
-  async getUserDetail(userId: string) {
-    try {
-      wx.showLoading({ title: '加载详情...' })
-
-      const result = await wx.cloud.callFunction({
-        name: 'user-management',
-        data: {
-          action: 'get_user_detail',
-          userId: userId
-        }
-      })
-
-      if (result.result && result.result.success) {
-        this.setData({
-          selectedUser: result.result.data.user,
-          showUserDetail: true
-        })
-      }
-    } catch (error) {
-      // 已移除调试日志
-      wx.showToast({
-        title: '获取详情失败',
-        icon: 'none'
-      })
-    } finally {
-      wx.hideLoading()
-    }
-  },
-
-  // 更新用户角色
-  async updateUserRole() {
-    if (!this.data.newRole) {
-      wx.showToast({
-        title: '请选择角色',
-        icon: 'none'
-      })
+  // 确认角色更新
+  async confirmRoleUpdate() {
+    if (!this.data.roleChanged) {
       return
     }
 
-    if (!this.data.roleChangeReason.trim()) {
-      wx.showToast({
-        title: '请填写修改原因',
-        icon: 'none'
-      })
-      return
-    }
+    const newRole = this.data.roleOptions[this.data.selectedRoleIndex[0]].value
+    const newRoleName = this.data.roleOptions[this.data.selectedRoleIndex[0]].label
 
     try {
       wx.showLoading({ title: '更新中...' })
@@ -256,8 +203,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         data: {
           action: 'update_user_role',
           userId: this.data.selectedUser._id,
-          newRole: this.data.newRole,
-          reason: this.data.roleChangeReason.trim()
+          newRole: newRole,
+          reason: `管理员修改角色为${newRoleName}`
         }
       })
 
@@ -267,13 +214,24 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           icon: 'success'
         })
         
-        this.closeRoleDialog()
-        this.closeUserDetail()
+        // 更新本地数据
+        const updatedUser = {
+          ...this.data.selectedUser,
+          role: newRole
+        }
+        
+        this.setData({
+          selectedUser: updatedUser,
+          originalRole: newRole,
+          roleChanged: false
+        })
+        
+        // 刷新列表
         this.loadUserList()
         this.loadUserStats()
       }
     } catch (error) {
-      // 已移除调试日志
+      console.error('更新角色失败:', error)
       wx.showToast({
         title: '更新失败',
         icon: 'none'
@@ -286,12 +244,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 切换用户状态
   async toggleUserStatus() {
     const user = this.data.selectedUser
-    const newStatus = user.status === 'active' ? 'disabled' : 'active'
-    const actionText = newStatus === 'active' ? '启用' : '禁用'
+    const isActive = user.isActive !== false
+    const actionText = isActive ? '禁用' : '启用'
 
     wx.showModal({
-      title: `${actionText}用户`,
-      content: `确定要${actionText}用户"${user.nickname}"吗？`,
+      title: `${actionText}账户`,
+      content: `确定要${actionText}用户"${user.nickName || user.nickname}"的账户吗？`,
       success: async (res) => {
         if (res.confirm) {
           try {
@@ -302,8 +260,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
               data: {
                 action: 'toggle_user_status',
                 userId: user._id,
-                status: newStatus,
-                reason: `管理员${actionText}用户`
+                isActive: !isActive,
+                reason: `管理员${actionText}账户`
               }
             })
 
@@ -313,12 +271,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
                 icon: 'success'
               })
               
-              this.closeUserDetail()
+              // 更新本地数据
+              const updatedUser = {
+                ...this.data.selectedUser,
+                isActive: !isActive
+              }
+              
+              this.setData({
+                selectedUser: updatedUser
+              })
+              
+              // 刷新列表
               this.loadUserList()
               this.loadUserStats()
             }
           } catch (error) {
-            // 已移除调试日志
+            console.error(`${actionText}账户失败:`, error)
             wx.showToast({
               title: `${actionText}失败`,
               icon: 'none'
@@ -371,26 +339,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.loadUserList()
   },
 
-  onSearchChange(e: any) {
-    this.setData({
-      searchKeyword: e.detail.value
-    })
-  },
-
-  onSearch() {
-    this.searchUsers()
-  },
-
-  onSearchClear() {
-    this.setData({
-      searchKeyword: ''
-    })
-    this.loadUserList()
-  },
-
   onUserClick(e: any) {
     const user = e.currentTarget.dataset.user
-    this.getUserDetail(user._id)
+    console.log('点击用户:', user)
+    this.openUserDetail(user)
   },
 
   loadMore() {
@@ -403,67 +355,100 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   closeUserDetail() {
     this.setData({
       showUserDetail: false,
-      selectedUser: null
+      selectedUser: null,
+      roleChanged: false
     })
   },
 
-  showRoleDialog() {
-    // 找到当前用户角色在选项中的索引
-    const currentRoleIndex = this.data.roleOptions.findIndex(
-      option => option.value === this.data.selectedUser.role
-    )
-    
-    this.setData({
-      showRoleDialog: true,
-      newRole: this.data.selectedUser.role,
-      selectedRoleIndex: [Math.max(0, currentRoleIndex)],
-      roleChangeReason: ''
-    })
-  },
-
-  closeRoleDialog() {
-    this.setData({
-      showRoleDialog: false,
-      newRole: '',
-      selectedRoleIndex: [0],
-      roleChangeReason: ''
-    })
+  stopPropagation() {
+    // 阻止事件冒泡
   },
 
   onRoleChange(e: any) {
     const selectedIndex = e.detail.value
-    const selectedRole = this.data.roleOptions[selectedIndex]?.value || 'user'
+    const selectedRole = this.data.roleOptions[selectedIndex]?.value
+    const roleChanged = selectedRole !== this.data.originalRole
     
     this.setData({
       selectedRoleIndex: [selectedIndex],
-      newRole: selectedRole
+      roleChanged: roleChanged
     })
   },
 
-  onReasonChange(e: any) {
-    this.setData({
-      roleChangeReason: e.detail.value
-    })
+  // 获取角色样式类
+  getRoleClass(role: string): string {
+    const classMap: Record<string, string> = {
+      'super_admin': 'role-super-admin',
+      'manager': 'role-manager',
+      'employee': 'role-employee',
+      'veterinarian': 'role-veterinarian',
+      'admin': 'role-admin',
+      'user': 'role-user',
+      'operator': 'role-operator'
+    }
+    return classMap[role] || 'role-employee'
+  },
+
+  // 获取显示的权限（简化版）
+  getDisplayPermissions(permissions: string[]): string[] {
+    if (!permissions || permissions.length === 0) return []
+    
+    // 如果包含 * 或 all，显示全部权限
+    if (permissions.includes('*') || permissions.includes('all')) {
+      return ['全部权限']
+    }
+    
+    // 权限映射表
+    const permissionMap: Record<string, string> = {
+      'production.view': '查看生产',
+      'production.manage': '管理生产',
+      'health.view': '查看健康',
+      'health.manage': '管理健康',
+      'finance.view': '查看财务',
+      'finance.manage': '管理财务',
+      'finance.approve': '审批财务',
+      'employee.view': '查看员工',
+      'employee.manage': '管理员工',
+      'employee.invite': '邀请员工',
+      'system.admin': '系统管理'
+    }
+    
+    // 只显示前8个主要权限
+    return permissions
+      .slice(0, 8)
+      .map(p => permissionMap[p] || p)
+      .filter(p => p !== 'basic')
   },
 
   // 工具函数
   getUserRoleText(role: string): string {
+    if (!role) return '员工'
     const roleMap = {
-      'user': '普通用户',
-      'operator': '操作员',
+      // 新角色系统
+      'super_admin': '超级管理员',
+      'manager': '经理',
+      'employee': '员工',
+      'veterinarian': '兽医',
+      // 旧角色兼容
       'admin': '管理员',
-      'manager': '经理'
+      'user': '普通用户',
+      'operator': '操作员'
     }
-    return roleMap[role] || '未知角色'
+    return roleMap[role] || '员工'
   },
 
   getUserRoleTheme(role: string): string {
     if (!role) return 'default'
     const themeMap = {
-      'user': 'default',
-      'operator': 'primary', 
+      // 新角色系统
+      'super_admin': 'danger',
+      'manager': 'warning',
+      'employee': 'default',
+      'veterinarian': 'success',
+      // 旧角色兼容
       'admin': 'warning',
-      'manager': 'danger'
+      'user': 'default',
+      'operator': 'primary'
     }
     return themeMap[role] || 'default'
   },

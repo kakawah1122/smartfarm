@@ -32,13 +32,6 @@ $spacing-xl: 40rpx;
   padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
 }
 
-/* 搜索区域 */
-.search-section {
-  padding: $spacing-s $spacing-s 0;
-  background: $bg-color-container;
-  border-bottom: 1rpx solid $border-color-light;
-}
-
 /* 统计卡片 */
 .stats-section {
   margin: $spacing-s;
@@ -107,27 +100,350 @@ $spacing-xl: 40rpx;
 /* 用户列表 */
 .user-list {
   margin: 0 $spacing-s $spacing-s;
-  border-radius: 16rpx;
-  overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-}
-
-.user-actions {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
-  align-items: flex-end;
+  gap: $spacing-s;
 }
 
-.role-tag,
-.status-tag {
-  min-width: 80rpx;
-  text-align: center;
+.user-card {
+  background: $bg-color-container;
+  border-radius: 16rpx;
+  padding: $spacing-l;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  
+  &-hover {
+    transform: scale(0.98);
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  }
+}
+
+.user-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-s;
+}
+
+.user-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.user-nickname {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: $text-primary;
+  line-height: 1.4;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-role-badge {
+  font-size: 20rpx;
+  color: #0052d9;
+  background: rgba(0, 82, 217, 0.08);
+  padding: 4rpx 10rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.user-farm {
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.4;
+  flex-shrink: 0;
+  text-align: right;
 }
 
 /* 加载更多 */
 .load-more {
   margin: $spacing-l $spacing-s;
+}
+
+/* ===== 用户详情底部弹窗样式 ===== */
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.popup-container {
+  width: 100%;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.user-detail-popup {
+  background: $bg-color-container;
+  border-radius: 32rpx 32rpx 0 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-bottom: calc($spacing-l + env(safe-area-inset-bottom));
+}
+
+/* 弹窗头部 */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-l $spacing-l $spacing-m;
+  border-bottom: 1rpx solid $border-color-light;
+  position: sticky;
+  top: 0;
+  background: $bg-color-container;
+  z-index: 10;
+}
+
+.header-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.header-close {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: $bg-color-page;
+  
+  &:active {
+    background: $border-color-light;
+  }
+}
+
+/* 基本信息区 */
+.detail-basic {
+  padding: $spacing-l;
+  text-align: center;
+  border-bottom: 1rpx solid $border-color-light;
+}
+
+.basic-name {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.basic-meta {
+  font-size: 26rpx;
+  color: $text-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+}
+
+.meta-item {
+  line-height: 1.4;
+}
+
+.meta-divider {
+  color: $border-color;
+}
+
+/* 详情分组 */
+.detail-section {
+  padding: $spacing-l;
+  border-bottom: 1rpx solid $border-color-light;
+}
+
+.section-header {
+  margin-bottom: $spacing-m;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+/* 当前角色 */
+.current-role {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-m;
+  padding: $spacing-s;
+  background: $bg-color-page;
+  border-radius: 12rpx;
+}
+
+.role-label {
+  font-size: 28rpx;
+  color: $text-secondary;
+}
+
+.role-value {
+  display: flex;
+  align-items: center;
+}
+
+.role-badge {
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  
+  &.role-super-admin {
+    background: rgba(213, 73, 65, 0.1);
+    color: $error-color;
+  }
+  
+  &.role-manager {
+    background: rgba(237, 123, 47, 0.1);
+    color: $warning-color;
+  }
+  
+  &.role-employee {
+    background: rgba(0, 0, 0, 0.06);
+    color: $text-secondary;
+  }
+  
+  &.role-veterinarian {
+    background: rgba(0, 168, 112, 0.1);
+    color: $success-color;
+  }
+  
+  &.role-admin {
+    background: rgba(237, 123, 47, 0.1);
+    color: $warning-color;
+  }
+}
+
+/* 角色选择器 */
+.role-selector {
+  margin-bottom: $spacing-m;
+}
+
+.selector-label {
+  font-size: 28rpx;
+  color: $text-secondary;
+  margin-bottom: $spacing-xs;
+}
+
+.selector-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-m $spacing-s;
+  background: $bg-color-page;
+  border-radius: 12rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+  
+  &:active {
+    border-color: $primary-color;
+    background: rgba(0, 82, 217, 0.05);
+  }
+}
+
+.selector-text {
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 500;
+}
+
+/* 权限列表 */
+.permissions-list {
+  margin-top: $spacing-m;
+}
+
+.permissions-label {
+  font-size: 28rpx;
+  color: $text-secondary;
+  margin-bottom: $spacing-s;
+}
+
+.permissions-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.permission-tag {
+  padding: 6rpx 12rpx;
+  background: rgba(0, 82, 217, 0.08);
+  color: $primary-color;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+/* 信息网格 */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-m;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.info-label {
+  font-size: 24rpx;
+  color: $text-placeholder;
+  line-height: 1.4;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 500;
+  line-height: 1.4;
+  
+  &.status-active {
+    color: $success-color;
+  }
+  
+  &.status-inactive {
+    color: $error-color;
+  }
+}
+
+/* 操作按钮 */
+.detail-actions {
+  padding: $spacing-l;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-s;
 }
 
 /* 操作按钮 */
@@ -344,28 +660,8 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 搜索框样式覆盖 */
-.t-search {
-  &__input-container {
-    border-radius: 12rpx !important;
-    background: $bg-color-page !important;
-    border: 1rpx solid $border-color-light !important;
-  }
-  
-  &__input {
-    font-size: 28rpx !important;
-    color: $text-primary !important;
-    
-    &::placeholder {
-      color: $text-placeholder !important;
-    }
-  }
-}
-
-
 /* 动画效果 */
 .stats-section,
-.user-list,
 .filter-section {
   transition: all 0.3s ease;
 
@@ -374,11 +670,9 @@ $spacing-xl: 40rpx;
   }
 }
 
-.t-cell {
-  transition: background-color 0.2s ease;
-  
+.user-card {
   &:active {
-    background: rgba(0, 0, 0, 0.02) !important;
+    background: rgba(0, 0, 0, 0.02);
   }
 }
 
