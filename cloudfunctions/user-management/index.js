@@ -218,6 +218,8 @@ exports.main = async (event, context) => {
         return await updateUserProfile(event, wxContext)
       case 'list_users':
         return await listUsers(event, wxContext)
+      case 'get_user_stats':
+        return await getUserStats(event, wxContext)
       case 'update_user_role':
         return await updateUserRole(event, wxContext)
       case 'deactivate_user':
@@ -431,7 +433,20 @@ async function listUsers(event, wxContext) {
   
   let query = db.collection('wx_users')
   
-  if (role) query = query.where({ role })
+  // 特殊处理：当 role 为 'admin' 时，查询所有管理类角色
+  if (role === 'admin') {
+    query = query.where({
+      role: db.command.in(['manager', 'super_admin', 'admin']) // 包含新旧角色体系的管理员
+    })
+  } else if (role === 'user') {
+    // 特殊处理：当 role 为 'user' 时，查询所有普通用户角色
+    query = query.where({
+      role: db.command.in(['employee', 'veterinarian', 'user', 'operator']) // 包含新旧角色体系的普通用户
+    })
+  } else if (role) {
+    query = query.where({ role })
+  }
+  
   if (status) query = query.where({ status })
   
   const total = await query.count()
@@ -456,6 +471,76 @@ async function listUsers(event, wxContext) {
         pageSize,
         total: total.total,
         totalPages: Math.ceil(total.total / pageSize)
+      }
+    }
+  }
+}
+
+// 获取用户统计
+async function getUserStats(event, wxContext) {
+  const openid = wxContext.OPENID
+  
+  if (!await validateAdminPermission(openid)) {
+    throw new Error('无权限查看用户统计')
+  }
+  
+  try {
+    // 获取总用户数
+    const totalUsersResult = await db.collection('wx_users').count()
+    const totalUsers = totalUsersResult.total
+    
+    // 获取活跃用户数（兼容两种字段格式）
+    // 新格式：status = 'active'
+    // 旧格式：isActive = true
+    const activeUsersWithStatus = await db.collection('wx_users')
+      .where({ status: 'active' })
+      .count()
+    
+    const activeUsersWithIsActive = await db.collection('wx_users')
+      .where({ isActive: true })
+      .count()
+    
+    // 使用两者中较大的值（避免重复计数，通常只有一种格式有数据）
+    const activeUsers = Math.max(activeUsersWithStatus.total, activeUsersWithIsActive.total)
+    
+    // 获取管理员数量（包含新旧角色体系）
+    const adminUsersResult = await db.collection('wx_users')
+      .where({
+        role: db.command.in(['manager', 'super_admin', 'admin'])
+      })
+      .count()
+    const adminUsers = adminUsersResult.total
+    
+    // 获取30天内活跃的用户数
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    
+    const recentActiveUsersResult = await db.collection('wx_users')
+      .where({
+        lastLoginTime: db.command.gte(thirtyDaysAgo)
+      })
+      .count()
+    const recentActiveUsers = recentActiveUsersResult.total
+    
+    return {
+      success: true,
+      data: {
+        totalUsers: totalUsers,
+        activeUsers: activeUsers,
+        adminUsers: adminUsers,
+        recentActiveUsers: recentActiveUsers
+      }
+    }
+  } catch (error) {
+    console.error('获取用户统计失败:', error)
+    // 返回默认值，避免页面报错
+    return {
+      success: true,
+      data: {
+        totalUsers: 0,
+        activeUsers: 0,
+        adminUsers: 0,
+        recentActiveUsers: 0
       }
     }
   }

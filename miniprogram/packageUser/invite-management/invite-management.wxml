@@ -212,7 +212,6 @@
       <!-- 表单部分（未生成邀请码时显示） -->
       <view wx:if="{{!isInviteGenerated}}">
         <view class="form-tip">
-          <text class="tip-icon">💡</text>
           <text class="tip-text">生成邀请码后，被邀请人可使用邀请码自行注册并填写个人信息</text>
         </view>
         
@@ -261,7 +260,6 @@
       <!-- 邀请码生成成功显示部分 -->
       <view wx:if="{{isInviteGenerated}}" class="invite-success-content">
         <view class="success-tip">
-          <text class="success-icon">🎉</text>
           <text class="success-text">邀请码生成成功！</text>
         </view>
         
@@ -269,7 +267,6 @@
           <text class="invite-code-label">邀请码</text>
           <view class="invite-code-box" bind:tap="copyInviteCode">
             <text class="invite-code-value">{{generatedInviteCode}}</text>
-            <text class="copy-hint">点击复制</text>
           </view>
         </view>
         
@@ -284,8 +281,12 @@
     </view>
     
     <view class="create-dialog-footer">
-      <button class="create-btn-cancel" bind:tap="closeCreateDialog">
-        {{isInviteGenerated ? '关闭' : '取消'}}
+      <button 
+        wx:if="{{!isInviteGenerated}}" 
+        class="create-btn-cancel" 
+        bind:tap="closeCreateDialog"
+      >
+        取消
       </button>
       <button 
         wx:if="{{!isInviteGenerated}}" 
@@ -296,10 +297,10 @@
       </button>
       <button 
         wx:if="{{isInviteGenerated}}" 
-        class="create-btn-copy" 
+        class="create-btn-copy create-btn-full" 
         bind:tap="copyInviteCode"
       >
-        📋 复制邀请码
+        复制邀请码
       </button>
     </view>
   </view>

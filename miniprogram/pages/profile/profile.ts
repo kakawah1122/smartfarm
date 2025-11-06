@@ -1,20 +1,24 @@
 // profile.ts - 个人中心页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
 
-// 报销类型配置
+// 报销类型配置 - 养殖场景
 const REIMBURSEMENT_TYPES = [
-  { code: 'travel', name: '差旅费' },
-  { code: 'meal', name: '餐费' },
-  { code: 'purchase', name: '采购费用' },
-  { code: 'entertainment', name: '招待费' },
-  { code: 'other', name: '其他' }
+  { code: 'feed', name: '饲料采购' },
+  { code: 'medicine', name: '兽药采购' },
+  { code: 'vaccine', name: '防疫费用' },
+  { code: 'equipment', name: '设备维修' },
+  { code: 'transport', name: '运输费用' },
+  { code: 'utilities', name: '水电费' },
+  { code: 'labor', name: '劳务费用' },
+  { code: 'other', name: '其他费用' }
 ]
 
 // 管理功能配置
 const ADMIN_FUNCTIONS = [
   { id: 1, label: '人员管理', page: '/packageUser/user-management/user-management' },
-  { id: 2, label: '财务管理', page: '/packageFinance/finance/finance' },
-  { id: 3, label: '数据分析', page: '/packageFinance/performance-analysis/performance-analysis' }
+  { id: 2, label: '邀请码管理', page: '/packageUser/invite-management/invite-management' },
+  { id: 3, label: '财务管理', page: '/packageFinance/finance/finance' },
+  { id: 4, label: '数据分析', page: '/packageFinance/performance-analysis/performance-analysis' }
 ]
 
 // 系统设置配置
@@ -265,7 +269,6 @@ const pageConfig = {
         amount: '',
         date: today,
         description: '',
-        detail: '',
         vouchers: []
       }
     })
@@ -291,7 +294,7 @@ const pageConfig = {
    * 提交报销申请
    */
   async submitReimbursement() {
-    const { typeIndex, amount, date, description, detail, vouchers } = this.data.reimbursementForm
+    const { typeIndex, amount, date, description, vouchers } = this.data.reimbursementForm
     const reimbursementType = REIMBURSEMENT_TYPES[typeIndex]
     
     // 验证表单
@@ -317,7 +320,6 @@ const pageConfig = {
             description: description.trim(),
             date: date,
             reimbursementType: reimbursementType.code,
-            detail: detail,
             vouchers: vouchers
           }
         }
@@ -460,12 +462,6 @@ const pageConfig = {
   onDescriptionInput(e: any) {
     this.setData({
       'reimbursementForm.description': e.detail.value
-    })
-  },
-
-  onDetailInput(e: any) {
-    this.setData({
-      'reimbursementForm.detail': e.detail.value
     })
   },
 

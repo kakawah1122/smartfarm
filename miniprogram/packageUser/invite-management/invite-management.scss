@@ -695,6 +695,16 @@ $spacing-xl: 40rpx;
 }
 
 .create-btn-copy {
+  flex: 1;
+  height: 72rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  transition: all 0.2s ease;
   background: linear-gradient(135deg, $success-color 0%, #00c576 100%);
   color: white;
   font-weight: 600;
@@ -704,6 +714,11 @@ $spacing-xl: 40rpx;
     transform: translateY(2rpx);
     box-shadow: 0 1rpx 4rpx rgba(0, 168, 112, 0.4);
   }
+}
+
+.create-btn-full {
+  flex: 1 0 100%;
+  width: 100%;
 }
 
 /* 邀请码生成成功内容样式 */

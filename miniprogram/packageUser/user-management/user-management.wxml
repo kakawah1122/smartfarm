@@ -67,7 +67,11 @@
 
   <!-- 空状态 -->
   <view wx:elif="{{userList.length === 0}}" class="empty-container">
-    <t-empty icon="user" description="暂无用户数据" />
+    <t-empty 
+      icon="user" 
+      description="暂无用户数据"
+      size="large"
+    />
   </view>
 
   <!-- 用户列表 -->
@@ -107,33 +111,26 @@
       </t-button>
     </view>
   </view>
-
-  <!-- 操作按钮 -->
-  <view class="action-section">
-    <t-button
-      theme="primary"
-      size="large"
-      block
-      bind:tap="exportUsers"
-      class="export-btn"
-    >
-      导出用户数据
-    </t-button>
-  </view>
 </view>
 
 <!-- 用户详情底部弹窗 -->
-<view wx:if="{{showUserDetail}}" class="popup-mask" bind:tap="closeUserDetail">
-  <view class="popup-container" catchtap="stopPropagation">
+<t-popup
+  visible="{{showUserDetail}}"
+  placement="bottom"
+  bind:visible-change="onPopupVisibleChange"
+  custom-style="border-radius: 32rpx 32rpx 0 0;"
+>
     <view wx:if="{{selectedUser}}" class="user-detail-popup">
     <!-- 弹窗头部 -->
     <view class="popup-header">
       <view class="header-title">用户详情</view>
       <view class="header-close" bind:tap="closeUserDetail">
-        <t-icon name="close" size="48rpx" />
+        <text class="close-icon">✕</text>
       </view>
     </view>
 
+    <!-- 滚动内容区 -->
+    <scroll-view scroll-y class="popup-content">
     <!-- 用户基本信息 -->
     <view class="detail-basic">
       <view class="basic-name">{{selectedUser.nickName || selectedUser.nickname || '未设置昵称'}}</view>
@@ -147,99 +144,113 @@
     <!-- 角色与权限管理 -->
     <view class="detail-section">
       <view class="section-header">
-        <text class="section-title">角色与权限</text>
-      </view>
-      
-      <!-- 当前角色 -->
-      <view class="current-role">
-        <view class="role-label">当前角色</view>
-        <view class="role-value">
-          <text class="role-badge {{getRoleClass(selectedUser.role)}}">
-            {{roleHelper.getRoleText(selectedUser.role)}}
-          </text>
+          <text class="section-title">角色与权限管理</text>
+          <text class="section-subtitle">修改角色后权限将自动更新</text>
         </view>
-      </view>
 
-      <!-- 角色选择 -->
-      <view class="role-selector">
-        <view class="selector-label">修改角色</view>
-        <picker 
-          range="{{roleOptions}}" 
-          range-key="label" 
-          value="{{selectedRoleIndex[0]}}" 
-          bind:change="onRoleChange"
-        >
-          <view class="selector-box">
-            <text class="selector-text">{{roleOptions[selectedRoleIndex[0]].label}}</text>
-            <t-icon name="chevron-down" size="32rpx" />
+        <!-- 角色与权限卡片 -->
+        <view class="role-permission-card">
+          <!-- 角色选择器 -->
+          <view class="role-selector-section">
+            <view class="selector-header">
+              <text class="selector-title">当前角色</text>
+              <text wx:if="{{roleChanged}}" class="change-indicator">已修改</text>
+            </view>
+            <picker 
+              range="{{roleOptions}}" 
+              range-key="label" 
+              value="{{selectedRoleIndex[0]}}" 
+              bind:change="onRoleChange"
+            >
+              <view class="selector-box">
+                <text class="selector-text">{{roleOptions[selectedRoleIndex[0]].label}}</text>
+                <t-icon name="chevron-down" size="32rpx" color="#0052d9" />
+              </view>
+            </picker>
           </view>
-        </picker>
-      </view>
 
-      <!-- 权限列表 -->
-      <view wx:if="{{selectedUser.permissions && selectedUser.permissions.length > 0}}" class="permissions-list">
-        <view class="permissions-label">当前权限</view>
-        <view class="permissions-tags">
-          <view 
-            wx:for="{{getDisplayPermissions(selectedUser.permissions)}}" 
-            wx:key="*this"
-            class="permission-tag"
-          >
-            {{item}}
+          <!-- 分隔线 -->
+          <view class="card-divider"></view>
+
+          <!-- 权限预览 -->
+          <view class="permissions-section">
+            <view class="permissions-header">
+              <text class="permissions-title">该角色包含以下权限</text>
+            </view>
+            <view wx:if="{{displayPermissions && displayPermissions.length > 0}}" class="permissions-tags">
+              <view 
+                wx:for="{{displayPermissions}}" 
+                wx:key="*this"
+                class="permission-tag"
+              >
+                {{item}}
+              </view>
+            </view>
+            <view wx:else class="no-permissions">
+              <text>暂无特殊权限</text>
+            </view>
           </view>
         </view>
       </view>
-    </view>
 
-    <!-- 账户信息 -->
-    <view class="detail-section">
-      <view class="section-header">
-        <text class="section-title">账户信息</text>
+      <!-- 账户状态 -->
+      <view class="detail-section">
+        <view class="section-header">
+          <text class="section-title">账户状态</text>
+        </view>
+        
+        <view class="account-status-card">
+          <view class="status-details">
+            <view class="detail-row">
+              <text class="detail-label">当前状态</text>
+              <text class="detail-value {{selectedUser.isActive !== false ? 'status-active' : 'status-inactive'}}">{{selectedUser.isActive !== false ? '正常使用中' : '已禁用'}}</text>
+            </view>
+            <view class="detail-row">
+              <text class="detail-label">登录次数</text>
+              <text class="detail-value">{{selectedUser.loginCount || 0}} 次</text>
+            </view>
+            <view class="detail-row">
+              <text class="detail-label">最后登录</text>
+              <text class="detail-value">{{selectedUser.formattedLastLoginTime}}</text>
+            </view>
+            <view class="detail-row">
+              <text class="detail-label">注册时间</text>
+              <text class="detail-value">{{selectedUser.formattedCreateTime}}</text>
+            </view>
+          </view>
+        </view>
       </view>
-      
-      <view class="info-grid">
-        <view class="info-item">
-          <text class="info-label">账户状态</text>
-          <text class="info-value {{selectedUser.isActive ? 'status-active' : 'status-inactive'}}">
-            {{selectedUser.isActive ? '正常' : '已禁用'}}
-          </text>
-        </view>
-        <view class="info-item">
-          <text class="info-label">登录次数</text>
-          <text class="info-value">{{selectedUser.loginCount || 0}}次</text>
-        </view>
-        <view class="info-item">
-          <text class="info-label">注册时间</text>
-          <text class="info-value">{{formatTime(selectedUser.createTime)}}</text>
-        </view>
-        <view class="info-item">
-          <text class="info-label">最后登录</text>
-          <text class="info-value">{{formatTime(selectedUser.lastLoginTime)}}</text>
-        </view>
-      </view>
-    </view>
 
-    <!-- 操作按钮 -->
-    <view class="detail-actions">
+      <!-- 底部安全间距 -->
+      <view style="height: 40rpx;"></view>
+    </scroll-view>
+
+    <!-- 固定底部操作按钮 -->
+    <view class="detail-actions-fixed">
+      <view class="actions-container">
       <t-button
         theme="primary"
         size="large"
         block
         bind:tap="confirmRoleUpdate"
         disabled="{{!roleChanged}}"
+          class="action-btn-save"
       >
-        保存角色修改
+          <t-icon name="check" size="32rpx" slot="icon" />
+          {{roleChanged ? '保存角色修改' : '角色未修改'}}
       </t-button>
       <t-button
-        theme="{{selectedUser.isActive ? 'danger' : 'success'}}"
+          theme="{{selectedUser.isActive ? 'default' : 'success'}}"
         size="large"
         block
         variant="outline"
         bind:tap="toggleUserStatus"
+          class="action-btn-toggle"
       >
-        {{selectedUser.isActive ? '禁用账户' : '启用账户'}}
+          <t-icon name="{{selectedUser.isActive ? 'poweroff' : 'refresh'}}" size="32rpx" slot="icon" />
+          {{selectedUser.isActive ? '禁用此账户' : '启用此账户'}}
       </t-button>
     </view>
     </view>
   </view>
-</view>
+</t-popup>

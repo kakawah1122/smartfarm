@@ -138,23 +138,32 @@
       <!-- 弹窗内容 -->
       <scroll-view class="popup-content" scroll-y>
         <view class="reimbursement-form">
-      <view class="form-item">
-        <text class="form-label">报销类型 *</text>
+          <!-- 基础信息 -->
+          <view class="form-section">
+            <view class="section-header">
+              <text class="section-title">基础信息</text>
+            </view>
+            <view class="form-card">
+              <!-- 报销类型 -->
         <picker 
           mode="selector" 
           range="{{reimbursementTypes}}" 
           range-key="name"
           value="{{reimbursementForm.typeIndex}}"
           bind:change="onReimbursementTypeChange"
+                class="picker-wrapper"
         >
+                <view class="form-item">
+                  <text class="form-label required">报销类型</text>
           <view class="picker-value">
             {{reimbursementTypes[reimbursementForm.typeIndex].name}}
+                  </view>
           </view>
         </picker>
-      </view>
       
+              <!-- 报销金额 -->
       <view class="form-item">
-        <text class="form-label">报销金额 *</text>
+                <text class="form-label required">报销金额</text>
         <input 
           class="form-input" 
           type="digit"
@@ -164,19 +173,29 @@
         />
       </view>
       
-      <view class="form-item">
-        <text class="form-label">报销日期 *</text>
+              <!-- 报销日期 -->
         <picker 
           mode="date" 
           value="{{reimbursementForm.date}}"
           bind:change="onDateChange"
+                class="picker-wrapper"
         >
+                <view class="form-item">
+                  <text class="form-label required">报销日期</text>
           <view class="picker-value">{{reimbursementForm.date}}</view>
+                </view>
         </picker>
+            </view>
       </view>
       
-      <view class="form-item">
-        <text class="form-label">报销说明 *</text>
+          <!-- 报销说明 -->
+          <view class="form-section">
+            <view class="section-header">
+              <text class="section-title">报销说明</text>
+            </view>
+            <view class="form-card">
+              <view class="form-item-textarea">
+                <text class="form-label required">报销说明</text>
         <textarea 
           class="form-textarea" 
           placeholder="请填写报销说明" 
@@ -185,19 +204,16 @@
           maxlength="200"
         />
       </view>
-      
-      <view class="form-item">
-        <text class="form-label">详细说明</text>
-        <textarea 
-          class="form-textarea" 
-          placeholder="选填" 
-          value="{{reimbursementForm.detail}}" 
-          bind:input="onDetailInput"
-          maxlength="500"
-        />
+            </view>
       </view>
       
-      <view class="form-item">
+          <!-- 上传凭证 -->
+          <view class="form-section">
+            <view class="section-header">
+              <text class="section-title">上传凭证</text>
+            </view>
+            <view class="form-card">
+              <view class="form-item-textarea">
         <text class="form-label">上传凭证（最多5张）</text>
         <view class="voucher-upload">
           <view 
@@ -215,6 +231,8 @@
           >
             <text class="add-icon">+</text>
             <text class="add-text">添加凭证</text>
+                  </view>
+                </view>
           </view>
         </view>
       </view>

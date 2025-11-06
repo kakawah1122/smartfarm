@@ -41,7 +41,21 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       { label: '兽医', value: 'veterinarian' },
       { label: '经理', value: 'manager' },
       { label: '超级管理员', value: 'super_admin' }
-    ]
+    ],
+    
+    // 角色权限映射
+    rolePermissionsMap: {
+      'employee': ['basic', 'production.view', 'health.view'],
+      'veterinarian': ['basic', 'production.view', 'health.view', 'health.manage'],
+      'manager': ['basic', 'production.view', 'production.manage', 'health.view', 'health.manage', 'finance.view', 'finance.manage', 'employee.view'],
+      'super_admin': ['all']
+    },
+    
+    // 当前预览的权限（根据选择的角色动态更新）
+    previewPermissions: [] as string[],
+    
+    // 显示的权限文本列表
+    displayPermissions: [] as string[]
   },
 
   onLoad(options: any) {
@@ -127,11 +141,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         const newUsers = result.result.data.users
         const pagination = result.result.data.pagination
 
-        // 临时调试：查看用户数据
-        if (newUsers.length > 0) {
-          console.log('用户数据示例:', JSON.stringify(newUsers[0], null, 2))
-        }
-
         this.setData({
           userList: reset ? newUsers : [...this.data.userList, ...newUsers],
           page: currentPage,
@@ -167,22 +176,32 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 显示用户详情弹窗
   openUserDetail(user: any) {
-    console.log('准备显示用户详情:', user.nickName, user.role)
-    
     const currentRoleIndex = this.data.roleOptions.findIndex(
       option => option.value === user.role
     )
     
-    console.log('当前角色索引:', currentRoleIndex)
+    // 获取当前角色的权限
+    const currentRole = user.role || 'employee'
+    const permissions = this.data.rolePermissionsMap[currentRole] || []
+    
+    // 计算显示的权限文本
+    const displayPermissions = this.getDisplayPermissions(permissions)
+    
+    // 格式化用户数据，包括时间
+    const formattedUser = {
+      ...user,
+      formattedLastLoginTime: user.lastLoginTime ? this.formatTime(user.lastLoginTime) : '从未登录',
+      formattedCreateTime: user.createTime ? this.formatTime(user.createTime) : '未知'
+    }
     
     this.setData({
-      selectedUser: user,
+      selectedUser: formattedUser,
       originalRole: user.role,
       selectedRoleIndex: [Math.max(0, currentRoleIndex)],
       roleChanged: false,
+      previewPermissions: permissions,
+      displayPermissions: displayPermissions,
       showUserDetail: true
-    }, () => {
-      console.log('弹窗状态已更新:', this.data.showUserDetail)
     })
   },
 
@@ -299,38 +318,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  // 导出用户数据
-  async exportUsers() {
-    try {
-      wx.showLoading({ title: '导出中...' })
-
-      const result = await wx.cloud.callFunction({
-        name: 'user-management',
-        data: {
-          action: 'export_users'
-        }
-      })
-
-      if (result.result && result.result.success) {
-        // 这里可以实现具体的导出逻辑
-        // 比如显示数据或生成文件
-        wx.showModal({
-          title: '导出成功',
-          content: `已导出 ${result.result.data.total} 条用户数据\n导出时间：${new Date(result.result.data.exportTime).toLocaleString()}`,
-          showCancel: false
-        })
-      }
-    } catch (error) {
-      // 已移除调试日志
-      wx.showToast({
-        title: '导出失败',
-        icon: 'none'
-      })
-    } finally {
-      wx.hideLoading()
-    }
-  },
-
   // 事件处理
   onTabChange(e: any) {
     this.setData({
@@ -341,7 +328,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   onUserClick(e: any) {
     const user = e.currentTarget.dataset.user
-    console.log('点击用户:', user)
     this.openUserDetail(user)
   },
 
@@ -360,6 +346,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
+  onPopupVisibleChange(e: any) {
+    if (!e.detail.visible) {
+      this.closeUserDetail()
+    }
+  },
+
   stopPropagation() {
     // 阻止事件冒泡
   },
@@ -369,9 +361,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const selectedRole = this.data.roleOptions[selectedIndex]?.value
     const roleChanged = selectedRole !== this.data.originalRole
     
+    // 获取新选择角色的权限
+    const newPermissions = this.data.rolePermissionsMap[selectedRole] || []
+    
+    // 计算显示的权限文本
+    const displayPermissions = this.getDisplayPermissions(newPermissions)
+    
     this.setData({
       selectedRoleIndex: [selectedIndex],
-      roleChanged: roleChanged
+      roleChanged: roleChanged,
+      previewPermissions: newPermissions,
+      displayPermissions: displayPermissions
     })
   },
 
@@ -391,7 +391,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   // 获取显示的权限（简化版）
   getDisplayPermissions(permissions: string[]): string[] {
-    if (!permissions || permissions.length === 0) return []
+    if (!permissions || permissions.length === 0) {
+      return []
+    }
     
     // 如果包含 * 或 all，显示全部权限
     if (permissions.includes('*') || permissions.includes('all')) {
@@ -400,6 +402,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 权限映射表
     const permissionMap: Record<string, string> = {
+      'basic': '基础权限',
       'production.view': '查看生产',
       'production.manage': '管理生产',
       'health.view': '查看健康',
@@ -413,11 +416,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       'system.admin': '系统管理'
     }
     
-    // 只显示前8个主要权限
+    // 映射并过滤未知权限
     return permissions
-      .slice(0, 8)
-      .map(p => permissionMap[p] || p)
-      .filter(p => p !== 'basic')
+      .map(p => permissionMap[p])
+      .filter(p => p !== undefined)
   },
 
   // 工具函数
@@ -475,8 +477,21 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   formatTime(time: string | Date): string {
     if (!time) return '未知'
-    const date = new Date(time)
-    return date.toLocaleString()
+    try {
+      const date = new Date(time)
+      // 检查日期是否有效
+      if (isNaN(date.getTime())) return '未知'
+      
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      
+      return `${year}-${month}-${day} ${hours}:${minutes}`
+    } catch (error) {
+      return '未知'
+    }
   },
 
   // 返回上一页
