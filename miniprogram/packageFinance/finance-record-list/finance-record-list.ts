@@ -154,6 +154,8 @@ const pageConfig = {
           } else if (record.source === 'purchase') {
             if (record.costType === 'feed') {
               title = '饲料成本'
+            } else if (record.costType === 'health') {
+              title = '医疗费用'
             } else {
               title = '其他费用'
             }
