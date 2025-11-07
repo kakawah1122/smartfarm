@@ -1,0 +1,296 @@
+/* manual-record-form.scss - 手动记账表单样式 - 与TDesign主题保持一致 */
+
+.page-container {
+  min-height: 100vh;
+  background-color: var(--td-bg-color-page, #f5f5f5);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 表单内容区域 */
+.form-content {
+  flex: 1;
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 64rpx);
+  padding-bottom: calc(160rpx + var(--safe-area-inset-bottom, 0)); /* 底部按钮高度 */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 表单卡片样式 */
+.form-card {
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 16rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  overflow: hidden;
+}
+
+/* 主表单样式 */
+.entry-form {
+  padding: 0 32rpx;
+}
+
+/* 表单分组样式 */
+.form-section {
+  margin-bottom: 24rpx;
+}
+
+.section-header {
+  margin-bottom: 12rpx;
+  padding: 0;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #0052d9;
+  padding: 8rpx 16rpx;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+  border-radius: 8rpx;
+  margin: 0 8rpx;
+}
+
+/* 表单项样式 */
+.form-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80rpx;
+  padding: 20rpx 32rpx;
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+/* 垂直布局的表单项（用于文本域） */
+.form-item-vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: auto;
+  padding-top: 24rpx;
+  padding-bottom: 24rpx;
+}
+
+/* 上传项特殊样式 */
+.upload-item {
+  padding-top: 24rpx;
+  padding-bottom: 24rpx;
+}
+
+/* 表单项标签 */
+.item-label {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  font-weight: 500;
+  min-width: 160rpx;
+  flex-shrink: 0;
+}
+
+/* 必填标识 */
+.item-label.required::before {
+  content: '*';
+  color: var(--td-error-color, #d54941);
+  margin-right: 8rpx;
+  font-weight: bold;
+}
+
+/* 输入框容器 */
+.item-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 40rpx;
+  margin-left: 24rpx;
+}
+
+/* 日期输入样式 */
+.date-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.date-text {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+}
+
+.date-text:empty::before {
+  content: '请选择记录日期';
+  color: var(--td-text-color-placeholder, #999999);
+}
+
+/* 选择器输入样式 */
+.picker-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-text {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  flex: 1;
+  text-align: right;
+}
+
+.picker-text:empty::before {
+  content: '请选择';
+  color: var(--td-text-color-placeholder, #999999);
+}
+
+/* 文本域容器 */
+.item-textarea {
+  width: 100%;
+  margin-top: 12rpx;
+}
+
+.form-item:not(.form-item-vertical) .item-textarea {
+  flex: 1;
+  margin-left: 24rpx;
+  margin-top: 0;
+}
+
+/* TDesign 文本域样式优化 */
+.item-textarea ::deep .t-textarea {
+  background: transparent;
+}
+
+.item-textarea ::deep .t-textarea__wrapper {
+  min-height: 120rpx;
+  padding: 16rpx 0;
+}
+
+/* 单选按钮组 - 一行显示 */
+.radio-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 20rpx 32rpx;
+  gap: 64rpx;
+}
+
+.radio-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+}
+
+.radio-label {
+  font-size: 30rpx;
+  color: var(--td-text-color-primary, #000000);
+  font-weight: 500;
+}
+
+/* 上传容器 */
+.upload-container {
+  width: 100%;
+  margin-top: 16rpx;
+}
+
+.upload-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.upload-item-preview {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 4rpx;
+  right: 4rpx;
+  width: 48rpx;
+  height: 48rpx;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-icon {
+  font-size: 40rpx;
+  color: #fff;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.upload-btn {
+  width: 160rpx;
+  height: 160rpx;
+  border: 2rpx dashed var(--td-border-level-2-color, #d4d4d4);
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--td-bg-color-page, #f5f5f5);
+}
+
+.upload-text {
+  font-size: 24rpx;
+  color: var(--td-text-color-placeholder, #999999);
+  text-align: center;
+}
+
+/* 底部操作按钮 */
+.bottom-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 24rpx;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + var(--safe-area-inset-bottom, 0));
+  background: var(--td-bg-color-container, #ffffff);
+  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  z-index: 100;
+}
+
+.action-button {
+  flex: 1;
+}
+
+.reset-button {
+  background: var(--td-bg-color-container-secondary, #f5f5f5);
+}
+
+/* 响应式调整 */
+@media (max-width: 375px) {
+  .form-content {
+    padding-left: 24rpx;
+    padding-right: 24rpx;
+  }
+  
+  .entry-form {
+    padding: 0;
+  }
+  
+  .item-label {
+    min-width: 140rpx;
+    font-size: 28rpx;
+  }
+  
+  .upload-item-preview,
+  .upload-btn {
+    width: 140rpx;
+    height: 140rpx;
+  }
+}

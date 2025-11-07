@@ -11,22 +11,6 @@
 
   <!-- 表单内容区域 -->
   <view class="form-content">
-    <!-- 表单顶部信息卡片 -->
-    <view class="form-header">
-      <view class="form-card">
-        <view class="header-info">
-          <view class="batch-id-section">
-            <view class="batch-label">批次ID</view>
-            <view class="batch-id">{{formData.batchId}}</view>
-            <t-tag theme="warning" size="small">自动生成</t-tag>
-          </view>
-          <view class="date-info">
-            <text class="date-text">{{formData.purchaseDate || '请选择采购日期'}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
     <!-- 主要表单 -->
     <view class="entry-form">
       <!-- 基础信息卡片 -->
@@ -35,6 +19,15 @@
           <text class="section-title">基础信息</text>
         </view>
         <view class="form-card">
+          <!-- 批次ID -->
+          <view class="form-item batch-id-item">
+            <view class="item-label">批次ID</view>
+            <view class="item-value batch-id-value">
+              <text class="batch-id">{{formData.batchId}}</text>
+              <t-tag theme="warning" size="small">自动生成</t-tag>
+            </view>
+          </view>
+          
           <!-- 采购日期（使用原生 picker）-->
           <picker 
             mode="date" 
@@ -169,7 +162,8 @@
         <view class="section-header">
           <text class="section-title">备注</text>
         </view>
-        <!-- 备注输入框 - 左右满屏 -->
+        <!-- 备注输入框 - 与卡片宽度一致 -->
+        <view class="form-card">
         <view class="fullwidth-textarea-container">
           <t-textarea
             placeholder="请输入备注信息（可选）"
@@ -181,6 +175,7 @@
             autosize
             class="fullwidth-textarea"
           />
+          </view>
         </view>
       </view>
 

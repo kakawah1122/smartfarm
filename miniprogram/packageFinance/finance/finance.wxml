@@ -248,7 +248,7 @@
     </view>
 
     <!-- 快捷操作 -->
-    <view class="card">
+    <view class="card quick-actions-card">
       <view class="card-content">
         <view class="card-header">
           <text class="card-title">快捷操作</text>
@@ -275,4 +275,55 @@
     record="{{selectedRecord}}"
     bind:close="closeDetailPopup"
   />
+  
+  <!-- 审批详情弹窗 -->
+  <bottom-popup
+    visible="{{showApprovalPopup}}"
+    title="审批详情"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="拒绝"
+    confirm-text="通过"
+    bind:close="closeApprovalPopup"
+    bind:cancel="handleRejectApproval"
+    bind:confirm="handleApproveApproval"
+    bind:visiblechange="onApprovalPopupVisibleChange"
+  >
+    <view wx:if="{{selectedApprovalItem}}" class="approval-detail-content">
+      <view class="info-card">
+        <view class="card-content">
+          <view class="info-row">
+            <text class="info-label">申请人：</text>
+            <text class="info-value">{{selectedApprovalItem.applicant}}</text>
+          </view>
+          <view class="divider-line"></view>
+          
+          <view class="info-row">
+            <text class="info-label">申请类型：</text>
+            <text class="info-value">{{selectedApprovalItem.title}}</text>
+          </view>
+          <view class="divider-line"></view>
+          
+          <block wx:if="{{selectedApprovalItem.description}}">
+            <view class="info-row">
+              <text class="info-label">说明：</text>
+              <text class="info-value note-text">{{selectedApprovalItem.description}}</text>
+            </view>
+            <view class="divider-line"></view>
+          </block>
+          
+          <view class="info-row">
+            <text class="info-label">申请金额：</text>
+            <text class="info-value amount-text expense">-¥{{selectedApprovalItem.amount}}</text>
+          </view>
+          <view class="divider-line"></view>
+          
+          <view class="info-row">
+            <text class="info-label">提交时间：</text>
+            <text class="info-value">{{selectedApprovalItem.submitTime}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
 </view>

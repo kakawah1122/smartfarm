@@ -669,11 +669,17 @@ async function getRevenueSumByDateRange(db, _, startDate, endDate, batchId = nul
 async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) {
   let totalCost = 0
   
-  // 1. 从财务成本记录汇总
+  // 1. 从财务成本记录汇总（排除待审批的报销记录）
   let financeQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
-    .where({
-      isDeleted: _.neq(true)
-    })
+    .where(
+      _.and([
+        { isDeleted: _.neq(true) },
+        _.or([
+          { isReimbursement: _.neq(true) },  // 非报销记录
+          { 'reimbursement.status': 'approved' }  // 已审批的报销记录
+        ])
+      ])
+    )
   
   // 日期筛选：仅在提供了日期范围时才添加（兼容 date 和 createTime 字段）
   if (startDate && endDate) {
@@ -794,11 +800,17 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
     otherCost: 0      // 其他费用
   }
   
-  // 1. 从财务成本记录汇总
+  // 1. 从财务成本记录汇总（排除待审批的报销记录）
   let financeQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
-    .where({
-      isDeleted: _.neq(true)
-    })
+    .where(
+      _.and([
+        { isDeleted: _.neq(true) },
+        _.or([
+          { isReimbursement: _.neq(true) },  // 非报销记录
+          { 'reimbursement.status': 'approved' }  // 已审批的报销记录
+        ])
+      ])
+    )
   
   // 日期筛选：仅在提供了日期范围时才添加
   if (startDate && endDate) {
@@ -826,12 +838,13 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
     
     if (costType === 'feed') {
       breakdown.feedCost += amount
-    } else if (costType === 'labor') {
-      // 人工成本归入其他费用
+    } else if (costType === 'labor' || costType === 'facility' || costType === 'other') {
+      // 人工、设施、其他成本归入其他费用
       breakdown.otherCost += amount
     } else if (costType === 'health' || costType === 'treatment' || costType === 'loss' || costType === 'death_loss') {
       breakdown.medicalCost += amount
     } else {
+      // 其他未分类的也归入其他费用
       breakdown.otherCost += amount
     }
   })
@@ -952,49 +965,6 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
   
   const entryResult = await entryQuery.get()
   breakdown.goslingCost += entryResult.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
-  
-  // 6. 从财务成本记录汇总（报销、人工、设备等归类为其他费用）
-  let costRecordQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
-    .where({
-      isDeleted: _.neq(true)
-    })
-  
-  // 日期筛选：仅在提供了日期范围时才添加
-  if (startDate && endDate) {
-    costRecordQuery = costRecordQuery.where(
-      _.or([
-        { date: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
-        { createTime: _.gte(startDate).and(_.lte(endDate)) }
-      ])
-    )
-  }
-  
-  if (batchId) {
-    costRecordQuery = costRecordQuery.where({
-      batchId: batchId
-    })
-  }
-  
-  const costRecordResult = await costRecordQuery.get()
-  
-  // 将财务成本记录按类型归类
-  costRecordResult.data.forEach(record => {
-    const amount = record.amount || 0
-    const costType = record.costType || 'other'
-    
-    // 报销、人工、设备采购等计入其他费用
-    // 注意：这里的 costType 可能是：reimbursement, labor, facility, equipment, other 等
-    if (costType === 'feed') {
-      // 饲料类成本记录（如果有的话）
-      breakdown.feedCost += amount
-    } else if (costType === 'health' || costType === 'medical') {
-      // 医疗类成本记录（如果有的话）
-      breakdown.medicalCost += amount
-    } else {
-      // 其他所有类型（报销、人工、设备等）都计入其他费用
-      breakdown.otherCost += amount
-    }
-  })
   
   const totalExpense = breakdown.feedCost + breakdown.goslingCost + breakdown.medicalCost + breakdown.otherCost
   

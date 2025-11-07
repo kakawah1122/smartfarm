@@ -89,7 +89,11 @@ const pageConfig = {
     
     // 交易详情弹窗
     showDetailPopup: false,
-    selectedRecord: null as any
+    selectedRecord: null as any,
+    
+    // 审批详情弹窗
+    showApprovalPopup: false,
+    selectedApprovalItem: null as any
   },
 
   onLoad() {
@@ -790,11 +794,14 @@ const pageConfig = {
           // 获取申请人信息
           const applicant = record.operatorName || record.operator || '未知'
           
+          // 获取报销类型名称
+          const typeName = record.reimbursement?.typeName || this.getReimbursementTypeTitle(record.reimbursement?.type) || '报销申请'
+          
           return {
             id: record._id || record.recordId,
             type: 'expense',
             applicant: applicant,
-            title: record.description || '报销申请',
+            title: typeName, // 使用报销类型名称
             description: record.reimbursement?.reason || record.description || '',
             amount: this.formatAmount(record.amount),
             submitTime: this.formatSubmitTime(record.createTime)
@@ -939,19 +946,54 @@ const pageConfig = {
   // 查看审批详情
   viewApprovalDetail(e: any) {
     const { item } = e.currentTarget.dataset
-    wx.showModal({
-      title: '审批详情',
-      content: `申请人：${item.applicant}\n\n${item.title}\n\n${item.description}\n\n金额：¥${item.amount}\n提交时间：${item.submitTime}`,
-      confirmText: '通过',
-      cancelText: '拒绝',
-      success: (res) => {
-        if (res.confirm) {
-          this.approveApproval({ currentTarget: { dataset: { id: item.id } } })
-        } else if (res.cancel) {
-          this.rejectApproval({ currentTarget: { dataset: { id: item.id } } })
-        }
-      }
+    this.setData({
+      selectedApprovalItem: item,
+      showApprovalPopup: true
     })
+  },
+  
+  // 关闭审批弹窗
+  closeApprovalPopup() {
+    this.setData({
+      showApprovalPopup: false
+    })
+    // 延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedApprovalItem: null
+      })
+    }, 300)
+  },
+  
+  // 审批弹窗可见性变化
+  onApprovalPopupVisibleChange(e: any) {
+    if (!e.detail.visible) {
+      this.closeApprovalPopup()
+    }
+  },
+  
+  // 处理通过审批
+  handleApproveApproval() {
+    if (this.data.selectedApprovalItem) {
+      this.approveApproval({ 
+        currentTarget: { 
+          dataset: { id: this.data.selectedApprovalItem.id } 
+        } 
+      })
+      this.closeApprovalPopup()
+    }
+  },
+  
+  // 处理拒绝审批
+  handleRejectApproval() {
+    if (this.data.selectedApprovalItem) {
+      this.rejectApproval({ 
+        currentTarget: { 
+          dataset: { id: this.data.selectedApprovalItem.id } 
+        } 
+      })
+      this.closeApprovalPopup()
+    }
   },
 
   // 通过审批

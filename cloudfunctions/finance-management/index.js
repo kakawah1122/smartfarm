@@ -894,8 +894,16 @@ async function getAllFinanceRecords(event, wxContext) {
       })
     })
 
-    // 2. 获取财务成本记录
-    let costQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS).where({ isDeleted: false })
+    // 2. 获取财务成本记录（排除待审批的报销记录）
+    let costQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS).where(
+      _.and([
+        { isDeleted: false },
+        _.or([
+          { isReimbursement: _.neq(true) },  // 非报销记录
+          { 'reimbursement.status': 'approved' }  // 已审批的报销记录
+        ])
+      ])
+    )
     if (dateRange) {
       costQuery = costQuery.where(
         _.or([

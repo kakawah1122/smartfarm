@@ -769,6 +769,11 @@ page {
 }
 
 /* 快捷操作 */
+/* 快捷操作卡片：增加标题和按钮之间的间距 */
+.quick-actions-card .card-header {
+  margin-bottom: 24rpx !important; /* 从8rpx增加到24rpx */
+}
+
 .actions-grid {
   display: flex !important;
   gap: 12rpx;
@@ -1047,4 +1052,93 @@ page {
   height: env(safe-area-inset-bottom);
   min-height: 0;
   flex-shrink: 0;
+}
+
+/* 审批详情弹窗样式 - 参考财务记录详情弹窗 */
+.approval-detail-content {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+.approval-detail-content .info-card {
+  background: white !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.approval-detail-content .card-content {
+  padding: 24rpx 32rpx !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+.approval-detail-content .info-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+  gap: 24rpx !important;
+  margin-bottom: 0 !important;
+  min-height: 44rpx !important;
+}
+
+.approval-detail-content .divider-line {
+  height: 2rpx !important;
+  min-height: 2rpx !important;
+  width: 100% !important;
+  border: none !important;
+  border-top: 2rpx dashed #999 !important;
+  margin: 10rpx 0 !important;
+  padding: 0 !important;
+  display: block !important;
+}
+
+.approval-detail-content .info-label {
+  font-size: 26rpx !important;
+  color: #666 !important;
+  flex-shrink: 0 !important;
+  min-width: 120rpx !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-weight: 400 !important;
+  line-height: 32rpx !important;
+  vertical-align: baseline !important;
+}
+
+.approval-detail-content .info-value {
+  font-size: 28rpx !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+  flex: 1 !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  line-height: 32rpx !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: baseline !important;
+}
+
+.approval-detail-content .amount-text {
+  font-size: 32rpx !important;
+  font-weight: 600 !important;
+  line-height: 32rpx !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: baseline !important;
+  
+  &.expense {
+    color: #52C41A !important; /* 支出显示绿色 */
+  }
+}
+
+.approval-detail-content .note-text {
+  text-align: right !important;
+  word-break: break-all !important;
+  white-space: normal !important;
+  line-height: 1.5 !important;
 }

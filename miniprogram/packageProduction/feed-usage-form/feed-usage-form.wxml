@@ -5,6 +5,7 @@
     title="饲料投喂记录"
     show-back="{{true}}"
     fallbackUrl="/pages/production/production"
+    bind:back="goBack"
   />
   
   <!-- 表单容器 - 添加顶部间距避免被导航栏遮挡 -->

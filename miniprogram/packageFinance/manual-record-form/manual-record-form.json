@@ -1,0 +1,14 @@
+{
+  "usingComponents": {
+    "navigation-bar": "/components/navigation-bar/navigation-bar",
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-radio-group": "tdesign-miniprogram/radio-group/radio-group",
+    "t-radio": "tdesign-miniprogram/radio/radio",
+    "t-picker": "tdesign-miniprogram/picker/picker",
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  },
+  "navigationStyle": "custom"
+}
+
