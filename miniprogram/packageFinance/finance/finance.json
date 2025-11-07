@@ -1,13 +1,20 @@
 {
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "bottom-popup": "/components/bottom-popup/bottom-popup",
+    "finance-record-detail": "/components/finance-record-detail-popup/finance-record-detail-popup",
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-tabs": "tdesign-miniprogram/tabs/tabs",
     "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
     "t-button": "tdesign-miniprogram/button/button",
     "t-tag": "tdesign-miniprogram/tag/tag",
-    "t-picker": "tdesign-miniprogram/picker/picker"
+    "t-picker": "tdesign-miniprogram/picker/picker",
+    "t-dropdown-menu": "tdesign-miniprogram/dropdown-menu/dropdown-menu",
+    "t-dropdown-item": "tdesign-miniprogram/dropdown-item/dropdown-item",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-row": "tdesign-miniprogram/row/row",
+    "t-col": "tdesign-miniprogram/col/col"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true,

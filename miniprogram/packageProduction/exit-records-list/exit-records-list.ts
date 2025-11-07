@@ -187,7 +187,6 @@ const pageConfig = {
   // 查看记录详情
   viewRecordDetail(e: any) {
     const { record } = e.currentTarget.dataset
-    
     this.setData({
       selectedRecord: record,
       showDetailPopup: true
@@ -197,20 +196,14 @@ const pageConfig = {
   // 关闭详情弹窗
   closeDetailPopup() {
     this.setData({
-      showDetailPopup: false,
-      selectedRecord: null
+      showDetailPopup: false
     })
-  },
-  
-  // 弹窗可见性变化
-  onDetailPopupChange(e: any) {
-    const { visible } = e.detail
-    if (!visible) {
+    // 延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
       this.setData({
-        showDetailPopup: false,
         selectedRecord: null
       })
-    }
+    }, 300)
   },
 
   // 新增出栏记录

@@ -121,91 +121,11 @@
     </view>
   </view>
 
-  <!-- 入栏记录详情弹窗 -->
-  <bottom-popup
+  <!-- 入栏记录详情弹窗组件 -->
+  <entry-record-detail
     visible="{{showDetailPopup}}"
-    title="入栏记录详情"
-    show-close="{{true}}"
-    show-actions="{{true}}"
-    confirm-text="确定"
+    record="{{selectedRecord}}"
     bind:close="closeDetailPopup"
-    bind:confirm="closeDetailPopup"
-    bind:visiblechange="onDetailPopupChange"
-  >
-    <view wx:if="{{selectedRecord}}" class="record-detail-content">
-      <view class="info-card">
-        <view class="card-content">
-          <view class="info-row">
-            <text class="info-label">品种：</text>
-            <text class="info-value">{{selectedRecord.breed}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">批次号：</text>
-            <text class="info-value">{{selectedRecord.batchNumber}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">数量：</text>
-            <text class="info-value">{{selectedRecord.displayQuantity}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <block wx:if="{{selectedRecord.supplier}}">
-            <view class="info-row">
-              <text class="info-label">供应商：</text>
-              <text class="info-value">{{selectedRecord.supplier}}</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <block wx:if="{{selectedRecord.avgWeight > 0}}">
-            <view class="info-row">
-              <text class="info-label">平均重量：</text>
-              <text class="info-value">{{selectedRecord.avgWeight}}斤</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <view class="info-row">
-            <text class="info-label">健康状况：</text>
-            <text class="info-value">{{selectedRecord.healthStatus}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">操作员：</text>
-            <text class="info-value">{{selectedRecord.operator}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">时间：</text>
-            <text class="info-value">{{selectedRecord.date}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">状态：</text>
-            <view class="status-value">
-              <t-tag theme="{{selectedRecord.status === '已完成' ? 'success' : 'warning'}}" size="small">
-                {{selectedRecord.status}}
-              </t-tag>
-            </view>
-          </view>
-          
-          <block wx:if="{{selectedRecord.notes}}">
-            <view class="divider-line"></view>
-            <view class="info-row">
-              <text class="info-label">备注：</text>
-              <text class="info-value note-text">{{selectedRecord.notes}}</text>
-            </view>
-          </block>
-        </view>
-      </view>
-    </view>
-  </bottom-popup>
+  />
 
 </view>

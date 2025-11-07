@@ -15,15 +15,77 @@
       <view class="card-content" style="padding-bottom: 0 !important;">
         <view class="overview-header">
           <text class="overview-title">财务概览</text>
-          <picker 
-            mode="selector" 
-            range="{{batchOptions}}" 
-            range-key="label"
-            value="{{selectedBatchIndex}}"
-            bind:change="onBatchPickerChange"
-          >
-            <text class="batch-filter-text">{{selectedBatchLabel}}</text>
-          </picker>
+          <view class="filter-container">
+            <!-- 第一级：时间维度类型选择 -->
+            <picker 
+              mode="selector" 
+              range="{{filterTypeOptions}}" 
+              range-key="label"
+              value="{{filterTypeIndex}}"
+              bind:change="onFilterTypeChange"
+            >
+              <text class="period-filter-text">{{filterTypeLabel}}</text>
+            </picker>
+            
+            <!-- 第二级：具体时间选择 -->
+            <!-- 月度选择 -->
+            <view wx:if="{{filterType === 'month'}}" class="custom-date-container">
+              <picker 
+                mode="selector"
+                range="{{monthOptions}}"
+                range-key="label"
+                value="{{selectedMonthIndex}}"
+                bind:change="onMonthChange"
+              >
+                <text class="custom-date-text">{{monthOptions[selectedMonthIndex].label}}</text>
+              </picker>
+            </view>
+            
+            <!-- 季度选择 -->
+            <view wx:if="{{filterType === 'quarter'}}" class="custom-date-container">
+              <picker 
+                mode="selector"
+                range="{{quarterOptions}}"
+                range-key="label"
+                value="{{selectedQuarterIndex}}"
+                bind:change="onQuarterChange"
+              >
+                <text class="custom-date-text">{{quarterOptions[selectedQuarterIndex].label}}</text>
+              </picker>
+            </view>
+            
+            <!-- 年度选择 -->
+            <view wx:if="{{filterType === 'year'}}" class="custom-date-container">
+              <picker 
+                mode="selector"
+                range="{{yearOptions}}"
+                range-key="label"
+                value="{{selectedYearIndex}}"
+                bind:change="onYearChange"
+              >
+                <text class="custom-date-text">{{yearOptions[selectedYearIndex].label}}</text>
+              </picker>
+            </view>
+            
+            <!-- 自定义日期选择 -->
+            <view wx:if="{{filterType === 'custom'}}" class="custom-date-container">
+              <picker 
+                mode="date"
+                value="{{customStartDate}}"
+                bind:change="onCustomStartDateChange"
+              >
+                <text class="custom-date-text">{{customStartDate || '开始日期'}}</text>
+              </picker>
+              <text class="date-separator">至</text>
+              <picker 
+                mode="date"
+                value="{{customEndDate}}"
+                bind:change="onCustomEndDateChange"
+              >
+                <text class="custom-date-text">{{customEndDate || '结束日期'}}</text>
+              </picker>
+            </view>
+          </view>
         </view>
         
         <!-- 收支对比 -->
@@ -52,9 +114,9 @@
             <text class="cost-percent">占支出 {{overview.feedPercent}}%</text>
           </view>
           <view class="cost-item purple">
-            <text class="cost-label">人工成本</text>
-            <text class="cost-value">¥{{overview.laborCost}}万</text>
-            <text class="cost-percent">占支出 {{overview.laborPercent}}%</text>
+            <text class="cost-label">鹅苗成本</text>
+            <text class="cost-value">¥{{overview.goslingCost}}万</text>
+            <text class="cost-percent">占支出 {{overview.goslingPercent}}%</text>
           </view>
           <view class="cost-item yellow">
             <text class="cost-label">医疗费用</text>
@@ -84,12 +146,13 @@
         <view class="card-content">
           <view class="card-header">
             <text class="card-title">最近交易记录</text>
+            <text class="view-all-btn" bind:tap="viewAllRecords">查看全部</text>
           </view>
           <view class="records-list">
             <view 
-              wx:for="{{filteredRecords}}" 
+              wx:for="{{displayRecords}}" 
               wx:key="id"
-              class="record-item"
+              class="record-item-card"
               bind:tap="viewRecordDetail"
               data-item="{{item}}"
             >
@@ -99,16 +162,12 @@
                   <view class="record-desc">{{item.description}}</view>
                   <view class="record-footer">
                     <text class="record-time">{{item.date}}</text>
-                    <t-tag theme="{{item.statusTheme || 'default'}}" size="small" class="record-status">{{item.status || '未知'}}</t-tag>
                   </view>
                 </view>
               </view>
               <view class="record-right">
                 <view class="record-amount {{item.type}}">
                   {{item.type === 'income' ? '+' : '-'}}¥{{item.amount}}
-                </view>
-                <view class="record-source">
-                  {{item.autoGenerated ? '自动生成' : '手动录入'}}
                 </view>
               </view>
             </view>
@@ -355,4 +414,11 @@
     </view>
 
   </scroll-view>
+  
+  <!-- 交易详情弹窗组件 -->
+  <finance-record-detail
+    visible="{{showDetailPopup}}"
+    record="{{selectedRecord}}"
+    bind:close="closeDetailPopup"
+  />
 </view>

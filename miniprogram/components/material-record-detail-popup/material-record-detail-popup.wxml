@@ -1,0 +1,81 @@
+<!-- 物料记录详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="{{record.type}}记录详情"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确定"
+  bind:close="onClose"
+  bind:confirm="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{record}}" class="record-detail-content">
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row">
+          <text class="info-label">物料：</text>
+          <text class="info-value">{{record.name}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">分类：</text>
+          <text class="info-value">{{record.category}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">数量：</text>
+          <text class="info-value">{{record.displayQuantity}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <block wx:if="{{record.supplier}}">
+          <view class="info-row">
+            <text class="info-label">供应商：</text>
+            <text class="info-value">{{record.supplier}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <block wx:if="{{record.targetLocation}}">
+          <view class="info-row">
+            <text class="info-label">用途：</text>
+            <text class="info-value">{{record.targetLocation}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <view class="info-row">
+          <text class="info-label">操作员：</text>
+          <text class="info-value">{{record.operator}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">时间：</text>
+          <text class="info-value">{{record.date}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">状态：</text>
+          <view class="status-value">
+            <t-tag theme="{{record.status === '已完成' ? 'success' : 'primary'}}" size="small">
+              {{record.status}}
+            </t-tag>
+          </view>
+        </view>
+        
+        <block wx:if="{{record.notes}}">
+          <view class="divider-line"></view>
+          <view class="info-row">
+            <text class="info-label">备注：</text>
+            <text class="info-value note-text">{{record.notes}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

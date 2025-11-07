@@ -204,24 +204,6 @@ const pageConfig = {
   // 查看记录详情
   viewRecordDetail(e: any) {
     const { record } = e.currentTarget.dataset
-    
-    // 构建详情内容（不包含金额信息）
-    let content = `物料：${record.name}\n分类：${record.category}\n数量：${record.displayQuantity}`
-    
-    if (record.supplier) {
-      content += `\n供应商：${record.supplier}`
-    }
-    
-    if (record.targetLocation) {
-      content += `\n用途：${record.targetLocation}`
-    }
-    
-    content += `\n操作员：${record.operator}\n时间：${record.date}\n状态：${record.status}`
-    
-    if (record.notes) {
-      content += `\n备注：${record.notes}`
-    }
-    
     this.setData({
       selectedRecord: record,
       showDetailPopup: true
@@ -231,20 +213,14 @@ const pageConfig = {
   // 关闭详情弹窗
   closeDetailPopup() {
     this.setData({
-      showDetailPopup: false,
-      selectedRecord: null
+      showDetailPopup: false
     })
-  },
-  
-  // 弹窗可见性变化
-  onDetailPopupChange(e: any) {
-    const { visible } = e.detail
-    if (!visible) {
+    // 延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
       this.setData({
-        showDetailPopup: false,
         selectedRecord: null
       })
-    }
+    }, 300)
   }
 }
 

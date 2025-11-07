@@ -1,0 +1,97 @@
+<!-- 出栏记录详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="出栏记录详情"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确定"
+  bind:close="onClose"
+  bind:confirm="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{record}}" class="record-detail-content">
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row">
+          <text class="info-label">客户：</text>
+          <text class="info-value">{{record.customer}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">出栏号：</text>
+          <text class="info-value">{{record.exitNumber}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">数量：</text>
+          <text class="info-value">{{record.displayQuantity}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <block wx:if="{{record.batchNumber}}">
+          <view class="info-row">
+            <text class="info-label">批次号：</text>
+            <text class="info-value">{{record.batchNumber}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <block wx:if="{{record.breed}}">
+          <view class="info-row">
+            <text class="info-label">品种：</text>
+            <text class="info-value">{{record.breed}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <block wx:if="{{record.avgWeight > 0}}">
+          <view class="info-row">
+            <text class="info-label">平均重量：</text>
+            <text class="info-value">{{record.avgWeight}}斤</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <block wx:if="{{record.totalWeight > 0}}">
+          <view class="info-row">
+            <text class="info-label">总重量：</text>
+            <text class="info-value">{{record.totalWeight}}斤</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <view class="info-row">
+          <text class="info-label">操作员：</text>
+          <text class="info-value">{{record.operator}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">时间：</text>
+          <text class="info-value">{{record.date}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">状态：</text>
+          <view class="status-value">
+            <t-tag theme="{{record.status === '已交付' ? 'success' : 'primary'}}" size="small">
+              {{record.status}}
+            </t-tag>
+          </view>
+        </view>
+        
+        <block wx:if="{{record.notes}}">
+          <view class="divider-line"></view>
+          <view class="info-row">
+            <text class="info-label">备注：</text>
+            <text class="info-value note-text">{{record.notes}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

@@ -1,0 +1,98 @@
+<!-- 交易详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="交易详情"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确定"
+  bind:close="onClose"
+  bind:confirm="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{detailInfo}}" class="record-detail-content">
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row">
+          <text class="info-label">交易类型：</text>
+          <text class="info-value">{{detailInfo.title}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <!-- 批次号 -->
+        <block wx:if="{{detailInfo.batchNumber}}">
+          <view class="info-row">
+            <text class="info-label">批次号：</text>
+            <text class="info-value">{{detailInfo.batchNumber}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 客户 -->
+        <block wx:if="{{detailInfo.customer}}">
+          <view class="info-row">
+            <text class="info-label">客户：</text>
+            <text class="info-value">{{detailInfo.customer}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 供应商 -->
+        <block wx:if="{{detailInfo.supplier}}">
+          <view class="info-row">
+            <text class="info-label">供应商：</text>
+            <text class="info-value">{{detailInfo.supplier}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 数量 -->
+        <block wx:if="{{detailInfo.quantity}}">
+          <view class="info-row">
+            <text class="info-label">数量：</text>
+            <text class="info-value">{{detailInfo.quantity}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 品种 -->
+        <block wx:if="{{detailInfo.breed}}">
+          <view class="info-row">
+            <text class="info-label">品种：</text>
+            <text class="info-value">{{detailInfo.breed}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 报销人 -->
+        <block wx:if="{{detailInfo.applicant}}">
+          <view class="info-row">
+            <text class="info-label">报销人：</text>
+            <text class="info-value">{{detailInfo.applicant}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 说明 -->
+        <block wx:if="{{detailInfo.description}}">
+          <view class="info-row">
+            <text class="info-label">说明：</text>
+            <text class="info-value note-text">{{detailInfo.description}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <view class="info-row">
+          <text class="info-label">交易金额：</text>
+          <text class="info-value amount-text {{detailInfo.type}}">{{detailInfo.type === 'income' ? '+' : '-'}}¥{{detailInfo.amount}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">交易时间：</text>
+          <text class="info-value">{{detailInfo.date}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

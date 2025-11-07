@@ -185,24 +185,6 @@ const pageConfig = {
   // 查看记录详情
   viewRecordDetail(e: any) {
     const { record } = e.currentTarget.dataset
-    
-    // 构建详情内容
-    let content = `品种：${record.breed}\n批次号：${record.batchNumber}\n数量：${record.displayQuantity}`
-    
-    if (record.supplier) {
-      content += `\n供应商：${record.supplier}`
-    }
-    
-    if (record.avgWeight > 0) {
-      content += `\n平均重量：${record.avgWeight}斤`
-    }
-    
-    content += `\n健康状况：${record.healthStatus}\n操作员：${record.operator}\n时间：${record.date}\n状态：${record.status}`
-    
-    if (record.notes) {
-      content += `\n备注：${record.notes}`
-    }
-    
     this.setData({
       selectedRecord: record,
       showDetailPopup: true
@@ -212,9 +194,14 @@ const pageConfig = {
   // 关闭详情弹窗
   closeDetailPopup() {
     this.setData({
-      showDetailPopup: false,
-      selectedRecord: null
+      showDetailPopup: false
     })
+    // 延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedRecord: null
+      })
+    }, 300)
   },
   
   // 弹窗可见性变化
