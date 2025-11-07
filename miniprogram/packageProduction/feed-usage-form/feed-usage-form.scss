@@ -3,8 +3,6 @@
 .feed-usage-form-page {
   min-height: 100vh;
   background-color: #f5f5f5;
-  position: relative;
-  z-index: 1; // 确保页面内容在导航栏下方
 }
 
 .form-container {
@@ -12,8 +10,6 @@
   padding-bottom: 120rpx; // 为底部按钮留出空间
   // padding-top 在 WXML 中动态设置，避免被导航栏遮挡
   box-sizing: border-box;
-  position: relative;
-  z-index: 1; // 确保表单容器不会覆盖导航栏
 }
 
 // 表单区块
@@ -240,7 +236,7 @@
   background-color: #fff;
   border-top: 1rpx solid #f0f0f0;
   box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.05);
-  z-index: 100; // 低于导航栏的 z-index (99999)
+  z-index: 100;
   
   .t-button {
     flex: 1;
