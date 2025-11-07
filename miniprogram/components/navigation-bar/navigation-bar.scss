@@ -1,14 +1,14 @@
 /* 导航栏组件样式 - 符合微信小程序官方规范 */
 .custom-navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  background: #ffffff;
-  z-index: 99999;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
-  pointer-events: auto; /* 确保导航栏可以接收点击事件 */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  background: #ffffff !important;
+  z-index: 99999 !important;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06) !important;
+  pointer-events: auto !important; /* 确保导航栏可以接收点击事件 */
 }
 
 /* 导航栏内容区域 */
