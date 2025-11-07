@@ -1,0 +1,160 @@
+<!--reimbursement-list.wxml - 我的报销列表-->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <navigation-bar 
+    title="我的报销"
+    show-back="{{true}}"
+  />
+  
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 筛选标签 -->
+    <view class="filter-tabs">
+    <view 
+      wx:for="{{statusTabs}}" 
+      wx:key="value"
+      class="tab-item {{currentStatus === item.value ? 'active' : ''}}"
+      bind:tap="onStatusChange"
+      data-status="{{item.value}}"
+    >
+      <text class="tab-label">{{item.label}}</text>
+      <view wx:if="{{currentStatus === item.value}}" class="tab-indicator"></view>
+    </view>
+  </view>
+  
+  <!-- 报销列表 -->
+  <scroll-view class="list-container" scroll-y>
+    <view wx:if="{{list.length > 0}}" class="reimbursement-list">
+      <view 
+        wx:for="{{list}}" 
+        wx:key="_id"
+        class="reimbursement-item"
+        bind:tap="onItemTap"
+        data-id="{{item._id}}"
+      >
+        <!-- 头部：类型和状态 -->
+        <view class="item-header">
+          <text class="type-name">{{item.reimbursement.typeName}}</text>
+          <view class="status-tag {{item.statusConfig.theme}}">
+            {{item.statusConfig.text}}
+          </view>
+        </view>
+        
+        <!-- 内容：说明和金额 -->
+        <view class="item-content">
+          <text class="description">{{item.description}}</text>
+          <text class="amount">¥{{item.amount}}</text>
+        </view>
+        
+        <!-- 底部：日期和操作人 -->
+        <view class="item-footer">
+          <text class="date">{{item.date}}</text>
+          <text class="operator">{{item.operator}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 空状态 -->
+    <view wx:else class="empty-state">
+      <text class="empty-text">暂无报销记录</text>
+    </view>
+    
+    <!-- 底部安全区域 -->
+    <view class="safe-area"></view>
+  </scroll-view>
+  </view>
+  
+  <!-- 报销详情弹窗 -->
+  <view wx:if="{{showDetailDialog}}" class="popup-mask" catchtap="closeDetailDialog">
+    <view class="popup-container detail-popup" catchtap="stopPropagation">
+      <!-- 弹窗头部 -->
+      <view class="popup-header">
+        <text class="header-title">报销详情</text>
+        <text class="header-close" catchtap="closeDetailDialog">✕</text>
+      </view>
+      
+      <!-- 弹窗内容 -->
+      <scroll-view class="popup-content" scroll-y>
+        <view class="detail-content">
+          <!-- 状态标签 -->
+          <view class="detail-status">
+            <view class="status-tag-large {{currentDetail.statusConfig.theme}}">
+              {{currentDetail.statusConfig.text}}
+            </view>
+          </view>
+          
+          <!-- 基础信息 -->
+          <view class="detail-section">
+            <view class="section-title">基础信息</view>
+            <view class="detail-item">
+              <text class="detail-label">报销类型</text>
+              <text class="detail-value">{{currentDetail.reimbursement.typeName}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">报销金额</text>
+              <text class="detail-value amount">¥{{currentDetail.amount}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">报销日期</text>
+              <text class="detail-value">{{currentDetail.date}}</text>
+            </view>
+          </view>
+          
+          <!-- 详细说明 -->
+          <view class="detail-section" wx:if="{{currentDetail.description}}">
+            <view class="section-title">详细说明</view>
+            <view class="detail-description">
+              {{currentDetail.description}}
+            </view>
+          </view>
+          
+          <!-- 凭证图片 -->
+          <view class="detail-section" wx:if="{{currentDetail.reimbursement.vouchers && currentDetail.reimbursement.vouchers.length > 0}}">
+            <view class="section-title">报销凭证</view>
+            <view class="voucher-images">
+              <image 
+                wx:for="{{currentDetail.reimbursement.vouchers}}" 
+                wx:key="fileId"
+                src="{{item.fileId}}"
+                mode="aspectFill"
+                class="voucher-image"
+                bind:tap="previewImage"
+                data-url="{{item.fileId}}"
+                data-index="{{index}}"
+              />
+            </view>
+          </view>
+          
+          <!-- 审批信息 -->
+          <view class="detail-section">
+            <view class="section-title">审批信息</view>
+            <view class="detail-item">
+              <text class="detail-label">申请人</text>
+              <text class="detail-value">{{currentDetail.operator}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">申请时间</text>
+              <text class="detail-value">{{currentDetail.createTime}}</text>
+            </view>
+            <view class="detail-item" wx:if="{{currentDetail.reimbursement.approver}}">
+              <text class="detail-label">审批人</text>
+              <text class="detail-value">{{currentDetail.reimbursement.approver}}</text>
+            </view>
+            <view class="detail-item" wx:if="{{currentDetail.reimbursement.approvalTime}}">
+              <text class="detail-label">审批时间</text>
+              <text class="detail-value">{{currentDetail.reimbursement.approvalTime}}</text>
+            </view>
+            <view class="detail-item" wx:if="{{currentDetail.reimbursement.rejectReason}}">
+              <text class="detail-label">拒绝原因</text>
+              <text class="detail-value reject-reason">{{currentDetail.reimbursement.rejectReason}}</text>
+            </view>
+          </view>
+          
+          <!-- 底部安全区域 -->
+          <view class="safe-area"></view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>
+

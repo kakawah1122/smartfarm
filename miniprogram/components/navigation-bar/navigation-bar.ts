@@ -59,14 +59,20 @@ Component({
 
     goBack() {
       // 先触发返回事件，允许页面自定义返回逻辑
-      const event = this.triggerEvent('back', {}, { bubbles: true, composed: true })
+      this.triggerEvent('back', {}, { bubbles: true, composed: true })
       
-      // 如果事件被阻止，则不执行默认返回
-      if (event && event.defaultPrevented) {
-        return
+      // 检查页面是否有自定义的 goBack 方法
+      const pages = getCurrentPages()
+      if (pages.length > 0) {
+        const currentPage = pages[pages.length - 1]
+        if (currentPage && typeof currentPage.goBack === 'function') {
+          // 页面有自定义返回逻辑，不执行默认返回
+          // 页面的 goBack 方法会通过 bind:back 事件被调用
+          return
+        }
       }
       
-      // 返回上一页
+      // 页面没有自定义返回逻辑，执行默认返回
       wx.navigateBack({
         delta: 1,
         fail: () => {
@@ -78,13 +84,17 @@ Component({
             wx.redirectTo({
               url: fallbackUrl,
               fail: () => {
-                // 备用页面跳转失败，尝试跳转到健康管理页
-                this.goToHealthPage()
+                // 备用页面跳转失败，尝试跳转到首页
+                wx.switchTab({
+                  url: '/pages/index/index'
+                })
               }
             })
           } else {
-            // 没有指定备用页面，跳转到健康管理页
-            this.goToHealthPage()
+            // 没有指定备用页面，跳转到首页
+            wx.switchTab({
+              url: '/pages/index/index'
+            })
           }
         }
       })

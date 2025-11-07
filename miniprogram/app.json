@@ -64,7 +64,9 @@
       "pages": [
         "finance/finance",
         "cost-analysis/cost-analysis",
-        "performance-analysis/performance-analysis"
+        "performance-analysis/performance-analysis",
+        "reimbursement-list/reimbursement-list",
+        "finance-record-list/finance-record-list"
       ]
     },
     {

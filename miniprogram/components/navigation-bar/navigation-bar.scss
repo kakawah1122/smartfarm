@@ -8,6 +8,7 @@
   background: #ffffff;
   z-index: 99999;
   box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+  pointer-events: auto; /* 确保导航栏可以接收点击事件 */
 }
 
 /* 导航栏内容区域 */
@@ -19,6 +20,7 @@
   position: relative;
   width: 100%;
   box-sizing: border-box;
+  pointer-events: auto; /* 确保内容区域可以接收点击事件 */
 }
 
 /* 左侧返回按钮区域 */
@@ -28,9 +30,9 @@
   justify-content: flex-start;
   min-width: 120rpx;
   height: 100%;
-  z-index: 100000;
+  z-index: 100001; /* 提高优先级 */
   position: relative;
-  pointer-events: auto;
+  pointer-events: auto; /* 确保可以点击 */
 }
 
 /* 返回按钮可点击区域 */
@@ -43,6 +45,7 @@
   min-height: 80rpx;
   position: relative;
   cursor: pointer;
+  pointer-events: auto; /* 明确设置可点击 */
 }
 
 .back-icon {

@@ -431,7 +431,7 @@ async function rejectReimbursement(db, _, event, wxContext) {
  * 获取财务总览（管理员）
  */
 async function getFinanceOverview(db, _, event, wxContext) {
-  const { month } = event
+  const { month, batchId, dateRange } = event
   
   // 权限检查
   const userInfo = await getUserInfo(db, wxContext.OPENID)
@@ -439,9 +439,35 @@ async function getFinanceOverview(db, _, event, wxContext) {
     throw new Error('无权限查看财务总览')
   }
   
-  // 获取月份范围
-  const { startDate, endDate } = getMonthRange(month)
-  const { startDate: lastStartDate, endDate: lastEndDate } = getLastMonthRange(month)
+  // 获取时间范围
+  let startDate, endDate, lastStartDate, lastEndDate
+  
+  if (dateRange && dateRange.start && dateRange.end) {
+    // 使用自定义时间范围
+    startDate = dateRange.start
+    endDate = dateRange.end
+    
+    // 计算上一个同等时间段（用于对比）
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const duration = end.getTime() - start.getTime()
+    lastEndDate = new Date(start.getTime() - 1).toISOString() // 前一天
+    lastStartDate = new Date(start.getTime() - duration - 1).toISOString()
+  } else if (!dateRange) {
+    // 如果 dateRange 为 undefined，查询所有数据（不设置时间范围）
+    startDate = null
+    endDate = null
+    lastStartDate = null
+    lastEndDate = null
+  } else {
+    // 使用月份范围（兼容旧版本）
+    const monthRange = getMonthRange(month)
+    startDate = monthRange.startDate
+    endDate = monthRange.endDate
+    const lastMonthRange = getLastMonthRange(month)
+    lastStartDate = lastMonthRange.startDate
+    lastEndDate = lastMonthRange.endDate
+  }
   
   // 并行查询本月和上月数据
   const [
@@ -449,13 +475,15 @@ async function getFinanceOverview(db, _, event, wxContext) {
     currentExpense,
     lastIncome,
     lastExpense,
-    reimbursementStats
+    reimbursementStats,
+    costBreakdown
   ] = await Promise.all([
-    getRevenueSumByDateRange(db, _, startDate, endDate),
-    getCostSumByDateRange(db, _, startDate, endDate),
-    getRevenueSumByDateRange(db, _, lastStartDate, lastEndDate),
-    getCostSumByDateRange(db, _, lastStartDate, lastEndDate),
-    getReimbursementStatsByMonth(db, _, month)
+    getRevenueSumByDateRange(db, _, startDate, endDate, batchId),
+    getCostSumByDateRange(db, _, startDate, endDate, batchId),
+    getRevenueSumByDateRange(db, _, lastStartDate, lastEndDate, batchId),
+    getCostSumByDateRange(db, _, lastStartDate, lastEndDate, batchId),
+    getReimbursementStatsByMonth(db, _, month),
+    getCostBreakdownByDateRange(db, _, startDate, endDate, batchId)
   ])
   
   // 计算增长率
@@ -483,7 +511,8 @@ async function getFinanceOverview(db, _, event, wxContext) {
         growth: profitGrowth,
         compareLastMonth: currentProfit - lastProfit
       },
-      reimbursement: reimbursementStats
+      reimbursement: reimbursementStats,
+      costBreakdown: costBreakdown
     }
   }
 }
@@ -496,7 +525,7 @@ async function getMyReimbursementStats(db, _, event, wxContext) {
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const { startDate, endDate } = getMonthRange(currentMonth)
   
-  // 查询本月已通过的报销
+  // 查询本月已通过的报销（只统计已审批通过的）
   const monthlyResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
     .where({
       _openid: wxContext.OPENID,
@@ -509,7 +538,7 @@ async function getMyReimbursementStats(db, _, event, wxContext) {
   
   const monthlyAmount = monthlyResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
   
-  // 查询累计已通过的报销
+  // 查询累计已通过的报销（只统计已审批通过的）
   const totalResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
     .where({
       _openid: wxContext.OPENID,
@@ -569,29 +598,417 @@ function getLastMonthRange(month) {
 /**
  * 按日期范围统计收入
  */
-async function getRevenueSumByDateRange(db, _, startDate, endDate) {
-  const result = await db.collection(COLLECTIONS.FINANCE_REVENUE_RECORDS)
+async function getRevenueSumByDateRange(db, _, startDate, endDate, batchId = null) {
+  let totalRevenue = 0
+  
+  // 1. 从财务收入记录汇总
+  let financeQuery = db.collection(COLLECTIONS.FINANCE_REVENUE_RECORDS)
     .where({
-      date: _.gte(startDate).and(_.lte(endDate)),
       isDeleted: _.neq(true)
     })
-    .get()
   
-  return result.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  // 日期筛选：仅在提供了日期范围时才添加（兼容 date 和 createTime 字段）
+  if (startDate && endDate) {
+    financeQuery = financeQuery.where(
+      _.or([
+        { date: _.gte(startDate).and(_.lte(endDate)) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    financeQuery = financeQuery.where({
+      batchId: batchId
+    })
+  }
+  
+  const financeResult = await financeQuery.get()
+  totalRevenue += financeResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  
+  // 2. 从出栏记录汇总销售收入
+  // 注意：出栏记录可能没有 exitReason 字段，只要 totalRevenue > 0 就认为是销售
+  let exitQuery = db.collection(COLLECTIONS.PROD_BATCH_EXITS)
+    .where({
+      isDeleted: _.neq(true)
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加（兼容 exitDate 和 createTime 字段）
+  if (startDate && endDate) {
+    exitQuery = exitQuery.where(
+      _.or([
+        { exitDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    // 批次筛选：兼容 batchId 和 batchNumber
+    exitQuery = exitQuery.where(
+      _.or([
+        { batchId: batchId },
+        { batchNumber: batchId }
+      ])
+    )
+  }
+  
+  const exitResult = await exitQuery.get()
+  // 只统计有收入的出栏记录
+  totalRevenue += exitResult.data.reduce((sum, r) => {
+    const revenue = r.totalRevenue || 0
+    return revenue > 0 ? sum + revenue : sum
+  }, 0)
+  
+  return totalRevenue
 }
 
 /**
  * 按日期范围统计支出
  */
-async function getCostSumByDateRange(db, _, startDate, endDate) {
-  const result = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) {
+  let totalCost = 0
+  
+  // 1. 从财务成本记录汇总
+  let financeQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
     .where({
-      date: _.gte(startDate).and(_.lte(endDate)),
       isDeleted: _.neq(true)
     })
-    .get()
   
-  return result.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  // 日期筛选：仅在提供了日期范围时才添加（兼容 date 和 createTime 字段）
+  if (startDate && endDate) {
+    financeQuery = financeQuery.where(
+      _.or([
+        { date: _.gte(startDate).and(_.lte(endDate)) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    financeQuery = financeQuery.where(
+      _.or([
+        { batchId: batchId },
+        { 'details.batchId': batchId }
+      ])
+    )
+  }
+  
+  const financeResult = await financeQuery.get()
+  totalCost += financeResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  
+  // 2. 从入栏记录汇总采购成本（鹅苗采购）
+  let entryQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+    .where({
+      isDeleted: _.neq(true)
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加（兼容 entryDate、purchaseDate 和 createTime 字段）
+  if (startDate && endDate) {
+    entryQuery = entryQuery.where(
+      _.or([
+        { entryDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { purchaseDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    entryQuery = entryQuery.where(
+      _.or([
+        { _id: batchId },
+        { batchNumber: batchId }
+      ])
+    )
+  }
+  
+  const entryResult = await entryQuery.get()
+  totalCost += entryResult.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+  
+  // 3. 从投喂记录汇总饲料成本
+  let feedQuery = db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
+    .where({
+      isDeleted: _.neq(true)
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加（兼容 recordDate 和 createTime 字段）
+  if (startDate && endDate) {
+    feedQuery = feedQuery.where(
+      _.or([
+        { recordDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    feedQuery = feedQuery.where(
+      _.or([
+        { batchId: batchId },
+        { batchNumber: batchId }
+      ])
+    )
+  }
+  
+  const feedResult = await feedQuery.get()
+  totalCost += feedResult.data.reduce((sum, r) => sum + (r.totalCost || 0), 0)
+  
+  // 4. 从采购记录汇总物料采购成本
+  let purchaseQuery = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
+    .where({
+      isDeleted: _.neq(true),
+      type: 'purchase'
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加（兼容 recordDate 和 createTime 字段）
+  if (startDate && endDate) {
+    purchaseQuery = purchaseQuery.where(
+      _.or([
+        { recordDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    purchaseQuery = purchaseQuery.where({
+      relatedBatch: batchId
+    })
+  }
+  
+  const purchaseResult = await purchaseQuery.get()
+  totalCost += purchaseResult.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+  
+  return totalCost
+}
+
+/**
+ * 按日期范围统计成本分解
+ */
+async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = null) {
+  const breakdown = {
+    feedCost: 0,      // 饲料成本
+    goslingCost: 0,   // 鹅苗成本
+    medicalCost: 0,   // 医疗费用
+    otherCost: 0      // 其他费用
+  }
+  
+  // 1. 从财务成本记录汇总
+  let financeQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      isDeleted: _.neq(true)
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加
+  if (startDate && endDate) {
+    financeQuery = financeQuery.where(
+      _.or([
+        { date: _.gte(startDate).and(_.lte(endDate)) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    financeQuery = financeQuery.where(
+      _.or([
+        { batchId: batchId },
+        { 'details.batchId': batchId }
+      ])
+    )
+  }
+  
+  const financeResult = await financeQuery.get()
+  financeResult.data.forEach(record => {
+    const amount = record.amount || 0
+    const costType = record.costType || 'other'
+    
+    if (costType === 'feed') {
+      breakdown.feedCost += amount
+    } else if (costType === 'labor') {
+      // 人工成本归入其他费用
+      breakdown.otherCost += amount
+    } else if (costType === 'health' || costType === 'treatment' || costType === 'loss' || costType === 'death_loss') {
+      breakdown.medicalCost += amount
+    } else {
+      breakdown.otherCost += amount
+    }
+  })
+  
+  // 2. 投喂记录不在成本统计中（库存流转，不涉及现金流）
+  // 说明：饲料成本只统计采购记录，投喂只是库存流转
+  
+  // 3. 从采购记录汇总（根据物料类型分类）
+  // 饲料、药品、营养品、其他物料的采购
+  let purchaseQuery = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
+    .where({
+      isDeleted: _.neq(true),
+      type: 'purchase'
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加
+  if (startDate && endDate) {
+    purchaseQuery = purchaseQuery.where(
+      _.or([
+        { recordDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    purchaseQuery = purchaseQuery.where({
+      relatedBatch: batchId
+    })
+  }
+  
+  const purchaseResult = await purchaseQuery.get()
+  // 根据物料类型判断是饲料、药品还是其他
+  // 注意：财务概览按采购金额统计（现金流），批次分析按实际使用统计（成本核算）
+  for (const record of purchaseResult.data) {
+    // 计算金额：优先使用 totalAmount，如果没有则用 quantity * unitPrice
+    let amount = record.totalAmount || 0
+    if (amount === 0 && record.quantity && record.unitPrice) {
+      amount = Number(record.quantity) * Number(record.unitPrice)
+    }
+    // 如果还是0，尝试从物料信息获取单价
+    if (amount === 0 && record.quantity && record.materialId) {
+      try {
+        const material = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(record.materialId).get()
+        if (material.data && material.data.unitPrice) {
+          amount = Number(record.quantity) * Number(material.data.unitPrice)
+        }
+      } catch (e) {
+        // 查询失败，保持为0
+      }
+    }
+    
+    // 如果物料ID存在，查询物料类型
+    if (record.materialId) {
+      try {
+        const material = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(record.materialId).get()
+        if (material.data) {
+          const category = material.data.category || material.data.type || ''
+          if (category === '饲料') {
+          breakdown.feedCost += amount
+          } else if (category === '药品' || category === 'medicine' || category === '营养品') {
+            // 药品采购计入医疗费用（现金流）
+            breakdown.medicalCost += amount
+          } else {
+            breakdown.otherCost += amount
+          }
+        } else {
+          breakdown.otherCost += amount
+        }
+      } catch (e) {
+        // 查询失败，默认归类为其他
+        breakdown.otherCost += amount
+      }
+    } else if (record.category) {
+      // 如果记录本身有category字段，也进行判断
+      const category = record.category
+      if (category === '饲料') {
+        breakdown.feedCost += amount
+      } else if (category === '药品' || category === 'medicine' || category === '营养品') {
+        // 药品采购计入医疗费用（现金流）
+        breakdown.medicalCost += amount
+      } else {
+        breakdown.otherCost += amount
+      }
+    } else {
+      breakdown.otherCost += amount
+    }
+  }
+  
+  // 4. 治疗领用记录不在财务概览统计中
+  // 说明：治疗领用记录只用于批次成本分析，财务概览按采购金额统计
+  
+  // 5. 从入栏记录汇总（归类为鹅苗成本）
+  let entryQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+    .where({
+      isDeleted: _.neq(true)
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加
+  if (startDate && endDate) {
+    entryQuery = entryQuery.where(
+      _.or([
+        { entryDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { purchaseDate: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    entryQuery = entryQuery.where(
+      _.or([
+        { _id: batchId },
+        { batchNumber: batchId }
+      ])
+    )
+  }
+  
+  const entryResult = await entryQuery.get()
+  breakdown.goslingCost += entryResult.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+  
+  // 6. 从财务成本记录汇总（报销、人工、设备等归类为其他费用）
+  let costRecordQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+    .where({
+      isDeleted: _.neq(true)
+    })
+  
+  // 日期筛选：仅在提供了日期范围时才添加
+  if (startDate && endDate) {
+    costRecordQuery = costRecordQuery.where(
+      _.or([
+        { date: _.gte(startDate.split('T')[0]).and(_.lte(endDate.split('T')[0])) },
+        { createTime: _.gte(startDate).and(_.lte(endDate)) }
+      ])
+    )
+  }
+  
+  if (batchId) {
+    costRecordQuery = costRecordQuery.where({
+      batchId: batchId
+    })
+  }
+  
+  const costRecordResult = await costRecordQuery.get()
+  
+  // 将财务成本记录按类型归类
+  costRecordResult.data.forEach(record => {
+    const amount = record.amount || 0
+    const costType = record.costType || 'other'
+    
+    // 报销、人工、设备采购等计入其他费用
+    // 注意：这里的 costType 可能是：reimbursement, labor, facility, equipment, other 等
+    if (costType === 'feed') {
+      // 饲料类成本记录（如果有的话）
+      breakdown.feedCost += amount
+    } else if (costType === 'health' || costType === 'medical') {
+      // 医疗类成本记录（如果有的话）
+      breakdown.medicalCost += amount
+    } else {
+      // 其他所有类型（报销、人工、设备等）都计入其他费用
+      breakdown.otherCost += amount
+    }
+  })
+  
+  const totalExpense = breakdown.feedCost + breakdown.goslingCost + breakdown.medicalCost + breakdown.otherCost
+  
+  // 计算百分比
+  return {
+    feedCost: breakdown.feedCost,
+    feedPercent: totalExpense > 0 ? parseFloat((breakdown.feedCost / totalExpense * 100).toFixed(1)) : 0,
+    goslingCost: breakdown.goslingCost,
+    goslingPercent: totalExpense > 0 ? parseFloat((breakdown.goslingCost / totalExpense * 100).toFixed(1)) : 0,
+    medicalCost: breakdown.medicalCost,
+    medicalPercent: totalExpense > 0 ? parseFloat((breakdown.medicalCost / totalExpense * 100).toFixed(1)) : 0,
+    otherCost: breakdown.otherCost,
+    otherPercent: totalExpense > 0 ? parseFloat((breakdown.otherCost / totalExpense * 100).toFixed(1)) : 0
+  }
 }
 
 /**

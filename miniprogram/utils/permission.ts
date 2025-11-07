@@ -41,7 +41,7 @@ export const ROLE_COLORS = {
 // 角色默认权限
 export const ROLE_PERMISSIONS = {
   'admin': ['all'],
-  'employee': ['basic', 'production.view', 'health.view', 'finance.view'],
+  'employee': ['basic', 'production.view', 'health.view'],
   'user': ['basic']
 }
 

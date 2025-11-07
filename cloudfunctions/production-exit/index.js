@@ -211,6 +211,35 @@ async function createExitRecord(event, wxContext) {
   } catch (e) {
     // 已移除调试日志
   }
+  // 计算总收入：总重量×单价（正确的计算方式）
+  let totalRevenue = 0
+  const totalWeightNum = Number(recordData.totalWeight) || 0
+  const unitPriceNum = Number(recordData.unitPrice) || 0
+  const quantityNum = Number(recordData.quantity) || 0
+  const avgWeightNum = Number(recordData.avgWeight) || 0
+  
+  // 1. 如果前端传递了totalRevenue且大于0，优先使用（前端已经按总重量×单价计算好了）
+  const totalRevenueNum = Number(recordData.totalRevenue) || 0
+  if (totalRevenueNum > 0) {
+    totalRevenue = totalRevenueNum
+  }
+  // 2. 如果有总重量，按总重量×单价计算（推荐方式）
+  else if (totalWeightNum > 0 && unitPriceNum > 0) {
+    totalRevenue = totalWeightNum * unitPriceNum
+  }
+  // 3. 如果有数量和平均重量，计算总重量后再乘以单价
+  else if (quantityNum > 0 && avgWeightNum > 0 && unitPriceNum > 0) {
+    const calculatedTotalWeight = quantityNum * avgWeightNum
+    totalRevenue = calculatedTotalWeight * unitPriceNum
+  }
+  // 4. 最后才按数量×单价计算（不准确，仅作为后备方案）
+  else if (quantityNum > 0 && unitPriceNum > 0) {
+    totalRevenue = quantityNum * unitPriceNum
+  }
+  
+  // 如果totalWeight没有传递但可以计算出来，保存计算结果
+  const finalTotalWeight = totalWeightNum > 0 ? totalWeightNum : (quantityNum * avgWeightNum || 0)
+  
   const newRecord = {
     userId: wxContext.OPENID,
     exitNumber,
@@ -219,10 +248,11 @@ async function createExitRecord(event, wxContext) {
     supplier: entryInfo.supplier || '',   // 从入栏记录获取供应商信息
     customer: recordData.customer,
     customerContact: recordData.customerContact || '',
-    quantity: Number(recordData.quantity),
-    avgWeight: Number(recordData.avgWeight) || 0,
-    unitPrice: Number(recordData.unitPrice) || 0,
-    totalRevenue: Number(recordData.quantity) * Number(recordData.unitPrice || 0),
+    quantity: quantityNum,
+    avgWeight: avgWeightNum,
+    totalWeight: finalTotalWeight, // 保存计算后的总重量
+    unitPrice: unitPriceNum,
+    totalRevenue: totalRevenue,
     exitDate: recordData.exitDate || now.toISOString().split('T')[0],
     deliveryDate: recordData.deliveryDate || '',
     operator: operatorName,
@@ -318,12 +348,42 @@ async function updateExitRecord(event, wxContext) {
     }
   }
   
-  // 重新计算总收入
-  if (updateData.quantity !== undefined || updateData.unitPrice !== undefined) {
+  // 重新计算总收入：使用与创建记录相同的逻辑
+  if (updateData.totalRevenue !== undefined || updateData.totalWeight !== undefined || updateData.unitPrice !== undefined || updateData.quantity !== undefined || updateData.avgWeight !== undefined) {
     const record = existingRecord.data[0]
-    const quantity = updateData.quantity !== undefined ? Number(updateData.quantity) : record.quantity
-    const unitPrice = updateData.unitPrice !== undefined ? Number(updateData.unitPrice) : record.unitPrice
-    updateFields.totalRevenue = quantity * unitPrice
+    
+    // 获取最新的值（优先使用更新的值，否则使用原记录的值）
+    const totalWeightNum = updateData.totalWeight !== undefined ? Number(updateData.totalWeight) : (Number(record.totalWeight) || 0)
+    const unitPriceNum = updateData.unitPrice !== undefined ? Number(updateData.unitPrice) : (Number(record.unitPrice) || 0)
+    const quantityNum = updateData.quantity !== undefined ? Number(updateData.quantity) : (Number(record.quantity) || 0)
+    const avgWeightNum = updateData.avgWeight !== undefined ? Number(updateData.avgWeight) : (Number(record.avgWeight) || 0)
+    const totalRevenueNum = updateData.totalRevenue !== undefined ? Number(updateData.totalRevenue) : 0
+    
+    let totalRevenue = 0
+    
+    // 1. 如果前端传递了totalRevenue且大于0，优先使用
+    if (totalRevenueNum > 0) {
+      totalRevenue = totalRevenueNum
+    }
+    // 2. 如果有总重量，按总重量×单价计算（推荐方式）
+    else if (totalWeightNum > 0 && unitPriceNum > 0) {
+      totalRevenue = totalWeightNum * unitPriceNum
+    }
+    // 3. 如果有数量和平均重量，计算总重量后再乘以单价
+    else if (quantityNum > 0 && avgWeightNum > 0 && unitPriceNum > 0) {
+      const calculatedTotalWeight = quantityNum * avgWeightNum
+      totalRevenue = calculatedTotalWeight * unitPriceNum
+      // 同时更新总重量
+      if (updateData.totalWeight === undefined) {
+        updateFields.totalWeight = calculatedTotalWeight
+      }
+    }
+    // 4. 最后才按数量×单价计算（不准确，仅作为后备方案）
+    else if (quantityNum > 0 && unitPriceNum > 0) {
+      totalRevenue = quantityNum * unitPriceNum
+    }
+    
+    updateFields.totalRevenue = totalRevenue
   }
   
   await db.collection('prod_batch_exits').doc(recordId).update({

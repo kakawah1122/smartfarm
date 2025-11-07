@@ -96,10 +96,10 @@ async function calculateCostStats(dateRange) {
 async function calculateRevenueStats(dateRange) {
   try {
     // 从出栏记录获取销售收入
+    // 注意：出栏记录可能没有 exitReason 字段，只要 totalRevenue > 0 就认为是销售
     let exitQuery = db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({ 
-        isDeleted: false,
-        exitReason: 'sale'
+        isDeleted: false
       })
     
     if (dateRange && dateRange.start && dateRange.end) {
@@ -110,8 +110,10 @@ async function calculateRevenueStats(dateRange) {
     
     const exitRecords = await exitQuery.get()
     
+    // 只统计有收入的出栏记录
     const salesRevenue = exitRecords.data.reduce((sum, record) => {
-      return sum + (record.totalRevenue || 0)
+      const revenue = record.totalRevenue || 0
+      return revenue > 0 ? sum + revenue : sum
     }, 0)
     
     // 从收入记录获取其他收入
@@ -227,6 +229,8 @@ exports.main = async (event, context) => {
         return await reimbursementHandler.getFinanceOverview(db, _, event, wxContext)
       case 'get_my_reimbursement_stats':
         return await reimbursementHandler.getMyReimbursementStats(db, _, event, wxContext)
+      case 'get_all_finance_records':
+        return await getAllFinanceRecords(event, wxContext)
       
       default:
         throw new Error('无效的操作类型')
@@ -836,6 +840,295 @@ async function createTreatmentCostRecord(event, wxContext) {
       success: false,
       error: error.message,
       message: '创建治疗成本记录失败'
+    }
+  }
+}
+
+/**
+ * 获取所有财务相关记录（包括业务记录）
+ */
+async function getAllFinanceRecords(event, wxContext) {
+  try {
+    const { page = 1, pageSize = 100, dateRange, batchId } = event
+    const openid = wxContext.OPENID
+
+    if (!await validateFinancePermission(openid, 'read')) {
+      throw new Error('无权限查看财务数据')
+    }
+
+    const startDate = dateRange?.start || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+    const endDate = dateRange?.end || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59).toISOString()
+    const startDateStr = startDate.split('T')[0]
+    const endDateStr = endDate.split('T')[0]
+
+    const records = []
+
+    // 1. 获取财务收入记录
+    let revenueQuery = db.collection(COLLECTIONS.FINANCE_REVENUE_RECORDS).where({ isDeleted: false })
+    if (dateRange) {
+      revenueQuery = revenueQuery.where(
+        _.or([
+          { date: _.gte(startDate).and(_.lte(endDate)) },
+          { createTime: _.gte(startDate).and(_.lte(endDate)) }
+        ])
+      )
+    }
+    if (batchId) {
+      revenueQuery = revenueQuery.where({ batchId: batchId })
+    }
+    const revenueResult = await revenueQuery.get()
+    revenueResult.data.forEach(record => {
+      records.push({
+        id: record._id || record.recordId,
+        type: 'income',
+        source: 'finance',
+        revenueType: record.revenueType,
+        amount: record.amount || 0,
+        description: record.description || '收入记录',
+        date: record.date || record.createTime,
+        createTime: record.createTime,
+        status: record.status || 'confirmed',
+        relatedRecordId: record.relatedRecordId,
+        batchId: record.batchId,
+        rawRecord: record
+      })
+    })
+
+    // 2. 获取财务成本记录
+    let costQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS).where({ isDeleted: false })
+    if (dateRange) {
+      costQuery = costQuery.where(
+        _.or([
+          { date: _.gte(startDate).and(_.lte(endDate)) },
+          { createTime: _.gte(startDate).and(_.lte(endDate)) }
+        ])
+      )
+    }
+    if (batchId) {
+      costQuery = costQuery.where(
+        _.or([
+          { batchId: batchId },
+          { 'details.batchId': batchId }
+        ])
+      )
+    }
+    const costResult = await costQuery.get()
+    costResult.data.forEach(record => {
+      records.push({
+        id: record._id || record.recordId,
+        type: 'expense',
+        source: 'finance',
+        costType: record.costType,
+        amount: record.amount || 0,
+        description: record.description || '支出记录',
+        date: record.date || record.createTime,
+        createTime: record.createTime,
+        status: record.status || 'confirmed',
+        relatedRecordId: record.relatedRecordId || record.sourceRecordId,
+        batchId: record.batchId || record.details?.batchId,
+        isReimbursement: record.isReimbursement,
+        reimbursement: record.reimbursement,
+        rawRecord: record
+      })
+    })
+
+    // 3. 获取出栏记录（销售收入）
+    // 注意：出栏记录可能没有 exitReason 字段，只要 totalRevenue > 0 就认为是销售
+    let exitQuery = db.collection(COLLECTIONS.PROD_BATCH_EXITS).where({
+      isDeleted: false
+    })
+    if (dateRange) {
+      exitQuery = exitQuery.where(
+        _.or([
+          { exitDate: _.gte(startDateStr).and(_.lte(endDateStr)) },
+          { createTime: _.gte(startDate).and(_.lte(endDate)) }
+        ])
+      )
+    }
+    if (batchId) {
+      exitQuery = exitQuery.where(
+        _.or([
+          { batchId: batchId },
+          { batchNumber: batchId }
+        ])
+      )
+    }
+    const exitResult = await exitQuery.get()
+    exitResult.data.forEach(record => {
+      // 只处理有收入的出栏记录（销售）
+      const revenue = record.totalRevenue || 0
+      if (revenue > 0) {
+        records.push({
+          id: `exit_${record._id}`,  // 添加前缀避免id重复
+          type: 'income',
+          source: 'exit',
+          revenueType: 'sales',
+          amount: revenue,
+          description: `成鹅销售收入 - ${record.batchNumber || ''} - ${record.customer || '客户'} - ${record.quantity || 0}羽`,
+          date: record.exitDate || record.createTime,
+          createTime: record.createTime,
+          status: 'confirmed',
+          relatedRecordId: record._id,
+          batchId: record.batchId || record.batchNumber,
+          batchNumber: record.batchNumber,
+          rawRecord: record
+        })
+      }
+    })
+
+    // 4. 获取入栏记录（采购成本）
+    let entryQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).where({ isDeleted: false })
+    if (dateRange) {
+      entryQuery = entryQuery.where(
+        _.or([
+          { entryDate: _.gte(startDateStr).and(_.lte(endDateStr)) },
+          { purchaseDate: _.gte(startDateStr).and(_.lte(endDateStr)) },
+          { createTime: _.gte(startDate).and(_.lte(endDate)) }
+        ])
+      )
+    }
+    if (batchId) {
+      entryQuery = entryQuery.where(
+        _.or([
+          { _id: batchId },
+          { batchNumber: batchId }
+        ])
+      )
+    }
+    const entryResult = await entryQuery.get()
+    entryResult.data.forEach(record => {
+      records.push({
+        id: `entry_${record._id}`,  // 添加前缀避免id重复
+        type: 'expense',
+        source: 'entry',
+        costType: 'other',
+        amount: record.totalAmount || 0,
+        description: `入栏采购 - ${record.breed || '品种'} - ${record.batchNumber || ''} - ${record.supplier || '供应商'}`,
+        date: record.entryDate || record.purchaseDate || record.createTime,
+        createTime: record.createTime,
+        status: 'confirmed',
+        relatedRecordId: record._id,
+        batchId: record._id,
+        batchNumber: record.batchNumber,
+        rawRecord: record
+      })
+    })
+
+    // 5. 投喂记录不在财务记录列表中显示
+    // 说明：投喂记录只用于批次成本分析，财务记录列表显示饲料采购记录
+
+    // 6. 获取物料采购记录（饲料、药品、其他物料）
+    let purchaseQuery = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).where({
+      isDeleted: false,
+      type: 'purchase'
+    })
+    if (dateRange) {
+      purchaseQuery = purchaseQuery.where(
+        _.or([
+          { recordDate: _.gte(startDateStr).and(_.lte(endDateStr)) },
+          { createTime: _.gte(startDate).and(_.lte(endDate)) }
+        ])
+      )
+    }
+    if (batchId) {
+      purchaseQuery = purchaseQuery.where({ relatedBatch: batchId })
+    }
+    const purchaseResult = await purchaseQuery.get()
+    
+    // 查询物料信息来判断类型和获取物料名称
+    for (const record of purchaseResult.data) {
+      let costType = 'other'
+      let materialName = record.materialName || '物料'
+      
+      if (record.materialId) {
+        try {
+          const material = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(record.materialId).get()
+          if (material.data) {
+            materialName = material.data.name || material.data.materialName || materialName
+            const category = material.data.category || material.data.type || ''
+            if (category === '饲料') {
+              costType = 'feed'
+            } else if (category === '药品' || category === 'medicine' || category === '营养品') {
+              costType = 'health'
+            }
+          }
+        } catch (e) {
+          // 查询失败，使用默认值
+        }
+      } else if (record.category) {
+        const category = record.category
+        if (category === '饲料') {
+          costType = 'feed'
+        } else if (category === '药品' || category === 'medicine' || category === '营养品') {
+          costType = 'health'
+        }
+      }
+      
+      // 计算总金额
+      let amount = record.totalAmount || 0
+      if (amount === 0 && record.quantity && record.unitPrice) {
+        amount = Number(record.quantity) * Number(record.unitPrice)
+      }
+      if (amount === 0 && record.quantity && record.materialId) {
+        try {
+          const material = await db.collection(COLLECTIONS.PROD_MATERIALS).doc(record.materialId).get()
+          if (material.data && material.data.unitPrice) {
+            amount = Number(record.quantity) * Number(material.data.unitPrice)
+          }
+        } catch (e) {
+          // 查询失败，保持为0
+        }
+      }
+      
+      records.push({
+        id: `purchase_${record._id}`,
+        type: 'expense',
+        source: 'purchase',
+        costType: costType,
+        amount: amount,
+        description: `${costType === 'health' ? '药品' : costType === 'feed' ? '饲料' : '物料'}采购 - ${materialName} - ${record.supplier || '供应商'} - ${record.quantity || 0}${record.unit || '件'}`,
+        date: record.recordDate || record.createTime,
+        createTime: record.createTime,
+        status: 'confirmed',
+        relatedRecordId: record._id,
+        batchId: record.relatedBatch,
+        rawRecord: record
+      })
+    }
+
+    // 7. 投喂记录和治疗领用记录不在财务记录列表中显示
+    // 说明：这些记录只用于批次成本分析，财务记录列表显示采购记录
+
+    // 按日期排序（最新的在前）
+    records.sort((a, b) => {
+      const dateA = new Date(a.createTime || a.date).getTime()
+      const dateB = new Date(b.createTime || b.date).getTime()
+      return dateB - dateA
+    })
+
+    // 分页
+    const total = records.length
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    const paginatedRecords = records.slice(startIndex, endIndex)
+
+    return {
+      success: true,
+      data: {
+        records: paginatedRecords,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize)
+        }
+      }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '获取财务记录失败'
     }
   }
 }
