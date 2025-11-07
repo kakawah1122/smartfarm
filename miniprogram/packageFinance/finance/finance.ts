@@ -93,7 +93,11 @@ const pageConfig = {
     
     // 审批详情弹窗
     showApprovalPopup: false,
-    selectedApprovalItem: null as any
+    selectedApprovalItem: null as any,
+    
+    // 拒绝原因输入弹窗
+    showRejectReasonPopup: false,
+    rejectReason: ''
   },
 
   onLoad() {
@@ -181,6 +185,11 @@ const pageConfig = {
         })
       }
     })
+  },
+
+  // 菜单点击
+  onMenuTap() {
+    // 可以添加更多菜单选项
   },
 
   // 时间筛选类型选择（第一级）
@@ -476,9 +485,11 @@ const pageConfig = {
     const profit = data.profit?.total || 0
     const costBreakdown = data.costBreakdown || {}
 
-    // 转换为万元单位显示
+    // 转换为万元单位显示（保留两位小数，去掉末尾的0）
     const formatToWan = (value: number) => {
-      return (value / 10000).toFixed(1)
+      const wan = value / 10000
+      // 保留两位小数，然后去掉末尾的0
+      return parseFloat(wan.toFixed(2)).toString()
     }
 
     // 计算净利润颜色类：负数为绿色(success)，正数为红色(danger)
@@ -706,10 +717,13 @@ const pageConfig = {
   // 获取报销类型标题
   getReimbursementTypeTitle(reimbursementType: string): string {
     const typeMap: any = {
-      'travel': '差旅费',
-      'meal': '餐费',
-      'purchase': '采购费用',
-      'entertainment': '招待费',
+      'feed': '饲料采购',
+      'medicine': '兽药采购',
+      'vaccine': '防疫费用',
+      'equipment': '设备维修',
+      'transport': '运输费用',
+      'utilities': '水电费',
+      'labor': '劳务费用',
       'other': '其他费用'
     }
     return typeMap[reimbursementType] || '其他费用'
@@ -984,15 +998,111 @@ const pageConfig = {
     }
   },
   
-  // 处理拒绝审批
+  // 处理拒绝审批 - 显示拒绝原因输入弹窗
   handleRejectApproval() {
     if (this.data.selectedApprovalItem) {
-      this.rejectApproval({ 
-        currentTarget: { 
-          dataset: { id: this.data.selectedApprovalItem.id } 
-        } 
+      // 保存当前选中的审批项，避免被清空
+      const currentItem = { ...this.data.selectedApprovalItem }
+      // 关闭审批详情弹窗
+      this.setData({
+        showApprovalPopup: false,
+        // 同时设置拒绝原因弹窗和保留审批项数据
+        showRejectReasonPopup: true,
+        rejectReason: '',
+        selectedApprovalItem: currentItem // 确保数据保留
       })
-      this.closeApprovalPopup()
+    } else {
+      wx.showToast({
+        title: '审批信息不存在',
+        icon: 'none'
+      })
+    }
+  },
+  
+  // 关闭拒绝原因输入弹窗
+  closeRejectReasonPopup() {
+    this.setData({
+      showRejectReasonPopup: false,
+      rejectReason: ''
+    })
+    // 延迟清空审批项数据
+    setTimeout(() => {
+      this.setData({
+        selectedApprovalItem: null
+      })
+    }, 300)
+  },
+  
+  // 拒绝原因输入变化
+  onRejectReasonChange(e: any) {
+    this.setData({
+      rejectReason: e.detail.value || e.detail
+    })
+  },
+  
+  // 确认拒绝审批
+  async confirmRejectApproval() {
+    const reason = this.data.rejectReason.trim()
+    if (!reason) {
+      wx.showToast({
+        title: '请填写拒绝原因',
+        icon: 'none'
+      })
+      return
+    }
+    
+    if (!this.data.selectedApprovalItem) {
+      wx.showToast({
+        title: '审批信息已丢失，请重新操作',
+        icon: 'none'
+      })
+      return
+    }
+    
+    const id = this.data.selectedApprovalItem.id
+    if (!id) {
+      wx.showToast({
+        title: '审批ID不存在',
+        icon: 'none'
+      })
+      return
+    }
+    
+    try {
+      wx.showLoading({ title: '处理中...' })
+      const result = await wx.cloud.callFunction({
+        name: 'finance-management',
+        data: {
+          action: 'reject_reimbursement',
+          reimbursementId: id,
+          reason: reason
+        }
+      })
+      wx.hideLoading()
+      
+      if (result.result?.success) {
+        wx.showToast({
+          title: '申请已拒绝',
+          icon: 'success'
+        })
+        // 关闭拒绝原因弹窗
+        this.closeRejectReasonPopup()
+        // 重新加载审批列表、财务概览和财务记录
+        await Promise.all([
+          this.loadApprovalItems(),
+          this.loadFinanceData(),
+          this.loadFinanceRecords()
+        ])
+      } else {
+        throw new Error(result.result?.error || '拒绝失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showToast({
+        title: error.message || '拒绝失败',
+        icon: 'none',
+        duration: 2000
+      })
     }
   },
 
@@ -1020,8 +1130,13 @@ const pageConfig = {
                 title: '申请已通过',
                 icon: 'success'
               })
-              // 重新加载审批列表
-              await this.loadApprovalItems()
+              // 重新加载审批列表、财务概览和财务记录
+              // 审批通过后，报销记录会从待审批变为已通过，影响财务统计
+              await Promise.all([
+                this.loadApprovalItems(),
+                this.loadFinanceData(),
+                this.loadFinanceRecords()
+              ])
             } else {
               throw new Error(result.result?.error || '审批失败')
             }
@@ -1037,51 +1152,18 @@ const pageConfig = {
     })
   },
 
-  // 拒绝审批
+  // 拒绝审批（保留此方法以兼容其他调用）
   async rejectApproval(e: any) {
     const { id } = e.currentTarget.dataset
-    wx.showModal({
-      title: '确认操作',
-      content: '确认拒绝此申请？',
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            wx.showLoading({ title: '处理中...' })
-            const result = await wx.cloud.callFunction({
-              name: 'finance-management',
-              data: {
-                action: 'reject_reimbursement',
-                reimbursementId: id
-              }
-            })
-            wx.hideLoading()
-            
-            if (result.result?.success) {
-              wx.showToast({
-                title: '申请已拒绝',
-                icon: 'success'
-              })
-              // 重新加载审批列表
-              await this.loadApprovalItems()
-            } else {
-              throw new Error(result.result?.error || '拒绝失败')
-            }
-          } catch (error: any) {
-            wx.hideLoading()
-            wx.showToast({
-              title: error.message || '拒绝失败',
-              icon: 'none'
-            })
-          }
-        }
-      }
-    })
-  },
-
-  // 移除审批项（重新加载列表）
-  async removeApprovalItem(id: string) {
-    // 重新加载审批列表以获取最新数据
-    await this.loadApprovalItems()
+    // 设置当前选中的审批项
+    const item = this.data.approvalItems.find((item: any) => item.id === id)
+    if (item) {
+      this.setData({
+        selectedApprovalItem: item,
+        showRejectReasonPopup: true,
+        rejectReason: ''
+      })
+    }
   },
 
   // 手动记账

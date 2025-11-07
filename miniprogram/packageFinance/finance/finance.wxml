@@ -326,4 +326,33 @@
       </view>
     </view>
   </bottom-popup>
+  
+  <!-- 拒绝原因输入弹窗 -->
+  <bottom-popup
+    visible="{{showRejectReasonPopup}}"
+    title="拒绝审批"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    cancel-text="取消"
+    confirm-text="确认拒绝"
+    bind:close="closeRejectReasonPopup"
+    bind:cancel="closeRejectReasonPopup"
+    bind:confirm="confirmRejectApproval"
+  >
+    <view class="reject-reason-content">
+      <view class="reject-warning">
+        <text>确定要拒绝此申请吗？请填写拒绝原因。</text>
+      </view>
+      <view class="form-item">
+        <text class="form-label">拒绝原因 *</text>
+        <t-textarea
+          value="{{rejectReason}}"
+          placeholder="请输入拒绝原因"
+          maxlength="200"
+          bind:change="onRejectReasonChange"
+          class="reject-reason-textarea"
+        />
+      </view>
+    </view>
+  </bottom-popup>
 </view>

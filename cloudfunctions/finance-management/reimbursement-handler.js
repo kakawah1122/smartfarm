@@ -10,31 +10,46 @@
 
 const { COLLECTIONS } = require('./collections.js')
 
-// 报销类型配置
+// 报销类型配置（养殖场景）
 const REIMBURSEMENT_TYPES = {
-  TRAVEL: {
-    code: 'travel',
-    name: '差旅费',
-    description: '出差产生的交通、住宿等费用'
+  FEED: {
+    code: 'feed',
+    name: '饲料采购',
+    description: '购买饲料产生的费用'
   },
-  MEAL: {
-    code: 'meal',
-    name: '餐费',
-    description: '工作餐、招待餐等费用'
+  MEDICINE: {
+    code: 'medicine',
+    name: '兽药采购',
+    description: '购买兽药、消毒剂等药品费用'
   },
-  PURCHASE: {
-    code: 'purchase',
-    name: '采购费用',
-    description: '采购物料、设备等费用'
+  VACCINE: {
+    code: 'vaccine',
+    name: '防疫费用',
+    description: '疫苗接种、防疫检查等费用'
   },
-  ENTERTAINMENT: {
-    code: 'entertainment',
-    name: '招待费',
-    description: '商务招待产生的费用'
+  EQUIPMENT: {
+    code: 'equipment',
+    name: '设备维修',
+    description: '养殖设备维修、保养费用'
+  },
+  TRANSPORT: {
+    code: 'transport',
+    name: '运输费用',
+    description: '运输饲料、禽类等产生的费用'
+  },
+  UTILITIES: {
+    code: 'utilities',
+    name: '水电费',
+    description: '养殖场水电费用'
+  },
+  LABOR: {
+    code: 'labor',
+    name: '劳务费用',
+    description: '临时工、外包服务等劳务费用'
   },
   OTHER: {
     code: 'other',
-    name: '其他',
+    name: '其他费用',
     description: '其他类型的报销'
   }
 }
@@ -332,16 +347,32 @@ async function approveReimbursement(db, _, event, wxContext) {
   
   // 更新审批状态
   const now = new Date().toISOString()
+  const approverInfo = {
+    openid: wxContext.OPENID,
+    name: userInfo.nickname || userInfo.nickName || '管理员',
+    role: userInfo.role
+  }
+  
+  // 当 approver 字段为 null 时，需要先删除再设置
+  // 使用传入的 _ 参数（db.command），避免重复声明
+  // 如果 approver 为 null，先删除该字段
+  if (record.data.reimbursement.approver === null || record.data.reimbursement.approver === undefined) {
+    await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+      .doc(reimbursementId)
+      .update({
+        data: {
+          'reimbursement.approver': _.remove()
+        }
+      })
+  }
+  
+  // 然后设置新的 approver 值和其他字段
   await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
     .doc(reimbursementId)
     .update({
       data: {
         'reimbursement.status': APPROVAL_STATUS.APPROVED,
-        'reimbursement.approver': {
-          openid: wxContext.OPENID,
-          name: userInfo.nickname || userInfo.nickName || '管理员',
-          role: userInfo.role
-        },
+        'reimbursement.approver': approverInfo,
         'reimbursement.approvalTime': now,
         'reimbursement.remark': remark || '',
         updateTime: now
@@ -397,16 +428,32 @@ async function rejectReimbursement(db, _, event, wxContext) {
   
   // 更新审批状态
   const now = new Date().toISOString()
+  const approverInfo = {
+    openid: wxContext.OPENID,
+    name: userInfo.nickname || userInfo.nickName || '管理员',
+    role: userInfo.role
+  }
+  
+  // 当 approver 字段为 null 时，需要先删除再设置
+  // 使用传入的 _ 参数（db.command），避免重复声明
+  // 如果 approver 为 null，先删除该字段
+  if (record.data.reimbursement.approver === null || record.data.reimbursement.approver === undefined) {
+    await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+      .doc(reimbursementId)
+      .update({
+        data: {
+          'reimbursement.approver': _.remove()
+        }
+      })
+  }
+  
+  // 然后设置新的 approver 值和其他字段
   await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
     .doc(reimbursementId)
     .update({
       data: {
         'reimbursement.status': APPROVAL_STATUS.REJECTED,
-        'reimbursement.approver': {
-          openid: wxContext.OPENID,
-          name: userInfo.nickname || userInfo.nickName || '管理员',
-          role: userInfo.role
-        },
+        'reimbursement.approver': approverInfo,
         'reimbursement.approvalTime': now,
         'reimbursement.rejectionReason': reason,
         updateTime: now
@@ -669,14 +716,17 @@ async function getRevenueSumByDateRange(db, _, startDate, endDate, batchId = nul
 async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) {
   let totalCost = 0
   
-  // 1. 从财务成本记录汇总（排除待审批的报销记录）
+  // 1. 从财务成本记录汇总（只包含非报销记录和已审批通过的报销记录，排除待审批和被拒绝的报销）
   let financeQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
     .where(
       _.and([
         { isDeleted: _.neq(true) },
         _.or([
           { isReimbursement: _.neq(true) },  // 非报销记录
-          { 'reimbursement.status': 'approved' }  // 已审批的报销记录
+          _.and([
+            { isReimbursement: true },
+            { 'reimbursement.status': 'approved' }  // 只包含已审批通过的报销记录
+          ])
         ])
       ])
     )
@@ -701,7 +751,21 @@ async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) 
   }
   
   const financeResult = await financeQuery.get()
-  totalCost += financeResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  // 代码层面再次过滤，确保排除所有未审批和被拒绝的报销记录
+  const filteredFinanceRecords = financeResult.data.filter(record => {
+    // 如果不是报销记录，直接包含
+    if (!record.isReimbursement) {
+      return true
+    }
+    // 如果是报销记录，只包含已审批通过的
+    if (record.isReimbursement && record.reimbursement && record.reimbursement.status === 'approved') {
+      return true
+    }
+    // 其他情况（待审批、已拒绝、状态异常）都排除
+    return false
+  })
+  
+  totalCost += filteredFinanceRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
   
   // 2. 从入栏记录汇总采购成本（鹅苗采购）
   let entryQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
@@ -800,14 +864,17 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
     otherCost: 0      // 其他费用
   }
   
-  // 1. 从财务成本记录汇总（排除待审批的报销记录）
+  // 1. 从财务成本记录汇总（只包含非报销记录和已审批通过的报销记录，排除待审批和被拒绝的报销）
   let financeQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
     .where(
       _.and([
         { isDeleted: _.neq(true) },
         _.or([
           { isReimbursement: _.neq(true) },  // 非报销记录
-          { 'reimbursement.status': 'approved' }  // 已审批的报销记录
+          _.and([
+            { isReimbursement: true },
+            { 'reimbursement.status': 'approved' }  // 只包含已审批通过的报销记录
+          ])
         ])
       ])
     )
@@ -832,20 +899,52 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
   }
   
   const financeResult = await financeQuery.get()
-  financeResult.data.forEach(record => {
+  // 代码层面再次过滤，确保排除所有未审批和被拒绝的报销记录
+  const filteredFinanceRecords = financeResult.data.filter(record => {
+    // 如果不是报销记录，直接包含
+    if (!record.isReimbursement) {
+      return true
+    }
+    // 如果是报销记录，只包含已审批通过的
+    if (record.isReimbursement && record.reimbursement && record.reimbursement.status === 'approved') {
+      return true
+    }
+    // 其他情况（待审批、已拒绝、状态异常）都排除
+    return false
+  })
+  
+  filteredFinanceRecords.forEach(record => {
     const amount = record.amount || 0
-    const costType = record.costType || 'other'
     
-    if (costType === 'feed') {
-      breakdown.feedCost += amount
-    } else if (costType === 'labor' || costType === 'facility' || costType === 'other') {
-      // 人工、设施、其他成本归入其他费用
-      breakdown.otherCost += amount
-    } else if (costType === 'health' || costType === 'treatment' || costType === 'loss' || costType === 'death_loss') {
-      breakdown.medicalCost += amount
+    // 如果是报销记录，根据报销类型分类
+    if (record.isReimbursement && record.reimbursement) {
+      const reimbursementType = record.reimbursement.type
+      
+      if (reimbursementType === 'feed') {
+        // 饲料采购报销 -> 饲料成本
+        breakdown.feedCost += amount
+      } else if (reimbursementType === 'medicine' || reimbursementType === 'vaccine') {
+        // 兽药采购、防疫费用报销 -> 医疗费用
+        breakdown.medicalCost += amount
+      } else {
+        // 其他报销类型（equipment, transport, utilities, labor, other）-> 其他费用
+        breakdown.otherCost += amount
+      }
     } else {
-      // 其他未分类的也归入其他费用
-      breakdown.otherCost += amount
+      // 非报销记录，根据 costType 分类
+      const costType = record.costType || 'other'
+      
+      if (costType === 'feed') {
+        breakdown.feedCost += amount
+      } else if (costType === 'labor' || costType === 'facility' || costType === 'other') {
+        // 人工、设施、其他成本归入其他费用
+        breakdown.otherCost += amount
+      } else if (costType === 'health' || costType === 'treatment' || costType === 'loss' || costType === 'death_loss') {
+        breakdown.medicalCost += amount
+      } else {
+        // 其他未分类的也归入其他费用
+        breakdown.otherCost += amount
+      }
     }
   })
   

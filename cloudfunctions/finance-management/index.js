@@ -894,13 +894,16 @@ async function getAllFinanceRecords(event, wxContext) {
       })
     })
 
-    // 2. 获取财务成本记录（排除待审批的报销记录）
+    // 2. 获取财务成本记录（只包含非报销记录和已审批通过的报销记录，排除待审批和被拒绝的报销）
     let costQuery = db.collection(COLLECTIONS.FINANCE_COST_RECORDS).where(
       _.and([
         { isDeleted: false },
         _.or([
           { isReimbursement: _.neq(true) },  // 非报销记录
-          { 'reimbursement.status': 'approved' }  // 已审批的报销记录
+          _.and([
+            { isReimbursement: true },
+            { 'reimbursement.status': 'approved' }  // 只包含已审批通过的报销记录
+          ])
         ])
       ])
     )
@@ -921,7 +924,21 @@ async function getAllFinanceRecords(event, wxContext) {
       )
     }
     const costResult = await costQuery.get()
-    costResult.data.forEach(record => {
+    // 代码层面再次过滤，确保排除所有未审批和被拒绝的报销记录
+    const filteredCostRecords = costResult.data.filter(record => {
+      // 如果不是报销记录，直接包含
+      if (!record.isReimbursement) {
+        return true
+      }
+      // 如果是报销记录，只包含已审批通过的
+      if (record.isReimbursement && record.reimbursement && record.reimbursement.status === 'approved') {
+        return true
+      }
+      // 其他情况（待审批、已拒绝、状态异常）都排除
+      return false
+    })
+    
+    filteredCostRecords.forEach(record => {
       records.push({
         id: record._id || record.recordId,
         type: 'expense',
