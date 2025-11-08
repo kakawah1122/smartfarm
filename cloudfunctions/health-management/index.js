@@ -2902,14 +2902,6 @@ async function getDiagnosisHistory(event, wxContext) {
       whereCondition.createTime = _.gte(dateRange.start).and(_.lte(dateRange.end + 'T23:59:59'))
     }
 
-    // 🔍 调试日志：查看查询条件
-    console.log('[getDiagnosisHistory] 查询条件:', {
-      whereCondition,
-      batchId,
-      dateRange,
-      openid
-    })
-
     let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS).where(whereCondition)
 
     // 查询数据
@@ -2919,12 +2911,6 @@ async function getDiagnosisHistory(event, wxContext) {
       .skip(skip)
       .limit(limit)
       .get()
-
-    // 🔍 调试日志：查看查询结果
-    console.log('[getDiagnosisHistory] 查询结果:', {
-      recordCount: result.data.length,
-      firstRecord: result.data[0] || null
-    })
 
     // 映射数据库字段到前端期望的格式
     const mappedRecords = result.data.map(record => {

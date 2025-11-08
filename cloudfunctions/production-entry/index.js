@@ -617,8 +617,6 @@ async function getActiveBatches(event, wxContext) {
       })
       .get()
     
-    console.log('所有死亡记录:', deathRecordsResult.data)  // 调试日志
-    
     // 统计每个批次的出栏数量
     const exitQuantityMap = {}
     exitRecordsResult.data.forEach(exitRecord => {
@@ -651,12 +649,9 @@ async function getActiveBatches(event, wxContext) {
         // 兼容多种死亡数字段名
         const deathCount = deathRecord.deathCount || deathRecord.deadCount || deathRecord.totalDeathCount || 0
         deathQuantityMap[batchNumber] += deathCount
-        console.log(`批次 ${batchNumber} 累计死亡: ${deathQuantityMap[batchNumber]}`)  // 调试日志
       }
     })
     
-    console.log('死亡数量汇总:', deathQuantityMap)  // 调试日志
-
     // 筛选存栏批次（排除完全出栏/死亡、已删除和已归档的）
     const activeRecords = allResult.data.filter(record => {
       const isNotDeleted = record.isDeleted !== true

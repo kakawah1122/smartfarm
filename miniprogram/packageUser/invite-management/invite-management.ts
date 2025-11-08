@@ -719,41 +719,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
       })
     }
-  },
-
-  // 手动设置超级管理员（临时调试用）
-  async manualSetSuperAdmin() {
-    // 已移除调试日志
-    const app = getApp()
-    const userInfo = app.globalData.userInfo
-    
-    if (!userInfo) {
-      wx.showToast({
-        title: '用户未登录',
-        icon: 'none'
-      })
-      return
-    }
-    
-    if (userInfo.role !== 'admin') {
-      wx.showToast({
-        title: '只有管理员可以设置',
-        icon: 'none'
-      })
-      return
-    }
-    
-    wx.showModal({
-      title: '设置超级管理员',
-      content: '是否要将当前用户设置为超级管理员？',
-      confirmText: '确认设置',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          this.setSuperAdmin()
-        }
-      }
-    })
   }
 }
 

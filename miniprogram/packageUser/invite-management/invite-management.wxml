@@ -108,18 +108,6 @@
     >
       创建邀请
     </t-button>
-    
-    <!-- 临时的超级管理员设置按钮（调试用） -->
-    <t-button
-      wx:if="{{!userInfo.isSuper && userInfo.role === 'admin'}}"
-      theme="warning"
-      size="medium"
-      bind:tap="manualSetSuperAdmin"
-      class="temp-super-admin-btn"
-      style="margin-top: 16rpx;"
-    >
-      设置超级管理员
-    </t-button>
   </view>
 </view>
 
