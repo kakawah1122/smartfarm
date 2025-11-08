@@ -1,0 +1,18 @@
+<view class="trend-chart-wrapper">
+  <view class="canvas-holder" style="height: {{height}}px;">
+    <canvas
+      type="2d"
+      id="trendCanvas"
+      class="trend-canvas"
+    ></canvas>
+    <view wx:if="{{!hasData}}" class="chart-empty">
+      <text>暂无数据</text>
+    </view>
+  </view>
+  <view wx:if="{{hasData}}" class="chart-axis">
+    <view class="axis-label" wx:for="{{axisLabels}}" wx:key="index">
+      {{item}}
+    </view>
+  </view>
+</view>
+

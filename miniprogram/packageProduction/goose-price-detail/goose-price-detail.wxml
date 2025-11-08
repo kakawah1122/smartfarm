@@ -1,0 +1,105 @@
+<view class="page goose-price-detail-page">
+  <navigation-bar
+    title="鹅价详情"
+    show-back="{{true}}"
+  />
+
+  <scroll-view class="detail-scroll" scroll-y>
+    <view class="detail-content">
+      <view class="tabs-wrapper">
+        <t-tabs value="{{activeTab}}" bind:change="onTabChange" t-class="tabs-root" t-class-content="tabs-content">
+          <t-tab-panel label="成鹅价格" value="adult">
+            <view class="panel-content">
+              <!-- 品种卡片网格 -->
+              <view class="breed-grid">
+                <view
+                  wx:for="{{priceBreeds}}"
+                  wx:key="key"
+                  class="breed-card {{currentBreed === item.key ? 'active' : ''}}"
+                  data-key="{{item.key}}"
+                  bindtap="onBreedCardTap"
+                >
+                  <view class="breed-card-header">
+                    <text class="breed-card-title">{{item.label}}</text>
+                  </view>
+                  <view class="breed-card-body">
+                    <text class="breed-card-price">¥{{priceData[item.key].adult.price}}</text>
+                    <text class="breed-card-unit">/斤</text>
+                  </view>
+                  <view class="breed-card-trend {{priceData[item.key].adult.trend > 0 ? 'trend-up' : 'trend-down'}}">
+                    <text class="trend-icon">{{priceData[item.key].adult.trend > 0 ? '↑' : '↓'}}</text>
+                    <text class="trend-value">{{priceData[item.key].adult.change}}</text>
+                  </view>
+                </view>
+              </view>
+
+              <!-- 走势图 -->
+              <view class="chart-section">
+                <view class="chart-title">{{currentBreedLabel}} - 价格走势</view>
+                <block wx:if="{{currentHistory.length > 0}}">
+                  <price-trend-chart
+                    series="{{currentHistory}}"
+                    color-scheme="{{chartScheme}}"
+                    height="{{240}}"
+                  />
+                </block>
+                <view wx:else class="empty-history">
+                  <text>暂无走势数据</text>
+                </view>
+                <view class="history-note">
+                  <text>最近{{currentHistory.length}}日价格走势，仅供参考</text>
+                </view>
+              </view>
+            </view>
+          </t-tab-panel>
+
+          <t-tab-panel label="鹅苗价格" value="gosling">
+            <view class="panel-content">
+              <!-- 品种卡片网格 -->
+              <view class="breed-grid">
+                <view
+                  wx:for="{{priceBreeds}}"
+                  wx:key="key"
+                  class="breed-card {{currentBreed === item.key ? 'active' : ''}}"
+                  data-key="{{item.key}}"
+                  bindtap="onBreedCardTap"
+                >
+                  <view class="breed-card-header">
+                    <text class="breed-card-title">{{item.label}}</text>
+                  </view>
+                  <view class="breed-card-body">
+                    <text class="breed-card-price">¥{{priceData[item.key].gosling.price}}</text>
+                    <text class="breed-card-unit">/羽</text>
+                  </view>
+                  <view class="breed-card-trend {{priceData[item.key].gosling.trend > 0 ? 'trend-up' : 'trend-down'}}">
+                    <text class="trend-icon">{{priceData[item.key].gosling.trend > 0 ? '↑' : '↓'}}</text>
+                    <text class="trend-value">{{priceData[item.key].gosling.change}}</text>
+                  </view>
+                </view>
+              </view>
+
+              <!-- 走势图 -->
+              <view class="chart-section">
+                <view class="chart-title">{{currentBreedLabel}} - 价格走势</view>
+                <block wx:if="{{currentHistory.length > 0}}">
+                  <price-trend-chart
+                    series="{{currentHistory}}"
+                    color-scheme="{{chartScheme}}"
+                    height="{{240}}"
+                  />
+                </block>
+                <view wx:else class="empty-history">
+                  <text>暂无走势数据</text>
+                </view>
+                <view class="history-note">
+                  <text>最近{{currentHistory.length}}日价格走势，仅供参考</text>
+                </view>
+              </view>
+            </view>
+          </t-tab-panel>
+        </t-tabs>
+      </view>
+    </view>
+  </scroll-view>
+</view>
+

@@ -1,0 +1,248 @@
+.goose-price-detail-page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-scroll {
+  flex: 1;
+  background: #f5f7fa;
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx));
+}
+
+.detail-content {
+  padding: 24rpx 32rpx 32rpx 32rpx;
+}
+
+.panel-content {
+  padding: 20rpx 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+
+/* 品种卡片网格 */
+.breed-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+  padding: 8rpx;
+}
+
+.breed-card {
+  border-radius: 24rpx;
+  padding: 24rpx 20rpx;
+  box-shadow: 0 6rpx 20rpx rgba(15, 23, 42, 0.08);
+  border: 2rpx solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  position: relative;
+  min-height: 140rpx;
+  overflow: visible;
+}
+
+.breed-card:nth-child(1) {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+.breed-card:nth-child(2) {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+
+.breed-card:nth-child(3) {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+}
+
+.breed-card:nth-child(4) {
+  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+}
+
+.breed-card:active {
+  transform: scale(0.96);
+}
+
+.breed-card.active {
+  border-color: #0052d9;
+  border-width: 3rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 82, 217, 0.25);
+  transform: scale(1.0);
+  z-index: 10;
+}
+
+.breed-card.active::after {
+  content: '✓';
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #0052d9;
+  color: #ffffff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.3);
+}
+
+.breed-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.breed-card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111827;
+  text-align: center;
+}
+
+.breed-card-body {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6rpx;
+  width: 100%;
+}
+
+.breed-card-price {
+  font-size: 56rpx;
+  font-weight: 800;
+  color: #111827;
+  text-align: center;
+}
+
+.breed-card-unit {
+  font-size: 26rpx;
+  color: #374151;
+  font-weight: 600;
+}
+
+.breed-card-trend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  width: 100%;
+}
+
+.breed-card-trend.trend-up {
+  color: #dc2626;
+}
+
+.breed-card-trend.trend-down {
+  color: #16a34a;
+}
+
+.breed-card-trend .trend-icon {
+  font-size: 30rpx;
+}
+
+.breed-card-trend .trend-value {
+  font-size: 26rpx;
+}
+
+/* 走势图区域 */
+.chart-section {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.chart-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+}
+
+.history-note {
+  font-size: 24rpx;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.empty-history {
+  height: 240rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 20rpx;
+  color: #6b7280;
+  font-size: 26rpx;
+}
+
+@media screen and (max-width: 750rpx) {
+  .detail-content {
+    padding: 20rpx 20rpx 28rpx 20rpx;
+  }
+
+  .panel-content {
+    padding: 16rpx 0 0 0;
+    gap: 24rpx;
+  }
+
+  .chart-section {
+    padding: 20rpx;
+  }
+
+  .breed-grid {
+    gap: 16rpx;
+    padding: 6rpx;
+  }
+
+  .breed-card {
+    padding: 20rpx 16rpx;
+    min-height: 130rpx;
+    gap: 6rpx;
+  }
+
+  .breed-card.active {
+    border-width: 2rpx;
+  }
+
+  .breed-card-title {
+    font-size: 28rpx;
+  }
+
+  .breed-card-price {
+    font-size: 48rpx;
+  }
+
+  .breed-card-unit {
+    font-size: 24rpx;
+  }
+
+  .breed-card-trend {
+    font-size: 24rpx;
+  }
+
+  .breed-card-trend .trend-icon {
+    font-size: 28rpx;
+  }
+
+  .breed-card-trend .trend-value {
+    font-size: 24rpx;
+  }
+
+  .chart-title {
+    font-size: 28rpx;
+  }
+}
+

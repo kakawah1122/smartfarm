@@ -357,30 +357,64 @@ page {
 
 
 /* 价格卡片 - 现代化设计 */
-.price-card .card-content,
 .price-card {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
 }
 
-.price-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
+.price-card .card-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.price-combined-card {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(240, 253, 244, 0.85), rgba(239, 246, 255, 0.85));
+  border: 1rpx solid rgba(15, 23, 42, 0.05);
 }
 
 .price-item {
-  text-align: center;
-  padding: var(--spacing-xl) var(--spacing-lg);
-  border-radius: var(--radius-md);
+  flex: 1;
+  padding: 32rpx 24rpx;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 160rpx;
+  box-sizing: border-box;
 }
 
-.price-item:active {
-  transform: scale(0.97);
+.price-item:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+}
+
+.price-item:last-child {
+  border-top-right-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.price-divider {
+  width: 2rpx;
+  background: rgba(15, 23, 42, 0.08);
+  margin: 28rpx 0;
+  align-self: stretch;
+  pointer-events: none;
+}
+
+.price-item > .price-label,
+.price-item > .price-value,
+.price-item > .price-trend {
+  width: 100%;
+}
+
+.price-item-hover {
+  opacity: 0.85;
+  transform: scale(0.98);
 }
 
 .success-bg {
@@ -394,21 +428,29 @@ page {
 }
 
 .price-label {
+  display: block;
+  text-align: center;
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-xs);
-  line-height: var(--line-height-base);
+  line-height: 1.2;
   font-weight: var(--font-weight-medium);
+  margin-bottom: 12rpx;
 }
 
 .price-value {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
-  margin-bottom: var(--spacing-sm);
-  line-height: var(--line-height-tight);
-  display: flex;
-  align-items: baseline;
+  line-height: 1.1;
   gap: var(--spacing-xs);
+  margin-bottom: 8rpx;
+}
+
+.price-number {
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .price-unit {
@@ -426,12 +468,13 @@ page {
 }
 
 .price-trend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-base);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
+  line-height: 1.2;
+  gap: 6rpx;
 }
 
 .trend-up {
@@ -440,6 +483,14 @@ page {
 
 .trend-down {
   color: var(--color-danger);
+}
+
+.trend-icon {
+  font-size: var(--font-size-base);
+}
+
+.trend-value {
+  font-size: var(--font-size-base);
 }
 
 /* 添加特色阴影层次 */
@@ -490,12 +541,30 @@ page {
 }
 
 @media screen and (max-width: 350px) {
-  .price-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-base);
+  .price-combined-card {
+    flex-direction: column;
   }
-  
 
+  .price-divider {
+    width: 100%;
+    height: 2rpx;
+    margin: 0 24rpx;
+  }
+
+  .price-item {
+    padding: 28rpx 24rpx;
+    min-height: auto;
+  }
+
+  .price-breed-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+
+  .detail-link {
+    font-size: var(--font-size-sm);
+  }
 }
 
 
@@ -568,20 +637,6 @@ page {
   outline-offset: 4rpx;
 }
 
-/* ========== AI智能建议样式 ========== */
-
-.ai-advice-card {
-  margin-bottom: var(--spacing-xl);
-  
-  .card-header {
-    .refresh-btn {
-      height: 60rpx;
-      line-height: 58rpx;
-      font-size: var(--font-size-sm);
-    }
-  }
-}
-
 /* ========== 响应式优化（小屏幕适配） ========== */
 
 @media (max-width: 750rpx) {
@@ -651,545 +706,6 @@ page {
 .form-textarea,
 .picker-input {
   transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
-
-// AI加载状态
-.ai-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: 60rpx 0;
-  
-  .loading-text {
-    font-size: var(--font-size-base);
-    color: var(--color-text-secondary);
-  }
-}
-
-// 综合评级
-.advice-rating {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--spacing-lg);
-  border: 2rpx solid #bae6fd;
-  
-  .rating-icon {
-    font-size: 48rpx;
-    width: 60rpx;
-    height: 60rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: white;
-    
-    &.good {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    }
-    
-    &.normal {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    }
-    
-    &.poor {
-      background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-    }
-  }
-  
-  .rating-content {
-    flex: 1;
-    
-    .rating-title {
-      font-size: var(--font-size-lg);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
-      display: block;
-      margin-bottom: 4rpx;
-    }
-    
-    .rating-desc {
-      font-size: var(--font-size-sm);
-      color: var(--color-text-secondary);
-      line-height: var(--line-height-base);
-    }
-  }
-  
-  .rating-score {
-    font-size: 36rpx;
-    font-weight: var(--font-weight-bold);
-    color: white;
-    padding: 8rpx 16rpx;
-    border-radius: var(--radius-md);
-    
-    &.good {
-      background: linear-gradient(135deg, var(--color-success) 0%, #16a34a 100%);
-    }
-    
-    &.normal {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    }
-    
-    &.poor {
-      background: linear-gradient(135deg, var(--color-danger) 0%, #dc2626 100%);
-    }
-  }
-}
-
-/* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
-
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
-
-// 建议内容区域
-.ai-advice-content {
-  .section-title {
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-    margin-bottom: var(--spacing-md);
-    display: block;
-  }
-}
-
-// 关键建议
-.key-advice {
-  .advice-section {
-    margin-bottom: var(--spacing-lg);
-    
-    .advice-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-md);
-      
-      .advice-item {
-        display: flex;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-        padding: var(--spacing-md);
-        background: white;
-        border-radius: var(--radius-md);
-        border-left: 4rpx solid #dbeafe;
-        
-        &.high {
-          border-left-color: var(--color-danger);
-          background: linear-gradient(135deg, #fef2f2 0%, #fecaca 5%, white 15%);
-        }
-        
-        &.medium {
-          border-left-color: #f59e0b;
-          background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 5%, white 15%);
-        }
-        
-        &.low {
-          border-left-color: var(--color-success);
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 5%, white 15%);
-        }
-        
-        .advice-icon {
-          font-size: 32rpx;
-          width: 40rpx;
-          height: 40rpx;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-top: 4rpx;
-        }
-        
-        .advice-content {
-          flex: 1;
-          
-          .advice-title {
-            font-size: var(--font-size-base);
-            font-weight: var(--font-weight-semibold);
-            color: var(--color-text-primary);
-            display: block;
-            margin-bottom: 6rpx;
-          }
-          
-          .advice-desc {
-            font-size: var(--font-size-sm);
-            color: var(--color-text-secondary);
-            line-height: var(--line-height-relaxed);
-          }
-        }
-        
-        .advice-priority {
-          font-size: var(--font-size-xs);
-          padding: 4rpx 8rpx;
-          border-radius: var(--radius-sm);
-          background: var(--color-bg-light);
-          color: var(--color-text-secondary);
-          font-weight: var(--font-weight-medium);
-        }
-      }
-    }
-  }
-}
-
-/* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
-
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
-
-// 环境建议
-.env-advice {
-  .env-category {
-    background: white;
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
-    border: 2rpx solid #f1f5f9;
-    
-    .env-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8rpx;
-      
-      .env-category-name {
-        font-size: var(--font-size-base);
-        font-weight: var(--font-weight-medium);
-        color: var(--color-text-primary);
-      }
-      
-      .env-status {
-        font-size: var(--font-size-xs);
-        padding: 4rpx 8rpx;
-        border-radius: var(--radius-sm);
-        font-weight: var(--font-weight-medium);
-        
-        &.good {
-          background: var(--color-success-lighter);
-          color: var(--color-success);
-        }
-        
-        &.warning {
-          background: #fef3c7;
-          color: #d97706;
-        }
-        
-        &.danger {
-          background: var(--color-danger-lighter);
-          color: var(--color-danger);
-        }
-      }
-    }
-    
-    .env-recommendation {
-      font-size: var(--font-size-sm);
-      color: var(--color-text-secondary);
-      line-height: var(--line-height-base);
-    }
-  }
-}
-
-/* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
-
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
-
-// 快速操作
-.quick-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-  
-  button {
-    flex: 1;
-    height: 72rpx;
-    font-size: var(--font-size-base);
-  }
-}
-
-// 空状态
-.ai-advice-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: 80rpx var(--spacing-lg) 60rpx;
-  
-  .empty-icon {
-    font-size: 80rpx;
-    opacity: 0.6;
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .empty-text {
-    font-size: var(--font-size-lg);
-    color: var(--color-text-primary);
-    font-weight: var(--font-weight-medium);
-    text-align: center;
-    margin-bottom: 6rpx;
-  }
-  
-  .empty-desc {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    text-align: center;
-    line-height: var(--line-height-base);
-  }
-}
-
-// 响应式适配
-@media (max-width: 375px) {
-  .advice-rating {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--spacing-sm);
-    
-    .rating-icon {
-      font-size: 56rpx;
-      width: 80rpx;
-      height: 80rpx;
-    }
-    
-    .rating-score {
-      font-size: 32rpx;
-      align-self: stretch;
-      text-align: center;
-    }
-  }
-  
-  .advice-item {
-    padding: var(--spacing-sm) !important;
-    
-    .advice-icon {
-      font-size: 28rpx !important;
-    }
-  }
-  
-  .quick-actions {
-    flex-direction: column;
-  }
-}
-
-// 动画效果
-@keyframes adviceSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20rpx);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.ai-advice-content {
-  animation: adviceSlideIn 0.3s ease-out;
-}
-
-.advice-item {
-  transition: all 0.2s ease;
-  
-  &:hover {
-    transform: translateX(4rpx);
-    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-  }
 }
 
 /* 高对比度模式支持 */
@@ -1200,10 +716,6 @@ page {
   
   .price-item {
     border: 2rpx solid var(--color-border-base);
-  }
-  
-  .advice-item {
-    border: 2rpx solid var(--color-border-base) !important;
   }
 }
 

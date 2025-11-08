@@ -1,0 +1,42 @@
+<view class="article-detail-page">
+  <navigation-bar
+    title="{{article ? article.categoryName : '文章详情'}}"
+    show-back="true"
+    bind:back="goBack"
+  />
+
+  <scroll-view class="content-scroll" scroll-y>
+    <view wx:if="{{article}}" class="article-wrapper">
+      <view class="article-hero {{themeClass}}">
+        <text class="hero-title">{{article.title}}</text>
+        <view class="hero-meta">
+          <view wx:if="{{article.views}}" class="hero-meta-item">
+            <text class="hero-meta-label">阅读量</text>
+            <text class="hero-meta-value">{{article.views}}</text>
+          </view>
+          <view wx:if="{{article.readTime}}" class="hero-meta-item">
+            <text class="hero-meta-label">预计阅读</text>
+            <text class="hero-meta-value">{{article.readTime}}分钟</text>
+          </view>
+          <view wx:if="{{article.date}}" class="hero-meta-item">
+            <text class="hero-meta-label">发布时间</text>
+            <text class="hero-meta-value">{{article.date}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="article-content">
+        <view class="article-body">
+          <block wx:for="{{contentParagraphs}}" wx:key="index">
+            <text class="article-paragraph">{{item}}</text>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="article-empty">
+      <text class="empty-text">文章内容加载中，请稍候...</text>
+    </view>
+  </scroll-view>
+</view>
+

@@ -66,6 +66,15 @@ Page({
     
     // 鹅价数据
     priceUpdateTime: '09:30',
+    priceBreeds: [
+      { key: 'normal', label: '普通种' },
+      { key: 'large', label: '大种' },
+      { key: 'extraLarge', label: '特大种' },
+      { key: 'baisha', label: '白沙鹅' }
+    ],
+    currentPriceBreed: 'extraLarge',
+    currentPriceBreedLabel: '特大种',
+    goosePriceData: {} as Record<string, any>,
     goosePrice: {
       adult: '12.5',
       adultTrend: 1,
@@ -74,6 +83,10 @@ Page({
       goslingTrend: -1,
       goslingChange: '-0.1'
     },
+    
+    // 任务相关
+    selectedTask: null as any,
+    showTaskDetailPopup: false,
     
     // 疫苗表单数据
     showVaccineFormPopup: false,
@@ -133,18 +146,7 @@ Page({
       operator: ''
     },
     nutritionFormErrors: {} as { [key: string]: string },
-    nutritionFormErrorList: [] as string[], // 用于模板遍历的错误列表
-    
-    // AI智能建议
-    aiAdvice: {
-      loading: false,
-      result: {
-        keyAdvice: [],
-        environmentAdvice: []
-      } as any,
-      error: null as string | null,
-      lastUpdateTime: null as string | null
-    }
+    nutritionFormErrorList: [] as string[] // 用于模板遍历的错误列表
   },
 
   onLoad() {
@@ -521,39 +523,148 @@ Page({
         const now = new Date()
         const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
         
-        // 模拟价格波动
-        const adultPrice = (Math.random() * 5 + 10).toFixed(1)
-        const adultTrend = Math.random() > 0.5 ? 1 : -1
-        const adultChange = (Math.random() * 1).toFixed(1)
-        
-        const goslingPrice = (Math.random() * 3 + 6).toFixed(1)
-        const goslingTrend = Math.random() > 0.5 ? 1 : -1
-        const goslingChange = (Math.random() * 0.5).toFixed(1)
-        
+        const breedConfigs: Array<{ key: string; label: string; baseAdult: number; baseGosling: number }> = [
+          { key: 'normal', label: '普通种', baseAdult: 12.0, baseGosling: 5.6 },
+          { key: 'large', label: '大种', baseAdult: 13.2, baseGosling: 5.9 },
+          { key: 'extraLarge', label: '特大种', baseAdult: 14.1, baseGosling: 6.2 },
+          { key: 'baisha', label: '白沙鹅', baseAdult: 13.5, baseGosling: 6.0 }
+        ]
+
+        const goosePriceData: Record<string, any> = {}
+        const displayBreeds = breedConfigs.map(({ key, label }) => ({ key, label }))
+
+        breedConfigs.forEach((config) => {
+          const adultHistory = this.generatePriceHistory(config.baseAdult, 7, 0.8)
+          const goslingHistory = this.generatePriceHistory(config.baseGosling, 7, 0.5)
+
+          const adultTrendInfo = this.calculateTrend(adultHistory)
+          const goslingTrendInfo = this.calculateTrend(goslingHistory)
+
+          const latestAdult = adultHistory[adultHistory.length - 1]?.value || config.baseAdult
+          const latestGosling = goslingHistory[goslingHistory.length - 1]?.value || config.baseGosling
+
+          goosePriceData[config.key] = {
+            label: config.label,
+            adult: {
+              price: latestAdult.toFixed(1),
+              trend: adultTrendInfo.trend,
+              change: adultTrendInfo.change
+            },
+            gosling: {
+              price: latestGosling.toFixed(1),
+              trend: goslingTrendInfo.trend,
+              change: goslingTrendInfo.change
+            },
+            history: {
+              adult: adultHistory,
+              gosling: goslingHistory
+            }
+          }
+        })
+
+        const targetBreed = this.data.currentPriceBreed || 'extraLarge'
+
         this.setData({
           priceUpdateTime: timeStr,
-          goosePrice: {
-            adult: adultPrice,
-            adultTrend,
-            adultChange: `${adultTrend > 0 ? '+' : ''}${adultChange}`,
-            gosling: goslingPrice,
-            goslingTrend,
-            goslingChange: `${goslingTrend > 0 ? '+' : ''}${goslingChange}`
-          }
+          priceBreeds: displayBreeds,
+          goosePriceData
+        }, () => {
+          this.updateDisplayedPrice(targetBreed)
+        })
+
+        this.cacheGoosePriceSnapshot({
+          updateTime: timeStr,
+          breeds: displayBreeds,
+          data: goosePriceData
         })
         resolve(true)
       }, 500)
     })
   },
 
-  // 获取待办事项 - 直接调用真实数据加载
+  generatePriceHistory(base: number, days: number, volatility: number) {
+    const history: Array<{ date: string; value: number }> = []
+    const today = new Date()
+    let previousValue = base
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today)
+      date.setDate(today.getDate() - i)
+
+      const fluctuation = (Math.random() * volatility * 2) - volatility
+      const nextValue = Math.max(0, parseFloat((previousValue + fluctuation).toFixed(1)))
+      previousValue = nextValue
+
+      history.push({
+        date: `${date.getMonth() + 1}-${date.getDate().toString().padStart(2, '0')}`,
+        value: nextValue
+      })
+    }
+
+    return history
+  },
+
+  calculateTrend(history: Array<{ value: number }>) {
+    if (!history || history.length < 2) {
+      return { trend: 0, change: '+0.0' }
+    }
+    const last = history[history.length - 1].value
+    const previous = history[history.length - 2].value
+    const diff = parseFloat((last - previous).toFixed(1))
+
+    let trend = 0
+    if (diff > 0) {
+      trend = 1
+    } else if (diff < 0) {
+      trend = -1
+    }
+    const sign = diff > 0 ? '+' : diff < 0 ? '-' : '+'
+    const change = `${sign}${Math.abs(diff).toFixed(1)}`
+    return { trend, change }
+  },
+
+  updateDisplayedPrice(breedKey: string) {
+    const breedData = this.data.goosePriceData?.[breedKey]
+    if (!breedData) {
+      return
+    }
+    this.setData({
+      currentPriceBreed: breedKey,
+      currentPriceBreedLabel: breedData.label,
+      goosePrice: {
+        adult: breedData.adult.price,
+        adultTrend: breedData.adult.trend,
+        adultChange: breedData.adult.change,
+        gosling: breedData.gosling.price,
+        goslingTrend: breedData.gosling.trend,
+        goslingChange: breedData.gosling.change
+      }
+    })
+  },
+
+  cacheGoosePriceSnapshot(snapshot: { updateTime: string; breeds: Array<{ key: string; label: string }>; data: Record<string, any> }) {
+    try {
+      wx.setStorageSync('goose_price_snapshot', snapshot)
+    } catch (error: any) {
+      // 忽略缓存失败
+    }
+  },
+
+  // 获取待办事项 - 首页已移除待办列表显示，保留方法以兼容调用
   async getTodoListData() {
     try {
-      await this.loadTodayBreedingTasks()
+      // 首页不再显示待办列表，方法保留作为占位
       return true
     } catch (error: any) {
       return false
     }
+  },
+
+  // 加载今日养殖任务 - 首页已移除待办列表显示，保留方法以兼容调用
+  async loadTodayBreedingTasks() {
+    // 首页不再显示待办列表，方法保留作为占位
+    // 实际的任务管理请在 健康管理 -> 养殖待办 页面查看
+    return true
   },
 
   // 刷新天气数据
@@ -1028,6 +1139,16 @@ Page({
   },
 
   /**
+   * 关闭任务详情弹窗
+   */
+  closeTaskDetailPopup() {
+    this.setData({
+      showTaskDetailPopup: false,
+      selectedTask: null
+    })
+  },
+
+  /**
    * 任务详情弹窗可见性变化
    */
   onTaskDetailPopupChange(event: any) {
@@ -1048,6 +1169,32 @@ Page({
   navigateToWeatherDetail() {
     wx.navigateTo({
       url: '/packageAI/weather-detail/weather-detail'
+    })
+  },
+
+  // 跳转到鹅价详情页
+  navigateToPriceDetail(event: any) {
+    const { goosePriceData, priceBreeds, currentPriceBreed, priceUpdateTime } = this.data
+    if (!goosePriceData || Object.keys(goosePriceData).length === 0) {
+      wx.showToast({
+        title: '暂未获取到鹅价数据',
+        icon: 'none'
+      })
+      return
+    }
+
+    this.cacheGoosePriceSnapshot({
+      updateTime: priceUpdateTime,
+      breeds: priceBreeds,
+      data: goosePriceData
+    })
+
+    // 从事件中获取 data-tab 属性，默认为 adult
+    const targetTab = event?.currentTarget?.dataset?.tab || 'adult'
+    const breed = currentPriceBreed || 'extraLarge'
+
+    wx.navigateTo({
+      url: `/packageProduction/goose-price-detail/goose-price-detail?breed=${breed}&tab=${targetTab}`
     })
   },
 
@@ -1146,8 +1293,7 @@ Page({
     Promise.all([
       this.refreshWeatherData(),
       this.refreshPriceData(),
-      this.getTodoListData(),
-      this.refreshAIAdvice()
+      this.getTodoListData()
     ]).then(() => {
       wx.showToast({
         title: '刷新成功',
@@ -1164,342 +1310,6 @@ Page({
         wx.stopPullDownRefresh()
       }, 1000)
     })
-  },
-
-  // ========== AI智能养殖建议功能 ==========
-
-  // 生成养殖建议
-  async generateFarmingAdvice() {
-    
-    this.setData({
-      'aiAdvice.loading': true,
-      'aiAdvice.error': null
-    })
-    
-    try {
-      // 收集环境和生产数据
-      const environmentData = this.collectEnvironmentData()
-      const productionData = await this.collectProductionData()
-      const healthData = await this.collectHealthData()
-      
-      // 构建AI分析提示词
-      const prompt = this.buildFarmingAdvicePrompt(environmentData, productionData, healthData)
-      
-      // 调用AI分析云函数
-      const result = await wx.cloud.callFunction({
-        name: 'ai-multi-model',
-        data: {
-          action: 'chat_completion',
-          messages: [
-            {
-              role: 'system',
-              content: '你是一个资深的鹅类养殖专家，具有20年的养殖经验，擅长根据天气、环境、生产、健康等多维度数据提供科学的养殖管理建议。'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          taskType: 'general_advice',
-          priority: 'balanced'
-        }
-      })
-      
-      if (result.result.success) {
-        const adviceData = this.parseAdviceResult(result.result.data.content)
-        
-        this.setData({
-          'aiAdvice.loading': false,
-          'aiAdvice.result': adviceData,
-          'aiAdvice.error': null,
-          'aiAdvice.lastUpdateTime': new Date().toLocaleString()
-        })
-        
-        wx.showToast({
-          title: 'AI分析完成',
-          icon: 'success',
-          duration: 1500
-        })
-        
-      } else {
-        // AI分析失败，使用fallback建议
-        this.setData({
-          'aiAdvice.loading': false,
-          'aiAdvice.result': this.generateFallbackAdvice(environmentData, productionData),
-          'aiAdvice.error': result.result.error
-        })
-        
-        wx.showToast({
-          title: '建议生成完成',
-          icon: 'none',
-          duration: 2000
-        })
-      }
-      
-    } catch (error: any) {
-      // 已移除调试日志
-      this.setData({
-        'aiAdvice.loading': false,
-        'aiAdvice.error': error.message || 'AI服务异常',
-        'aiAdvice.result': null
-      })
-      
-      wx.showToast({
-        title: '建议生成失败，请稍后重试',
-        icon: 'none',
-        duration: 2000
-      })
-    }
-  },
-  
-  // 收集环境数据
-  collectEnvironmentData() {
-    const { weather, location } = this.data
-    return {
-      temperature: weather.temperature,
-      humidity: weather.humidity,
-      condition: weather.condition,
-      windDirection: weather.windDirection,
-      windScale: weather.windScale,
-      location: `${location.city}${location.district}`,
-      season: this.getCurrentSeason(),
-      timeOfDay: this.getTimeOfDay()
-    }
-  },
-  
-  // 收集生产数据（模拟，实际可从云函数获取）
-  async collectProductionData() {
-    try {
-      // 这里可以调用云函数获取真实的生产数据
-      // const result = await wx.cloud.callFunction({
-      //   name: 'production-dashboard',
-      //   data: { action: 'get_current_stats' }
-      // })
-      
-      // 使用模拟数据
-      return {
-        totalGeese: 450,
-        avgAge: 65, // 天
-        feedConsumption: 1200, // kg/day
-        avgWeight: 3.2, // kg
-        eggProduction: 85, // 只/天
-        mortality: 0.5, // %
-        feedType: '配合饲料',
-        housingDensity: 8 // 只/平方米
-      }
-    } catch (error: any) {
-      // 已移除调试日志
-      return null
-    }
-  },
-  
-  // 收集健康数据
-  async collectHealthData() {
-    try {
-      // 模拟健康数据，实际可从健康管理云函数获取
-      return {
-        healthyCount: 432,
-        abnormalCount: 18,
-        vaccinationRate: 95, // %
-        recentDiseases: ['禽流感', '肠道感染'],
-        treatmentSuccess: 88 // %
-      }
-    } catch (error: any) {
-      // 已移除调试日志
-      return null
-    }
-  },
-  
-  // 构建AI分析提示词
-  buildFarmingAdvicePrompt(envData: any, prodData: any, healthData: any): string {
-    return `请基于以下数据为我的鹅养殖场提供今日智能管理建议：
-
-🌤️ **环境数据**：
-- 地点：${envData.location}
-- 天气：${envData.condition}，气温 ${envData.temperature}°C，湿度 ${envData.humidity}%
-- 风向：${envData.windDirection}，风力：${envData.windScale}
-- 季节：${envData.season}，时段：${envData.timeOfDay}
-
-🏭 **生产数据**：
-- 鹅群总数：${prodData?.totalGeese || 450} 只
-- 平均日龄：${prodData?.avgAge || 65} 天
-- 日均采食量：${prodData?.feedConsumption || 1200} kg
-- 平均体重：${prodData?.avgWeight || 3.2} kg
-- 产蛋量：${prodData?.eggProduction || 85} 只/天
-- 死亡率：${prodData?.mortality || 0.5}%
-- 饲养密度：${prodData?.housingDensity || 8} 只/平方米
-
-🏥 **健康数据**：
-- 健康个体：${healthData?.healthyCount || 432} 只
-- 异常个体：${healthData?.abnormalCount || 18} 只
-- 防疫用药：${healthData?.vaccinationRate || 95}%
-- 近期疾病：${healthData?.recentDiseases?.join('、') || '禽流感、肠道感染'}
-- 治疗成功率：${healthData?.treatmentSuccess || 88}%
-
-请提供以下格式的JSON建议：
-{
-  "overallRating": {
-    "score": 85,
-    "level": "good|normal|poor",
-    "emoji": "😊|😐|😟",
-    "title": "养殖状况评级标题",
-    "description": "简短评价描述"
-  },
-  "keyAdvice": [
-    {
-      "icon": "🌡️",
-      "title": "建议标题",
-      "description": "具体建议内容"
-    }
-  ],
-  "environmentAdvice": [
-    {
-      "category": "通风管理",
-      "status": "good|warning|danger",
-      "statusText": "状态描述",
-      "recommendation": "具体建议"
-    }
-  ]
-}`
-  },
-  
-  // 解析AI建议结果
-  parseAdviceResult(content: string): any {
-    try {
-      // 尝试提取JSON
-      const jsonMatch = content.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0])
-      } else {
-        // 如果无法解析，返回fallback
-        return this.generateFallbackAdvice()
-      }
-    } catch (error: any) {
-      // 已移除调试日志
-      return this.generateFallbackAdvice()
-    }
-  },
-  
-  // 生成fallback建议
-  generateFallbackAdvice(_envData?: any, _prodData?: any): any {
-    const { weather } = this.data
-    const temp = weather.temperature
-    const humidity = weather.humidity
-    
-    // 基于天气条件生成简单建议
-    let ratingLevel = 'good'
-    let ratingEmoji = '😊'
-    let ratingTitle = '养殖环境良好'
-    let ratingScore = 85
-    
-    if (temp < 5 || temp > 35) {
-      ratingLevel = 'poor'
-      ratingEmoji = '😟'
-      ratingTitle = '温度条件不佳'
-      ratingScore = 65
-    } else if (temp < 10 || temp > 30) {
-      ratingLevel = 'normal'
-      ratingEmoji = '😐'
-      ratingTitle = '温度需要关注'
-      ratingScore = 75
-    }
-    
-    const keyAdvice = []
-    const environmentAdvice = []
-    
-    // 根据温度生成建议
-    if (temp < 10) {
-      keyAdvice.push({
-        icon: '🔥',
-        title: '加强保温措施',
-        description: '气温较低，注意鹅舍保温，防止鹅群感冒'
-      })
-      environmentAdvice.push({
-        category: '温度控制',
-        status: 'warning',
-        statusText: '偏低',
-        recommendation: '检查加热设备，增加垫料厚度'
-      })
-    } else if (temp > 30) {
-      keyAdvice.push({
-        icon: '🌬️',
-        title: '加强通风降温',
-        description: '气温较高，增加通风，提供充足饮水'
-      })
-      environmentAdvice.push({
-        category: '温度控制',
-        status: 'warning',
-        statusText: '偏高',
-        recommendation: '开启通风系统，检查饮水设备'
-      })
-    } else {
-      keyAdvice.push({
-        icon: '✅',
-        title: '维持当前管理',
-        description: '温度适宜，继续当前的饲养管理'
-      })
-      environmentAdvice.push({
-        category: '温度控制',
-        status: 'good',
-        statusText: '适宜',
-        recommendation: '保持现有温控措施'
-      })
-    }
-    
-    // 根据湿度生成建议
-    if (humidity > 80) {
-      keyAdvice.push({
-        icon: '💨',
-        title: '降低湿度',
-        description: '湿度过高，加强通风除湿，预防疾病'
-      })
-      environmentAdvice.push({
-        category: '湿度控制',
-        status: 'warning',
-        statusText: '偏高',
-        recommendation: '加强通风，清理积水，更换垫料'
-      })
-    } else if (humidity < 40) {
-      environmentAdvice.push({
-        category: '湿度控制',
-        status: 'warning',
-        statusText: '偏低',
-        recommendation: '适度增湿，防止灰尘过多'
-      })
-    } else {
-      environmentAdvice.push({
-        category: '湿度控制',
-        status: 'good',
-        statusText: '适宜',
-        recommendation: '保持现有湿度控制措施'
-      })
-    }
-    
-    // 通用建议
-    keyAdvice.push({
-      icon: '🍽️',
-      title: '检查饲料质量',
-      description: '定时检查饲料新鲜度，确保营养均衡'
-    })
-    
-    environmentAdvice.push({
-      category: '饲养管理',
-      status: 'good',
-      statusText: '正常',
-      recommendation: '按时喂食，保持饲料新鲜，观察采食情况'
-    })
-    
-    return {
-      overallRating: {
-        score: ratingScore,
-        level: ratingLevel,
-        emoji: ratingEmoji,
-        title: ratingTitle,
-        description: `基于当前环境条件的综合评估`
-      },
-      keyAdvice: keyAdvice.slice(0, 3), // 最多3条关键建议
-      environmentAdvice
-    }
   },
 
   // 计算当前日龄（与详情页逻辑保持一致）
@@ -1520,50 +1330,6 @@ Page({
     const dayAge = diffDays + 1 // 入栏当天为第1日龄
     
     return dayAge
-  },
-  
-  // 获取当前季节
-  getCurrentSeason(): string {
-    const month = new Date().getMonth() + 1
-    if (month >= 3 && month <= 5) return '春季'
-    if (month >= 6 && month <= 8) return '夏季'
-    if (month >= 9 && month <= 11) return '秋季'
-    return '冬季'
-  },
-  
-  // 获取时段
-  getTimeOfDay(): string {
-    const hour = new Date().getHours()
-    if (hour >= 6 && hour < 12) return '上午'
-    if (hour >= 12 && hour < 18) return '下午'
-    if (hour >= 18 && hour < 22) return '傍晚'
-    return '夜间'
-  },
-  
-  // 查看详细建议
-  viewDetailedAdvice() {
-    // 这里可以跳转到详细的建议页面
-    wx.showModal({
-      title: '详细建议',
-      content: '详细建议功能开发中，敬请期待！',
-      showCancel: false
-    })
-  },
-  
-  // 添加建议到待办（首页已移除待办列表）
-  addAdviceToTodo() {
-    wx.showToast({
-      title: '请在健康管理页面查看待办',
-      icon: 'none'
-    })
-  },
-  
-  // 刷新AI建议（用于下拉刷新）
-  async refreshAIAdvice() {
-    if (this.data.aiAdvice.result) {
-      // 如果已有建议，静默刷新
-      await this.generateFarmingAdvice()
-    }
   },
 
   // ========== 用药管理表单相关方法 ==========

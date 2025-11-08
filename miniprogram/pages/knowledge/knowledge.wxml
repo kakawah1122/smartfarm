@@ -1,6 +1,6 @@
 <!--knowledge.wxml-->
 <view class="page-container">
-  <!-- 新式导航栏 -->
+  <!-- 导航栏 -->
   <navigation-bar 
     title="养鹅知识库"
     show-back="true"
@@ -9,18 +9,19 @@
     bind:back="goBack"
   />
   
-  <!-- 搜索栏 -->
-  <view class="search-section" wx:if="{{showSearchBar}}">
-    <view class="search-container">
-      <t-input placeholder="搜索养鹅知识..." 
-               value="{{searchKeyword}}" 
-               bind:change="onSearchInput"
-               bind:enter="searchArticles"
-               prefix-icon="search" />
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 搜索栏 -->
+    <view class="search-section" wx:if="{{showSearchBar}}">
+      <view class="search-container">
+        <t-input placeholder="搜索养鹅知识..." 
+                 value="{{searchKeyword}}" 
+                 bind:change="onSearchInput"
+                 bind:enter="searchArticles"
+                 prefix-icon="search" />
+      </view>
     </view>
-  </view>
 
-  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight + 100}}rpx;">
     <!-- 分类导航 -->
     <view class="category-nav">
       <t-tabs value="{{activeCategory}}" bind:change="selectCategory" theme="line" class="knowledge-tabs">
@@ -28,64 +29,66 @@
       </t-tabs>
     </view>
 
-    <!-- 热门推荐 -->
-    <view wx:if="{{activeCategory === 'all'}}" class="card hot-card">
-      <view class="card-header">
-        <text class="card-title">🔥 本周热门</text>
-      </view>
-      <t-cell title="{{hotArticle.title}}"
-              description="{{hotArticle.description}}"
-              note="阅读量: {{hotArticle.views}} • {{hotArticle.date}}"
-              left-icon="🔥"
-              arrow
-              bind:click="viewArticle"
-              data-item="{{hotArticle}}"
-              class="hot-article-cell">
-      </t-cell>
-    </view>
-
-    <!-- 文章列表 -->
-    <view class="card article-list-card">
-      <view class="card-header">
-        <text class="card-title">文章列表</text>
-      </view>
-      <t-cell-group>
-        <t-cell wx:for="{{filteredArticles}}" 
-                wx:key="id"
-                title="{{item.title}}"
-                description="{{item.description}}"
-                note="👁️ {{item.views}} • ⏱️ {{item.readTime}}分钟 • {{item.date}}"
-                left-icon="{{item.categoryIcon}}"
-                arrow
-                bind:click="viewArticle"
-                data-item="{{item}}">
-          <view slot="right" class="article-meta">
-            <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
+    <!-- 滚动列表 -->
+    <scroll-view class="list-container" scroll-y>
+      <view class="articles-list">
+        <!-- 热门推荐 -->
+        <view wx:if="{{activeCategory === 'all'}}" class="card hot-card">
+          <view class="card-header">
+            <text class="card-title">本周热门</text>
           </view>
-        </t-cell>
-      </t-cell-group>
-    </view>
-
-    <!-- 我的收藏 -->
-    <view class="card collection-card">
-      <view class="card-header">
-        <text class="card-title">💾 我的收藏</text>
-        <text class="view-all" bind:tap="viewAllCollections">查看全部</text>
-      </view>
-      <t-grid column="2" class="collection-grid">
-        <t-grid-item wx:for="{{collections}}" 
-                     wx:key="id"
-                     bind:click="viewArticle" 
-                     data-item="{{item}}">
-          <view class="collection-item">
-            <text class="collection-title">{{item.title}}</text>
-            <text class="collection-date">{{item.collectedDate}}收藏</text>
+          <view class="hot-article" bind:tap="viewArticle" data-item="{{hotArticle}}">
+            <view class="hot-article-content">
+              <view class="hot-article-text">
+                <text class="hot-article-title">{{hotArticle.title}}</text>
+                <text class="hot-article-desc">{{hotArticle.description}}</text>
+              </view>
+            </view>
+            <view class="hot-article-meta">
+              <view class="meta-item">
+                <text class="meta-label">阅读量</text>
+                <text class="meta-value">{{hotArticle.views}}</text>
+              </view>
+              <text class="meta-dot">•</text>
+              <text class="meta-date">{{hotArticle.date}}</text>
+            </view>
           </view>
-        </t-grid-item>
-      </t-grid>
-    </view>
+        </view>
 
-    <!-- 底部安全区域 -->
-    <view style="height: 120rpx;"></view>
-  </scroll-view>
+        <!-- 文章列表 -->
+        <view class="card article-list-card">
+          <view class="card-header">
+            <text class="card-title">文章列表</text>
+          </view>
+          <view class="article-items">
+            <block wx:for="{{filteredArticles}}" wx:key="id">
+              <view class="article-item" bind:tap="viewArticle" data-item="{{item}}">
+                <view class="article-item-top">
+                  <text class="article-title">{{item.title}}</text>
+                  <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
+                </view>
+                <text class="article-desc">{{item.description}}</text>
+                <view class="article-item-footer">
+                  <view class="article-stats">
+                    <view class="stat-item">
+                      <text class="stat-label">阅读量</text>
+                      <text class="stat-text">{{item.views}}</text>
+                    </view>
+                    <view class="stat-item">
+                      <text class="stat-label">预计阅读</text>
+                      <text class="stat-text">{{item.readTime}}分钟</text>
+                    </view>
+                  </view>
+                  <text class="article-date">{{item.date}}</text>
+                </view>
+              </view>
+            </block>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 底部安全区域 -->
+      <view class="safe-area"></view>
+    </scroll-view>
+  </view>
 </view>

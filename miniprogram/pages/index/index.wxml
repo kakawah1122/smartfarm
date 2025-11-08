@@ -58,105 +58,33 @@
     <!-- 今日鹅价 -->
     <view class="card price-card">
       <view class="card-header">
-        <text class="card-title">📈 今日鹅价</text>
+        <text class="card-title">今日鹅价</text>
         <text class="update-time">更新于 {{priceUpdateTime}}</text>
       </view>
-      <view class="price-grid">
-        <view class="price-item success-bg">
-          <text class="price-label">成鹅价格</text>
-          <text class="price-value success-text">¥{{goosePrice.adult}}<text class="price-unit">/斤</text></text>
-          <text class="price-trend {{goosePrice.adultTrend > 0 ? 'trend-down' : 'trend-up'}}">
-            {{goosePrice.adultTrend > 0 ? '↑' : '↓'}} {{goosePrice.adultChange}}
-          </text>
-        </view>
-        <view class="price-item primary-bg">
-          <text class="price-label">鹅苗价格</text>
-          <text class="price-value primary-text">¥{{goosePrice.gosling}}<text class="price-unit">/羽</text></text>
-          <text class="price-trend {{goosePrice.goslingTrend > 0 ? 'trend-down' : 'trend-up'}}">
-            {{goosePrice.goslingTrend > 0 ? '↑' : '↓'}} {{goosePrice.goslingChange}}
-          </text>
-        </view>
-      </view>
-    </view>
-
-    <!-- AI智能建议 -->
-    <view class="card ai-advice-card">
-      <view class="card-header">
-        <text class="card-title">🤖 AI智能建议</text>
-        <t-button wx:if="{{!aiAdvice.loading}}" size="small" theme="primary" bind:tap="generateFarmingAdvice" class="refresh-btn ai-button primary-button">
-          {{aiAdvice.result ? '刷新建议' : '生成建议'}}
-        </t-button>
-      </view>
-      
-      <!-- AI分析进行中 -->
-      <view wx:if="{{aiAdvice.loading}}" class="ai-loading">
-        <t-loading theme="spinner" size="40rpx" />
-        <text class="loading-text">AI正在分析环境和生产数据...</text>
-      </view>
-      
-      <!-- AI建议结果 -->
-      <view wx:elif="{{aiAdvice.result}}" class="ai-advice-content">
-        <!-- 综合评级 -->
-        <view class="advice-rating">
-          <view class="rating-icon {{aiAdvice.result.overallRating.level}}">
-            {{aiAdvice.result.overallRating.emoji}}
+      <view class="price-combined-card">
+        <view class="price-item success-bg" bindtap="navigateToPriceDetail" data-tab="adult" hover-class="price-item-hover">
+          <view class="price-label">成鹅价格</view>
+          <view class="price-value">
+            <text class="price-number success-text">¥{{goosePrice.adult}}</text>
+            <text class="price-unit">/斤</text>
           </view>
-          <view class="rating-content">
-            <text class="rating-title">{{aiAdvice.result.overallRating.title}}</text>
-            <text class="rating-desc">{{aiAdvice.result.overallRating.description}}</text>
-          </view>
-          <view class="rating-score {{aiAdvice.result.overallRating.level}}">
-            {{aiAdvice.result.overallRating.score}}分
+          <view class="price-trend {{goosePrice.adultTrend > 0 ? 'trend-down' : 'trend-up'}}">
+            <text class="trend-icon">{{goosePrice.adultTrend > 0 ? '↑' : '↓'}}</text>
+            <text class="trend-value">{{goosePrice.adultChange}}</text>
           </view>
         </view>
-        
-        <!-- 关键建议 -->
-        <view class="key-advice">
-          <view class="advice-section">
-            <text class="section-title">🎯 今日关键建议</text>
-            <view class="advice-list">
-              <view wx:for="{{aiAdvice.result && aiAdvice.result.keyAdvice ? aiAdvice.result.keyAdvice : []}}" wx:key="index" class="advice-item {{item.priority}}">
-                <view class="advice-icon">{{item.icon}}</view>
-                <view class="advice-content">
-                  <text class="advice-title">{{item.title}}</text>
-                  <text class="advice-desc">{{item.description}}</text>
-                </view>
-                <view class="advice-priority">{{item.priorityText}}</view>
-              </view>
-            </view>
+        <view class="price-divider"></view>
+        <view class="price-item primary-bg" bindtap="navigateToPriceDetail" data-tab="gosling" hover-class="price-item-hover">
+          <view class="price-label">鹅苗价格</view>
+          <view class="price-value">
+            <text class="price-number primary-text">¥{{goosePrice.gosling}}</text>
+            <text class="price-unit">/羽</text>
           </view>
-          
-          <!-- 环境建议 -->
-          <view class="advice-section">
-            <text class="section-title">🌤️ 环境管理</text>
-            <view class="env-advice">
-              <view wx:for="{{aiAdvice.result && aiAdvice.result.environmentAdvice ? aiAdvice.result.environmentAdvice : []}}" wx:key="category" class="env-category">
-                <view class="env-header">
-                  <text class="env-category-name">{{item.category}}</text>
-                  <view class="env-status {{item.status}}">{{item.statusText}}</view>
-                </view>
-                <text class="env-recommendation">{{item.recommendation}}</text>
-              </view>
-            </view>
+          <view class="price-trend {{goosePrice.goslingTrend > 0 ? 'trend-down' : 'trend-up'}}">
+            <text class="trend-icon">{{goosePrice.goslingTrend > 0 ? '↑' : '↓'}}</text>
+            <text class="trend-value">{{goosePrice.goslingChange}}</text>
           </view>
         </view>
-        
-        <!-- 快速操作 -->
-        <view class="quick-actions">
-          <t-button size="small" theme="light" variant="outline" bind:tap="viewDetailedAdvice" class="light-button">
-            查看详细建议
-          </t-button>
-          <t-button size="small" theme="success" variant="outline" bind:tap="addAdviceToTodo" class="success-button">
-            添加到待办
-          </t-button>
-        </view>
-      </view>
-      
-      <!-- 无建议时的提示 -->
-      <view wx:else class="ai-advice-empty">
-        <view class="empty-icon">🤖</view>
-        <text class="empty-text">点击"生成建议"获取AI智能建议</text>
-        <text class="empty-desc">基于天气、生产、健康等数据提供个性化建议</text>
       </view>
     </view>
 

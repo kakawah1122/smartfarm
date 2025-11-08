@@ -5,6 +5,7 @@
     "pages/health/health",
     "pages/profile/profile",
     "pages/knowledge/knowledge",
+    "pages/knowledge/article-detail/article-detail",
     "pages/privacy-settings/privacy-settings",
     "pages/notification-settings/notification-settings",
     "pages/about/about",
@@ -24,7 +25,8 @@
         "exit-records-list/exit-records-list",
         "inventory-detail/inventory-detail",
         "feed-usage-form/feed-usage-form",
-        "batch-feed-cost/batch-feed-cost"
+        "batch-feed-cost/batch-feed-cost",
+        "goose-price-detail/goose-price-detail"
       ]
     },
     {

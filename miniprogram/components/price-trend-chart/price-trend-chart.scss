@@ -1,0 +1,55 @@
+.trend-chart-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.canvas-holder {
+  width: 100%;
+  position: relative;
+  border-radius: 20rpx;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(0, 82, 217, 0.06), rgba(14, 165, 233, 0.04));
+}
+
+.trend-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 26rpx;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8rpx;
+  color: #9ca3af;
+  font-size: 22rpx;
+}
+
+.axis-label {
+  flex: 1;
+  text-align: center;
+}
+
+@media screen and (max-width: 750rpx) {
+  .trend-chart-wrapper {
+    gap: 12rpx;
+  }
+
+  .chart-axis {
+    font-size: 20rpx;
+  }
+}
+
