@@ -166,9 +166,9 @@
   .analysis-result {
     .structured-result {
       .analysis-section {
-        margin-bottom: 24rpx;
+        margin-bottom: 20rpx;
         border-radius: 20rpx;
-        padding: 28rpx;
+        padding: 24rpx;
         box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
         transition: all 0.3s ease;
         
@@ -233,7 +233,7 @@
         }
         
         .section-header {
-          margin-bottom: 20rpx;
+          margin-bottom: 16rpx;
           padding-bottom: 0;
           
           .section-title-wrapper {
@@ -262,17 +262,17 @@
           .summary-text {
             font-size: 28rpx;
             color: #4b5563;
-            line-height: 1.9;
-            margin-bottom: 20rpx;
-            padding: 20rpx 24rpx;
+            line-height: 1.8;
+            margin-bottom: 16rpx;
+            padding: 16rpx 20rpx;
             background: rgba(248, 250, 252, 0.6);
             border-radius: 14rpx;
             box-shadow: inset 0 1rpx 3rpx rgba(0, 0, 0, 0.04);
           }
           
           .detail-item {
-            margin-bottom: 16rpx;
-            padding: 16rpx 20rpx;
+            margin-bottom: 12rpx;
+            padding: 14rpx 18rpx;
             background: rgba(248, 250, 252, 0.4);
             border-radius: 12rpx;
             
@@ -280,15 +280,20 @@
               font-size: 26rpx;
               color: #9ca3af;
               font-weight: 500;
-              margin-bottom: 8rpx;
+              margin-bottom: 6rpx;
               display: block;
             }
             
             .detail-value {
               font-size: 26rpx;
               color: #374151;
-              line-height: 1.8;
+              line-height: 1.7;
               display: block;
+            }
+            
+            // 最后一个detail-item不需要下边距
+            &:last-child {
+              margin-bottom: 0;
             }
           }
         }
@@ -296,14 +301,14 @@
         // 优化建议特殊样式
         &.suggestions-section {
           .suggestions-group {
-            margin-top: 24rpx;
+            margin-top: 20rpx;
             
             .suggestions-group-title {
               display: block;
               font-size: 28rpx;
               font-weight: 600;
               color: #374151;
-              margin-bottom: 16rpx;
+              margin-bottom: 12rpx;
               padding-left: 12rpx;
               position: relative;
               
@@ -324,8 +329,8 @@
               .suggestion-item {
                 display: flex;
                 align-items: flex-start;
-                padding: 16rpx 20rpx;
-                margin-bottom: 12rpx;
+                padding: 12rpx 16rpx;
+                margin-bottom: 10rpx;
                 border-radius: 12rpx;
                 background: rgba(248, 250, 252, 0.4);
                 transition: background 0.2s ease;
@@ -347,12 +352,21 @@
                   flex: 1;
                   font-size: 26rpx;
                   color: #374151;
-                  line-height: 1.8;
+                  line-height: 1.7;
+                }
+                
+                // 最后一个suggestion-item不需要下边距
+                &:last-child {
+                  margin-bottom: 0;
                 }
               }
             }
           }
           
+          // 最后一个建议section不需要下边距
+          &:last-child {
+            margin-bottom: 0;
+          }
         }
       }
     }

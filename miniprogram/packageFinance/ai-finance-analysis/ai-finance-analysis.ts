@@ -75,19 +75,10 @@ Component({
     },
     
     async collectAllModuleData() {
-      console.log('开始收集模块数据（优先使用props）...')
-      const startTime = Date.now()
-      
       // ⭐ 优先使用props传入的数据，避免重复调用云函数
       const propsProduction = this.properties.productionData
       const propsHealth = this.properties.healthData
       const propsGoosePrice = this.properties.goosePriceData
-      
-      console.log('Props数据可用性:', {
-        production: !!propsProduction,
-        health: !!propsHealth,
-        goosePrice: !!propsGoosePrice
-      })
       
       // 只有当props没有提供时，才按需加载（降级方案）
       // ⚠️ 已移除天气数据：对长期财务分析参考价值不大，季节信息已足够
@@ -96,14 +87,6 @@ Component({
         propsHealth ? Promise.resolve(propsHealth) : this.withTimeout(this.collectHealthData(), 2000, null, '健康数据'),
         propsGoosePrice ? Promise.resolve(propsGoosePrice) : this.collectGoosePriceData()
       ])
-      
-      const duration = Date.now() - startTime
-      console.log(`模块数据收集完成，耗时：${duration}ms`)
-      console.log('数据来源:', {
-        production: propsProduction ? 'Props' : (productionData ? '云函数' : '失败'),
-        health: propsHealth ? 'Props' : (healthData ? '云函数' : '失败'),
-        goosePrice: propsGoosePrice ? 'Props' : '本地'
-      })
       
       return {
         production: productionData,
@@ -115,18 +98,12 @@ Component({
     // 收集生产数据（简化版：仅获取overview，快速模式）
     async collectProductionData() {
       try {
-        console.log('开始获取生产数据...')
-        const startTime = Date.now()
-        
         // 只获取overview数据，快速超时
         const result = await wx.cloud.callFunction({
           name: 'production-dashboard',
           data: { action: 'overview' },
           timeout: 4000  // 4秒快速超时
         })
-        
-        const duration = Date.now() - startTime
-        console.log(`生产数据获取完成，耗时：${duration}ms`)
         
         if (result.result && result.result.success) {
           return result.result.data
@@ -140,9 +117,6 @@ Component({
     // 收集健康数据（简化版：仅获取死亡记录统计）
     async collectHealthData() {
       try {
-        console.log('开始获取健康数据...')
-        const startTime = Date.now()
-        
         const db = wx.cloud.database()
         
         // 只查询死亡记录，限制3条
@@ -153,9 +127,6 @@ Component({
           .orderBy('deathDate', 'desc')
           .limit(3)
           .get()
-        
-        const duration = Date.now() - startTime
-        console.log(`健康数据获取完成，耗时：${duration}ms`)
         
         return {
           recentDeaths: deathRecords.data || [],
@@ -169,20 +140,16 @@ Component({
     
     // 收集鹅价数据（优先从全局状态获取，避免重复调用）
     collectGoosePriceData() {
-      console.log('获取鹅价数据...')
-      
       try {
         // 1. 尝试从全局状态获取（首页可能已加载）
         const app = getApp<IAppOption>()
         if (app.globalData && app.globalData.goosePrice) {
-          console.log('使用全局状态的鹅价数据')
           return Promise.resolve(app.globalData.goosePrice)
         }
         
         // 2. 尝试从缓存获取
         const cachedPrice = wx.getStorageSync('goose_price_cache')
         if (cachedPrice && cachedPrice.data) {
-          console.log('使用缓存的鹅价数据')
           return Promise.resolve(cachedPrice.data)
         }
       } catch (error) {
@@ -190,7 +157,6 @@ Component({
       }
       
       // 3. 降级方案：使用默认数据
-      console.log('使用默认鹅价数据')
       return Promise.resolve({
         adult: 12.5,
         gosling: 18.0,
@@ -227,9 +193,6 @@ Component({
       try {
         // 收集所有模块数据
         const moduleData = await this.collectAllModuleData()
-        
-        // 调试：输出收集到的数据
-        console.log('收集到的模块数据:', moduleData)
         
         // 构建财务分析prompt
         const prompt = this.buildFinanceAnalysisPrompt(financeData, userQuery, moduleData)
@@ -812,7 +775,6 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
           }
           
           const formatted = formatObject(parsed)
-          console.log('格式化后的结果:', JSON.stringify(formatted, null, 2))
           return formatted
         }
       } catch (error) {
