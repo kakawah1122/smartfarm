@@ -4,6 +4,8 @@
   <navigation-bar 
     title="我的报销"
     show-back="{{true}}"
+    fallback-url="/pages/profile/profile"
+    bind:back="goBack"
   />
   
   <!-- 内容区域 -->

@@ -54,6 +54,14 @@ const pageConfig = {
       otherPercent: '0'
     },
     
+    // 原始财务数据（用于AI分析）
+    rawFinanceData: null as any,
+    
+    // AI分析所需的其他模块数据（避免在组件中重复调用云函数）
+    productionData: null as any,
+    healthData: null as any,
+    goosePriceData: null as any,
+    
     // 筛选条件
     filters: {
       type: '全部类型',
@@ -112,6 +120,8 @@ const pageConfig = {
     this.loadApprovalItems()
     // 加载财务报表
     this.loadFinancialReports()
+    // 加载AI分析所需的模块数据（避免组件内重复调用）
+    this.loadModuleDataForAI()
     
     // 初始化筛选记录
     this.setData({
@@ -501,6 +511,18 @@ const pageConfig = {
       return totalExpense > 0 ? ((cost / totalExpense) * 100).toFixed(1) : '0'
     }
 
+    // 获取当前选择的时间范围
+    const dateRange = this.getDateRange()
+
+    // 保存原始财务数据（用于AI分析）
+    const rawFinanceData = {
+      income: data.income || {},
+      expense: data.expense || {},
+      profit: data.profit || {},
+      costBreakdown: costBreakdown,
+      dateRange: dateRange || null  // 确保是 null 而不是 undefined
+    }
+
     this.setData({
       overview: {
         income: formatToWan(income),
@@ -516,7 +538,8 @@ const pageConfig = {
         medicalPercent: calculatePercent(costBreakdown.medicalCost || 0),
         otherCost: formatToWan(costBreakdown.otherCost || 0),
         otherPercent: calculatePercent(costBreakdown.otherCost || 0)
-      }
+      },
+      rawFinanceData: rawFinanceData
     })
   },
 
@@ -1186,6 +1209,109 @@ const pageConfig = {
         icon: 'success'
       })
     }, 1500)
+  },
+
+  // 加载AI分析所需的模块数据（在页面级加载，避免组件内重复调用云函数）
+  async loadModuleDataForAI() {
+    console.log('开始加载AI分析所需的模块数据...')
+    
+    try {
+      // 并行加载生产、健康数据（性能最优）
+      const [productionData, healthData] = await Promise.all([
+        // 加载生产数据
+        wx.cloud.callFunction({
+          name: 'production-dashboard',
+          data: { action: 'overview' },
+          timeout: 5000
+        }).then(res => {
+          if (res.result && res.result.success) {
+            console.log('生产数据加载成功')
+            return res.result.data
+          }
+          return null
+        }).catch(err => {
+          console.warn('生产数据加载失败:', err)
+          return null
+        }),
+        
+        // 加载健康数据（简化版）
+        wx.cloud.database().collection('health_death_records')
+          .where({ isDeleted: false })
+          .orderBy('deathDate', 'desc')
+          .limit(3)
+          .get()
+          .then(res => {
+            console.log('健康数据加载成功')
+            return {
+              recentDeaths: res.data || [],
+              totalDeaths: (res.data || []).reduce((sum: number, r: any) => sum + (r.deathCount || 0), 0)
+            }
+          })
+          .catch(err => {
+            console.warn('健康数据加载失败:', err)
+            return null
+          })
+      ])
+      
+      // 鹅价数据：尝试从全局状态获取
+      let goosePriceData = null
+      try {
+        const app = getApp<IAppOption>()
+        if (app.globalData && app.globalData.goosePrice) {
+          goosePriceData = app.globalData.goosePrice
+          console.log('鹅价数据从全局状态获取')
+        } else {
+          // 降级：使用默认值
+          goosePriceData = {
+            adult: 12.5,
+            gosling: 18.0,
+            egg: 2.8,
+            adultTrend: 0.3,
+            trend: '上涨'
+          }
+          console.log('鹅价数据使用默认值')
+        }
+      } catch (e) {
+        console.warn('获取鹅价数据失败:', e)
+        goosePriceData = {
+          adult: 12.5,
+          gosling: 18.0,
+          egg: 2.8,
+          adultTrend: 0.3,
+          trend: '上涨'
+        }
+      }
+      
+      // 更新到页面数据
+      this.setData({
+        productionData,
+        healthData,
+        goosePriceData
+      })
+      
+      console.log('模块数据加载完成:', {
+        production: !!productionData,
+        health: !!healthData,
+        goosePrice: !!goosePriceData
+      })
+    } catch (error) {
+      console.error('加载模块数据失败:', error)
+    }
+  },
+
+  // AI分析完成事件
+  onAnalysisComplete(e: any) {
+    console.log('AI财务分析完成:', e.detail.result)
+    // 可以在这里处理分析结果，比如保存到本地等
+  },
+
+  // AI分析错误事件
+  onAnalysisError(e: any) {
+    console.error('AI财务分析错误:', e.detail.error)
+    wx.showToast({
+      title: '分析失败，请重试',
+      icon: 'none'
+    })
   },
 
   // 审批操作 - 适配 TDesign 滑动操作

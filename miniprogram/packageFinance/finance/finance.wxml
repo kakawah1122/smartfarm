@@ -94,15 +94,24 @@
         <view class="comparison-section">
           <view class="comparison-data">
             <view class="data-item">
-              <text class="data-value danger">¥{{overview.income}}万</text>
+              <view class="data-value-wrapper">
+                <text class="data-value danger">{{overview.income}}</text>
+                <text class="data-unit">万</text>
+              </view>
               <text class="data-label">总收入</text>
             </view>
             <view class="data-item">
-              <text class="data-value {{overview.profitColorClass}}">¥{{overview.profit}}万</text>
+              <view class="data-value-wrapper">
+                <text class="data-value {{overview.profitColorClass}}">{{overview.profit}}</text>
+                <text class="data-unit">万</text>
+              </view>
               <text class="data-label">净利润</text>
             </view>
             <view class="data-item">
-              <text class="data-value success">¥{{overview.expense}}万</text>
+              <view class="data-value-wrapper">
+                <text class="data-value success">{{overview.expense}}</text>
+                <text class="data-unit">万</text>
+              </view>
               <text class="data-label">总支出</text>
             </view>
           </view>
@@ -137,7 +146,7 @@
     <!-- Tab 切换 -->
     <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" t-class="finance-tabs" style="margin-top: 0 !important; padding-top: 0 !important;">
       <t-tab-panel label="收支明细" value="records" />
-      <t-tab-panel label="财务报表" value="reports" />
+      <t-tab-panel label="AI财务分析" value="reports" />
       <t-tab-panel label="审批管理" value="approval" />
     </t-tabs>
 
@@ -178,35 +187,22 @@
       </view>
     </view>
 
-    <!-- 财务报表页面 -->
+    <!-- AI财务分析页面 -->
     <view wx:if="{{activeTab === 'reports'}}" class="tab-content">
       <view class="card">
         <view class="card-content">
           <view class="card-header">
-            <text class="card-title">财务报表</text>
+            <text class="card-title">AI财务分析</text>
           </view>
-          
-          <!-- 趋势图占位 -->
-          <view class="chart-section">
-            <text class="chart-header">收支趋势图</text>
-            <view class="chart-placeholder">
-              <text class="chart-text">📊 图表占位区域</text>
-            </view>
-          </view>
-
-          <!-- 同比分析 -->
-          <view class="analysis-grid">
-            <view class="analysis-item success">
-              <text class="analysis-title">同比增长</text>
-              <text class="analysis-value">+{{reports.yearGrowth}}%</text>
-              <text class="analysis-desc">较去年同期</text>
-            </view>
-            <view class="analysis-item primary">
-              <text class="analysis-title">利润率</text>
-              <text class="analysis-value">{{reports.profitRate}}%</text>
-              <text class="analysis-desc">较上月提升</text>
-            </view>
-          </view>
+          <ai-finance-analysis 
+            finance-data="{{rawFinanceData}}"
+            date-range="{{rawFinanceData ? rawFinanceData.dateRange : null}}"
+            production-data="{{productionData}}"
+            health-data="{{healthData}}"
+            goose-price-data="{{goosePriceData}}"
+            bind:analysisComplete="onAnalysisComplete"
+            bind:analysisError="onAnalysisError"
+          />
         </view>
       </view>
     </view>

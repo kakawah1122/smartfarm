@@ -209,10 +209,10 @@ const TASK_MODEL_MAPPING = {
     description: '通用对话，快速响应'
   },
   'financial_analysis': {
-    primary: 'qwen-plus',  // 财务分析用专家模型
+    primary: 'qwen-turbo',  // 财务分析用快速模型（优化响应速度，避免超时）
     fallback: ['qwen-long'],
-    timeout: 8000,
-    description: '财务分析，精确计算'
+    timeout: 45000,  // 45秒（微信云函数60秒限制，留15秒余量）
+    description: '财务分析，快速响应'
   },
   'farming_advice': {
     primary: 'qwen-turbo',  // 养殖建议用快速模型
@@ -1402,8 +1402,14 @@ async function handleChatCompletion(event, manager) {
       
       
       try {
+        // 合并options，优先使用taskType配置的timeout
+        const modelOptions = {
+          ...options,
+          timeout: modelMapping.timeout || options.timeout || 60000
+        }
+        
         // 调用模型
-        const result = await manager.callModel(modelId, processedMessages, options)
+        const result = await manager.callModel(modelId, processedMessages, modelOptions)
         
         
         // 设置缓存（图片诊断不缓存或缓存时间更短）

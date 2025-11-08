@@ -1,0 +1,286 @@
+<!--ai-finance-analysis.wxml - AI财务分析组件-->
+<view class="ai-finance-analysis">
+  <!-- 分析操作区域 -->
+  <view wx:if="{{!loading && !analysisResult && !analysisError}}" class="analysis-controls">
+    <!-- 自定义分析需求输入 -->
+    <view class="custom-query-section">
+      <view class="query-input-wrapper">
+        <t-textarea
+          value="{{customQuery}}"
+          placeholder="例如：分析医疗费用偏高的原因，或重点关注饲料成本优化，或评估出栏时机对利润的影响等..."
+          maxlength="200"
+          bind:change="onQueryInput"
+          class="query-textarea"
+        />
+      </view>
+    </view>
+    
+    <!-- 快速分析按钮 -->
+    <view class="quick-actions">
+      <t-button theme="primary" size="large" bind:tap="triggerAnalysis" block class="quick-analyze-btn">
+        开始AI分析
+      </t-button>
+      <text class="quick-desc">如有输入将按您的要求分析，否则进行全面的多维度分析</text>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="analysis-loading">
+    <t-loading theme="circular" size="40rpx" />
+    <text class="loading-text">{{analyzing ? 'AI分析中...' : '加载中...'}}</text>
+  </view>
+
+  <!-- 错误状态 -->
+  <view wx:elif="{{analysisError}}" class="analysis-error">
+    <view class="error-content">
+      <t-icon name="error-circle" size="48" color="#ED3737" />
+      <text class="error-text">{{analysisError}}</text>
+      <view class="error-actions">
+        <t-button theme="light" size="small" bind:tap="clearAnalysis" class="clear-btn">
+          清除
+        </t-button>
+        <t-button theme="primary" size="small" bind:tap="retryAnalysis" class="retry-btn">
+          重试
+        </t-button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分析结果 -->
+  <view wx:elif="{{analysisResult}}" class="analysis-result">
+    <!-- JSON格式结果 -->
+    <view wx:if="{{analysisResult.format !== 'text'}}" class="structured-result">
+      <!-- 盈利能力分析 -->
+      <view wx:if="{{analysisResult.profitability}}" class="analysis-section profitability-section">
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-indicator profitability-indicator"></view>
+            <text class="section-title">盈利能力分析</text>
+          </view>
+        </view>
+        <view class="section-content">
+          <view class="summary-text">{{analysisResult.profitability.summary || ''}}</view>
+          <view wx:if="{{analysisResult.profitability.profitMargin}}" class="detail-item">
+            <text class="detail-label">利润率分析：</text>
+            <text class="detail-value">{{analysisResult.profitability.profitMargin}}</text>
+          </view>
+          <view wx:if="{{analysisResult.profitability.roi}}" class="detail-item">
+            <text class="detail-label">投资回报率：</text>
+            <text class="detail-value">{{analysisResult.profitability.roi}}</text>
+          </view>
+          <view wx:if="{{analysisResult.profitability.efficiency}}" class="detail-item">
+            <text class="detail-label">经营效率：</text>
+            <text class="detail-value">{{analysisResult.profitability.efficiency}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 成本结构分析 -->
+      <view wx:if="{{analysisResult.costStructure}}" class="analysis-section cost-section">
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-indicator cost-indicator"></view>
+            <text class="section-title">成本结构分析</text>
+          </view>
+        </view>
+        <view class="section-content">
+          <view class="summary-text">{{analysisResult.costStructure.summary || ''}}</view>
+          <view wx:if="{{analysisResult.costStructure.breakdown}}" class="detail-item">
+            <text class="detail-label">成本分解：</text>
+            <text class="detail-value">{{analysisResult.costStructure.breakdown}}</text>
+          </view>
+          <view wx:if="{{analysisResult.costStructure.optimization}}" class="detail-item">
+            <text class="detail-label">优化潜力：</text>
+            <text class="detail-value">{{analysisResult.costStructure.optimization}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 现金流分析 -->
+      <view wx:if="{{analysisResult.cashFlow}}" class="analysis-section cashflow-section">
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-indicator cashflow-indicator"></view>
+            <text class="section-title">现金流分析</text>
+          </view>
+        </view>
+        <view class="section-content">
+          <view class="summary-text">{{analysisResult.cashFlow.summary || ''}}</view>
+          <view wx:if="{{analysisResult.cashFlow.incomeFlow}}" class="detail-item">
+            <text class="detail-label">收入流：</text>
+            <text class="detail-value">{{analysisResult.cashFlow.incomeFlow}}</text>
+          </view>
+          <view wx:if="{{analysisResult.cashFlow.expenseFlow}}" class="detail-item">
+            <text class="detail-label">支出流：</text>
+            <text class="detail-value">{{analysisResult.cashFlow.expenseFlow}}</text>
+          </view>
+          <view wx:if="{{analysisResult.cashFlow.stability}}" class="detail-item">
+            <text class="detail-label">稳定性：</text>
+            <text class="detail-value">{{analysisResult.cashFlow.stability}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 趋势分析 -->
+      <view wx:if="{{analysisResult.trend}}" class="analysis-section trend-section">
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-indicator trend-indicator"></view>
+            <text class="section-title">趋势分析</text>
+          </view>
+        </view>
+        <view class="section-content">
+          <view class="summary-text">{{analysisResult.trend.summary || ''}}</view>
+          <view wx:if="{{analysisResult.trend.incomeTrend}}" class="detail-item">
+            <text class="detail-label">收入趋势：</text>
+            <text class="detail-value">{{analysisResult.trend.incomeTrend}}</text>
+          </view>
+          <view wx:if="{{analysisResult.trend.expenseTrend}}" class="detail-item">
+            <text class="detail-label">支出趋势：</text>
+            <text class="detail-value">{{analysisResult.trend.expenseTrend}}</text>
+          </view>
+          <view wx:if="{{analysisResult.trend.profitTrend}}" class="detail-item">
+            <text class="detail-label">利润趋势：</text>
+            <text class="detail-value">{{analysisResult.trend.profitTrend}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 风险评估 -->
+      <view wx:if="{{analysisResult.risk}}" class="analysis-section risk-section">
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-indicator risk-indicator"></view>
+            <text class="section-title">风险评估</text>
+          </view>
+        </view>
+        <view class="section-content">
+          <view class="summary-text">{{analysisResult.risk.summary || ''}}</view>
+          <view wx:if="{{analysisResult.risk.financialRisk}}" class="detail-item">
+            <text class="detail-label">财务风险：</text>
+            <text class="detail-value">{{analysisResult.risk.financialRisk}}</text>
+          </view>
+          <view wx:if="{{analysisResult.risk.operationalRisk}}" class="detail-item">
+            <text class="detail-label">经营风险：</text>
+            <text class="detail-value">{{analysisResult.risk.operationalRisk}}</text>
+          </view>
+          <view wx:if="{{analysisResult.risk.recommendations}}" class="detail-item">
+            <text class="detail-label">风险控制建议：</text>
+            <text class="detail-value">{{analysisResult.risk.recommendations}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 优化建议 -->
+      <view wx:if="{{analysisResult.suggestions}}" class="analysis-section suggestions-section">
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-indicator suggestions-indicator"></view>
+            <text class="section-title">优化建议</text>
+          </view>
+        </view>
+        <view class="section-content">
+          <view class="summary-text">{{analysisResult.suggestions.summary || ''}}</view>
+          
+          <!-- 立即执行 -->
+          <view wx:if="{{analysisResult.suggestions.immediate && analysisResult.suggestions.immediate.length > 0}}" class="suggestions-group">
+            <text class="suggestions-group-title">立即执行</text>
+            <view class="suggestions-list">
+              <view 
+                class="suggestion-item immediate"
+                wx:for="{{analysisResult.suggestions.immediate}}"
+                wx:key="index"
+                wx:for-item="suggestion"
+              >
+                <text class="suggestion-index">{{index + 1}}.</text>
+                <text class="suggestion-text">{{suggestion}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 短期优化 -->
+          <view wx:if="{{analysisResult.suggestions.shortTerm && analysisResult.suggestions.shortTerm.length > 0}}" class="suggestions-group">
+            <text class="suggestions-group-title">短期优化</text>
+            <view class="suggestions-list">
+              <view 
+                class="suggestion-item short-term"
+                wx:for="{{analysisResult.suggestions.shortTerm}}"
+                wx:key="index"
+                wx:for-item="suggestion"
+              >
+                <text class="suggestion-index">{{index + 1}}.</text>
+                <text class="suggestion-text">{{suggestion}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 长期战略 -->
+          <view wx:if="{{analysisResult.suggestions.longTerm && analysisResult.suggestions.longTerm.length > 0}}" class="suggestions-group">
+            <text class="suggestions-group-title">长期战略</text>
+            <view class="suggestions-list">
+              <view 
+                class="suggestion-item long-term"
+                wx:for="{{analysisResult.suggestions.longTerm}}"
+                wx:key="index"
+                wx:for-item="suggestion"
+              >
+                <text class="suggestion-index">{{index + 1}}.</text>
+                <text class="suggestion-text">{{suggestion}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 生产管理建议 -->
+          <view wx:if="{{analysisResult.suggestions.productionAdvice && analysisResult.suggestions.productionAdvice.length > 0}}" class="suggestions-group production-advice-group">
+            <text class="suggestions-group-title">生产管理建议</text>
+            <view class="suggestions-list">
+              <view 
+                class="suggestion-item production-advice"
+                wx:for="{{analysisResult.suggestions.productionAdvice}}"
+                wx:key="index"
+                wx:for-item="suggestion"
+              >
+                <text class="suggestion-index">{{index + 1}}.</text>
+                <text class="suggestion-text">{{suggestion}}</text>
+              </view>
+            </view>
+          </view>
+
+        </view>
+      </view>
+    </view>
+
+    <!-- 文本格式结果 -->
+    <view wx:else class="text-result">
+      <view class="text-content">{{analysisResult.rawText}}</view>
+    </view>
+    
+    <!-- 修正分析区域 -->
+    <view class="refinement-section">
+      <view class="refinement-header">
+        <text class="refinement-title">对结果不满意？</text>
+        <text class="refinement-desc">输入修正变量，优化分析结果</text>
+      </view>
+      
+      <view class="refinement-input">
+        <t-textarea
+          value="{{refinementQuery}}"
+          placeholder="例如：重点分析出栏时机、需要更详细的成本优化建议、结合近期鹅价趋势给建议等..."
+          maxlength="200"
+          bind:change="onRefinementInput"
+          class="refinement-textarea"
+        />
+      </view>
+      
+      <view class="refinement-actions">
+        <t-button theme="light" size="large" bind:tap="clearAnalysis" class="restart-btn">
+          重新分析
+        </t-button>
+        <t-button theme="primary" size="large" bind:tap="refineAnalysis" class="refine-btn">
+          修正分析
+        </t-button>
+      </view>
+    </view>
+  </view>
+</view>
+

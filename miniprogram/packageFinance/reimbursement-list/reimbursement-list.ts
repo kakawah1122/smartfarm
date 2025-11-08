@@ -57,6 +57,52 @@ const pageConfig = {
   },
 
   /**
+   * 返回上一页
+   */
+  goBack(e?: any) {
+    // 阻止事件冒泡，避免 navigation-bar 执行默认返回
+    if (e) {
+      e.stopPropagation && e.stopPropagation()
+    }
+    
+    const pages = getCurrentPages()
+    
+    if (pages.length > 1) {
+      // 有上一页，正常返回
+      wx.navigateBack({
+        delta: 1,
+        success: () => {
+          console.log('返回成功')
+        },
+        fail: (err) => {
+          console.error('返回失败:', err)
+          // 返回失败，跳转到个人中心页面
+          wx.redirectTo({
+            url: '/pages/profile/profile',
+            fail: () => {
+              // 如果跳转失败，尝试切换到首页
+              wx.switchTab({
+                url: '/pages/index/index'
+              })
+            }
+          })
+        }
+      })
+    } else {
+      // 没有上一页，直接跳转到个人中心页面
+      console.log('没有上一页，跳转到个人中心页面')
+      wx.redirectTo({
+        url: '/pages/profile/profile',
+        fail: () => {
+          wx.switchTab({
+            url: '/pages/index/index'
+          })
+        }
+      })
+    }
+  },
+
+  /**
    * 加载报销列表
    */
   async loadList() {

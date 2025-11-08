@@ -85,12 +85,12 @@ exports.main = async (event, context) => {
   data: {
     // 基础信息
     amount: 280,                          // 报销金额（必填）
-    description: '前往南京出差的费用',     // 描述（必填）
+    description: '购买饲料费用',           // 描述（必填）
     date: '2024-03-15',                   // 日期（必填，格式：YYYY-MM-DD）
     
     // 报销信息
-    reimbursementType: 'travel',          // 报销类型（必填）travel|meal|purchase|entertainment|other
-    detail: '交通费180元，住宿费100元',   // 详细说明（可选）
+    reimbursementType: 'feed',            // 报销类型（必填）feed|medicine|vaccine|equipment|transport|utilities|labor|other
+    detail: '购买饲料500kg',              // 详细说明（可选）
     remark: '已提前获得经理口头同意',      // 备注（可选）
     
     // 凭证
@@ -251,11 +251,11 @@ async function createReimbursement(event, wxContext) {
       {
         _id: 'reimbursement_xxx',
         amount: 280,
-        description: '差旅费报销',
+        description: '饲料采购报销',
         date: '2024-03-15',
         reimbursement: {
-          type: 'travel',
-          typeName: '差旅费',
+          type: 'feed',
+          typeName: '饲料采购',
           status: 'pending',
           createTime: '2024-03-15T14:30:22.000Z'
         }
@@ -335,7 +335,7 @@ async function createReimbursement(event, wxContext) {
             name: '李四',
             role: 'employee'
           },
-          type: 'travel',
+          type: 'feed',
           status: 'pending',
           createTime: '2024-03-15T14:30:22.000Z'
         }
@@ -742,13 +742,16 @@ function getAmountLimitByRole(role) {
 // 获取报销类型显示名称
 function getReimbursementTypeName(type) {
   const typeNames = {
-    'travel': '差旅费',
-    'meal': '餐费',
-    'purchase': '采购费用',
-    'entertainment': '招待费',
-    'other': '其他'
+    'feed': '饲料采购',
+    'medicine': '兽药采购',
+    'vaccine': '防疫费用',
+    'equipment': '设备维修',
+    'transport': '运输费用',
+    'utilities': '水电费',
+    'labor': '劳务费用',
+    'other': '其他费用'
   }
-  return typeNames[type] || '其他'
+  return typeNames[type] || '其他费用'
 }
 ```
 
@@ -979,9 +982,9 @@ describe('创建报销申请', () => {
       action: 'create_reimbursement',
       data: {
         amount: 280,
-        description: '差旅费',
+        description: '饲料采购',
         date: '2024-03-15',
-        reimbursementType: 'travel'
+        reimbursementType: 'feed'
       }
     }
     
@@ -997,7 +1000,7 @@ describe('创建报销申请', () => {
         amount: 0,
         description: '测试',
         date: '2024-03-15',
-        reimbursementType: 'travel'
+        reimbursementType: 'feed'
       }
     }
     

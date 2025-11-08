@@ -43,8 +43,8 @@
   
   reimbursement: {
     // 报销基本信息
-    type: String,                       // 报销类型：'travel'|'meal'|'purchase'|'entertainment'|'other'
-    typeName: String,                   // 报销类型名称：'差旅费'|'餐费'|'采购费用'|'招待费'|'其他'
+    type: String,                       // 报销类型：'feed'|'medicine'|'vaccine'|'equipment'|'transport'|'utilities'|'labor'|'other'
+    typeName: String,                   // 报销类型名称：'饲料采购'|'兽药采购'|'防疫费用'|'设备维修'|'运输费用'|'水电费'|'劳务费用'|'其他费用'
     
     // 申请人信息
     applicant: {
@@ -149,29 +149,44 @@ const RECORD_TYPES = {
 
 ```javascript
 const REIMBURSEMENT_TYPES = {
-  TRAVEL: {
-    code: 'travel',
-    name: '差旅费',
-    description: '出差产生的交通、住宿等费用'
+  FEED: {
+    code: 'feed',
+    name: '饲料采购',
+    description: '购买饲料产生的费用'
   },
-  MEAL: {
-    code: 'meal',
-    name: '餐费',
-    description: '工作餐、招待餐等费用'
+  MEDICINE: {
+    code: 'medicine',
+    name: '兽药采购',
+    description: '购买兽药、消毒剂等药品费用'
   },
-  PURCHASE: {
-    code: 'purchase',
-    name: '采购费用',
-    description: '采购物料、设备等费用'
+  VACCINE: {
+    code: 'vaccine',
+    name: '防疫费用',
+    description: '疫苗接种、防疫检查等费用'
   },
-  ENTERTAINMENT: {
-    code: 'entertainment',
-    name: '招待费',
-    description: '商务招待产生的费用'
+  EQUIPMENT: {
+    code: 'equipment',
+    name: '设备维修',
+    description: '养殖设备维修、保养费用'
+  },
+  TRANSPORT: {
+    code: 'transport',
+    name: '运输费用',
+    description: '运输饲料、禽类等产生的费用'
+  },
+  UTILITIES: {
+    code: 'utilities',
+    name: '水电费',
+    description: '养殖场水电费用'
+  },
+  LABOR: {
+    code: 'labor',
+    name: '劳务费用',
+    description: '临时工、外包服务等劳务费用'
   },
   OTHER: {
     code: 'other',
-    name: '其他',
+    name: '其他费用',
     description: '其他类型的报销'
   }
 }
@@ -223,8 +238,8 @@ const APPROVAL_STATUS = {
   
   // 报销详细信息
   reimbursement: {
-    type: 'travel',
-    typeName: '差旅费',
+    type: 'feed',
+    typeName: '饲料采购',
     
     applicant: {
       openid: 'oABC123456789',
@@ -272,7 +287,7 @@ const APPROVAL_STATUS = {
   
   costType: 'other',
   amount: 120,
-  description: '工作餐费报销',
+  description: '购买兽药费用',
   date: '2024-03-14',
   operator: '张三',
   
@@ -280,8 +295,8 @@ const APPROVAL_STATUS = {
   isReimbursement: true,
   
   reimbursement: {
-    type: 'meal',
-    typeName: '餐费',
+    type: 'medicine',
+    typeName: '兽药采购',
     
     applicant: {
       openid: 'oABC123456789',
@@ -334,8 +349,8 @@ const APPROVAL_STATUS = {
   isReimbursement: true,
   
   reimbursement: {
-    type: 'purchase',
-    typeName: '采购费用',
+    type: 'equipment',
+    typeName: '设备维修',
     
     applicant: {
       openid: 'oABC123456789',
@@ -429,7 +444,7 @@ const reimbursementValidationRules = {
   amount: (value) => value > 0,
   
   // 报销类型必须在允许范围内
-  'reimbursement.type': (value) => ['travel', 'meal', 'purchase', 'entertainment', 'other'].includes(value),
+  'reimbursement.type': (value) => ['feed', 'medicine', 'vaccine', 'equipment', 'transport', 'utilities', 'labor', 'other'].includes(value),
   
   // 描述不能为空
   description: (value) => value && value.trim().length > 0,

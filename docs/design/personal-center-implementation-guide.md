@@ -118,7 +118,7 @@ node setup-reimbursement-database.js
     "amount": 100,
     "description": "测试报销",
     "date": "2024-03-15",
-    "reimbursementType": "meal"
+    "reimbursementType": "feed"
   }
 }
 ```
@@ -369,10 +369,10 @@ const result = await wx.cloud.callFunction({
     action: 'create_reimbursement',
     data: {
       amount: 280,
-      description: '差旅费报销',
+      description: '饲料采购报销',
       date: '2024-03-15',
-      reimbursementType: 'travel',
-      detail: '高铁往返费用',
+      reimbursementType: 'feed',
+      detail: '购买饲料500kg',
       vouchers: [
         {
           fileId: 'cloud://xxx.png',

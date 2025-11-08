@@ -309,10 +309,13 @@ const pageConfig = {
   // 获取报销类型标题
   getReimbursementTypeTitle(reimbursementType: string): string {
     const typeMap: any = {
-      'travel': '差旅费',
-      'meal': '餐费',
-      'purchase': '采购费用',
-      'entertainment': '招待费',
+      'feed': '饲料采购',
+      'medicine': '兽药采购',
+      'vaccine': '防疫费用',
+      'equipment': '设备维修',
+      'transport': '运输费用',
+      'utilities': '水电费',
+      'labor': '劳务费用',
       'other': '其他费用'
     }
     return typeMap[reimbursementType] || '其他费用'
