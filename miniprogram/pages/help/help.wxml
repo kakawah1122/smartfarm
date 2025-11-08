@@ -1,0 +1,43 @@
+<!--help.wxml - 帮助中心页面-->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="帮助中心"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight}}rpx;">
+    <!-- 使用指南 -->
+    <view class="card card-guide">
+      <view class="card-title">使用指南</view>
+      <view class="guide-list">
+        <view 
+          wx:for="{{guideList}}" 
+          wx:key="id"
+          class="guide-item">
+          <view class="guide-title-row">
+            <t-icon name="file-text" size="28rpx" color="#0052d9" />
+            <text class="guide-title">{{item.title}}</text>
+          </view>
+          <text class="guide-text">{{item.content}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 联系方式 -->
+    <view class="card card-contact">
+      <view class="card-title">联系我们</view>
+      <t-cell-group>
+        <t-cell title="客服电话" note="400-XXX-XXXX" arrow />
+        <t-cell title="客服邮箱" note="service@example.com" arrow />
+        <t-cell title="工作时间" note="周一至周五 9:00-18:00" />
+      </t-cell-group>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view class="safe-area-bottom"></view>
+  </scroll-view>
+</view>
+

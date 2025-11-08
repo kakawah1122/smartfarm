@@ -4,7 +4,11 @@
     "pages/production/production",
     "pages/health/health",
     "pages/profile/profile",
-    "pages/knowledge/knowledge"
+    "pages/knowledge/knowledge",
+    "pages/privacy-settings/privacy-settings",
+    "pages/notification-settings/notification-settings",
+    "pages/about/about",
+    "pages/help/help"
   ],
   "subpackages": [
     {
@@ -64,7 +68,6 @@
       "pages": [
         "finance/finance",
         "cost-analysis/cost-analysis",
-        "performance-analysis/performance-analysis",
         "reimbursement-list/reimbursement-list",
         "finance-record-list/finance-record-list",
         "manual-record-form/manual-record-form"

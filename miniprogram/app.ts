@@ -1,12 +1,23 @@
 // app.ts
 
 // 扩展全局数据类型
+interface SubscriptionTemplateConfig {
+  tmplId: string
+  title: string
+  description: string
+  scene?: string
+}
+
 interface AppGlobalData {
   userInfo?: WechatMiniprogram.UserInfo;
   statusBarHeight?: number;
   navBarHeight?: number;
   openid?: string;
   isLoggedIn?: boolean;
+  /**
+   * 订阅消息模板配置，可在运行时注入真实模板 ID
+   */
+  subscriptionTemplates?: SubscriptionTemplateConfig[];
 }
 
 interface AppOption {
@@ -26,6 +37,11 @@ App<AppOption>({
   globalData: {
     statusBarHeight: 44, // 默认状态栏高度
     navBarHeight: 88,    // 默认导航栏高度
+    subscriptionTemplates: [
+      // TODO: 在部署前，将 tmplId 替换为微信公众平台实际的订阅消息模板 ID
+      // { tmplId: 'REAL_TEMPLATE_ID_1', title: '系统交互消息', description: '系统审批、任务通知等提醒' },
+      // { tmplId: 'REAL_TEMPLATE_ID_2', title: '生产进度提醒', description: '生产计划、排行榜等动态提醒' }
+    ]
   },
   onLaunch() {
     // 初始化云开发

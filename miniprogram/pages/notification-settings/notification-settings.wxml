@@ -1,0 +1,94 @@
+<!--notification-settings.wxml - 通知设置页面-->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="通知设置"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight}}rpx;">
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 内容区域 -->
+    <view wx:else>
+      <!-- 订阅消息总开关 -->
+      <view class="card card-switch">
+        <view class="card-title">订阅消息总开关</view>
+        <view class="switch-row">
+          <view class="switch-info">
+            <text class="switch-label">订阅消息</text>
+            <text class="switch-desc">开启后可以接收小程序推送的通知消息</text>
+          </view>
+          <view class="switch-badge {{mainSwitch ? 'on' : 'off'}}">
+            <text>{{mainSwitch ? '已开启' : '已关闭'}}</text>
+          </view>
+        </view>
+        <view class="switch-tip">
+          <text>提示：您可以在微信设置中管理订阅消息权限</text>
+        </view>
+      </view>
+
+      <!-- 订阅消息列表 -->
+      <view class="card card-subscription">
+        <view class="card-title">订阅消息列表</view>
+        <view wx:if="{{subscriptions.length === 0}}" class="empty-state">
+          <text class="empty-text">暂无订阅消息</text>
+        </view>
+        <view wx:else class="subscription-list">
+          <view 
+            wx:for="{{subscriptions}}" 
+            wx:key="tmplId"
+            class="subscription-item">
+            <view class="subscription-info">
+              <text class="subscription-title">{{item.title}}</text>
+              <text class="subscription-desc">{{item.description}}</text>
+            </view>
+            <view class="subscription-badge status-{{item.statusClass}}">
+              <text>{{item.statusText}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="card card-actions">
+        <view class="button-group">
+          <t-button 
+            theme="primary" 
+            size="large" 
+            bind:tap="requestSubscribeMessage"
+            disabled="{{!canSubscribe}}"
+            block>
+            订阅消息
+          </t-button>
+          <t-button 
+            theme="light" 
+            size="large" 
+            bind:tap="openSystemSettings"
+            block>
+            打开系统设置
+          </t-button>
+        </view>
+      </view>
+
+      <!-- 说明信息 -->
+      <view class="card card-notes">
+        <view class="card-title">说明</view>
+        <view class="info-list">
+          <text class="info-text">1. 订阅消息可以让您及时接收重要通知</text>
+          <text class="info-text">2. 您可以在微信设置中随时管理订阅消息权限</text>
+          <text class="info-text">3. 订阅消息不会频繁打扰，仅在重要时刻推送</text>
+        </view>
+      </view>
+
+      <!-- 底部安全区域 -->
+      <view class="safe-area-bottom"></view>
+    </view>
+  </scroll-view>
+</view>
+

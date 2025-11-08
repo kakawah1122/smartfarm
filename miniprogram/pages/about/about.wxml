@@ -1,0 +1,59 @@
+<!--about.wxml - 关于我们页面-->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="关于我们"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight}}rpx;">
+    <!-- 应用信息卡片 -->
+    <view class="card app-info-card">
+      <view class="app-logo">🦢</view>
+      <view class="app-name">{{appName}}</view>
+      <view class="app-version">{{appVersion}}</view>
+      <view class="app-description">{{appDescription}}</view>
+    </view>
+
+    <!-- 应用详情 -->
+    <view class="card">
+      <view class="card-title">应用信息</view>
+      <t-cell-group>
+        <t-cell title="应用名称" note="{{appName}}" />
+        <t-cell title="版本号" note="{{appVersion}}" />
+        <t-cell title="构建日期" note="{{buildDate}}" />
+      </t-cell-group>
+    </view>
+
+    <!-- 功能介绍 -->
+    <view class="card features-card">
+      <view class="card-title">主要功能</view>
+      <view class="features-grid">
+        <view
+          wx:for="{{features}}"
+          wx:key="id"
+          wx:for-item="feature"
+          wx:for-index="index"
+          class="feature-item feature-item--{{feature.theme}} {{features.length % 2 === 1 && index === features.length - 1 ? 'feature-item-single' : ''}}"
+        >
+          <view class="feature-icon">
+            <text class="feature-emoji">{{feature.emoji}}</text>
+          </view>
+          <view class="feature-text">{{feature.title}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 版权信息 -->
+    <view class="card copyright-card">
+      <text class="copyright-text">{{copyright}}</text>
+      <text class="copyright-desc">致力于为养殖行业提供智能化管理解决方案</text>
+    </view>
+
+    <!-- 底部安全区域 -->
+    <view class="safe-area-bottom"></view>
+  </scroll-view>
+</view>
+

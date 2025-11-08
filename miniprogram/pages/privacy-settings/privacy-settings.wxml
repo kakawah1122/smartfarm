@@ -1,0 +1,80 @@
+<!--privacy-settings.wxml - 隐私设置页面-->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="隐私设置"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight}}rpx;">
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 内容区域 -->
+    <view wx:else>
+      <!-- 隐私授权状态卡片 -->
+      <view class="card card-status">
+        <view class="card-title">隐私授权状态</view>
+        <view class="status-row">
+          <text class="status-label">授权状态</text>
+          <view class="status-badge {{authorized ? 'authorized' : 'unauthorized'}}">
+            <t-icon name="{{authorized ? 'check-circle-filled' : 'close-circle-filled'}}" size="28rpx" />
+            <text>{{authorized ? '已授权' : '未授权'}}</text>
+          </view>
+        </view>
+        <view class="status-desc">
+          <text wx:if="{{authorized}}">您已同意隐私保护指引，小程序可以正常使用相关功能。</text>
+          <text wx:else>您需要同意隐私保护指引才能使用相关功能。</text>
+        </view>
+      </view>
+
+      <!-- 隐私协议卡片 -->
+      <view class="card card-contract">
+        <view class="card-title">隐私协议</view>
+        <view class="contract-row">
+          <text class="contract-name">{{privacyContractName}}</text>
+          <t-button 
+            theme="primary" 
+            size="small" 
+            bind:tap="openPrivacyContract">
+            查看协议
+          </t-button>
+        </view>
+        <view class="contract-desc">
+          <text>我们重视您的隐私保护，请查看我们的隐私保护指引，了解我们如何收集、使用和保护您的个人信息。</text>
+        </view>
+      </view>
+
+      <!-- 隐私说明 -->
+      <view class="card card-info">
+        <view class="card-title">隐私说明</view>
+        <view class="info-list">
+          <view class="info-item">
+            <text class="info-title">1. 信息收集</text>
+            <text class="info-text">我们仅收集提供服务所必需的信息，包括用户基本信息、设备信息等。</text>
+          </view>
+          <view class="info-item">
+            <text class="info-title">2. 信息使用</text>
+            <text class="info-text">我们使用收集的信息用于提供、维护和改进服务，不会用于其他目的。</text>
+          </view>
+          <view class="info-item">
+            <text class="info-title">3. 信息保护</text>
+            <text class="info-text">我们采用行业标准的安全措施保护您的信息安全。</text>
+          </view>
+          <view class="info-item">
+            <text class="info-title">4. 信息共享</text>
+            <text class="info-text">未经您同意，我们不会与第三方共享您的个人信息。</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部安全区域 -->
+      <view class="safe-area-bottom"></view>
+    </view>
+  </scroll-view>
+</view>
+
