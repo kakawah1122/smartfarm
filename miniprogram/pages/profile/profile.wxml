@@ -7,14 +7,6 @@
   />
   
   <scroll-view class="scroll-container" scroll-y>
-    <!-- 开发调试：角色切换按钮 -->
-    <view class="role-switch-container">
-      <button class="role-switch-btn" bind:tap="toggleAdminRole">
-        <text class="role-switch-icon">{{isAdmin ? '👨‍💼' : '👤'}}</text>
-        <text class="role-switch-text">{{isAdmin ? '管理员模式' : '普通用户模式'}}</text>
-      </button>
-    </view>
-    
     <!-- 个人信息卡片 -->
     <view class="profile-card">
       <view class="profile-header">
@@ -38,7 +30,7 @@
         <!-- 用户信息 -->
         <view class="profile-info">
           <view class="profile-name-row">
-            <text class="profile-name">{{userInfo.name}}</text>
+            <text class="profile-name" bind:tap="editUserInfo">{{userInfo.name}}</text>
             <text class="role-badge">{{userInfo.role}}</text>
           </view>
           <text class="profile-farm">{{userInfo.farm}}</text>
@@ -243,6 +235,75 @@
       <view class="popup-footer">
         <button class="btn-cancel" catchtap="closeReimbursementDialog">取消</button>
         <button class="btn-confirm" catchtap="submitReimbursement">提交申请</button>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 编辑用户信息弹窗 -->
+  <view wx:if="{{showEditUserDialog}}" class="popup-mask" catchtap="closeEditUserDialog">
+    <view class="popup-container edit-user-popup" catchtap="stopEditUserPropagation">
+      <!-- 弹窗头部 -->
+      <view class="popup-header">
+        <text class="header-title">编辑个人信息</text>
+        <text class="header-close" catchtap="closeEditUserDialog">✕</text>
+      </view>
+      
+      <!-- 弹窗内容 -->
+      <scroll-view class="popup-content" scroll-y>
+        <view class="edit-user-form">
+          <!-- 基础信息 -->
+          <view class="form-section">
+            <view class="section-header">
+              <text class="section-title">基础信息</text>
+            </view>
+            <view class="form-card">
+              <!-- 昵称 -->
+              <view class="form-item">
+                <text class="form-label required">昵称</text>
+                <input 
+                  class="form-input" 
+                  type="nickname"
+                  placeholder="请输入昵称" 
+                  value="{{editUserForm.nickName}}" 
+                  bind:input="onNickNameInput"
+                  maxlength="20"
+                />
+              </view>
+              
+              <!-- 手机号 -->
+              <view class="form-item">
+                <text class="form-label required">手机号</text>
+                <input 
+                  class="form-input" 
+                  type="number"
+                  placeholder="请输入手机号" 
+                  value="{{editUserForm.phone}}" 
+                  bind:input="onPhoneInput"
+                  maxlength="11"
+                />
+              </view>
+              
+              <!-- 养殖场名称 -->
+              <view class="form-item">
+                <text class="form-label required">养殖场名称</text>
+                <input 
+                  class="form-input" 
+                  type="text"
+                  placeholder="请输入养殖场名称" 
+                  value="{{editUserForm.farmName}}" 
+                  bind:input="onFarmNameInput"
+                  maxlength="30"
+                />
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      
+      <!-- 弹窗底部操作按钮 -->
+      <view class="popup-footer">
+        <button class="btn-cancel" catchtap="closeEditUserDialog">取消</button>
+        <button class="btn-confirm" catchtap="submitEditUserInfo">保存</button>
       </view>
     </view>
   </view>

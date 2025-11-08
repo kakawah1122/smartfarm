@@ -17,8 +17,7 @@ const REIMBURSEMENT_TYPES = [
 const ADMIN_FUNCTIONS = [
   { id: 1, label: '人员管理', page: '/packageUser/user-management/user-management' },
   { id: 2, label: '邀请码管理', page: '/packageUser/invite-management/invite-management' },
-  { id: 3, label: '财务管理', page: '/packageFinance/finance/finance' },
-  { id: 4, label: '数据分析', page: '/packageFinance/performance-analysis/performance-analysis' }
+  { id: 3, label: '财务管理', page: '/packageFinance/finance/finance' }
 ]
 
 // 系统设置配置
@@ -60,6 +59,7 @@ const pageConfig = {
     
     // 弹窗状态
     showReimbursementDialog: false,
+    showEditUserDialog: false,
     
     // 报销表单
     reimbursementTypes: REIMBURSEMENT_TYPES,
@@ -70,6 +70,13 @@ const pageConfig = {
       description: '',
       detail: '',
       vouchers: []
+    },
+    
+    // 编辑用户信息表单
+    editUserForm: {
+      nickName: '',
+      phone: '',
+      farmName: ''
     },
     
     // 加载状态
@@ -382,28 +389,40 @@ const pageConfig = {
    */
   handleAction(action: string) {
     switch (action) {
-      case 'notification':
-        wx.showToast({ title: '消息通知功能开发中', icon: 'none' })
-        break
-      case 'help':
-        wx.showModal({
-          title: '帮助中心',
-          content: '如有问题，请联系管理员',
-          showCancel: false
-        })
-        break
       case 'privacy':
-        wx.showToast({ title: '隐私设置功能开发中', icon: 'none' })
+        wx.navigateTo({
+          url: '/pages/privacy-settings/privacy-settings',
+          fail: () => {
+            wx.showToast({ title: '页面跳转失败', icon: 'none' })
+          }
+        })
         break
       case 'notification-settings':
-        wx.showToast({ title: '通知设置功能开发中', icon: 'none' })
+        wx.navigateTo({
+          url: '/pages/notification-settings/notification-settings',
+          fail: () => {
+            wx.showToast({ title: '页面跳转失败', icon: 'none' })
+          }
+        })
         break
       case 'about':
-        wx.showModal({
-          title: '关于鹅数通',
-          content: '鹅数通 v1.1.0\n\n智慧养殖管理小程序',
-          showCancel: false
+        wx.navigateTo({
+          url: '/pages/about/about',
+          fail: () => {
+            wx.showToast({ title: '页面跳转失败', icon: 'none' })
+          }
         })
+        break
+      case 'help':
+        wx.navigateTo({
+          url: '/pages/help/help',
+          fail: () => {
+            wx.showToast({ title: '页面跳转失败', icon: 'none' })
+          }
+        })
+        break
+      case 'notification':
+        wx.showToast({ title: '消息通知功能开发中', icon: 'none' })
         break
       case 'export':
         wx.showToast({ title: '数据导出功能开发中', icon: 'none' })
@@ -505,22 +524,6 @@ const pageConfig = {
   },
 
   /**
-   * 切换管理员角色（开发调试用）
-   */
-  toggleAdminRole() {
-    const newIsAdmin = !this.data.isAdmin
-    this.setData({
-      isAdmin: newIsAdmin
-    })
-    
-    wx.showToast({
-      title: newIsAdmin ? '已切换到管理员模式' : '已切换到普通用户模式',
-      icon: 'success',
-      duration: 1500
-    })
-  },
-
-  /**
    * 获取角色显示名称
    */
   getRoleDisplayName(role: string): string {
@@ -531,6 +534,133 @@ const pageConfig = {
       'veterinarian': '兽医'
     }
     return roleNames[role] || '用户'
+  },
+
+  /**
+   * 打开编辑用户信息弹窗
+   */
+  editUserInfo() {
+    const { userInfo } = this.data
+    this.setData({
+      showEditUserDialog: true,
+      editUserForm: {
+        nickName: userInfo.name || '',
+        phone: userInfo.phone || '',
+        farmName: userInfo.farm || ''
+      }
+    })
+  },
+
+  /**
+   * 关闭编辑用户信息弹窗
+   */
+  closeEditUserDialog() {
+    this.setData({
+      showEditUserDialog: false
+    })
+  },
+
+  /**
+   * 阻止事件冒泡
+   */
+  stopEditUserPropagation() {
+    // 阻止点击弹窗内容时关闭弹窗
+  },
+
+  /**
+   * 编辑用户信息表单输入处理
+   */
+  onNickNameInput(e: any) {
+    this.setData({
+      'editUserForm.nickName': e.detail.value
+    })
+  },
+
+  onPhoneInput(e: any) {
+    this.setData({
+      'editUserForm.phone': e.detail.value
+    })
+  },
+
+  onFarmNameInput(e: any) {
+    this.setData({
+      'editUserForm.farmName': e.detail.value
+    })
+  },
+
+  /**
+   * 提交更新用户信息
+   */
+  async submitEditUserInfo() {
+    const { nickName, phone, farmName } = this.data.editUserForm
+    
+    // 验证表单
+    if (!nickName || !nickName.trim()) {
+      wx.showToast({ title: '请输入昵称', icon: 'none' })
+      return
+    }
+    
+    if (!phone || !phone.trim()) {
+      wx.showToast({ title: '请输入手机号', icon: 'none' })
+      return
+    }
+    
+    // 验证手机号格式
+    const phoneRegex = /^1[3-9]\d{9}$/
+    if (!phoneRegex.test(phone.trim())) {
+      wx.showToast({ title: '手机号格式不正确', icon: 'none' })
+      return
+    }
+    
+    if (!farmName || !farmName.trim()) {
+      wx.showToast({ title: '请输入养殖场名称', icon: 'none' })
+      return
+    }
+    
+    try {
+      wx.showLoading({ title: '更新中...' })
+      
+      const result = await wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'update_user_profile',
+          nickName: nickName.trim(),
+          phone: phone.trim(),
+          farmName: farmName.trim()
+        }
+      })
+      
+      if (result.result && result.result.success) {
+        // 更新本地用户信息
+        const app = getApp<IAppOption>()
+        if (app.globalData.userInfo) {
+          app.globalData.userInfo.nickName = nickName.trim()
+          app.globalData.userInfo.nickname = nickName.trim()
+          app.globalData.userInfo.phone = phone.trim()
+          app.globalData.userInfo.farmName = farmName.trim()
+          app.globalData.userInfo.department = farmName.trim()
+          wx.setStorageSync('userInfo', app.globalData.userInfo)
+        }
+        
+        // 更新页面显示
+        await this.loadUserInfo()
+        
+        this.setData({
+          showEditUserDialog: false
+        })
+        
+        wx.hideLoading()
+        wx.showToast({ title: '更新成功', icon: 'success' })
+      } else {
+        throw new Error(result.result?.message || '更新失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showToast({ 
+        title: error.message || '更新失败', 
+        icon: 'none' 
+      })
+    }
   }
 }
 
