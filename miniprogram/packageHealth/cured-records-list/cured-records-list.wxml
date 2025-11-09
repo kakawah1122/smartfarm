@@ -9,59 +9,59 @@
 
   <!-- 内容区域 -->
   <view class="content-wrapper">
-    <!-- 加载状态 -->
-    <view class="loading-container" wx:if="{{loading}}">
-      <t-loading theme="circular" size="60rpx" text="加载中..." />
-    </view>
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
 
-    <!-- 内容区 -->
+  <!-- 内容区 -->
     <scroll-view class="list-container" scroll-y wx:else>
-      <!-- 统计卡片 -->
-      <view class="stats-section">
-        <view class="stats-grid">
-          <view class="stat-card success">
-            <view class="stat-info">
-              <text class="stat-label">累计治愈</text>
-              <text class="stat-value">{{stats.totalCured}}</text>
-            </view>
+    <!-- 统计卡片 -->
+    <view class="stats-section">
+      <view class="stats-grid">
+        <view class="stat-card success">
+          <view class="stat-info">
+            <text class="stat-label">累计治愈</text>
+            <text class="stat-value">{{stats.totalCured}}</text>
           </view>
+        </view>
 
-          <view class="stat-card primary">
-            <view class="stat-info">
-              <text class="stat-label">治疗成本</text>
-              <text class="stat-value">¥{{stats.totalCost}}</text>
-            </view>
+        <view class="stat-card primary">
+          <view class="stat-info">
+            <text class="stat-label">治疗成本</text>
+            <text class="stat-value">¥{{stats.totalCost}}</text>
           </view>
+        </view>
 
-          <view class="stat-card warning">
-            <view class="stat-info">
-              <text class="stat-label">平均成本</text>
-              <text class="stat-value">¥{{stats.avgCostPerAnimal}}</text>
-            </view>
+        <view class="stat-card warning">
+          <view class="stat-info">
+            <text class="stat-label">平均成本</text>
+            <text class="stat-value">¥{{stats.avgCostPerAnimal}}</text>
           </view>
         </view>
       </view>
+    </view>
 
-      <!-- 空状态 -->
-      <view class="empty-container" wx:if="{{records.length === 0}}">
-        <t-empty>
-          <view slot="description" class="empty-tip">
-            <text class="tip-title">暂无治愈记录</text>
-            <text class="tip-subtitle">请在治疗记录中点击"记录治愈"按钮</text>
-            <text class="tip-subtitle">治愈后的记录将在此处显示</text>
-          </view>
-        </t-empty>
-      </view>
+    <!-- 空状态 -->
+    <view class="empty-container" wx:if="{{records.length === 0}}">
+      <t-empty>
+        <view slot="description" class="empty-tip">
+          <text class="tip-title">暂无治愈记录</text>
+          <text class="tip-subtitle">请在治疗记录中点击"记录治愈"按钮</text>
+          <text class="tip-subtitle">治愈后的记录将在此处显示</text>
+        </view>
+      </t-empty>
+    </view>
 
-      <!-- 记录列表 -->
-      <view class="records-list" wx:if="{{records.length > 0}}">
-        <view 
-          class="record-card"
-          wx:for="{{records}}"
-          wx:key="_id"
-          bind:tap="onRecordTap"
-          data-id="{{item._id}}"
-        >
+    <!-- 记录列表 -->
+    <view class="records-list" wx:if="{{records.length > 0}}">
+      <view 
+        class="record-card"
+        wx:for="{{records}}"
+        wx:key="_id"
+        bind:tap="onRecordTap"
+        data-id="{{item._id}}"
+      >
         <!-- 记录头部 -->
         <view class="record-header">
           <view class="record-title-row">
@@ -111,7 +111,8 @@
           </view>
         </view>
       </view>
-      
+    </view>
+
       <!-- 底部安全区域占位 -->
       <view class="safe-area"></view>
     </scroll-view>
