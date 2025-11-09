@@ -626,27 +626,33 @@ Page({
             uploadedImageFileID: uploadRes.fileID
         })
         
-        Message.success({
-          context: this,
-          offset: [20, 32],
-          content: '图片上传成功'
-        })
-        } catch (error: any) {
-          Message.error({
-            context: this,
+        const message = this.getMessage()
+        if (message) {
+          message.success({
             offset: [20, 32],
-            content: '图片上传失败，请重试'
+            content: '图片上传成功'
           })
+        }
+        } catch (error: any) {
+          const message = this.getMessage()
+          if (message) {
+            message.error({
+              offset: [20, 32],
+              content: '图片上传失败，请重试'
+            })
+          }
         } finally {
           wx.hideLoading()
         }
       },
       fail: () => {
-        Message.error({
-          context: this,
-          offset: [20, 32],
-          content: '选择图片失败'
-        })
+        const message = this.getMessage()
+        if (message) {
+          message.error({
+            offset: [20, 32],
+            content: '选择图片失败'
+          })
+        }
       }
     })
   },
@@ -861,20 +867,24 @@ Page({
           parsing: false
         })
 
-        Message.success({
-          context: this,
-          offset: [20, 32],
-          content: '解析成功，请查看预览数据'
-        })
+        const message = this.getMessage()
+        if (message) {
+          message.success({
+            offset: [20, 32],
+            content: '解析成功，请查看预览数据'
+          })
+        }
       } else {
         throw new Error(result.message || '解析失败')
       }
     } catch (error: any) {
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: error.message || '解析失败，请检查文本格式'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: error.message || '解析失败，请检查文本格式'
+        })
+      }
 
       this.setData({ parsing: false })
     }
@@ -1018,21 +1028,25 @@ Page({
     const { articleUrl } = this.data
 
     if (!articleUrl) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请输入文章链接'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请输入文章链接'
+        })
+      }
       return
     }
 
     // 验证是否是微信公众号链接
     if (!articleUrl.includes('mp.weixin.qq.com')) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请输入有效的微信公众号文章链接'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请输入有效的微信公众号文章链接'
+        })
+      }
       return
     }
 
@@ -1052,20 +1066,24 @@ Page({
           parsing: false
         })
 
-        Message.success({
-          context: this,
-          offset: [20, 32],
-          content: '解析成功，请查看预览数据'
-        })
+        const message = this.getMessage()
+        if (message) {
+          message.success({
+            offset: [20, 32],
+            content: '解析成功，请查看预览数据'
+          })
+        }
       } else {
         throw new Error(res.message || '解析失败')
       }
     } catch (error: any) {
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: error.message || '解析失败，请检查链接是否正确'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: error.message || '解析失败，请检查链接是否正确'
+        })
+      }
 
       this.setData({ parsing: false })
     }
