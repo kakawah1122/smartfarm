@@ -1197,16 +1197,17 @@ const pageConfig = {
     })
   },
 
-  // 联系兽医（模拟功能）
+  // 联系兽医
   contactVet() {
+    const vetPhoneNumber = '13925720708'
     wx.showModal({
       title: '联系专业兽医',
-      content: '是否拨打兽医服务热线：400-xxx-xxxx？',
+      content: `是否拨打兽医服务热线：${vetPhoneNumber}？`,
       confirmText: '拨打',
       success: (res) => {
         if (res.confirm) {
           wx.makePhoneCall({
-            phoneNumber: '400-xxx-xxxx',
+            phoneNumber: vetPhoneNumber,
             fail: () => {
               wx.showToast({
                 title: '拨打电话失败',
