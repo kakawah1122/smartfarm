@@ -22,6 +22,9 @@ const pageConfig = {
     // 诊断记录列表
     records: [] as DiagnosisRecord[],
     
+    // 批次ID（从健康页面传递）
+    batchId: undefined as string | undefined,
+    
     // 分页信息
     pagination: {
       page: 1,
@@ -47,16 +50,27 @@ const pageConfig = {
     
     // 选中的记录
     selectedRecord: null as DiagnosisRecord | null,
-    showDetailDialog: false
+    showDetailDialog: false,
+    
+    // ✅ 标记是否已经完成首次加载
+    hasLoaded: false
   },
 
-  onLoad() {
+  onLoad(options: any) {
+    // ✅ 接收从健康页面传递的 batchId 参数
+    // 如果 batchId 是 'all' 或未传递，则查询所有批次的记录
+    const batchId = options.batchId
+    // 🔍 调试：输出接收到的参数
+    console.log('[诊断历史] onLoad 接收参数:', { batchId, options })
+    this.setData({ batchId: batchId || undefined })
     this.loadDiagnosisHistory()
   },
 
   onShow() {
-    // 页面显示时刷新数据
-    this.refreshData()
+    // ✅ 修复：只在页面已经完成首次加载的情况下刷新数据，避免覆盖首次加载
+    if (this.data.hasLoaded) {
+      this.refreshData()
+    }
   },
 
   onPullDownRefresh() {
@@ -112,23 +126,99 @@ const pageConfig = {
     }
 
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'ai-diagnosis',
-        data: {
-          action: 'get_diagnosis_history',
-          page: this.data.pagination.page,
-          pageSize: this.data.pagination.pageSize,
-          status: this.data.activeStatus === 'all' ? undefined : this.data.activeStatus
+      // ✅ 与健康页面保持一致：当 batchId 是 'all' 时，使用 health-management 云函数
+      // 这样能确保数据源一致
+      const batchId = this.data.batchId && this.data.batchId !== 'all' 
+        ? this.data.batchId 
+        : undefined
+
+      // 🔍 调试：输出查询参数
+      console.log('[诊断历史] 查询参数:', {
+        batchId: batchId || 'all (查询所有批次)',
+        page: this.data.pagination.page,
+        pageSize: this.data.pagination.pageSize,
+        status: this.data.activeStatus === 'all' ? undefined : this.data.activeStatus
+      })
+
+      let result: any
+      
+      // ✅ 当 batchId 为 'all' 或 undefined 时，使用与健康页面相同的数据源
+      if (!batchId) {
+        // 使用 health-management 云函数的 get_dashboard_snapshot，与健康页面保持一致
+        const snapshotResult = await wx.cloud.callFunction({
+          name: 'health-management',
+          data: {
+            action: 'get_dashboard_snapshot',
+            batchId: 'all',
+            includeDiagnosis: true,
+            diagnosisLimit: this.data.pagination.pageSize * this.data.pagination.page, // 获取足够的数据用于分页
+            includeAbnormalRecords: false
+          }
+        })
+
+        if (snapshotResult.result && snapshotResult.result.success) {
+          const diagnosisRecords = snapshotResult.result.data?.latestDiagnosisRecords || []
+          
+          // 转换为分页格式
+          const total = diagnosisRecords.length
+          const startIndex = (this.data.pagination.page - 1) * this.data.pagination.pageSize
+          const endIndex = startIndex + this.data.pagination.pageSize
+          const paginatedRecords = diagnosisRecords.slice(startIndex, endIndex)
+          
+          result = {
+            result: {
+              success: true,
+              data: {
+                records: paginatedRecords,
+                pagination: {
+                  page: this.data.pagination.page,
+                  pageSize: this.data.pagination.pageSize,
+                  total: total,
+                  totalPages: Math.ceil(total / this.data.pagination.pageSize)
+                }
+              }
+            }
+          }
+        } else {
+          throw new Error('获取诊断记录失败')
         }
+      } else {
+        // 单个批次时，使用 ai-diagnosis 云函数
+        result = await wx.cloud.callFunction({
+          name: 'ai-diagnosis',
+          data: {
+            action: 'get_diagnosis_history',
+            batchId: batchId,
+            page: this.data.pagination.page,
+            pageSize: this.data.pagination.pageSize,
+            status: this.data.activeStatus === 'all' ? undefined : this.data.activeStatus
+          }
+        })
+      }
+
+      // 🔍 调试：输出查询结果
+      console.log('[诊断历史] 查询结果:', {
+        success: result.result?.success,
+        recordCount: result.result?.data?.records?.length || 0,
+        total: result.result?.data?.pagination?.total || 0
       })
 
       if (result.result && result.result.success) {
         const { records, pagination } = result.result.data
         
-        // 处理时间格式
+        // ✅ 与健康页面保持一致：处理时间格式并过滤图片数组中的 null 值
+        // ✅ 同时确保 diagnosis 字段存在（健康页面使用 diagnosis，诊断历史页面使用 diagnosisResult）
         const processedRecords = records.map((record: any) => ({
           ...record,
-          createTime: this.formatDateTime(record.createTime)
+          // ✅ 确保 diagnosis 字段存在（健康页面使用此字段）
+          diagnosis: record.diagnosis || record.diagnosisResult || '未知疾病',
+          // ✅ 确保 diagnosisResult 字段存在（诊断历史页面使用此字段）
+          diagnosisResult: record.diagnosisResult || record.diagnosis || '未知疾病',
+          // ✅ 格式化诊断日期（健康页面使用 diagnosisDate）
+          diagnosisDate: record.diagnosisDate || (record.createTime ? record.createTime.substring(0, 16).replace('T', ' ') : ''),
+          createTime: this.formatDateTime(record.createTime),
+          // ✅ 过滤掉图片数组中的 null 值（与健康页面保持一致）
+          images: (record.images || []).filter((img: any) => img && typeof img === 'string')
         }))
 
         const existingRecords = this.data.pagination.page === 1 ? [] : this.data.records
@@ -138,7 +228,9 @@ const pageConfig = {
           pagination: {
             ...pagination,
             hasMore: pagination.page < pagination.totalPages
-          }
+          },
+          // ✅ 标记首次加载完成
+          hasLoaded: true
         })
       } else {
         throw new Error(result.result?.message || '加载失败')
@@ -149,6 +241,8 @@ const pageConfig = {
         title: error.message || '加载失败',
         icon: 'none'
       })
+      // ✅ 即使加载失败也标记为已加载，避免 onShow 重复刷新
+      this.setData({ hasLoaded: true })
     } finally {
       if (showLoading) {
         this.setData({ loading: false })
@@ -163,6 +257,7 @@ const pageConfig = {
       this.setData({ 
         activeStatus: value,
         'pagination.page': 1,
+        'pagination.hasMore': true,
         records: []
       })
       this.loadDiagnosisHistory()

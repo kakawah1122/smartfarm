@@ -1,5 +1,5 @@
 <!-- miniprogram/packageHealth/cured-records-list/cured-records-list.wxml -->
-<view class="cured-records-page">
+<view class="page-container">
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="治愈记录" 
@@ -7,63 +7,61 @@
     fallbackUrl="/pages/health/health" 
   />
 
-  <!-- 占位区域 - 增加安全边距 -->
-  <view style="height: calc(var(--navbar-height, 132rpx) + 32rpx);"></view>
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 加载状态 -->
+    <view class="loading-container" wx:if="{{loading}}">
+      <t-loading theme="circular" size="60rpx" text="加载中..." />
+    </view>
 
-  <!-- 加载状态 -->
-  <view class="loading-container" wx:if="{{loading}}">
-    <t-loading theme="circular" size="60rpx" text="加载中..." />
-  </view>
-
-  <!-- 内容区 -->
-  <view class="page-content" wx:else>
-    
-    <!-- 统计卡片 -->
-    <view class="stats-section">
-      <view class="stats-grid">
-        <view class="stat-card success">
-          <view class="stat-info">
-            <text class="stat-label">累计治愈</text>
-            <text class="stat-value">{{stats.totalCured}}</text>
+    <!-- 内容区 -->
+    <scroll-view class="list-container" scroll-y wx:else>
+      <!-- 统计卡片 -->
+      <view class="stats-section">
+        <view class="stats-grid">
+          <view class="stat-card success">
+            <view class="stat-info">
+              <text class="stat-label">累计治愈</text>
+              <text class="stat-value">{{stats.totalCured}}</text>
+            </view>
           </view>
-        </view>
 
-        <view class="stat-card primary">
-          <view class="stat-info">
-            <text class="stat-label">治疗成本</text>
-            <text class="stat-value">¥{{stats.totalCost}}</text>
+          <view class="stat-card primary">
+            <view class="stat-info">
+              <text class="stat-label">治疗成本</text>
+              <text class="stat-value">¥{{stats.totalCost}}</text>
+            </view>
           </view>
-        </view>
 
-        <view class="stat-card warning">
-          <view class="stat-info">
-            <text class="stat-label">平均成本</text>
-            <text class="stat-value">¥{{stats.avgCostPerAnimal}}</text>
+          <view class="stat-card warning">
+            <view class="stat-info">
+              <text class="stat-label">平均成本</text>
+              <text class="stat-value">¥{{stats.avgCostPerAnimal}}</text>
+            </view>
           </view>
         </view>
       </view>
-    </view>
 
-    <!-- 空状态 -->
-    <view class="empty-container" wx:if="{{records.length === 0}}">
-      <t-empty>
-        <view slot="description" class="empty-tip">
-          <text class="tip-title">暂无治愈记录</text>
-          <text class="tip-subtitle">请在治疗记录中点击"记录治愈"按钮</text>
-          <text class="tip-subtitle">治愈后的记录将在此处显示</text>
-        </view>
-      </t-empty>
-    </view>
+      <!-- 空状态 -->
+      <view class="empty-container" wx:if="{{records.length === 0}}">
+        <t-empty>
+          <view slot="description" class="empty-tip">
+            <text class="tip-title">暂无治愈记录</text>
+            <text class="tip-subtitle">请在治疗记录中点击"记录治愈"按钮</text>
+            <text class="tip-subtitle">治愈后的记录将在此处显示</text>
+          </view>
+        </t-empty>
+      </view>
 
-    <!-- 记录列表 -->
-    <view class="records-list" wx:if="{{records.length > 0}}">
-      <view 
-        class="record-card"
-        wx:for="{{records}}"
-        wx:key="_id"
-        bind:tap="onRecordTap"
-        data-id="{{item._id}}"
-      >
+      <!-- 记录列表 -->
+      <view class="records-list" wx:if="{{records.length > 0}}">
+        <view 
+          class="record-card"
+          wx:for="{{records}}"
+          wx:key="_id"
+          bind:tap="onRecordTap"
+          data-id="{{item._id}}"
+        >
         <!-- 记录头部 -->
         <view class="record-header">
           <view class="record-title-row">
@@ -113,114 +111,17 @@
           </view>
         </view>
       </view>
-    </view>
-  </view>
-
-  <!-- ========== 治疗详情底部弹窗 ========== -->
-  <!-- 遮罩层 -->
-  <view 
-    class="detail-mask" 
-    wx:if="{{showDetailDialog}}"
-    bind:tap="closeDetailDialog"
-    catchtouchmove="preventTouchMove"
-  ></view>
-  
-  <!-- 弹窗内容 -->
-  <view class="detail-popup {{showDetailDialog ? 'show' : ''}}" wx:if="{{showDetailDialog && selectedRecord}}">
-    <!-- 标题栏 -->
-    <view class="popup-header">
-      <text class="popup-title">治疗详情</text>
-      <view class="close-btn" bind:tap="closeDetailDialog">
-        <text class="icon-close">×</text>
-      </view>
-    </view>
-    
-    <!-- 内容区域 -->
-    <scroll-view class="popup-content" scroll-y>
-      <!-- 诊断信息 -->
-      <view class="detail-section">
-        <view class="section-title">诊断信息</view>
-        <view class="info-card">
-          <view class="info-row" wx:if="{{selectedRecord.treatmentNumber}}">
-            <text class="info-label">治疗编号</text>
-            <text class="info-value">{{selectedRecord.treatmentNumber}}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">诊断结果</text>
-            <text class="info-value">{{selectedRecord.diagnosis.confirmed || selectedRecord.diagnosis.preliminary}}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">鹅群批次</text>
-            <text class="info-value">{{selectedRecord.batchNumber || selectedRecord.batchId}}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">治疗类型</text>
-            <text class="info-value">{{selectedRecord.treatmentType === 'medication' ? '药物治疗' : '观察记录'}}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">治疗日期</text>
-            <text class="info-value">{{selectedRecord.treatmentDate}}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 治愈结果 -->
-      <view class="detail-section">
-        <view class="section-title">治愈结果</view>
-        <view class="cure-summary">
-          <view class="cure-stat-item primary">
-            <text class="stat-label">治愈数量</text>
-            <text class="stat-value">{{selectedRecord.outcome.curedCount}} 只</text>
-          </view>
-          <view class="cure-stat-item" wx:if="{{selectedRecord.outcome.totalTreated > selectedRecord.outcome.curedCount}}">
-            <text class="stat-label">总治疗数</text>
-            <text class="stat-value">{{selectedRecord.outcome.totalTreated}} 只</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 治愈成本 -->
-      <view class="detail-section">
-        <view class="section-title">治愈成本</view>
-        <view class="cost-grid">
-          <view class="cost-item">
-            <text class="cost-label">治愈总成本</text>
-            <text class="cost-value primary">¥{{selectedRecord.formattedCuredCost}}</text>
-          </view>
-          <view class="cost-item" wx:if="{{selectedRecord.formattedMedicationCost > 0}}">
-            <text class="cost-label">药物成本</text>
-            <text class="cost-value">¥{{selectedRecord.formattedMedicationCost}}</text>
-          </view>
-          <view class="cost-item">
-            <text class="cost-label">单只成本</text>
-            <text class="cost-value">¥{{selectedRecord.formattedCostPerAnimal}}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 治疗方案 -->
-      <view class="detail-section" wx:if="{{selectedRecord.treatmentPlan.primary}}">
-        <view class="section-title">治疗方案</view>
-        <view class="plan-card">
-          <text class="plan-text">{{selectedRecord.treatmentPlan.primary}}</text>
-        </view>
-      </view>
-
-      <!-- 用药记录 -->
-      <view class="detail-section" wx:if="{{selectedRecord.medications && selectedRecord.medications.length > 0}}">
-        <view class="section-title">用药记录</view>
-        <view class="medication-list">
-          <view class="medication-item" wx:for="{{selectedRecord.medications}}" wx:key="index">
-            <view class="med-icon">💊</view>
-            <view class="med-info">
-              <text class="med-name">{{item.name}}</text>
-              <text class="med-spec">{{item.quantity}}{{item.unit}}</text>
-              <text class="med-dosage" wx:if="{{item.dosage}}">{{item.dosage}}</text>
-            </view>
-          </view>
-        </view>
-      </view>
+      
+      <!-- 底部安全区域占位 -->
+      <view class="safe-area"></view>
     </scroll-view>
   </view>
+
+  <!-- 治愈记录详情弹窗 -->
+  <cured-record-detail
+    visible="{{showDetailPopup}}"
+    record="{{selectedRecord}}"
+    bind:close="closeDetailPopup"
+  />
 </view>
 

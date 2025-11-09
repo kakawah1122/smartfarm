@@ -1,5 +1,7 @@
 // app.ts
 
+import CloudApi from './utils/cloud-api'
+
 // 扩展全局数据类型
 interface SubscriptionTemplateConfig {
   tmplId: string
@@ -172,17 +174,22 @@ App<AppOption>({
   async login() {
     try {
       // 调用微信登录
-      const loginRes = await wx.cloud.callFunction({
-        name: 'login',
-        data: {}
-      })
+      const loginRes = await CloudApi.callFunction<any>(
+        'login',
+        {},
+        {
+          showError: false
+        }
+      )
       
-      if (loginRes.result && loginRes.result.openid) {
-        this.globalData.openid = loginRes.result.openid
+      const openid = loginRes?.openid ?? loginRes?.data?.openid
+      
+      if (openid) {
+        this.globalData.openid = openid
         this.globalData.isLoggedIn = true
         
         // 保存到本地存储
-        wx.setStorageSync('openid', loginRes.result.openid)
+        wx.setStorageSync('openid', openid)
         
       }
     } catch (error) {

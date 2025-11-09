@@ -248,8 +248,8 @@ Page({
       
       // 获取位置和天气
       this.getLocationAndWeather().then((res: any) => {
-        if (res.result.success && res.result.data) {
-          const weatherData = res.result.data
+        if (res.success && res.data) {
+          const weatherData = res.data
           
           // 缓存天气数据
           this.cacheWeatherData(weatherData)
@@ -259,7 +259,7 @@ Page({
           
           resolve(true)
         } else {
-          const errorMsg = res.result?.message || res.result?.error || '天气数据获取失败'
+          const errorMsg = res.message || res.error || '天气数据获取失败'
           
           wx.showModal({
             title: '天气数据获取失败',
@@ -323,18 +323,21 @@ Page({
                 }
               })
 
-              wx.cloud.callFunction({
-                name: 'weather',
-                data: {
+              CloudApi.callFunction<any>(
+                'weather',
+                {
                   action: 'getCompleteWeather',
                   lat: latitude,
                   lon: longitude
+                },
+                {
+                  showError: false
                 }
-              }).then((result: any) => {
-                if (result.result && result.result.success) {
+              ).then((result) => {
+                if (result.success && result.data) {
                   resolve(result)
                 } else {
-                  const errorMsg = result.result?.message || result.result?.error?.message || '天气数据获取失败'
+                  const errorMsg = result.message || result.error || '天气数据获取失败'
                   wx.showModal({
                     title: '天气数据获取失败',
                     content: errorMsg,
@@ -1565,16 +1568,19 @@ Page({
    */
   async loadAvailableMedicines() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'production-material',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-material',
+        {
           action: 'list_materials',
           category: '药品'  // 只获取药品类别的物料
+        },
+        {
+          showError: false
         }
-      })
+      )
 
-      if (result.result && result.result.success) {
-        const materials = result.result.data?.materials || []
+      if (result.success && result.data) {
+        const materials = result.data?.materials || []
         
         // 只显示有库存的药品
         const availableMedicines = materials
@@ -1615,18 +1621,21 @@ Page({
   async loadAvailableNutrition() {
     try {
       // 首页加载营养品库存
-      const result = await wx.cloud.callFunction({
-        name: 'production-material',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-material',
+        {
           action: 'list_materials',
           category: '营养品'  // 只获取营养品类别的物料
+        },
+        {
+          showError: false
         }
-      })
+      )
 
       // 首页营养品云函数返回结果
       
-      if (result.result && result.result.success) {
-        const materials = result.result.data?.materials || []
+      if (result.success && result.data) {
+        const materials = result.data?.materials || []
         // 首页原始营养品数据
         
         // 只显示有库存的营养品
@@ -2006,17 +2015,21 @@ Page({
       // 首页构建的记录数据
 
       // 调用临时修复版云函数创建用药记录
-      const result = await wx.cloud.callFunction({
-        name: 'production-material',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-material',
+        {
           action: 'create_record',
           recordData: recordData
+        },
+        {
+          loading: false,
+          showError: false
         }
-      })
+      )
 
       // 首页云函数调用结果
 
-      if (result.result && result.result.success) {
+      if (result.success) {
         // 首页用药记录创建成功
         
         // 标记任务为完成
@@ -2033,7 +2046,7 @@ Page({
 
       } else {
         // 已移除调试日志
-        throw new Error(result.result?.message || result.result?.error || '提交失败')
+        throw new Error(result.message || result.error || '提交失败')
       }
 
     } catch (error: any) {
@@ -2069,18 +2082,21 @@ Page({
    */
   async completeMedicationTask(taskId: string, batchId: string) {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'breeding-todo',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'breeding-todo',
+        {
           action: 'completeTask',
           taskId: taskId,
           batchId: batchId,
           completedAt: new Date().toISOString(),
           completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
+        },
+        {
+          showError: false
         }
-      })
+      )
 
-      if (result.result && result.result.success) {
+      if (result.success) {
         // 首页用药管理任务完成
       } else {
         // 已移除调试日志
@@ -2164,17 +2180,21 @@ Page({
       // 首页构建的营养记录数据
 
       // 调用云函数创建营养记录
-      const result = await wx.cloud.callFunction({
-        name: 'production-material',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-material',
+        {
           action: 'create_record',
           recordData: recordData
+        },
+        {
+          loading: false,
+          showError: false
         }
-      })
+      )
 
       // 首页营养云函数返回结果
 
-      if (result.result && result.result.success) {
+      if (result.success) {
         // 首页营养记录创建成功
         
         // 完成对应的任务
@@ -2192,7 +2212,7 @@ Page({
 
       } else {
         // 已移除调试日志
-        throw new Error(result.result?.message || result.result?.error || '提交失败')
+        throw new Error(result.message || result.error || '提交失败')
       }
 
     } catch (error: any) {
@@ -2230,17 +2250,20 @@ Page({
     // 首页完成营养管理任务
     
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'breeding-todo', 
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'breeding-todo', 
+        {
           action: 'completeTask',
           taskId: task.id || task.taskId || task._id,
           batchId: task.batchId || task.batchNumber || '',
           notes: '营养品领用完成'
+        },
+        {
+          showError: false
         }
-      })
+      )
 
-      if (result.result?.success) {
+      if (result.success) {
         // 首页营养任务完成成功
         return true
       } else {
@@ -2295,17 +2318,20 @@ Page({
   async loadKnowledgePreview() {
     try {
       // 从数据库获取最近5篇文章
-      const result = await wx.cloud.callFunction({
-        name: 'knowledge-management',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'knowledge-management',
+        {
           action: 'list',
           page: 1,
           pageSize: 5
+        },
+        {
+          showError: false
         }
-      })
+      )
 
-      if (result.result && result.result.success) {
-        const articles = result.result.data.list || []
+      if (result.success && result.data) {
+        const articles = result.data.list || []
         // 转换为前端需要的格式
         const formattedArticles = articles.map((article: any) => ({
           id: article._id,

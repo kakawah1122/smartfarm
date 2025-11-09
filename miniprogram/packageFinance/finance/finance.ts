@@ -1,5 +1,6 @@
 // finance.ts
 import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
 
 const pageConfig = {
   options: {
@@ -462,22 +463,25 @@ const pageConfig = {
       const dateRange = this.getDateRange()
     
       // 调用云函数加载财务数据
-      const result = await wx.cloud.callFunction({
-        name: 'finance-management',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'finance-management',
+        {
           action: 'get_finance_overview',
           dateRange: dateRange,
           batchId: null  // 财务概览不按批次筛选
+        },
+        {
+          showError: false
         }
-      })
+      )
 
       wx.hideLoading()
 
-      if (result.result && result.result.success) {
+      if (result.success && result.data) {
         // 处理财务数据
-        this.processFinanceData(result.result.data)
+        this.processFinanceData(result.data)
       } else {
-        throw new Error(result.result?.error || '加载失败')
+        throw new Error(result.error || '加载失败')
       }
     } catch (error: any) {
       wx.hideLoading()
@@ -558,23 +562,26 @@ const pageConfig = {
       }
 
       // 使用新的接口获取所有财务相关记录（包括业务记录）
-      const result = await wx.cloud.callFunction({
-        name: 'finance-management',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'finance-management',
+        {
           action: 'get_all_finance_records',
           page: 1,
           pageSize: 200, // 增加数量以获取更多记录
           dateRange: dateRange,
           batchId: null  // 财务概览不按批次筛选
+        },
+        {
+          showError: false
         }
-      })
+      )
 
-      if (!result.result?.success) {
-        throw new Error(result.result?.error || '加载失败')
+      if (!result.success) {
+        throw new Error(result.error || '加载失败')
       }
 
       const records: any[] = []
-      const allRecords = result.result.data?.records || []
+      const allRecords = result.data?.records || []
 
       // 处理所有记录（与 finance-record-list.ts 保持完全一致）
       allRecords.forEach((record: any) => {
@@ -817,17 +824,20 @@ const pageConfig = {
   // 加载审批事项
   async loadApprovalItems() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'finance-management',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'finance-management',
+        {
           action: 'get_pending_reimbursements',
           page: 1,
           pageSize: 20
+        },
+        {
+          showError: false
         }
-      })
+      )
 
-      if (result.result?.success && result.result.data?.records) {
-        const approvalItems = result.result.data.records.map((record: any) => {
+      if (result.success && result.data?.records) {
+        const approvalItems = result.data.records.map((record: any) => {
           // 获取申请人信息
           const applicant = record.operatorName || record.operator || '未知'
           
@@ -910,32 +920,38 @@ const pageConfig = {
       const lastYearEnd = new Date(currentYear - 1, currentMonth + 1, 0, 23, 59, 59).toISOString()
 
       const [currentResult, lastYearResult] = await Promise.all([
-        wx.cloud.callFunction({
-          name: 'finance-management',
-          data: {
+        CloudApi.callFunction<any>(
+          'finance-management',
+          {
             action: 'get_financial_summary',
             dateRange: { start: currentStart, end: currentEnd }
+          },
+          {
+            showError: false
           }
-        }),
-        wx.cloud.callFunction({
-          name: 'finance-management',
-          data: {
+        ),
+        CloudApi.callFunction<any>(
+          'finance-management',
+          {
             action: 'get_financial_summary',
             dateRange: { start: lastYearStart, end: lastYearEnd }
+          },
+          {
+            showError: false
           }
-        })
+        )
       ])
 
       let yearGrowth = '0'
       let profitRate = '0'
 
-      if (currentResult.result?.success && currentResult.result.data?.growth) {
-        yearGrowth = currentResult.result.data.growth.revenueGrowth || '0'
+      if (currentResult.success && currentResult.data?.growth) {
+        yearGrowth = currentResult.data.growth.revenueGrowth || '0'
       }
 
-      if (currentResult.result?.success && currentResult.result.data?.currentPeriod) {
-        const profit = currentResult.result.data.currentPeriod.profit || 0
-        const revenue = currentResult.result.data.currentPeriod.revenue?.totalRevenue || 0
+      if (currentResult.success && currentResult.data?.currentPeriod) {
+        const profit = currentResult.data.currentPeriod.profit || 0
+        const revenue = currentResult.data.currentPeriod.revenue?.totalRevenue || 0
         if (revenue > 0) {
           profitRate = ((profit / revenue) * 100).toFixed(1)
         }
@@ -1093,17 +1109,21 @@ const pageConfig = {
     
     try {
       wx.showLoading({ title: '处理中...' })
-      const result = await wx.cloud.callFunction({
-        name: 'finance-management',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'finance-management',
+        {
           action: 'reject_reimbursement',
           reimbursementId: id,
           reason: reason
+        },
+        {
+          loading: false,
+          showError: false
         }
-      })
+      )
       wx.hideLoading()
       
-      if (result.result?.success) {
+      if (result.success) {
         wx.showToast({
           title: '申请已拒绝',
           icon: 'success'
@@ -1117,7 +1137,7 @@ const pageConfig = {
           this.loadFinanceRecords()
         ])
       } else {
-        throw new Error(result.result?.error || '拒绝失败')
+        throw new Error(result.error || '拒绝失败')
       }
     } catch (error: any) {
       wx.hideLoading()
@@ -1139,16 +1159,20 @@ const pageConfig = {
         if (res.confirm) {
           try {
             wx.showLoading({ title: '处理中...' })
-            const result = await wx.cloud.callFunction({
-              name: 'finance-management',
-              data: {
+            const result = await CloudApi.callFunction<any>(
+              'finance-management',
+              {
                 action: 'approve_reimbursement',
                 reimbursementId: id
+              },
+              {
+                loading: false,
+                showError: false
               }
-            })
+            )
             wx.hideLoading()
             
-            if (result.result?.success) {
+            if (result.success) {
               wx.showToast({
                 title: '申请已通过',
                 icon: 'success'
@@ -1161,7 +1185,7 @@ const pageConfig = {
                 this.loadFinanceRecords()
               ])
             } else {
-              throw new Error(result.result?.error || '审批失败')
+              throw new Error(result.error || '审批失败')
             }
           } catch (error: any) {
             wx.hideLoading()
@@ -1218,13 +1242,15 @@ const pageConfig = {
       // 并行加载生产、健康数据（性能最优）
       const [productionData, healthData] = await Promise.all([
         // 加载生产数据
-        wx.cloud.callFunction({
-          name: 'production-dashboard',
-          data: { action: 'overview' },
-          timeout: 5000
-        }).then(res => {
-          if (res.result && res.result.success) {
-            return res.result.data
+        CloudApi.callFunction<any>(
+          'production-dashboard',
+          { action: 'overview' },
+          {
+            showError: false
+          }
+        ).then(res => {
+          if (res.success && res.data) {
+            return res.data
           }
           return null
         }).catch(err => {
@@ -1272,7 +1298,7 @@ const pageConfig = {
         production: productionData,
         health: !!healthData,
         goosePrice: !!goosePriceData
-      })
+      }
     } catch (error) {
       console.error('加载模块数据失败:', error)
     }
