@@ -324,29 +324,21 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.loadInviteList()
         this.loadInviteStats()
       } else {
-        // 已移除调试日志
         let errorMessage = '生成失败'
-        let debugInfo = ''
         
         if (result.result) {
           if (result.result.error === 'PERMISSION_DENIED') {
             errorMessage = '权限不足，仅管理员可创建邀请码'
-            debugInfo = '\n调试信息：请检查用户权限设置'
           } else {
             errorMessage = result.result.message || result.result.error || '生成失败'
-            debugInfo = `\n错误代码：${result.result.error || '未知'}`
-            if (result.result.errorStack) {
-              // 已移除调试日志
-            }
           }
         } else if (result.errMsg) {
           errorMessage = `云函数调用失败：${result.errMsg}`
-          debugInfo = `\n错误代码：${result.errCode || '未知'}`
         }
         
         wx.showModal({
           title: '生成失败',
-          content: `${errorMessage}${debugInfo}\n\n请检查：\n1. 用户权限是否足够\n2. 云函数是否正确部署\n3. 网络连接是否正常`,
+          content: `${errorMessage}\n\n请检查：\n1. 用户权限是否足够\n2. 云函数是否正确部署\n3. 网络连接是否正常`,
           showCancel: true,
           cancelText: '查看详情',
           confirmText: '确定',

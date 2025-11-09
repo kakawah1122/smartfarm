@@ -40,7 +40,9 @@ App<AppOption>({
     statusBarHeight: 44, // 默认状态栏高度
     navBarHeight: 88,    // 默认导航栏高度
     subscriptionTemplates: [
-      // TODO: 在部署前，将 tmplId 替换为微信公众平台实际的订阅消息模板 ID
+      // ⚠️ 部署前必填：在微信公众平台获取真实的订阅消息模板ID并替换下方配置
+      // 获取方式：登录微信公众平台 -> 功能 -> 订阅消息 -> 公共模板库 -> 选择模板 -> 获取模板ID
+      // 示例配置（请替换为真实模板ID）：
       // { tmplId: 'REAL_TEMPLATE_ID_1', title: '系统交互消息', description: '系统审批、任务通知等提醒' },
       // { tmplId: 'REAL_TEMPLATE_ID_2', title: '生产进度提醒', description: '生产计划、排行榜等动态提醒' }
     ]
