@@ -1,6 +1,6 @@
 // knowledge-management.ts - 知识库文章管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
-import Message from 'tdesign-miniprogram/message/index'
+import { logger } from '../../utils/logger'
 
 interface Article {
   _id?: string
@@ -31,6 +31,11 @@ interface FormData {
 }
 
 const pageConfig = {
+  // 获取 message 组件实例的辅助方法
+  getMessage() {
+    return this.selectComponent('#t-message')
+  },
+
   data: {
     // 文章列表
     articleList: [] as Article[],
@@ -142,11 +147,13 @@ const pageConfig = {
       }
     } catch (error: any) {
       this.setData({ loading: false })
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: error.message || '加载文章列表失败'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: error.message || '加载文章列表失败'
+        })
+      }
     }
   },
 
@@ -242,11 +249,13 @@ const pageConfig = {
         throw new Error(result.result?.message || '加载失败')
       }
     } catch (error: any) {
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: error.message || '加载文章失败'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: error.message || '加载文章失败'
+        })
+      }
     } finally {
       wx.hideLoading()
     }
@@ -293,11 +302,13 @@ const pageConfig = {
   parseText() {
     const text = this.data.parseText.trim()
     if (!text) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请输入要解析的文本'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请输入要解析的文本'
+        })
+      }
       return
     }
 
@@ -414,17 +425,21 @@ const pageConfig = {
         })
       }
 
-      Message.success({
-        context: this,
-        offset: [20, 32],
-        content: '文本解析成功，标题已自动提取，请检查并完善信息'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.success({
+          offset: [20, 32],
+          content: '文本解析成功，标题已自动提取，请检查并完善信息'
+        })
+      }
     } catch (error: any) {
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: '解析失败：' + (error.message || '未知错误')
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: '解析失败：' + (error.message || '未知错误')
+        })
+      }
     }
   },
 
@@ -434,21 +449,25 @@ const pageConfig = {
 
     // 验证必填字段
     if (!formData.title || !formData.content) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请填写标题和内容'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请填写标题和内容'
+        })
+      }
       return
     }
 
     // 验证分类
     if (!formData.category || formData.category === 'all') {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请选择文章分类'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请选择文章分类'
+        })
+      }
       return
     }
 
@@ -467,16 +486,18 @@ const pageConfig = {
         })
 
         if (result.result && result.result.success) {
-          Message.success({
-            context: this,
-            offset: [20, 32],
-            content: '文章更新成功'
-          })
+          const message = this.getMessage()
+          if (message) {
+            message.success({
+              offset: [20, 32],
+              content: '文章更新成功'
+            })
+          }
           this.closeForm()
           this.loadArticles(true)
         } else {
           const errorMsg = result.result?.message || result.result?.error || '更新失败'
-          console.error('Update failed:', errorMsg)
+          logger.error('Update failed:', errorMsg)
           throw new Error(errorMsg)
         }
       } else {
@@ -490,27 +511,31 @@ const pageConfig = {
         })
 
         if (result.result && result.result.success) {
-          Message.success({
-            context: this,
-            offset: [20, 32],
-            content: '文章创建成功'
-          })
+          const message = this.getMessage()
+          if (message) {
+            message.success({
+              offset: [20, 32],
+              content: '文章创建成功'
+            })
+          }
           this.closeForm()
           this.loadArticles(true)
         } else {
           const errorMsg = result.result?.message || result.result?.error || '创建失败'
-          console.error('Create failed:', errorMsg)
+          logger.error('Create failed:', errorMsg)
           throw new Error(errorMsg)
         }
       }
     } catch (error: any) {
-      console.error('Save article error:', error)
+      logger.error('Save article error:', error)
       const errorMessage = error.message || error.errMsg || '保存失败，请重试'
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: errorMessage
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: errorMessage
+        })
+      }
     } finally {
       wx.hideLoading()
     }
@@ -538,11 +563,13 @@ const pageConfig = {
             })
 
             if (result.result && result.result.success) {
-              Message.success({
-                context: this,
-                offset: [20, 32],
-                content: '删除成功'
-              })
+              const message = this.getMessage()
+              if (message) {
+                message.success({
+                  offset: [20, 32],
+                  content: '删除成功'
+                })
+              }
               // 关闭滑动状态
               this.setData({
                 swipedId: '',
@@ -553,11 +580,13 @@ const pageConfig = {
               throw new Error(result.result?.message || '删除失败')
             }
           } catch (error: any) {
-            Message.error({
-              context: this,
-              offset: [20, 32],
-              content: error.message || '删除失败'
-            })
+            const message = this.getMessage()
+            if (message) {
+              message.error({
+                offset: [20, 32],
+                content: error.message || '删除失败'
+              })
+            }
           } finally {
             wx.hideLoading()
           }
@@ -755,7 +784,10 @@ const pageConfig = {
         }
       })
     }
-  }
+  },
+
+  // 搜索定时器
+  searchTimer: null as any
 }
 
 Page(createPageWithNavbar(pageConfig))

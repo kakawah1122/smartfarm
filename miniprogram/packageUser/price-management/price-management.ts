@@ -405,11 +405,13 @@ Page({
 
     // 验证数据
     if (!manualData.date) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请选择日期'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请选择日期'
+        })
+      }
       return
     }
 
@@ -463,11 +465,13 @@ Page({
     })
 
     if (goslingBreeds.length === 0 && meatBreeds.length === 0) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请至少录入一组价格数据'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请至少录入一组价格数据'
+        })
+      }
       return
     }
 
@@ -501,12 +505,14 @@ Page({
       })
 
       wx.hideLoading()
-        Message.success({
-          context: this,
+      const message = this.getMessage()
+      if (message) {
+        message.success({
           offset: [20, 32],
           content: `已更新 ${manualData.date} 的价格数据`,
           duration: 2000
         })
+      }
       } else {
         // 3. 不存在：新增记录
         await db.collection('goose_prices').add({
@@ -517,12 +523,14 @@ Page({
         })
 
         wx.hideLoading()
-      Message.success({
-        context: this,
-        offset: [20, 32],
-          content: `已保存 ${manualData.date} 的价格数据`,
-        duration: 2000
-      })
+        const message = this.getMessage()
+        if (message) {
+          message.success({
+            offset: [20, 32],
+            content: `已保存 ${manualData.date} 的价格数据`,
+            duration: 2000
+          })
+        }
       }
 
       // 清空表单
@@ -548,12 +556,13 @@ Page({
 
     } catch (error: any) {
       wx.hideLoading()
-
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: '保存失败：' + error.message
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: '保存失败：' + error.message
+        })
+      }
     }
   },
 
@@ -752,11 +761,13 @@ Page({
     const { uploadedImageFileID } = this.data
 
     if (!uploadedImageFileID) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请先上传截图'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请先上传截图'
+        })
+      }
       return
     }
 
@@ -805,12 +816,14 @@ Page({
     } catch (error: any) {
       this.setData({ recognizing: false })
 
-      Message.error({
-        context: this,
-        offset: [20, 32],
-        content: error.message || 'AI识别失败，请重试或使用手动录入',
-        duration: 3000
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.error({
+          offset: [20, 32],
+          content: error.message || 'AI识别失败，请重试或使用手动录入',
+          duration: 3000
+        })
+      }
     }
   },
 
@@ -826,11 +839,13 @@ Page({
     const { articleText } = this.data
 
     if (!articleText) {
-      Message.warning({
-        context: this,
-        offset: [20, 32],
-        content: '请输入文章内容'
-      })
+      const message = this.getMessage()
+      if (message) {
+        message.warning({
+          offset: [20, 32],
+          content: '请输入文章内容'
+        })
+      }
       return
     }
 
