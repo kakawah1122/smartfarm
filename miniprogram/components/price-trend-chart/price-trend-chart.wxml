@@ -4,9 +4,26 @@
       type="2d"
       id="trendCanvas"
       class="trend-canvas"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
     ></canvas>
     <view wx:if="{{!hasData}}" class="chart-empty">
       <text>暂无数据</text>
+    </view>
+    <!-- 悬浮提示框 -->
+    <view wx:if="{{tooltip.show}}" class="tooltip">
+      <view class="tooltip-date">{{tooltip.date}}</view>
+      <view class="tooltip-prices">
+        <view class="tooltip-item">
+          <text class="tooltip-label">最高价:</text>
+          <text class="tooltip-value tooltip-value-max">¥{{tooltip.max}}</text>
+        </view>
+        <view class="tooltip-item">
+          <text class="tooltip-label">最低价:</text>
+          <text class="tooltip-value tooltip-value-min">¥{{tooltip.min}}</text>
+        </view>
+      </view>
     </view>
   </view>
   <view wx:if="{{hasData}}" class="chart-axis">

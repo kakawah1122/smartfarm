@@ -23,11 +23,13 @@ Page({
     activeTab: 'adult',
     
     currentPriceDisplay: {
-      price: '--',
+      range: '--',
+      min: 0,
+      max: 0,
       trend: 0,
       change: '+0.0'
     },
-    currentHistory: [] as Array<{ date: string; value: number }>,
+    currentHistory: [] as Array<{ date: string; min: number; max: number; avg: number }>,
     currentUnit: '/斤',
     chartScheme: {
       line: '#16a34a',
@@ -92,28 +94,40 @@ Page({
     }
 
     meatKeys.forEach(key => {
-      const history: Array<{ date: string; value: number }> = []
+      const history: Array<{ date: string; min: number; max: number; avg: number }> = []
       
       records.forEach(record => {
         const breed = record.meatBreeds?.find((b: any) => b.key === key)
-        if (breed && breed.price) {
+        if (breed && breed.range) {
+          // 保存完整的价格区间数据
           history.push({
             date: this.formatDate(record.date),
-            value: breed.price
+            min: breed.min || 0,
+            max: breed.max || 0,
+            avg: (breed.min + breed.max) / 2
           })
         }
       })
 
       if (history.length > 0) {
-        const latest = history[history.length - 1]
-        const trendInfo = this.calculateTrendFromHistory(history)
+        // 只保留最近7天数据
+        const recentHistory = history.slice(-7)
+        
+        const latestRecord = records[records.length - 1]
+        const latestBreed = latestRecord.meatBreeds?.find((b: any) => b.key === key)
+        // 计算趋势（基于均价）
+        const avgHistory = recentHistory.map(h => ({ date: h.date, value: h.avg }))
+        const trendInfo = this.calculateTrendFromHistory(avgHistory)
         
         meatBreedsMap[key] = {
           label: meatLabels[key],
-          price: latest.value.toFixed(1),
+          range: latestBreed?.range || '--',
+          min: latestBreed?.min || 0,
+          max: latestBreed?.max || 0,
           trend: trendInfo.trend,
           change: trendInfo.change,
-          history
+          history: recentHistory, // 只保留最近7天的完整价格区间历史数据
+          avgHistory // 均价历史数据（用于趋势计算）
         }
       }
     })
@@ -128,28 +142,40 @@ Page({
     }
 
     goslingKeys.forEach(key => {
-      const history: Array<{ date: string; value: number }> = []
+      const history: Array<{ date: string; min: number; max: number; avg: number }> = []
       
       records.forEach(record => {
         const breed = record.goslingBreeds?.find((b: any) => b.key === key)
-        if (breed && breed.price) {
+        if (breed && breed.range) {
+          // 保存完整的价格区间数据
           history.push({
             date: this.formatDate(record.date),
-            value: breed.price
+            min: breed.min || 0,
+            max: breed.max || 0,
+            avg: (breed.min + breed.max) / 2
           })
         }
       })
 
       if (history.length > 0) {
-        const latest = history[history.length - 1]
-        const trendInfo = this.calculateTrendFromHistory(history)
+        // 只保留最近7天数据
+        const recentHistory = history.slice(-7)
+        
+        const latestRecord = records[records.length - 1]
+        const latestBreed = latestRecord.goslingBreeds?.find((b: any) => b.key === key)
+        // 计算趋势（基于均价）
+        const avgHistory = recentHistory.map(h => ({ date: h.date, value: h.avg }))
+        const trendInfo = this.calculateTrendFromHistory(avgHistory)
         
         goslingBreedsMap[key] = {
           label: goslingLabels[key],
-          price: latest.value.toFixed(1),
+          range: latestBreed?.range || '--',
+          min: latestBreed?.min || 0,
+          max: latestBreed?.max || 0,
           trend: trendInfo.trend,
           change: trendInfo.change,
-          history
+          history: recentHistory, // 只保留最近7天的完整价格区间历史数据
+          avgHistory // 均价历史数据（用于趋势计算）
         }
       }
     })
@@ -271,7 +297,9 @@ Page({
       currentBreedLabel: breedData.label || '--',
       activeTab: tabKey,
       currentPriceDisplay: {
-        price: breedData.price || '--',
+        range: breedData.range || '--',
+        min: breedData.min || 0,
+        max: breedData.max || 0,
         trend: breedData.trend ?? 0,
         change: breedData.change || '+0.0'
       },

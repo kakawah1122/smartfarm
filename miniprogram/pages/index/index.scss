@@ -407,8 +407,7 @@ page {
 }
 
 .price-item > .price-label,
-.price-item > .price-value,
-.price-item > .price-trend {
+.price-item > .price-value {
   width: 100%;
 }
 
@@ -465,32 +464,6 @@ page {
 
 .primary-text {
   color: var(--primary-blue);
-}
-
-.price-trend {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.2;
-  gap: 6rpx;
-}
-
-.trend-up {
-  color: var(--color-success);
-}
-
-.trend-down {
-  color: var(--color-danger);
-}
-
-.trend-icon {
-  font-size: var(--font-size-base);
-}
-
-.trend-value {
-  font-size: var(--font-size-base);
 }
 
 /* 添加特色阴影层次 */

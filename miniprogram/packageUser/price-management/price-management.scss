@@ -10,22 +10,24 @@
 
 .content-wrapper {
   flex: 1;
-  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx));
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0; /* 重要：允许 flex 子元素缩小 */
 }
 
 /* AI识别区域 */
 .ai-section {
-  margin-top: 20rpx;
+  margin-top: 0;
   margin-bottom: 24rpx;
 }
 
 .scroll-container {
   flex: 1;
-  padding: 16rpx 24rpx 0 24rpx;
+  padding: 16rpx 24rpx;
   box-sizing: border-box;
+  height: 0; /* 重要：配合 flex: 1 使用，让 scroll-view 正确计算高度 */
 }
 
 /* 手动录入表单 */
@@ -424,11 +426,250 @@
   margin-top: 24rpx;
 }
 
+.history-list {
+  background: white;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.history-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 24rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  transition: background-color 0.2s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background-color: #f8f8f8;
+  }
+}
+
+.history-main {
+  flex: 1;
+}
+
+.history-date {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.history-source {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.history-count {
+  font-size: 24rpx;
+  color: #0052d9;
+  background: #f0f7ff;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.history-arrow {
+  display: flex;
+  align-items: center;
+  margin-left: 16rpx;
+}
+
 .empty-tip {
   text-align: center;
   padding: 80rpx 0;
   color: #999;
   font-size: 28rpx;
+}
+
+// 详情弹窗样式（参考入栏记录弹窗）
+.detail-popup-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.popup-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.detail-popup {
+  position: relative;
+  width: 100%;
+  max-height: 80vh;
+  background: white;
+  border-radius: 32rpx 32rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1001;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.12);
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(100%); 
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1;
+  }
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40rpx 32rpx 24rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+}
+
+.popup-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: 0.5rpx;
+}
+
+.close-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 50%;
+  
+  &:active {
+    background: #e8e8e8;
+  }
+}
+
+.popup-content {
+  flex: 1;
+  padding: 24rpx 32rpx 40rpx;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+// 记录项
+.record-item {
+  background: #fafafa;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx dashed #e0e0e0;
+}
+
+.record-index {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+// 价格区块
+.price-section {
+  margin-bottom: 20rpx;
+
+  &:last-of-type {
+    margin-bottom: 16rpx;
+  }
+}
+
+.section-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 12rpx;
+  padding: 8rpx 16rpx;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+  border-radius: 8rpx;
+  color: #0052d9;
+}
+
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.price-item {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  gap: 8rpx;
+}
+
+.price-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.price-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #0052d9;
+}
+
+// 记录底部
+.record-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx dashed #e0e0e0;
+}
+
+.record-operator,
+.record-time {
+  font-size: 24rpx;
+  color: #999;
 }
 
 /* 批量数据预览区域 */

@@ -71,12 +71,10 @@ Page({
     currentPriceBreedLabel: '',
     goosePriceData: {} as Record<string, any>,
     goosePrice: {
-      adult: '--',      // 肉鹅价格（元/斤）
-      adultTrend: 0,
-      adultChange: '+0.0',
-      gosling: '--',    // 鹅苗价格（元/只）
-      goslingTrend: 0,
-      goslingChange: '+0.0'
+      adultRange: '--',
+      goslingRange: '--',
+      adultUnit: '元/斤',
+      goslingUnit: '元/羽'
     },
     
     // 任务相关
@@ -541,15 +539,16 @@ Page({
             goosePriceData[breed.key] = {
               label: breed.label,
               gosling: {
-                price: breed.price.toFixed(1),
-                trend: 0,
-                change: '+0.0',
-                range: breed.range
+                range: breed.range || '--',
+                min: typeof breed.min === 'number' ? breed.min : null,
+                max: typeof breed.max === 'number' ? breed.max : null,
+                unit: '元/羽'
               },
               adult: {
-                price: '--',
-                trend: 0,
-                change: '+0.0'
+                range: '--',
+                min: null,
+                max: null,
+                unit: '元/斤'
               },
               history: {
                 gosling: [],
@@ -572,10 +571,9 @@ Page({
             const meatData = meat130 || meat120
             if (meatData) {
               goosePriceData[key].adult = {
-                price: meatData.price.toFixed(1),
-                trend: 0,
-                change: '+0.0',
-                range: meatData.range,
+                range: meatData.range || '--',
+                min: typeof meatData.min === 'number' ? meatData.min : null,
+                max: typeof meatData.max === 'number' ? meatData.max : null,
                 unit: '元/斤'
               }
             }
@@ -618,12 +616,10 @@ Page({
           priceUpdateTime: '',
           priceBreeds: [],
           goosePrice: {
-            adult: '--',
-            adultTrend: 0,
-            adultChange: '+0.0',
-            gosling: '--',
-            goslingTrend: 0,
-            goslingChange: '+0.0'
+            adultRange: '--',
+            goslingRange: '--',
+            adultUnit: '/斤',
+            goslingUnit: '/羽'
           }
         })
         return false
@@ -635,12 +631,10 @@ Page({
         priceUpdateTime: '',
         priceBreeds: [],
         goosePrice: {
-          adult: '--',
-          adultTrend: 0,
-          adultChange: '+0.0',
-          gosling: '--',
-          goslingTrend: 0,
-          goslingChange: '+0.0'
+          adultRange: '--',
+          goslingRange: '--',
+          adultUnit: '/斤',
+          goslingUnit: '/羽'
         }
       })
       return false
@@ -697,12 +691,10 @@ Page({
       currentPriceBreed: breedKey,
       currentPriceBreedLabel: breedData.label,
       goosePrice: {
-        adult: breedData.adult.price,
-        adultTrend: breedData.adult.trend,
-        adultChange: breedData.adult.change,
-        gosling: breedData.gosling.price,
-        goslingTrend: breedData.gosling.trend,
-        goslingChange: breedData.gosling.change
+        adultRange: breedData.adult?.range || '--',
+        goslingRange: breedData.gosling?.range || '--',
+        adultUnit: breedData.adult?.unit || '元/斤',
+        goslingUnit: breedData.gosling?.unit || '元/羽'
       }
     })
   },

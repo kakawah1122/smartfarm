@@ -65,24 +65,16 @@
         <view class="price-item success-bg" bindtap="navigateToPriceDetail" data-tab="adult" hover-class="price-item-hover">
           <view class="price-label">成鹅价格</view>
           <view class="price-value">
-            <text class="price-number success-text">¥{{goosePrice.adult}}</text>
-            <text class="price-unit">/斤</text>
-          </view>
-          <view class="price-trend {{goosePrice.adultTrend > 0 ? 'trend-down' : 'trend-up'}}">
-            <text class="trend-icon">{{goosePrice.adultTrend > 0 ? '↑' : '↓'}}</text>
-            <text class="trend-value">{{goosePrice.adultChange}}</text>
+            <text class="price-number success-text">{{goosePrice.adultRange}}</text>
+            <text class="price-unit">{{goosePrice.adultUnit}}</text>
           </view>
         </view>
         <view class="price-divider"></view>
         <view class="price-item primary-bg" bindtap="navigateToPriceDetail" data-tab="gosling" hover-class="price-item-hover">
           <view class="price-label">鹅苗价格</view>
           <view class="price-value">
-            <text class="price-number primary-text">¥{{goosePrice.gosling}}</text>
-            <text class="price-unit">/羽</text>
-          </view>
-          <view class="price-trend {{goosePrice.goslingTrend > 0 ? 'trend-down' : 'trend-up'}}">
-            <text class="trend-icon">{{goosePrice.goslingTrend > 0 ? '↑' : '↓'}}</text>
-            <text class="trend-value">{{goosePrice.goslingChange}}</text>
+            <text class="price-number primary-text">{{goosePrice.goslingRange}}</text>
+            <text class="price-unit">{{goosePrice.goslingUnit}}</text>
           </view>
         </view>
       </view>

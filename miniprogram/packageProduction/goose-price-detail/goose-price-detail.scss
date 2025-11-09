@@ -172,9 +172,26 @@
 }
 
 .history-note {
-  font-size: 24rpx;
-  color: #9ca3af;
-  text-align: center;
+  margin-top: 20rpx;
+  padding: 16rpx 20rpx;
+  background: #2563eb;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #60a5fa;
+  
+  .note-text {
+    display: block;
+    font-size: 26rpx;
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 6rpx;
+  }
+  
+  .note-detail {
+    display: block;
+    font-size: 24rpx;
+    color: #ffffff;
+    font-weight: 500;
+  }
 }
 
 .empty-history {

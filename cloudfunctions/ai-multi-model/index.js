@@ -253,7 +253,7 @@ const TASK_MODEL_MAPPING = {
   'goose_price_ocr': {
     primary: 'qwen-vl-max',  // 直接使用最强视觉模型
     fallback: [],
-    timeout: 55000,  // 55秒超时（留5秒余量）
+    timeout: 58000,  // 58秒超时（留2秒余量，微信云函数最大60秒）
     condition: {
       hasImages: true,
       imageCount: 1,

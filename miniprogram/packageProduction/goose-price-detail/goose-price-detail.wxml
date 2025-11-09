@@ -23,7 +23,7 @@
                     <text class="breed-card-title">{{item.label}}</text>
                   </view>
                   <view class="breed-card-body">
-                    <text class="breed-card-price">¥{{meatData[item.key].price}}</text>
+                    <text class="breed-card-price">¥{{meatData[item.key].range}}</text>
                     <text class="breed-card-unit">/斤</text>
                   </view>
                   <view class="breed-card-trend {{meatData[item.key].trend > 0 ? 'trend-up' : 'trend-down'}}">
@@ -38,16 +38,18 @@
                 <view class="chart-title">{{currentBreedLabel}} - 价格走势</view>
                 <block wx:if="{{currentHistory.length > 0}}">
                   <price-trend-chart
-                    series="{{currentHistory}}"
+                    chart-type="dual-line"
+                    price-ranges="{{currentHistory}}"
                     color-scheme="{{chartScheme}}"
-                    height="{{240}}"
+                    height="{{300}}"
                   />
                 </block>
                 <view wx:else class="empty-history">
                   <text>暂无走势数据</text>
                 </view>
                 <view class="history-note">
-                  <text>最近{{currentHistory.length}}日价格走势，仅供参考</text>
+                  <text class="note-text">最近7天价格走势 · 双线图</text>
+                  <text class="note-detail">红线=最高价 | 蓝线=最低价</text>
                 </view>
               </view>
             </view>
@@ -68,7 +70,7 @@
                     <text class="breed-card-title">{{item.label}}</text>
                   </view>
                   <view class="breed-card-body">
-                    <text class="breed-card-price">¥{{goslingData[item.key].price}}</text>
+                    <text class="breed-card-price">¥{{goslingData[item.key].range}}</text>
                     <text class="breed-card-unit">/只</text>
                   </view>
                   <view class="breed-card-trend {{goslingData[item.key].trend > 0 ? 'trend-up' : 'trend-down'}}">
@@ -83,16 +85,18 @@
                 <view class="chart-title">{{currentBreedLabel}} - 价格走势</view>
                 <block wx:if="{{currentHistory.length > 0}}">
                   <price-trend-chart
-                    series="{{currentHistory}}"
+                    chart-type="dual-line"
+                    price-ranges="{{currentHistory}}"
                     color-scheme="{{chartScheme}}"
-                    height="{{240}}"
+                    height="{{300}}"
                   />
                 </block>
                 <view wx:else class="empty-history">
                   <text>暂无走势数据</text>
                 </view>
                 <view class="history-note">
-                  <text>最近{{currentHistory.length}}日价格走势，仅供参考</text>
+                  <text class="note-text">最近7天价格走势 · 双线图</text>
+                  <text class="note-detail">红线=最高价 | 蓝线=最低价</text>
                 </view>
               </view>
             </view>

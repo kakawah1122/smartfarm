@@ -7,7 +7,7 @@
  * 2. 双模式录入：手动录入 + AI批量识别（Qwen-VL-Max）
  * 3. 批量识别：AI自动提取图片中所有日期的价格数据，一次保存多条记录
  * 4. 历史数据：完整保存90天内所有日期数据，支持趋势分析
- * 5. 数据验证：自动计算平均价、格式化价格区间
+ * 5. 数据验证：格式化价格区间
  * 
  * v2.0 更新：
  * - 支持从价格表格截图中批量提取多天的数据
@@ -20,7 +20,8 @@ interface BaseBreed {
   key: string
   label: string
   range: string
-  price: number
+  min: number
+  max: number
 }
 
 interface GoslingBreed extends BaseBreed {}
@@ -44,6 +45,8 @@ interface HistoryItem {
   date: string
   source: string
   updateTime: Date
+  goslingBreeds?: BaseBreed[]
+  meatBreeds?: BaseBreed[]
 }
 
 interface ParsedBreedItem {
@@ -70,52 +73,29 @@ interface ParsedBatchGoosePriceResult {
 const GOOSE_PRICE_SYSTEM_PROMPT =
   '你是一名擅长从价格表截图中提取结构化数据的助手，请严格按照示例JSON输出结果。'
 
-const GOOSE_PRICE_USER_PROMPT = `你是一个专业的价格表格识别助手。请识别图片中的鹅价表格，精确提取**所有日期**的价格信息：
+const GOOSE_PRICE_USER_PROMPT = `识别表格中的鹅价信息，**只提取最新日期（最后一行）的价格数据**：
 
-**识别要求：**
-1. 提取表格中的**所有日期**及对应的价格数据（不要遗漏任何一行）
-2. 对于每个日期，提取：
-   - 鹅苗价格（单位：元/只）：
-     * 中种鹅：价格区间（如：30-33）
-     * 大种鹅：价格区间（如：44-46）
-     * 特大种鹅：价格区间（如：48-52）
-   - 肉鹅价格（单位：元/斤）：
-     * 120日龄：价格区间
-     * 130日龄：价格区间
-3. 按日期从早到晚排序
-
-**注意事项：**
-- 必须提取所有日期的数据，不要遗漏
-- 价格区间格式：最低价-最高价
-- 如果某个品种或日龄没有数据，可以省略
-- 日期格式：YYYY-MM-DD（如：2025-10-30）
-
-**输出格式（严格JSON）：**
-\`\`\`json
-{
-  "records": [
+**输出格式（纯JSON，无其他文字）：**
     {
-      "date": "2025-10-30",
+  "date": "2025-11-09",
       "goslingBreeds": [
-        {"key": "middle", "label": "中种鹅", "min": 38, "max": 41},
-        {"key": "large", "label": "大种鹅", "min": 52, "max": 54},
-        {"key": "extraLarge", "label": "特大种鹅", "min": 56, "max": 60}
+    {"key": "middle", "min": 24, "max": 27},
+    {"key": "large", "min": 38, "max": 40},
+    {"key": "extraLarge", "min": 42, "max": 46}
       ],
       "meatBreeds": [
-        {"key": "meat120", "label": "肉鹅120日龄", "min": 18.5, "max": 18.5},
-        {"key": "meat130", "label": "肉鹅130日龄", "min": 19.0, "max": 19.0}
+    {"key": "meat120", "min": 16.5, "max": 16.5},
+    {"key": "meat130", "min": 17, "max": 17}
       ]
-    },
-    {
-      "date": "2025-10-31",
-      "goslingBreeds": [...],
-      "meatBreeds": [...]
-    }
-  ]
 }
-\`\`\`
 
-请严格按照上述JSON格式输出，records数组中包含所有日期的数据，不要添加任何其他说明文字。`
+**要求：**
+1. 只提取最新日期（表格最后一行）
+2. 日期格式：YYYY-MM-DD
+3. 鹅苗价格3项：中种鹅(middle)、大种鹅(large)、特大种鹅(extraLarge)
+4. 肉鹅价格2项：120日龄(meat120)、130日龄(meat130)
+5. 价格单位：鹅苗(元/只)、肉鹅(元/斤)
+6. 直接输出JSON，不要markdown代码块`
 
 const RANGE_SPLIT_REGEX = /[-~－—到]/g
 
@@ -178,7 +158,6 @@ function normalizeBreedList(list: ParsedBreedItem[] | undefined): BaseBreed[] {
 
       const minVal = Number(min.toFixed ? min.toFixed(1) : min)
       const maxVal = Number(max.toFixed ? max.toFixed(1) : max)
-      const average = Number((((minVal + maxVal) / 2) || 0).toFixed(1))
 
       const key = item.key || `item_${index}`
       const label = item.label || item.key || `数据${index + 1}`
@@ -187,7 +166,8 @@ function normalizeBreedList(list: ParsedBreedItem[] | undefined): BaseBreed[] {
         key,
         label,
         range: `${minVal}-${maxVal}`,
-        price: average
+        min: minVal,
+        max: maxVal
       }
     })
     .filter((item): item is GoslingBreed => item !== null)
@@ -325,8 +305,10 @@ function buildBatchPreviewData(parsed: ParsedBatchGoosePriceResult): BatchPrevie
 
 Page({
   data: {
-    uploadedImage: '',
+    uploadedImageUrl: '',
+    uploadedImageFileID: '',
     recognizing: false,
+    scrollViewHeight: 0, // 动态计算的滚动容器高度
     historyList: [] as HistoryItem[],
     manualData: {
       date: new Date().toISOString().split('T')[0],
@@ -338,12 +320,45 @@ Page({
       meat: {
         meat120: { min: '', max: '' },
         meat130: { min: '', max: '' }
-      }
     }
+    },
+    // 弹窗相关
+    showDetailPopup: false,
+    selectedDate: '',
+    selectedDateRecords: [] as any[]
   },
 
   onLoad() {
     this.loadHistory()
+    // 动态计算 scroll-view 高度
+    this.calculateScrollHeight()
+  },
+
+  // 计算滚动容器高度
+  calculateScrollHeight() {
+    try {
+      const systemInfo = wx.getSystemInfoSync()
+      const statusBarHeight = systemInfo.statusBarHeight || 44
+      const navbarHeight = 88 // 导航栏高度
+      const safeAreaTop = 16 // 安全间距
+      const windowHeight = systemInfo.windowHeight
+      
+      // 计算可用高度
+      const availableHeight = windowHeight - statusBarHeight - navbarHeight - safeAreaTop
+      
+      console.log('系统信息:', {
+        windowHeight,
+        statusBarHeight,
+        availableHeight
+      })
+      
+      // 设置 scroll-view 高度（单位：px）
+      this.setData({
+        scrollViewHeight: availableHeight
+      })
+    } catch (error) {
+      console.error('计算滚动高度失败:', error)
+    }
   },
 
   onShow() {
@@ -420,13 +435,13 @@ Page({
       if (data.min && data.max) {
         const min = parseFloat(data.min)
         const max = parseFloat(data.max)
-        const price = ((min + max) / 2).toFixed(1)
         
         goslingBreeds.push({
           key,
           label,
           range: `${min}-${max}`,
-          price: parseFloat(price)
+          min,
+          max
         })
       }
     })
@@ -442,13 +457,13 @@ Page({
       if (data.min && data.max) {
         const min = parseFloat(data.min)
         const max = parseFloat(data.max)
-        const price = ((min + max) / 2).toFixed(1)
         
         meatBreeds.push({
           key,
           label,
           range: `${min}-${max}`,
-          price: parseFloat(price)
+          min,
+          max
         })
       }
     })
@@ -561,10 +576,55 @@ Page({
       count: 1,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
-        const tempFilePath = res.tempFiles[0].tempFilePath
+      sizeType: ['compressed'],  // 使用压缩图片
+      success: async (res) => {
+        try {
+          wx.showLoading({
+            title: '处理中...',
+            mask: true
+          })
+
+          let tempFilePath = res.tempFiles[0].tempFilePath
+          const fileSize = res.tempFiles[0].size
+
+          console.log('原始图片大小:', (fileSize / 1024 / 1024).toFixed(2), 'MB')
+
+          // 如果图片大于2MB，进一步压缩
+          if (fileSize > 2 * 1024 * 1024) {
+            console.log('图片过大，开始压缩...')
+            wx.showLoading({ title: '压缩中...', mask: true })
+            try {
+              const compressRes = await wx.compressImage({
+                src: tempFilePath,
+                quality: 60  // 压缩质量60%
+              })
+              tempFilePath = compressRes.tempFilePath
+              console.log('压缩完成')
+            } catch (compressError) {
+              console.warn('压缩失败，使用原图:', compressError)
+            }
+          }
+
+          // 上传到云存储
+          wx.showLoading({ title: '上传中...', mask: true })
+          const ext = tempFilePath.substring(tempFilePath.lastIndexOf('.')) || '.jpg'
+          const cloudPath = `goose-price-uploads/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
+
+          const uploadRes = await wx.cloud.uploadFile({
+            cloudPath,
+            filePath: tempFilePath
+          })
+
+          const tempUrlRes = await wx.cloud.getTempFileURL({
+            fileList: [uploadRes.fileID]
+          })
+
+          const fileInfo = tempUrlRes.fileList && tempUrlRes.fileList[0]
+          const tempUrl = fileInfo?.tempFileURL || ''
+
         this.setData({
-          uploadedImage: tempFilePath
+            uploadedImageUrl: tempUrl || uploadRes.fileID,
+            uploadedImageFileID: uploadRes.fileID
         })
         
         Message.success({
@@ -572,8 +632,18 @@ Page({
           offset: [20, 32],
           content: '图片上传成功'
         })
+        } catch (error: any) {
+          console.error('上传图片失败:', error)
+          Message.error({
+            context: this,
+            offset: [20, 32],
+            content: '图片上传失败，请重试'
+          })
+        } finally {
+          wx.hideLoading()
+        }
       },
-      fail: (err) => {
+      fail: () => {
         Message.error({
           context: this,
           offset: [20, 32],
@@ -586,14 +656,15 @@ Page({
   // 清除图片
   clearImage() {
     this.setData({
-      uploadedImage: ''
+      uploadedImageUrl: '',
+      uploadedImageFileID: ''
     })
   },
 
   // 填充表单数据（AI识别成功后调用）
   fillFormData(parsedData: ParsedGoosePriceResult) {
     console.log('=== fillFormData 开始 ===')
-    console.log('parsedData:', parsedData)
+    console.log('parsedData:', JSON.stringify(parsedData, null, 2))
     
     const formData: any = {
       date: parsedData.date || new Date().toISOString().split('T')[0],
@@ -610,52 +681,150 @@ Page({
 
     // 填充鹅苗价格
     if (parsedData.goslingBreeds && Array.isArray(parsedData.goslingBreeds)) {
-      console.log('处理鹅苗价格，数量:', parsedData.goslingBreeds.length)
+      console.log('✅ 处理鹅苗价格，数量:', parsedData.goslingBreeds.length)
+      console.log('鹅苗详情:', JSON.stringify(parsedData.goslingBreeds, null, 2))
       parsedData.goslingBreeds.forEach((breed: ParsedBreedItem) => {
         const { min, max } = extractMinMax(breed)
-        console.log(`品种 ${breed.key}: min=${min}, max=${max}`)
+        console.log(`鹅苗品种 ${breed.key} (label: ${breed.label}): min=${min}, max=${max}`)
         if (min !== null && max !== null) {
           const key = breed.key || ''
-          if (key === 'middle' && formData.gosling.middle) {
+          if (key === 'middle') {
             formData.gosling.middle = { min: min.toString(), max: max.toString() }
-          } else if (key === 'large' && formData.gosling.large) {
+            console.log('✅ 填充中种鹅:', formData.gosling.middle)
+          } else if (key === 'large') {
             formData.gosling.large = { min: min.toString(), max: max.toString() }
-          } else if (key === 'extraLarge' && formData.gosling.extraLarge) {
+            console.log('✅ 填充大种鹅:', formData.gosling.large)
+          } else if (key === 'extraLarge') {
             formData.gosling.extraLarge = { min: min.toString(), max: max.toString() }
+            console.log('✅ 填充特大种鹅:', formData.gosling.extraLarge)
+          } else {
+            console.warn('❌ 未匹配鹅苗品种key:', key)
           }
         }
       })
+    } else {
+      console.warn('⚠️ 没有鹅苗价格数据或数据格式错误')
     }
 
     // 填充肉鹅价格
     if (parsedData.meatBreeds && Array.isArray(parsedData.meatBreeds)) {
-      console.log('处理肉鹅价格，数量:', parsedData.meatBreeds.length)
-      parsedData.meatBreeds.forEach((breed: ParsedBreedItem) => {
+      console.log('✅ 处理肉鹅价格，数量:', parsedData.meatBreeds.length)
+      console.log('肉鹅详情:', JSON.stringify(parsedData.meatBreeds, null, 2))
+      
+      // 遍历所有肉鹅品种
+      parsedData.meatBreeds.forEach((breed: ParsedBreedItem, index: number) => {
         const { min, max } = extractMinMax(breed)
-        console.log(`品种 ${breed.key}: min=${min}, max=${max}`)
+        const key = (breed.key || '').toLowerCase()
+        const label = (breed.label || '').toLowerCase()
+        
+        console.log(`[肉鹅 ${index}] key="${breed.key}", label="${breed.label}", min=${min}, max=${max}`)
+        console.log(`匹配检测:`, {
+          原始key: breed.key,
+          原始label: breed.label,
+          小写key: key,
+          小写label: label,
+          'key包含meat120': key.includes('meat120'),
+          'key包含120': key.includes('120'),
+          'label包含120': label.includes('120'),
+          'key包含meat130': key.includes('meat130'),
+          'key包含130': key.includes('130'),
+          'label包含130': label.includes('130')
+        })
+        
         if (min !== null && max !== null) {
-          const key = breed.key || ''
-          if (key === 'meat120' && formData.meat.meat120) {
+          // 更宽松的匹配规则
+          const is120 = key.includes('120') || label.includes('120') || key === 'meat120'
+          const is130 = key.includes('130') || label.includes('130') || key === 'meat130'
+          
+          if (is120) {
             formData.meat.meat120 = { min: min.toString(), max: max.toString() }
-          } else if (key === 'meat130' && formData.meat.meat130) {
+            console.log('✅ 成功填充120日龄:', formData.meat.meat120)
+          } else if (is130) {
             formData.meat.meat130 = { min: min.toString(), max: max.toString() }
+            console.log('✅ 成功填充130日龄:', formData.meat.meat130)
+          } else {
+            console.warn('❌ 未匹配肉鹅品种:', { 
+              原始数据: breed, 
+              提取的min: min, 
+              提取的max: max,
+              是否120: is120,
+              是否130: is130
+            })
           }
+        } else {
+          console.warn('❌ 肉鹅价格无效 min/max为null:', { 
+            breed: JSON.stringify(breed), 
+            提取的min: min, 
+            提取的max: max 
+          })
         }
       })
+      
+      console.log('肉鹅填充后的formData.meat:', JSON.stringify(formData.meat, null, 2))
+    } else {
+      console.warn('⚠️ 没有肉鹅价格数据或数据格式错误')
+      console.warn('parsedData.meatBreeds:', parsedData.meatBreeds)
+      console.warn('是否为数组:', Array.isArray(parsedData.meatBreeds))
     }
 
-    console.log('最终 formData:', formData)
+    console.log('最终 formData:', JSON.stringify(formData, null, 2))
     this.setData({ manualData: formData })
     console.log('=== fillFormData 完成 ===')
+  },
+
+  // 保存最新日期的识别结果（新增记录，不做覆盖）
+  async saveLatestRecord(record: ParsedGoosePriceResult | undefined) {
+    if (!record) {
+      console.warn('没有可保存的记录')
+      return
+    }
+
+    console.log('=== 保存最新日期记录 ===', record.date)
+
+    try {
+      const db = wx.cloud.database()
+      const operator = wx.getStorageSync('userInfo')?.nickName || '管理员'
+
+      const goslingBreeds = normalizeBreedList(record.goslingBreeds) as GoslingBreed[]
+      const meatBreeds = normalizeBreedList(record.meatBreeds) as MeatBreed[]
+
+      if (goslingBreeds.length === 0 && meatBreeds.length === 0) {
+        console.warn('最新记录内容为空，跳过保存')
+        return
+      }
+
+      const date = record.date || new Date().toISOString().split('T')[0]
+
+      await db.collection('goose_prices').add({
+        data: {
+          date,
+          goslingBreeds,
+          meatBreeds,
+          rawData: { goslingBreeds, meatBreeds },
+          source: 'ai_recognition',
+          operator,
+          createTime: db.serverDate(),
+          updateTime: db.serverDate()
+        }
+      })
+
+      console.log(`保存成功: ${date}`)
+
+      setTimeout(() => {
+        this.loadHistory()
+      }, 500)
+    } catch (error: any) {
+      console.error('保存最新记录失败:', error)
+    }
   },
 
   // AI识别图片
   async recognizeWithAI() {
     console.log('=== 开始AI识别 ===')
-    const { uploadedImage } = this.data
-    console.log('uploadedImage:', uploadedImage)
+    const { uploadedImageFileID } = this.data
+    console.log('uploadedImageFileID:', uploadedImageFileID)
 
-    if (!uploadedImage) {
+    if (!uploadedImageFileID) {
       console.warn('没有上传图片')
       Message.warning({
         context: this,
@@ -669,14 +838,6 @@ Page({
     console.log('设置 recognizing = true')
 
     try {
-      // 先上传图片到云存储
-      console.log('开始上传图片到云存储...')
-      const uploadResult = await wx.cloud.uploadFile({
-        cloudPath: `goose-price-temp/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`,
-        filePath: uploadedImage
-      })
-      console.log('图片上传成功:', uploadResult.fileID)
-
       // 调用多模型AI服务进行识别
       console.log('开始调用AI服务...')
       const aiResult: any = await wx.cloud.callFunction({
@@ -694,13 +855,13 @@ Page({
               content: `${GOOSE_PRICE_USER_PROMPT}\n\n请结合我提供的截图完成识别。`
             }
           ],
-          images: [uploadResult.fileID],
+          images: [uploadedImageFileID],
           options: {
             temperature: 0,
-            maxTokens: 2000  // 增加到2000，给AI更多空间输出
+            maxTokens: 500  // 减少token限制，只需要输出最新一条数据
           }
         },
-        timeout: 60000  // 微信云函数总超时60秒
+        timeout: 58000  // 58秒超时
       })
       console.log('AI服务调用完成')
 
@@ -717,21 +878,15 @@ Page({
       console.log('内容长度:', aiContent.length)
       
       const parsedGoosePrice = parseGoosePriceContent(aiContent)
-      console.log('解析后的数据:', parsedGoosePrice)
+      console.log('解析后的数据:', JSON.stringify(parsedGoosePrice, null, 2))
       
-      // 判断是批量数据还是单条数据
-      if ('records' in parsedGoosePrice && parsedGoosePrice.records && parsedGoosePrice.records.length > 0) {
-        console.log('识别为批量数据，记录数:', parsedGoosePrice.records.length)
-        // 批量数据：填充第一条数据到表单
-        const firstRecord = parsedGoosePrice.records[0]
-        console.log('第一条记录:', firstRecord)
-        this.fillFormData(firstRecord)
-      } else {
-        console.log('识别为单条数据')
-        // 单条数据（兼容旧格式）
-        this.fillFormData(parsedGoosePrice as ParsedGoosePriceResult)
-      }
+      // 现在只返回单条数据（最新日期）
+      console.log('识别到最新日期数据')
+      this.fillFormData(parsedGoosePrice as ParsedGoosePriceResult)
       
+      // 保存最新数据
+      await this.saveLatestRecord(parsedGoosePrice as ParsedGoosePriceResult)
+        
       this.setData({ recognizing: false })
       console.log('=== AI识别流程结束 ===')
     } catch (error: any) {
@@ -846,27 +1001,36 @@ Page({
             if (rowMatch) {
               
               // 中种鹅
+              const middleMin = parseFloat(rowMatch[3])
+              const middleMax = parseFloat(rowMatch[4])
               goslingBreeds.push({
                 key: 'middle',
                 label: '中种鹅',
-                range: `${rowMatch[3]}-${rowMatch[4]}`,
-                price: parseFloat(((parseFloat(rowMatch[3]) + parseFloat(rowMatch[4])) / 2).toFixed(1))
+                range: `${middleMin}-${middleMax}`,
+                min: middleMin,
+                max: middleMax
               })
               
               // 大种鹅
+              const largeMin = parseFloat(rowMatch[5])
+              const largeMax = parseFloat(rowMatch[6])
               goslingBreeds.push({
                 key: 'large',
                 label: '大种鹅',
-                range: `${rowMatch[5]}-${rowMatch[6]}`,
-                price: parseFloat(((parseFloat(rowMatch[5]) + parseFloat(rowMatch[6])) / 2).toFixed(1))
+                range: `${largeMin}-${largeMax}`,
+                min: largeMin,
+                max: largeMax
               })
               
               // 特大种鹅
+              const extraLargeMin = parseFloat(rowMatch[7])
+              const extraLargeMax = parseFloat(rowMatch[8])
               goslingBreeds.push({
                 key: 'extraLarge',
                 label: '特大种鹅',
-                range: `${rowMatch[7]}-${rowMatch[8]}`,
-                price: parseFloat(((parseFloat(rowMatch[7]) + parseFloat(rowMatch[8])) / 2).toFixed(1))
+                range: `${extraLargeMin}-${extraLargeMax}`,
+                min: extraLargeMin,
+                max: extraLargeMax
               })
               
               break
@@ -889,13 +1053,13 @@ Page({
           if (match) {
             const price1 = parseFloat(match[1])
             const price2 = match[2] ? parseFloat(match[2]) : price1
-            const avgPrice = parseFloat(((price1 + price2) / 2).toFixed(1))
             
             meatBreeds.push({
               key,
               label,
               range: price1 === price2 ? `${price1}` : `${price1}-${price2}`,
-              price: avgPrice
+              min: price1,
+              max: price2
             })
           }
         })
@@ -999,30 +1163,81 @@ Page({
           date: db.command.gte(dateStr)
         })
         .orderBy('date', 'desc')
-        .limit(30)
+        .orderBy('createTime', 'desc')
+        .limit(100)
         .get()
 
+      // 按日期分组，每个日期只显示一条记录（最新的）
+      const groupedByDate: { [key: string]: any[] } = {}
+      result.data.forEach((item: any) => {
+        if (!groupedByDate[item.date]) {
+          groupedByDate[item.date] = []
+        }
+        groupedByDate[item.date].push(item)
+      })
+
+      // 转换为显示列表，每个日期取第一条（最新的）
+      const historyList = Object.keys(groupedByDate)
+        .sort((a, b) => b.localeCompare(a)) // 日期降序
+        .map(date => {
+          const records = groupedByDate[date]
+          const latestRecord = records[0] // 最新的一条
+          return {
+            date,
+            recordCount: records.length, // 该日期的记录数
+            source: latestRecord.source === 'ai_recognition' ? 'AI识别' : latestRecord.source === 'manual' ? '手动录入' : '文章解析',
+            updateTime: latestRecord.updateTime,
+            allRecords: records.map(r => ({
+              _id: r._id,
+              date: r.date,
+              source: r.source === 'ai_recognition' ? 'AI识别' : r.source === 'manual' ? '手动录入' : '文章解析',
+              createTime: r.createTime,
+              operator: r.operator || '系统',
+              goslingBreeds: r.goslingBreeds || [],
+              meatBreeds: r.meatBreeds || []
+            }))
+          }
+        })
+
       this.setData({
-        historyList: result.data.map((item: any) => ({
-          _id: item._id,
-          date: item.date,
-          source: item.source === 'ai_recognition' ? 'AI识别' : item.source === 'manual' ? '手动录入' : '文章解析',
-          updateTime: item.updateTime
-        }))
+        historyList
       })
     } catch (error) {
       // 加载历史记录失败，静默处理
+      console.error('加载历史记录失败:', error)
     }
   },
 
-  // 查看历史记录
+  // 查看历史记录（打开弹窗显示该日期的所有记录）
   viewHistory(e: any) {
     const { item } = e.currentTarget.dataset
-    wx.showModal({
-      title: '历史记录',
-      content: `日期：${item.date}\n来源：${item.source}\n更新时间：${new Date(item.updateTime).toLocaleString()}`,
-      showCancel: false
+    console.log('查看历史记录:', item)
+    
+    this.setData({
+      showDetailPopup: true,
+      selectedDate: item.date,
+      selectedDateRecords: item.allRecords || []
     })
+  },
+
+  // 关闭详情弹窗
+  closeDetailPopup() {
+      this.setData({
+      showDetailPopup: false
+    })
+  },
+
+  // 格式化时间
+  formatTime(dateStr: string) {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      const hours = date.getHours().toString().padStart(2, '0')
+      const minutes = date.getMinutes().toString().padStart(2, '0')
+      return `${hours}:${minutes}`
+    } catch (error) {
+      return ''
+    }
   }
 })
 
