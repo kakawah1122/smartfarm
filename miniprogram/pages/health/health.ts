@@ -1,6 +1,7 @@
 // health/health.ts - 健康管理页面（模块化优化版）
 import CloudApi from '../../utils/cloud-api'
 import { formatTime } from '../../utils/util'
+import { logger } from '../../utils/logger'
 import * as HealthStatsCalculator from './modules/health-stats-calculator'
 import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopDataWatcher as stopHealthDataWatcher } from './modules/health-watchers'
 import { clearAllHealthCache, clearBatchCache } from './modules/health-data-loader'
@@ -1048,7 +1049,7 @@ Page<PageData, any>({
       })
       
     } catch (error: any) {
-      console.error('加载批次数据失败:', error)
+      logger.error('加载批次数据失败:', error)
       wx.showToast({
         title: '加载数据失败',
         icon: 'error'
@@ -1116,7 +1117,7 @@ Page<PageData, any>({
         // 🔍 详细错误日志
         if (!response.success) {
           lastError = response
-          console.error('[loadPreventionData] 云函数返回失败:', {
+          logger.error('[loadPreventionData] 云函数返回失败:', {
             errorCode: response?.errorCode,
             message: response?.message,
             error: response?.error
@@ -1181,7 +1182,7 @@ Page<PageData, any>({
     } catch (error: any) {
         // 捕获网络错误或其他异常
         lastError = error
-      console.error('[loadPreventionData] 加载预防管理数据失败:', error)
+      logger.error('[loadPreventionData] 加载预防管理数据失败:', error)
         
         // 如果不是最后一次尝试，继续重试
         if (attempt < MAX_RETRIES) {
@@ -1299,7 +1300,7 @@ Page<PageData, any>({
         // 静默清理完成
       }
     }).catch((error: any) => {
-      console.error('清理孤儿任务失败:', error)
+      logger.error('清理孤儿任务失败:', error)
     })
   },
 
@@ -1718,7 +1719,7 @@ Page<PageData, any>({
         }
       })
     } catch (error: any) {
-      console.error('加载分析数据失败:', error)
+      logger.error('加载分析数据失败:', error)
     }
   },
 
@@ -1919,7 +1920,7 @@ Page<PageData, any>({
         })
       }
     } catch (error: any) {
-      console.error('加载单批次今日任务失败:', error)
+      logger.error('加载单批次今日任务失败:', error)
       this.setData({
         todayTasksByBatch: [],
         'preventionData.todayTasks': []
@@ -1987,7 +1988,7 @@ Page<PageData, any>({
             return null
           }
         } catch (error) {
-          console.error(`批次 ${batch._id} 任务加载失败:`, error)
+          logger.error(`批次 ${batch._id} 任务加载失败:`, error)
           return null
         }
       })
@@ -2008,7 +2009,7 @@ Page<PageData, any>({
         'preventionData.todayTasks': allTasks
       })
     } catch (error: any) {
-      console.error('[loadAllBatchesTodayTasks] 加载所有批次今日任务失败:', error)
+      logger.error('[loadAllBatchesTodayTasks] 加载所有批次今日任务失败:', error)
       this.setData({
         todayTasksByBatch: [],
         'preventionData.todayTasks': []
@@ -2235,7 +2236,7 @@ Page<PageData, any>({
             validBatchIds = (batchResult.result.data || []).map((b: any) => b._id)
           }
         } catch (error) {
-          console.error('[历史任务] 获取批次列表失败:', error)
+          logger.error('[历史任务] 获取批次列表失败:', error)
         }
       } else {
         validBatchIds = [this.data.currentBatchId]
@@ -2295,7 +2296,7 @@ Page<PageData, any>({
       }
 
     } catch (error) {
-      console.error('加载历史任务失败:', error)
+      logger.error('加载历史任务失败:', error)
       this.setData({ historyTasksByBatch: [] })
       wx.showToast({
         title: '加载失败',
@@ -2341,7 +2342,7 @@ Page<PageData, any>({
         throw new Error(response.message || '加载失败')
       }
     } catch (error: any) {
-      console.error('加载预防时间线失败:', error)
+      logger.error('加载预防时间线失败:', error)
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -2374,7 +2375,7 @@ Page<PageData, any>({
         throw new Error(response.message || '加载失败')
       }
     } catch (error: any) {
-      console.error('加载批次对比数据失败:', error)
+      logger.error('加载批次对比数据失败:', error)
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -3200,7 +3201,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           }
         }
       } catch (error) {
-        console.error('获取批次存栏数失败:', error)
+        logger.error('获取批次存栏数失败:', error)
       }
     }
     
@@ -3505,7 +3506,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           }
         }
       } catch (error) {
-        console.error('获取批次存栏数失败:', error)
+        logger.error('获取批次存栏数失败:', error)
       }
     }
     
@@ -3564,7 +3565,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         })
       }
     } catch (error: any) {
-      console.error('加载药品库存失败:', error)
+      logger.error('加载药品库存失败:', error)
     }
   },
 
@@ -3870,7 +3871,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
     } catch (error: any) {
-      console.error('完成任务失败:', error)
+      logger.error('完成任务失败:', error)
     }
   },
 
@@ -3933,7 +3934,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         })
       }
     } catch (error: any) {
-      console.error('加载营养品库存失败:', error)
+      logger.error('加载营养品库存失败:', error)
     }
   },
 
@@ -4169,7 +4170,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
     } catch (error: any) {
-      console.error('完成任务失败:', error)
+      logger.error('完成任务失败:', error)
     }
   },
 

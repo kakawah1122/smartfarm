@@ -1,0 +1,103 @@
+<!-- 死亡记录详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="死亡详情"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确定"
+  bind:close="onClose"
+  bind:confirm="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{record}}" class="record-detail-content">
+    <!-- 基本信息 -->
+    <view class="detail-section">
+      <view class="section-title">基本信息</view>
+      <view class="info-card">
+        <view class="info-row">
+          <text class="info-label">死亡原因：</text>
+          <text class="info-value">{{record.deathCause || '未知'}}</text>
+        </view>
+        <view class="divider-line"></view>
+        <view class="info-row">
+          <text class="info-label">死亡批次：</text>
+          <text class="info-value">{{record.batchNumber || record.batchId}}</text>
+        </view>
+        <view class="divider-line"></view>
+        <view class="info-row">
+          <text class="info-label">死亡日期：</text>
+          <text class="info-value">{{record.deathDate}}</text>
+        </view>
+        <view class="divider-line" wx:if="{{record.deathCategory}}"></view>
+        <view class="info-row" wx:if="{{record.deathCategory}}">
+          <text class="info-label">死亡类别：</text>
+          <text class="info-value">
+            {{record.deathCategory === 'disease' ? '疾病' : 
+              record.deathCategory === 'accident' ? '事故' : 
+              record.deathCategory === 'old_age' ? '衰老' : '其他'}}
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 死亡统计 -->
+    <view class="detail-section">
+      <view class="section-title">死亡统计</view>
+      <view class="death-summary">
+        <view class="death-stat-item danger">
+          <text class="stat-label">死亡数量</text>
+          <text class="stat-value">{{record.deathCount}} 只</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 财务损失 -->
+    <view class="detail-section" wx:if="{{record.formattedTotalLoss}}">
+      <view class="section-title">财务损失</view>
+      <view class="cost-grid">
+        <view class="cost-item">
+          <text class="cost-label">总损失</text>
+          <text class="cost-value danger">¥{{record.formattedTotalLoss}}</text>
+        </view>
+        <view class="cost-item">
+          <text class="cost-label">单只损失</text>
+          <text class="cost-value">¥{{record.formattedCostPerAnimal}}</text>
+        </view>
+        <view class="cost-item" wx:if="{{record.formattedTreatmentCost && record.formattedTreatmentCost !== '0.00'}}">
+          <text class="cost-label">治疗成本</text>
+          <text class="cost-value">¥{{record.formattedTreatmentCost}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 备注说明 -->
+    <view class="detail-section" wx:if="{{record.description}}">
+      <view class="section-title">备注说明</view>
+      <view class="description-card">
+        <text class="description-text">{{record.description}}</text>
+      </view>
+    </view>
+
+    <!-- 修正信息 -->
+    <view class="detail-section" wx:if="{{record.isCorrected}}">
+      <view class="section-title">修正信息</view>
+      <view class="info-card">
+        <view class="info-row">
+          <text class="info-label">修正原因：</text>
+          <text class="info-value">{{record.correctedCause}}</text>
+        </view>
+        <view class="divider-line" wx:if="{{record.correctedBy}}"></view>
+        <view class="info-row" wx:if="{{record.correctedBy}}">
+          <text class="info-label">修正人：</text>
+          <text class="info-value">{{record.correctedBy}}</text>
+        </view>
+        <view class="divider-line" wx:if="{{record.correctedAt}}"></view>
+        <view class="info-row" wx:if="{{record.correctedAt}}">
+          <text class="info-label">修正时间：</text>
+          <text class="info-value">{{record.correctedAt}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

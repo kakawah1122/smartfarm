@@ -1,27 +1,44 @@
 // miniprogram/packageHealth/death-records-list/death-records-list.scss
-// 死亡记录列表页面样式
+// 死亡记录列表页面样式 - 按照项目Flex布局规范
 
-.death-records-page {
-  min-height: 100vh;
-  background: #f5f5f5;
+/* 页面容器 */
+.page-container {
+  height: 100vh;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.page-content {
-  padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
-  padding-bottom: 40rpx;
+/* 内容包装器 */
+.content-wrapper {
+  flex: 1;
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 滚动容器 */
+.list-container {
+  flex: 1;
+  padding: 16rpx 24rpx;
+  box-sizing: border-box;
 }
 
 // ============ 加载状态 ============
 .loading-container {
+  flex: 1;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  min-height: 80vh;
+  justify-content: center;
+  padding: 40rpx 24rpx;
 }
 
 // ============ 统计卡片 ============
 .stats-section {
-  padding: 32rpx;
+  padding: 16rpx 0;
   background: transparent;
   margin-bottom: 8rpx;
 }
@@ -78,41 +95,24 @@
 
 // ============ 空状态 ============
 .empty-container {
+  flex: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  min-height: 60vh;
-}
-
-.empty-tip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12rpx;
-  margin-top: 16rpx;
-}
-
-.tip-title {
-  font-size: 32rpx;
-  color: #333;
-  font-weight: 500;
-}
-
-.tip-subtitle {
-  font-size: 26rpx;
-  color: #999;
-  line-height: 1.6;
+  padding: 40rpx 24rpx;
 }
 
 // ============ 记录列表 ============
 .records-list {
-  padding: 0 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding-bottom: 0; /* 底部间距由safe-area处理 */
 }
 
 .record-card {
   background: #fff;
   border-radius: 16rpx;
-  margin-bottom: 20rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   overflow: hidden;
@@ -121,6 +121,10 @@
     transform: scale(0.98);
     opacity: 0.9;
   }
+}
+
+.record-card:last-child {
+  margin-bottom: 0; /* 最后一个卡片不需要底部间距 */
 }
 
 // 记录头部
@@ -133,6 +137,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
 }
 
 .record-name {
@@ -220,240 +225,9 @@
   }
 }
 
-// ============ 死亡详情弹窗 ============
-.detail-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999998;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.detail-popup {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-height: 75vh;
-  background: #fff;
-  border-radius: 32rpx 32rpx 0 0;
-  z-index: 999999;
-  display: flex;
-  flex-direction: column;
-  transform: translateY(100%);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.12);
-  
-  &.show {
-    transform: translateY(0);
-  }
-  
-  .popup-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 40rpx 32rpx 24rpx;
-    border-bottom: 2rpx solid #f0f0f0;
-    flex-shrink: 0;
-    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-    
-    .popup-title {
-      font-size: 36rpx;
-      font-weight: 600;
-      color: #1a1a1a;
-      letter-spacing: 0.5rpx;
-    }
-    
-    .close-btn {
-      width: 56rpx;
-      height: 56rpx;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f5f5f5;
-      border-radius: 50%;
-      
-      .icon-close {
-        font-size: 56rpx;
-        color: #999;
-        line-height: 1;
-        font-weight: 300;
-      }
-      
-      &:active {
-        background: #e8e8e8;
-      }
-    }
-  }
-  
-  .popup-content {
-    flex: 1;
-    padding: 24rpx 32rpx 40rpx;
-    overflow-y: auto;
-    box-sizing: border-box;
-  }
-}
-
-// 详情区块
-.detail-section {
-  margin-bottom: 20rpx; // 优化：减少区块间距，使弹窗更紧凑
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-  
-  .section-title {
-    font-size: 28rpx;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 12rpx;
-    padding: 12rpx 16rpx;
-    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
-    border-radius: 8rpx;
-    color: #0052d9;
-    word-break: break-all;
-  }
-}
-
-// 信息卡片
-.info-card {
-  background: #fafafa;
-  border-radius: 12rpx;
-  padding: 20rpx; // 优化：减少内边距
-  
-  .info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12rpx 0; // 优化：减少行间距
-    gap: 24rpx;
-    
-    &:not(:last-child) {
-      border-bottom: 1rpx solid #f0f0f0;
-    }
-    
-    .info-label {
-      font-size: 26rpx;
-      color: #666;
-      flex-shrink: 0;
-      min-width: 120rpx;
-    }
-    
-    .info-value {
-      font-size: 28rpx;
-      color: #333;
-      font-weight: 500;
-      text-align: right;
-      flex: 1;
-      word-break: break-all;
-      overflow-wrap: break-word;
-      line-height: 1.5;
-    }
-  }
-}
-
-// 死亡统计
-.death-summary {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16rpx;
-}
-
-.death-stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx; // 优化：减少标签与数值间距
-  padding: 20rpx 16rpx; // 优化：减少内边距
-  background: #fafafa;
-  border-radius: 12rpx;
-  border: 2rpx solid #e8e8e8;
-  
-  &.danger {
-    background: linear-gradient(135deg, #fff5f6 0%, #ffe9eb 100%);
-    border-color: #e34d59;
-    
-    .stat-value {
-      color: #e34d59;
-    }
-  }
-  
-  .stat-label {
-    font-size: 24rpx;
-    color: #666;
-    text-align: center;
-  }
-  
-  .stat-value {
-    font-size: 36rpx;
-    font-weight: 600;
-    color: #333;
-    text-align: center;
-  }
-}
-
-// 成本网格
-.cost-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx; // 优化：减少成本项间距
-}
-
-.cost-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16rpx 20rpx; // 优化：减少内边距
-  background: #fafafa;
-  border-radius: 12rpx;
-  gap: 16rpx;
-  
-  .cost-label {
-    font-size: 26rpx;
-    color: #666;
-    flex-shrink: 0;
-  }
-  
-  .cost-value {
-    font-size: 30rpx;
-    font-weight: 600;
-    color: #333;
-    text-align: right;
-    word-break: break-all;
-    
-    &.danger {
-      color: #e34d59;
-      font-size: 32rpx;
-    }
-  }
-}
-
-// 描述卡片
-.description-card {
-  background: #f8f9fa;
-  border-radius: 12rpx;
-  padding: 20rpx; // 优化：减少内边距
-  border: 1rpx solid #e8e8e8;
-  box-sizing: border-box;
-  
-  .description-text {
-    font-size: 26rpx;
-    color: #333;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
+.safe-area {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 0;
+  flex-shrink: 0;
 }

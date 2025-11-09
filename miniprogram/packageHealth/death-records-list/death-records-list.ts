@@ -44,7 +44,7 @@ Page({
     },
     
     // 详情弹窗
-    showDetailDialog: false,
+    showDetailPopup: false,
     selectedRecord: null as DeathRecord | null
   },
 
@@ -153,7 +153,7 @@ Page({
     if (record) {
       this.setData({
         selectedRecord: record,
-        showDetailDialog: true
+        showDetailPopup: true
       })
     }
   },
@@ -161,17 +161,16 @@ Page({
   /**
    * 关闭详情弹窗
    */
-  closeDetailDialog() {
+  closeDetailPopup() {
     this.setData({
-      showDetailDialog: false
+      showDetailPopup: false
     })
-  },
-
-  /**
-   * 阻止遮罩层滚动穿透
-   */
-  preventTouchMove() {
-    return false
+    // ⚠️ 重要：延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedRecord: null
+      })
+    }, 300)
   },
 
   /**
