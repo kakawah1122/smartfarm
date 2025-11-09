@@ -7,11 +7,18 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const debugEnabled = process.env.DEBUG_LOG === 'true'
+const debugLog = (...args) => {
+  if (debugEnabled) {
+    console.info(...args)
+  }
+}
+
 /**
  * 清理所有孤儿任务（批次已删除但任务记录还在的）
  */
 async function cleanupAllOrphanTasks() {
-  console.log('===== 开始清理孤儿任务 =====')
+  debugLog('===== 开始清理孤儿任务 =====')
   
   try {
     // 1. 获取所有存在的批次ID
@@ -20,11 +27,11 @@ async function cleanupAllOrphanTasks() {
       .get()
     
     const validBatchIds = batchesResult.data.map(b => b._id)
-    console.log('有效批次数量:', validBatchIds.length)
-    console.log('有效批次ID:', validBatchIds)
+    debugLog('有效批次数量:', validBatchIds.length)
+    debugLog('有效批次ID:', validBatchIds)
     
     if (validBatchIds.length === 0) {
-      console.log('警告：没有找到任何批次，跳过清理')
+      debugLog('警告：没有找到任何批次，跳过清理')
       return {
         success: true,
         message: '没有找到任何批次',
@@ -37,17 +44,17 @@ async function cleanupAllOrphanTasks() {
       .field({ _id: true, batchId: true, batchNumber: true, title: true })
       .get()
     
-    console.log('任务总数:', allTasksResult.data.length)
+    debugLog('任务总数:', allTasksResult.data.length)
     
     // 3. 筛选出孤儿任务
     const orphanTasks = allTasksResult.data.filter(task => 
       !validBatchIds.includes(task.batchId)
     )
     
-    console.log('孤儿任务数量:', orphanTasks.length)
+    debugLog('孤儿任务数量:', orphanTasks.length)
     
     if (orphanTasks.length === 0) {
-      console.log('没有孤儿任务需要清理')
+      debugLog('没有孤儿任务需要清理')
       return {
         success: true,
         message: '没有孤儿任务',
@@ -62,9 +69,9 @@ async function cleanupAllOrphanTasks() {
       batchStats[batchNumber] = (batchStats[batchNumber] || 0) + 1
     })
     
-    console.log('孤儿任务按批次统计:')
+    debugLog('孤儿任务按批次统计:')
     Object.entries(batchStats).forEach(([batchNumber, count]) => {
-      console.log(`  ${batchNumber}: ${count} 个任务`)
+      debugLog(`  ${batchNumber}: ${count} 个任务`)
     })
     
     // 4. 批量删除孤儿任务
@@ -80,14 +87,14 @@ async function cleanupAllOrphanTasks() {
       try {
         await Promise.all(deletePromises)
         deletedCount += batch.length
-        console.log(`已删除 ${deletedCount}/${orphanTasks.length} 个孤儿任务`)
+        debugLog(`已删除 ${deletedCount}/${orphanTasks.length} 个孤儿任务`)
       } catch (error) {
         console.error('删除批次任务失败:', error)
       }
     }
     
-    console.log('===== 清理完成 =====')
-    console.log('总删除数量:', deletedCount)
+    debugLog('===== 清理完成 =====')
+    debugLog('总删除数量:', deletedCount)
     
     return {
       success: true,

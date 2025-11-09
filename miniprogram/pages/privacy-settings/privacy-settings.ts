@@ -46,9 +46,6 @@ const pageConfig = {
    */
   openPrivacyContract() {
     wx.openPrivacyContract({
-      success: () => {
-        console.log('打开隐私协议成功')
-      },
       fail: () => {
         wx.showToast({
           title: '打开隐私协议失败',

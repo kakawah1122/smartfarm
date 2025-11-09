@@ -6,6 +6,13 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
+const debugEnabled = process.env.DEBUG_LOG === 'true'
+const debugLog = (...args) => {
+  if (debugEnabled) {
+    console.info(...args)
+  }
+}
+
 // ========== AI模型配置（使用阿里云通义千问系列）==========
 // 官方文档：https://help.aliyun.com/zh/model-studio/getting-started/models
 const MODEL_CONFIGS = {
@@ -1295,7 +1302,7 @@ function validateCount(count, expectedRange) {
 
 // 文本响应解析器（兜底方案）
 function parseFallbackResult(textResponse, expectedRange, modelInfo) {
-  console.log('📝 使用文本解析兜底方案')
+  debugLog('📝 使用文本解析兜底方案')
   
   // 尝试从文本中提取数字
   const numberMatches = textResponse.match(/(\d+)\s*只/g) || 

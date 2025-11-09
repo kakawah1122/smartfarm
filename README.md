@@ -54,19 +54,10 @@
 │   ├── production-entry/   # 生产入栏
 │   ├── user-management/    # 用户管理
 │   └── ai-multi-model/     # AI多模型
-└── docs/                   # 文档目录
-    ├── health/            # 健康管理相关维护文档
-    │   └── 健康页面维护指南.md
-    ├── diagnosis/         # 诊断历史相关维护文档
-    │   └── 诊断历史维护指南.md
-    ├── OPTIMIZATION_SUMMARY.md
-    ├── PERFORMANCE_OPTIMIZATION_GUIDE.md
-    ├── DATABASE_CONFIG_GUIDE.md
-    ├── DATABASE_INDEX_GUIDE.md
-    ├── DEPLOYMENT_CHECKLIST.md
-    ├── UI_DESIGN_GUIDELINES.md
-    ├── 饲养成本管理-快速使用指南.md
-    └── 饲养成本管理-数据库配置.md
+└── docs/                   # 核心维护文档
+    ├── health/健康页面维护指南.md
+    ├── diagnosis/诊断历史维护指南.md
+    └── archive/README.md
 ```
 
 ---
@@ -177,19 +168,10 @@ npm install
 
 ## 📚 文档
 
-### 核心文档
-- [优化总结](./OPTIMIZATION_SUMMARY.md) - 近期优化与成果概览
-- [性能优化指南](./PERFORMANCE_OPTIMIZATION_GUIDE.md) - 性能优化最佳实践
-- [部署检查清单](./DEPLOYMENT_CHECKLIST.md) - 部署与上线流程
-- [数据库配置指南](./DATABASE_CONFIG_GUIDE.md) - 数据库环境与集合设置
-- [数据库索引指南](./DATABASE_INDEX_GUIDE.md) - 索引配置与性能策略
-- [UI 设计规范](./UI_DESIGN_GUIDELINES.md) - 界面设计标准与样式约束
-
-### 业务文档
-- [健康页面维护指南](./docs/health/健康页面维护指南.md)
-- [诊断历史维护指南](./docs/diagnosis/诊断历史维护指南.md)
-- [饲养成本管理 - 快速使用指南](./饲养成本管理-快速使用指南.md)
-- [饲养成本管理 - 数据库配置](./饲养成本管理-数据库配置.md)
+- [项目开发规范](./项目开发规范.md) — 编码规范、提交要求、TDesign 组件使用约束
+- [健康页面维护指南](./docs/health/健康页面维护指南.md) — 健康模块页面和数据维护要点
+- [诊断历史维护指南](./docs/diagnosis/诊断历史维护指南.md) — AI 诊断历史、处理流程说明
+- [历史文档归档索引](./docs/archive/README.md) — 旧版部署、排障、专项优化资料索引
 
 ---
 
@@ -270,9 +252,9 @@ npm run e2e
 ### 开发规范
 1. 使用TypeScript开发
 2. 遵循ESLint规则
-3. **严格遵守 [UI 设计规范](./UI_DESIGN_GUIDELINES.md)**
-   - ❌ 禁止使用粗边框（border-width > 2rpx）
-   - ✅ 使用背景色、阴影、细边框等替代方案
+3. **严格遵守《项目开发规范》中的 UI/TDesign 条款**
+   - ❌ 禁止使用超过 2rpx 的粗边框（参见 TDesign 规范）
+   - ✅ 优先使用留白、阴影、主题变量完成视觉强调
 4. 提交前运行测试
 5. 编写清晰的注释
 

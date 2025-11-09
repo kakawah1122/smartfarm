@@ -11,6 +11,13 @@ const db = cloud.database()
 const _ = db.command
 const dbManager = new DatabaseManager(db)
 
+const debugEnabled = process.env.DEBUG_LOG === 'true'
+const debugLog = (...args) => {
+  if (debugEnabled) {
+    console.info(...args)
+  }
+}
+
 // 生成记录ID
 function generateRecordId(prefix) {
   const now = new Date()
@@ -93,7 +100,7 @@ async function checkPermission(openid, module, action, resourceId = null) {
     
     const user = userResult.data[0]
     const userRole = user.role || 'employee'
-    console.log('[权限验证] 用户角色:', { openid: openid.substring(0, 8) + '...', userRole, module, action })
+    debugLog('[权限验证] 用户角色:', { openid: openid.substring(0, 8) + '...', userRole, module, action })
     
     // 2. 直接从wx_users获取角色（简化权限检查）
     // 超级管理员拥有所有权限
@@ -131,7 +138,7 @@ async function checkPermission(openid, module, action, resourceId = null) {
       
     // 5. 检查操作权限
       if (modulePermission.actions.includes(action) || modulePermission.actions.includes('*')) {
-        console.log('[权限验证] 验证通过', { userRole, module, action })
+        debugLog('[权限验证] 验证通过', { userRole, module, action })
         return true
     }
     
@@ -855,7 +862,7 @@ async function createDeathFromVaccine(event, wxContext) {
     const entryUnitPrice = parseFloat(batch.unitPrice) || 0
     const totalLoss = (entryUnitPrice * deathCount).toFixed(2)
     
-    console.log('[疫苗死亡] 财务计算:', {
+    debugLog('[疫苗死亡] 财务计算:', {
       deathCount: deathCount,
       entryUnitPrice: entryUnitPrice,
       totalLoss: totalLoss,
@@ -874,7 +881,7 @@ async function createDeathFromVaccine(event, wxContext) {
         .limit(1)
         .get()
       
-      console.log('[疫苗死亡] 用户查询结果:', {
+      debugLog('[疫苗死亡] 用户查询结果:', {
         openid: openid.substring(0, 8) + '...',
         found: userInfo.data.length > 0,
         userName: userInfo.data[0]?.name
@@ -929,7 +936,7 @@ async function createDeathFromVaccine(event, wxContext) {
     
     // 6. 调用财务云函数创建损失记录
     try {
-      console.log('[疫苗死亡] 准备创建财务记录:', {
+      debugLog('[疫苗死亡] 准备创建财务记录:', {
         deathRecordId,
         deathCount,
         entryUnitPrice: entryUnitPrice.toFixed(2),
@@ -952,7 +959,7 @@ async function createDeathFromVaccine(event, wxContext) {
         }
       })
       
-      console.log('[疫苗死亡] 财务记录创建结果:', financeResult.result)
+      debugLog('[疫苗死亡] 财务记录创建结果:', financeResult.result)
       
       // ✅ 如果财务记录创建成功，更新死亡记录中的财务记录ID
       if (financeResult.result && financeResult.result.success && financeResult.result.data?.financeRecordId) {
@@ -963,7 +970,7 @@ async function createDeathFromVaccine(event, wxContext) {
               'financialLoss.financeRecordId': financeResult.result.data.financeRecordId
             }
           })
-        console.log('[疫苗死亡] 已更新财务记录ID到死亡记录')
+        debugLog('[疫苗死亡] 已更新财务记录ID到死亡记录')
       }
     } catch (financeError) {
       console.error('[疫苗死亡] 创建财务记录失败:', financeError)
@@ -1439,7 +1446,7 @@ async function correctAbnormalDiagnosis(event, wxContext) {
               updatedAt: new Date()
             }
           })
-        console.log('✅ 已同步更新 AI 诊断记录:', recordResult.data.diagnosisId)
+        debugLog('✅ 已同步更新 AI 诊断记录:', recordResult.data.diagnosisId)
       } catch (diagnosisError) {
         // 如果 AI 诊断记录不存在或更新失败，不影响主流程
         console.warn('⚠️ 更新 AI 诊断记录失败（可能记录不存在）:', diagnosisError.message)
@@ -1559,7 +1566,7 @@ async function createTreatmentRecord(event, wxContext) {
               updatedAt: new Date()
             }
           })
-        console.log('✅ 已同步治疗信息到AI诊断记录:', diagnosisId)
+        debugLog('✅ 已同步治疗信息到AI诊断记录:', diagnosisId)
       } catch (syncError) {
         console.warn('⚠️ 同步治疗信息到AI诊断记录失败:', syncError.message)
         // 不影响主流程
@@ -1694,7 +1701,7 @@ async function updateTreatmentRecord(event, wxContext) {
                 updatedAt: new Date()
               }
             })
-          console.log('✅ 已同步治疗更新到AI诊断记录:', treatmentRecord.data.diagnosisId)
+          debugLog('✅ 已同步治疗更新到AI诊断记录:', treatmentRecord.data.diagnosisId)
         }
       } catch (syncError) {
         console.warn('⚠️ 同步治疗更新到AI诊断记录失败:', syncError.message)
@@ -3621,7 +3628,7 @@ async function createDeathRecord(event, wxContext) {
     const entryUnitPrice = parseFloat(batch.unitPrice) || 0
     const totalLoss = (entryUnitPrice * deathCount).toFixed(2)
     
-    console.log('[标准死亡] 财务计算:', {
+    debugLog('[标准死亡] 财务计算:', {
       deathCount: deathCount,
       entryUnitPrice: entryUnitPrice,
       totalLoss: totalLoss,
@@ -3640,7 +3647,7 @@ async function createDeathRecord(event, wxContext) {
         .limit(1)
         .get()
       
-      console.log('[标准死亡] 用户查询结果:', {
+      debugLog('[标准死亡] 用户查询结果:', {
         openid: openid.substring(0, 8) + '...',
         found: userInfo.data.length > 0,
         userName: userInfo.data[0]?.name
@@ -3694,7 +3701,7 @@ async function createDeathRecord(event, wxContext) {
     
     // 6. 调用财务云函数创建损失记录
     try {
-      console.log('[标准死亡] 准备创建财务记录:', {
+      debugLog('[标准死亡] 准备创建财务记录:', {
         deathRecordId,
         deathCount,
         entryUnitPrice: entryUnitPrice.toFixed(2),
@@ -3717,7 +3724,7 @@ async function createDeathRecord(event, wxContext) {
         }
       })
       
-      console.log('[标准死亡] 财务记录创建结果:', financeResult.result)
+      debugLog('[标准死亡] 财务记录创建结果:', financeResult.result)
       
       // ✅ 如果财务记录创建成功，更新死亡记录中的财务记录ID
       if (financeResult.result && financeResult.result.success && financeResult.result.data?.financeRecordId) {
@@ -3728,7 +3735,7 @@ async function createDeathRecord(event, wxContext) {
               'financialLoss.financeRecordId': financeResult.result.data.financeRecordId
             }
           })
-        console.log('[标准死亡] 已更新财务记录ID到死亡记录')
+        debugLog('[标准死亡] 已更新财务记录ID到死亡记录')
       }
     } catch (financeError) {
       console.error('[标准死亡] 创建财务记录失败:', financeError)
@@ -4376,7 +4383,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
         }
       })
       
-      console.log(`✅ 更新死亡记录: ${deathRecordId}, 新增死亡数: ${actualDiedCount}, 累计死亡数: ${newDeathCount}`)
+      debugLog(`✅ 更新死亡记录: ${deathRecordId}, 新增死亡数: ${actualDiedCount}, 累计死亡数: ${newDeathCount}`)
       
     } else {
       // 不存在，创建新记录
@@ -4415,7 +4422,7 @@ async function completeTreatmentAsDied(treatmentId, diedCount, deathDetails, wxC
       
       deathRecordId = deathResult._id
       
-      console.log(`✅ 创建死亡记录: ${deathRecordId}, 死亡数: ${actualDiedCount}`)
+      debugLog(`✅ 创建死亡记录: ${deathRecordId}, 死亡数: ${actualDiedCount}`)
     }
     
     // 4. 更新治疗记录的 outcome
@@ -5118,7 +5125,7 @@ async function updateTreatmentProgress(event, wxContext) {
         batchDocId = treatment.batchId  // 文档ID就是传入的batchId
       } catch (err) {
         // 如果文档不存在，尝试通过批次号查询
-        console.log('批次ID查询失败，尝试通过批次号查询:', treatment.batchId)
+        debugLog('批次ID查询失败，尝试通过批次号查询:', treatment.batchId)
         try {
           const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
             .where({
@@ -5132,7 +5139,7 @@ async function updateTreatmentProgress(event, wxContext) {
             batch = batchQueryResult.data[0]
             batchNumber = batch.batchNumber
             batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
-            console.log('通过批次号查询成功，批次号:', batchNumber, '文档ID:', batchDocId)
+            debugLog('通过批次号查询成功，批次号:', batchNumber, '文档ID:', batchDocId)
           } else {
             console.warn('未找到批次信息:', treatment.batchId)
             // 批次不存在，使用默认值
@@ -5148,16 +5155,16 @@ async function updateTreatmentProgress(event, wxContext) {
       let unitCost = 0
       let breedingCostPerAnimal = 0
       
-      console.log('========== 批次成本计算开始 ==========')
-      console.log('治疗记录中的 batchId:', treatment.batchId)
-      console.log('查询到的批次文档ID:', batchDocId)
-      console.log('查询到的批次号:', batchNumber)
-      console.log('批次数据:', JSON.stringify(batch))
+      debugLog('========== 批次成本计算开始 ==========')
+      debugLog('治疗记录中的 batchId:', treatment.batchId)
+      debugLog('查询到的批次文档ID:', batchDocId)
+      debugLog('查询到的批次号:', batchNumber)
+      debugLog('批次数据:', JSON.stringify(batch))
       
       if (batch) {
         // ✅ 直接使用入栏单价，不分摊饲养成本
         unitCost = parseFloat(batch.unitPrice) || 0
-        console.log('使用批次入栏单价:', unitCost)
+        debugLog('使用批次入栏单价:', unitCost)
       } else {
         console.error('❌ 批次数据为空')
       }
@@ -5243,7 +5250,7 @@ async function updateTreatmentProgress(event, wxContext) {
           }
         })
         
-        console.log(`✅ 更新死亡记录: ${deathRecordId}, 新增死亡数: ${count}, 累计死亡数: ${newDeathCount}`)
+        debugLog(`✅ 更新死亡记录: ${deathRecordId}, 新增死亡数: ${count}, 累计死亡数: ${newDeathCount}`)
         
       } else {
         // ✅ 不存在，创建新的死亡记录
@@ -5287,7 +5294,7 @@ async function updateTreatmentProgress(event, wxContext) {
         
         deathRecordId = deathResult._id
         
-        console.log(`✅ 创建死亡记录: ${deathRecordId}, 死亡数: ${count}`)
+        debugLog(`✅ 创建死亡记录: ${deathRecordId}, 死亡数: ${count}`)
       }
       
       // ✅ 更新批次的死亡数（容错处理，因为可能 batchId 是批次号而不是文档ID）
@@ -5469,7 +5476,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
       batchDocId = batchId  // 文档ID就是传入的batchId
     } catch (err) {
       // 如果文档不存在，尝试通过批次号查询
-      console.log('批次ID查询失败，尝试通过批次号查询:', batchId)
+      debugLog('批次ID查询失败，尝试通过批次号查询:', batchId)
       const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
         .where({
           batchNumber: batchId,
@@ -5481,7 +5488,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
       if (batchQueryResult.data && batchQueryResult.data.length > 0) {
         batch = batchQueryResult.data[0]
         batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
-        console.log('通过批次号查询成功，批次号:', batch.batchNumber, '文档ID:', batchDocId)
+        debugLog('通过批次号查询成功，批次号:', batch.batchNumber, '文档ID:', batchDocId)
       }
     }
     
@@ -5498,7 +5505,7 @@ async function createDeathRecordWithFinance(event, wxContext) {
     
     const financeLoss = unitCost * deathCount
     
-    console.log('[AI死因剖析] 成本计算:', {
+    debugLog('[AI死因剖析] 成本计算:', {
       deathCount,
       unitCost: unitCost.toFixed(2),
       totalLoss: financeLoss.toFixed(2)
@@ -5663,9 +5670,9 @@ async function getDeathRecordsList(event, wxContext) {
       .limit(100)
       .get()
     
-    console.log('[死亡记录列表] 查询到的记录数:', result.data.length)
+    debugLog('[死亡记录列表] 查询到的记录数:', result.data.length)
     if (result.data.length > 0) {
-      console.log('[死亡记录列表] 第一条记录字段:', Object.keys(result.data[0]))
+      debugLog('[死亡记录列表] 第一条记录字段:', Object.keys(result.data[0]))
     }
     
     // ✅ 关联操作员信息
@@ -5921,7 +5928,7 @@ async function correctDeathDiagnosis(event, wxContext) {
               updatedAt: new Date()
             }
           })
-        console.log('✅ 已同步更新 AI 诊断记录:', record.aiDiagnosisId)
+        debugLog('✅ 已同步更新 AI 诊断记录:', record.aiDiagnosisId)
       } catch (feedbackError) {
         console.warn('⚠️ 更新 AI 诊断记录失败（可能记录不存在）:', feedbackError.message)
         // 不影响主流程
@@ -5957,7 +5964,7 @@ async function getTodayPreventionTasks(event, wxContext) {
     const today = new Date().toISOString().split('T')[0]
     
     // ========== 1. 权限验证 ==========
-    console.log('[首页预防待办] 开始权限验证', logContext)
+    debugLog('[首页预防待办] 开始权限验证', logContext)
     const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
     if (!hasPermission) {
       console.warn('[首页预防待办] 权限不足', logContext)
@@ -5981,7 +5988,7 @@ async function getTodayPreventionTasks(event, wxContext) {
     }
     
     // ========== 3. 查询任务 ==========
-    console.log('[首页预防待办] 开始查询任务', logContext)
+    debugLog('[首页预防待办] 开始查询任务', logContext)
     const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
       .where(whereCondition)
       .field({
@@ -6061,7 +6068,7 @@ async function getTodayPreventionTasks(event, wxContext) {
     
     // ========== 5. 返回结果 ==========
     const totalTime = Date.now() - startTime
-    console.log(`[首页预防待办] 查询成功，总耗时: ${totalTime}ms`, {
+    debugLog(`[首页预防待办] 查询成功，总耗时: ${totalTime}ms`, {
       ...logContext,
       tasksCount: tasks.length
     })
@@ -6120,7 +6127,7 @@ async function getPreventionTimeline(event, wxContext) {
     }
     
     // ========== 2. 权限验证 ==========
-    console.log('[时间线] 开始权限验证', logContext)
+    debugLog('[时间线] 开始权限验证', logContext)
     const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
     if (!hasPermission) {
       console.warn('[时间线] 权限不足', logContext)
@@ -6245,7 +6252,7 @@ async function getPreventionTimeline(event, wxContext) {
     
     // ========== 8. 返回数据 ==========
     const totalTime = Date.now() - startTime
-    console.log(`[时间线] 操作成功，总耗时: ${totalTime}ms`, {
+    debugLog(`[时间线] 操作成功，总耗时: ${totalTime}ms`, {
       ...logContext,
       batchId,
       timelineCount: timeline.length,
@@ -6308,7 +6315,7 @@ async function getBatchPreventionComparison(event, wxContext) {
     const openid = wxContext.OPENID
     
     // ========== 1. 权限验证 ==========
-    console.log('[批次对比] 开始权限验证', logContext)
+    debugLog('[批次对比] 开始权限验证', logContext)
     const hasPermission = await checkPermission(openid, 'health', 'view', null)
     if (!hasPermission) {
       console.warn('[批次对比] 权限不足', logContext)
@@ -6426,7 +6433,7 @@ async function getBatchPreventionComparison(event, wxContext) {
     
     // ========== 5. 返回数据 ==========
     const totalTime = Date.now() - startTime
-    console.log(`[批次对比] 操作成功，总耗时: ${totalTime}ms`, {
+    debugLog(`[批次对比] 操作成功，总耗时: ${totalTime}ms`, {
       ...logContext,
       batchCount: batches.length
     })
@@ -6475,12 +6482,12 @@ async function getPreventionDashboard(event, wxContext) {
     const openid = wxContext.OPENID
     
     // ========== 1. 权限验证 ==========
-    console.log('[预防管理] 开始权限验证', logContext)
-    console.log('[预防管理] 批次ID:', batchId, '类型:', typeof batchId)
-    console.log('[预防管理] OpenID:', openid ? openid.substring(0, 8) + '...' : 'null')
+    debugLog('[预防管理] 开始权限验证', logContext)
+    debugLog('[预防管理] 批次ID:', batchId, '类型:', typeof batchId)
+    debugLog('[预防管理] OpenID:', openid ? openid.substring(0, 8) + '...' : 'null')
     
     const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
-    console.log('[预防管理] 权限验证结果:', hasPermission)
+    debugLog('[预防管理] 权限验证结果:', hasPermission)
     
     if (!hasPermission) {
       console.warn('[预防管理] 权限不足', logContext)
@@ -6490,7 +6497,7 @@ async function getPreventionDashboard(event, wxContext) {
         message: '您没有查看预防管理数据的权限'
       }
     }
-    console.log('[预防管理] 权限验证通过')
+    debugLog('[预防管理] 权限验证通过')
     
     const today = new Date().toISOString().split('T')[0]
     const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -6800,7 +6807,7 @@ async function getPreventionDashboard(event, wxContext) {
     
     // ========== 12. 返回数据 ==========
     const totalTime = Date.now() - startTime
-    console.log(`[预防管理] 操作成功，总耗时: ${totalTime}ms`, {
+    debugLog(`[预防管理] 操作成功，总耗时: ${totalTime}ms`, {
       ...logContext,
       todayTasksCount: todayTasks.length,
       upcomingTasksCount: upcomingTasksList.length,
@@ -6888,7 +6895,7 @@ async function completePreventionTask(event, wxContext) {
     }
     
     // ========== 2. 权限验证 ==========
-    console.log('[预防任务] 开始权限验证', { ...logContext, taskId, batchId })
+    debugLog('[预防任务] 开始权限验证', { ...logContext, taskId, batchId })
     const hasPermission = await checkPermission(openid, 'health', 'create', batchId)
     if (!hasPermission) {
       console.warn('[预防任务] 权限不足', logContext)
@@ -6900,7 +6907,7 @@ async function completePreventionTask(event, wxContext) {
     }
     
     // ========== 3. 验证任务存在且未完成 ==========
-    console.log('[预防任务] 验证任务状态', { ...logContext, taskId })
+    debugLog('[预防任务] 验证任务状态', { ...logContext, taskId })
     const taskResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
       .doc(taskId)
       .field({
@@ -6951,7 +6958,7 @@ async function completePreventionTask(event, wxContext) {
     }
     
     // ========== 5. 创建预防记录 ==========
-    console.log('[预防任务] 创建预防记录', { ...logContext, taskId, batchId })
+    debugLog('[预防任务] 创建预防记录', { ...logContext, taskId, batchId })
     const recordData = {
       ...preventionData,
       taskId,
@@ -6981,10 +6988,10 @@ async function completePreventionTask(event, wxContext) {
       }
     }
     
-    console.log('[预防任务] 预防记录创建成功', { ...logContext, recordId: recordResult._id })
+    debugLog('[预防任务] 预防记录创建成功', { ...logContext, recordId: recordResult._id })
     
     // ========== 6. 标记任务完成 ==========
-    console.log('[预防任务] 更新任务状态', { ...logContext, taskId })
+    debugLog('[预防任务] 更新任务状态', { ...logContext, taskId })
     await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
       .doc(taskId)
       .update({
@@ -7000,7 +7007,7 @@ async function completePreventionTask(event, wxContext) {
     // ========== 7. 创建财务成本记录（如果有成本） ==========
     let costRecordId = null
     if (preventionData.costInfo && preventionData.costInfo.totalCost > 0) {
-      console.log('[预防任务] 创建成本记录', { 
+      debugLog('[预防任务] 创建成本记录', { 
         ...logContext, 
         amount: preventionData.costInfo.totalCost 
       })
@@ -7024,7 +7031,7 @@ async function completePreventionTask(event, wxContext) {
           })
         
         costRecordId = costResult._id
-        console.log('[预防任务] 成本记录创建成功', { ...logContext, costRecordId })
+        debugLog('[预防任务] 成本记录创建成功', { ...logContext, costRecordId })
       } catch (costError) {
         // 成本记录创建失败不影响主流程
         console.error('[预防任务] 创建成本记录失败', { 
@@ -7060,7 +7067,7 @@ async function completePreventionTask(event, wxContext) {
     
     // ========== 9. 返回成功结果 ==========
     const totalTime = Date.now() - startTime
-    console.log('[预防任务] 任务完成成功', {
+    debugLog('[预防任务] 任务完成成功', {
       ...logContext,
       recordId: recordResult._id,
       costRecordId,

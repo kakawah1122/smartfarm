@@ -33,15 +33,11 @@ const pageConfig = {
     }
     
     const pages = getCurrentPages()
-    console.log('当前页面栈长度:', pages.length)
     
     if (pages.length > 1) {
       // 有上一页，正常返回
       wx.navigateBack({
         delta: 1,
-        success: () => {
-          console.log('返回成功')
-        },
         fail: (err) => {
           console.error('返回失败:', err)
           // 返回失败，跳转到财务管理页面
@@ -58,7 +54,6 @@ const pageConfig = {
       })
     } else {
       // 没有上一页，直接跳转到财务管理页面
-      console.log('没有上一页，跳转到财务管理页面')
       wx.redirectTo({
         url: '/packageFinance/finance/finance',
         fail: () => {

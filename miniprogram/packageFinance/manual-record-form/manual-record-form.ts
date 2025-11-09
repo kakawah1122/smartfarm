@@ -116,7 +116,6 @@ const pageConfig = {
   // 记账类型变化
   onRecordTypeChange(e: any) {
     const recordType = e.detail.value as 'expense' | 'income'
-    console.log('记账类型变化:', recordType)
     this.setData({ recordType })
     this.updateTypeOptions()
   },

@@ -1213,7 +1213,6 @@ const pageConfig = {
 
   // 加载AI分析所需的模块数据（在页面级加载，避免组件内重复调用云函数）
   async loadModuleDataForAI() {
-    console.log('开始加载AI分析所需的模块数据...')
     
     try {
       // 并行加载生产、健康数据（性能最优）
@@ -1225,7 +1224,6 @@ const pageConfig = {
           timeout: 5000
         }).then(res => {
           if (res.result && res.result.success) {
-            console.log('生产数据加载成功')
             return res.result.data
           }
           return null
@@ -1241,7 +1239,6 @@ const pageConfig = {
           .limit(3)
           .get()
           .then(res => {
-            console.log('健康数据加载成功')
             return {
               recentDeaths: res.data || [],
               totalDeaths: (res.data || []).reduce((sum: number, r: any) => sum + (r.deathCount || 0), 0)
@@ -1271,8 +1268,8 @@ const pageConfig = {
         goosePriceData
       })
       
-      console.log('模块数据加载完成:', {
-        production: !!productionData,
+      return {
+        production: productionData,
         health: !!healthData,
         goosePrice: !!goosePriceData
       })
@@ -1283,8 +1280,7 @@ const pageConfig = {
 
   // AI分析完成事件
   onAnalysisComplete(e: any) {
-    console.log('AI财务分析完成:', e.detail.result)
-    // 可以在这里处理分析结果，比如保存到本地等
+    // AI财务分析完成，可以在这里处理分析结果
   },
 
   // AI分析错误事件

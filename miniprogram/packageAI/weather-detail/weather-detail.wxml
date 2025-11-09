@@ -238,7 +238,6 @@
     <t-button 
       theme="primary" 
       size="large" 
-      icon="refresh" 
       loading="{{refreshing}}"
       bind:tap="onRefreshWeather"
       class="refresh-button"

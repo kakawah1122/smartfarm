@@ -11,6 +11,13 @@ const db = cloud.database()
 const _ = db.command
 const dbManager = new DatabaseManager(db)
 
+const debugEnabled = process.env.DEBUG_LOG === 'true'
+const debugLog = (...args) => {
+  if (debugEnabled) {
+    console.info(...args)
+  }
+}
+
 
 // 生成任务记录ID
 function generateTaskRecordId() {
@@ -97,7 +104,7 @@ async function createPreventionRecordFromTask(task, taskId, batchId, openid, not
       data: preventionData
     })
     
-    console.log('[自动创建预防记录成功]', { 
+    debugLog('[自动创建预防记录成功]', { 
       preventionType, 
       taskId, 
       batchId,
@@ -826,7 +833,7 @@ async function cleanOrphanTasks(userId) {
  * 适用于清理历史遗留的孤儿任务数据
  */
 async function cleanAllOrphanTasksForce() {
-  console.log('===== 开始强制清理所有孤儿任务 =====')
+  debugLog('===== 开始强制清理所有孤儿任务 =====')
   
   try {
     // 1. 获取所有存在的批次ID（包括已归档但未删除的）
@@ -835,11 +842,11 @@ async function cleanAllOrphanTasksForce() {
       .get()
     
     const validBatchIds = batchesResult.data.map(b => b._id)
-    console.log(`有效批次数量: ${validBatchIds.length}`)
-    console.log('有效批次:', batchesResult.data.map(b => `${b.batchNumber}${b.isArchived ? '(已归档)' : ''}`).join(', '))
+    debugLog(`有效批次数量: ${validBatchIds.length}`)
+    debugLog('有效批次:', batchesResult.data.map(b => `${b.batchNumber}${b.isArchived ? '(已归档)' : ''}`).join(', '))
     
     if (validBatchIds.length === 0) {
-      console.log('警告：没有找到任何批次')
+      debugLog('警告：没有找到任何批次')
       return {
         success: true,
         message: '没有找到任何批次',
@@ -864,20 +871,20 @@ async function cleanAllOrphanTasksForce() {
       hasMore = tasksResult.data.length === pageSize
       skip += pageSize
       
-      console.log(`已查询 ${allTasks.length} 个任务...`)
+      debugLog(`已查询 ${allTasks.length} 个任务...`)
     }
     
-    console.log(`任务总数: ${allTasks.length}`)
+    debugLog(`任务总数: ${allTasks.length}`)
     
     // 3. 筛选出孤儿任务
     const orphanTasks = allTasks.filter(task => 
       !validBatchIds.includes(task.batchId)
     )
     
-    console.log(`孤儿任务数量: ${orphanTasks.length}`)
+    debugLog(`孤儿任务数量: ${orphanTasks.length}`)
     
     if (orphanTasks.length === 0) {
-      console.log('没有孤儿任务需要清理')
+      debugLog('没有孤儿任务需要清理')
       return {
         success: true,
         message: '没有孤儿任务',
@@ -892,9 +899,9 @@ async function cleanAllOrphanTasksForce() {
       batchStats[batchNumber] = (batchStats[batchNumber] || 0) + 1
     })
     
-    console.log('孤儿任务按批次统计:')
+    debugLog('孤儿任务按批次统计:')
     Object.entries(batchStats).forEach(([batchNumber, count]) => {
-      console.log(`  ${batchNumber}: ${count} 个任务`)
+      debugLog(`  ${batchNumber}: ${count} 个任务`)
     })
     
     // 4. 批量删除孤儿任务
@@ -910,14 +917,14 @@ async function cleanAllOrphanTasksForce() {
       try {
         await Promise.all(deletePromises)
         deletedCount += batch.length
-        console.log(`已删除 ${deletedCount}/${orphanTasks.length} 个孤儿任务`)
+        debugLog(`已删除 ${deletedCount}/${orphanTasks.length} 个孤儿任务`)
       } catch (error) {
         console.error('删除批次任务失败:', error)
       }
     }
     
-    console.log('===== 清理完成 =====')
-    console.log(`总删除数量: ${deletedCount}`)
+    debugLog('===== 清理完成 =====')
+    debugLog(`总删除数量: ${deletedCount}`)
     
     return {
       success: true,

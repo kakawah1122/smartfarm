@@ -1,5 +1,6 @@
 // production.ts
 import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
 
 const pageConfig = {
   data: {
@@ -129,16 +130,19 @@ const pageConfig = {
     try {
       this.setData({ loading: true })
       
-      const result = await wx.cloud.callFunction({
-        name: 'production-dashboard',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-dashboard',
+        {
           action: 'overview'
           // 暂时移除日期过滤，获取所有数据的统计
+        },
+        {
+          showError: false
         }
-      })
+      )
       
-      if (result.result && result.result.success) {
-        const data = result.result.data
+      if (result.success && result.data) {
+        const data = result.data
         
         // 使用新的详细物料状态信息
         const newMaterialStats = {
@@ -245,17 +249,20 @@ const pageConfig = {
   // 加载入栏数据
   async loadEntryData() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'production-entry',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-entry',
+        {
           action: 'list',
           page: 1,
           pageSize: 10
+        },
+        {
+          showError: false
         }
-      })
+      )
       
-      if (result.result && result.result.success) {
-        const records = result.result.data.records || []
+      if (result.success && result.data) {
+        const records = result.data.records || []
         
         // 获取当前用户信息
         const app = getApp()
@@ -282,6 +289,8 @@ const pageConfig = {
           entryRecords: formattedRecords,
           isEmpty: formattedRecords.length === 0
         })
+      } else {
+        this.setData({ entryRecords: [], isEmpty: true })
       }
     } catch (error) {
       this.setData({ entryRecords: [], isEmpty: true })
@@ -291,17 +300,20 @@ const pageConfig = {
   // 加载出栏数据
   async loadExitData() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'production-exit',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-exit',
+        {
           action: 'list',
           page: 1,
           pageSize: 10
+        },
+        {
+          showError: false
         }
-      })
+      )
       
-      if (result.result && result.result.success) {
-        const records = result.result.data.records || []
+      if (result.success && result.data) {
+        const records = result.data.records || []
         
         // 获取当前用户信息
         const app = getApp()
@@ -329,6 +341,8 @@ const pageConfig = {
         this.setData({
           exitRecords: formattedRecords
         })
+      } else {
+        this.setData({ exitRecords: [] })
       }
     } catch (error) {
       this.setData({ exitRecords: [] })
@@ -338,18 +352,21 @@ const pageConfig = {
   // 加载物料数据
   async loadMaterialData() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'production-material',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'production-material',
+        {
           action: 'list_records',
           page: 1,
           pageSize: 10,
           includeFeedRecords: true // 包含饲料投喂记录
+        },
+        {
+          showError: false
         }
-      })
+      )
       
-      if (result.result && result.result.success) {
-        const records = result.result.data.records || []
+      if (result.success && result.data) {
+        const records = result.data.records || []
         
         // 获取当前用户信息
         const app = getApp()
@@ -670,7 +687,6 @@ const pageConfig = {
             compressedWidth: Math.min(info.width, 1920), // 最大宽度1920px
             compressedHeight: Math.min(info.height, 1080), // 最大高度1080px
             success: (res) => {
-              console.log('图片压缩成功，原尺寸:', info.width, 'x', info.height)
               resolve(res.tempFilePath)
             },
             fail: (error) => {
@@ -737,9 +753,9 @@ const pageConfig = {
       }
       
       // 调用AI图像识别云函数（传递云存储文件ID）
-      const result = await wx.cloud.callFunction({
-        name: 'ai-multi-model',
-        data: {
+      const result = await CloudApi.callFunction<any>(
+        'ai-multi-model',
+        {
           action: 'image_recognition',
           images: [uploadResult.fileID],
           location: '1号鹅舍',
@@ -748,11 +764,14 @@ const pageConfig = {
             min: 50,
             max: 1000
           }
+        },
+        {
+          showError: false
         }
-      })
+      )
       
-      if (result.result.success) {
-        const recognitionData = result.result.data
+      if (result.success && result.data) {
+        const recognitionData = result.data
         
         // 处理识别结果（多特征融合）
         const processedResult = {
@@ -825,14 +844,14 @@ const pageConfig = {
         
         this.setData({
           'aiCount.loading': false,
-          'aiCount.error': result.result.error || '识别失败',
+          'aiCount.error': result.error || '识别失败',
           'aiCount.result': null
         })
         
         // 显示详细错误信息
         wx.showModal({
           title: '识别失败',
-          content: result.result.errorDetail || result.result.error || '未知错误',
+          content: result.errorDetail || result.error || '未知错误',
           showCancel: true,
           confirmText: '重试',
           cancelText: '取消',
@@ -888,9 +907,9 @@ const pageConfig = {
           
           // 保存学习案例（使用AI分析的场景特征）
           try {
-            const result = await wx.cloud.callFunction({
-              name: 'ai-learning-cases',
-              data: {
+            const result = await CloudApi.callFunction<any>(
+              'ai-learning-cases',
+              {
                 action: 'save_case',
                 imageFileID: imageFileID,
                 aiCount: recognitionResult.totalCount,
@@ -902,10 +921,13 @@ const pageConfig = {
                   imageQuality: 'unknown'
                 },
                 operator: wx.getStorageSync('userInfo')?.nickName || wx.getStorageSync('userInfo')?.nickname || '养殖户'
+              },
+              {
+                showError: false
               }
-            })
+            )
             
-            if (result.result.success) {
+            if (result.success) {
               wx.showToast({
                 title: '标记成功，AI将学习此案例',
                 icon: 'success',
@@ -933,7 +955,7 @@ const pageConfig = {
                 })
               }
             } else {
-              throw new Error(result.result.error)
+              throw new Error(result.error || '保存失败')
             }
           } catch (error: any) {
             wx.showToast({
