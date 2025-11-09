@@ -55,6 +55,9 @@ const COLLECTIONS = {
   SYS_PERMISSIONS: 'sys_permissions',
   SYS_ROLES: 'sys_roles',
   SYS_STORAGE_STATISTICS: 'sys_storage_statistics',
+  
+  // 知识库模块 (Knowledge Management)
+  KNOWLEDGE_ARTICLES: 'knowledge_articles',
 
   // 文件管理模块 (File Management)
   FILE_DYNAMIC_RECORDS: 'file_dynamic_records',
@@ -117,6 +120,10 @@ const COLLECTION_MODULES = {
     COLLECTIONS.SYS_PERMISSIONS,
     COLLECTIONS.SYS_ROLES,
     COLLECTIONS.SYS_STORAGE_STATISTICS
+  ],
+  
+  KNOWLEDGE_MANAGEMENT: [
+    COLLECTIONS.KNOWLEDGE_ARTICLES
   ],
   
   FILE_MANAGEMENT: [

@@ -33,7 +33,7 @@
     <scroll-view class="list-container" scroll-y>
       <view class="articles-list">
         <!-- 热门推荐 -->
-        <view wx:if="{{activeCategory === 'all'}}" class="card hot-card">
+        <view wx:if="{{activeCategory === 'all' && hotArticle}}" class="card hot-card">
           <view class="card-header">
             <text class="card-title">本周热门</text>
           </view>

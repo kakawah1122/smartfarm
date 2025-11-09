@@ -1,11 +1,27 @@
+/**
+ * 鹅价详情页
+ * 
+ * v2.0 更新：
+ * - 成鹅价格：显示120日龄、130日龄（meatBreeds）
+ * - 鹅苗价格：显示中种鹅、大种鹅、特大种鹅（goslingBreeds）
+ * - 趋势图：从数据库加载真实历史数据（最近30天）
+ */
 Page({
   data: {
     priceUpdateTime: '--:--',
-    priceBreeds: [] as Array<{ key: string; label: string }>,
-    priceData: {} as Record<string, any>,
-    currentBreed: 'extraLarge',
-    currentBreedLabel: '特大种',
+    
+    // 成鹅品种（日龄）
+    meatBreeds: [] as Array<{ key: string; label: string }>,
+    meatData: {} as Record<string, any>,
+    
+    // 鹅苗品种
+    goslingBreeds: [] as Array<{ key: string; label: string }>,
+    goslingData: {} as Record<string, any>,
+    
+    currentBreed: 'meat130',
+    currentBreedLabel: '130日龄',
     activeTab: 'adult',
+    
     currentPriceDisplay: {
       price: '--',
       trend: 0,
@@ -30,169 +46,167 @@ Page({
   },
 
   onLoad(options: Record<string, any>) {
-    const defaultBreed = options?.breed || 'extraLarge'
     const defaultTab = options?.tab || 'adult'
-    this.initializePriceDetail(defaultBreed, defaultTab)
+    const defaultBreed = defaultTab === 'adult' ? 'meat130' : 'extraLarge'
+    this.loadPriceDataFromDB(defaultBreed, defaultTab)
   },
 
-  initializePriceDetail(defaultBreed: string, defaultTab: string) {
-    const snapshot = this.getCachedPriceSnapshot()
-
-    if (snapshot) {
-      this.setData(
-        {
-          priceUpdateTime: snapshot.updateTime || '--:--',
-          priceBreeds: snapshot.breeds || [],
-          priceData: snapshot.data || {}
-        },
-        () => {
-          const availableBreed = snapshot.data?.[defaultBreed]
-            ? defaultBreed
-            : (snapshot.breeds?.[0]?.key || 'extraLarge')
-          this.updateCurrentDisplay(availableBreed, defaultTab as 'adult' | 'gosling')
-        }
-      )
-      return
-    }
-
-    const mock = this.createMockPriceDataset()
-    this.setData(
-      {
-        priceUpdateTime: '--:--',
-        priceBreeds: mock.breeds,
-        priceData: mock.data
-      },
-      () => {
-        this.updateCurrentDisplay(defaultBreed || 'extraLarge', defaultTab as 'adult' | 'gosling')
-      }
-    )
-  },
-
-  getCachedPriceSnapshot() {
+  // 从数据库加载鹅价数据
+  async loadPriceDataFromDB(defaultBreed: string, defaultTab: string) {
     try {
-      const snapshot = wx.getStorageSync('goose_price_snapshot')
-      if (snapshot && snapshot.data) {
-        return snapshot
+      const db = wx.cloud.database()
+      
+      // 查询最近30天的历史数据
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const dateStr = thirtyDaysAgo.toISOString().split('T')[0]
+      
+      const result = await db.collection('goose_prices')
+        .where({
+          date: db.command.gte(dateStr)
+        })
+        .orderBy('date', 'asc')  // 升序，方便计算趋势
+        .limit(30)
+        .get()
+
+      if (result.data && result.data.length > 0) {
+        this.processHistoricalData(result.data, defaultBreed, defaultTab)
+      } else {
+        // 没有数据，显示空状态
+        this.setEmptyState()
       }
-      return null
     } catch (error) {
-      return null
+      console.error('加载鹅价数据失败:', error)
+      this.setEmptyState()
     }
   },
 
-  onBreedChange(event: WechatMiniprogram.TouchEvent) {
-    const breedKey = event.currentTarget.dataset.key as string
-    if (!breedKey || breedKey === this.data.currentBreed) {
-      return
-    }
-    this.updateCurrentDisplay(breedKey, this.data.activeTab as 'adult' | 'gosling')
-  },
-
-  onBreedCardTap(event: WechatMiniprogram.TouchEvent) {
-    const breedKey = event.currentTarget.dataset.key as string
-    if (!breedKey) {
-      return
-    }
-    this.updateCurrentDisplay(breedKey, this.data.activeTab as 'adult' | 'gosling')
-  },
-
-  onTabChange(event: any) {
-    const tabValue = event.detail?.value || 'adult'
-    this.updateCurrentDisplay(this.data.currentBreed, tabValue as 'adult' | 'gosling')
-  },
-
-  updateCurrentDisplay(breedKey: string, tabKey: 'adult' | 'gosling') {
-    const breedData = this.data.priceData?.[breedKey]
-    if (!breedData) {
-      return
+  // 处理历史数据
+  processHistoricalData(records: any[], defaultBreed: string, defaultTab: string) {
+    // 1. 构建肉鹅数据（成鹅价格）
+    const meatBreedsMap: Record<string, any> = {}
+    const meatKeys = ['meat120', 'meat130']
+    const meatLabels: Record<string, string> = {
+      'meat120': '120日龄',
+      'meat130': '130日龄'
     }
 
-    const tabData = breedData[tabKey] || {}
-    const history = breedData.history?.[tabKey] || []
-    const unit = tabKey === 'adult' ? '/斤' : '/羽'
-    const scheme = this.data.chartPresets?.[tabKey] || this.data.chartScheme
+    meatKeys.forEach(key => {
+      const history: Array<{ date: string; value: number }> = []
+      
+      records.forEach(record => {
+        const breed = record.meatBreeds?.find((b: any) => b.key === key)
+        if (breed && breed.price) {
+          history.push({
+            date: this.formatDate(record.date),
+            value: breed.price
+          })
+        }
+      })
 
-    this.setData({
-      currentBreed: breedKey,
-      currentBreedLabel: breedData.label || '特大种',
-      activeTab: tabKey,
-      currentPriceDisplay: {
-        price: tabData.price || '--',
-        trend: tabData.trend ?? 0,
-        change: tabData.change || '+0.0'
-      },
-      currentHistory: history,
-      currentUnit: unit,
-      chartScheme: scheme
-    })
-  },
-
-  createMockPriceDataset() {
-    const breedConfigs: Array<{ key: string; label: string; baseAdult: number; baseGosling: number }> = [
-      { key: 'normal', label: '普通种', baseAdult: 12.0, baseGosling: 5.6 },
-      { key: 'large', label: '大种', baseAdult: 13.2, baseGosling: 5.9 },
-      { key: 'extraLarge', label: '特大种', baseAdult: 14.1, baseGosling: 6.2 },
-      { key: 'baisha', label: '白沙鹅', baseAdult: 13.5, baseGosling: 6.0 }
-    ]
-
-    const data: Record<string, any> = {}
-
-    breedConfigs.forEach((config) => {
-      const adultHistory = this.generatePriceHistory(config.baseAdult, 7, 0.8)
-      const goslingHistory = this.generatePriceHistory(config.baseGosling, 7, 0.5)
-      const adultTrendInfo = this.calculateTrend(adultHistory)
-      const goslingTrendInfo = this.calculateTrend(goslingHistory)
-
-      const latestAdult = adultHistory[adultHistory.length - 1]?.value || config.baseAdult
-      const latestGosling = goslingHistory[goslingHistory.length - 1]?.value || config.baseGosling
-
-      data[config.key] = {
-        label: config.label,
-        adult: {
-          price: latestAdult.toFixed(1),
-          trend: adultTrendInfo.trend,
-          change: adultTrendInfo.change
-        },
-        gosling: {
-          price: latestGosling.toFixed(1),
-          trend: goslingTrendInfo.trend,
-          change: goslingTrendInfo.change
-        },
-        history: {
-          adult: adultHistory,
-          gosling: goslingHistory
+      if (history.length > 0) {
+        const latest = history[history.length - 1]
+        const trendInfo = this.calculateTrendFromHistory(history)
+        
+        meatBreedsMap[key] = {
+          label: meatLabels[key],
+          price: latest.value.toFixed(1),
+          trend: trendInfo.trend,
+          change: trendInfo.change,
+          history
         }
       }
     })
 
-    return {
-      breeds: breedConfigs.map(({ key, label }) => ({ key, label })),
-      data
+    // 2. 构建鹅苗数据
+    const goslingBreedsMap: Record<string, any> = {}
+    const goslingKeys = ['middle', 'large', 'extraLarge']
+    const goslingLabels: Record<string, string> = {
+      'middle': '中种鹅',
+      'large': '大种鹅',
+      'extraLarge': '特大种鹅'
     }
-  },
 
-  generatePriceHistory(base: number, days: number, volatility: number) {
-    const history: Array<{ date: string; value: number }> = []
-    const today = new Date()
-    let previousValue = base
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(today.getDate() - i)
-      const fluctuation = (Math.random() * volatility * 2) - volatility
-      const nextValue = Math.max(0, parseFloat((previousValue + fluctuation).toFixed(1)))
-      previousValue = nextValue
-
-      history.push({
-        date: `${date.getMonth() + 1}-${date.getDate().toString().padStart(2, '0')}`,
-        value: nextValue
+    goslingKeys.forEach(key => {
+      const history: Array<{ date: string; value: number }> = []
+      
+      records.forEach(record => {
+        const breed = record.goslingBreeds?.find((b: any) => b.key === key)
+        if (breed && breed.price) {
+          history.push({
+            date: this.formatDate(record.date),
+            value: breed.price
+          })
+        }
       })
-    }
 
-    return history
+      if (history.length > 0) {
+        const latest = history[history.length - 1]
+        const trendInfo = this.calculateTrendFromHistory(history)
+        
+        goslingBreedsMap[key] = {
+          label: goslingLabels[key],
+          price: latest.value.toFixed(1),
+          trend: trendInfo.trend,
+          change: trendInfo.change,
+          history
+        }
+      }
+    })
+
+    // 3. 构建品种列表
+    const meatBreeds = meatKeys
+      .filter(key => meatBreedsMap[key])
+      .map(key => ({ key, label: meatLabels[key] }))
+    
+    const goslingBreeds = goslingKeys
+      .filter(key => goslingBreedsMap[key])
+      .map(key => ({ key, label: goslingLabels[key] }))
+
+    // 4. 获取最新更新时间
+    const latestRecord = records[records.length - 1]
+    const updateTime = latestRecord ? this.formatDate(latestRecord.date) : '--:--'
+
+    // 5. 更新页面数据
+    this.setData({
+      meatBreeds,
+      meatData: meatBreedsMap,
+      goslingBreeds,
+      goslingData: goslingBreedsMap,
+      priceUpdateTime: updateTime
+    }, () => {
+      // 默认选择第一个可用品种
+      let initialBreed = defaultBreed
+      if (defaultTab === 'adult' && !meatBreedsMap[defaultBreed] && meatBreeds.length > 0) {
+        initialBreed = meatBreeds[0].key
+      } else if (defaultTab === 'gosling' && !goslingBreedsMap[defaultBreed] && goslingBreeds.length > 0) {
+        initialBreed = goslingBreeds[0].key
+      }
+      
+      this.updateCurrentDisplay(initialBreed, defaultTab as 'adult' | 'gosling')
+    })
   },
 
-  calculateTrend(history: Array<{ value: number }>) {
+  // 设置空状态
+  setEmptyState() {
+    this.setData({
+      meatBreeds: [],
+      meatData: {},
+      goslingBreeds: [],
+      goslingData: {},
+      priceUpdateTime: '--:--',
+      currentHistory: []
+    })
+  },
+
+  // 格式化日期
+  formatDate(dateStr: string) {
+    const date = new Date(dateStr)
+    return `${date.getMonth() + 1}-${date.getDate().toString().padStart(2, '0')}`
+  },
+
+  // 从历史数据计算趋势
+  calculateTrendFromHistory(history: Array<{ value: number }>) {
     if (!history || history.length < 2) {
       return { trend: 0, change: '+0.0' }
     }
@@ -209,6 +223,63 @@ Page({
     const sign = diff > 0 ? '+' : diff < 0 ? '-' : '+'
     const change = `${sign}${Math.abs(diff).toFixed(1)}`
     return { trend, change }
-  }
+  },
+
+  onBreedCardTap(event: WechatMiniprogram.TouchEvent) {
+    const breedKey = event.currentTarget.dataset.key as string
+    if (!breedKey) {
+      return
+    }
+    this.updateCurrentDisplay(breedKey, this.data.activeTab as 'adult' | 'gosling')
+  },
+
+  onTabChange(event: any) {
+    const tabValue = event.detail?.value || 'adult'
+    
+    // 切换 tab 时，选择该 tab 的第一个品种
+    let newBreed = this.data.currentBreed
+    if (tabValue === 'adult') {
+      const meatBreeds = this.data.meatBreeds
+      if (meatBreeds.length > 0) {
+        newBreed = meatBreeds[0].key
+      }
+    } else {
+      const goslingBreeds = this.data.goslingBreeds
+      if (goslingBreeds.length > 0) {
+        newBreed = goslingBreeds[0].key
+      }
+    }
+    
+    this.updateCurrentDisplay(newBreed, tabValue as 'adult' | 'gosling')
+  },
+
+  updateCurrentDisplay(breedKey: string, tabKey: 'adult' | 'gosling') {
+    // 根据 tab 选择对应的数据源
+    const dataSource = tabKey === 'adult' ? this.data.meatData : this.data.goslingData
+    const breedData = dataSource?.[breedKey]
+    
+    if (!breedData) {
+      console.warn('未找到品种数据:', breedKey, tabKey)
+      return
+    }
+
+    const unit = tabKey === 'adult' ? '/斤' : '/只'
+    const scheme = this.data.chartPresets?.[tabKey] || this.data.chartScheme
+
+    this.setData({
+      currentBreed: breedKey,
+      currentBreedLabel: breedData.label || '--',
+      activeTab: tabKey,
+      currentPriceDisplay: {
+        price: breedData.price || '--',
+        trend: breedData.trend ?? 0,
+        change: breedData.change || '+0.0'
+      },
+      currentHistory: breedData.history || [],
+      currentUnit: unit,
+      chartScheme: scheme
+    })
+  },
+
 })
 

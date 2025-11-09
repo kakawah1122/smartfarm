@@ -61,7 +61,8 @@
         "invite-management/invite-management",
         "user-approval/user-approval",
         "role-management/role-management",
-        "role-migration/role-migration"
+        "role-migration/role-migration",
+        "price-management/price-management"
       ]
     },
     {

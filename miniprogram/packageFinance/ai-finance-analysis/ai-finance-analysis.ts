@@ -156,14 +156,8 @@ Component({
         console.warn('获取全局/缓存鹅价失败:', error)
       }
       
-      // 3. 降级方案：使用默认数据
-      return Promise.resolve({
-        adult: 12.5,
-        gosling: 18.0,
-        egg: 2.8,
-        adultTrend: 0.3,
-        trend: '上涨'
-      })
+      // 3. 如果没有数据，返回 null
+      return Promise.resolve(null)
     },
     
     // 执行AI财务分析

@@ -1,0 +1,201 @@
+<view class="page-container">
+  <navigation-bar
+    title="文章管理"
+    show-back="{{true}}"
+  />
+
+  <view class="content-wrapper">
+    <!-- 操作栏 -->
+    <view class="action-bar">
+      <t-button theme="primary" size="small" bind:tap="showCreateForm">
+        新建文章
+      </t-button>
+      <t-input
+        placeholder="搜索文章..."
+        value="{{searchKeyword}}"
+        bind:change="onSearchInput"
+        prefix-icon="search"
+        class="search-input"
+      />
+    </view>
+
+    <!-- 分类筛选 -->
+    <view class="category-filter">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-item {{activeCategory === item.id ? 'active' : ''}}"
+        bind:tap="selectCategory"
+        data-category="{{item.id}}"
+      >
+        {{item.name}}
+      </view>
+    </view>
+
+    <!-- 文章列表 -->
+    <scroll-view class="scroll-container" scroll-y bind:scrolltolower="loadMore">
+      <view wx:if="{{articleList.length > 0}}" class="article-list">
+        <view
+          wx:for="{{articleList}}"
+          wx:key="_id"
+          class="article-item"
+          bind:tap="editArticle"
+          data-id="{{item._id}}"
+        >
+          <view class="article-header">
+            <text class="article-title">{{item.title}}</text>
+            <t-tag theme="{{getThemeByCategory(item.categoryTheme)}}" size="small">
+              {{item.categoryName}}
+            </t-tag>
+          </view>
+          <text class="article-description">{{item.description || '暂无描述'}}</text>
+          <view class="article-meta">
+            <text class="meta-item">阅读量 {{item.views || '0'}}</text>
+            <text class="meta-item">预计阅读 {{item.readTime || '5'}}分钟</text>
+            <text class="meta-item">{{item.date || ''}}</text>
+          </view>
+          <view class="article-actions">
+            <t-button theme="default" size="small" bind:tap="deleteArticle" data-id="{{item._id}}" catchtap="deleteArticle" data-id="{{item._id}}">
+              删除
+            </t-button>
+          </view>
+        </view>
+      </view>
+      
+      <view wx:else class="empty-state">
+        <text class="empty-text">暂无文章</text>
+      </view>
+      
+      <view wx:if="{{loading}}" class="loading-more">
+        <t-loading theme="dots" size="40rpx" />
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 编辑/创建弹窗 -->
+  <view wx:if="{{showForm}}" class="form-modal" catchtap="closeForm">
+    <view class="form-content" catchtap="stopPropagation">
+      <view class="form-header">
+        <text class="form-title">{{editingArticle ? '编辑文章' : '新建文章'}}</text>
+        <text class="form-close" bind:tap="closeForm">×</text>
+      </view>
+      
+      <scroll-view class="form-scroll" scroll-y>
+        <!-- 文本解析 -->
+        <view class="form-section">
+          <view class="section-title">快速填充</view>
+          <t-textarea
+            placeholder="粘贴文章内容，系统将自动解析标题、描述等信息..."
+            value="{{parseText}}"
+            bind:change="onParseTextChange"
+            maxlength="5000"
+            autosize
+            class="parse-textarea"
+          />
+          <t-button theme="default" size="small" bind:tap="parseText" class="parse-btn">
+            解析文本
+          </t-button>
+        </view>
+
+        <!-- 基本信息 -->
+        <view class="form-section">
+          <view class="section-title">基本信息</view>
+          
+          <view class="form-item">
+            <view class="form-label">标题 *</view>
+            <t-input
+              value="{{formData.title}}"
+              bind:change="onFormChange"
+              data-field="title"
+              placeholder="请输入文章标题"
+            />
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">描述</view>
+            <t-textarea
+              value="{{formData.description}}"
+              bind:change="onFormChange"
+              data-field="description"
+              placeholder="请输入文章描述"
+              maxlength="200"
+              autosize
+            />
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">分类 *</view>
+            <t-picker
+              value="{{categoryIndex}}"
+              range="{{categories}}"
+              range-key="name"
+              bind:change="onCategoryChange"
+            >
+              <view class="picker-display">
+                {{formData.categoryName || '请选择分类'}}
+              </view>
+            </t-picker>
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">发布日期</view>
+            <picker mode="date" value="{{formData.date}}" bind:change="onDateChange">
+              <view class="picker-display">
+                {{formData.date || '请选择日期'}}
+              </view>
+            </picker>
+          </view>
+        </view>
+
+        <!-- 文章内容 -->
+        <view class="form-section">
+          <view class="section-title">文章内容 *</view>
+          <t-textarea
+            value="{{formData.content}}"
+            bind:change="onFormChange"
+            data-field="content"
+            placeholder="请输入文章内容，支持换行"
+            maxlength="10000"
+            autosize
+            class="content-textarea"
+          />
+        </view>
+
+        <!-- 统计信息 -->
+        <view class="form-section">
+          <view class="section-title">统计信息</view>
+          
+          <view class="form-item">
+            <view class="form-label">阅读量</view>
+            <t-input
+              value="{{formData.views}}"
+              bind:change="onFormChange"
+              data-field="views"
+              placeholder="0"
+              type="number"
+            />
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">预计阅读时间（分钟）</view>
+            <t-input
+              value="{{formData.readTime}}"
+              bind:change="onFormChange"
+              data-field="readTime"
+              placeholder="5"
+              type="number"
+            />
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 操作按钮 -->
+      <view class="form-actions">
+        <t-button theme="default" bind:tap="closeForm">取消</t-button>
+        <t-button theme="primary" bind:tap="saveArticle">保存</t-button>
+      </view>
+    </view>
+  </view>
+</view>
+
+

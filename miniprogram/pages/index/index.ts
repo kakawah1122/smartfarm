@@ -64,24 +64,19 @@ Page({
       district: '请稍候...'
     },
     
-    // 鹅价数据
-    priceUpdateTime: '09:30',
-    priceBreeds: [
-      { key: 'normal', label: '普通种' },
-      { key: 'large', label: '大种' },
-      { key: 'extraLarge', label: '特大种' },
-      { key: 'baisha', label: '白沙鹅' }
-    ],
+    // 鹅价数据（数据库字段：goslingBreeds鹅苗, meatBreeds肉鹅）
+    priceUpdateTime: '',
+    priceBreeds: [],
     currentPriceBreed: 'extraLarge',
-    currentPriceBreedLabel: '特大种',
+    currentPriceBreedLabel: '',
     goosePriceData: {} as Record<string, any>,
     goosePrice: {
-      adult: '12.5',
-      adultTrend: 1,
-      adultChange: '+0.3',
-      gosling: '8.2',
-      goslingTrend: -1,
-      goslingChange: '-0.1'
+      adult: '--',      // 肉鹅价格（元/斤）
+      adultTrend: 0,
+      adultChange: '+0.0',
+      gosling: '--',    // 鹅苗价格（元/只）
+      goslingTrend: 0,
+      goslingChange: '+0.0'
     },
     
     // 任务相关
@@ -517,55 +512,93 @@ Page({
   },
 
   // 获取鹅价数据
-  getGoosePriceData() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const now = new Date()
-        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-        
-        const breedConfigs: Array<{ key: string; label: string; baseAdult: number; baseGosling: number }> = [
-          { key: 'normal', label: '普通种', baseAdult: 12.0, baseGosling: 5.6 },
-          { key: 'large', label: '大种', baseAdult: 13.2, baseGosling: 5.9 },
-          { key: 'extraLarge', label: '特大种', baseAdult: 14.1, baseGosling: 6.2 },
-          { key: 'baisha', label: '白沙鹅', baseAdult: 13.5, baseGosling: 6.0 }
-        ]
-
-        const goosePriceData: Record<string, any> = {}
-        const displayBreeds = breedConfigs.map(({ key, label }) => ({ key, label }))
-
-        breedConfigs.forEach((config) => {
-          const adultHistory = this.generatePriceHistory(config.baseAdult, 7, 0.8)
-          const goslingHistory = this.generatePriceHistory(config.baseGosling, 7, 0.5)
-
-          const adultTrendInfo = this.calculateTrend(adultHistory)
-          const goslingTrendInfo = this.calculateTrend(goslingHistory)
-
-          const latestAdult = adultHistory[adultHistory.length - 1]?.value || config.baseAdult
-          const latestGosling = goslingHistory[goslingHistory.length - 1]?.value || config.baseGosling
-
-          goosePriceData[config.key] = {
-            label: config.label,
-            adult: {
-              price: latestAdult.toFixed(1),
-              trend: adultTrendInfo.trend,
-              change: adultTrendInfo.change
-            },
-            gosling: {
-              price: latestGosling.toFixed(1),
-              trend: goslingTrendInfo.trend,
-              change: goslingTrendInfo.change
-            },
-            history: {
-              adult: adultHistory,
-              gosling: goslingHistory
-            }
-          }
+  async getGoosePriceData() {
+    try {
+      const db = wx.cloud.database()
+      
+      // 获取最新的价格记录（添加日期条件避免全表扫描）
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      
+      const result = await db.collection('goose_prices')
+        .where({
+          updateTime: db.command.gte(thirtyDaysAgo)
         })
+        .orderBy('updateTime', 'desc')
+        .limit(1)
+        .get()
+
+      if (result.data && result.data.length > 0) {
+        const latestPrice = result.data[0]
+        
+        // 直接使用数据库的品种数据，不做映射
+        const goosePriceData: Record<string, any> = {}
+        const displayBreeds: Array<{ key: string; label: string }> = []
+
+        // 处理鹅苗价格
+        if (latestPrice.goslingBreeds && latestPrice.goslingBreeds.length > 0) {
+          latestPrice.goslingBreeds.forEach((breed: any) => {
+            goosePriceData[breed.key] = {
+              label: breed.label,
+              gosling: {
+                price: breed.price.toFixed(1),
+                trend: 0,
+                change: '+0.0',
+                range: breed.range
+              },
+              adult: {
+                price: '--',
+                trend: 0,
+                change: '+0.0'
+              },
+              history: {
+                gosling: [],
+                adult: []
+              }
+            }
+            displayBreeds.push({ key: breed.key, label: breed.label })
+          })
+        }
+
+        // 处理肉鹅价格（映射到adult字段）
+        if (latestPrice.meatBreeds && latestPrice.meatBreeds.length > 0) {
+          // 使用肉鹅130日龄的价格作为成鹅价格
+          const meat130 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat130')
+          const meat120 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat120')
+          
+          // 将肉鹅价格应用到所有品种
+          Object.keys(goosePriceData).forEach((key) => {
+            // 优先使用130日龄价格，否则使用120日龄价格
+            const meatData = meat130 || meat120
+            if (meatData) {
+              goosePriceData[key].adult = {
+                price: meatData.price.toFixed(1),
+                trend: 0,
+                change: '+0.0',
+                range: meatData.range,
+                unit: '元/斤'
+              }
+            }
+          })
+        }
+
+        // 如果没有从数据库获取到数据，使用默认品种
+        if (displayBreeds.length === 0) {
+          displayBreeds.push(
+            { key: 'middle', label: '中种鹅' },
+            { key: 'large', label: '大种鹅' },
+            { key: 'extraLarge', label: '特大种鹅' }
+          )
+        }
+
+        const updateTime = latestPrice.date ? 
+          new Date(latestPrice.date).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) :
+          new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
 
         const targetBreed = this.data.currentPriceBreed || 'extraLarge'
 
         this.setData({
-          priceUpdateTime: timeStr,
+          priceUpdateTime: updateTime,
           priceBreeds: displayBreeds,
           goosePriceData
         }, () => {
@@ -573,13 +606,45 @@ Page({
         })
 
         this.cacheGoosePriceSnapshot({
-          updateTime: timeStr,
+          updateTime: updateTime,
           breeds: displayBreeds,
           data: goosePriceData
         })
-        resolve(true)
-      }, 500)
-    })
+        
+        return true
+      } else {
+        // 如果数据库没有数据，显示空状态
+        this.setData({
+          priceUpdateTime: '',
+          priceBreeds: [],
+          goosePrice: {
+            adult: '--',
+            adultTrend: 0,
+            adultChange: '+0.0',
+            gosling: '--',
+            goslingTrend: 0,
+            goslingChange: '+0.0'
+          }
+        })
+        return false
+      }
+    } catch (error) {
+      console.error('获取鹅价数据失败:', error)
+      // 出错时显示空状态
+      this.setData({
+        priceUpdateTime: '',
+        priceBreeds: [],
+        goosePrice: {
+          adult: '--',
+          adultTrend: 0,
+          adultChange: '+0.0',
+          gosling: '--',
+          goslingTrend: 0,
+          goslingChange: '+0.0'
+        }
+      })
+      return false
+    }
   },
 
   generatePriceHistory(base: number, days: number, volatility: number) {
@@ -2128,26 +2193,83 @@ Page({
   },
 
   /**
-   * 加载知识库预览数据
+   * 加载知识库预览数据（显示最近5篇文章）
    */
   async loadKnowledgePreview() {
     try {
-      // TODO: 实际实现应该从云数据库获取最新知识内容
+      // 从数据库获取最近5篇文章
+      const result = await wx.cloud.callFunction({
+        name: 'knowledge-management',
+        data: {
+          action: 'list',
+          page: 1,
+          pageSize: 5
+        }
+      })
+
+      if (result.result && result.result.success) {
+        const articles = result.result.data.list || []
+        // 转换为前端需要的格式
+        const formattedArticles = articles.map((article: any) => ({
+          id: article._id,
+          title: article.title,
+          description: article.description,
+          category: article.category,
+          categoryName: article.categoryName,
+          categoryTheme: article.categoryTheme,
+          views: article.views,
+          readTime: article.readTime,
+          date: article.date,
+          content: article.content
+        }))
+        
+        this.setData({
+          knowledgeList: formattedArticles
+        })
+      } else {
+        // 如果数据库没有数据，显示空状态
+        this.setData({
+          knowledgeList: []
+        })
+      }
+    } catch (error) {
+      console.error('加载知识库预览失败:', error)
       this.setData({
         knowledgeList: []
       })
-    } catch (error) {
-      console.error('加载知识库预览失败:', error)
     }
   },
 
   /**
    * 导航到知识库页面
    */
-  navigateToKnowledge() {
+  navigateToKnowledge(e?: any) {
+    // 阻止事件冒泡，避免触发卡片点击
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation()
+    }
     wx.navigateTo({
       url: '/pages/knowledge/knowledge'
     })
+  },
+
+  /**
+   * 查看文章详情
+   */
+  viewKnowledgeArticle(e: any) {
+    const article = e.currentTarget.dataset.article
+    if (!article) {
+      return
+    }
+
+    try {
+      const payload = encodeURIComponent(JSON.stringify(article))
+      wx.navigateTo({
+        url: `/pages/knowledge/article-detail/article-detail?article=${payload}`
+      })
+    } catch (error) {
+      wx.showToast({ title: '文章打开失败', icon: 'none' })
+    }
   }
 })
 

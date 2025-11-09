@@ -1,0 +1,17 @@
+{
+  "indexes": [
+    {
+      "name": "date_1",
+      "keys": {
+        "date": 1
+      },
+      "options": {
+        "background": true
+      }
+    }
+  ]
+}
+
+
+
+

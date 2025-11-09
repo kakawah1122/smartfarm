@@ -10,10 +10,10 @@
         <t-tabs value="{{activeTab}}" bind:change="onTabChange" t-class="tabs-root" t-class-content="tabs-content">
           <t-tab-panel label="成鹅价格" value="adult">
             <view class="panel-content">
-              <!-- 品种卡片网格 -->
+              <!-- 日龄卡片网格 -->
               <view class="breed-grid">
                 <view
-                  wx:for="{{priceBreeds}}"
+                  wx:for="{{meatBreeds}}"
                   wx:key="key"
                   class="breed-card {{currentBreed === item.key ? 'active' : ''}}"
                   data-key="{{item.key}}"
@@ -23,12 +23,12 @@
                     <text class="breed-card-title">{{item.label}}</text>
                   </view>
                   <view class="breed-card-body">
-                    <text class="breed-card-price">¥{{priceData[item.key].adult.price}}</text>
+                    <text class="breed-card-price">¥{{meatData[item.key].price}}</text>
                     <text class="breed-card-unit">/斤</text>
                   </view>
-                  <view class="breed-card-trend {{priceData[item.key].adult.trend > 0 ? 'trend-up' : 'trend-down'}}">
-                    <text class="trend-icon">{{priceData[item.key].adult.trend > 0 ? '↑' : '↓'}}</text>
-                    <text class="trend-value">{{priceData[item.key].adult.change}}</text>
+                  <view class="breed-card-trend {{meatData[item.key].trend > 0 ? 'trend-up' : 'trend-down'}}">
+                    <text class="trend-icon">{{meatData[item.key].trend > 0 ? '↑' : '↓'}}</text>
+                    <text class="trend-value">{{meatData[item.key].change}}</text>
                   </view>
                 </view>
               </view>
@@ -58,7 +58,7 @@
               <!-- 品种卡片网格 -->
               <view class="breed-grid">
                 <view
-                  wx:for="{{priceBreeds}}"
+                  wx:for="{{goslingBreeds}}"
                   wx:key="key"
                   class="breed-card {{currentBreed === item.key ? 'active' : ''}}"
                   data-key="{{item.key}}"
@@ -68,12 +68,12 @@
                     <text class="breed-card-title">{{item.label}}</text>
                   </view>
                   <view class="breed-card-body">
-                    <text class="breed-card-price">¥{{priceData[item.key].gosling.price}}</text>
-                    <text class="breed-card-unit">/羽</text>
+                    <text class="breed-card-price">¥{{goslingData[item.key].price}}</text>
+                    <text class="breed-card-unit">/只</text>
                   </view>
-                  <view class="breed-card-trend {{priceData[item.key].gosling.trend > 0 ? 'trend-up' : 'trend-down'}}">
-                    <text class="trend-icon">{{priceData[item.key].gosling.trend > 0 ? '↑' : '↓'}}</text>
-                    <text class="trend-value">{{priceData[item.key].gosling.change}}</text>
+                  <view class="breed-card-trend {{goslingData[item.key].trend > 0 ? 'trend-up' : 'trend-down'}}">
+                    <text class="trend-icon">{{goslingData[item.key].trend > 0 ? '↑' : '↓'}}</text>
+                    <text class="trend-value">{{goslingData[item.key].change}}</text>
                   </view>
                 </view>
               </view>

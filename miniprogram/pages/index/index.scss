@@ -93,7 +93,7 @@ page {
 .card-title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  color: #3b82f6; // 与文章详情页主题色保持一致（theme-primary）
   letter-spacing: 0.5rpx;
   line-height: var(--line-height-tight);
 }
@@ -561,7 +561,7 @@ page {
     align-items: flex-start;
     gap: var(--spacing-xs);
   }
-
+  
   .detail-link {
     font-size: var(--font-size-sm);
   }
@@ -1697,7 +1697,7 @@ page {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24rpx;
+    margin-bottom: 20rpx;
   }
   
   .view-all-link {
@@ -1707,23 +1707,29 @@ page {
   }
 }
 
+// 文章列表容器 - 在同一个卡片内
 .knowledge-preview {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 0;
+  padding: 0;
+  margin-top: 0;
 }
 
 .knowledge-item {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  padding: 16rpx;
-  background: #f8f9fa;
-  border-radius: 12rpx;
+  padding: 20rpx 0;
   transition: background 0.2s;
   
+  // 添加分隔线（除了最后一项）
+  &:not(:last-child) {
+    border-bottom: 1rpx solid #f0f0f0;
+  }
+  
   &:active {
-    background: #f0f2f5;
+    background: #f8f9fa;
   }
 }
 
@@ -1731,15 +1737,63 @@ page {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: #0052d9;
   flex-shrink: 0;
+  
+  // 默认颜色
+  background: #6366f1;
+  
+  // 根据主题设置颜色
+  &-default {
+    background: #6366f1; // 深蓝紫色
+  }
+  
+  &-primary {
+    background: #3b82f6; // 深蓝色
+  }
+  
+  &-success {
+    background: #00bcd4; // 天青色
+  }
+  
+  &-danger {
+    background: #ef4444; // 深红色
+  }
+  
+  &-warning {
+    background: #f59e0b; // 深橙色
+  }
 }
 
 .knowledge-title {
-  font-size: 26rpx;
-  color: #333;
-  line-height: 1.5;
+  font-size: 28rpx;
+  font-weight: 600; // 加粗，提高可读性
+  line-height: 1.6;
   flex: 1;
+  letter-spacing: 0.2rpx; // 增加字间距，提高清晰度
+  
+  // 默认颜色 - 使用更深的颜色提高对比度
+  color: #6366f1;
+  
+  // 根据主题设置颜色（与文章详情页保持一致，使用更深的颜色提高可读性）
+  &-default {
+    color: #4f46e5; // 更深的蓝紫色，提高对比度
+  }
+  
+  &-primary {
+    color: #2563eb; // 更深的蓝色，提高对比度
+  }
+  
+  &-success {
+    color: #0891b2; // 更深的天青色，提高对比度
+  }
+  
+  &-danger {
+    color: #dc2626; // 更深的红色，提高对比度
+  }
+  
+  &-warning {
+    color: #d97706; // 更深的橙色，提高对比度
+  }
 }
 
 .knowledge-empty {

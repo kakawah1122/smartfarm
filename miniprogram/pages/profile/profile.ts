@@ -17,7 +17,9 @@ const REIMBURSEMENT_TYPES = [
 const ADMIN_FUNCTIONS = [
   { id: 1, label: '人员管理', page: '/packageUser/user-management/user-management' },
   { id: 2, label: '邀请码管理', page: '/packageUser/invite-management/invite-management' },
-  { id: 3, label: '财务管理', page: '/packageFinance/finance/finance' }
+  { id: 3, label: '财务管理', page: '/packageFinance/finance/finance' },
+  { id: 4, label: '鹅价管理', page: '/packageUser/price-management/price-management' },
+  { id: 5, label: '文章管理', page: '/packageUser/knowledge-management/knowledge-management' }
 ]
 
 // 系统设置配置

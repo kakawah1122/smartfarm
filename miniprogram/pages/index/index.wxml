@@ -89,18 +89,18 @@
     </view>
 
     <!-- 养殖知识卡片 -->
-    <view class="card knowledge-card" bind:tap="navigateToKnowledge">
+    <view class="card knowledge-card">
       <view class="card-header">
-        <text class="card-title">📚 养殖知识</text>
-        <text class="view-all-link">查看更多 ›</text>
+        <text class="card-title">养殖知识</text>
+        <text class="view-all-link" bind:tap="navigateToKnowledge" catchtap="navigateToKnowledge">查看更多 ›</text>
       </view>
       <view wx:if="{{knowledgeList.length > 0}}" class="knowledge-preview">
-        <view wx:for="{{knowledgeList}}" wx:key="id" class="knowledge-item">
-          <view class="knowledge-dot"></view>
-          <text class="knowledge-title">{{item.title}}</text>
+        <view wx:for="{{knowledgeList}}" wx:key="id" class="knowledge-item" bind:tap="viewKnowledgeArticle" catchtap="viewKnowledgeArticle" data-article="{{item}}">
+          <view class="knowledge-dot knowledge-dot-{{item.categoryTheme || 'default'}}"></view>
+          <text class="knowledge-title knowledge-title-{{item.categoryTheme || 'default'}}">{{item.title}}</text>
         </view>
       </view>
-      <view wx:else class="knowledge-empty">
+      <view wx:else class="knowledge-empty" bind:tap="navigateToKnowledge">
         <text class="empty-hint">点击查看养殖知识库</text>
       </view>
     </view>

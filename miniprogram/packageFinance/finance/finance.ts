@@ -1259,27 +1259,9 @@ const pageConfig = {
         const app = getApp<IAppOption>()
         if (app.globalData && app.globalData.goosePrice) {
           goosePriceData = app.globalData.goosePrice
-          console.log('鹅价数据从全局状态获取')
-        } else {
-          // 降级：使用默认值
-          goosePriceData = {
-            adult: 12.5,
-            gosling: 18.0,
-            egg: 2.8,
-            adultTrend: 0.3,
-            trend: '上涨'
-          }
-          console.log('鹅价数据使用默认值')
         }
       } catch (e) {
         console.warn('获取鹅价数据失败:', e)
-        goosePriceData = {
-          adult: 12.5,
-          gosling: 18.0,
-          egg: 2.8,
-          adultTrend: 0.3,
-          trend: '上涨'
-        }
       }
       
       // 更新到页面数据

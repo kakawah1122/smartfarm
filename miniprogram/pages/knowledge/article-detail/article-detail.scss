@@ -17,7 +17,7 @@
 }
 
 .article-hero {
-  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx);
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 48rpx);
   padding: 40rpx 32rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
@@ -26,14 +26,11 @@
   gap: 20rpx;
   position: relative;
   overflow: hidden;
+  background: #fff;
 }
 
 .article-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
-  pointer-events: none;
+  display: none;
 }
 
 .hero-tag {
@@ -48,6 +45,9 @@
   font-size: 40rpx;
   font-weight: 700;
   line-height: 1.4;
+  letter-spacing: 0.3rpx; // 增加字间距，提高清晰度
+  text-rendering: optimizeLegibility; // 优化文字渲染
+  -webkit-font-smoothing: antialiased; // 字体平滑
 }
 
 .hero-meta {
@@ -73,7 +73,7 @@
 
 .article-content {
   margin-top: 24rpx;
-  background: #fafbfc;
+  background: #fff;
   border-radius: 24rpx;
   padding: 40rpx 32rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
@@ -107,25 +107,40 @@
   color: #999;
 }
 
-/* 主题配色 - 浅色系 */
+/* 主题配色 - 标题文字颜色（使用更深的颜色提高对比度和可读性） */
 .theme-default {
-  background: linear-gradient(135deg, #e0e7ff, #cfd9ff);
+  // 原背景: #e0e7ff, #cfd9ff -> 标题颜色使用更深的蓝紫色
+  .hero-title {
+    color: #4f46e5;
+  }
 }
 
 .theme-primary {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  // 原背景: #dbeafe, #bfdbfe -> 标题颜色使用更深的蓝色
+  .hero-title {
+    color: #2563eb;
+  }
 }
 
 .theme-success {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  // 原背景: #d1fae5, #a7f3d0 -> 标题颜色使用更深的天青色
+  .hero-title {
+    color: #0891b2;
+  }
 }
 
 .theme-danger {
-  background: linear-gradient(135deg, #ffe4e6, #fecdd3);
+  // 原背景: #ffe4e6, #fecdd3 -> 标题颜色使用更深的红色
+  .hero-title {
+    color: #dc2626;
+  }
 }
 
 .theme-warning {
-  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  // 原背景: #fed7aa, #fdba74 -> 标题颜色使用更深的橙色
+  .hero-title {
+    color: #d97706;
+  }
 }
 
 .theme-success .hero-tag,
@@ -145,13 +160,7 @@
   color: #374151;
 }
 
-.theme-success .hero-title,
-.theme-primary .hero-title,
-.theme-danger .hero-title,
-.theme-warning .hero-title,
-.theme-default .hero-title {
-  color: #1f2937;
-}
+// 标题颜色已在各自主题中定义，移除通用样式
 
 .theme-success .hero-meta-label,
 .theme-primary .hero-meta-label,

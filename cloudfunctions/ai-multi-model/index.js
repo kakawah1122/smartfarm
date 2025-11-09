@@ -139,6 +139,36 @@ const MODEL_CONFIGS = {
       medicalDiagnosis: 'good'
     },
     description: '高性价比视觉模型，常规图片诊断'
+  },
+
+  // 💰 OCR专用模型：Qwen-VL-OCR（表格识别）
+  'qwen-vl-ocr': {
+    provider: '阿里通义',
+    baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1/',
+    model: 'qwen-vl-ocr',
+    apiKey: process.env.QWEN_API_KEY,
+    maxTokens: 8192,
+    costPerKToken: 0.005,  // 输入输出统一成本
+    outputCostPerKToken: 0.005,
+    estimatedCostPerCall: 0.005,  // 约0.5分/次
+    freeQuotaTokens: 1000000,  // 100万tokens免费额度（180天）
+    freeQuotaDays: 180,
+    maxRequestsPerDay: 2000,  // 每天约2000次
+    supportVision: true,
+    maxImages: 1,  // 支持1张图片
+    maxImageSize: 10 * 1024 * 1024,
+    supportedFormats: ['BMP', 'JPEG', 'PNG', 'TIFF', 'WEBP'],
+    tier: 'ocr',
+    specialty: 'ocr',
+    language: 'zh-CN',
+    features: {
+      multimodal: 'native',
+      ocr: 'excellent',  // 专业OCR
+      tableRecognition: 'excellent',  // 表格识别
+      chinese: 'excellent',
+      multiLanguage: 'good'  // 支持多语言
+    },
+    description: 'OCR专用模型，表格识别和文字提取（有免费额度）'
   }
 }
 
@@ -219,6 +249,17 @@ const TASK_MODEL_MAPPING = {
     fallback: ['qwen-long'],
     timeout: 6000,
     description: '养殖建议，快速响应'
+  },
+  'goose_price_ocr': {
+    primary: 'qwen-vl-max',  // 直接使用最强视觉模型
+    fallback: [],
+    timeout: 55000,  // 55秒超时（留5秒余量）
+    condition: {
+      hasImages: true,
+      imageCount: 1,
+      taskType: 'ocr'
+    },
+    description: '鹅价表格识别，使用Qwen-VL-Max模型'
   },
   'history_analysis': {
     primary: 'qwen-long',  // 历史记录分析用超长文本模型

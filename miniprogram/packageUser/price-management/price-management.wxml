@@ -1,0 +1,224 @@
+<view class="page-container">
+  <navigation-bar
+    title="鹅价管理"
+    show-back="{{true}}"
+  />
+
+  <view class="content-wrapper">
+    <scroll-view class="scroll-container" scroll-y>
+      <!-- AI识别区域 -->
+      <view class="ai-section">
+        <view class="form-card">
+          <view class="ai-tip-box">
+            <view class="ai-tip-content">
+              <text class="ai-tip-title">AI智能识别</text>
+              <text class="ai-tip-desc">识别成功后自动填充到下方表单</text>
+            </view>
+          </view>
+
+          <!-- 图片上传区域 -->
+          <view class="ai-upload-area" bind:tap="chooseImage">
+            <view wx:if="{{!uploadedImage}}" class="ai-upload-placeholder">
+              <text class="ai-upload-text">点击上传截图</text>
+              <text class="ai-upload-hint">支持JPG、PNG格式，建议清晰截图</text>
+      </view>
+            <block wx:else>
+              <image class="ai-uploaded-image" src="{{uploadedImage}}" mode="aspectFit" />
+              <view class="ai-upload-close" catchtap="clearImage">X</view>
+            </block>
+          </view>
+
+          <t-button
+            theme="primary"
+            size="large"
+            loading="{{recognizing}}"
+            disabled="{{recognizing || !uploadedImage}}"
+            bind:tap="recognizeWithAI"
+            t-class="ai-recognize-btn"
+            icon="{{recognizing ? '' : 'app'}}"
+          >
+            {{recognizing ? 'AI识别中...' : '开始AI识别'}}
+          </t-button>
+
+          <!-- AI识别进度提示 -->
+          <view wx:if="{{recognizing}}" class="ai-loading-tip">
+            <text class="ai-loading-text">AI正在分析图片内容...</text>
+          </view>
+      </view>
+    </view>
+
+      <!-- 手动录入表单 -->
+      <view class="manual-section">
+        <view class="form-card">
+          <!-- 日期选择 -->
+          <view class="form-item">
+            <view class="form-label">日期</view>
+            <picker mode="date" value="{{manualData.date}}" bind:change="onDateChange">
+              <view class="picker-value">
+                {{manualData.date || '请选择日期'}}
+              </view>
+            </picker>
+          </view>
+
+          <!-- 鹅苗价格 -->
+          <view class="form-group">
+            <view class="group-header">鹅苗价格（元/只）</view>
+            
+            <view class="form-item">
+              <view class="form-label">中种鹅</view>
+              <view class="range-input">
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最低价"
+                  value="{{manualData.gosling.middle.min}}"
+                  bind:input="onGoslingMinInput"
+                  data-key="middle"
+                />
+                <text class="range-separator">-</text>
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最高价"
+                  value="{{manualData.gosling.middle.max}}"
+                  bind:input="onGoslingMaxInput"
+                  data-key="middle"
+                />
+              </view>
+            </view>
+
+            <view class="form-item">
+              <view class="form-label">大种鹅</view>
+              <view class="range-input">
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最低价"
+                  value="{{manualData.gosling.large.min}}"
+                  bind:input="onGoslingMinInput"
+                  data-key="large"
+                />
+                <text class="range-separator">-</text>
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最高价"
+                  value="{{manualData.gosling.large.max}}"
+                  bind:input="onGoslingMaxInput"
+                  data-key="large"
+                />
+              </view>
+            </view>
+
+            <view class="form-item">
+              <view class="form-label">特大种鹅</view>
+              <view class="range-input">
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最低价"
+                  value="{{manualData.gosling.extraLarge.min}}"
+                  bind:input="onGoslingMinInput"
+                  data-key="extraLarge"
+                />
+                <text class="range-separator">-</text>
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最高价"
+                  value="{{manualData.gosling.extraLarge.max}}"
+                  bind:input="onGoslingMaxInput"
+                  data-key="extraLarge"
+                />
+              </view>
+            </view>
+          </view>
+
+          <!-- 肉鹅价格 -->
+          <view class="form-group">
+            <view class="group-header">肉鹅价格（元/斤）</view>
+            
+            <view class="form-item">
+              <view class="form-label">120日龄</view>
+              <view class="range-input">
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最低价"
+                  value="{{manualData.meat.meat120.min}}"
+                  bind:input="onMeatMinInput"
+                  data-key="meat120"
+                />
+                <text class="range-separator">-</text>
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最高价"
+                  value="{{manualData.meat.meat120.max}}"
+                  bind:input="onMeatMaxInput"
+                  data-key="meat120"
+                />
+              </view>
+            </view>
+
+            <view class="form-item">
+              <view class="form-label">130日龄</view>
+              <view class="range-input">
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最低价"
+                  value="{{manualData.meat.meat130.min}}"
+                  bind:input="onMeatMinInput"
+                  data-key="meat130"
+                />
+                <text class="range-separator">-</text>
+                <input
+                  class="price-input"
+                  type="digit"
+                  placeholder="最高价"
+                  value="{{manualData.meat.meat130.max}}"
+                  bind:input="onMeatMaxInput"
+                  data-key="meat130"
+                />
+              </view>
+            </view>
+          </view>
+
+          <t-button
+            theme="primary"
+            size="large"
+            bind:tap="submitManualData"
+            t-class="submit-btn"
+          >
+            保存价格数据
+          </t-button>
+        </view>
+      </view>
+
+      <!-- 历史记录 -->
+      <view class="history-section">
+        <view class="section-title">最近更新记录</view>
+        <t-cell-group theme="card">
+          <t-cell
+            wx:for="{{historyList}}"
+            wx:key="_id"
+            title="{{item.date}}"
+            note="来源：{{item.source}}"
+            rightIcon="chevron-right"
+            bind:click="viewHistory"
+            data-item="{{item}}"
+          />
+        </t-cell-group>
+        <view wx:if="{{historyList.length === 0}}" class="empty-tip">
+          <text>暂无更新记录</text>
+        </view>
+      </view>
+
+      <view class="safe-area"></view>
+    </scroll-view>
+  </view>
+
+  <t-message id="t-message" />
+</view>
+
