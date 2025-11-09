@@ -14,7 +14,6 @@
  * - 优化AI识别，一次可识别10天以上的历史价格
  * - 批量保存，自动去重，新增/更新混合处理
  */
-import Message from 'tdesign-miniprogram/message/index'
 
 interface BaseBreed {
   key: string
