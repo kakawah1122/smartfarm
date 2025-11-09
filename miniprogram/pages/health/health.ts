@@ -1002,40 +1002,38 @@ Page<PageData, any>({
       const pendingDiagnosisCount = data.pendingDiagnosisCount || 0
       
       // ✅ 一次性更新所有数据（避免多次setData）
+      // ✅ 使用数据路径形式更新对象属性，符合微信小程序最佳实践
       this.setData({
-        // 健康统计
-        healthStats: {
-          totalChecks: healthStats.totalChecks || 0,
-          healthyCount: healthStats.healthyCount || 0,
-          sickCount: healthStats.sickCount || 0,
-          deadCount: healthStats.deadCount || 0,
-          // 没有入栏数据时显示 "-"
-          healthyRate: (healthStats.totalChecks > 0) ? ((healthStats.healthyRate || 0) + '%') : '-',
-          mortalityRate: (healthStats.totalChecks > 0) ? ((healthStats.mortalityRate || 0) + '%') : '-',
-          abnormalCount: abnormalCount,
-          treatingCount: treatmentStats.ongoingCount || 0
-        },
+        // 健康统计 - 使用数据路径形式更新对象属性
+        'healthStats.totalChecks': healthStats.totalChecks || 0,
+        'healthStats.healthyCount': healthStats.healthyCount || 0,
+        'healthStats.sickCount': healthStats.sickCount || 0,
+        'healthStats.deadCount': healthStats.deadCount || 0,
+        'healthStats.healthyRate': (healthStats.totalChecks > 0) ? ((healthStats.healthyRate || 0) + '%') : '-',
+        'healthStats.mortalityRate': (healthStats.totalChecks > 0) ? ((healthStats.mortalityRate || 0) + '%') : '-',
+        'healthStats.abnormalCount': abnormalCount,
+        'healthStats.treatingCount': treatmentStats.ongoingCount || 0,
         
-        // 预防数据
-        preventionStats,
+        // 预防数据 - 使用数据路径形式
+        'preventionStats.totalPreventions': preventionStats.totalPreventions || 0,
+        'preventionStats.vaccineCount': preventionStats.vaccineCount || 0,
+        'preventionStats.vaccineCoverage': preventionStats.vaccineCoverage || 0,
+        'preventionStats.disinfectionCount': preventionStats.disinfectionCount || 0,
+        'preventionStats.totalCost': preventionStats.totalCost || 0,
         recentPreventionRecords: preventionRecords.slice(0, 10),
-        'preventionData.stats': {
-          vaccinationRate: vaccinationRate.toFixed(1),
-          preventionCost: preventionStats.totalCost,
-          vaccineCount: preventionStats.vaccineCount || 0,
-          vaccineCoverage: preventionStats.vaccineCoverage || 0,
-          medicationCount: preventionStats.medicationCount || 0
-        },
+        'preventionData.stats.vaccinationRate': vaccinationRate.toFixed(1),
+        'preventionData.stats.preventionCost': preventionStats.totalCost,
+        'preventionData.stats.vaccineCount': preventionStats.vaccineCount || 0,
+        'preventionData.stats.vaccineCoverage': preventionStats.vaccineCoverage || 0,
+        'preventionData.stats.medicationCount': preventionStats.medicationCount || 0,
         'preventionData.recentRecords': preventionRecords.slice(0, 10),
         
-        // 治疗数据
-        'treatmentData.stats': {
-          pendingDiagnosis: pendingDiagnosisCount,
-          ongoingTreatment: treatmentStats.ongoingCount || 0,
-          totalTreatmentCost: parseFloat((treatmentStats.totalCost || 0).toString()),
-          cureRate: parseFloat((treatmentStats.cureRate || '0').toString()),
-          ongoingAnimalsCount: treatmentStats.ongoingAnimalsCount || 0
-        },
+        // 治疗数据 - 使用数据路径形式
+        'treatmentData.stats.pendingDiagnosis': pendingDiagnosisCount,
+        'treatmentData.stats.ongoingTreatment': treatmentStats.ongoingCount || 0,
+        'treatmentData.stats.totalTreatmentCost': parseFloat((treatmentStats.totalCost || 0).toString()),
+        'treatmentData.stats.cureRate': parseFloat((treatmentStats.cureRate || '0').toString()),
+        'treatmentData.stats.ongoingAnimalsCount': treatmentStats.ongoingAnimalsCount || 0,
         'treatmentData.diagnosisHistory': diagnosisHistory,
         'treatmentStats.totalTreatments': treatmentStats.totalTreated || 0,
         'treatmentStats.totalCost': parseFloat((treatmentStats.totalCost || 0).toString()),
@@ -1043,7 +1041,7 @@ Page<PageData, any>({
         'treatmentStats.ongoingCount': treatmentStats.ongoingCount || 0,
         'treatmentStats.recoveryRate': (treatmentStats.cureRate || 0) + '%',
         
-        // 监控数据
+        // 监控数据 - 使用数据路径形式
         'monitoringData.realTimeStatus.abnormalCount': abnormalCount,
         'monitoringData.abnormalList': abnormalRecords
       })
