@@ -429,7 +429,7 @@ page {
 .price-label {
   display: block;
   text-align: center;
-  font-size: var(--font-size-base);
+  font-size: 30rpx;
   color: var(--color-text-secondary);
   line-height: 1.2;
   font-weight: var(--font-weight-medium);
@@ -440,7 +440,7 @@ page {
   display: flex;
   justify-content: center;
   align-items: baseline;
-  font-size: var(--font-size-xl);
+  font-size: 44rpx;
   font-weight: var(--font-weight-bold);
   line-height: 1.1;
   gap: var(--spacing-xs);
@@ -453,7 +453,7 @@ page {
 }
 
 .price-unit {
-  font-size: var(--font-size-base);
+  font-size: 30rpx;
   font-weight: var(--font-weight-medium);
   opacity: 0.8;
 }
@@ -1671,6 +1671,8 @@ page {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20rpx;
+    padding-bottom: 20rpx;
+    border-bottom: 2rpx solid #d1d5db; /* 标题与文章列表之间的分割线 */
   }
   
   .view-all-link {
@@ -1696,9 +1698,10 @@ page {
   padding: 20rpx 0;
   transition: background 0.2s;
   
-  // 添加分隔线（除了最后一项）
+  // 添加分隔线（除了最后一项）- 增强可见性
   &:not(:last-child) {
-    border-bottom: 1rpx solid #f0f0f0;
+    border-bottom: 2rpx solid #d1d5db;
+    margin-bottom: 0;
   }
   
   &:active {

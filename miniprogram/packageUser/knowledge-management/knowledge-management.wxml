@@ -2,23 +2,10 @@
   <navigation-bar
     title="文章管理"
     show-back="{{true}}"
+    bind:back="goBack"
   />
 
   <view class="content-wrapper">
-    <!-- 操作栏 -->
-    <view class="action-bar">
-      <t-button theme="primary" size="small" bind:tap="showCreateForm">
-        新建文章
-      </t-button>
-      <t-input
-        placeholder="搜索文章..."
-        value="{{searchKeyword}}"
-        bind:change="onSearchInput"
-        prefix-icon="search"
-        class="search-input"
-      />
-    </view>
-
     <!-- 分类筛选 -->
     <view class="category-filter">
       <view
@@ -38,26 +25,45 @@
         <view
           wx:for="{{articleList}}"
           wx:key="_id"
-          class="article-item"
-          bind:tap="editArticle"
-          data-id="{{item._id}}"
+          class="swipe-item-wrapper"
         >
-          <view class="article-header">
-            <text class="article-title">{{item.title}}</text>
-            <t-tag theme="{{getThemeByCategory(item.categoryTheme)}}" size="small">
-              {{item.categoryName}}
-            </t-tag>
+          <!-- 滑动操作按钮 -->
+          <view class="swipe-actions">
+            <view class="swipe-action-btn edit-btn" bind:tap="onSwipeEdit" data-id="{{item._id}}">
+              <text class="swipe-action-icon">✎</text>
+              <text class="swipe-action-text">编辑</text>
+            </view>
+            <view class="swipe-action-btn delete-btn" bind:tap="onSwipeDelete" data-id="{{item._id}}">
+              <text class="swipe-action-icon">🗑</text>
+              <text class="swipe-action-text">删除</text>
+            </view>
           </view>
-          <text class="article-description">{{item.description || '暂无描述'}}</text>
-          <view class="article-meta">
-            <text class="meta-item">阅读量 {{item.views || '0'}}</text>
-            <text class="meta-item">预计阅读 {{item.readTime || '5'}}分钟</text>
-            <text class="meta-item">{{item.date || ''}}</text>
-          </view>
-          <view class="article-actions">
-            <t-button theme="default" size="small" bind:tap="deleteArticle" data-id="{{item._id}}" catchtap="deleteArticle" data-id="{{item._id}}">
-              删除
-            </t-button>
+          
+          <!-- 文章卡片 -->
+          <view
+            class="article-item {{swipedId === item._id ? 'swiped' : ''}}"
+            style="transform: translateX({{swipedId === item._id ? swipeDistance : 0}}rpx);"
+            bind:touchstart="onTouchStart"
+            bind:touchmove="onTouchMove"
+            bind:touchend="onTouchEnd"
+            data-id="{{item._id}}"
+            catch:tap="onItemTap"
+          >
+            <view class="article-content">
+              <view class="article-header">
+                <text class="article-title">{{item.title}}</text>
+                <t-tag theme="{{item.categoryTheme || 'default'}}" size="small" class="article-tag">
+                  {{item.categoryName}}
+                </t-tag>
+              </view>
+              <view class="article-meta">
+                <text class="meta-item">阅读量 {{item.views || '0'}}</text>
+                <text class="meta-divider">•</text>
+                <text class="meta-item">阅读时长 {{item.averageReadDuration ? item.averageReadDuration + '分钟' : '暂无'}}</text>
+                <text class="meta-divider">•</text>
+                <text class="meta-item">更新 {{item.updateTimeFormatted || item.date || '未知'}}</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -69,7 +75,17 @@
       <view wx:if="{{loading}}" class="loading-more">
         <t-loading theme="dots" size="40rpx" />
       </view>
+      
+      <!-- 底部安全区域占位 -->
+      <view class="safe-area-bottom"></view>
     </scroll-view>
+    
+    <!-- 底部新建文章按钮 -->
+    <view class="bottom-action-bar">
+      <t-button theme="primary" size="large" bind:tap="showCreateForm" class="create-button">
+        新建文章
+      </t-button>
+    </view>
   </view>
 
   <!-- 编辑/创建弹窗 -->
@@ -124,24 +140,27 @@
           </view>
 
           <view class="form-item">
-            <view class="form-label">分类 *</view>
-            <t-picker
+            <view class="form-label required">文章分类 *</view>
+            <picker
+              mode="selector"
               value="{{categoryIndex}}"
               range="{{categories}}"
               range-key="name"
               bind:change="onCategoryChange"
             >
-              <view class="picker-display">
-                {{formData.categoryName || '请选择分类'}}
+              <view class="picker-display {{formData.categoryName ? '' : 'placeholder'}}">
+                <text>{{formData.categoryName || '请选择文章分类'}}</text>
+                <text class="picker-arrow">›</text>
               </view>
-            </t-picker>
+            </picker>
           </view>
 
           <view class="form-item">
             <view class="form-label">发布日期</view>
             <picker mode="date" value="{{formData.date}}" bind:change="onDateChange">
-              <view class="picker-display">
-                {{formData.date || '请选择日期'}}
+              <view class="picker-display {{formData.date ? '' : 'placeholder'}}">
+                <text>{{formData.date || '请选择发布日期'}}</text>
+                <text class="picker-arrow">›</text>
               </view>
             </picker>
           </view>
@@ -160,33 +179,6 @@
             class="content-textarea"
           />
         </view>
-
-        <!-- 统计信息 -->
-        <view class="form-section">
-          <view class="section-title">统计信息</view>
-          
-          <view class="form-item">
-            <view class="form-label">阅读量</view>
-            <t-input
-              value="{{formData.views}}"
-              bind:change="onFormChange"
-              data-field="views"
-              placeholder="0"
-              type="number"
-            />
-          </view>
-
-          <view class="form-item">
-            <view class="form-label">预计阅读时间（分钟）</view>
-            <t-input
-              value="{{formData.readTime}}"
-              bind:change="onFormChange"
-              data-field="readTime"
-              placeholder="5"
-              type="number"
-            />
-          </view>
-        </view>
       </scroll-view>
 
       <!-- 操作按钮 -->
@@ -196,6 +188,8 @@
       </view>
     </view>
   </view>
+
+  <t-message id="t-message" />
 </view>
 
 

@@ -136,7 +136,7 @@ async function createArticle(event, wxContext) {
   }
 
   try {
-    const { title, description, category, categoryName, categoryTheme, content, views, readTime, date } = event
+    const { title, description, category, categoryName, categoryTheme, content, date } = event
     
     if (!title || !content) {
       return {
@@ -152,6 +152,10 @@ async function createArticle(event, wxContext) {
       .get()
     const operator = userResult.data[0]?.nickName || '管理员'
     
+    // 根据内容长度自动计算阅读时间（假设每分钟阅读300字）
+    const contentLength = content.length
+    const estimatedReadTime = Math.max(1, Math.ceil(contentLength / 300))
+    
     const articleData = {
       title,
       description: description || '',
@@ -159,8 +163,8 @@ async function createArticle(event, wxContext) {
       categoryName: categoryName || '全部',
       categoryTheme: categoryTheme || 'default',
       content,
-      views: views || '0',
-      readTime: readTime || '5',
+      views: '0', // 新建文章阅读量默认为0
+      readTime: estimatedReadTime.toString(), // 根据内容自动计算
       date: date || new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
       operator,
       createTime: db.serverDate(),
@@ -202,7 +206,7 @@ async function updateArticle(event, wxContext) {
   }
 
   try {
-    const { id, title, description, category, categoryName, categoryTheme, content, views, readTime, date } = event
+    const { id, title, description, category, categoryName, categoryTheme, content, date } = event
     
     if (!id) {
       return {
@@ -228,10 +232,16 @@ async function updateArticle(event, wxContext) {
     if (category !== undefined) updateData.category = category
     if (categoryName !== undefined) updateData.categoryName = categoryName
     if (categoryTheme !== undefined) updateData.categoryTheme = categoryTheme
-    if (content !== undefined) updateData.content = content
-    if (views !== undefined) updateData.views = views
-    if (readTime !== undefined) updateData.readTime = readTime
     if (date !== undefined) updateData.date = date
+    
+    // 如果内容更新了，自动重新计算阅读时间
+    if (content !== undefined) {
+      updateData.content = content
+      // 根据内容长度自动计算阅读时间（假设每分钟阅读300字）
+      const contentLength = content.length
+      const estimatedReadTime = Math.max(1, Math.ceil(contentLength / 300))
+      updateData.readTime = estimatedReadTime.toString()
+    }
     
     await db.collection(COLLECTIONS.KNOWLEDGE_ARTICLES)
       .doc(id)

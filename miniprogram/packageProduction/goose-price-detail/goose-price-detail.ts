@@ -119,9 +119,23 @@ Page({
         const avgHistory = recentHistory.map(h => ({ date: h.date, value: h.avg }))
         const trendInfo = this.calculateTrendFromHistory(avgHistory)
         
+        // 格式化价格显示：如果最低价和最高价一致，只显示一个数字
+        const formatPriceRange = (min: number, max: number, range: string) => {
+          if (min === max && min > 0) {
+            return min.toString()
+          }
+          if (range && range !== '--') {
+            return range
+          }
+          if (min > 0 && max > 0) {
+            return `${min}-${max}`
+          }
+          return '--'
+        }
+        
         meatBreedsMap[key] = {
           label: meatLabels[key],
-          range: latestBreed?.range || '--',
+          range: formatPriceRange(latestBreed?.min || 0, latestBreed?.max || 0, latestBreed?.range || '--'),
           min: latestBreed?.min || 0,
           max: latestBreed?.max || 0,
           trend: trendInfo.trend,
@@ -167,9 +181,23 @@ Page({
         const avgHistory = recentHistory.map(h => ({ date: h.date, value: h.avg }))
         const trendInfo = this.calculateTrendFromHistory(avgHistory)
         
+        // 格式化价格显示：如果最低价和最高价一致，只显示一个数字
+        const formatPriceRange = (min: number, max: number, range: string) => {
+          if (min === max && min > 0) {
+            return min.toString()
+          }
+          if (range && range !== '--') {
+            return range
+          }
+          if (min > 0 && max > 0) {
+            return `${min}-${max}`
+          }
+          return '--'
+        }
+        
         goslingBreedsMap[key] = {
           label: goslingLabels[key],
-          range: latestBreed?.range || '--',
+          range: formatPriceRange(latestBreed?.min || 0, latestBreed?.max || 0, latestBreed?.range || '--'),
           min: latestBreed?.min || 0,
           max: latestBreed?.max || 0,
           trend: trendInfo.trend,

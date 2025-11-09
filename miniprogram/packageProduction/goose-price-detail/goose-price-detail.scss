@@ -112,13 +112,16 @@
   justify-content: center;
   gap: 6rpx;
   width: 100%;
+  flex-wrap: nowrap;
 }
 
 .breed-card-price {
-  font-size: 56rpx;
+  font-size: 48rpx;
   font-weight: 800;
   color: #111827;
   text-align: center;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .breed-card-unit {
@@ -239,7 +242,7 @@
   }
 
   .breed-card-price {
-    font-size: 48rpx;
+    font-size: 42rpx;
   }
 
   .breed-card-unit {

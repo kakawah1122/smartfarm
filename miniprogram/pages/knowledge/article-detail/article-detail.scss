@@ -8,7 +8,9 @@
 
 .content-scroll {
   flex: 1;
+  height: 0; /* 让 flex 布局正确计算高度 */
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .article-wrapper {
@@ -105,6 +107,14 @@
 
 .empty-text {
   color: #999;
+}
+
+/* 底部安全区域占位 */
+.safe-area-bottom {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 40rpx;
+  flex-shrink: 0;
 }
 
 /* 主题配色 - 标题文字颜色（使用更深的颜色提高对比度和可读性） */

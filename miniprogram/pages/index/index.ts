@@ -533,15 +533,44 @@ Page({
         const goosePriceData: Record<string, any> = {}
         const displayBreeds: Array<{ key: string; label: string }> = []
 
+        // 格式化价格范围的辅助函数
+        const formatPriceRange = (min: number | null, max: number | null, range: string) => {
+          if (typeof min === 'number' && typeof max === 'number' && min > 0 && max > 0) {
+            if (min === max) {
+              return min.toString()
+            }
+            return `${min}-${max}`
+          }
+          // 如果 min/max 不可用，解析 range 字符串
+          if (range && range !== '--') {
+            const parts = range.split(/[-~－—到]/).map((p: string) => p.trim()).filter(Boolean)
+            if (parts.length >= 2) {
+              const parsedMin = parseFloat(parts[0])
+              const parsedMax = parseFloat(parts[1])
+              if (!isNaN(parsedMin) && !isNaN(parsedMax) && parsedMin > 0 && parsedMax > 0) {
+                if (Math.abs(parsedMin - parsedMax) < 0.01) {
+                  return parsedMin.toString()
+                }
+                return `${parsedMin}-${parsedMax}`
+              }
+            }
+          }
+          return range || '--'
+        }
+        
         // 处理鹅苗价格
         if (latestPrice.goslingBreeds && latestPrice.goslingBreeds.length > 0) {
           latestPrice.goslingBreeds.forEach((breed: any) => {
+            const min = typeof breed.min === 'number' ? breed.min : null
+            const max = typeof breed.max === 'number' ? breed.max : null
+            const range = breed.range || '--'
+            
             goosePriceData[breed.key] = {
               label: breed.label,
               gosling: {
-                range: breed.range || '--',
-                min: typeof breed.min === 'number' ? breed.min : null,
-                max: typeof breed.max === 'number' ? breed.max : null,
+                range: formatPriceRange(min, max, range),
+                min: min,
+                max: max,
                 unit: '元/羽'
               },
               adult: {
@@ -565,15 +594,44 @@ Page({
           const meat130 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat130')
           const meat120 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat120')
           
+          // 格式化价格范围的辅助函数
+          const formatRange = (min: number | null, max: number | null, range: string) => {
+            if (typeof min === 'number' && typeof max === 'number' && min > 0 && max > 0) {
+              if (min === max) {
+                return min.toString()
+              }
+              return `${min}-${max}`
+            }
+            // 如果 min/max 不可用，解析 range 字符串
+            if (range && range !== '--') {
+              const parts = range.split(/[-~－—到]/).map((p: string) => p.trim()).filter(Boolean)
+              if (parts.length >= 2) {
+                const parsedMin = parseFloat(parts[0])
+                const parsedMax = parseFloat(parts[1])
+                if (!isNaN(parsedMin) && !isNaN(parsedMax) && parsedMin > 0 && parsedMax > 0) {
+                  if (Math.abs(parsedMin - parsedMax) < 0.01) {
+                    return parsedMin.toString()
+                  }
+                  return `${parsedMin}-${parsedMax}`
+                }
+              }
+            }
+            return range || '--'
+          }
+          
           // 将肉鹅价格应用到所有品种
           Object.keys(goosePriceData).forEach((key) => {
             // 优先使用130日龄价格，否则使用120日龄价格
             const meatData = meat130 || meat120
             if (meatData) {
+              const min = typeof meatData.min === 'number' ? meatData.min : null
+              const max = typeof meatData.max === 'number' ? meatData.max : null
+              const range = meatData.range || '--'
+              
               goosePriceData[key].adult = {
-                range: meatData.range || '--',
-                min: typeof meatData.min === 'number' ? meatData.min : null,
-                max: typeof meatData.max === 'number' ? meatData.max : null,
+                range: formatRange(min, max, range),
+                min: min,
+                max: max,
                 unit: '元/斤'
               }
             }
@@ -687,12 +745,59 @@ Page({
     if (!breedData) {
       return
     }
+    
+    // 格式化价格显示：如果最低价和最高价一致，只显示一个数字
+    const formatPriceRange = (priceData: any) => {
+      if (!priceData) {
+        return '--'
+      }
+      
+      // 优先使用 min 和 max 数据
+      if (typeof priceData.min === 'number' && typeof priceData.max === 'number' && priceData.min > 0 && priceData.max > 0) {
+        if (priceData.min === priceData.max) {
+          return priceData.min.toString()
+        }
+        return `${priceData.min}-${priceData.max}`
+      }
+      
+      // 如果没有 min/max，解析 range 字符串
+      const rangeStr = priceData.range ? priceData.range.toString() : ''
+      if (!rangeStr || rangeStr === '--' || rangeStr === '') {
+        return '--'
+      }
+      
+      // 解析范围字符串（支持 "17-17"、"17~17"、"17-17.0" 等格式）
+      const parts = rangeStr.split(/[-~－—到]/).map((p: string) => p.trim()).filter(Boolean)
+      if (parts.length >= 2) {
+        const min = parseFloat(parts[0])
+        const max = parseFloat(parts[1])
+        if (!isNaN(min) && !isNaN(max) && min > 0 && max > 0) {
+          // 如果两个值相等（允许小数误差），只显示一个数字
+          if (Math.abs(min - max) < 0.01) {
+            return min.toString()
+          }
+          return `${min}-${max}`
+        }
+      }
+      
+      // 如果只有一个数字，直接返回
+      if (parts.length === 1) {
+        const singleValue = parseFloat(parts[0])
+        if (!isNaN(singleValue) && singleValue > 0) {
+          return singleValue.toString()
+        }
+      }
+      
+      // 如果无法解析，返回原始值
+      return rangeStr
+    }
+    
     this.setData({
       currentPriceBreed: breedKey,
       currentPriceBreedLabel: breedData.label,
       goosePrice: {
-        adultRange: breedData.adult?.range || '--',
-        goslingRange: breedData.gosling?.range || '--',
+        adultRange: formatPriceRange(breedData.adult),
+        goslingRange: formatPriceRange(breedData.gosling),
         adultUnit: breedData.adult?.unit || '元/斤',
         goslingUnit: breedData.gosling?.unit || '元/羽'
       }

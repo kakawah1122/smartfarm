@@ -5,7 +5,7 @@
     bind:back="goBack"
   />
 
-  <scroll-view class="content-scroll" scroll-y>
+  <scroll-view class="content-scroll" scroll-y enable-flex>
     <view wx:if="{{article}}" class="article-wrapper">
       <view class="article-hero {{themeClass}}">
         <text class="hero-title">{{article.title}}</text>
@@ -32,6 +32,9 @@
           </block>
         </view>
       </view>
+      
+      <!-- 底部安全区域占位 -->
+      <view class="safe-area-bottom"></view>
     </view>
 
     <view wx:else class="article-empty">
