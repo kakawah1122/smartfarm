@@ -1,5 +1,6 @@
 // diagnosis-history.ts - 诊断历史页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 interface DiagnosisRecord {
   _id: string
@@ -61,7 +62,7 @@ const pageConfig = {
     // 如果 batchId 是 'all' 或未传递，则查询所有批次的记录
     const batchId = options.batchId
     // 🔍 调试：输出接收到的参数
-    console.log('[诊断历史] onLoad 接收参数:', { batchId, options })
+    logger.log('[诊断历史] onLoad 接收参数:', { batchId, options })
     this.setData({ batchId: batchId || undefined })
     this.loadDiagnosisHistory()
   },
@@ -133,7 +134,7 @@ const pageConfig = {
         : undefined
 
       // 🔍 调试：输出查询参数
-      console.log('[诊断历史] 查询参数:', {
+      logger.log('[诊断历史] 查询参数:', {
         batchId: batchId || 'all (查询所有批次)',
         page: this.data.pagination.page,
         pageSize: this.data.pagination.pageSize,
@@ -197,7 +198,7 @@ const pageConfig = {
       }
 
       // 🔍 调试：输出查询结果
-      console.log('[诊断历史] 查询结果:', {
+      logger.log('[诊断历史] 查询结果:', {
         success: result.result?.success,
         recordCount: result.result?.data?.records?.length || 0,
         total: result.result?.data?.pagination?.total || 0
@@ -286,7 +287,7 @@ const pageConfig = {
             .filter((url: any) => url && typeof url === 'string')
         }
       } catch (urlError) {
-        console.warn('图片URL转换失败，使用原始URL:', urlError)
+        logger.warn('图片URL转换失败，使用原始URL:', urlError)
         // 继续使用已过滤的原始图片URL
       }
     }
@@ -460,7 +461,7 @@ const pageConfig = {
       
       // 检查日期是否有效
       if (isNaN(date.getTime())) {
-        console.warn('Invalid date string:', dateString)
+        logger.warn('Invalid date string:', dateString)
         return '时间格式错误'
       }
     } catch (e) {

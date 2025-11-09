@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger'
 Component({
   properties: {
     series: {
@@ -78,7 +79,7 @@ Component({
         .fields({ node: true, size: true })
         .exec((res) => {
           if (!res || !res[0]) {
-            console.warn('Canvas query failed, retrying...')
+            logger.warn('Canvas query failed, retrying...')
             setTimeout(() => {
               this.prepareCanvas(force)
             }, 100)
@@ -87,7 +88,7 @@ Component({
 
           const result = res[0]
           if (!result.node) {
-            console.warn('Canvas node not found')
+            logger.warn('Canvas node not found')
             return
           }
 

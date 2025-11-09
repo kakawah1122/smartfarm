@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger'
 // ai-finance-analysis.ts - AI财务分析组件
 Component({
   properties: {
@@ -67,7 +68,7 @@ Component({
         promise,
         new Promise<T>((resolve) => 
           setTimeout(() => {
-            console.warn(`[${dataSource}] 数据收集超时 (${timeoutMs}ms)，使用默认值`)
+            logger.warn(`[${dataSource}] 数据收集超时 (${timeoutMs}ms)，使用默认值`)
             resolve(fallback)
           }, timeoutMs)
         )
@@ -109,7 +110,7 @@ Component({
           return result.result.data
         }
       } catch (error) {
-        console.warn('获取生产数据失败:', error)
+        logger.warn('获取生产数据失败:', error)
       }
       return null
     },
@@ -133,7 +134,7 @@ Component({
           totalDeaths: (deathRecords.data || []).reduce((sum: number, r: any) => sum + (r.deathCount || 0), 0)
         }
       } catch (error) {
-        console.warn('获取健康数据失败:', error)
+        logger.warn('获取健康数据失败:', error)
       }
       return null
     },
@@ -153,7 +154,7 @@ Component({
           return Promise.resolve(cachedPrice.data)
         }
       } catch (error) {
-        console.warn('获取全局/缓存鹅价失败:', error)
+        logger.warn('获取全局/缓存鹅价失败:', error)
       }
       
       // 3. 如果没有数据，返回 null
@@ -772,7 +773,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
           return formatted
         }
       } catch (error) {
-        console.warn('JSON解析失败，使用文本格式:', error)
+        logger.warn('JSON解析失败，使用文本格式:', error)
       }
 
       // 如果JSON解析失败，返回文本格式

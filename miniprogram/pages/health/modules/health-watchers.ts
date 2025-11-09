@@ -1,3 +1,4 @@
+import { logger } from '../../../utils/logger'
 // health-watchers.ts - 健康数据实时监听模块
 
 export interface WatcherManager {
@@ -128,7 +129,7 @@ export function startDataWatcher(
               const isKnownError = knownErrors.some(keyword => errorMsg.includes(keyword))
               
               if (!isKnownError) {
-                console.warn(`${collectionName} watcher error:`, errorMsg)
+                logger.warn(`${collectionName} watcher error:`, errorMsg)
               }
               
               // 清除watcher引用和状态
@@ -157,7 +158,7 @@ export function startDataWatcher(
         const isKnownError = knownErrors.some(keyword => errorMsg.includes(keyword))
         
         if (!isKnownError) {
-          console.warn(`Failed to init ${collectionName} watcher:`, errorMsg)
+          logger.warn(`Failed to init ${collectionName} watcher:`, errorMsg)
         }
         
         manager[watcherKey] = null
@@ -254,7 +255,7 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
       
       if (!isNonFatalError(errorMsg)) {
         // 只记录未知的、可能真正有问题的错误
-        console.warn(`Error closing ${watcherName}:`, errorMsg)
+        logger.warn(`Error closing ${watcherName}:`, errorMsg)
       }
       // 对于已知的非致命错误，完全静默处理
     } finally {

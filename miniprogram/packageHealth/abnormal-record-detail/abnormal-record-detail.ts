@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger'
 // miniprogram/packageHealth/abnormal-record-detail/abnormal-record-detail.ts
 
 interface AbnormalRecord {
@@ -111,7 +112,7 @@ Page({
           } catch (urlError) {
             // 图片URL转换失败，静默处理
             // 继续使用已过滤的原始图片URL（不影响显示）
-            console.warn('图片URL转换失败，使用原始URL:', urlError)
+            logger.warn('图片URL转换失败，使用原始URL:', urlError)
           }
         }
 

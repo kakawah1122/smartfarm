@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger'
 // miniprogram/packageHealth/death-record-detail/death-record-detail.ts
 
 interface DeathRecord {
@@ -107,7 +108,7 @@ Page({
           } catch (urlError) {
             // 图片URL转换失败，静默处理
             // 继续使用已过滤的原始图片URL（不影响显示）
-            console.warn('剖检图片URL转换失败，使用原始URL:', urlError)
+            logger.warn('剖检图片URL转换失败，使用原始URL:', urlError)
           }
         }
 

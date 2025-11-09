@@ -1,6 +1,7 @@
 // pages/login/login.ts
 
 import { ROLES, getRoleName, getRoleColor } from '../../utils/role-config.js'
+import { logger } from '../../utils/logger'
 
 interface UserInfo {
   _id: string;
@@ -644,7 +645,7 @@ Page({
             })
           } catch (error) {
             // 捕获可能的异常（如微信开发者工具的内部错误）
-            console.warn('退出登录过程中出现警告（已忽略）:', error)
+            logger.warn('退出登录过程中出现警告（已忽略）:', error)
             
             // 即使出错，也确保显示成功提示
             wx.showToast({

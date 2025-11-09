@@ -13,10 +13,12 @@ const TARGET_DIR = path.join(__dirname, '../miniprogram')
 // 需要排除的文件/目录
 const EXCLUDE_PATTERNS = [
   'node_modules',
-  'miniprogram_npm',
-  'utils/logger.ts', // 日志工具本身不处理
-  '.ts',
-  '.js'
+  'miniprogram_npm'
+]
+
+// 需要排除的特定文件
+const EXCLUDE_FILES = [
+  'utils/logger.ts' // 日志工具本身不处理
 ]
 
 // 需要处理的文件扩展名
@@ -41,7 +43,11 @@ function getAllFiles(dirPath, arrayOfFiles = []) {
       // 只处理 TypeScript 和 JavaScript 文件
       const ext = path.extname(file)
       if (FILE_EXTENSIONS.includes(ext)) {
-        arrayOfFiles.push(filePath)
+        // 排除特定文件
+        const relativePath = path.relative(TARGET_DIR, filePath).replace(/\\/g, '/')
+        if (!EXCLUDE_FILES.some(excludeFile => relativePath.includes(excludeFile))) {
+          arrayOfFiles.push(filePath)
+        }
       }
     }
   })
@@ -63,19 +69,19 @@ function replaceConsoleLogs(filePath) {
 
   // 添加 logger 导入（如果还没有）
   if (!hasLoggerImport && (content.includes('console.log') || content.includes('console.warn'))) {
+    // 计算正确的相对路径
+    let loggerImportPath = './utils/logger'
+    const depth = filePath.split(path.sep).length - TARGET_DIR.split(path.sep).length - 1
+    if (depth > 0) {
+      loggerImportPath = '../'.repeat(depth) + 'utils/logger'
+    }
+    
     // 查找最后一个 import 语句的位置
     const importMatch = content.match(/^import\s+.*$/gm)
     if (importMatch) {
       const lastImport = importMatch[importMatch.length - 1]
       const lastImportIndex = content.lastIndexOf(lastImport)
       const insertIndex = lastImportIndex + lastImport.length
-      
-      // 计算正确的相对路径
-      let loggerImportPath = './utils/logger'
-      const depth = filePath.split(path.sep).length - TARGET_DIR.split(path.sep).length - 1
-      if (depth > 0) {
-        loggerImportPath = '../'.repeat(depth) + 'utils/logger'
-      }
       
       content = content.slice(0, insertIndex) + `\nimport { logger } from '${loggerImportPath}'` + content.slice(insertIndex)
       modified = true

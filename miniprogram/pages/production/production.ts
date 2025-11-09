@@ -1,6 +1,7 @@
 // production.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
+import { logger } from '../../utils/logger'
 
 const pageConfig = {
   data: {
@@ -639,7 +640,7 @@ const pageConfig = {
         const compressedPath = await this.compressImage(tempFilePath)
         tempFilePath = compressedPath
       } catch (compressError) {
-        console.warn('图片压缩失败，使用原图:', compressError)
+        logger.warn('图片压缩失败，使用原图:', compressError)
         // 压缩失败不影响主流程，继续使用原图
       }
       
@@ -690,7 +691,7 @@ const pageConfig = {
               resolve(res.tempFilePath)
             },
             fail: (error) => {
-              console.warn('图片压缩失败:', error)
+              logger.warn('图片压缩失败:', error)
               reject(error)
             }
           })

@@ -1,6 +1,7 @@
 // finance.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
+import { logger } from '../../utils/logger'
 
 const pageConfig = {
   options: {
@@ -1254,7 +1255,7 @@ const pageConfig = {
           }
           return null
         }).catch(err => {
-          console.warn('生产数据加载失败:', err)
+          logger.warn('生产数据加载失败:', err)
           return null
         }),
         
@@ -1271,7 +1272,7 @@ const pageConfig = {
             }
           })
           .catch(err => {
-            console.warn('健康数据加载失败:', err)
+            logger.warn('健康数据加载失败:', err)
             return null
           })
       ])
@@ -1284,7 +1285,7 @@ const pageConfig = {
           goosePriceData = app.globalData.goosePrice
         }
       } catch (e) {
-        console.warn('获取鹅价数据失败:', e)
+        logger.warn('获取鹅价数据失败:', e)
       }
       
       // 更新到页面数据

@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger'
 /**
  * 鹅价详情页
  * 
@@ -313,7 +314,7 @@ Page({
     const breedData = dataSource?.[breedKey]
     
     if (!breedData) {
-      console.warn('未找到品种数据:', breedKey, tabKey)
+      logger.warn('未找到品种数据:', breedKey, tabKey)
       return
     }
 
