@@ -206,7 +206,7 @@ Page({
           
           wx.showModal({
             title: '登录检查失败',
-            content: `云函数调用出错：${checkResult.result?.error || '未知错误'}\n\n调试信息：${JSON.stringify(checkResult.result?.debug, null, 2)}`,
+            content: `云函数调用出错：${checkResult.result?.error || '未知错误'}\n\n请检查：\n1. 网络连接是否正常\n2. 云函数是否正确部署`,
             showCancel: false,
             confirmText: '确定'
           })
