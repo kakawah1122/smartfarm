@@ -38,7 +38,7 @@ export const logger = {
    */
   log: (...args: any[]) => {
     if (getDebugEnabled()) {
-      logger.log('[DEBUG]', ...args)
+      console.log('[DEBUG]', ...args)
     }
   },
 
@@ -48,7 +48,7 @@ export const logger = {
    */
   warn: (...args: any[]) => {
     if (getDebugEnabled()) {
-      logger.warn('[WARN]', ...args)
+      console.warn('[WARN]', ...args)
     }
   },
 
