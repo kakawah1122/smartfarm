@@ -1,6 +1,6 @@
 <!--knowledge.wxml-->
 <view class="page-container">
-  <!-- 导航栏 -->
+  <!-- 新式导航栏 -->
   <navigation-bar 
     title="养鹅知识库"
     show-back="true"
@@ -9,7 +9,7 @@
     bind:back="goBack"
   />
   
-  <!-- 内容区域 -->
+  <!-- 内容区域 - 按照项目规范 -->
   <view class="content-wrapper">
     <!-- 搜索栏 -->
     <view class="search-section" wx:if="{{showSearchBar}}">
@@ -29,65 +29,45 @@
       </t-tabs>
     </view>
 
-    <!-- 滚动列表 -->
-    <scroll-view class="list-container" scroll-y>
-      <view class="articles-list">
-        <!-- 热门推荐 -->
-        <view wx:if="{{activeCategory === 'all' && hotArticle}}" class="card hot-card">
-          <view class="card-header">
-            <text class="card-title">本周热门</text>
-          </view>
-          <view class="hot-article" bind:tap="viewArticle" data-item="{{hotArticle}}">
-            <view class="hot-article-content">
-              <view class="hot-article-text">
-                <text class="hot-article-title">{{hotArticle.title}}</text>
-                <text class="hot-article-desc">{{hotArticle.description}}</text>
-              </view>
+    <!-- 滚动列表容器 - 按照项目规范 -->
+    <scroll-view class="scroll-container" scroll-y>
+      <!-- 文章列表 -->
+      <view wx:if="{{filteredArticles.length > 0}}" class="article-list">
+        <view wx:for="{{filteredArticles}}" 
+              wx:key="id"
+              class="article-item"
+              bindtap="viewArticle"
+              data-item="{{item}}">
+          <view class="article-item-top">
+            <view class="article-item-content">
+              <text class="article-title">{{item.title}}</text>
+              <text class="article-desc" wx:if="{{item.description}}">{{item.description}}</text>
             </view>
-            <view class="hot-article-meta">
-              <view class="meta-item">
-                <text class="meta-label">阅读量</text>
-                <text class="meta-value">{{hotArticle.views}}</text>
-              </view>
-              <text class="meta-dot">•</text>
-              <text class="meta-date">{{hotArticle.date}}</text>
+            <view class="article-meta">
+              <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
             </view>
           </view>
-        </view>
-
-        <!-- 文章列表 -->
-        <view class="card article-list-card">
-          <view class="card-header">
-            <text class="card-title">文章列表</text>
-          </view>
-          <view class="article-items">
-            <block wx:for="{{filteredArticles}}" wx:key="id">
-              <view class="article-item" bind:tap="viewArticle" data-item="{{item}}">
-                <view class="article-item-top">
-                  <text class="article-title">{{item.title}}</text>
-                  <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
-                </view>
-                <text class="article-desc">{{item.description}}</text>
-                <view class="article-item-footer">
-                  <view class="article-stats">
-                    <view class="stat-item">
-                      <text class="stat-label">阅读量</text>
-                      <text class="stat-text">{{item.views}}</text>
-                    </view>
-                    <view class="stat-item">
-                      <text class="stat-label">预计阅读</text>
-                      <text class="stat-text">{{item.readTime}}分钟</text>
-                    </view>
-                  </view>
-                  <text class="article-date">{{item.date}}</text>
-                </view>
+          <view class="article-item-footer">
+            <view class="article-stats">
+              <view class="stat-item">
+                <text class="stat-text">👁️ {{item.views || 0}}</text>
               </view>
-            </block>
+              <view class="stat-item">
+                <text class="stat-text">⏱️ {{item.readTime || 0}}分钟</text>
+              </view>
+            </view>
+            <text class="article-date">{{item.date}}</text>
           </view>
         </view>
       </view>
-      
-      <!-- 底部安全区域 -->
+
+      <!-- 空状态提示 -->
+      <view wx:else class="empty-state">
+        <text class="empty-text">暂无文章</text>
+        <text class="empty-desc">该分类下还没有文章，请稍后再来查看</text>
+      </view>
+
+      <!-- 底部安全区域占位 -->
       <view class="safe-area"></view>
     </scroll-view>
   </view>

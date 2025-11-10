@@ -12,7 +12,11 @@
 }
 
 .detail-content {
-  padding: 24rpx 32rpx 32rpx 32rpx;
+  padding: 0 16rpx 32rpx 16rpx; /* 缩小左右间距，让卡片更靠近屏幕边缘 */
+}
+
+.tabs-wrapper {
+  padding-top: 24rpx; /* 增加导航栏与tab栏之间的间距 */
 }
 
 .panel-content {
@@ -26,8 +30,8 @@
 .breed-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
-  padding: 8rpx;
+  gap: 16rpx;
+  padding: 0;
 }
 
 .breed-card {
@@ -210,7 +214,7 @@
 
 @media screen and (max-width: 750rpx) {
   .detail-content {
-    padding: 20rpx 20rpx 28rpx 20rpx;
+    padding: 0 12rpx 28rpx 12rpx; /* 小屏幕也缩小左右间距 */
   }
 
   .panel-content {
