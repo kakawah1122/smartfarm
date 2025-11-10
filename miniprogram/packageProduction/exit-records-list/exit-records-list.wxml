@@ -139,7 +139,7 @@
 </view>
 
 <!-- 出栏记录详情弹窗组件 -->
-<exit-record-detail
+<exit-record-detail-popup
   visible="{{showDetailPopup}}"
   record="{{selectedRecord}}"
   bind:close="closeDetailPopup"

@@ -1,11 +1,16 @@
 // index.ts - 清理版本，只使用和风天气地理编码
 import { checkPageAuth } from '../../utils/auth-guard'
-import { 
+import {
   TYPE_NAMES,
   isMedicationTask,
   isNutritionTask
 } from '../../utils/breeding-schedule'
 import CloudApi from '../../utils/cloud-api'
+import {
+  clearHomepageNeedSync,
+  isHomepageNeedSync,
+  markHomepageNeedSync
+} from '../../utils/global-sync'
 
 interface VaccineFormData {
   // 兽医信息
@@ -166,19 +171,16 @@ Page({
   checkAndSyncTaskStatus() {
     try {
       const globalData = getApp<any>().globalData || {}
-      
-      // 检查是否有需要同步的标识
-      if (globalData.needSyncHomepage && globalData.lastSyncTime) {
-        
+
+      if (isHomepageNeedSync()) {
         // 立即同步全局状态中的任务更新
         const taskStatusUpdates = globalData.taskStatusUpdates || {}
         Object.keys(taskStatusUpdates).forEach(taskId => {
           const updateInfo = taskStatusUpdates[taskId]
           this.syncSingleTaskStatus(taskId, updateInfo.completed)
         })
-        
-        // 清除同步标识
-        globalData.needSyncHomepage = false
+
+        clearHomepageNeedSync()
       }
     } catch (error: any) {
       // 检查同步状态失败
@@ -882,6 +884,8 @@ Page({
         completed,
         timestamp: Date.now()
       }
+
+      markHomepageNeedSync()
     } catch (error: any) {
       // 首页更新全局状态失败
     }

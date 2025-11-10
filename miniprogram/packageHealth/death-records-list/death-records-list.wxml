@@ -4,17 +4,18 @@
   <navigation-bar 
     title="死亡记录" 
     showBack="{{true}}" 
-    fallbackUrl="/pages/health/health" 
+    fallbackUrl="/pages/health/health"
+    bind:back="goBack"
   />
   
   <!-- 内容区域 -->
   <view class="content-wrapper">
-    <!-- 加载状态 -->
-    <view class="loading-container" wx:if="{{loading}}">
-      <t-loading theme="circular" size="60rpx" text="加载中..." />
-    </view>
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
 
-    <!-- 内容区 -->
+  <!-- 内容区 -->
     <scroll-view class="list-container" scroll-y wx:else>
     
     <!-- 统计卡片 -->
@@ -50,93 +51,60 @@
       />
     </view>
 
-      <!-- 统计卡片 -->
-      <view class="stats-section">
-        <view class="stats-grid">
-          <view class="stat-card danger">
-            <view class="stat-info">
-              <text class="stat-label">累计死亡</text>
-              <text class="stat-value">{{stats.totalDeath}}</text>
-            </view>
-          </view>
-
-          <view class="stat-card warning">
-            <view class="stat-info">
-              <text class="stat-label">总损失</text>
-              <text class="stat-value">¥{{stats.totalLoss}}</text>
-            </view>
-          </view>
-
-          <view class="stat-card primary">
-            <view class="stat-info">
-              <text class="stat-label">平均损失</text>
-              <text class="stat-value">¥{{stats.avgLossPerAnimal}}</text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 空状态 -->
-      <view class="empty-container" wx:if="{{records.length === 0}}">
-        <t-empty 
-          description="暂无死亡记录"
-        />
-      </view>
-
-      <!-- 记录列表 -->
-      <view class="records-list" wx:if="{{records.length > 0}}">
-        <view 
-          class="record-card"
-          wx:for="{{records}}"
-          wx:key="_id"
-          bind:tap="onRecordTap"
-          data-id="{{item._id}}"
-        >
-          <!-- 记录头部 -->
-          <view class="record-header">
-            <view class="record-title-row">
-              <text class="record-name">{{item.deathCause || '未知死因'}}</text>
-              <!-- 只在需要确认的情况下显示标签 -->
-              <t-tag 
-                wx:if="{{item.isCorrected || (!item.treatmentId && !item.isCorrected)}}"
-                theme="{{item.isCorrected ? 'success' : 'warning'}}" 
-                size="small" 
-                class="status-tag"
-              >
-                {{item.isCorrected ? '已修正' : '待确认'}}
-              </t-tag>
-            </view>
-          </view>
-
-          <!-- 记录内容 -->
-          <view class="record-content">
-            <!-- 批次信息 -->
-            <view class="info-row">
-              <text class="info-label">批次：</text>
-              <text class="info-value">{{item.batchNumber || item.batchId}}</text>
-            </view>
-
-            <!-- 死亡数量 -->
-            <view class="info-row">
-              <text class="info-label">死亡：</text>
-              <text class="info-value death-count">{{item.deathCount}} 只</text>
-            </view>
-
-            <!-- 损失金额 -->
-            <view class="info-row">
-              <text class="info-label">损失：</text>
-              <text class="info-value loss-value">¥{{item.formattedTotalLoss}}</text>
-            </view>
-
-            <!-- 底部：日期 + 操作员 -->
-            <view class="record-footer">
-              <text class="date-text">{{item.deathDate}}</text>
-              <text class="operator-text">{{item.operatorName}}</text>
-            </view>
+    <!-- 记录列表 -->
+    <view class="records-list" wx:if="{{records.length > 0}}">
+      <view 
+        class="record-card"
+        wx:for="{{records}}"
+        wx:key="_id"
+        bind:tap="onRecordTap"
+        data-id="{{item._id}}"
+      >
+        <!-- 记录头部 -->
+        <view class="record-header">
+          <view class="record-title-row">
+            <text class="record-name">{{item.deathCause || '未知死因'}}</text>
+            <!-- 只在需要确认的情况下显示标签 -->
+            <t-tag 
+              wx:if="{{item.isCorrected || (!item.treatmentId && !item.isCorrected)}}"
+              theme="{{item.isCorrected ? 'success' : 'warning'}}" 
+              size="small" 
+              class="status-tag"
+            >
+              {{item.isCorrected ? '已修正' : '待确认'}}
+            </t-tag>
           </view>
         </view>
+
+        <!-- 记录内容 -->
+        <view class="record-content">
+          <!-- 批次信息 -->
+          <view class="info-row">
+            <text class="info-label">批次：</text>
+            <text class="info-value">{{item.batchNumber || item.batchId}}</text>
+          </view>
+
+          <!-- 死亡数量 -->
+          <view class="info-row">
+            <text class="info-label">死亡：</text>
+            <text class="info-value death-count">{{item.deathCount}} 只</text>
+          </view>
+
+          <!-- 损失金额 -->
+          <view class="info-row">
+            <text class="info-label">损失：</text>
+            <text class="info-value loss-value">¥{{item.formattedTotalLoss}}</text>
+          </view>
+
+          <!-- 底部：日期 + 操作员 -->
+          <view class="record-footer">
+            <text class="date-text">{{item.deathDate}}</text>
+            <text class="operator-text">{{item.operatorName}}</text>
+        </view>
       </view>
-      
+    </view>
+  </view>
+
       <!-- 底部安全区域占位 -->
       <view class="safe-area"></view>
     </scroll-view>

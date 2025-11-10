@@ -11,16 +11,16 @@
   
   <!-- 内容区域 - 按照项目规范 -->
   <view class="content-wrapper">
-    <!-- 搜索栏 -->
-    <view class="search-section" wx:if="{{showSearchBar}}">
-      <view class="search-container">
-        <t-input placeholder="搜索养鹅知识..." 
-                 value="{{searchKeyword}}" 
-                 bind:change="onSearchInput"
-                 bind:enter="searchArticles"
-                 prefix-icon="search" />
-      </view>
+  <!-- 搜索栏 -->
+  <view class="search-section" wx:if="{{showSearchBar}}">
+    <view class="search-container">
+      <t-input placeholder="搜索养鹅知识..." 
+               value="{{searchKeyword}}" 
+               bind:change="onSearchInput"
+               bind:enter="searchArticles"
+               prefix-icon="search" />
     </view>
+  </view>
 
     <!-- 分类导航 -->
     <view class="category-nav">
@@ -31,20 +31,20 @@
 
     <!-- 滚动列表容器 - 按照项目规范 -->
     <scroll-view class="scroll-container" scroll-y>
-      <!-- 文章列表 -->
+    <!-- 文章列表 -->
       <view wx:if="{{filteredArticles.length > 0}}" class="article-list">
         <view wx:for="{{filteredArticles}}" 
-              wx:key="id"
+                wx:key="id"
               class="article-item"
               bindtap="viewArticle"
-              data-item="{{item}}">
+                data-item="{{item}}">
           <view class="article-item-top">
             <view class="article-item-content">
               <text class="article-title">{{item.title}}</text>
               <text class="article-desc" wx:if="{{item.description}}">{{item.description}}</text>
             </view>
             <view class="article-meta">
-              <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
+            <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
             </view>
           </view>
           <view class="article-item-footer">
@@ -54,8 +54,8 @@
               </view>
               <view class="stat-item">
                 <text class="stat-text">⏱️ {{item.readTime || 0}}分钟</text>
-              </view>
-            </view>
+    </view>
+      </view>
             <text class="article-date">{{item.date}}</text>
           </view>
         </view>
@@ -65,10 +65,10 @@
       <view wx:else class="empty-state">
         <text class="empty-text">暂无文章</text>
         <text class="empty-desc">该分类下还没有文章，请稍后再来查看</text>
-      </view>
+    </view>
 
       <!-- 底部安全区域占位 -->
       <view class="safe-area"></view>
-    </scroll-view>
+  </scroll-view>
   </view>
 </view>

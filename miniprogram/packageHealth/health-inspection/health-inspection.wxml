@@ -257,7 +257,7 @@
     </view>
 
     <!-- 底部安全区域 -->
-    <view style="height: 120rpx;"></view>
+    <view class="safe-area"></view>
   </view>
 
   <!-- 异常记录对话框 -->

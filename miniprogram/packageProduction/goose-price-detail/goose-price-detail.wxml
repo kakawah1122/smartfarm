@@ -26,10 +26,6 @@
                     <text class="breed-card-price">¥{{meatData[item.key].range}}</text>
                     <text class="breed-card-unit">/斤</text>
                   </view>
-                  <view class="breed-card-trend {{meatData[item.key].trend > 0 ? 'trend-up' : 'trend-down'}}">
-                    <text class="trend-icon">{{meatData[item.key].trend > 0 ? '↑' : '↓'}}</text>
-                    <text class="trend-value">{{meatData[item.key].change}}</text>
-                  </view>
                 </view>
               </view>
 
@@ -72,10 +68,6 @@
                   <view class="breed-card-body">
                     <text class="breed-card-price">¥{{goslingData[item.key].range}}</text>
                     <text class="breed-card-unit">/只</text>
-                  </view>
-                  <view class="breed-card-trend {{goslingData[item.key].trend > 0 ? 'trend-up' : 'trend-down'}}">
-                    <text class="trend-icon">{{goslingData[item.key].trend > 0 ? '↑' : '↓'}}</text>
-                    <text class="trend-value">{{goslingData[item.key].change}}</text>
                   </view>
                 </view>
               </view>

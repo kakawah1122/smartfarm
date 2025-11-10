@@ -150,9 +150,9 @@ const pageConfig = {
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: error.message || '加载文章列表失败'
-        })
+        offset: [20, 32],
+        content: error.message || '加载文章列表失败'
+      })
       }
     }
   },
@@ -252,9 +252,9 @@ const pageConfig = {
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: error.message || '加载文章失败'
-        })
+        offset: [20, 32],
+        content: error.message || '加载文章失败'
+      })
       }
     } finally {
       wx.hideLoading()
@@ -305,9 +305,9 @@ const pageConfig = {
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请输入要解析的文本'
-        })
+        offset: [20, 32],
+        content: '请输入要解析的文本'
+      })
       }
       return
     }
@@ -428,17 +428,17 @@ const pageConfig = {
       const message = this.getMessage()
       if (message) {
         message.success({
-          offset: [20, 32],
-          content: '文本解析成功，标题已自动提取，请检查并完善信息'
-        })
+        offset: [20, 32],
+        content: '文本解析成功，标题已自动提取，请检查并完善信息'
+      })
       }
     } catch (error: any) {
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: '解析失败：' + (error.message || '未知错误')
-        })
+        offset: [20, 32],
+        content: '解析失败：' + (error.message || '未知错误')
+      })
       }
     }
   },
@@ -452,9 +452,9 @@ const pageConfig = {
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请填写标题和内容'
-        })
+        offset: [20, 32],
+        content: '请填写标题和内容'
+      })
       }
       return
     }
@@ -464,9 +464,9 @@ const pageConfig = {
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请选择文章分类'
-        })
+        offset: [20, 32],
+        content: '请选择文章分类'
+      })
       }
       return
     }
@@ -489,9 +489,9 @@ const pageConfig = {
           const message = this.getMessage()
           if (message) {
             message.success({
-              offset: [20, 32],
-              content: '文章更新成功'
-            })
+            offset: [20, 32],
+            content: '文章更新成功'
+          })
           }
           this.closeForm()
           this.loadArticles(true)
@@ -514,9 +514,9 @@ const pageConfig = {
           const message = this.getMessage()
           if (message) {
             message.success({
-              offset: [20, 32],
-              content: '文章创建成功'
-            })
+            offset: [20, 32],
+            content: '文章创建成功'
+          })
           }
           this.closeForm()
           this.loadArticles(true)
@@ -532,9 +532,9 @@ const pageConfig = {
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: errorMessage
-        })
+        offset: [20, 32],
+        content: errorMessage
+      })
       }
     } finally {
       wx.hideLoading()
@@ -566,9 +566,9 @@ const pageConfig = {
               const message = this.getMessage()
               if (message) {
                 message.success({
-                  offset: [20, 32],
-                  content: '删除成功'
-                })
+                offset: [20, 32],
+                content: '删除成功'
+              })
               }
               // 关闭滑动状态
               this.setData({
@@ -583,9 +583,9 @@ const pageConfig = {
             const message = this.getMessage()
             if (message) {
               message.error({
-                offset: [20, 32],
-                content: error.message || '删除失败'
-              })
+              offset: [20, 32],
+              content: error.message || '删除失败'
+            })
             }
           } finally {
             wx.hideLoading()

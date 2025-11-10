@@ -407,9 +407,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请选择日期'
-        })
+        offset: [20, 32],
+        content: '请选择日期'
+      })
       }
       return
     }
@@ -467,9 +467,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请至少录入一组价格数据'
-        })
+        offset: [20, 32],
+        content: '请至少录入一组价格数据'
+      })
       }
       return
     }
@@ -525,10 +525,10 @@ Page({
         const message = this.getMessage()
         if (message) {
           message.success({
-            offset: [20, 32],
-            content: `已保存 ${manualData.date} 的价格数据`,
-            duration: 2000
-          })
+        offset: [20, 32],
+          content: `已保存 ${manualData.date} 的价格数据`,
+        duration: 2000
+      })
         }
       }
 
@@ -558,9 +558,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: '保存失败：' + error.message
-        })
+        offset: [20, 32],
+        content: '保存失败：' + error.message
+      })
       }
     }
   },
@@ -628,17 +628,17 @@ Page({
         const message = this.getMessage()
         if (message) {
           message.success({
-            offset: [20, 32],
-            content: '图片上传成功'
-          })
+          offset: [20, 32],
+          content: '图片上传成功'
+        })
         }
         } catch (error: any) {
           const message = this.getMessage()
           if (message) {
             message.error({
-              offset: [20, 32],
-              content: '图片上传失败，请重试'
-            })
+            offset: [20, 32],
+            content: '图片上传失败，请重试'
+          })
           }
         } finally {
           wx.hideLoading()
@@ -648,9 +648,9 @@ Page({
         const message = this.getMessage()
         if (message) {
           message.error({
-            offset: [20, 32],
-            content: '选择图片失败'
-          })
+          offset: [20, 32],
+          content: '选择图片失败'
+        })
         }
       }
     })
@@ -769,9 +769,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请先上传截图'
-        })
+        offset: [20, 32],
+        content: '请先上传截图'
+      })
       }
       return
     }
@@ -824,10 +824,10 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: error.message || 'AI识别失败，请重试或使用手动录入',
-          duration: 3000
-        })
+        offset: [20, 32],
+        content: error.message || 'AI识别失败，请重试或使用手动录入',
+        duration: 3000
+      })
       }
     }
   },
@@ -847,9 +847,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请输入文章内容'
-        })
+        offset: [20, 32],
+        content: '请输入文章内容'
+      })
       }
       return
     }
@@ -869,9 +869,9 @@ Page({
         const message = this.getMessage()
         if (message) {
           message.success({
-            offset: [20, 32],
-            content: '解析成功，请查看预览数据'
-          })
+          offset: [20, 32],
+          content: '解析成功，请查看预览数据'
+        })
         }
       } else {
         throw new Error(result.message || '解析失败')
@@ -880,9 +880,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: error.message || '解析失败，请检查文本格式'
-        })
+        offset: [20, 32],
+        content: error.message || '解析失败，请检查文本格式'
+      })
       }
 
       this.setData({ parsing: false })
@@ -1030,9 +1030,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请输入文章链接'
-        })
+        offset: [20, 32],
+        content: '请输入文章链接'
+      })
       }
       return
     }
@@ -1042,9 +1042,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.warning({
-          offset: [20, 32],
-          content: '请输入有效的微信公众号文章链接'
-        })
+        offset: [20, 32],
+        content: '请输入有效的微信公众号文章链接'
+      })
       }
       return
     }
@@ -1068,9 +1068,9 @@ Page({
         const message = this.getMessage()
         if (message) {
           message.success({
-            offset: [20, 32],
-            content: '解析成功，请查看预览数据'
-          })
+          offset: [20, 32],
+          content: '解析成功，请查看预览数据'
+        })
         }
       } else {
         throw new Error(res.message || '解析失败')
@@ -1079,9 +1079,9 @@ Page({
       const message = this.getMessage()
       if (message) {
         message.error({
-          offset: [20, 32],
-          content: error.message || '解析失败，请检查链接是否正确'
-        })
+        offset: [20, 32],
+        content: error.message || '解析失败，请检查链接是否正确'
+      })
       }
 
       this.setData({ parsing: false })

@@ -16,7 +16,8 @@
     "t-row": "tdesign-miniprogram/row/row",
     "t-col": "tdesign-miniprogram/col/col",
     "t-image": "tdesign-miniprogram/image/image",
-    "t-empty": "tdesign-miniprogram/empty/empty"
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "diagnosis-detail-popup": "../../components/diagnosis-detail-popup/diagnosis-detail-popup"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

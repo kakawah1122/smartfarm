@@ -8,17 +8,6 @@
     bind:back="goBack"
   />
 
-  <!-- 搜索栏 -->
-  <view class="search-section">
-    <t-search
-      value="{{searchKeyword}}"
-      placeholder="搜索姓名、手机号或邀请码"
-      bind:change="onSearchChange"
-      bind:submit="onSearch"
-      bind:clear="onSearchClear"
-    />
-  </view>
-
   <!-- 统计卡片 -->
   <view class="stats-section">
     <view class="stats-grid">
@@ -102,11 +91,21 @@
     <t-button
       theme="primary"
       size="large"
-      icon="add"
       bind:tap="showCreateDialog"
       class="create-invite-btn"
     >
       创建邀请
+    </t-button>
+    
+    <!-- 临时的超级管理员设置按钮（调试用） -->
+    <t-button
+      wx:if="{{!userInfo.isSuper && userInfo.role === 'admin'}}"
+      theme="warning"
+      size="medium"
+      bind:tap="manualSetSuperAdmin"
+      class="temp-super-admin-btn btn-spacing"
+    >
+      设置超级管理员
     </t-button>
   </view>
 </view>
@@ -200,6 +199,7 @@
       <!-- 表单部分（未生成邀请码时显示） -->
       <view wx:if="{{!isInviteGenerated}}">
         <view class="form-tip">
+          <text class="tip-icon">💡</text>
           <text class="tip-text">生成邀请码后，被邀请人可使用邀请码自行注册并填写个人信息</text>
         </view>
         
@@ -248,6 +248,7 @@
       <!-- 邀请码生成成功显示部分 -->
       <view wx:if="{{isInviteGenerated}}" class="invite-success-content">
         <view class="success-tip">
+          <text class="success-icon">🎉</text>
           <text class="success-text">邀请码生成成功！</text>
         </view>
         
@@ -255,6 +256,7 @@
           <text class="invite-code-label">邀请码</text>
           <view class="invite-code-box" bind:tap="copyInviteCode">
             <text class="invite-code-value">{{generatedInviteCode}}</text>
+            <text class="copy-hint">点击复制</text>
           </view>
         </view>
         
@@ -269,12 +271,8 @@
     </view>
     
     <view class="create-dialog-footer">
-      <button 
-        wx:if="{{!isInviteGenerated}}" 
-        class="create-btn-cancel" 
-        bind:tap="closeCreateDialog"
-      >
-        取消
+      <button class="create-btn-cancel" bind:tap="closeCreateDialog">
+        {{isInviteGenerated ? '关闭' : '取消'}}
       </button>
       <button 
         wx:if="{{!isInviteGenerated}}" 
@@ -285,10 +283,10 @@
       </button>
       <button 
         wx:if="{{isInviteGenerated}}" 
-        class="create-btn-copy create-btn-full" 
+        class="create-btn-copy" 
         bind:tap="copyInviteCode"
       >
-        复制邀请码
+        📋 复制邀请码
       </button>
     </view>
   </view>

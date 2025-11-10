@@ -1,7 +1,8 @@
 {
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "entry-record-detail": "/components/entry-record-detail-popup/entry-record-detail-popup",
+    "bottom-popup": "/components/bottom-popup/bottom-popup",
+    "entry-record-detail-popup": "/components/entry-record-detail-popup/entry-record-detail-popup",
     "t-loading": "tdesign-miniprogram/loading/loading",
     "t-empty": "tdesign-miniprogram/empty/empty",
     "t-button": "tdesign-miniprogram/button/button",

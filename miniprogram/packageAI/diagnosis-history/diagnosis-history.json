@@ -10,7 +10,8 @@
     "t-divider": "tdesign-miniprogram/divider/divider",
     "t-tabs": "tdesign-miniprogram/tabs/tabs",
     "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
-    "t-image": "tdesign-miniprogram/image/image"
+    "t-image": "tdesign-miniprogram/image/image",
+    "diagnosis-detail-popup": "/components/diagnosis-detail-popup/diagnosis-detail-popup"
   },
   "navigationStyle": "custom",
   "navigationBarTitleText": "诊断历史",

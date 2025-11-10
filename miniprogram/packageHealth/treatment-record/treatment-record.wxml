@@ -269,25 +269,24 @@
       
       <!-- 已选择的药品列表 -->
       <view class="selected-medications-list" wx:if="{{initialMedications.length > 0}}">
-        <view class="medication-card-new" style="padding: 32rpx; margin-bottom: 16rpx; background: #fff; border-radius: 16rpx; border: 2rpx solid #e8eaed;" wx:for="{{initialMedications}}" wx:key="materialId">
+        <view class="medication-card-new" wx:for="{{initialMedications}}" wx:key="materialId">
           <!-- 头部：药品名称和删除按钮 -->
-          <view class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; padding-bottom: 16rpx; border-bottom: 2rpx solid #f5f6f7;">
-            <view class="drug-info" style="flex: 1;">
-              <text class="drug-name" style="font-size: 30rpx; font-weight: normal; color: #1a1a1a; display: block;">{{item.materialName}}</text>
+          <view class="card-header">
+            <view class="drug-info">
+              <text class="drug-name">{{item.materialName}}</text>
             </view>
-            <view class="delete-icon" style="width: 56rpx; height: 56rpx; display: flex; align-items: center; justify-content: center; background: #fff1f0; border-radius: 50%; margin-left: 16rpx;" bind:tap="removeInitialMedication" data-index="{{index}}">
-              <text class="icon-close" style="font-size: 56rpx; color: #ff4d4f; line-height: 1; font-weight: 300;">×</text>
+            <view class="delete-icon" bind:tap="removeInitialMedication" data-index="{{index}}">
+              <text class="icon-close">×</text>
             </view>
           </view>
           
           <!-- 药品信息输入 -->
           <view class="medication-inputs-simple">
             <!-- 数量行 -->
-            <view class="input-row-simple" style="display: flex; align-items: center; margin-bottom: 20rpx;">
-              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">数量</text>
+            <view class="input-row-simple">
+              <text class="label-simple">数量</text>
               <input
                 class="input-field-simple"
-                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
                 value="{{item.quantity}}"
                 placeholder="请输入数量（库存: {{item.currentStock}}{{item.unit}}）"
                 type="digit"
@@ -295,15 +294,14 @@
                 data-field="quantity"
                 bind:input="onInitialMedicationInput"
               />
-              <text class="unit-simple" style="font-size: 26rpx; color: #646566; margin-left: 16rpx;">{{item.unit}}</text>
+              <text class="unit-simple">{{item.unit}}</text>
             </view>
             
             <!-- 用法行 -->
-            <view class="input-row-simple" style="display: flex; align-items: center;">
-              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">用法</text>
+            <view class="input-row-simple">
+              <text class="label-simple">用法</text>
               <input
                 class="input-field-simple full-width"
-                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
                 value="{{item.dosage}}"
                 placeholder="如：10mg/kg 每日2次"
                 data-index="{{index}}"
@@ -471,25 +469,24 @@
         </view>
         
         <!-- ✅ 已选择的药品列表（统一样式） -->
-        <view class="medication-card-new" style="padding: 32rpx; margin-bottom: 16rpx; background: #fff; border-radius: 16rpx; border: 2rpx solid #e8eaed;" wx:for="{{selectedMedications}}" wx:key="materialId">
+        <view class="medication-card-new" wx:for="{{selectedMedications}}" wx:key="materialId">
           <!-- 头部：药品名称和删除按钮 -->
-          <view class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; padding-bottom: 16rpx; border-bottom: 2rpx solid #f5f6f7;">
-            <view class="drug-info" style="flex: 1;">
-              <text class="drug-name" style="font-size: 30rpx; font-weight: normal; color: #1a1a1a; display: block;">{{item.materialName}}</text>
+          <view class="card-header">
+            <view class="drug-info">
+              <text class="drug-name">{{item.materialName}}</text>
             </view>
-            <view class="delete-icon" style="width: 56rpx; height: 56rpx; display: flex; align-items: center; justify-content: center; background: #fff1f0; border-radius: 50%; margin-left: 16rpx;" bind:tap="removeMedication" data-index="{{index}}">
-              <text class="icon-close" style="font-size: 56rpx; color: #ff4d4f; line-height: 1; font-weight: 300;">×</text>
+            <view class="delete-icon" bind:tap="removeMedication" data-index="{{index}}">
+              <text class="icon-close">×</text>
             </view>
           </view>
 
           <!-- 药品信息输入 -->
           <view class="medication-inputs-simple">
             <!-- 数量行 -->
-            <view class="input-row-simple" style="display: flex; align-items: center; margin-bottom: 20rpx;">
-              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">数量</text>
+            <view class="input-row-simple">
+              <text class="label-simple">数量</text>
               <input
                 class="input-field-simple"
-                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
                 value="{{item.quantity}}"
                 placeholder="请输入数量（库存: {{item.currentStock}}{{item.unit}}）"
                 type="digit"
@@ -497,15 +494,14 @@
                 data-field="quantity"
                 bind:input="onSelectedMedicationInput"
               />
-              <text class="unit-simple" style="font-size: 26rpx; color: #646566; margin-left: 16rpx;">{{item.unit}}</text>
+              <text class="unit-simple">{{item.unit}}</text>
             </view>
 
             <!-- 用法行 -->
-            <view class="input-row-simple" style="display: flex; align-items: center;">
-              <text class="label-simple" style="width: 90rpx; font-size: 28rpx; font-weight: normal; color: #1a1a1a; margin-right: 16rpx;">用法</text>
+            <view class="input-row-simple">
+              <text class="label-simple">用法</text>
               <input
                 class="input-field-simple full-width"
-                style="flex: 1; height: 70rpx; padding: 0 24rpx; font-size: 28rpx; color: #1a1a1a; background: #f7f8fa; border-radius: 12rpx; border: 2rpx solid #e8eaed;"
                 value="{{item.dosage}}"
                 placeholder="如：10mg/kg 每日2次"
                 data-index="{{index}}"

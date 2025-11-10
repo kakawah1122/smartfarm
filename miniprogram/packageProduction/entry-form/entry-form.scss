@@ -84,17 +84,14 @@
 }
 
 /* 必填标识 */
-.item-label.required::before {
-  content: '*';
+.item-label.required::after {
+  content: ' *';
   color: var(--td-error-color, #d54941);
-  margin-right: 8rpx;
+  margin-left: 4rpx;
   font-weight: bold;
 }
 
-/* 非必填字段对齐样式 */
-.item-label.non-required {
-  padding-left: 24rpx; /* 与必填字段的 * 号 + margin-right 8rpx + 字符宽度对齐 */
-}
+/* 非必填字段对齐样式 - 星号在标签后面，无需特殊对齐 */
 
 /* 输入框容器 */
 .item-input {

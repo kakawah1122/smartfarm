@@ -88,12 +88,9 @@
       <view class="section-title">用药记录</view>
       <view class="medication-list">
         <view class="medication-item" wx:for="{{record.medications}}" wx:key="index">
-          <view class="med-icon">💊</view>
-          <view class="med-info">
-            <text class="med-name">{{item.name}}</text>
-            <text class="med-spec">{{item.quantity}}{{item.unit}}</text>
-            <text class="med-dosage" wx:if="{{item.dosage}}">{{item.dosage}}</text>
-          </view>
+          <text class="med-name">{{item.name}}</text>
+          <text class="med-dosage" wx:if="{{item.dosage}}">{{item.dosage}}</text>
+          <text class="med-spec">{{item.quantity}}{{item.unit}}</text>
         </view>
       </view>
     </view>

@@ -196,7 +196,7 @@
               wx:for="{{diagnosisResult.biosecurityAdvice}}" 
               wx:key="index"
             >
-              <view class="list-dot" style="background: #e34d59;"></view>
+              <view class="list-dot list-dot-danger"></view>
               <text class="list-text">{{item}}</text>
             </view>
           </view>

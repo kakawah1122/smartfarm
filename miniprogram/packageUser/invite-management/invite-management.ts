@@ -17,8 +17,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     page: 1,
     pageSize: 20,
     
-    // 搜索和筛选
-    searchKeyword: '',
+    // 筛选
     activeTab: 'all',
     
     // 统计数据
@@ -231,7 +230,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           page: currentPage,
           pageSize: this.data.pageSize,
           status: status,
-          searchKeyword: this.data.searchKeyword || null,
+          searchKeyword: null,
           sortBy: 'createTime',
           sortOrder: 'desc'
         }
@@ -273,11 +272,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     }
-  },
-
-  // 搜索邀请
-  async searchInvites() {
-    this.loadInviteList()
   },
 
   // 创建邀请码
@@ -470,23 +464,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   onTabChange(e: any) {
     this.setData({
       activeTab: e.detail.value
-    })
-    this.loadInviteList()
-  },
-
-  onSearchChange(e: any) {
-    this.setData({
-      searchKeyword: e.detail.value
-    })
-  },
-
-  onSearch() {
-    this.searchInvites()
-  },
-
-  onSearchClear() {
-    this.setData({
-      searchKeyword: ''
     })
     this.loadInviteList()
   },

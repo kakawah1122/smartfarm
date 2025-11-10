@@ -150,7 +150,7 @@
   </view>
 
   <!-- 物料记录详情弹窗组件 -->
-  <material-record-detail
+  <material-record-detail-popup
     visible="{{showDetailPopup}}"
     record="{{selectedRecord}}"
     bind:close="closeDetailPopup"

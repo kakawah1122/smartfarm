@@ -37,6 +37,8 @@ interface TreatmentRecord {
   updatedAt: string
 }
 
+import { markHomepageNeedSync } from '../../utils/global-sync'
+
 Page({
   data: {
     loading: true,
@@ -169,6 +171,7 @@ Page({
             // 无法通知上一页，使用降级方案
             // 降级方案
             wx.setStorageSync('health_page_need_refresh', true)
+            markHomepageNeedSync()
           }
         }
       }

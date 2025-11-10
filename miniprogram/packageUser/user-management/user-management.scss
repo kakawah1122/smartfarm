@@ -32,6 +32,13 @@ $spacing-xl: 40rpx;
   padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
 }
 
+/* 搜索区域 */
+.search-section {
+  padding: $spacing-s $spacing-s 0;
+  background: $bg-color-container;
+  border-bottom: 1rpx solid $border-color-light;
+}
+
 /* 统计卡片 */
 .stats-section {
   margin: $spacing-s;
@@ -92,77 +99,30 @@ $spacing-xl: 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-top: 200rpx;
-  padding-bottom: 80rpx;
-  padding-left: $spacing-l;
-  padding-right: $spacing-l;
-  min-height: 400rpx;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 120rpx $spacing-l;
 }
 
 /* 用户列表 */
 .user-list {
   margin: 0 $spacing-s $spacing-s;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.user-actions {
   display: flex;
   flex-direction: column;
-  gap: $spacing-s;
+  gap: $spacing-xs;
+  align-items: flex-end;
 }
 
-.user-card {
-  background: $bg-color-container;
-  border-radius: 16rpx;
-  padding: $spacing-l;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  
-  &-hover {
-    transform: scale(0.98);
-    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
-  }
-}
-
-.user-card-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: $spacing-s;
-}
-
-.user-info {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  min-width: 0;
-}
-
-.user-nickname {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: $text-primary;
-  line-height: 1.4;
-  flex-shrink: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-role-badge {
-  font-size: 20rpx;
-  color: #0052d9;
-  background: rgba(0, 82, 217, 0.08);
-  padding: 4rpx 10rpx;
-  border-radius: 4rpx;
-  flex-shrink: 0;
-  font-weight: 500;
-}
-
-.user-farm {
-  font-size: 26rpx;
-  color: $text-secondary;
-  line-height: 1.4;
-  flex-shrink: 0;
-  text-align: right;
+.role-tag,
+.status-tag {
+  min-width: 80rpx;
+  text-align: center;
 }
 
 /* 加载更多 */
@@ -170,347 +130,18 @@ $spacing-xl: 40rpx;
   margin: $spacing-l $spacing-s;
 }
 
-/* ===== 用户详情底部弹窗样式 ===== */
-.user-detail-popup {
-  background: $bg-color-container;
-  border-radius: 32rpx 32rpx 0 0;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 滚动内容区 */
-.popup-content {
-  flex: 1;
-  max-height: calc(85vh - 120rpx - 180rpx);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 弹窗头部 */
-.popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: $spacing-l $spacing-l $spacing-m;
-  border-bottom: 1rpx solid $border-color-light;
-  flex-shrink: 0;
-  background: $bg-color-container;
-  z-index: 10;
-}
-
-.header-title {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.header-close {
-  width: 64rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: $bg-color-page;
-  flex-shrink: 0;
-  
-  .close-icon {
-    font-size: 40rpx;
-    color: #666666;
-    line-height: 1;
-    font-weight: 300;
-  }
-  
-  &:active {
-    background: $border-color-light;
-  }
-}
-
-/* 基本信息区 */
-.detail-basic {
-  padding: $spacing-l;
-  text-align: center;
-  border-bottom: 1rpx solid $border-color-light;
-}
-
-.basic-name {
-  font-size: 40rpx;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: $spacing-xs;
-}
-
-.basic-meta {
-  font-size: 26rpx;
-  color: $text-secondary;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-xs;
-}
-
-.meta-item {
-  line-height: 1.4;
-}
-
-.meta-divider {
-  color: $border-color;
-}
-
-/* 详情分组 */
-.detail-section {
-  padding: $spacing-l;
-  border-bottom: 1rpx solid $border-color-light;
-}
-
-.section-header {
-  margin-bottom: $spacing-m;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.section-subtitle {
-  font-size: 24rpx;
-  color: $text-placeholder;
-  line-height: 1.4;
-}
-
-.role-badge {
-  padding: 6rpx 16rpx;
-  border-radius: 6rpx;
-  font-size: 24rpx;
-  font-weight: 500;
-  
-  &.role-super-admin {
-    background: rgba(213, 73, 65, 0.1);
-    color: $error-color;
-  }
-  
-  &.role-manager {
-    background: rgba(237, 123, 47, 0.1);
-    color: $warning-color;
-  }
-  
-  &.role-employee {
-    background: rgba(0, 0, 0, 0.06);
-    color: $text-secondary;
-  }
-  
-  &.role-veterinarian {
-    background: rgba(0, 168, 112, 0.1);
-    color: $success-color;
-  }
-  
-  &.role-admin {
-    background: rgba(237, 123, 47, 0.1);
-    color: $warning-color;
-  }
-}
-
-/* 角色与权限卡片（整合后的统一卡片） */
-.role-permission-card {
-  background: $bg-color-page;
-  border-radius: 16rpx;
-  padding: $spacing-m;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-}
-
-/* 角色选择器区域 */
-.role-selector-section {
-  // 无需额外的 padding，继承父容器
-}
-
-.selector-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-m;
-}
-
-.selector-title {
-  font-size: 28rpx;
-  color: $text-primary;
-  font-weight: 600;
-}
-
-.change-indicator {
-  font-size: 22rpx;
-  color: $primary-color;
-  background: rgba(0, 82, 217, 0.1);
-  padding: 4rpx 12rpx;
-  border-radius: 6rpx;
-  font-weight: 500;
-}
-
-.selector-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: $spacing-m;
-  background: $bg-color-container;
-  border-radius: 12rpx;
-  border: 2rpx solid $border-color-light;
-  transition: all 0.3s;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-  
-  &:active {
-    border-color: $primary-color;
-    background: rgba(0, 82, 217, 0.05);
-    transform: scale(0.98);
-  }
-}
-
-.selector-text {
-  font-size: 28rpx;
-  color: $text-primary;
-  font-weight: 500;
-}
-
-/* 卡片内分隔线 */
-.card-divider {
-  height: 1rpx;
-  background: $border-color-light;
-  margin: $spacing-l 0;
-}
-
-/* 权限区域 */
-.permissions-section {
-  // 无需额外的背景，统一在卡片背景下
-}
-
-.permissions-header {
-  margin-bottom: $spacing-m;
-}
-
-.permissions-title {
-  font-size: 28rpx;
-  color: $text-primary;
-  font-weight: 600;
-}
-
-.permissions-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-xs;
-}
-
-.permission-tag {
-  display: inline-block;
-  padding: 10rpx 16rpx;
-  background: rgba(0, 168, 112, 0.08);
-  color: $success-color;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  font-weight: 500;
-  border: 1rpx solid rgba(0, 168, 112, 0.15);
-  line-height: 1.4;
-}
-
-.no-permissions {
-  padding: $spacing-m 0;
-  text-align: center;
-  
-  text {
-    font-size: 24rpx;
-    color: $text-placeholder;
-  }
-}
-
-/* 账户状态卡片 */
-.account-status-card {
-  background: $bg-color-page;
-  border-radius: 16rpx;
-  padding: $spacing-m;
-}
-
-.status-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: $spacing-m 0;
-  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-  
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.detail-label {
-  font-size: 28rpx;
-  color: $text-secondary;
-  line-height: 1.4;
-  font-weight: 500;
-}
-
-.detail-value {
-  font-size: 28rpx;
-  color: $text-primary;
-  font-weight: 500;
-  line-height: 1.4;
-  text-align: right;
-  max-width: 60%;
-  word-break: break-all;
-  
-  &.status-active {
-    color: $success-color;
-    font-weight: 600;
-  }
-  
-  &.status-inactive {
-    color: $error-color;
-    font-weight: 600;
-  }
-}
-
-/* 固定底部操作按钮 */
-.detail-actions-fixed {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
+/* 操作按钮 */
+.action-section {
+  padding: $spacing-l $spacing-s;
   background: $bg-color-container;
   border-top: 1rpx solid $border-color-light;
-  padding: $spacing-m $spacing-l;
-  padding-bottom: calc($spacing-l + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
-  z-index: 10;
 }
 
-.actions-container {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-s;
-}
-
-.action-btn-save,
-.action-btn-toggle {
+.export-btn {
   height: 88rpx !important;
-  border-radius: 16rpx !important;
-  font-size: 30rpx !important;
+  border-radius: 12rpx !important;
+  font-size: 32rpx !important;
   font-weight: 500 !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-xs;
-  
-  &[disabled] {
-    opacity: 0.4;
-  }
 }
 
 /* 用户详情弹窗 */
@@ -713,8 +344,28 @@ $spacing-xl: 40rpx;
   }
 }
 
+/* 搜索框样式覆盖 */
+.t-search {
+  &__input-container {
+    border-radius: 12rpx !important;
+    background: $bg-color-page !important;
+    border: 1rpx solid $border-color-light !important;
+  }
+  
+  &__input {
+    font-size: 28rpx !important;
+    color: $text-primary !important;
+    
+    &::placeholder {
+      color: $text-placeholder !important;
+    }
+  }
+}
+
+
 /* 动画效果 */
 .stats-section,
+.user-list,
 .filter-section {
   transition: all 0.3s ease;
 
@@ -723,9 +374,11 @@ $spacing-xl: 40rpx;
   }
 }
 
-.user-card {
+.t-cell {
+  transition: background-color 0.2s ease;
+  
   &:active {
-    background: rgba(0, 0, 0, 0.02);
+    background: rgba(0, 0, 0, 0.02) !important;
   }
 }
 

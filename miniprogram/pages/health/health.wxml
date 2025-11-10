@@ -513,7 +513,7 @@
     </view>
 
     <!-- 底部安全区域 -->
-    <view style="height: 120rpx;"></view>
+    <view class="safe-area"></view>
   </view>
 
   <!-- 详情弹窗 -->
@@ -533,156 +533,12 @@
     </view>
   </bottom-popup>
 
-  <!-- ✅ 诊断记录详情弹窗（复用 diagnosis-history 的弹窗结构） -->
-  <bottom-popup
+  <!-- ✅ 诊断记录详情弹窗（使用共用组件） -->
+  <diagnosis-detail-popup
     visible="{{showDiagnosisDetailPopup}}"
-    title="诊断详情"
-    show-close="{{true}}"
+    record="{{selectedDiagnosisRecord}}"
     bind:close="onCloseDiagnosisDetail"
-  >
-    <view wx:if="{{selectedDiagnosisRecord}}" class="diagnosis-detail-content">
-      <!-- AI诊断结果 -->
-      <view class="detail-section">
-        <view class="detail-section-title">
-          <text>AI诊断结果</text>
-          <t-tag wx:if="{{!selectedDiagnosisRecord.isCorrected}}" theme="primary" size="small">AI分析</t-tag>
-        </view>
-        <view class="detail-item">
-          <text class="detail-label">疾病名称</text>
-          <text class="detail-value primary">{{selectedDiagnosisRecord.diagnosisResult || selectedDiagnosisRecord.diagnosis}}</text>
-        </view>
-        <view class="detail-item">
-          <text class="detail-label">置信度</text>
-          <text class="detail-value confidence">{{selectedDiagnosisRecord.confidence}}%</text>
-        </view>
-      </view>
-
-      <!-- 诊断修正记录（如果存在） -->
-      <view class="detail-section correction-section" wx:if="{{selectedDiagnosisRecord.isCorrected}}">
-        <view class="detail-section-title">
-          <text>诊断修正记录</text>
-          <t-tag theme="success" size="small">已确认</t-tag>
-        </view>
-        <view class="detail-item">
-          <text class="detail-label">修正后诊断</text>
-          <text class="detail-value primary corrected">{{selectedDiagnosisRecord.correctedDiagnosis}}</text>
-        </view>
-        <view class="detail-item" wx:if="{{selectedDiagnosisRecord.aiAccuracyRating > 0}}">
-          <text class="detail-label">AI准确性评分</text>
-          <view class="rating-display">
-              <text 
-              wx:for="{{[1,2,3,4,5]}}" 
-              wx:key="*this"
-                class="star-display {{selectedDiagnosisRecord.aiAccuracyRating >= item ? 'active' : ''}}"
-              >{{selectedDiagnosisRecord.aiAccuracyRating >= item ? '★' : '☆'}}</text>
-          </view>
-        </view>
-        <view class="detail-item" wx:if="{{selectedDiagnosisRecord.veterinarianDiagnosis}}">
-          <text class="detail-label">兽医诊断</text>
-          <text class="detail-value text-content">{{selectedDiagnosisRecord.veterinarianDiagnosis}}</text>
-        </view>
-        <view class="detail-item" wx:if="{{selectedDiagnosisRecord.correctionReason}}">
-          <text class="detail-label">修正原因</text>
-          <text class="detail-value text-content">{{selectedDiagnosisRecord.correctionReason}}</text>
-        </view>
-      </view>
-
-      <!-- 症状描述 -->
-      <view class="detail-section" wx:if="{{selectedDiagnosisRecord.symptoms}}">
-        <view class="detail-section-title">症状描述</view>
-        <view class="detail-text-content">
-          <text class="detail-text">{{selectedDiagnosisRecord.symptoms}}</text>
-        </view>
-      </view>
-
-      <!-- 诊断图片 -->
-      <view class="detail-section" wx:if="{{selectedDiagnosisRecord.images && selectedDiagnosisRecord.images.length > 0}}">
-        <view class="detail-section-title">
-          {{selectedDiagnosisRecord.diagnosisType === 'autopsy_analysis' ? '剖检图片' : '症状图片'}}
-          <text class="image-count">({{selectedDiagnosisRecord.images.length}}张)</text>
-        </view>
-        <view class="diagnosis-images">
-          <view 
-            class="image-item"
-            wx:for="{{selectedDiagnosisRecord.images}}"
-            wx:key="index"
-            bind:tap="onPreviewDiagnosisImage"
-            data-url="{{item}}"
-          >
-            <t-image 
-              src="{{item}}"
-              mode="aspectFill"
-              width="200rpx"
-              height="200rpx"
-              shape="round"
-              error="加载失败"
-              lazy-load="{{false}}"
-            />
-          </view>
-        </view>
-      </view>
-
-      <!-- 建议用药 -->
-      <view class="detail-section" wx:if="{{selectedDiagnosisRecord.recommendedMedications && selectedDiagnosisRecord.recommendedMedications.length > 0}}">
-        <view class="detail-section-title">建议用药</view>
-        <view class="medications-list">
-          <view class="medication-item" wx:for="{{selectedDiagnosisRecord.recommendedMedications}}" wx:key="index">
-            <text class="medication-icon">💊</text>
-            <text class="medication-name">{{item}}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 实际治疗记录（如果存在） -->
-      <view class="detail-section treatment-section" wx:if="{{selectedDiagnosisRecord.actualTreatment}}">
-        <view class="detail-section-title">
-          <text>实际治疗记录</text>
-          <t-tag theme="primary" size="small">已执行</t-tag>
-        </view>
-        <view class="detail-item" wx:if="{{selectedDiagnosisRecord.actualTreatment.treatmentPlan}}">
-          <text class="detail-label">治疗方案</text>
-          <text class="detail-value text-content">{{selectedDiagnosisRecord.actualTreatment.treatmentPlan}}</text>
-        </view>
-        <view class="detail-item" wx:if="{{selectedDiagnosisRecord.actualTreatment.medications && selectedDiagnosisRecord.actualTreatment.medications.length > 0}}">
-          <text class="detail-label">用药记录</text>
-          <view class="medications-list-actual">
-            <view class="medication-item-actual" wx:for="{{selectedDiagnosisRecord.actualTreatment.medications}}" wx:key="index">
-              <text class="medication-icon">💊</text>
-              <view class="medication-info">
-                <text class="medication-name">{{item.name || item}}</text>
-                <text class="medication-detail" wx:if="{{item.dosage}}">{{item.dosage}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-        <view class="detail-item" wx:if="{{selectedDiagnosisRecord.actualTreatment.outcome}}">
-          <text class="detail-label">治疗结果</text>
-          <text class="detail-value">{{selectedDiagnosisRecord.actualTreatment.outcome}}</text>
-        </view>
-      </view>
-
-      <!-- 基本信息 -->
-      <view class="detail-section">
-        <view class="detail-section-title">基本信息</view>
-        <view class="detail-item">
-          <text class="detail-label">受影响数量</text>
-          <text class="detail-value">{{selectedDiagnosisRecord.affectedCount || 0}}只</text>
-        </view>
-        <view class="detail-item">
-          <text class="detail-label">鹅只日龄</text>
-          <text class="detail-value">{{selectedDiagnosisRecord.dayAge || 0}}天</text>
-        </view>
-        <view class="detail-item">
-          <text class="detail-label">诊断时间</text>
-          <text class="detail-value">{{selectedDiagnosisRecord.diagnosisDate || selectedDiagnosisRecord.createTime}}</text>
-        </view>
-        <view class="detail-item" wx:if="{{selectedDiagnosisRecord.treatmentDuration}}">
-          <text class="detail-label">治疗周期</text>
-          <text class="detail-value">{{selectedDiagnosisRecord.treatmentDuration}}</text>
-        </view>
-      </view>
-    </view>
-  </bottom-popup>
+  />
 
   <!-- 批次筛选下拉菜单（放在最后，确保显示在最上层） -->
   <view class="batch-dropdown {{showBatchDropdown ? 'show' : ''}}" style="top: {{dropdownTop}}px;" wx:if="{{showBatchDropdown}}">
@@ -736,7 +592,12 @@
     visible="{{showTaskDetailPopup}}"
     title="任务详情"
     show-close="{{true}}"
+    show-actions="{{selectedTask && !selectedTask.completed && !selectedTask.isUpcoming}}"
+    confirm-text="{{selectedTask && selectedTask.isVaccineTask ? '填写接种信息' : (selectedTask && selectedTask.isMedicationTask ? '领取药品' : (selectedTask && selectedTask.isNutritionTask ? '领取营养品' : '完成任务'))}}"
+    cancel-text="关闭"
     bind:close="closeTaskDetailPopup"
+    bind:confirm="onTaskConfirm"
+    bind:cancel="closeTaskDetailPopup"
     bind:visiblechange="onTaskDetailPopupChange"
   >
     <view wx:if="{{selectedTask}}" class="record-detail-content">
@@ -884,18 +745,6 @@
           </view>
         </view>
       </view>
-
-      <!-- 底部操作按钮 - 仅待完成任务显示 -->
-      <view class="task-detail-actions" wx:if="{{selectedTask && !selectedTask.completed && !selectedTask.isUpcoming}}">
-        <t-button 
-          theme="primary" 
-          size="large" 
-          block
-          bind:tap="onTaskConfirm"
-        >
-          {{selectedTask.isVaccineTask ? '填写接种信息' : (selectedTask.isMedicationTask ? '领取药品' : (selectedTask.isNutritionTask ? '领取营养品' : '完成任务'))}}
-        </t-button>
-      </view>
     </view>
   </bottom-popup>
 
@@ -910,118 +759,154 @@
       <!-- 兽医信息 -->
       <view class="form-section">
         <view class="section-title">兽医信息</view>
-        <view class="form-row">
-          <text class="form-label required">执行兽医</text>
-          <input class="form-input" 
-                 placeholder="请输入兽医姓名"
-                 value=""
-                 data-field="veterinarianName"
-                 bindinput="onVaccineFormInput" />
+        <view class="form-item">
+          <view class="item-label required">执行兽医</view>
+          <view class="item-input">
+            <input
+              placeholder="请输入兽医姓名"
+              value="{{vaccineFormData.veterinarianName}}"
+              data-field="veterinarianName"
+              bindinput="onVaccineFormInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label">联系电话</text>
-          <input class="form-input" 
-                 placeholder="请输入联系电话"
-                 value=""
-                 data-field="veterinarianPhone"
-                 bindinput="onVaccineFormInput" />
+        <view class="form-item">
+          <view class="item-label">联系电话</view>
+          <view class="item-input">
+            <input
+              placeholder="请输入联系电话"
+              value="{{vaccineFormData.veterinarianContact}}"
+              data-field="veterinarianContact"
+              bindinput="onVaccineFormInput"
+            />
+          </view>
         </view>
       </view>
 
       <!-- 疫苗信息 -->
       <view class="form-section">
         <view class="section-title">疫苗信息</view>
-        <view class="form-row">
-          <text class="form-label required">疫苗名称</text>
-          <input class="form-input" 
-                 placeholder="请输入疫苗名称"
-                 value=""
-                 data-field="vaccineName"
-                 bindinput="onVaccineFormInput" />
+        <view class="form-item">
+          <view class="item-label required">疫苗名称</view>
+          <view class="item-input">
+            <input
+              placeholder="请输入疫苗名称"
+              value="{{vaccineFormData.vaccineName}}"
+              data-field="vaccineName"
+              bindinput="onVaccineFormInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label">生产厂家</text>
-          <input class="form-input" 
-                 placeholder="请输入生产厂家"
-                 value=""
-                 data-field="manufacturer"
-                 bindinput="onVaccineFormInput" />
+        <view class="form-item">
+          <view class="item-label">生产厂家</view>
+          <view class="item-input">
+            <input
+              placeholder="请输入生产厂家"
+              value="{{vaccineFormData.manufacturer}}"
+              data-field="manufacturer"
+              bindinput="onVaccineFormInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label">批次号</text>
-          <input class="form-input" 
-                 placeholder="请输入疫苗批次号"
-                 value=""
-                 data-field="batchNumber"
-                 bindinput="onVaccineFormInput" />
+        <view class="form-item">
+          <view class="item-label">批次号</view>
+          <view class="item-input">
+            <input
+              placeholder="请输入疫苗批次号"
+              value="{{vaccineFormData.batchNumber}}"
+              data-field="batchNumber"
+              bindinput="onVaccineFormInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label required">接种剂量</text>
-          <input class="form-input" 
-                 placeholder="请输入接种剂量"
-                 value=""
-                 data-field="dosage"
-                 bindinput="onVaccineFormInput" />
+        <view class="form-item">
+          <view class="item-label required">接种剂量</view>
+          <view class="item-input">
+            <input
+              placeholder="请输入接种剂量"
+              value="{{vaccineFormData.dosage}}"
+              data-field="dosage"
+              bindinput="onVaccineFormInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label required">接种数量</text>
-          <input class="form-input" 
-                 type="number"
-                 placeholder="{{currentBatchStockQuantity > 0 ? '请输入接种数量（存栏' + currentBatchStockQuantity + '只）' : '请输入接种数量'}}"
-                 value=""
-                 data-field="vaccinationCount"
-                 bindinput="onVaccineNumberInput" />
-          <text wx:if="{{vaccineFormErrors.vaccinationCount}}" class="error-text">{{vaccineFormErrors.vaccinationCount}}</text>
+        <view class="form-item">
+          <view class="item-label required">接种数量</view>
+          <view class="item-input">
+            <input
+              type="number"
+              placeholder="{{currentBatchStockQuantity > 0 ? '请输入接种数量（存栏' + currentBatchStockQuantity + '只）' : '请输入接种数量'}}"
+              value="{{vaccineFormData.vaccinationCount}}"
+              data-field="vaccinationCount"
+              bindinput="onVaccineNumberInput"
+            />
+          </view>
+        </view>
+        <view wx:if="{{vaccineFormErrors.vaccinationCount}}" class="form-item error-item">
+          <view class="error-text">{{vaccineFormErrors.vaccinationCount}}</view>
         </view>
       </view>
 
       <!-- 费用信息 -->
       <view class="form-section">
         <view class="section-title">费用信息</view>
-        <view class="form-row">
-          <text class="form-label required">疫苗费用</text>
-          <input class="form-input" 
-                 type="digit"
-                 placeholder="请输入疫苗费用"
-                 value=""
-                 data-field="vaccineCost"
-                 bindinput="onVaccineNumberInput" />
+        <view class="form-item">
+          <view class="item-label required">疫苗费用</view>
+          <view class="item-input">
+            <input
+              type="digit"
+              placeholder="请输入疫苗费用"
+              value="{{vaccineFormData.vaccineCost}}"
+              data-field="vaccineCost"
+              bindinput="onVaccineNumberInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label">兽医费用</text>
-          <input class="form-input" 
-                 type="digit"
-                 placeholder="请输入兽医费用"
-                 value=""
-                 data-field="veterinaryCost"
-                 bindinput="onVaccineNumberInput" />
+        <view class="form-item">
+          <view class="item-label">兽医费用</view>
+          <view class="item-input">
+            <input
+              type="digit"
+              placeholder="请输入兽医费用"
+              value="{{vaccineFormData.veterinaryCost}}"
+              data-field="veterinaryCost"
+              bindinput="onVaccineNumberInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label">其他费用</text>
-          <input class="form-input" 
-                 type="digit"
-                 placeholder="请输入其他费用"
-                 value=""
-                 data-field="otherCost"
-                 bindinput="onVaccineNumberInput" />
+        <view class="form-item">
+          <view class="item-label">其他费用</view>
+          <view class="item-input">
+            <input
+              type="digit"
+              placeholder="请输入其他费用"
+              value="{{vaccineFormData.otherCost}}"
+              data-field="otherCost"
+              bindinput="onVaccineNumberInput"
+            />
+          </view>
         </view>
-        <view class="form-row">
-          <text class="form-label">总费用</text>
-          <view class="form-input readonly-input">{{vaccineFormData.totalCostFormatted}}</view>
+        <view class="form-item">
+          <view class="item-label">总费用</view>
+          <view class="item-value">
+            <view class="value-text">{{vaccineFormData.totalCostFormatted || '¥0.00'}}</view>
+          </view>
         </view>
       </view>
 
       <!-- 备注和异常记录 -->
       <view class="form-section">
         <view class="section-title">备注信息</view>
-        <view class="form-row textarea-row">
-          <textarea class="form-textarea" 
-                    placeholder="请输入接种备注信息"
-                    value=""
-                    data-field="notes"
-                    bindinput="onVaccineFormInput"
-                    maxlength="200"
-                    auto-height />
+        <view class="form-item textarea-item">
+          <textarea
+            class="textarea-input"
+            placeholder="请输入接种备注信息"
+            value="{{vaccineFormData.notes}}"
+            data-field="notes"
+            bindinput="onVaccineFormInput"
+            maxlength="200"
+            auto-height
+          />
         </view>
       </view>
 

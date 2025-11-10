@@ -11,10 +11,10 @@
 
   <!-- 内容区域 -->
   <view class="content-wrapper">
-    <scroll-view class="scroll-container" scroll-y>
+  <scroll-view class="scroll-container" scroll-y>
     <!-- 财务概览卡片 -->
-    <view class="card overview-card" style="margin-bottom: 0 !important;">
-      <view class="card-content" style="padding-bottom: 0 !important;">
+    <view class="card overview-card">
+      <view class="card-content overview-card-content">
         <view class="overview-header">
           <text class="overview-title">财务概览</text>
           <view class="filter-container">
@@ -118,7 +118,7 @@
         </view>
 
         <!-- 成本构成 -->
-        <view class="cost-grid" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
+        <view class="cost-grid">
           <view class="cost-item orange">
             <text class="cost-label">饲料成本</text>
             <text class="cost-value">¥{{overview.feedCost}}万</text>
@@ -144,16 +144,16 @@
     </view>
 
     <!-- Tab 切换 -->
-    <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" t-class="finance-tabs" style="margin-top: 0 !important; padding-top: 0 !important;">
+    <t-tabs value="{{activeTab}}" bind:change="onTabChange" theme="line" t-class="finance-tabs">
       <t-tab-panel label="收支明细" value="records" />
       <t-tab-panel label="AI财务分析" value="reports" />
       <t-tab-panel label="审批管理" value="approval" />
     </t-tabs>
 
     <!-- 收支明细页面 -->
-    <view wx:if="{{activeTab === 'records'}}" class="tab-content" style="margin-top: 0 !important; padding-top: 0 !important;">
+    <view wx:if="{{activeTab === 'records'}}" class="tab-content">
       <!-- 交易记录 -->
-      <view class="card" style="margin-top: 0 !important;">
+      <view class="card tab-content-card">
         <view class="card-content">
           <view class="card-header">
             <text class="card-title">最近交易记录</text>
@@ -251,18 +251,18 @@
         </view>
         <view class="actions-grid">
           <t-button theme="primary" size="large" bind:tap="addManualRecord" class="action-button primary-button">
-            手动记账
-          </t-button>
+              手动记账
+            </t-button>
           <t-button theme="light" size="large" bind:tap="exportReport" class="action-button light-button">
-            导出报表
-          </t-button>
+              导出报表
+            </t-button>
         </view>
       </view>
     </view>
 
       <!-- 底部安全区域占位 -->
       <view class="safe-area"></view>
-    </scroll-view>
+  </scroll-view>
   </view>
   
   <!-- 交易详情弹窗组件 -->

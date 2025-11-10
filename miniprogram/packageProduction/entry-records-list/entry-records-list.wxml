@@ -122,7 +122,7 @@
   </view>
 
   <!-- 入栏记录详情弹窗组件 -->
-  <entry-record-detail
+  <entry-record-detail-popup
     visible="{{showDetailPopup}}"
     record="{{selectedRecord}}"
     bind:close="closeDetailPopup"

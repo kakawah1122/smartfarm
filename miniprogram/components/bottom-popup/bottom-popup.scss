@@ -60,7 +60,7 @@
 /* 内容区域（可滚动） */
 .popup-content {
   flex: 1;
-  padding: 24rpx 32rpx calc(env(safe-area-inset-bottom) + 24rpx) 32rpx;
+  padding: 24rpx 32rpx 24rpx 32rpx;
   box-sizing: border-box;
   min-height: 0; /* 修复 flex 滚动问题 */
   max-height: calc(80vh - 120rpx); /* 确保有足够的滚动空间 */
@@ -71,7 +71,8 @@
 .popup-actions {
   background: #ffffff;
   border-top: 1rpx solid #f0f0f0;
-  padding: 24rpx 40rpx 40rpx;
+  padding: 24rpx 40rpx constant(safe-area-inset-bottom);
+  padding: 24rpx 40rpx env(safe-area-inset-bottom);
   flex-shrink: 0;
 }
 

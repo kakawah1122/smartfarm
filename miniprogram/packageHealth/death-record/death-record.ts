@@ -1,5 +1,6 @@
 // death-record.ts - 死亡记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import { markHomepageNeedSync } from '../../utils/global-sync'
 
 const pageConfig = {
   data: {
@@ -437,6 +438,7 @@ const pageConfig = {
         if (result.result && result.result.success) {
           // ✅ 设置刷新标志，通知健康页面刷新
           wx.setStorageSync('health_page_need_refresh', true)
+          markHomepageNeedSync()
           
           wx.showToast({
             title: '死亡记录已提交',

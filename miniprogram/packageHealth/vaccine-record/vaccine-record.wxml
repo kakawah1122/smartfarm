@@ -280,7 +280,7 @@
     </view>
 
     <!-- 底部安全区域 -->
-    <view style="height: 120rpx;"></view>
+    <view class="safe-area"></view>
   </view>
 
   <!-- 给药途径选择器 -->

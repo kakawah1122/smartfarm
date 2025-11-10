@@ -302,7 +302,7 @@
     </view>
 
     <!-- 底部安全区域 -->
-    <view style="height: 120rpx;"></view>
+    <view class="safe-area"></view>
   </view>
 
   <!-- 保健类型选择器 -->

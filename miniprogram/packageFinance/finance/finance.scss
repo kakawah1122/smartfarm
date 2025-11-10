@@ -22,82 +22,7 @@ page {
   overflow: hidden;
 }
 
-/* 移动端容器 - 刘海屏适配 */
-.mobile-container {
-  max-width: 414rpx;
-  width: 100%;
-  height: 100vh;
-  margin: 0 auto;
-  background: white;
-  box-shadow: 0 0 60rpx rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-  padding-bottom: var(--safe-area-inset-bottom, 0);
-}
-
-/* 状态栏 - 刘海屏适配 */
-.status-bar {
-  background: var(--primary-gradient);
-  text-align: center;
-  padding: var(--safe-area-inset-top, 0) 0 var(--spacing-xs) 0;
-  color: white;
-  font-size: var(--font-size-sm);
-  min-height: calc(40rpx + var(--safe-area-inset-top, 0));
-  line-height: 40rpx;
-  display: flex;
-  align-items: end;
-  justify-content: center;
-  padding-left: var(--safe-area-inset-left, 0);
-  padding-right: var(--safe-area-inset-right, 0);
-}
-
-/* 顶部导航栏 - 刘海屏适配 */
-.gradient-header {
-  background: var(--primary-gradient);
-  padding: var(--spacing-xl);
-  padding-left: max(var(--spacing-xl), var(--safe-area-inset-left, 0));
-  padding-right: max(var(--spacing-xl), var(--safe-area-inset-right, 0));
-  color: white;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-}
-
-.back-icon {
-  width: 64rpx;
-  height: 64rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 24rpx;
-  font-size: 24rpx;
-}
-
-.nav-title {
-  font-size: 36rpx;
-  font-weight: bold;
-}
-
-.chart-icon {
-  width: 64rpx;
-  height: 64rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24rpx;
-}
+/* 已移除未使用的样式：mobile-container, status-bar, gradient-header, nav-left, back-icon, nav-title, chart-icon */
 
 /* 滚动容器 - 使用flex自适应高度 */
 .scroll-container {
@@ -126,18 +51,13 @@ page {
 
 /* 第一个卡片顶部间距 */
 .scroll-container > .card:first-child {
-  margin-top: 0;
+  margin-top: 16rpx;
 }
 
-/* 财务概览卡片 - 必须放在.card之后，使用更具体的选择器 */
+/* 财务概览卡片 */
 .card.overview-card {
-  margin: 0 0 0 0 !important;
-  margin-bottom: 0 !important;
-}
-
-.overview-card {
-  margin: 0 0 0 0 !important;
-  margin-bottom: 0 !important;
+  margin-top: 16rpx;
+  margin-bottom: 0;
 }
 
 .card:last-child {
@@ -185,15 +105,14 @@ page {
   margin-right: 16rpx;
 }
 
-.overview-card .card-content {
-  padding: 12rpx 0 0 0 !important;
-  margin: 0 !important;
-  padding-bottom: 0 !important;
+/* 财务概览卡片内容 */
+.overview-card-content {
+  padding: 12rpx 0 0 0;
 }
 
 .overview-card .cost-grid {
-  margin: 0 !important;
-  padding: 0 0 0 0 !important;
+  margin: 0;
+  padding: 0;
 }
 
 .overview-header {
@@ -256,15 +175,7 @@ page {
   margin: 0 4rpx;
 }
 
-.month-selector {
-  font-size: 24rpx;
-  color: #666;
-  padding: 8rpx 16rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 16rpx;
-  display: flex;
-  align-items: center;
-}
+/* 已移除未使用的样式：month-selector */
 
 /* 收支对比 */
 .comparison-section {
@@ -415,8 +326,8 @@ page {
   gap: 8rpx;
   row-gap: 16rpx;
   column-gap: 8rpx;
-  padding: 0 0;
-  margin-bottom: 0 !important;
+  padding: 0;
+  margin-bottom: 0;
   grid-auto-rows: 1fr;
 }
 
@@ -494,234 +405,19 @@ page {
   z-index: 1;
 }
 
-/* AI智能建议卡片 - 与原型图一致 */
-.ai-card {
-  background: linear-gradient(135deg, #faf5ff, #ede9fe);
-  border: 2rpx solid #e9d5ff;
-}
-
-.suggestion-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 24rpx;
-}
-
-.suggestion-item:last-child {
-  margin-bottom: 32rpx;
-}
-
-.suggestion-icon {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20rpx;
-  margin-right: 24rpx;
-  flex-shrink: 0;
-}
-
-.suggestion-icon.success {
-  background: #dcfce7;
-  color: #059669;
-}
-
-.suggestion-icon.warning {
-  background: #fef3c7;
-  color: #f59e0b;
-}
-
-.suggestion-icon.primary {
-  background: #dbeafe;
-  color: #0ea5e9;
-}
-
-.suggestion-content {
-  flex: 1;
-}
-
-.suggestion-title {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333;
-  line-height: 32rpx;
-  margin-bottom: 4rpx;
-  display: block;
-}
-
-.suggestion-desc {
-  font-size: 24rpx;
-  color: #666;
-  line-height: 32rpx;
-  display: block;
-}
-
-/* Tab切换 - 与原型图一致 */
-.tab-container {
-  background: white;
-  padding: 24rpx 32rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
-
-.tab-buttons {
-  display: flex;
-  gap: 16rpx;
-}
-
-.tab-button {
-  padding: 16rpx 32rpx;
-  border-radius: 40rpx;
-  font-size: 28rpx;
-  font-weight: 500;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-
-.tab-button.active {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  color: white;
-}
-
-.tab-button.inactive {
-  background: #f3f4f6;
-  color: #666;
-}
+/* 已移除未使用的样式：ai-card, suggestion-item, suggestion-icon, suggestion-content, suggestion-title, suggestion-desc, tab-container, tab-buttons, tab-button */
 
 /* 收支内容 */
 .tab-content {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
+  margin-top: 0;
+  padding-top: 0;
 }
 
-.filter-section {
-  padding: 0 32rpx 8rpx !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+.tab-content-card {
+  margin-top: 16rpx;
 }
 
-/* Tab内容中的第一个卡片 - 减小顶部间距 */
-.tab-content > .card:first-child {
-  margin-top: 0 !important;
-}
-
-/* 记录卡片 - 进一步减小顶部间距 */
-.tab-content .card {
-  margin-top: 0 !important;
-}
-
-.filter-row {
-  display: flex;
-  gap: 24rpx;
-}
-
-.filter-item {
-  flex: 1;
-  padding: 16rpx 24rpx;
-  background: white;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-  font-size: 24rpx;
-  color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-
-.amount-value {
-  font-size: 32rpx;
-  font-weight: bold;
-  line-height: 36rpx;
-  display: block;
-  margin-bottom: 4rpx;
-}
-
-.amount-value.income {
-  color: #059669;
-}
-
-.amount-value.expense {
-  color: #dc2626;
-}
-
-.amount-type {
-  font-size: 22rpx;
-  color: #999;
-  line-height: 26rpx;
-  display: block;
-}
-
-/* 财务报表内容 */
-.chart-section {
-  background: linear-gradient(135deg, #dbeafe, #e9d5ff);
-  padding: 32rpx;
-  border-radius: 24rpx;
-  margin-bottom: 32rpx;
-}
-
-.chart-header {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 24rpx;
-}
-
-.chart-placeholder {
-  height: 240rpx;
-  background: white;
-  border-radius: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chart-text {
-  font-size: 28rpx;
-  color: #666;
-}
-
-.analysis-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32rpx;
-}
-
-.analysis-item {
-  padding: 32rpx;
-  border-radius: 24rpx;
-  text-align: center;
-}
-
-.analysis-item.success {
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-}
-
-.analysis-item.primary {
-  background: linear-gradient(135deg, #dbeafe, #93c5fd);
-}
-
-.analysis-title {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 8rpx;
-  display: block;
-}
-
-.analysis-value {
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 8rpx;
-  display: block;
-}
-
-.analysis-desc {
-  font-size: 24rpx;
-  color: #666;
-  display: block;
-}
+/* 已移除未使用的样式：filter-section, filter-row, filter-item, amount-value, amount-type, chart-section, chart-header, chart-placeholder, chart-text, analysis-grid, analysis-item, analysis-title, analysis-value, analysis-desc */
 
 /* 审批管理内容 */
 .approval-list {
@@ -816,13 +512,12 @@ page {
 }
 
 /* 快捷操作 */
-/* 快捷操作卡片：增加标题和按钮之间的间距 */
 .quick-actions-card .card-header {
-  margin-bottom: 24rpx !important; /* 从8rpx增加到24rpx */
+  margin-bottom: 24rpx;
 }
 
 .actions-grid {
-  display: flex !important;
+  display: flex;
   gap: 12rpx;
   padding: 0 16rpx;
   width: 100%;
@@ -830,123 +525,95 @@ page {
 }
 
 .actions-grid .action-button {
-  flex: 1 !important;
-  min-width: 0 !important;
-  width: 0 !important; /* 让 flex:1 生效 */
-  height: 88rpx !important;
+  flex: 1;
+  min-width: 0;
+  height: 88rpx;
 }
 
 .actions-grid .action-button.t-button--large,
 .actions-grid .action-button.t-button {
-  font-size: 30rpx !important;
-  font-weight: 500 !important;
+  font-size: 30rpx;
+  font-weight: 500;
 }
 
 .actions-grid .action-button .t-button__text {
-  font-size: 30rpx !important;
-  font-weight: 500 !important;
+  font-size: 30rpx;
+  font-weight: 500;
 }
 
-/* TDesign 组件自定义样式 */
-.t-button--primary {
-  background: linear-gradient(135deg, #0ea5e9, #3b82f6) !important;
-  border: none !important;
-  border-radius: 20rpx !important;
+/* TDesign 组件自定义样式 - 使用更具体的选择器避免!important */
+.page-container .t-button--primary {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  border: none;
+  border-radius: 20rpx;
 }
 
-.t-tag {
-  border-radius: 16rpx !important;
-  font-size: 20rpx !important;
-  padding: 6rpx 12rpx !important;
+.page-container .t-tag {
+  border-radius: 16rpx;
+  font-size: 20rpx;
+  padding: 6rpx 12rpx;
 }
 
-.t-button--medium {
-  height: 72rpx !important;
-  border-radius: 20rpx !important;
-  font-size: 28rpx !important;
+.page-container .t-button--medium {
+  height: 72rpx;
+  border-radius: 20rpx;
+  font-size: 28rpx;
 }
 
-.t-button--small {
-  height: 56rpx !important;
-  border-radius: 16rpx !important;
-  font-size: 24rpx !important;
-  padding: 0 24rpx !important;
+.page-container .t-button--small {
+  height: 56rpx;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  padding: 0 24rpx;
 }
 
-/* 自定义导航栏样式 - 刘海屏适配 */
-.custom-navbar {
-  background: var(--primary-gradient) !important;
-  color: white !important;
-  padding-top: var(--safe-area-inset-top, 0) !important;
-  padding-left: var(--safe-area-inset-left, 0) !important;
-  padding-right: var(--safe-area-inset-right, 0) !important;
-}
-
-/* 财务Tab样式 - 刘海屏适配 */
-.finance-tabs {
-  background: var(--color-bg-primary) !important;
-  --td-tab-track-color: var(--primary-blue) !important;
-  --td-tab-item-active-color: var(--primary-blue) !important;
-  --td-tab-item-color: var(--color-text-secondary) !important;
-  position: relative !important;
-  top: auto !important;
+/* 财务Tab样式 - 使用更具体的选择器避免!important */
+.content-wrapper .finance-tabs {
+  background: var(--color-bg-primary);
+  --td-tab-track-color: var(--primary-blue);
+  --td-tab-item-active-color: var(--primary-blue);
+  --td-tab-item-color: var(--color-text-secondary);
+  position: relative;
+  top: auto;
   z-index: 1;
-  margin: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  box-shadow: none !important;
-  min-height: 64rpx !important;
-  height: auto !important;
-}
-/* 直接覆盖 TDesign Tabs 根节点样式 - 使用更具体的选择器 */
-.t-tabs.finance-tabs,
-.finance-tabs.t-tabs {
-  margin: 0 !important;
-  padding: 0 !important;
-  min-height: 64rpx !important;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  min-height: 64rpx;
+  height: auto;
 }
 
-/* 覆盖 Tabs wrapper 的样式 */
-.finance-tabs .t-tabs__wrapper {
-  margin: 0 !important;
-  padding: 0 !important;
-  min-height: 64rpx !important;
+.content-wrapper .finance-tabs.t-tabs {
+  margin: 0;
+  padding: 0;
+  min-height: 64rpx;
 }
 
-.finance-tabs .t-tabs__scroll {
-  margin: 0 !important;
-  padding: 0 !important;
+.content-wrapper .finance-tabs .t-tabs__wrapper {
+  margin: 0;
+  padding: 0;
+  min-height: 64rpx;
 }
 
-.finance-tabs .t-tabs__nav {
-  margin: 0 !important;
-  padding: 8rpx 0 !important;
-  min-height: 64rpx !important;
+.content-wrapper .finance-tabs .t-tabs__scroll {
+  margin: 0;
+  padding: 0;
 }
 
-.finance-tabs .t-tab {
-  padding: 8rpx 16rpx !important;
-  font-size: 26rpx !important;
-  line-height: 32rpx !important;
-  height: auto !important;
-  min-height: auto !important;
+.content-wrapper .finance-tabs .t-tabs__nav {
+  margin: 0;
+  padding: 8rpx 0;
+  min-height: 64rpx;
 }
 
-
-/* Cell组件样式 */
-.t-cell {
-  --td-cell-bg-color: white;
-  --td-cell-border-color: #f3f4f6;
+.content-wrapper .finance-tabs .t-tab {
+  padding: 8rpx 16rpx;
+  font-size: 26rpx;
+  line-height: 32rpx;
+  height: auto;
+  min-height: auto;
 }
 
-
-/* 记录金额样式 */
-.record-amount {
-  text-align: right;
-}
 
 /* 交易记录 */
 .records-list {
@@ -979,26 +646,6 @@ page {
   flex: 1;
   min-width: 0;
   margin-right: 16rpx;
-}
-
-.record-icon {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 12rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32rpx;
-  margin-right: 16rpx;
-  flex-shrink: 0;
-}
-
-.record-icon.income {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-}
-
-.record-icon.expense {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
 }
 
 .record-content {
@@ -1035,10 +682,6 @@ page {
   line-height: 32rpx;
 }
 
-.record-status {
-  flex-shrink: 0;
-}
-
 .record-right {
   display: flex;
   align-items: center;
@@ -1051,7 +694,6 @@ page {
   font-size: 32rpx;
   font-weight: 600;
   line-height: 44rpx;
-  margin-bottom: 8rpx;
   text-align: right;
 }
 
@@ -1063,30 +705,17 @@ page {
   color: #059669; /* 支出显示绿色 */
 }
 
-/* 响应式适配 */
-@media (max-width: 414px) {
-  .mobile-container {
-    max-width: 100%;
-    box-shadow: none;
-  }
-}
+/* 响应式适配 - 已移除未使用的mobile-container样式 */
 
 /* 滑动效果 */
 .card,
-.record-item,
 .approval-item {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.record-item:active,
 .approval-item:active {
   transform: scale(0.98);
   background: #f9fafb;
-}
-
-/* 响应式调整 */
-@media (max-width: 375px) {
-  // 响应式样式调整
 }
 
 /* 底部安全区域占位 - 最小化底部空白 */

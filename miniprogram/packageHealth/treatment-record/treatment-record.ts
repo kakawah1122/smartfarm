@@ -1,5 +1,6 @@
 // treatment-record.ts - 治疗记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import { markHomepageNeedSync } from '../../utils/global-sync'
 
 interface Medication {
   medicationId?: string
@@ -11,6 +12,11 @@ interface Medication {
   startDate: string
   endDate: string
   status: 'ongoing' | 'completed' | 'discontinued'
+}
+
+const setHealthPageRefreshFlag = () => {
+  wx.setStorageSync('health_page_need_refresh', true)
+  markHomepageNeedSync()
 }
 
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
@@ -1314,7 +1320,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             
             if (result.result && result.result.success) {
               // ✅ 设置刷新标志，通知健康页面刷新
-              wx.setStorageSync('health_page_need_refresh', true)
+              setHealthPageRefreshFlag()
               
               wx.showToast({
                 title: '已标记为治愈',
@@ -1531,7 +1537,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
         
         // ✅ 设置刷新标志，通知健康页面刷新
-        wx.setStorageSync('health_page_need_refresh', true)
+        setHealthPageRefreshFlag()
         
         wx.showToast({
           title: successMessage,
@@ -1556,7 +1562,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         } catch (error) {
           // EventChannel通知失败，使用降级方案
           // 降级方案：使用Storage标记
-          wx.setStorageSync('health_page_need_refresh', true)
+          setHealthPageRefreshFlag()
         }
         
         // 重新加载治疗详情
@@ -2264,12 +2270,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }, 500)
       } else {
         // 如果页面不在栈中，使用存储标记
-        wx.setStorageSync('health_page_need_refresh', true)
+        setHealthPageRefreshFlag()
       }
     } catch (error) {
       // 通知失败，静默处理
       // 降级方案：使用存储标记
-      wx.setStorageSync('health_page_need_refresh', true)
+      setHealthPageRefreshFlag()
     }
   }
 }

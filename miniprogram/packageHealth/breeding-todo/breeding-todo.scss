@@ -5,15 +5,7 @@
   padding: 0 !important;
 }
 
-.record-detail-content > .info-card {
-  background: #ffffff !important;
-  border-radius: 12rpx !important;
-  padding: 20rpx !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-  border: 2rpx solid #0052d9 !important;
-}
-
+.record-detail-content > .info-card,
 .record-detail-content .info-card {
   background: #ffffff !important;
   border-radius: 12rpx !important;
@@ -103,15 +95,7 @@
   align-items: flex-start !important;
 }
 
-.record-detail-content .info-row-dosage .info-label {
-  margin-top: 2rpx !important;
-  align-self: flex-start !important;
-  font-size: 26rpx !important;
-  color: #666 !important;
-  flex-shrink: 0 !important;
-  min-width: 120rpx !important;
-}
-
+.record-detail-content .info-row-dosage .info-label,
 .record-detail-content .info-row-description .info-label {
   margin-top: 2rpx !important;
   align-self: flex-start !important;
@@ -1399,7 +1383,8 @@ page {
   min-height: 200rpx;
 }
 
-.empty-content {
+.empty-content,
+.no-batch-content {
   text-align: center;
   max-width: 480rpx;
 }
@@ -1423,11 +1408,6 @@ page {
   justify-content: center;
   padding: var(--spacing-xl, 64rpx) var(--spacing-lg, 24rpx);
   min-height: 60vh;
-}
-
-.no-batch-content {
-  text-align: center;
-  max-width: 480rpx;
 }
 
 .no-batch-title {
@@ -2324,52 +2304,7 @@ page {
 }
 
 /* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
+/* 已合并到下方统一的响应式适配中 */
 
 /* ========== 性能优化 ========== */
 
@@ -2394,16 +2329,18 @@ page {
   transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
 
-/* ========== 原有响应式适配 ========== */
+/* ========== 响应式适配（小屏幕优化） ========== */
 
-// 响应式适配 - 小屏幕优化  
 @media (max-width: 750rpx) {
-  .vaccine-form-content {
+  .vaccine-form-content,
+  .medication-form-content,
+  .nutrition-form-content {
     .form-section {
       .form-row {
         flex-direction: column;
         align-items: stretch;
         padding: 16rpx 24rpx;
+        min-height: auto;
         
         .form-label {
           width: auto;
@@ -2426,39 +2363,41 @@ page {
             text-align: left;
           }
         }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
       }
     }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
   }
-
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .form-textarea {
-          &::placeholder {
-            text-align: left;
-          }
-        }
-      }
+  
+  .input-with-unit {
+    flex-direction: row;
+    align-items: center;
+    
+    .form-input {
+      flex: 1;
+      padding-right: 60rpx;
+      text-align: left;
+    }
+    
+    .unit-text {
+      position: absolute;
+      right: 16rpx;
+      font-size: 22rpx;
     }
   }
 }
@@ -2510,33 +2449,7 @@ page {
   }
 }
 
-// 响应式适配
-@media (max-width: 750rpx) {
-  .input-with-unit {
-    flex-direction: row;
-    align-items: center;
-    
-    .form-input {
-      flex: 1;
-      padding-right: 60rpx;
-      text-align: left; // 小屏幕也使用左对齐
-    }
-    
-    .unit-text {
-      position: absolute;
-      right: 16rpx;
-      font-size: 22rpx;
-    }
-  }
-}
+/* 已合并到上方统一的响应式适配中 */
 
 /* ========== 强制应用蓝色边框样式（最高优先级）========== */
-.record-detail-content .info-card,
-.record-detail-content > .info-card {
-  background: #ffffff !important;
-  border: 2rpx solid #0052d9 !important;
-  border-radius: 12rpx !important;
-  padding: 20rpx !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-}
+/* 已合并到文件开头的统一样式定义中 */

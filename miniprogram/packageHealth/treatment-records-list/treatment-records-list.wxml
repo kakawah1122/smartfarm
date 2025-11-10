@@ -9,26 +9,26 @@
 
   <!-- 内容区域 -->
   <view class="content-wrapper">
-    <!-- 加载状态 -->
-    <view class="loading-container" wx:if="{{loading}}">
-      <t-loading theme="circular" size="60rpx" text="加载中..." />
-    </view>
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <t-loading theme="circular" size="60rpx" text="加载中..." />
+  </view>
 
-    <!-- 空状态 -->
-    <view class="empty-container" wx:if="{{!loading && records.length === 0}}">
-      <t-empty description="暂无进行中的治疗" />
-    </view>
+  <!-- 空状态 -->
+  <view class="empty-container" wx:if="{{!loading && records.length === 0}}">
+    <t-empty description="暂无进行中的治疗" />
+  </view>
 
-    <!-- 记录列表 -->
+  <!-- 记录列表 -->
     <scroll-view class="list-container" scroll-y wx:if="{{!loading && records.length > 0}}">
       <view class="records-list">
-        <view 
-          class="record-card"
-          wx:for="{{records}}"
-          wx:key="_id"
-          bind:tap="onRecordTap"
-          data-id="{{item._id}}"
-        >
+    <view 
+      class="record-card"
+      wx:for="{{records}}"
+      wx:key="_id"
+      bind:tap="onRecordTap"
+      data-id="{{item._id}}"
+    >
       <!-- 记录头部：诊断名称 + 治疗类型 -->
       <view class="record-header">
         <view class="record-title-row">
@@ -108,7 +108,8 @@
             进行中
           </t-tag>
         </view>
-        </view>
+      </view>
+    </view>
       </view>
       
       <!-- 底部安全区域占位 -->

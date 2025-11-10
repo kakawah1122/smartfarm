@@ -12,6 +12,9 @@
 .main-content {
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx)); /* 状态栏 + 导航栏 */
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
 }
 
 /* 生产概览卡片 */
@@ -63,14 +66,6 @@
   opacity: 0.9;
 }
 
-/* 主内容区域 */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  /* 移除负边距，使用精确的顶部间距 */
-  padding-top: 0;
-}
 
 /* TDesign原生Tab样式 - 优化与导航栏的间距 */
 .main-tabs {
@@ -128,27 +123,27 @@
 }
 
 .primary-button:active {
-  transform: scale(0.98) !important;
+  transform: scale(0.98);
   box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.3) !important;
 }
 
 .ai-button {
   /* AI按钮特殊样式 - 继承light主题 */
   border-width: 2rpx !important;
-}
-
-.ai-button:active {
-  transform: scale(0.98) !important;
+  
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 .warning-button {
   /* 警告按钮特殊样式 - 继承danger主题 */
   box-shadow: 0 4rpx 16rpx rgba(237, 123, 47, 0.2) !important;
-}
-
-.warning-button:active {
-  transform: scale(0.98) !important;
-  box-shadow: 0 2rpx 8rpx rgba(237, 123, 47, 0.3) !important;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2rpx 8rpx rgba(237, 123, 47, 0.3) !important;
+  }
 }
 
 .purple-button {
@@ -157,14 +152,15 @@
   border: none !important;
   color: #ffffff !important;
   box-shadow: 0 4rpx 16rpx rgba(83, 29, 171, 0.3) !important;
-}
-
-.purple-button:active {
-  transform: scale(0.98) !important;
-  box-shadow: 0 2rpx 8rpx rgba(83, 29, 171, 0.4) !important;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2rpx 8rpx rgba(83, 29, 171, 0.4) !important;
+  }
 }
 
 /* 物料类型标签样式 - 对应四宫格配色 */
+.orange-tag,
 .feed-tag {
   background: rgba(250, 140, 22, 0.15) !important;
   color: #fa8c16 !important;
@@ -177,6 +173,7 @@
   border: 1rpx solid rgba(235, 47, 150, 0.3) !important;
 }
 
+.purple-tag,
 .equipment-tag {
   background: rgba(114, 46, 209, 0.15) !important;
   color: #722ed1 !important;
@@ -189,30 +186,17 @@
   border: 1rpx solid rgba(24, 144, 255, 0.3) !important;
 }
 
-/* 保留旧样式以兼容其他地方 */
-.purple-tag {
-  background: rgba(114, 46, 209, 0.15) !important;
-  color: #722ed1 !important;
-  border: 1rpx solid rgba(114, 46, 209, 0.3) !important;
-}
-
-.orange-tag {
-  background: rgba(250, 140, 22, 0.15) !important;
-  color: #fa8c16 !important;
-  border: 1rpx solid rgba(250, 140, 22, 0.3) !important;
-}
-
 .success-button {
   /* 绿色按钮样式 - 与采购标签保持一致 */
   background: linear-gradient(135deg, #389e0d 0%, #52c41a 100%) !important;
   border: none !important;
   color: #ffffff !important;
   box-shadow: 0 4rpx 16rpx rgba(56, 158, 13, 0.3) !important;
-}
-
-.success-button:active {
-  transform: scale(0.98) !important;
-  box-shadow: 0 2rpx 8rpx rgba(56, 158, 13, 0.4) !important;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2rpx 8rpx rgba(56, 158, 13, 0.4) !important;
+  }
 }
 
 .list-section {
@@ -239,29 +223,34 @@
   margin-bottom: 8rpx;
   line-height: 1.4;
   flex: 1;
+  
+  /* 列表卡片中的标题左对齐 */
+  .list-card & {
+    text-align: left;
+  }
 }
 
 /* 查看全部按钮样式 */
 .view-all-btn {
-  height: 56rpx !important;
-  padding: 0 24rpx !important;
-  border-radius: 8rpx !important;
-  font-size: 24rpx !important;
-  font-weight: 500 !important;
+  height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
   background: var(--td-bg-color-component, #f3f3f3) !important;
   border: 1rpx solid var(--td-border-level-1-color, #e7e7e7) !important;
   color: var(--td-brand-color, #0052d9) !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   white-space: nowrap;
   margin-bottom: 8rpx;
 }
 
 .view-all-btn:active {
-  transform: scale(0.95) !important;
+  transform: scale(0.95);
   background: var(--td-bg-color-component-hover, #e8e8e8) !important;
   border-color: var(--td-brand-color, #0052d9) !important;
 }
@@ -270,11 +259,6 @@
 /* TDesign原生列表卡片 */
 .list-card {
   margin: 24rpx 0;
-}
-
-/* 标题左对齐 */
-.list-card .card-title {
-  text-align: left;
 }
 
 /* TDesign原生记录样式 */
@@ -447,7 +431,7 @@
 }
 
 .record-status-tag {
-  margin-top: 0 !important;
+  margin-top: 0;
 }
 
 .record-symptoms {
@@ -497,6 +481,26 @@
     font-size: 22rpx;
   }
 
+  /* 物料卡片响应式 */
+  .material-overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12rpx;
+  }
+  
+  .material-overview-card {
+    padding: 20rpx 12rpx;
+    border-radius: 8rpx;
+  }
+  
+  .material-overview-label {
+    font-size: 24rpx;
+    margin-bottom: 8rpx;
+  }
+  
+  .material-overview-status {
+    font-size: 20rpx;
+  }
+
   /* 记录列表响应式 */
   .list-section,
   .card,
@@ -539,7 +543,7 @@
   .health-text {
     font-size: 22rpx;
   }
-  
+
   /* 兼容旧版样式 */
   .record-location {
     font-size: 28rpx;
@@ -691,27 +695,7 @@
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.15);
 }
 
-/* 物料卡片响应式设计 */
-@media screen and (max-width: 480px) {
-  .material-overview-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12rpx;
-  }
-  
-  .material-overview-card {
-    padding: 20rpx 12rpx;
-    border-radius: 8rpx;
-  }
-  
-  .material-overview-label {
-    font-size: 24rpx;
-    margin-bottom: 8rpx;
-  }
-  
-  .material-overview-status {
-    font-size: 20rpx;
-  }
-}
+/* 物料卡片响应式设计 - 合并到主响应式查询中 */
 
 /* ========== AI智能盘点功能样式 ========== */
 
@@ -1028,15 +1012,15 @@
       border: none !important;
       color: #ffffff !important;
       box-shadow: 0 4rpx 16rpx rgba(0, 168, 112, 0.2) !important;
-      transition: all 0.3s ease !important;
-      line-height: 80rpx !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      text-align: center !important;
+      transition: all 0.3s ease;
+      line-height: 80rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
       
       &:active {
-        transform: scale(0.98) !important;
+        transform: scale(0.98);
         box-shadow: 0 2rpx 8rpx rgba(0, 168, 112, 0.3) !important;
       }
     }
@@ -1055,15 +1039,15 @@
         background: #ffffff !important;
         border: 1rpx solid var(--td-component-stroke, #e7e7e7) !important;
         color: var(--td-brand-color, #0052d9) !important;
-        transition: all 0.3s ease !important;
-        line-height: 64rpx !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
+        transition: all 0.3s ease;
+        line-height: 64rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
         
         &:active {
-          transform: scale(0.98) !important;
+          transform: scale(0.98);
           background: var(--td-bg-color-component-hover, #f8f8f8) !important;
           border-color: var(--td-brand-color, #0052d9) !important;
         }
@@ -1082,19 +1066,19 @@
   }
   
   .camera-placeholder {
-    height: 320rpx !important;
+    height: 320rpx;
     
     .placeholder-text {
-      font-size: 28rpx !important;
+      font-size: 28rpx;
     }
     
     .placeholder-desc {
-      font-size: 22rpx !important;
+      font-size: 22rpx;
     }
   }
   
   .main-result {
-    padding: 24rpx !important;
+    padding: 24rpx;
     
     .count-display {
       .count-number {
@@ -1119,7 +1103,7 @@
       height: 72rpx !important;
       font-size: 28rpx !important;
       border-radius: 10rpx !important;
-      line-height: 72rpx !important;
+      line-height: 72rpx;
     }
     
     .secondary-actions {
@@ -1130,7 +1114,7 @@
         height: 60rpx !important;
         font-size: 24rpx !important;
         border-radius: 8rpx !important;
-        line-height: 60rpx !important;
+        line-height: 60rpx;
       }
     }
   }
@@ -1162,20 +1146,20 @@
 }
 
 .record-detail-content .card-content {
-  display: flex !important;
-  flex-direction: column !important;
+  display: flex;
+  flex-direction: column;
   padding: 0 !important;
   overflow: visible !important;
 }
 
 /* 信息行样式 */
 .record-detail-content .info-row {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 12rpx 0 !important;
-  gap: 24rpx !important;
-  margin-bottom: 0 !important;
+  gap: 24rpx;
+  margin-bottom: 0;
 }
 
 /* 虚线分隔符 */
@@ -1196,7 +1180,7 @@
   color: #666 !important;
   flex-shrink: 0 !important;
   min-width: 120rpx !important;
-  margin-right: 0 !important;
+  margin-right: 0;
   font-weight: 400 !important;
 }
 
@@ -1207,26 +1191,12 @@
   font-weight: 500 !important;
   text-align: right !important;
   flex: 1 !important;
-  word-break: break-all !important;
-  overflow-wrap: break-word !important;
-  line-height: 1.5 !important;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  line-height: 1.5;
 }
 
-/* 状态标签容器 */
-.record-detail-content .status-value {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  flex: 1 !important;
-}
-
-/* 备注文本 */
-.record-detail-content .note-text {
-  text-align: left !important;
-  word-break: break-all !important;
-  white-space: pre-wrap !important;
-  line-height: 1.5 !important;
-}
+/* 状态标签容器 - 已合并到上方统一样式 */
 
 /* ========== 弹窗优化样式 ========== */
 
@@ -1251,11 +1221,11 @@
 
 /* 优化信息行样式 */
 .info-section .info-row {
-  margin-bottom: 0 !important;
+  margin-bottom: 0;
   padding: 20rpx 8rpx;
-  display: flex !important;
+  display: flex;
   justify-content: space-between;
-  align-items: center !important;
+  align-items: center;
   flex-wrap: nowrap;
   gap: 16rpx;
   border-bottom: 1rpx dashed var(--td-border-level-2-color, #e0e0e0);
@@ -1288,19 +1258,21 @@
   }
 }
 
-/* 状态标签居右对齐 */
-.info-section .status-value {
+/* 状态标签居右对齐 - 与详情弹窗保持一致 */
+.info-section .status-value,
+.record-detail-content .status-value {
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 
-/* 备注文本左对齐 */
-.info-section .note-text {
+/* 备注文本左对齐 - 与详情弹窗保持一致 */
+.info-section .note-text,
+.record-detail-content .note-text {
   word-break: break-all;
   white-space: pre-wrap;
   line-height: 1.5;
-  text-align: left !important;
+  text-align: left;
 }
 
 /* 详情按钮区域 */

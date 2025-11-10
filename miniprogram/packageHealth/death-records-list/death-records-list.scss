@@ -229,5 +229,5 @@
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
   min-height: 0;
-  flex-shrink: 0;
+    flex-shrink: 0;
 }

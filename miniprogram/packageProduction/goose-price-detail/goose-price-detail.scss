@@ -36,7 +36,7 @@
 
 .breed-card {
   border-radius: 24rpx;
-  padding: 24rpx 20rpx;
+  padding: 20rpx 20rpx;
   box-shadow: 0 6rpx 20rpx rgba(15, 23, 42, 0.08);
   border: 2rpx solid transparent;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -44,7 +44,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
+  gap: 16rpx;
   position: relative;
   min-height: 140rpx;
   overflow: visible;
@@ -232,9 +232,9 @@
   }
 
   .breed-card {
-    padding: 20rpx 16rpx;
+    padding: 18rpx 16rpx;
     min-height: 130rpx;
-    gap: 6rpx;
+    gap: 14rpx;
   }
 
   .breed-card.active {
