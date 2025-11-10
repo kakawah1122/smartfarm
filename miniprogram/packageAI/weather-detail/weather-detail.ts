@@ -1,4 +1,182 @@
 // weather-detail.ts - 天气详情页
+
+// 类型定义
+interface WeatherData {
+  temperature: number
+  humidity: number
+  condition: string
+  emoji: string
+  feelsLike: number
+  windDirection: string
+  windScale: string
+  windSpeed: number
+  visibility: number
+  pressure: number
+  updateTime: string
+}
+
+interface LocationInfo {
+  province: string
+  city: string
+  district: string
+}
+
+interface TodayForecast {
+  tempMax: number
+  tempMin: number
+}
+
+interface WeatherWarning {
+  id: string
+  title: string
+  severity: string
+  severityLevel: number
+  theme: string
+  text: string
+  type: string
+  typeName: string
+  startTime: string
+  endTime: string
+  pubTime: string
+  status: string
+  level: string
+  urgency: string
+  certainty: string
+}
+
+interface AirQualityData {
+  aqi: number
+  category: string
+  color: string
+  progress: number
+  pm2p5: number
+  pm10: number
+  no2: number
+  so2: number
+  co: number
+  o3: number
+  updateTime?: string
+}
+
+interface NextHourWeather {
+  time: string
+  desc: string
+  wind: string
+  temp: string
+  pop: string
+}
+
+interface HourlyForecastItem {
+  time: string
+  timeLabel: string
+  temp: number
+  icon: string
+  text: string
+  windSpeed: number
+  humidity: number
+  pop: number
+}
+
+interface DailyForecastItem {
+  date: string
+  dayName: string
+  iconDay: string
+  iconNight: string
+  textDay: string
+  textNight: string
+  tempMax: number
+  tempMin: number
+  tempProgress: number
+  humidity: number
+  uvIndex: number
+  vis: number
+  windDir: string
+  windScale: string
+  windSpeed: number
+}
+
+interface CompleteWeatherData {
+  current?: {
+    temperature?: number
+    humidity?: number
+    feelsLike?: number
+    windDirection?: string
+    windScale?: string
+    windSpeed?: number
+    visibility?: number
+    pressure?: number
+    updateTime?: string
+  }
+  condition?: {
+    text?: string
+    emoji?: string
+  }
+  hourly?: Array<{
+    fxTime: string
+    temp: string | number
+    text: string
+    windSpeed?: number
+    humidity?: number
+    pop?: number
+  }>
+  daily?: Array<{
+    fxDate: string
+    tempMax: string | number
+    tempMin: string | number
+    textDay: string
+    textNight: string
+    humidity?: number
+    uvIndex?: number
+    vis?: number
+    windDirDay?: string
+    windScaleDay?: string
+    windSpeedDay?: number
+  }>
+  air?: {
+    aqi: string | number
+    pm2p5?: string | number
+    pm10?: string | number
+    no2?: string | number
+    so2?: string | number
+    co?: string | number
+    o3?: string | number
+    updateTime?: string
+  }
+  warning?: Array<{
+    id?: string
+    title: string
+    severity?: string
+    severityColor?: string
+    text?: string
+    type?: string
+    typeName?: string
+    startTime?: string
+    endTime?: string
+    pubTime?: string
+    status?: string
+    level?: string
+    urgency?: string
+    certainty?: string
+  }>
+  locationInfo?: LocationInfo
+}
+
+interface LocationResult {
+  latitude: number
+  longitude: number
+}
+
+interface WeatherAPIResponse {
+  result?: {
+    success?: boolean
+    data?: CompleteWeatherData
+    error?: {
+      message?: string
+    }
+    message?: string
+  }
+}
+
 Page({
   data: {
     // 天气数据
@@ -30,20 +208,19 @@ Page({
     },
     
     // 天气预警列表
-    warningList: [] as any[],
+    warningList: [] as WeatherWarning[],
     
     // 空气质量数据
-    airData: null as any,
+    airData: null as AirQualityData | null,
     
     // 下一小时天气预报
-    nextHourWeather: null as any,
+    nextHourWeather: null as NextHourWeather | null,
     
     // 24小时预报
-    hourlyForecast: [] as any[],
-    hourlyLabels: [] as any[],
+    hourlyForecast: [] as HourlyForecastItem[],
     
     // 7日预报
-    dailyForecast: [] as any[],
+    dailyForecast: [] as DailyForecastItem[],
     
     // 刷新状态
     refreshing: false,
@@ -58,18 +235,13 @@ Page({
     locationRetryCount: 0
   },
 
-  onLoad(options: any) {
-    // 已移除调试日志
-    // 添加调试信息
-    // 已移除调试日志
-    // 已移除调试日志
+  onLoad(_options: Record<string, any>) {
     this.loadWeatherData()
   },
 
   // 安全显示 Loading
   showLoadingSafe(title = '加载中...') {
     if (!this.data.loadingVisible) {
-      // 已移除调试日志
       wx.showLoading({ title })
       this.setData({ loadingVisible: true })
     }
@@ -78,17 +250,13 @@ Page({
   // 安全隐藏 Loading
   hideLoadingSafe() {
     if (this.data.loadingVisible) {
-      // 已移除调试日志
       wx.hideLoading()
       this.setData({ loadingVisible: false })
-    } else {
-      // 已移除调试日志
     }
   },
 
   // 强制清理 Loading 状态（用于异常情况）
   forceHideLoading() {
-    // 已移除调试日志
     try {
       wx.hideLoading()
     } catch (e) {
@@ -98,8 +266,7 @@ Page({
   },
 
   // 统一异常处理
-  handleError(error: any, context = '操作') {
-    // 已移除调试日志
+  handleError(error: Error | { message?: string; errMsg?: string } | unknown, context = '操作') {
     // 确保 Loading 状态被清理
     this.forceHideLoading()
     
@@ -121,7 +288,6 @@ Page({
   onShow() {
     // 重置 Loading 状态，防止页面切换导致的状态不一致
     if (this.data.loadingVisible && !this.data.isLoading) {
-      // 已移除调试日志
       this.setData({ loadingVisible: false })
     }
     
@@ -131,7 +297,6 @@ Page({
 
   onUnload() {
     // 页面卸载时强制清理 Loading 状态
-    // 已移除调试日志
     this.forceHideLoading()
   },
 
@@ -146,10 +311,8 @@ Page({
   async loadWeatherData() {
     const cachedData = this.getCachedWeatherData()
     if (cachedData) {
-      // 已移除调试日志
       this.updateCompleteWeatherData(cachedData)
     } else {
-      // 已移除调试日志
       // 首次加载时静默获取，不显示toast
       await this.getWeatherData(false)
     }
@@ -159,7 +322,6 @@ Page({
   async getWeatherData(showLoading = true) {
     // 防止重复调用
     if (this.data.isLoading) {
-      // 已移除调试日志
       return
     }
 
@@ -189,10 +351,9 @@ Page({
       } else {
         // 增强错误处理，显示云函数返回的具体错误信息
         const errorMessage = weatherRes.result?.error?.message || weatherRes.result?.message || '天气数据获取失败，请稍后重试'
-        // 已移除调试日志
         throw new Error(errorMessage)
       }
-    } catch (error: any) {
+    } catch (error) {
       this.handleError(error, '获取天气数据')
     } finally {
       this.setData({ isLoading: false })
@@ -204,13 +365,10 @@ Page({
   },
 
   // 获取位置 - 彻底重写，确保获取真实位置
-  getLocation(retryCount = 0): Promise<any> {
+  getLocation(retryCount = 0): Promise<LocationResult> {
     return new Promise((resolve, reject) => {
-      // 已移除调试日志
-      // 已移除调试日志
       // 防止无限递归重试
       if (retryCount >= 3) {
-        // 已移除调试日志
         reject(new Error('位置获取失败，重试次数超限'))
         return
       }
@@ -218,10 +376,7 @@ Page({
       // 先检查位置权限
       wx.getSetting({
         success: (settingsRes) => {
-          // 已移除调试日志
-          // 已移除调试日志
           if (settingsRes.authSetting['scope.userLocation'] === false) {
-            // 已移除调试日志
             wx.showModal({
               title: '需要位置权限',
               content: '为了获取准确的天气信息，需要您的位置权限。请在设置中开启位置权限。',
@@ -237,22 +392,13 @@ Page({
           }
           
           // 强制获取高精度位置
-          // 已移除调试日志
           wx.getLocation({
             type: 'gcj02',
             isHighAccuracy: true,
             success: (locationRes) => {
-              const { latitude, longitude, accuracy, speed, altitude } = locationRes
-              // 已移除调试日志
-              // 已移除调试日志
-              // 已移除调试日志
-              // 已移除调试日志
-              // 已移除调试日志
-              // 已移除调试日志
-              // 已移除调试日志
+              const { latitude, longitude } = locationRes
               // 验证坐标有效性
               if (!latitude || !longitude || latitude === 0 || longitude === 0) {
-                // 已移除调试日志
                 reject(new Error('获取到的坐标无效'))
                 return
               }
@@ -269,7 +415,6 @@ Page({
               resolve(locationRes)
             },
             fail: (error) => {
-              // 已移除调试日志
               wx.showModal({
                 title: '位置获取失败',
                 content: `无法获取您的位置信息: ${error.errMsg || '未知错误'}`,
@@ -287,7 +432,6 @@ Page({
           })
         },
         fail: (error) => {
-          // 已移除调试日志
           reject(error)
         }
       })
@@ -295,7 +439,7 @@ Page({
   },
 
   // 调用完整天气API
-  callCompleteWeatherAPI(lat: number, lon: number): Promise<any> {
+  callCompleteWeatherAPI(lat: number, lon: number): Promise<WeatherAPIResponse> {
     return wx.cloud.callFunction({
       name: 'weather',
       data: {
@@ -307,19 +451,14 @@ Page({
   },
 
   // 更新完整天气数据
-  updateCompleteWeatherData(weatherData: any) {
-    // 已移除调试日志
+  updateCompleteWeatherData(weatherData: CompleteWeatherData | { data?: CompleteWeatherData }) {
     // 处理云函数返回的嵌套数据结构
     // 云函数返回格式: { success: true, data: { current: {...}, hourly: [...] } }
     const actualData = weatherData.data || weatherData
     
-    // 已移除调试日志
-    // 已移除调试日志
-    
     // 优先更新位置信息 - 彻底清除"实时定位获取中"状态
     const locationInfo = actualData.locationInfo
     if (locationInfo) {
-      // 已移除调试日志
       // 立即清除"实时定位获取中"的显示
       this.setData({
         location: {
@@ -328,10 +467,7 @@ Page({
           district: locationInfo.district || '周边区域'
         }
       })
-      
-      // 已移除调试日志
     } else {
-      // 已移除调试日志
       // 即使没有位置信息，也要清除"获取中"状态
       this.setData({
         location: {
@@ -363,34 +499,23 @@ Page({
     
     // 更新逐小时预报
     if (actualData.hourly && Array.isArray(actualData.hourly) && actualData.hourly.length > 0) {
-      // 已移除调试日志
       this.processHourlyForecast(actualData.hourly)
-    } else {
-      // 已移除调试日志
     }
     
     // 更新每日预报
     if (actualData.daily && Array.isArray(actualData.daily) && actualData.daily.length > 0) {
-      // 已移除调试日志
       this.processDailyForecast(actualData.daily)
-    } else {
-      // 已移除调试日志
     }
     
     // 更新空气质量
     if (actualData.air) {
-      // 已移除调试日志
       this.processAirQuality(actualData.air)
-    } else {
-      // 已移除调试日志
     }
     
     // 更新天气预警
     if (actualData.warning) {
-      // 已移除调试日志
       this.processWeatherWarning(actualData.warning)
     } else {
-      // 已移除调试日志
       this.setData({ warningList: [] })
     }
   },
@@ -414,15 +539,13 @@ Page({
   },
 
   // 处理逐小时预报数据
-  processHourlyForecast(hourlyData: any) {
-    // 已移除调试日志
+  processHourlyForecast(hourlyData: CompleteWeatherData['hourly']) {
     // 确保 hourlyData 是数组
     if (!Array.isArray(hourlyData)) {
-      // 已移除调试日志
       return
     }
     
-    const hourlyForecast = hourlyData.slice(0, 24).map((item: any, index: number) => {
+    const hourlyForecast = hourlyData.slice(0, 24).map((item, index: number) => {
       const time = new Date(item.fxTime)
       let timeLabel = ''
       
@@ -461,11 +584,9 @@ Page({
   },
 
   // 处理每日预报数据
-  processDailyForecast(dailyData: any) {
-    // 已移除调试日志
+  processDailyForecast(dailyData: CompleteWeatherData['daily']) {
     // 确保 dailyData 是数组
     if (!Array.isArray(dailyData)) {
-      // 已移除调试日志
       return
     }
     
@@ -480,7 +601,7 @@ Page({
       })
     }
     
-    const dailyForecast = dailyData.slice(0, 7).map((item: any, index: number) => {
+    const dailyForecast = dailyData.slice(0, 7).map((item, index: number) => {
       const date = new Date(item.fxDate)
       let dayName = ''
       
@@ -532,10 +653,8 @@ Page({
   },
 
   // 处理空气质量数据
-  processAirQuality(airData: any) {
-    // 已移除调试日志
+  processAirQuality(airData: CompleteWeatherData['air']) {
     if (!airData || typeof airData.aqi === 'undefined') {
-      // 已移除调试日志
       this.setData({
         airData: {
           aqi: 0,
@@ -602,17 +721,15 @@ Page({
   },
 
   // 处理天气预警数据
-  processWeatherWarning(warningData: any) {
-    // 已移除调试日志
+  processWeatherWarning(warningData: CompleteWeatherData['warning']) {
     // 确保 warningData 是数组
     if (!Array.isArray(warningData)) {
-      // 已移除调试日志
       this.setData({ warningList: [] })
       return
     }
     
     // 过滤并处理预警数据
-    const warningList = warningData.filter(item => item && item.title).map((item: any) => {
+    const warningList = warningData.filter(item => item && item.title).map((item) => {
       let theme = 'primary'
       let severityLevel = 0 // 用于排序：4=红色(最高), 3=橙色, 2=黄色, 1=蓝色
       
@@ -654,7 +771,6 @@ Page({
     // 按严重级别排序（红色在前）
     warningList.sort((a, b) => b.severityLevel - a.severityLevel)
     
-    // 已移除调试日志
     this.setData({ warningList })
   },
 
@@ -710,7 +826,6 @@ Page({
       const cachedData = this.getCachedWeatherData()
       if (!cachedData) {
         // 没有缓存数据，自动获取（静默模式，不显示Loading）
-        // 已移除调试日志
         await this.getWeatherData(false)
       } else {
         // 有缓存数据，检查是否过期（1小时）
@@ -719,7 +834,6 @@ Page({
         const oneHour = 60 * 60 * 1000
         
         if (now - cacheTime > oneHour) {
-          // 已移除调试日志
           await this.getWeatherData(false)
         }
       }
@@ -729,7 +843,7 @@ Page({
   },
 
   // 缓存天气数据
-  cacheWeatherData(weatherData: any) {
+  cacheWeatherData(weatherData: CompleteWeatherData) {
     try {
       const cacheData = {
         data: weatherData,
@@ -737,9 +851,8 @@ Page({
         expireTime: Date.now() + 60 * 60 * 1000 // 1小时过期
       }
       wx.setStorageSync('weather_cache', cacheData)
-      // 已移除调试日志
     } catch (error) {
-      // 已移除调试日志
+      // 缓存失败不影响主流程
     }
   },
 
@@ -760,68 +873,13 @@ Page({
   clearWeatherCache() {
     try {
       wx.removeStorageSync('weather_cache')
-      // 已移除调试日志
     } catch (error) {
-      // 已移除调试日志
+      // 清除缓存失败不影响主流程
     }
-  },
-
-  // 计算天气建议
-  calculateWeatherTips() {
-    const { weather, airData, warningList } = this.data
-    const tips = []
-    
-    // 基于温度的建议
-    if (weather.temperature < 0) {
-      tips.push('气温较低，注意保暖，外出建议穿厚外套')
-    } else if (weather.temperature < 10) {
-      tips.push('气温偏低，建议穿长袖和外套')
-    } else if (weather.temperature > 35) {
-      tips.push('高温天气，注意防暑降温，多补充水分')
-    } else if (weather.temperature > 30) {
-      tips.push('气温较高，建议穿轻薄透气的衣服')
-    }
-    
-    // 基于湿度的建议
-    if (weather.humidity > 80) {
-      tips.push('湿度较高，注意通风，预防潮湿')
-    } else if (weather.humidity < 30) {
-      tips.push('空气干燥，注意补水，使用保湿产品')
-    }
-    
-    // 基于天气状况的建议
-    if (weather.condition.includes('雨')) {
-      tips.push('有降雨，外出请携带雨具')
-    } else if (weather.condition.includes('雪')) {
-      tips.push('有降雪，路面湿滑，出行注意安全')
-    } else if (weather.condition.includes('雾') || weather.condition.includes('霾')) {
-      tips.push('能见度较低，驾驶时请注意安全')
-    }
-    
-    // 基于空气质量的建议
-    if (airData && airData.aqi > 150) {
-      tips.push('空气质量较差，建议减少户外活动，外出佩戴口罩')
-    } else if (airData && airData.aqi > 100) {
-      tips.push('空气质量一般，敏感人群应减少户外活动')
-    }
-    
-    // 基于预警的建议
-    if (warningList.length > 0) {
-      tips.push(`有${warningList.length}条天气预警，请关注天气变化`)
-    }
-    
-    // 如果没有特殊建议，给出通用建议
-    if (tips.length === 0) {
-      tips.push('天气状况良好，适宜户外活动')
-    }
-    
-    // 已移除调试日志
-    return tips
   },
 
   // 导航栏返回按钮事件
   onNavigateBack() {
-    // 已移除调试日志
     // 清理页面状态和资源
     this.forceHideLoading()
     
@@ -829,8 +887,6 @@ Page({
     // - 保存用户浏览历史
     // - 清理定时器
     // - 发送统计数据等
-    
-    // 已移除调试日志
   },
 
   // 页面分享

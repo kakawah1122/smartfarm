@@ -46,11 +46,6 @@ Component({
     className: {
       type: String,
       value: ''
-    },
-    // 是否显示更新时间
-    showUpdateTime: {
-      type: Boolean,
-      value: true
     }
   },
 
