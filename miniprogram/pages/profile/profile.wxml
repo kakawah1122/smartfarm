@@ -1,12 +1,14 @@
 <!--profile.wxml - 个人中心页面-->
-<view class="page profile-page">
+<view class="page-container">
   <!-- 导航栏 -->
   <navigation-bar 
     title="个人中心"
     show-back="{{false}}"
   />
   
-  <scroll-view class="scroll-container" scroll-y>
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <scroll-view class="list-container" scroll-y>
     <!-- 个人信息卡片 -->
     <view class="profile-card">
       <view class="profile-header">
@@ -114,199 +116,186 @@
       </button>
     </view>
     
-    <!-- 安全区域 -->
-    <view class="safe-area-bottom"></view>
-  </scroll-view>
-  
-  <!-- 报销申请弹窗 - 使用原生实现 -->
-  <view wx:if="{{showReimbursementDialog}}" class="popup-mask" catchtap="closeReimbursementDialog">
-    <view class="popup-container reimbursement-popup" catchtap="stopPropagation">
-      <!-- 弹窗头部 -->
-      <view class="popup-header">
-        <text class="header-title">新建报销申请</text>
-        <text class="header-close" catchtap="closeReimbursementDialog">✕</text>
-      </view>
-      
-      <!-- 弹窗内容 -->
-      <scroll-view class="popup-content" scroll-y>
-        <view class="reimbursement-form">
-          <!-- 基础信息 -->
-          <view class="form-section">
-            <view class="section-header">
-              <text class="section-title">基础信息</text>
-            </view>
-            <view class="form-card">
-              <!-- 报销类型 -->
-        <picker 
-          mode="selector" 
-          range="{{reimbursementTypes}}" 
-          range-key="name"
-          value="{{reimbursementForm.typeIndex}}"
-          bind:change="onReimbursementTypeChange"
-                class="picker-wrapper"
-        >
-                <view class="form-item">
-                  <text class="form-label required">报销类型</text>
-          <view class="picker-value">
-            {{reimbursementTypes[reimbursementForm.typeIndex].name}}
-                  </view>
-          </view>
-        </picker>
-      
-              <!-- 报销金额 -->
-      <view class="form-item">
-                <text class="form-label required">报销金额</text>
-        <input 
-          class="form-input" 
-          type="digit"
-          placeholder="请输入金额" 
-          value="{{reimbursementForm.amount}}" 
-          bind:input="onAmountInput"
-        />
-      </view>
-      
-              <!-- 报销日期 -->
-        <picker 
-          mode="date" 
-          value="{{reimbursementForm.date}}"
-          bind:change="onDateChange"
-                class="picker-wrapper"
-        >
-                <view class="form-item">
-                  <text class="form-label required">报销日期</text>
-          <view class="picker-value">{{reimbursementForm.date}}</view>
-                </view>
-        </picker>
-            </view>
-      </view>
-      
-          <!-- 报销说明 -->
-          <view class="form-section">
-            <view class="section-header">
-              <text class="section-title">报销说明</text>
-            </view>
-            <view class="form-card">
-              <view class="form-item-textarea">
-                <text class="form-label required">报销说明</text>
-        <textarea 
-          class="form-textarea" 
-          placeholder="请填写报销说明" 
-          value="{{reimbursementForm.description}}" 
-          bind:input="onDescriptionInput"
-          maxlength="200"
-        />
-      </view>
-            </view>
-      </view>
-      
-          <!-- 上传凭证 -->
-          <view class="form-section">
-            <view class="section-header">
-              <text class="section-title">上传凭证</text>
-            </view>
-            <view class="form-card">
-              <view class="form-item-textarea">
-        <text class="form-label">上传凭证（最多5张）</text>
-        <view class="voucher-upload">
-          <view 
-            wx:for="{{reimbursementForm.vouchers}}" 
-            wx:key="index"
-            class="voucher-item"
-          >
-            <image class="voucher-image" src="{{item.tempPath}}" mode="aspectFill" />
-            <view class="voucher-remove" bind:tap="removeVoucher" data-index="{{index}}">×</view>
-          </view>
-          <view 
-            wx:if="{{reimbursementForm.vouchers.length < 5}}"
-            class="voucher-add"
-            bind:tap="chooseVoucher"
-          >
-            <text class="add-icon">+</text>
-            <text class="add-text">添加凭证</text>
-                  </view>
-                </view>
-          </view>
-        </view>
-      </view>
-        </view>
-      </scroll-view>
-      
-      <!-- 弹窗底部操作按钮 -->
-      <view class="popup-footer">
-        <button class="btn-cancel" catchtap="closeReimbursementDialog">取消</button>
-        <button class="btn-confirm" catchtap="submitReimbursement">提交申请</button>
-      </view>
-    </view>
+      <!-- 底部安全区域占位 -->
+      <view class="safe-area"></view>
+    </scroll-view>
   </view>
   
-  <!-- 编辑用户信息弹窗 -->
-  <view wx:if="{{showEditUserDialog}}" class="popup-mask" catchtap="closeEditUserDialog">
-    <view class="popup-container edit-user-popup" catchtap="stopEditUserPropagation">
-      <!-- 弹窗头部 -->
-      <view class="popup-header">
-        <text class="header-title">编辑个人信息</text>
-        <text class="header-close" catchtap="closeEditUserDialog">✕</text>
+  <!-- 报销申请弹窗 - 使用 bottom-popup 组件 -->
+  <bottom-popup
+    visible="{{showReimbursementDialog}}"
+    title="新建报销申请"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="提交申请"
+    cancel-text="取消"
+    bind:close="closeReimbursementDialog"
+    bind:confirm="submitReimbursement"
+    bind:cancel="closeReimbursementDialog"
+  >
+    <view class="reimbursement-form">
+      <!-- 基础信息 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">基础信息</text>
+        </view>
+        <view class="form-card">
+          <!-- 报销类型 -->
+          <picker 
+            mode="selector" 
+            range="{{reimbursementTypes}}" 
+            range-key="name"
+            value="{{reimbursementForm.typeIndex}}"
+            bind:change="onReimbursementTypeChange"
+            class="picker-wrapper"
+          >
+            <view class="form-item">
+              <text class="form-label required">报销类型</text>
+              <view class="picker-value">
+                {{reimbursementTypes[reimbursementForm.typeIndex].name}}
+              </view>
+            </view>
+          </picker>
+        
+          <!-- 报销金额 -->
+          <view class="form-item">
+            <text class="form-label required">报销金额</text>
+            <input 
+              class="form-input" 
+              type="digit"
+              placeholder="请输入金额" 
+              value="{{reimbursementForm.amount}}" 
+              bind:input="onAmountInput"
+            />
+          </view>
+        
+          <!-- 报销日期 -->
+          <picker 
+            mode="date" 
+            value="{{reimbursementForm.date}}"
+            bind:change="onDateChange"
+            class="picker-wrapper"
+          >
+            <view class="form-item">
+              <text class="form-label required">报销日期</text>
+              <view class="picker-value">{{reimbursementForm.date}}</view>
+            </view>
+          </picker>
+        </view>
       </view>
       
-      <!-- 弹窗内容 -->
-      <scroll-view class="popup-content" scroll-y>
-        <view class="edit-user-form">
-          <!-- 基础信息 -->
-          <view class="form-section">
-            <view class="section-header">
-              <text class="section-title">基础信息</text>
-            </view>
-            <view class="form-card">
-              <!-- 昵称 -->
-              <view class="form-item">
-                <text class="form-label required">昵称</text>
-                <input 
-                  class="form-input" 
-                  type="nickname"
-                  placeholder="请输入昵称" 
-                  value="{{editUserForm.nickName}}" 
-                  bind:input="onNickNameInput"
-                  maxlength="20"
-                />
+      <!-- 报销说明 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">报销说明</text>
+        </view>
+        <view class="form-card">
+          <view class="form-item-textarea">
+            <text class="form-label required">报销说明</text>
+            <textarea 
+              class="form-textarea" 
+              placeholder="请填写报销说明" 
+              value="{{reimbursementForm.description}}" 
+              bind:input="onDescriptionInput"
+              maxlength="200"
+            />
+          </view>
+        </view>
+      </view>
+      
+      <!-- 上传凭证 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">上传凭证</text>
+        </view>
+        <view class="form-card">
+          <view class="form-item-textarea">
+            <text class="form-label">上传凭证（最多5张）</text>
+            <view class="voucher-upload">
+              <view 
+                wx:for="{{reimbursementForm.vouchers}}" 
+                wx:key="index"
+                class="voucher-item"
+              >
+                <image class="voucher-image" src="{{item.tempPath}}" mode="aspectFill" />
+                <view class="voucher-remove" bind:tap="removeVoucher" data-index="{{index}}">×</view>
               </view>
-              
-              <!-- 手机号 -->
-              <view class="form-item">
-                <text class="form-label required">手机号</text>
-                <input 
-                  class="form-input" 
-                  type="number"
-                  placeholder="请输入手机号" 
-                  value="{{editUserForm.phone}}" 
-                  bind:input="onPhoneInput"
-                  maxlength="11"
-                />
-              </view>
-              
-              <!-- 养殖场名称 -->
-              <view class="form-item">
-                <text class="form-label required">养殖场名称</text>
-                <input 
-                  class="form-input" 
-                  type="text"
-                  placeholder="请输入养殖场名称" 
-                  value="{{editUserForm.farmName}}" 
-                  bind:input="onFarmNameInput"
-                  maxlength="30"
-                />
+              <view 
+                wx:if="{{reimbursementForm.vouchers.length < 5}}"
+                class="voucher-add"
+                bind:tap="chooseVoucher"
+              >
+                <text class="add-icon">+</text>
+                <text class="add-text">添加凭证</text>
               </view>
             </view>
           </view>
         </view>
-      </scroll-view>
-      
-      <!-- 弹窗底部操作按钮 -->
-      <view class="popup-footer">
-        <button class="btn-cancel" catchtap="closeEditUserDialog">取消</button>
-        <button class="btn-confirm" catchtap="submitEditUserInfo">保存</button>
       </view>
     </view>
-  </view>
+  </bottom-popup>
+  
+  <!-- 编辑用户信息弹窗 - 使用 bottom-popup 组件 -->
+  <bottom-popup
+    visible="{{showEditUserDialog}}"
+    title="编辑个人信息"
+    show-close="{{true}}"
+    show-actions="{{true}}"
+    confirm-text="保存"
+    cancel-text="取消"
+    bind:close="closeEditUserDialog"
+    bind:confirm="submitEditUserInfo"
+    bind:cancel="closeEditUserDialog"
+  >
+    <view class="edit-user-form">
+      <!-- 基础信息 -->
+      <view class="form-section">
+        <view class="section-header">
+          <text class="section-title">基础信息</text>
+        </view>
+        <view class="form-card">
+          <!-- 昵称 -->
+          <view class="form-item">
+            <text class="form-label required">昵称</text>
+            <input 
+              class="form-input" 
+              type="nickname"
+              placeholder="请输入昵称" 
+              value="{{editUserForm.nickName}}" 
+              bind:input="onNickNameInput"
+              maxlength="20"
+            />
+          </view>
+          
+          <!-- 手机号 -->
+          <view class="form-item">
+            <text class="form-label required">手机号</text>
+            <input 
+              class="form-input" 
+              type="number"
+              placeholder="请输入手机号" 
+              value="{{editUserForm.phone}}" 
+              bind:input="onPhoneInput"
+              maxlength="11"
+            />
+          </view>
+          
+          <!-- 养殖场名称 -->
+          <view class="form-item">
+            <text class="form-label required">养殖场名称</text>
+            <input 
+              class="form-input" 
+              type="text"
+              placeholder="请输入养殖场名称" 
+              value="{{editUserForm.farmName}}" 
+              bind:input="onFarmNameInput"
+              maxlength="30"
+            />
+          </view>
+        </view>
+      </view>
+    </view>
+  </bottom-popup>
   
 </view>
 

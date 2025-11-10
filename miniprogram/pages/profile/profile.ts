@@ -1,5 +1,6 @@
 // profile.ts - 个人中心页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 // 报销类型配置 - 养殖场景
 const REIMBURSEMENT_TYPES = [
@@ -106,7 +107,7 @@ const pageConfig = {
       wx.hideLoading()
     } catch (error) {
       wx.hideLoading()
-      console.error('页面初始化失败:', error)
+      logger.error('页面初始化失败:', error)
       wx.showToast({
         title: '加载失败',
         icon: 'none'
@@ -122,7 +123,7 @@ const pageConfig = {
     try {
       await this.loadReimbursementStats()
     } catch (error) {
-      console.error('刷新数据失败:', error)
+      logger.error('刷新数据失败:', error)
     }
   },
 
@@ -162,7 +163,7 @@ const pageConfig = {
         userRole: userInfo.role
       })
     } catch (error) {
-      console.error('加载用户信息失败:', error)
+      logger.error('加载用户信息失败:', error)
       throw error
     }
   },
@@ -191,7 +192,7 @@ const pageConfig = {
         })
       }
     } catch (error) {
-      console.error('加载报销统计失败:', error)
+      logger.error('加载报销统计失败:', error)
     }
   },
 
@@ -260,7 +261,7 @@ const pageConfig = {
         wx.showToast({ title: '头像更新成功', icon: 'success' })
       }
     } catch (error) {
-      console.error('头像上传失败:', error)
+      logger.error('头像上传失败:', error)
       wx.hideLoading()
       wx.showToast({ title: '头像更新失败', icon: 'none' })
     }
@@ -292,12 +293,6 @@ const pageConfig = {
     })
   },
 
-  /**
-   * 阻止事件冒泡
-   */
-  stopPropagation() {
-    // 阻止点击弹窗内容时关闭弹窗
-  },
 
   /**
    * 提交报销申请
@@ -562,12 +557,6 @@ const pageConfig = {
     })
   },
 
-  /**
-   * 阻止事件冒泡
-   */
-  stopEditUserPropagation() {
-    // 阻止点击弹窗内容时关闭弹窗
-  },
 
   /**
    * 编辑用户信息表单输入处理
