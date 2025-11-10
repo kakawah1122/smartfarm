@@ -65,8 +65,6 @@ const pageConfig = {
     generatedInviteCode: '',
     isInviteGenerated: false,
     
-    // 撤销邀请弹窗已移除
-    
     // 邀请选项数据 - 使用新的4角色体系
     inviteRoleOptions: [
       { label: '员工', value: 'employee' },
@@ -118,7 +116,7 @@ const pageConfig = {
     
     // 角色编辑相关
     selectedRoleIndex: [0],
-    
+    newRole: '',
     
     // 部门管理
     departments: [],
@@ -276,6 +274,11 @@ const pageConfig = {
                 
                 // 预先计算角色显示名
                 formatted.roleDisplayName = self.getRoleDisplayName(formatted.role)
+                
+                // 预先计算角色标签样式
+                const roleColor = self.getRoleColor(formatted.role)
+                formatted.roleTagStyle = `background-color: ${roleColor}15; border-color: ${roleColor}; color: ${roleColor}`
+                formatted.roleBadgeStyle = `background-color: ${roleColor}; color: #ffffff;`
                 
                 return formatted
               })
@@ -466,6 +469,13 @@ const pageConfig = {
     // 预先计算角色显示名和权限列表
     const roleDisplayName = this.getRoleDisplayName(employee.role)
     const permissions = this.getPermissionList(employee.role)
+    
+    // 确保样式已计算（如果数据中没有）
+    if (!employee.roleTagStyle) {
+      const roleColor = this.getRoleColor(employee.role)
+      employee.roleTagStyle = `background-color: ${roleColor}15; border-color: ${roleColor}; color: ${roleColor}`
+      employee.roleBadgeStyle = `background-color: ${roleColor}; color: #ffffff;`
+    }
     
     this.setData({
       selectedEmployee: employee,
@@ -802,17 +812,6 @@ const pageConfig = {
     }
 
     return friendlyPermissions
-  },
-
-  // 获取角色图标
-  getRoleIcon: function(role) {
-    const iconMap = {
-      'employee': '👤',
-      'veterinarian': '🩺',
-      'manager': '👔',
-      'super_admin': '👑'
-    }
-    return iconMap[role] || '👤'
   },
 
   // 获取角色索引

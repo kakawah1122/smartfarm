@@ -45,13 +45,8 @@
     <t-loading theme="spinner" size="40rpx" text="加载中..." />
   </view>
 
-  <!-- 空状态 -->
-  <view wx:elif="{{inviteList.length === 0}}" class="empty-container">
-    <t-empty icon="user-add" description="暂无邀请记录" />
-  </view>
-
   <!-- 邀请列表 -->
-  <view wx:else class="content-container">
+  <view wx:if="{{!loading && inviteList.length > 0}}" class="content-container">
     <t-cell-group class="invite-list" border="{{true}}">
       <t-cell
         wx:for="{{inviteList}}"

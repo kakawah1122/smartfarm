@@ -1,0 +1,98 @@
+/* 鹅价记录详情弹窗组件样式 */
+
+/* 详情内容容器 */
+.record-detail-content {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+// 记录项
+.record-item {
+  background: #fafafa !important;
+  border-radius: 16rpx !important;
+  padding: 24rpx !important;
+  margin-bottom: 24rpx !important;
+
+  &:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+.record-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 20rpx !important;
+  padding-bottom: 16rpx !important;
+  border-bottom: 2rpx dashed #e0e0e0 !important;
+}
+
+.record-index {
+  font-size: 28rpx !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+// 价格区块
+.price-section {
+  margin-bottom: 20rpx !important;
+
+  &:last-of-type {
+    margin-bottom: 16rpx !important;
+  }
+}
+
+.section-label {
+  font-size: 26rpx !important;
+  font-weight: 600 !important;
+  color: #666 !important;
+  margin-bottom: 12rpx !important;
+  padding: 8rpx 16rpx !important;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%) !important;
+  border-radius: 8rpx !important;
+  color: #0052d9 !important;
+}
+
+.price-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 16rpx !important;
+}
+
+.price-item {
+  display: flex !important;
+  flex-direction: column !important;
+  background: white !important;
+  border-radius: 12rpx !important;
+  padding: 16rpx !important;
+  gap: 8rpx !important;
+}
+
+.price-label {
+  font-size: 24rpx !important;
+  color: #999 !important;
+}
+
+.price-value {
+  font-size: 32rpx !important;
+  font-weight: 600 !important;
+  color: #0052d9 !important;
+}
+
+// 记录底部
+.record-footer {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8rpx !important;
+  padding-top: 16rpx !important;
+  border-top: 2rpx dashed #e0e0e0 !important;
+}
+
+.record-operator,
+.record-time {
+  font-size: 24rpx !important;
+  color: #999 !important;
+}
+

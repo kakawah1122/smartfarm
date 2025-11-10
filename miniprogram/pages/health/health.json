@@ -17,7 +17,12 @@
     "t-col": "tdesign-miniprogram/col/col",
     "t-image": "tdesign-miniprogram/image/image",
     "t-empty": "tdesign-miniprogram/empty/empty",
-    "diagnosis-detail-popup": "../../components/diagnosis-detail-popup/diagnosis-detail-popup"
+    "diagnosis-detail-popup": "../../components/diagnosis-detail-popup/diagnosis-detail-popup",
+    "task-detail-popup": "../../components/task-detail-popup/task-detail-popup",
+    "vaccine-form-popup": "../../components/vaccine-form-popup/vaccine-form-popup",
+    "medication-form-popup": "../../components/medication-form-popup/medication-form-popup",
+    "nutrition-form-popup": "../../components/nutrition-form-popup/nutrition-form-popup",
+    "adverse-reaction-popup": "../../components/adverse-reaction-popup/adverse-reaction-popup"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

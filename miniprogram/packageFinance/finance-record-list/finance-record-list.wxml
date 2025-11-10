@@ -48,11 +48,6 @@
             </view>
           </view>
         </view>
-
-        <!-- 空状态 -->
-        <view wx:if="{{displayRecords.length === 0}}" class="empty-state">
-          <text class="empty-text">暂无记录</text>
-        </view>
       </view>
       
       <!-- 底部安全区域占位 -->

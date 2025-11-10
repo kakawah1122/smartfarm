@@ -1,0 +1,111 @@
+<!-- 用药管理表单弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="用药管理"
+  show-close="{{true}}"
+  bind:close="onClose"
+>
+  <view class="medication-form-content">
+    <!-- 用药信息 -->
+    <view class="form-section">
+      <view class="section-title">用药信息</view>
+      <view class="form-row">
+        <text class="form-label required">选择药品</text>
+        <picker mode="selector" 
+                range="{{availableMedicines}}"
+                range-key="name"
+                bindchange="onMedicineSelect">
+          <view class="form-input picker-input">
+            {{selectedMedicine ? selectedMedicine.name : '请选择药品'}}
+          </view>
+        </picker>
+        <text wx:if="{{formErrors.medicineId}}" class="error-text">{{formErrors.medicineId}}</text>
+      </view>
+      
+      <view wx:if="{{selectedMedicine}}" class="medicine-info">
+        <view class="info-item">
+          <text class="info-label">当前库存：</text>
+          <text class="info-value">{{selectedMedicine.stock}}{{selectedMedicine.unit}}</text>
+        </view>
+        <view class="info-item" wx:if="{{selectedMedicine.description}}">
+          <text class="info-label">药品说明：</text>
+          <text class="info-value">{{selectedMedicine.description}}</text>
+        </view>
+      </view>
+
+      <view class="form-row">
+        <text class="form-label required">用药数量</text>
+        <input class="form-input" 
+               type="number"
+               placeholder="请输入用药数量"
+               value="{{formData.quantity > 0 ? formData.quantity : ''}}"
+               bindinput="onQuantityInput" />
+        <text wx:if="{{formErrors.quantity}}" class="error-text">{{formErrors.quantity}}</text>
+      </view>
+      <view class="form-row">
+        <text class="form-label">用药剂量</text>
+        <input class="form-input" 
+               placeholder="请输入用药剂量"
+               value="{{formData.dosage}}"
+               data-field="dosage"
+               bindinput="onInput" />
+      </view>
+      <view class="form-row">
+        <text class="form-label required">鹅只数量</text>
+        <input class="form-input" 
+               type="number"
+               placeholder="{{stockQuantity > 0 ? '请输入鹅只数量（存栏' + stockQuantity + '只）' : '请输入鹅只数量'}}"
+               value="{{formData.animalCount > 0 ? formData.animalCount : ''}}"
+               bindinput="onAnimalCountInput" />
+        <text wx:if="{{formErrors.animalCount}}" class="error-text">{{formErrors.animalCount}}</text>
+      </view>
+      <view class="form-row">
+        <text class="form-label">操作员</text>
+        <view class="form-input readonly-input">{{formData.operator}}</view>
+      </view>
+    </view>
+
+    <!-- 备注信息 -->
+    <view class="form-section">
+      <view class="section-title">备注信息</view>
+      <view class="form-row textarea-row">
+        <textarea class="form-textarea" 
+                  placeholder="请输入用药备注信息"
+                  value="{{formData.notes}}"
+                  data-field="notes"
+                  bindinput="onInput"
+                  maxlength="200"
+                  auto-height="{{true}}"
+                  show-confirm-bar="{{false}}" />
+      </view>
+    </view>
+
+    <!-- 表单验证错误提示 -->
+    <view wx:if="{{errorList && errorList.length > 0}}" class="form-errors">
+      <view wx:for="{{errorList}}" wx:key="index" class="error-item">
+        <text class="error-text">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 底部操作按钮 -->
+    <view class="form-actions">
+      <t-button 
+        theme="light" 
+        size="large" 
+        block
+        bind:tap="onClose"
+      >
+        取消
+      </t-button>
+      <t-button 
+        theme="primary" 
+        size="large" 
+        block
+        bind:tap="onSubmit"
+      >
+        确认领用
+      </t-button>
+    </view>
+  </view>
+</bottom-popup>
+

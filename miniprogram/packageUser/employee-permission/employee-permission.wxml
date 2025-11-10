@@ -53,7 +53,7 @@
       <view
         wx:for="{{employeeList}}"
         wx:key="_id"
-        class="employee-card {{isEmployeeSelected(item._id) ? 'selected' : ''}}"
+        class="employee-card"
         bind:tap="onEmployeeClick"
         data-employee="{{item}}"
       >
@@ -64,7 +64,7 @@
               <text class="employee-details">{{item.farmName || '未设置农场'}} · {{item.department || '未设置部门'}}</text>
             </view>
             <view class="employee-role">
-              <view class="role-tag" style="background-color: {{getRoleColor(item.role)}}15; border-color: {{getRoleColor(item.role)}}; color: {{getRoleColor(item.role)}}">
+              <view class="role-tag" style="{{item.roleTagStyle}}">
                 {{item.roleDisplayName || '未知角色'}}
               </view>
               <t-icon name="chevron-right" size="16" color="#c8c9cc" />
@@ -143,13 +143,8 @@
         <t-loading theme="spinner" size="40rpx" text="加载中..." />
       </view>
 
-      <!-- 空状态 -->
-      <view wx:elif="{{inviteList.length === 0}}" class="empty-container">
-        <t-empty icon="user-add" description="暂无邀请记录" />
-      </view>
-
       <!-- 邀请列表 -->
-      <view wx:else class="invite-list">
+      <view wx:if="{{!inviteLoading && inviteList.length > 0}}" class="invite-list">
         <view
           wx:for="{{inviteList}}"
           wx:key="_id"
@@ -177,7 +172,7 @@
       </view>
 
       <!-- 分页加载 -->
-      <view wx:if="{{inviteHasMore}}" class="load-more">
+      <view wx:if="{{inviteHasMore && inviteList.length > 0}}" class="load-more">
         <view class="load-more-btn" bind:tap="loadMoreInvites">
           <t-loading wx:if="{{inviteLoadingMore}}" theme="spinner" size="32rpx" />
           <text class="load-more-text">{{inviteLoadingMore ? '加载中...' : '加载更多'}}</text>
@@ -218,7 +213,7 @@
     <view class="employee-profile-section">
       <view class="profile-info">
         <text class="profile-name">{{selectedEmployee.nickname || '未设置'}}</text>
-        <view class="profile-role-tag" style="background-color: {{getRoleColor(selectedEmployee.role)}}15; border-color: {{getRoleColor(selectedEmployee.role)}}; color: {{getRoleColor(selectedEmployee.role)}}">
+        <view class="profile-role-tag" style="{{selectedEmployee.roleTagStyle || ''}}">
           {{selectedEmployeeRoleDisplayName}}
         </view>
       </view>
@@ -273,7 +268,7 @@
         <view class="card-content">
           <view class="permission-role-info">
             <text class="role-label">当前角色</text>
-            <view class="role-badge" style="background-color: {{getRoleColor(selectedEmployee.role)}}; color: #ffffff;">
+            <view class="role-badge" style="{{selectedEmployee.roleBadgeStyle || ''}}">
               {{selectedEmployeeRoleDisplayName}}
             </view>
           </view>

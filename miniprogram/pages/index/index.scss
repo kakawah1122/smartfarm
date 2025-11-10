@@ -7,353 +7,92 @@ page {
 }
 
 .page-container {
+  height: 100vh;
   background-color: #f5f5f5 !important;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* 移动端容器 - 优化布局 */
-.mobile-container {
-  width: 100%;
-  height: 100vh;
-  margin: 0 auto;
-  background: #f9fafb !important;
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* 防止页面整体滚动 */
 }
 
-
-
-
+/* 内容包装器 - 统一处理导航栏高度 */
+.content-wrapper {
+  flex: 1;
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 34rpx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
 /* 滚动容器 - 导航栏安全间距适配 */
-.scroll-container {
+.list-container {
   flex: 1;
   background-color: #f9fafb !important;
-  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx); /* 状态栏 + 导航栏 + 安全间距 */
-  padding-top: var(--spacing-base, 16rpx);
-  padding-bottom: 0;
-  border-radius: var(--spacing-xl, 32rpx) var(--spacing-xl, 32rpx) 0 0;
-  position: relative;
-  z-index: 2;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding: 0; /* 四周都为0，边距由卡片自身的margin控制 */
+  box-sizing: border-box;
 }
 
-/* 卡片通用样式 - 现代化设计 */
+/* 底部安全区域占位 */
+.safe-area {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 0;
+  flex-shrink: 0;
+}
+
+/* 卡片通用样式 - iOS风格，保持与天气详情页一致 */
 .card {
-  background: var(--color-bg-primary, #ffffff);
-  border-radius: var(--radius-lg, 16rpx);
-  margin: var(--spacing-lg, 24rpx) var(--spacing-xl, 32rpx) var(--spacing-lg, 24rpx) var(--spacing-xl, 32rpx);
-  box-shadow: var(--shadow-base, 0 2rpx 12rpx rgba(0, 0, 0, 0.1));
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20rpx;
+  margin: 12rpx 24rpx; /* 统一边距 */
+  box-shadow: none;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
 }
 
 .card:last-child {
-  margin-bottom: 0;
+  margin-bottom: 0; /* 最后一张卡片底部间距为0，由safe-area处理 */
 }
 
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4rpx;
-  background: var(--primary-gradient);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.card:first-child {
+  margin-top: 10rpx; /* 第一张卡片顶部间距 */
 }
 
 .card:active {
   transform: scale(0.98);
-  box-shadow: var(--shadow-md);
-}
-
-.card:active::before {
-  opacity: 1;
-}
-
-.card-content {
-  padding: var(--spacing-xl);
+  box-shadow: none;
 }
 
 .card-header {
+  padding: 20rpx 24rpx 16rpx 24rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-base);
-  min-height: 60rpx; /* 确保有足够高度容纳按钮 */
+  background: transparent;
 }
 
 .card-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: #3b82f6; // 与文章详情页主题色保持一致（theme-primary）
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2937;
   letter-spacing: 0.5rpx;
-  line-height: var(--line-height-tight);
+  line-height: 1.3;
 }
 
 .update-time {
-  font-size: var(--font-size-base);
-  color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-medium);
-}
-
-/* 天气卡片 - 现代化设计 */
-.weather-card {
-  margin-top: 0;
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(59, 130, 246, 0.12) 100%);
-  border: var(--td-border-level-1-color, 2rpx solid rgba(14, 165, 233, 0.1));
-  min-height: 180rpx;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: scale(1);
-}
-
-.weather-card:active {
-  transform: scale(0.98) translateY(2rpx);
-  box-shadow: 
-    0 4rpx 20rpx rgba(14, 165, 233, 0.12),
-    0 2rpx 6rpx rgba(14, 165, 233, 0.08),
-    inset 0 1rpx 0 rgba(255, 255, 255, 0.2);
-}
-
-.weather-card .card-content {
-  padding: var(--spacing-2xl) var(--spacing-xl);
-}
-
-.weather-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
-}
-
-.weather-left {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.weather-icon-wrapper {
-  width: 120rpx;
-  height: 120rpx;
-  background: var(--primary-gradient);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: var(--spacing-xl);
-  box-shadow: 0 8rpx 32rpx rgba(14, 165, 233, 0.25);
-  position: relative;
-  transform: scale(1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.weather-icon-wrapper::before {
-  content: '';
-  position: absolute;
-  inset: -4rpx;
-  background: var(--primary-gradient);
-  border-radius: var(--radius-full);
-  z-index: -1;
-  opacity: 0.4;
-  filter: blur(12rpx);
-  animation: weather-glow 3s ease-in-out infinite alternate;
-}
-
-.weather-emoji {
-  font-size: 48rpx;
-  filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.2));
-  transform: scale(1.2);
-}
-
-@keyframes weather-glow {
-  0% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-}
-
-/* 加载动画 */
-@keyframes loading-pulse {
-  0%, 100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-}
-
-.loading-animation {
-  animation: loading-pulse 1.5s ease-in-out infinite;
-}
-
-/* 错误状态样式 */
-.error-text {
-  color: var(--color-danger) !important;
-  opacity: 0.8;
-}
-
-.weather-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.weather-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  line-height: var(--line-height-tight);
-  margin-bottom: var(--spacing-sm);
-  letter-spacing: 0.8rpx;
-}
-
-.weather-location {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-base);
-  font-weight: var(--font-weight-medium);
-  opacity: 0.85;
-  margin-bottom: var(--spacing-xs);
-}
-
-/* 温度和天气状况水平容器 - 与详情页一致 */
-.temperature-and-condition {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 40rpx;
-  margin-bottom: 8rpx;
-}
-
-/* 在温度旁边的天气状况样式 - 与详情页一致 */
-.temperature-and-condition .weather-condition {
   font-size: 24rpx;
-  color: #374151;
-  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.45);
   font-weight: 500;
-  padding: 6rpx 10rpx;
-  background: rgba(14, 165, 233, 0.1);
-  border-radius: 8rpx;
-  border: 1rpx solid rgba(14, 165, 233, 0.2);
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
 }
 
-.temperature-and-condition .weather-condition.error-text {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.15);
-  color: var(--color-danger);
+.card-content {
+  padding: 20rpx 24rpx 24rpx 24rpx;
 }
 
-.weather-error-hint {
-  font-size: var(--font-size-xs);
-  color: var(--color-info);
-  text-decoration: underline;
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  border-radius: var(--radius-sm);
-  text-align: center;
-  background: rgba(59, 130, 246, 0.05);
-  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
-  transition: all 0.2s ease;
-}
-
-.weather-error-hint:active {
-  background: rgba(59, 130, 246, 0.1);
-  transform: scale(0.98);
-}
-
-.weather-right {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  min-width: 140rpx;
-}
-
-.temperature {
-  font-size: 72rpx;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  line-height: var(--line-height-none);
-  display: block;
-  background: var(--primary-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 4rpx 8rpx rgba(14, 165, 233, 0.3));
-  transform: scale(1.2);
-  margin-bottom: var(--spacing-xs);
-  min-width: 140rpx;
-  text-align: center;
-}
-
-
-
-/* 天气详细信息样式 */
-.weather-details {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 2rpx solid rgba(14, 165, 233, 0.1);
-  gap: var(--spacing-base);
-}
-
-.weather-detail-item {
-  flex: 1;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-xs);
-  min-width: 0;
-}
-
-.detail-label {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-base);
-  opacity: 0.8;
-  white-space: nowrap;
-}
-
-.detail-value {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  white-space: nowrap;
-}
-
-/* 可点击的更新时间样式 */
-.weather-update-item {
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: var(--radius-sm);
-  position: relative;
-}
-
-.weather-update-item:active {
-  background: rgba(14, 165, 233, 0.1);
-  transform: scale(0.98);
-}
+/* 天气卡片 - 已迁移到 weather-card 组件，这里只保留页面特定的覆盖样式 */
 
 
 /* 价格卡片 - 现代化设计 */
@@ -466,28 +205,16 @@ page {
   color: var(--primary-blue);
 }
 
-/* 添加特色阴影层次 */
+/* 天气卡片样式已移至 weather-card 组件 */
 .weather-card {
-  box-shadow: 
-    0 8rpx 32rpx rgba(14, 165, 233, 0.15),
-    0 2rpx 8rpx rgba(14, 165, 233, 0.08),
-    inset 0 1rpx 0 rgba(255, 255, 255, 0.3);
-  position: relative;
-  overflow: visible;
-}
-
-.weather-card::after {
-  content: '';
-  position: absolute;
-  top: -2rpx;
-  left: -2rpx;
-  right: -2rpx;
-  bottom: -2rpx;
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(59, 130, 246, 0.3) 100%);
-  border-radius: inherit;
-  z-index: -1;
-  filter: blur(8rpx);
-  opacity: 0.6;
+  margin-left: 24rpx !important;
+  margin-right: 24rpx !important;
+  margin-top: 10rpx !important;
+  margin-bottom: 12rpx !important;
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .price-card {
@@ -496,21 +223,13 @@ page {
 
 /* 响应式设计 */
 @media screen and (max-width: 480px) {
-  .mobile-container {
-    max-width: 100%;
-  }
-  
-
-  
   .card {
-    margin: var(--spacing-base) var(--spacing-lg) var(--spacing-base) var(--spacing-lg);
+    margin: 12rpx 24rpx; /* 统一边距 */
   }
   
   .card-content {
     padding: var(--spacing-lg);
   }
-  
-
 }
 
 @media screen and (max-width: 350px) {
@@ -552,15 +271,11 @@ page {
 }
 
 /* 滚动性能优化 */
-.scroll-container {
+.list-container {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
-/* 安全区域适配 - 增强版 */
-.mobile-container {
-  padding-bottom: 0;
-}
 
 /* 针对刘海屏设备的特殊优化 */
 @supports (padding: max(0px)) {
@@ -568,11 +283,21 @@ page {
     padding-top: max(var(--safe-area-inset-top, 0), 8rpx);
   }
   
-
-  
   .card {
-    margin-left: max(var(--spacing-xl), calc(var(--spacing-xl) + var(--safe-area-inset-left, 0)));
-    margin-right: max(var(--spacing-xl), calc(var(--spacing-xl) + var(--safe-area-inset-right, 0)));
+    margin-left: max(24rpx, calc(24rpx + var(--safe-area-inset-left, 0)));
+    margin-right: max(24rpx, calc(24rpx + var(--safe-area-inset-right, 0)));
+  }
+  
+  /* 确保天气卡片也使用相同的margin */
+  .weather-card {
+    margin-left: max(24rpx, calc(24rpx + var(--safe-area-inset-left, 0))) !important;
+    margin-right: max(24rpx, calc(24rpx + var(--safe-area-inset-right, 0))) !important;
+  }
+  
+  /* 详情页天气卡片 */
+  .current-weather-card {
+    margin-left: max(24rpx, calc(24rpx + var(--safe-area-inset-left, 0))) !important;
+    margin-right: max(24rpx, calc(24rpx + var(--safe-area-inset-right, 0))) !important;
   }
 }
 
@@ -610,76 +335,6 @@ page {
   outline-offset: 4rpx;
 }
 
-/* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
-
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
 
 /* 高对比度模式支持 */
 @media (prefers-contrast: high) {
@@ -905,182 +560,9 @@ page {
   }
 }
 
-/* ========== 响应式优化（小屏幕适配） ========== */
 
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
 
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
-
-/* 响应式适配 - 小屏幕优化 */
-@media (max-width: 750rpx) {
-  .vaccine-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .form-textarea {
-          &::placeholder {
-            text-align: left;
-          }
-        }
-      }
-    }
-  }
-}
-
-/* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
-
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}/* 用药管理表单样式 - 添加到首页样式文件末尾 */
+/* 用药管理表单样式 - 添加到首页样式文件末尾 */
 
 /* ========== 用药管理表单样式（优化版 - 参照接种信息表单） ========== */
 
@@ -1292,76 +774,6 @@ page {
   }
 }
 
-/* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
-
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
 
 /* ========== 营养管理表单样式（优化版 - 参照接种信息表单） ========== */
 
@@ -1573,76 +985,6 @@ page {
   }
 }
 
-/* ========== 响应式优化（小屏幕适配） ========== */
-
-@media (max-width: 750rpx) {
-  .medication-form-content, .nutrition-form-content {
-    .form-section {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16rpx 24rpx;
-        min-height: auto;
-        
-        .form-label {
-          width: auto;
-          margin-right: 0;
-          margin-bottom: 12rpx;
-          font-size: 26rpx;
-        }
-        
-        .form-input, .form-textarea, .picker-input {
-          width: 100%;
-          text-align: left;
-          
-          &::placeholder {
-            text-align: left;
-          }
-        }
-        
-        .unit-text {
-          position: static;
-          transform: none;
-          margin-left: 12rpx;
-          align-self: flex-end;
-        }
-      }
-      
-      .section-title {
-        font-size: 28rpx;
-        padding: 20rpx 24rpx 12rpx 24rpx;
-      }
-    }
-    
-    .medicine-info, .nutrition-info, .form-errors {
-      margin: 20rpx 24rpx;
-      padding: 16rpx;
-    }
-  }
-}
-
-/* ========== 性能优化 ========== */
-
-/* 减少重绘和回流 */
-.form-input:focus,
-.form-textarea:focus,
-.picker-input:focus {
-  transform: translateZ(0);
-}
-
-/* 优化滚动性能 */
-.medication-form-content,
-.nutrition-form-content {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* 减少动画开销 */
-.form-input,
-.form-textarea,
-.picker-input {
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
 
 
 // 只读输入框样式
@@ -1780,4 +1122,110 @@ page {
     font-size: 26rpx;
     color: #999;
   }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  /* 疫苗表单响应式适配 */
+  .vaccine-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .form-textarea {
+          &::placeholder {
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+
+  /* 用药管理和营养管理表单响应式适配 */
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content,
+.vaccine-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }

@@ -1,59 +1,22 @@
-<view class="page page-container mobile-container">
+<view class="page-container">
   <!-- 自定义导航栏 -->
   <navigation-bar 
     title="智慧养鹅"
     show-back="{{false}}"
   />
 
-  <scroll-view class="scroll-container" scroll-y>
-    <!-- 天气模块 -->
-    <view class="card weather-card {{weather.loading ? 'loading' : ''}}" bindtap="navigateToWeatherDetail">
-      <view class="card-content">
-        <view class="weather-header">
-          <view class="weather-left">
-            <view class="weather-icon-wrapper {{weather.loading ? 'loading-animation' : ''}}">
-              <text class="weather-emoji">{{weather.emoji || '🌤️'}}</text>
-            </view>
-            <view class="weather-info">
-              <text class="weather-title">{{weather.loading ? '获取天气中...' : '今日天气'}}</text>
-              <text class="weather-location">{{location.city}}{{location.district}}</text>
-              <text wx:if="{{weather.hasError}}" class="weather-error-hint" bindtap="onWeatherRefresh">点击重试</text>
-            </view>
-          </view>
-          <view class="weather-right">
-            <view class="temperature-and-condition">
-              <text class="weather-condition {{weather.hasError ? 'error-text' : ''}}">{{weather.condition || '晴'}}</text>
-              <text class="temperature {{weather.hasError ? 'error-text' : ''}}">{{weather.temperature}}°C</text>
-            </view>
-          </view>
-        </view>
-        
-        <!-- 天气详细信息 -->
-        <view class="weather-details">
-          <view class="weather-detail-item">
-            <text class="detail-label">风向</text>
-            <text class="detail-value">{{weather.windDirection}}</text>
-          </view>
-          <view class="weather-detail-item">
-            <text class="detail-label">风力</text>
-            <text class="detail-value">{{weather.windScale}}</text>
-          </view>
-          <view class="weather-detail-item">
-            <text class="detail-label">体感温度</text>
-            <text class="detail-value">{{weather.feelsLike}}°C</text>
-          </view>
-          <view class="weather-detail-item">
-            <text class="detail-label">湿度</text>
-            <text class="detail-value">{{weather.humidity}}%</text>
-          </view>
-          <view class="weather-detail-item weather-update-item" catchtap="onWeatherRefresh">
-            <text class="detail-label">更新时间</text>
-            <text class="detail-value">{{weather.updateTime}}</text>
-          </view>
-        </view>
-        
-      </view>
-    </view>
+  <view class="content-wrapper">
+    <scroll-view class="list-container" scroll-y>
+      <!-- 天气模块 - 使用 weather-card 组件 -->
+      <weather-card
+        weather="{{weather}}"
+        location="{{location}}"
+        loading="{{weather.loading}}"
+        has-error="{{weather.hasError}}"
+        clickable="{{true}}"
+        bind:cardtap="navigateToWeatherDetail"
+        bind:refresh="onWeatherRefresh"
+      />
 
     <!-- 今日鹅价 -->
     <view class="card price-card">
@@ -97,7 +60,10 @@
       </view>
     </view>
 
-  </scroll-view>
+      <!-- 底部安全区域占位 -->
+      <view class="safe-area"></view>
+    </scroll-view>
+  </view>
 
   <!-- 任务详情弹窗 -->
   <bottom-popup

@@ -49,7 +49,6 @@
               <view class="item-label required">记录日期</view>
               <view class="item-input date-input">
                 <text class="date-text">{{formData.recordDate || '请选择记录日期'}}</text>
-                <t-icon name="chevron-right" size="32" color="#c8c9cc" />
               </view>
             </view>
           </picker>
@@ -66,7 +65,6 @@
               <view class="item-label required">{{recordType === 'expense' ? '支出类型' : '收入类型'}}</view>
               <view class="item-input picker-input">
                 <text class="picker-text">{{formData.typeLabel || (recordType === 'expense' ? '请选择支出类型' : '请选择收入类型')}}</text>
-                <t-icon name="chevron-right" size="32" color="#c8c9cc" />
               </view>
             </view>
           </picker>

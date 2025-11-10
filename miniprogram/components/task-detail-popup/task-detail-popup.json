@@ -1,0 +1,8 @@
+{
+  "component": true,
+  "usingComponents": {
+    "bottom-popup": "/components/bottom-popup/bottom-popup",
+    "t-tag": "tdesign-miniprogram/tag/tag"
+  }
+}
+

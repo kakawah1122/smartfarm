@@ -107,22 +107,123 @@ $spacing-xl: 40rpx;
 /* 用户列表 */
 .user-list {
   margin: 0 $spacing-s $spacing-s;
+  background: $bg-color-container;
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
-.user-actions {
+/* 用户卡片 */
+.user-card {
+  display: flex;
+  align-items: center;
+  padding: $spacing-l;
+  border-bottom: 1rpx solid $border-color-light;
+  background: $bg-color-container;
+  transition: background-color 0.2s ease;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:active {
+    background: rgba(0, 82, 217, 0.04);
+  }
+}
+
+/* 头像容器 */
+.user-avatar-container {
+  flex-shrink: 0;
+  margin-right: $spacing-m;
+}
+
+.user-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.user-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.avatar-text {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+/* 用户信息 */
+.user-info {
+  flex: 1;
+  min-width: 0; /* 允许flex子元素收缩 */
   display: flex;
   flex-direction: column;
   gap: $spacing-xs;
-  align-items: flex-end;
 }
 
-.role-tag,
-.status-tag {
+.user-name {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: $text-primary;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-details {
+  display: flex;
+  align-items: center;
+  gap: $spacing-s;
+  flex-wrap: wrap;
+}
+
+.user-phone {
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.4;
+}
+
+.user-farm {
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200rpx;
+  
+  &::before {
+    content: '·';
+    margin-right: $spacing-xs;
+    color: $text-placeholder;
+  }
+}
+
+/* 右侧：角色标签 */
+.user-role-tag {
+  flex-shrink: 0;
+  margin-right: $spacing-s;
+  display: flex;
+  align-items: center;
+}
+
+.role-tag {
   min-width: 80rpx;
   text-align: center;
+}
+
+/* 右侧箭头 */
+.user-arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 /* 加载更多 */
@@ -144,155 +245,215 @@ $spacing-xl: 40rpx;
   font-weight: 500 !important;
 }
 
-/* 用户详情弹窗 */
-.user-detail {
-  padding: $spacing-l 0;
+/* 用户详情底部弹窗样式 - 参照入栏记录样式 */
+.user-detail-content {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: $spacing-m !important;
 }
 
-.detail-section {
-  margin-bottom: $spacing-l;
+/* 信息卡片 */
+.user-detail-content .info-card {
+  background: white !important;
+  border-radius: 12rpx !important;
+  padding: 20rpx !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: 2rpx solid #0052d9 !important;
 }
 
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: $spacing-s 0;
-  border-bottom: 1rpx solid $border-color-light;
-  
-  &:last-child {
-    border-bottom: none;
-  }
+/* 卡片内容 */
+.user-detail-content .card-content {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: visible !important;
 }
 
-.detail-label {
-  font-size: 28rpx;
-  color: $text-secondary;
-  min-width: 120rpx;
+/* 用户头部 */
+.user-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: $spacing-m !important;
+  padding: $spacing-s 0 !important;
 }
 
-.detail-value {
-  font-size: 28rpx;
-  color: $text-primary;
-  flex: 1;
-  text-align: right;
-  word-break: break-word;
+.user-avatar-large {
+  width: 120rpx !important;
+  height: 120rpx !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
 
-.section-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: $spacing-s;
-  padding-bottom: $spacing-s;
-  border-bottom: 2rpx solid $primary-color;
+.avatar-image {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-/* 业务统计 */
-.business-stats {
-  display: flex;
-  justify-content: space-around;
-  padding: $spacing-l 0;
-  
-  .stat-item {
-    text-align: center;
-    
-    .stat-number {
-      font-size: 36rpx;
-      color: $success-color;
-    }
-    
-    .stat-label {
-      font-size: 22rpx;
-    }
-  }
+.avatar-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
 
-/* 管理操作 */
-.management-actions {
-  display: flex;
-  gap: $spacing-s;
-  margin-top: $spacing-l;
-  
-  .action-btn {
-    flex: 1;
-    height: 72rpx !important;
-    border-radius: 12rpx !important;
-    font-size: 28rpx !important;
-  }
+.user-basic-info {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: $spacing-xs !important;
 }
 
-/* 角色修改弹窗 */
-.role-dialog {
-  padding: $spacing-l 0;
+.user-name-large {
+  font-size: 36rpx !important;
+  font-weight: 600 !important;
+  color: $text-primary !important;
+  line-height: 1.4 !important;
 }
 
-.form-item {
-  margin-bottom: $spacing-l;
-  
-  .form-label {
-    display: block;
-    font-size: 28rpx;
-    color: $text-primary;
-    margin-bottom: $spacing-s;
-    font-weight: 500;
-  }
+.user-phone-large {
+  font-size: 28rpx !important;
+  color: $text-secondary !important;
+  line-height: 1.4 !important;
 }
 
-/* Picker 样式 */
-.picker-container {
-  background: #f8f9fa;
-  border: 1rpx solid #e9ecef;
-  border-radius: 12rpx;
-  padding: 24rpx;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.3s ease;
-  
-  &:active {
-    background: #e9ecef;
-  }
+/* 信息行 */
+.user-detail-content .info-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 12rpx 0 !important;
+  gap: 24rpx !important;
+  margin-bottom: 0 !important;
+}
+
+/* 虚线分隔符 */
+.user-detail-content .divider-line {
+  height: 2rpx !important;
+  min-height: 2rpx !important;
+  width: 100% !important;
+  border: none !important;
+  border-top: 2rpx dashed #999 !important;
+  margin: 10rpx 0 !important;
+  padding: 0 !important;
+  display: block !important;
+}
+
+/* 标签样式 */
+.user-detail-content .info-label {
+  font-size: 26rpx !important;
+  color: #666 !important;
+  flex-shrink: 0 !important;
+  min-width: 120rpx !important;
+  margin-right: 0 !important;
+  font-weight: 400 !important;
+}
+
+/* 值样式 */
+.user-detail-content .info-value {
+  font-size: 28rpx !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+  flex: 1 !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.5 !important;
+}
+
+/* Picker 值样式 */
+.picker-value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: $spacing-xs !important;
+  flex: 1 !important;
+  min-width: 0 !important;
 }
 
 .picker-text {
-  font-size: 28rpx;
-  color: $text-primary;
+  font-size: 28rpx !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-.picker-arrow {
-  font-size: 24rpx;
-  color: $text-secondary;
+/* 状态标签容器 */
+.user-detail-content .status-value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex: 1 !important;
 }
 
-/* Cell组件样式覆盖 */
-.t-cell {
-  padding: $spacing-l !important;
-  
-  &__title {
-    font-size: 30rpx !important;
-    font-weight: 500 !important;
-    color: $text-primary !important;
-  }
-  
-  &__note {
-    font-size: 26rpx !important;
-    color: $text-secondary !important;
-    margin-top: $spacing-xs !important;
-  }
-  
-  &__description {
-    font-size: 24rpx !important;
-    color: $text-placeholder !important;
-    margin-top: $spacing-xs !important;
-  }
-  
-  &__image {
-    width: 80rpx !important;
-    height: 80rpx !important;
-    border-radius: 50% !important;
-  }
+/* 身份管理区域 */
+.identity-section {
+  margin-top: $spacing-s !important;
 }
+
+.section-title {
+  font-size: 30rpx !important;
+  font-weight: 600 !important;
+  color: $text-primary !important;
+  margin-bottom: $spacing-m !important;
+  padding-bottom: $spacing-s !important;
+  border-bottom: 2rpx solid #0052d9 !important;
+}
+
+/* 权限行 */
+.permissions-row {
+  align-items: flex-start !important;
+}
+
+/* 权限列表 */
+.permissions-list {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: $spacing-xs !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.permission-item {
+  font-size: 24rpx !important;
+  color: #333 !important;
+  padding: 6rpx 16rpx !important;
+  background: rgba(0, 82, 217, 0.1) !important;
+  border-radius: 8rpx !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  display: inline-block !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* 操作按钮区域 */
+.action-buttons-section {
+  padding: $spacing-m 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: $spacing-s !important;
+}
+
+.action-button {
+  width: 100% !important;
+  height: 88rpx !important;
+  border-radius: 12rpx !important;
+  font-size: 32rpx !important;
+}
+
 
 /* 标签样式 */
 .t-tag {
@@ -374,13 +535,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-.t-cell {
-  transition: background-color 0.2s ease;
-  
-  &:active {
-    background: rgba(0, 0, 0, 0.02) !important;
-  }
-}
 
 /* 响应式布局 */
 @media screen and (max-width: 750rpx) {

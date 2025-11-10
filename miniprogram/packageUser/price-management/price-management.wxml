@@ -8,7 +8,6 @@
     <scroll-view 
       class="scroll-container" 
       scroll-y
-      style="{{scrollViewHeight ? 'height: ' + scrollViewHeight + 'px;' : ''}}"
     >
       <!-- AI识别区域 -->
       <view class="ai-section">
@@ -236,54 +235,11 @@
   <t-message id="t-message" />
 
   <!-- 价格详情弹窗 -->
-  <view wx:if="{{showDetailPopup}}" class="detail-popup-wrapper">
-    <view class="popup-mask" bindtap="closeDetailPopup"></view>
-    <view class="detail-popup">
-      <view class="popup-header">
-        <text class="popup-title">{{selectedDate}} 价格记录</text>
-        <view class="close-btn" bindtap="closeDetailPopup">
-          <t-icon name="close" size="48rpx" color="#999" />
-        </view>
-      </view>
-      <scroll-view class="popup-content" scroll-y>
-        <view wx:for="{{selectedDateRecords}}" wx:key="_id" class="record-item">
-          <view class="record-header">
-            <text class="record-index">记录 {{index + 1}}</text>
-            <t-tag theme="{{item.source === 'AI识别' ? 'primary' : 'success'}}" size="small" variant="light">
-              {{item.source}}
-            </t-tag>
-          </view>
-
-          <!-- 鹅苗价格 -->
-          <view wx:if="{{item.goslingBreeds && item.goslingBreeds.length > 0}}" class="price-section">
-            <view class="section-label">鹅苗价格（元/只）</view>
-            <view class="price-grid">
-              <view wx:for="{{item.goslingBreeds}}" wx:for-item="breed" wx:key="key" class="price-item">
-                <text class="price-label">{{breed.label}}</text>
-                <text class="price-value">¥{{breed.range}}</text>
-              </view>
-            </view>
-          </view>
-
-          <!-- 肉鹅价格 -->
-          <view wx:if="{{item.meatBreeds && item.meatBreeds.length > 0}}" class="price-section">
-            <view class="section-label">肉鹅价格（元/斤）</view>
-            <view class="price-grid">
-              <view wx:for="{{item.meatBreeds}}" wx:for-item="breed" wx:key="key" class="price-item">
-                <text class="price-label">{{breed.label}}</text>
-                <text class="price-value">¥{{breed.range}}</text>
-              </view>
-            </view>
-          </view>
-
-          <!-- 记录信息 -->
-          <view class="record-footer">
-            <text class="record-operator">操作员：{{item.operator}}</text>
-            <text class="record-time">创建时间：{{item.createTime}}</text>
-          </view>
-        </view>
-      </scroll-view>
-    </view>
-  </view>
+  <goose-price-detail
+    visible="{{showDetailPopup}}"
+    date="{{selectedDate}}"
+    records="{{selectedDateRecords}}"
+    bind:close="closeDetailPopup"
+  />
 </view>
 

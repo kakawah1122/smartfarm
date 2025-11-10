@@ -1,0 +1,355 @@
+/* weather-card.scss - 天气卡片组件样式 - 全新iOS风格 */
+
+/* 天气卡片 - 极简iOS风格 + 动态背景 */
+.weather-card {
+  /* 默认背景：使用"晴"天气的背景色，避免首次渲染时的颜色闪烁
+     内联样式会立即覆盖此背景，但如果没有内联样式，至少显示正确的默认颜色 */
+  background: linear-gradient(135deg, #FFA751 10%, #FFE259 100%);
+  min-height: 200rpx;
+  display: block;
+  box-sizing: border-box;
+  /* margin 由使用页面控制，不在组件内部设置 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 20rpx;
+  overflow: hidden;
+  position: relative;
+  backdrop-filter: blur(30rpx);
+  -webkit-backdrop-filter: blur(30rpx);
+}
+
+.weather-card:active {
+  transform: scale(0.985);
+  opacity: 0.9;
+}
+
+.card-content {
+  padding: 32rpx 24rpx;
+}
+
+/* ==================== 顶部区域 - 位置信息 ==================== */
+.weather-header-ios {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-bottom: 24rpx;
+}
+
+.location-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.location-label {
+  font-size: 22rpx;
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 400;
+  letter-spacing: 0.5rpx;
+  text-shadow: 0 1rpx 2rpx rgba(255, 255, 255, 0.5);
+}
+
+.location-name {
+  font-size: 28rpx;
+  color: #000000;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  text-shadow: 0 1rpx 3rpx rgba(255, 255, 255, 0.6);
+}
+
+/* ==================== 中部区域 - 温度和状况 ==================== */
+.temperature-section-ios {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32rpx;
+  gap: 4rpx;
+  text-align: center;
+}
+
+.temperature-large {
+  font-size: 96rpx;
+  font-weight: 200;
+  color: #000000;
+  line-height: 1;
+  letter-spacing: -4rpx;
+  text-shadow: 0 2rpx 8rpx rgba(255, 255, 255, 0.8);
+}
+
+.weather-condition-ios {
+  font-size: 32rpx;
+  color: rgba(0, 0, 0, 0.8);
+  font-weight: 400;
+  letter-spacing: 0.5rpx;
+  margin-top: 4rpx;
+  text-shadow: 0 1rpx 3rpx rgba(255, 255, 255, 0.6);
+}
+
+/* 错误状态样式 */
+.error-text {
+  color: #ff3b30 !important;
+  opacity: 0.8;
+}
+
+.weather-error-hint-ios {
+  font-size: 24rpx;
+  color: #007aff;
+  text-decoration: underline;
+  padding: 8rpx 0;
+  margin-top: 8rpx;
+}
+
+/* ==================== 底部区域 - 详细信息 ==================== */
+.weather-details-ios {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0 0 0;
+  border-top: 1rpx solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 -1rpx 0 rgba(255, 255, 255, 0.3);
+}
+
+.detail-item-ios {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  flex: 1;
+}
+
+.detail-value-ios {
+  font-size: 32rpx;
+  color: #000000;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.5rpx;
+  text-shadow: 0 1rpx 3rpx rgba(255, 255, 255, 0.6);
+}
+
+.detail-label-ios {
+  font-size: 20rpx;
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 400;
+  letter-spacing: 0.5rpx;
+  text-transform: uppercase;
+  text-shadow: 0 1rpx 2rpx rgba(255, 255, 255, 0.5);
+}
+
+.detail-divider-ios {
+  width: 1rpx;
+  height: 48rpx;
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 2rpx rgba(255, 255, 255, 0.3);
+  margin: 0 8rpx;
+}
+
+/* ==================== 动态天气效果层 ==================== */
+.weather-animation-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==================== 雨滴效果 ==================== */
+.rain-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.rain {
+  position: absolute;
+  top: -10%;
+  width: 2rpx;
+  height: 40rpx;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.6));
+  animation: rainfall linear infinite;
+}
+
+@keyframes rainfall {
+  0% {
+    top: -10%;
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 110%;
+    opacity: 0;
+}
+}
+
+/* ==================== 雪花效果 ==================== */
+.snow-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.snowflake {
+  position: absolute;
+  top: -10%;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+  animation: snowfall linear infinite;
+  text-shadow: 0 0 8rpx rgba(255, 255, 255, 0.8);
+}
+
+@keyframes snowfall {
+  0% {
+    top: -10%;
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    top: 110%;
+    transform: translateX(50rpx) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+/* ==================== 云朵飘动效果 ==================== */
+.cloud-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.cloud {
+  position: absolute;
+  font-size: 60rpx;
+  opacity: 0.3;
+  animation: cloudFloat linear infinite;
+}
+
+.cloud-1 {
+  top: 20%;
+  left: -10%;
+  animation-duration: 20s;
+  animation-delay: 0s;
+}
+
+.cloud-2 {
+  top: 50%;
+  left: -10%;
+  animation-duration: 25s;
+  animation-delay: 5s;
+  font-size: 50rpx;
+}
+
+.cloud-3 {
+  top: 70%;
+  left: -10%;
+  animation-duration: 30s;
+  animation-delay: 10s;
+  font-size: 70rpx;
+}
+
+@keyframes cloudFloat {
+  0% {
+    left: -10%;
+  }
+  100% {
+    left: 110%;
+  }
+}
+
+/* ==================== 雷电效果 ==================== */
+.thunder-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.lightning {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4rpx;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent 0%, #fff 10%, transparent 20%);
+  transform: translateX(-50%);
+  animation: lightning 3s ease-in-out infinite;
+  opacity: 0;
+}
+
+@keyframes lightning {
+  0%, 90%, 100% {
+    opacity: 0;
+  }
+  91%, 93%, 95% {
+    opacity: 1;
+    box-shadow: 0 0 20rpx 10rpx rgba(255, 255, 255, 0.8);
+}
+  92%, 94% {
+    opacity: 0;
+  }
+}
+
+/* ==================== 雾霾效果 ==================== */
+.fog-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.fog-layer {
+  position: absolute;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 25%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    rgba(255, 255, 255, 0.3) 75%, 
+    transparent 100%
+  );
+  animation: fogMove linear infinite;
+}
+
+.fog-layer-1 {
+  top: 0;
+  animation-duration: 15s;
+  opacity: 0.6;
+}
+
+.fog-layer-2 {
+  top: 33%;
+  animation-duration: 20s;
+  opacity: 0.4;
+}
+
+.fog-layer-3 {
+  top: 66%;
+  animation-duration: 25s;
+  opacity: 0.5;
+}
+
+@keyframes fogMove {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+}
+}

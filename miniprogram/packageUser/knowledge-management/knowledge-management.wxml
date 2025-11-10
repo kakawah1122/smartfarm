@@ -1,3 +1,12 @@
+<wxs module="swipe">
+  function getTransform(distance) {
+    return 'translateX(' + distance + 'rpx)'
+  }
+  module.exports = {
+    getTransform: getTransform
+  }
+</wxs>
+
 <view class="page-container">
   <navigation-bar
     title="文章管理"
@@ -42,7 +51,7 @@
           <!-- 文章卡片 -->
           <view
             class="article-item {{swipedId === item._id ? 'swiped' : ''}}"
-            style="transform: translateX({{swipedId === item._id ? swipeDistance : 0}}rpx);"
+            style="transform: {{swipe.getTransform(swipedId === item._id ? swipeDistance : 0)}};"
             bind:touchstart="onTouchStart"
             bind:touchmove="onTouchMove"
             bind:touchend="onTouchEnd"
@@ -52,7 +61,7 @@
             <view class="article-content">
               <view class="article-header">
                 <text class="article-title">{{item.title}}</text>
-                <t-tag theme="{{item.categoryTheme || 'default'}}" size="small" class="article-tag">
+                <t-tag theme="{{item.categoryTheme ? item.categoryTheme : 'default'}}" size="small" class="article-tag">
                   {{item.categoryName}}
                 </t-tag>
               </view>

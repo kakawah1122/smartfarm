@@ -235,7 +235,7 @@ Component({
           throw new Error(result.result?.error || 'AI分析失败')
         }
       } catch (error: any) {
-        console.error('AI财务分析失败:', error)
+        logger.error('AI财务分析失败:', error)
         this.setData({
           analysisError: error.message || '分析失败，请稍后重试',
           analyzing: false,

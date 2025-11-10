@@ -303,11 +303,15 @@ function buildBatchPreviewData(parsed: ParsedBatchGoosePriceResult): BatchPrevie
 }
 
 Page({
+  // 获取 message 组件实例的辅助方法
+  getMessage() {
+    return this.selectComponent('#t-message')
+  },
+
   data: {
     uploadedImageUrl: '',
     uploadedImageFileID: '',
     recognizing: false,
-    scrollViewHeight: 0, // 动态计算的滚动容器高度
     historyList: [] as HistoryItem[],
     manualData: {
       date: new Date().toISOString().split('T')[0],
@@ -329,29 +333,6 @@ Page({
 
   onLoad() {
     this.loadHistory()
-    // 动态计算 scroll-view 高度
-    this.calculateScrollHeight()
-  },
-
-  // 计算滚动容器高度
-  calculateScrollHeight() {
-    try {
-      const systemInfo = wx.getSystemInfoSync()
-      const statusBarHeight = systemInfo.statusBarHeight || 44
-      const navbarHeight = 88 // 导航栏高度
-      const safeAreaTop = 16 // 安全间距
-      const windowHeight = systemInfo.windowHeight
-      
-      // 计算可用高度
-      const availableHeight = windowHeight - statusBarHeight - navbarHeight - safeAreaTop
-      
-      // 设置 scroll-view 高度（单位：px）
-      this.setData({
-        scrollViewHeight: availableHeight
-      })
-    } catch (error) {
-      // 计算滚动高度失败，静默处理
-    }
   },
 
   onShow() {
@@ -563,13 +544,6 @@ Page({
       })
       }
     }
-  },
-
-  // 输入链接变化
-  onUrlChange(e: any) {
-    this.setData({
-      articleUrl: e.detail.value
-    })
   },
 
   // 选择图片
@@ -832,263 +806,6 @@ Page({
     }
   },
 
-  // 文章文本输入
-  onArticleTextInput(e: any) {
-    this.setData({
-      articleText: e.detail.value
-    })
-  },
-
-  // 解析文章文本（已废弃，改用OCR）
-  async parseArticleText() {
-    const { articleText } = this.data
-
-    if (!articleText) {
-      const message = this.getMessage()
-      if (message) {
-        message.warning({
-        offset: [20, 32],
-        content: '请输入文章内容'
-      })
-      }
-      return
-    }
-
-    this.setData({ parsing: true })
-
-    try {
-      // 解析文本内容
-      const result = this.parseTextContent(articleText)
-
-      if (result.success && result.data) {
-        this.setData({
-          previewData: result.data,
-          parsing: false
-        })
-
-        const message = this.getMessage()
-        if (message) {
-          message.success({
-          offset: [20, 32],
-          content: '解析成功，请查看预览数据'
-        })
-        }
-      } else {
-        throw new Error(result.message || '解析失败')
-      }
-    } catch (error: any) {
-      const message = this.getMessage()
-      if (message) {
-        message.error({
-        offset: [20, 32],
-        content: error.message || '解析失败，请检查文本格式'
-      })
-      }
-
-      this.setData({ parsing: false })
-    }
-  },
-
-  // 解析文本内容
-  parseTextContent(text: string) {
-    try {
-      // 提取最新日期（找文本中最后一个日期）
-      const allDateMatches = text.matchAll(/(\d{1,2})月(\d{1,2})日/g)
-      let date = new Date().toISOString().split('T')[0]
-      let latestDate: any = null
-      
-      for (const match of allDateMatches) {
-        latestDate = match
-      }
-      
-      if (latestDate) {
-        const year = new Date().getFullYear()
-        const month = latestDate[1].padStart(2, '0')
-        const day = latestDate[2].padStart(2, '0')
-        date = `${year}-${month}-${day}`
-      }
-
-      const goslingBreeds: GoslingBreed[] = []
-      const meatBreeds: MeatBreed[] = []
-
-      // 检查是否包含表头关键词
-      const hasGoslingTable = text.includes('中种鹅') || text.includes('大种鹅') || text.includes('特大种鹅')
-      const hasMeatTable = text.includes('120日龄') || text.includes('130日龄') || text.includes('肉鹅')
-
-      if (hasGoslingTable) {
-        // 解析鹅苗价格表格格式
-        // 找到包含表头的部分，确定列的顺序
-        const headerMatch = text.match(/中种鹅[\s\S]*?大种鹅[\s\S]*?特大种鹅/)
-        
-        if (headerMatch) {
-          // 找到最后一行数据（最新日期的数据）
-          // 格式：11月6日30-3344-4648-52
-          const lines = text.split(/[\n\r_]/).filter(line => line.trim())
-          
-          // 从后往前找第一行包含日期和价格的数据
-          for (let i = lines.length - 1; i >= 0; i--) {
-            const line = lines[i]
-            // 匹配格式：月日+三组价格区间
-            const rowMatch = line.match(/(\d{1,2})月(\d{1,2})日\s*(\d+)\s*[-~－—]\s*(\d+)\s*(\d+)\s*[-~－—]\s*(\d+)\s*(\d+)\s*[-~－—]\s*(\d+)/)
-            
-            if (rowMatch) {
-              
-              // 中种鹅
-              const middleMin = parseFloat(rowMatch[3])
-              const middleMax = parseFloat(rowMatch[4])
-              goslingBreeds.push({
-                key: 'middle',
-                label: '中种鹅',
-                range: `${middleMin}-${middleMax}`,
-                min: middleMin,
-                max: middleMax
-              })
-              
-              // 大种鹅
-              const largeMin = parseFloat(rowMatch[5])
-              const largeMax = parseFloat(rowMatch[6])
-              goslingBreeds.push({
-                key: 'large',
-                label: '大种鹅',
-                range: `${largeMin}-${largeMax}`,
-                min: largeMin,
-                max: largeMax
-              })
-              
-              // 特大种鹅
-              const extraLargeMin = parseFloat(rowMatch[7])
-              const extraLargeMax = parseFloat(rowMatch[8])
-              goslingBreeds.push({
-                key: 'extraLarge',
-                label: '特大种鹅',
-                range: `${extraLargeMin}-${extraLargeMax}`,
-                min: extraLargeMin,
-                max: extraLargeMax
-              })
-              
-              break
-            }
-          }
-        }
-      }
-
-      if (hasMeatTable) {
-        // 解析肉鹅价格
-        // 尝试各种格式
-        const patterns = [
-          { key: 'meat120', label: '肉鹅120日龄', regex: /(?:肉鹅)?120日?龄?[\\s:：(（]*([\\d.]+)\\s*[-~－—]?\\s*([\\d.]+)?/ },
-          { key: 'meat130', label: '肉鹅130日龄', regex: /(?:肉鹅)?130日?龄?[\\s:：(（]*([\\d.]+)\\s*[-~－—]?\\s*([\\d.]+)?/ }
-        ]
-
-        patterns.forEach(({ key, label, regex }) => {
-          const match = text.match(regex)
-          
-          if (match) {
-            const price1 = parseFloat(match[1])
-            const price2 = match[2] ? parseFloat(match[2]) : price1
-            
-            meatBreeds.push({
-              key,
-              label,
-              range: price1 === price2 ? `${price1}` : `${price1}-${price2}`,
-              min: price1,
-              max: price2
-            })
-          }
-        })
-      }
-
-      if (goslingBreeds.length === 0 && meatBreeds.length === 0) {
-        return {
-          success: false,
-          message: '未能识别出价格数据。请确保复制了完整的表格内容（包含日期和价格）'
-        }
-      }
-
-      return {
-        success: true,
-        data: {
-          date,
-          goslingBreeds,
-          meatBreeds,
-          rawData: { goslingBreeds, meatBreeds }
-        }
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        message: '解析失败：' + error.message
-      }
-    }
-  },
-
-  // 解析文章（链接方式 - 已弃用）
-  async parseArticle() {
-    const { articleUrl } = this.data
-
-    if (!articleUrl) {
-      const message = this.getMessage()
-      if (message) {
-        message.warning({
-        offset: [20, 32],
-        content: '请输入文章链接'
-      })
-      }
-      return
-    }
-
-    // 验证是否是微信公众号链接
-    if (!articleUrl.includes('mp.weixin.qq.com')) {
-      const message = this.getMessage()
-      if (message) {
-        message.warning({
-        offset: [20, 32],
-        content: '请输入有效的微信公众号文章链接'
-      })
-      }
-      return
-    }
-
-    this.setData({ parsing: true })
-
-    try {
-      const result = await wx.cloud.callFunction({
-        name: 'parse-wechat-article',
-        data: { url: articleUrl }
-      })
-
-      const res = result.result as any
-
-      if (res.success && res.data) {
-        this.setData({
-          previewData: res.data,
-          parsing: false
-        })
-
-        const message = this.getMessage()
-        if (message) {
-          message.success({
-          offset: [20, 32],
-          content: '解析成功，请查看预览数据'
-        })
-        }
-      } else {
-        throw new Error(res.message || '解析失败')
-      }
-    } catch (error: any) {
-      const message = this.getMessage()
-      if (message) {
-        message.error({
-        offset: [20, 32],
-        content: error.message || '解析失败，请检查链接是否正确'
-      })
-      }
-
-      this.setData({ parsing: false })
-    }
-  },
-
-
   // 加载历史记录
   async loadHistory() {
     try {
@@ -1161,9 +878,16 @@ Page({
 
   // 关闭详情弹窗
   closeDetailPopup() {
-      this.setData({
+    this.setData({
       showDetailPopup: false
     })
+    // ⚠️ 重要：延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedDate: '',
+        selectedDateRecords: []
+      })
+    }, 300)
   },
 
   // 格式化时间

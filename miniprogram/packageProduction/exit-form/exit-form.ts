@@ -482,12 +482,12 @@ const pageConfig = {
         duration: 1500
       })
 
-      // 缩短延迟，快速返回上一页
+      // 延迟后自动返回上一页
       setTimeout(() => {
         wx.navigateBack({
           delta: 1
         })
-      }, 800)
+      }, 500)
 
     } catch (error) {
       wx.showToast({

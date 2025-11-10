@@ -225,22 +225,33 @@ Page({
     })
   },
 
-  // 获取天气数据
+  // 获取天气数据 - 优化：优先使用缓存，减少API请求
   getWeatherData(forceRefresh = false) {
     return new Promise((resolve, _reject) => {
-      // 为了确保位置信息正确更新，先清除缓存
-      if (forceRefresh) {
-        this.clearWeatherCache()
-      }
-      
-      // 如果不是强制刷新，首先尝试使用缓存数据
+      // 如果不是强制刷新，首先尝试使用缓存数据（即使过期也使用）
       if (!forceRefresh) {
         const cachedData = this.getCachedWeatherData()
         if (cachedData) {
+          // 有缓存且未过期，直接使用
           this.updateWeatherUI(cachedData)
           resolve(true)
           return
         }
+        
+        // 检查是否有过期缓存，如果有也先使用
+        try {
+          const cacheData = wx.getStorageSync('weather_cache')
+          if (cacheData && cacheData.data) {
+            // 即使过期也先使用缓存数据，避免空白页面
+            this.updateWeatherUI(cacheData.data)
+            // 继续执行后续的API请求来更新数据
+          }
+        } catch (error: any) {
+          // 忽略缓存读取错误
+        }
+      } else {
+        // 强制刷新时清除缓存
+        this.clearWeatherCache()
       }
       
       // 显示加载状态
@@ -688,7 +699,6 @@ Page({
         return false
       }
     } catch (error) {
-      console.error('获取鹅价数据失败:', error)
       // 出错时显示空状态
       this.setData({
         priceUpdateTime: '',
@@ -817,7 +827,12 @@ Page({
     }
   },
 
-  // 获取待办事项 - 首页已移除待办列表显示，保留方法以兼容调用
+  /**
+   * 获取待办事项数据
+   * 注意：首页已移除待办列表UI显示，但此方法仍被loadData()和onPullDownRefresh()调用
+   * 保留此方法以保持代码结构完整性，避免调用处报错
+   * 实际的任务管理功能请前往：健康管理 -> 养殖待办 页面
+   */
   async getTodoListData() {
     try {
       // 首页不再显示待办列表，方法保留作为占位
@@ -827,7 +842,12 @@ Page({
     }
   },
 
-  // 加载今日养殖任务 - 首页已移除待办列表显示，保留方法以兼容调用
+  /**
+   * 加载今日养殖任务
+   * 注意：首页已移除待办列表UI显示，但此方法在表单提交成功后仍被调用
+   * 保留此方法以保持代码结构完整性，避免调用处报错
+   * 实际的任务管理功能请前往：健康管理 -> 养殖待办 页面
+   */
   async loadTodayBreedingTasks() {
     // 首页不再显示待办列表，方法保留作为占位
     // 实际的任务管理请在 健康管理 -> 养殖待办 页面查看
@@ -891,7 +911,11 @@ Page({
     }
   },
 
-  // 同步单个任务状态（已移除首页待办列表，无需更新UI）
+  /**
+   * 同步单个任务状态
+   * 注意：首页已不再显示待办列表UI，但此方法仍被checkAndSyncTaskStatus()和syncTaskStatusFromGlobal()调用
+   * 保留此方法以保持代码结构完整性，实际同步逻辑已移至全局状态管理
+   */
   syncSingleTaskStatus(taskId: string, completed: boolean) {
     // 首页已不再显示待办列表，此方法保留以兼容其他页面调用
     // 实际同步逻辑已移至全局状态管理
@@ -1427,30 +1451,41 @@ Page({
     }
   },
 
-  // 检查并自动刷新天气
+  // 检查并自动刷新天气 - 优化：优先使用缓存，减少API请求
   checkAndAutoRefreshWeather() {
     try {
       const cacheData = wx.getStorageSync('weather_cache')
       if (!cacheData) {
+        // 没有缓存，不自动刷新，等待用户主动刷新或下次onLoad时加载
         return
       }
 
       const now = Date.now()
       const cacheTime = cacheData.timestamp || 0
       const oneHour = 60 * 60 * 1000 // 1小时的毫秒数
+      const cacheAge = now - cacheTime
 
-      // 检查缓存是否超过1小时
-      if (now - cacheTime > oneHour) {
+      // 如果缓存超过1小时，先使用缓存数据更新UI，然后在后台静默刷新
+      if (cacheAge > oneHour) {
+        // 先使用缓存数据更新UI（即使过期也显示，避免空白）
+        if (cacheData.data) {
+          this.updateWeatherUI(cacheData.data)
+        }
         
-        // 静默刷新，不显示loading和toast
-        this.getWeatherData(true).then(() => {
-          // 静默更新成功，不显示任何提示
-        }).catch((error: any) => {
-          // 已移除调试日志
-          // 静默失败，不干扰用户体验
-        })
+        // 在后台静默刷新，不显示loading和toast
+        // 使用setTimeout延迟执行，避免阻塞UI
+        setTimeout(() => {
+          this.getWeatherData(true).then(() => {
+            // 静默更新成功，不显示任何提示
+          }).catch((error: any) => {
+            // 静默失败，不干扰用户体验，继续使用缓存数据
+          })
+        }, 500)
       } else {
-        // 缓存仍在有效期内，无需刷新
+        // 缓存仍在有效期内，使用缓存数据更新UI
+        if (cacheData.data) {
+          this.updateWeatherUI(cacheData.data)
+        }
       }
     } catch (error: any) {
       // 已移除调试日志
@@ -2360,7 +2395,7 @@ Page({
         })
       }
     } catch (error) {
-      console.error('加载知识库预览失败:', error)
+      // 加载失败时显示空状态
       this.setData({
         knowledgeList: []
       })

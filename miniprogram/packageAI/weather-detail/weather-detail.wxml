@@ -8,80 +8,44 @@
 
   <scroll-view class="scroll-container" scroll-y enhanced="{{true}}" show-scrollbar="{{false}}">
     
-    <!-- 当前天气卡片 -->
-    <view class="card current-weather-card">
-      <view class="card-content">
+    <!-- 当前天气卡片 - 使用 weather-card 组件 -->
+    <weather-card
+      class="current-weather-card"
+      weather="{{weather}}"
+      location="{{location}}"
+      loading="{{false}}"
+      has-error="{{false}}"
+      clickable="{{false}}"
+      show-update-time="{{false}}"
+      bind:refresh="onPullDownRefresh"
+    />
 
-        <!-- 主要天气信息 - 参照首页样式重构 -->
-        <view class="weather-main-layout">
-          <!-- 左侧区域 - 图标和信息 -->
-          <view class="left-city-section">
-            <view class="weather-icon-wrapper">
-              <text class="weather-emoji">{{weather.emoji || '☀️'}}</text>
-            </view>
-            <view class="weather-info">
-              <text class="weather-title">今日天气</text>
-              <text class="city-name">{{location.city}}{{location.district}}</text>
-            </view>
-          </view>
-          
-          <!-- 右侧温度区域 -->
-          <view class="right-feels-section">
-            <view class="temperature-and-condition">
-              <text class="weather-condition">{{weather.condition}}</text>
-              <text class="main-temperature">{{weather.temperature}}°C</text>
-            </view>
-          </view>
-        </view>
-        
-        <!-- 今日概览数据 -->
-        <view class="today-overview" wx:if="{{todayForecast.tempMax}}">
-          <view class="overview-item">
-            <text class="overview-label">今日最高</text>
-            <text class="overview-value">{{todayForecast.tempMax}}°</text>
-          </view>
-          <view class="overview-item">
-            <text class="overview-label">今日最低</text>
-            <text class="overview-value">{{todayForecast.tempMin}}°</text>
-          </view>
-          <view class="overview-item">
-            <text class="overview-label">体感温度</text>
-            <text class="overview-value">{{weather.feelsLike}}°</text>
-          </view>
-          <view class="overview-item">
-            <text class="overview-label">湿度</text>
-            <text class="overview-value humidity-value">{{weather.humidity}}%</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 天气预警卡片 -->
+    <!-- 天气预警卡片 - 重新设计 -->
     <view class="card warning-card" wx:if="{{warningList.length > 0}}">
       <view class="card-header">
-        <text class="card-title">⚠️ 天气预警</text>
-        <view class="warning-count">{{warningList.length}}条预警</view>
+        <text class="card-title">天气预警</text>
+        <t-tag theme="warning" variant="light" size="medium">{{warningList.length}}条</t-tag>
       </view>
       <view class="card-content">
         <view class="warning-list">
-          <view class="warning-item" wx:for="{{warningList}}" wx:key="id">
-            <view class="warning-header">
-              <t-tag theme="{{item.theme || 'default'}}" size="small">{{item.severity || '未知'}}</t-tag>
-              <text class="warning-type">{{item.typeName || item.type}}</text>
-            </view>
-            <text class="warning-title">{{item.title}}</text>
-            
-            <!-- 预警详情内容，使用更清晰的布局 -->
-            <view class="warning-details">
-              <text class="warning-text" wx:if="{{item.text}}">{{item.text}}</text>
+          <view class="warning-item warning-level-{{item.severityLevel}}" wx:for="{{warningList}}" wx:key="id">
+            <view class="warning-main">
+              <view class="warning-header-row">
+                <t-tag theme="{{item.theme}}" size="medium">{{item.severity}}</t-tag>
+                <text class="warning-type-name">{{item.typeName}}</text>
+              </view>
+              <text class="warning-title-text">{{item.title}}</text>
             </view>
             
-            <!-- 预警时间信息，使用更清晰的布局 -->
-            <view class="warning-time-info">
-              <text class="warning-time" wx:if="{{item.pubTime}}">发布: {{item.pubTime}}</text>
-              <view class="warning-period">
-                <text class="period-start" wx:if="{{item.startTime}}">生效: {{item.startTime}}</text>
-                <text class="period-end" wx:if="{{item.endTime}}">解除: {{item.endTime}}</text>
+            <!-- 预警详情（可展开） -->
+            <view class="warning-details" wx:if="{{item.text}}">
+              <text class="warning-text">{{item.text}}</text>
+            </view>
+            
+            <!-- 时间信息 -->
+            <view class="warning-footer">
+              <view class="time-badge" wx:if="{{item.pubTime}}">
+                <text class="time-text">{{item.pubTime}}</text>
               </view>
             </view>
           </view>
@@ -89,139 +53,126 @@
       </view>
     </view>
 
-    <!-- 24小时预报卡片 -->
+    <!-- 24小时预报卡片 - 重新设计 -->
     <view class="card hourly-forecast-card">
       <view class="card-header">
         <text class="card-title">24小时预报</text>
-        <text class="next-hour-info" wx:if="{{nextHourWeather}}">下一小时：{{nextHourWeather.desc}}</text>
+        <view class="next-hour-badge" wx:if="{{nextHourWeather}}">
+          <text class="badge-text">{{nextHourWeather.desc}}</text>
+        </view>
       </view>
       <view class="card-content">
-        <view class="next-hour-summary" wx:if="{{nextHourWeather}}">
-          <view class="next-hour-details">
-            <text class="next-hour-time">{{nextHourWeather.time}}</text>
-            <text class="next-hour-temp">{{nextHourWeather.temp}}</text>
-            <text class="next-hour-wind">{{nextHourWeather.wind}}</text>
-            <text class="next-hour-pop" wx:if="{{nextHourWeather.pop}}">{{nextHourWeather.pop}}</text>
-          </view>
-        </view>
-        <scroll-view scroll-x class="hourly-scroll" show-scrollbar="{{false}}">
+        <scroll-view scroll-x class="hourly-scroll" show-scrollbar="{{false}}" enhanced="{{true}}">
           <view class="hourly-container">
-            <view class="hourly-item {{index === 0 ? 'current' : ''}}" wx:for="{{hourlyForecast}}" wx:key="time">
-              <text class="hour-time">{{item.timeLabel}}</text>
-              <view class="hour-weather">
+            <view class="hourly-item {{index === 0 ? 'is-current' : ''}}" wx:for="{{hourlyForecast}}" wx:key="time">
+              <text class="hour-label">{{item.timeLabel}}</text>
                 <text class="hour-icon">{{item.icon}}</text>
                 <text class="hour-temp">{{item.temp}}°</text>
-                <text class="hour-pop" wx:if="{{item.pop > 0}}">{{item.pop}}%</text>
-              </view>
             </view>
           </view>
         </scroll-view>
       </view>
     </view>
 
-    <!-- 空气质量卡片 - 使用TDesign组件 -->
+    <!-- 空气质量卡片 - 重新设计 -->
     <view class="card air-quality-card" wx:if="{{airData}}">
       <view class="card-header">
         <text class="card-title">空气质量</text>
-        <t-tag theme="{{airData.aqi <= 50 ? 'success' : (airData.aqi <= 100 ? 'warning' : 'danger')}}" variant="light" size="medium">
-          {{airData.category || '获取中'}}
+        <t-tag 
+          theme="{{airData.aqi <= 50 ? 'success' : (airData.aqi <= 100 ? 'warning' : 'danger')}}" 
+          variant="light" 
+          size="medium"
+        >
+          {{airData.category}}
         </t-tag>
       </view>
       <view class="card-content">
-        <!-- 主要AQI显示区域 -->
-        <view class="aqi-display">
-          <view class="aqi-main-section">
-            <view class="aqi-main-value">
-              <text class="aqi-number" style="color: {{airData.color}}">{{airData.aqi || '--'}}</text>
-              <text class="aqi-unit">AQI</text>
+        <!-- AQI主显示 - 参照iOS天气样式 -->
+        <view class="aqi-main-display-ios">
+          <view class="aqi-header-row">
+            <text class="aqi-number-large">{{airData.aqi}}</text>
+            <text class="aqi-separator">-</text>
+            <text class="aqi-category-text">{{airData.category}}</text>
             </view>
-            <view class="aqi-progress-container">
-              <t-progress 
-                percentage="{{airData.progress || 0}}" 
-                color="{{airData.color}}"
-                stroke-width="8"
-                track-color="rgba(0, 0, 0, 0.1)"
-              />
-            </view>
+          
+          <!-- 彩色渐变进度条 -->
+          <view class="aqi-gradient-bar">
+            <view class="aqi-gradient-bg"></view>
+            <view class="aqi-indicator" style="left: {{airData.progress}}%;"></view>
           </view>
         </view>
         
+        <!-- 主要污染物 -->
+        <view class="pollutants-summary-ios" wx:if="{{airData.pm2p5 || airData.pm10}}">
+          <view class="pollutant-item-ios">
+            <text class="pollutant-label-ios">PM2.5</text>
+            <text class="pollutant-value-ios">{{airData.pm2p5}}</text>
+          </view>
+          <view class="pollutant-item-ios">
+            <text class="pollutant-label-ios">PM10</text>
+            <text class="pollutant-value-ios">{{airData.pm10}}</text>
+          </view>
+          <view class="pollutant-item-ios">
+            <text class="pollutant-label-ios">O₃</text>
+            <text class="pollutant-value-ios">{{airData.o3}}</text>
+          </view>
+        </view>
       </view>
     </view>
 
-    <!-- 详细指标卡片 -->
+    <!-- 详细指标卡片 - 重新设计 -->
     <view class="card weather-metrics-card">
       <view class="card-header">
         <text class="card-title">详细指标</text>
-        <text class="metrics-subtitle">实时数据</text>
+        <view class="metrics-badge">
+          <text class="badge-text">实时数据</text>
+        </view>
       </view>
       <view class="card-content">
-        <t-grid column="2" border="{{true}}" class="metrics-grid">
-          <t-grid-item>
-            <view class="metric-item">
-              <text class="metric-value">{{weather.humidity}}%</text>
-              <text class="metric-label">湿度</text>
+        <view class="metrics-grid-custom">
+          <view class="metric-item-custom">
+            <text class="metric-value-custom">{{weather.humidity}}%</text>
+            <text class="metric-label-custom">湿度</text>
             </view>
-          </t-grid-item>
           
-          <t-grid-item>
-            <view class="metric-item">
-              <text class="metric-value">{{weather.windScale}}</text>
-              <text class="metric-label">风力等级</text>
+          <view class="metric-item-custom">
+            <text class="metric-value-custom">{{weather.windScale}}</text>
+            <text class="metric-label-custom">风力</text>
             </view>
-          </t-grid-item>
           
-          <t-grid-item>
-            <view class="metric-item">
-              <text class="metric-value">{{weather.visibility || '--'}}km</text>
-              <text class="metric-label">能见度</text>
+          <view class="metric-item-custom">
+            <text class="metric-value-custom">{{weather.visibility || '--'}}km</text>
+            <text class="metric-label-custom">能见度</text>
             </view>
-          </t-grid-item>
           
-          <t-grid-item>
-            <view class="metric-item">
-              <text class="metric-value">{{weather.pressure || '--'}}</text>
-              <text class="metric-label">气压 (hPa)</text>
+          <view class="metric-item-custom">
+            <text class="metric-value-custom">{{weather.pressure || '--'}}</text>
+            <text class="metric-label-custom">气压</text>
+          </view>
             </view>
-          </t-grid-item>
-        </t-grid>
       </view>
     </view>
 
 
-    <!-- 7天预报卡片 -->
+    <!-- 7天预报卡片 - iOS风格 -->
     <view class="card weekly-forecast-card">
       <view class="card-header">
-        <text class="card-title">7天预报</text>
-        <text class="forecast-trend">温度趋势</text>
+        <text class="card-title">7日天气预报</text>
       </view>
       <view class="card-content">
-        <view class="daily-forecast-list">
-          <view class="daily-forecast-item" wx:for="{{dailyForecast}}" wx:key="date">
-            <view class="day-info">
+        <view class="daily-list">
+          <view class="daily-item {{index === 0 ? 'is-today' : ''}}" wx:for="{{dailyForecast}}" wx:key="date">
+            <view class="day-section">
               <text class="day-name">{{item.dayName}}</text>
-              <view class="day-weather">
                 <text class="day-icon">{{item.iconDay}}</text>
-                <text class="day-condition">{{item.textDay}}</text>
-              </view>
-              <view class="day-wind" wx:if="{{item.windDir}}">
-                <text class="wind-dir">{{item.windDir}}</text>
-                <text class="wind-scale">{{item.windScale}}</text>
-              </view>
             </view>
             
-            <view class="temp-info">
-              <view class="temp-range">
-                <text class="temp-low">{{item.tempMin}}°</text>
-                <view class="temp-bar-wrapper">
-                  <view class="temp-bar" style="width: {{item.tempProgress}}%;"></view>
-                </view>
-                <text class="temp-high">{{item.tempMax}}°</text>
+            <view class="temp-section">
+              <text class="temp-min">{{item.tempMin}}°</text>
+              <view class="temp-bar-container">
+                <view class="temp-bar-fill" style="width: {{item.tempProgress}}%;"></view>
               </view>
-              <view class="day-details" wx:if="{{item.humidity}}">
-                <text class="humidity-info">湿度{{item.humidity}}%</text>
-                <text class="uv-info" wx:if="{{item.uvIndex}}">UV{{item.uvIndex}}</text>
-              </view>
+              <text class="temp-max">{{item.tempMax}}°</text>
             </view>
           </view>
         </view>
@@ -232,19 +183,5 @@
 
 
   </scroll-view>
-
-  <!-- 刷新按钮 -->
-  <view class="refresh-button-container">
-    <t-button 
-      theme="primary" 
-      size="large" 
-      icon="refresh" 
-      loading="{{refreshing}}"
-      bind:tap="onRefreshWeather"
-      class="refresh-button"
-    >
-      {{refreshing ? '刷新中...' : '刷新天气'}}
-    </t-button>
-  </view>
 
 </view>

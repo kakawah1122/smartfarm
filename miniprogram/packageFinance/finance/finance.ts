@@ -712,7 +712,7 @@ const pageConfig = {
       // 应用筛选条件
       this.filterRecords()
     } catch (error: any) {
-      console.error('加载财务记录失败:', error)
+      logger.error('加载财务记录失败:', error)
       wx.showToast({
         title: error.message || '加载记录失败',
         icon: 'none'
@@ -865,7 +865,7 @@ const pageConfig = {
         })
       }
     } catch (error: any) {
-      console.error('加载审批事项失败:', error)
+      logger.error('加载审批事项失败:', error)
       // 权限不足时不显示错误
       if (!error.message?.includes('无权限')) {
         this.setData({
@@ -965,7 +965,7 @@ const pageConfig = {
         }
       })
     } catch (error: any) {
-      console.error('加载财务报表失败:', error)
+      logger.error('加载财务报表失败:', error)
       this.setData({
         reports: {
           yearGrowth: '0',
@@ -1301,7 +1301,7 @@ const pageConfig = {
         goosePrice: !!goosePriceData
       }
     } catch (error) {
-      console.error('加载模块数据失败:', error)
+      logger.error('加载模块数据失败:', error)
     }
   },
 
@@ -1312,7 +1312,7 @@ const pageConfig = {
 
   // AI分析错误事件
   onAnalysisError(e: any) {
-    console.error('AI财务分析错误:', e.detail.error)
+    logger.error('AI财务分析错误:', e.detail.error)
     wx.showToast({
       title: '分析失败，请重试',
       icon: 'none'

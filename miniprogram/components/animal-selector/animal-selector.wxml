@@ -25,7 +25,7 @@
       <!-- 搜索框 -->
       <view wx:if="{{showSearch}}" class="search-section">
         <t-search 
-          value="{{searchValue}}" 
+          value="{{searchValue || ''}}" 
           placeholder="搜索动物编号/品种/位置"
           bind:change="onSearch"
         />

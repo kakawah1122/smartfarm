@@ -1,0 +1,112 @@
+<!-- 报销记录详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="报销详情"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确定"
+  bind:close="onClose"
+  bind:confirm="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{record}}" class="record-detail-content">
+    <view class="info-card">
+      <view class="card-content">
+        <!-- 状态标签 -->
+        <view class="info-row">
+          <text class="info-label">状态：</text>
+          <view class="status-value">
+            <t-tag 
+              theme="{{record.statusConfig.theme === 'warning' ? 'warning' : record.statusConfig.theme === 'success' ? 'success' : 'danger'}}" 
+              size="small"
+            >
+              {{record.statusConfig.text}}
+            </t-tag>
+          </view>
+        </view>
+        <view class="divider-line"></view>
+        
+        <!-- 基础信息 -->
+        <view class="info-row">
+          <text class="info-label">报销类型：</text>
+          <text class="info-value">{{record.reimbursement.typeName}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">报销金额：</text>
+          <text class="info-value amount">¥{{record.amount}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">报销日期：</text>
+          <text class="info-value">{{record.date}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <!-- 详细说明 -->
+        <block wx:if="{{record.description}}">
+          <view class="info-row">
+            <text class="info-label">详细说明：</text>
+            <text class="info-value note-text">{{record.description}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 凭证图片 -->
+        <block wx:if="{{record.reimbursement.vouchers && record.reimbursement.vouchers.length > 0}}">
+          <view class="info-row">
+            <text class="info-label">报销凭证：</text>
+            <view class="info-value voucher-container">
+              <image 
+                wx:for="{{record.reimbursement.vouchers}}" 
+                wx:key="fileId"
+                src="{{item.fileId}}"
+                mode="aspectFill"
+                class="voucher-image"
+                bind:tap="previewImage"
+                data-url="{{item.fileId}}"
+              />
+            </view>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 审批信息 -->
+        <view class="info-row">
+          <text class="info-label">申请人：</text>
+          <text class="info-value">{{record.operator}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">申请时间：</text>
+          <text class="info-value">{{record.createTime}}</text>
+        </view>
+        <block wx:if="{{record.reimbursement.approver}}">
+          <view class="divider-line"></view>
+          <view class="info-row">
+            <text class="info-label">审批人：</text>
+            <text class="info-value">{{record.reimbursement.approver.name || record.reimbursement.approver}}</text>
+          </view>
+        </block>
+        <block wx:if="{{record.reimbursement.approvalTime}}">
+          <view class="divider-line"></view>
+          <view class="info-row">
+            <text class="info-label">审批时间：</text>
+            <text class="info-value">{{record.reimbursement.approvalTime}}</text>
+          </view>
+        </block>
+        <block wx:if="{{record.reimbursement.rejectionReason}}">
+          <view class="divider-line"></view>
+          <view class="info-row">
+            <text class="info-label">拒绝原因：</text>
+            <text class="info-value reject-reason note-text">{{record.reimbursement.rejectionReason}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

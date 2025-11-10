@@ -1,7 +1,8 @@
 {
   "navigationStyle": "custom",
   "usingComponents": {
-    "navigation-bar": "/components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar",
+    "reimbursement-record-detail": "/components/reimbursement-record-detail-popup/reimbursement-record-detail-popup"
   }
 }
 

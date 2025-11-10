@@ -1,5 +1,6 @@
 // reimbursement-list.ts - 报销列表页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 /**
  * 格式化时间为 24 小时制，不带秒
@@ -49,7 +50,7 @@ const pageConfig = {
     ],
     loading: false,
     showDetailDialog: false,
-    currentDetail: {} as any
+    selectedRecord: null as any
   },
 
   onLoad() {
@@ -72,7 +73,7 @@ const pageConfig = {
       wx.navigateBack({
         delta: 1,
         fail: (err) => {
-          console.error('返回失败:', err)
+          logger.error('返回失败:', err)
           // 返回失败，跳转到个人中心页面
           wx.redirectTo({
             url: '/pages/profile/profile',
@@ -103,6 +104,7 @@ const pageConfig = {
    */
   async loadList() {
     try {
+      this.setData({ loading: true })
       wx.showLoading({ title: '加载中...' })
       
       const result = await wx.cloud.callFunction({
@@ -129,9 +131,11 @@ const pageConfig = {
       }
       
       wx.hideLoading()
+      this.setData({ loading: false })
     } catch (error) {
       wx.hideLoading()
-      console.error('加载报销列表失败:', error)
+      this.setData({ loading: false })
+      logger.error('加载报销列表失败:', error)
       wx.showToast({ title: '加载失败', icon: 'none' })
     }
   },
@@ -154,7 +158,7 @@ const pageConfig = {
     
     if (item) {
       this.setData({
-        currentDetail: item,
+        selectedRecord: item,
         showDetailDialog: true
       })
     }
@@ -167,29 +171,12 @@ const pageConfig = {
     this.setData({
       showDetailDialog: false
     })
-  },
-
-  /**
-   * 阻止事件冒泡
-   */
-  stopPropagation() {
-    // 阻止冒泡，防止点击弹窗内容区域关闭弹窗
-  },
-
-  /**
-   * 预览图片
-   */
-  previewImage(e: any) {
-    const { url, index } = e.currentTarget.dataset
-    const vouchers = this.data.currentDetail.reimbursement.vouchers || []
-    
-    // 提取所有图片的 fileId
-    const urls = vouchers.map((v: any) => v.fileId)
-    
-    wx.previewImage({
-      current: url,
-      urls: urls
-    })
+    // ⚠️ 重要：延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedRecord: null
+      })
+    }, 300)
   }
 }
 

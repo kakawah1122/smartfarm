@@ -39,11 +39,11 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   --td-brand-color-active: #003cab;
 }
 .health-center-page {
-  min-height: 100vh;
+  height: 100vh;  /* ✅ 使用 height: 100vh 而非 min-height: 100vh */
   background-color: var(--td-bg-color-page);
   display: flex;
   flex-direction: column;
-  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 安全间距 */
+  overflow: hidden;  /* ✅ 防止页面整体滚动 */
 }
 /* 批次筛选和Tab导航卡片组 */
 .filter-tabs-card {
@@ -228,7 +228,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 /* 批次下拉菜单 */
 .batch-dropdown {
   position: fixed;  /* ✅ 使用fixed定位，避免被父容器裁剪 */
-  /* top值由JS动态设置 */
+  top: var(--dropdown-top, 0);  /* ✅ 使用CSS变量替代内联样式，单位为rpx */
   left: 24rpx;  /* ✅ 与卡片左边距对齐 */
   right: 24rpx;  /* ✅ 与卡片右边距对齐 */
   background: white;
@@ -427,11 +427,21 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   --td-tab-item-font-size: 28rpx;
   padding: 0 24rpx;
 }
+/* 内容包装器（符合规范8） */
+.content-wrapper {
+  flex: 1;
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 /* Tab内容区域 */
 .tab-content-container {
   flex: 1;
   padding-bottom: 120rpx;
   background: var(--td-bg-color-page, #f5f5f5);
+  overflow-y: auto;  /* ✅ 允许内容区域滚动 */
 }
 .tab-content {
   padding: 0 24rpx 24rpx;
@@ -3409,213 +3419,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
-/* ========== 任务详情弹窗样式（从 breeding-todo 完整复制） ========== */
-/* 物料文本样式 */
-.materials-text {
-  color: var(--primary-blue, #0052d9) !important;
-  font-weight: var(--font-weight-medium, 500) !important;
-}
-/* 任务描述行样式 */
-.info-row-description {
-  align-items: flex-start;
-  padding-top: var(--spacing-sm, 8rpx);
-  padding-bottom: var(--spacing-sm, 8rpx);
-}
-.info-row-description .info-label {
-  margin-top: 2rpx;
-  align-self: flex-start;
-}
-.info-row-description .info-value {
-  text-align: left;
-}
-/* 注意事项行样式 */
-.info-row-notes {
-  align-items: flex-start;
-  padding: var(--spacing-base, 16rpx) 0;
-  background: rgba(237, 123, 47, 0.05);
-  border-radius: var(--radius-base, 12rpx);
-  margin: var(--spacing-sm, 8rpx) -var(--spacing-base, 16rpx);
-  padding-left: var(--spacing-base, 16rpx);
-  padding-right: var(--spacing-base, 16rpx);
-}
-.info-row-notes .info-label {
-  color: var(--color-warning, #ed7b2f) !important;
-  font-weight: var(--font-weight-semibold, 600) !important;
-  margin-top: 2rpx;
-}
-.info-row-notes .info-value {
-  text-align: left;
-}
-/* 重要文本样式 */
-.important-text {
-  color: var(--color-warning, #ed7b2f) !important;
-  font-weight: var(--font-weight-medium, 500) !important;
-  line-height: 1.6;
-}
-/* 弹窗内容样式 - 与生产记录保持一致 */
-.record-detail-content {
-  padding: 0 !important;
-}
-/* 任务详情信息卡片 */
-.record-detail-content .info-card {
-  margin: 0;
-  background: #ffffff !important;
-  border: 2rpx solid #0052d9 !important;
-  border-radius: 12rpx !important;
-  padding: 20rpx !important;
-}
-.record-detail-content .info-card .card-content {
-  padding: 0 !important;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  overflow: visible !important;
-}
-.record-detail-content .info-row,
-.record-detail-content .info-row-description,
-.record-detail-content .info-row-notes {
-  padding: 12rpx 0;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  gap: 24rpx;
-  display: flex;
-  align-items: center;
-  margin: 0;
-}
-.record-detail-content .divider-line {
-  height: 2rpx;
-  min-height: 2rpx;
-  width: 100%;
-  border: none;
-  border-top: 2rpx dashed #999;
-  margin: 10rpx 0;
-  display: block;
-  flex-shrink: 0;
-}
-.record-detail-content .info-row-dosage {
-  align-items: flex-start;
-}
-.record-detail-content .info-row-dosage .info-label {
-  margin-top: 2rpx;
-  align-self: flex-start;
-}
-/* 疫苗接种信息卡片 */
-.record-detail-content .vaccine-info-card {
-  margin: 20rpx 8rpx;
-  padding: 24rpx;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e8f3ff 100%);
-  border-radius: 12rpx;
-  border: 1rpx solid rgba(0, 82, 217, 0.15);
-  box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.08);
-  .card-title {
-    font-size: 30rpx;
-    font-weight: 700;
-    margin-bottom: 20rpx;
-    padding-bottom: 16rpx;
-    color: #0052d9;
-    border-bottom: 2rpx solid rgba(0, 82, 217, 0.2);
-  }
-  .info-row {
-    margin-bottom: 16rpx;
-    padding: 0;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-  .info-label {
-    color: #0052d9 !important;
-    font-weight: 600 !important;
-  }
-  .info-value {
-    color: #1a1a1a !important;
-    font-weight: 500 !important;
-  }
-}
-/* 用药信息卡片 */
-.record-detail-content .medication-info-card {
-  margin: 20rpx 8rpx;
-  padding: 24rpx;
-  background: linear-gradient(135deg, #fff5f0 0%, #ffe8e0 100%);
-  border-radius: 12rpx;
-  border: 1rpx solid rgba(255, 107, 0, 0.15);
-  box-shadow: 0 2rpx 8rpx rgba(255, 107, 0, 0.08);
-  .card-title {
-    font-size: 30rpx;
-    font-weight: 700;
-    margin-bottom: 20rpx;
-    padding-bottom: 16rpx;
-    color: #ff6b00;
-    border-bottom: 2rpx solid rgba(255, 107, 0, 0.2);
-  }
-  .info-row {
-    margin-bottom: 16rpx;
-    padding: 0;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-  .info-label {
-    color: #ff6b00 !important;
-    font-weight: 600 !important;
-  }
-  .info-value {
-    color: #1a1a1a !important;
-    font-weight: 500 !important;
-  }
-}
-/* 标签样式 - 与生产记录响应式一致 */
-.record-detail-content .info-label {
-  font-size: 26rpx !important;
-  color: #6c757d !important;
-  font-weight: 500 !important;
-  min-width: 120rpx !important;
-  text-align: left;
-  flex-shrink: 0;
-}
-/* 数值样式 - 与生产记录响应式一致 */
-.record-detail-content .info-value {
-  font-size: 28rpx !important;
-  color: #1a1a1a !important;
-  font-weight: 400 !important;
-  text-align: right;
-  flex: 1;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  line-height: 1.5;
-}
-
-/* 自动对齐样式 - 默认右对齐，多行时左对齐 */
-.record-detail-content .info-value.auto-align {
-  text-align: right !important;
-}
-
-.record-detail-content .info-value.auto-align.multiline {
-  text-align: left !important;
-}
-.record-detail-content .dosage-text {
-  text-align: left;
-  word-break: break-all;
-  white-space: normal !important;
-  overflow-wrap: break-word;
-}
-/* 状态标签居右对齐优化 */
-.record-detail-content .status-value {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-/* 注释文本样式 - 与生产记录一致 */
-.record-detail-content .note-text {
-  word-break: break-all;
-  white-space: pre-wrap;
-  line-height: 1.5;
-}
-/* 任务描述和注意事项保持顶部对齐 */
-.info-row-description,
-.info-row-notes {
-  align-items: flex-start !important;
-}
+/* ✅ 任务详情弹窗样式已提取到组件 task-detail-popup */
 /* ========== 疫苗接种表单样式（无边框样式，参考饲料投喂记录表单） ========== */
 .vaccine-form-content {
   padding: 0;
@@ -4840,4 +4644,10 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 
 
 /* 底部安全区域 */
-.safe-area { height: 120rpx; }
+/* 底部安全区域（符合规范8.5） */
+.safe-area {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 0;
+  flex-shrink: 0;
+}

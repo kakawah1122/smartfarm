@@ -1,0 +1,170 @@
+<!-- 诊断详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="诊断详情"
+  show-close="{{true}}"
+  bind:close="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{record}}" class="diagnosis-detail-content">
+    <!-- AI诊断结果 -->
+    <view class="detail-section">
+      <view class="detail-section-title">
+        <text>AI诊断结果</text>
+        <t-tag wx:if="{{!record.isCorrected}}" theme="primary" size="small">AI分析</t-tag>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">疾病名称</text>
+        <text class="detail-value primary">{{record.diagnosisResult || record.diagnosis}}</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">置信度</text>
+        <text class="detail-value confidence">{{record.confidence}}%</text>
+      </view>
+    </view>
+
+    <!-- 诊断修正记录（如果存在） -->
+    <view class="detail-section correction-section" wx:if="{{record.isCorrected}}">
+      <view class="detail-section-title">
+        <text>诊断修正记录</text>
+        <t-tag theme="success" size="small">已确认</t-tag>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">修正后诊断</text>
+        <text class="detail-value primary corrected">{{record.correctedDiagnosis}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.aiAccuracyRating > 0}}">
+        <text class="detail-label">AI准确性评分</text>
+        <view class="rating-display">
+          <text 
+            wx:for="{{[1,2,3,4,5]}}" 
+            wx:key="*this"
+            class="star-display {{record.aiAccuracyRating >= item ? 'active' : ''}}"
+          >{{record.aiAccuracyRating >= item ? '★' : '☆'}}</text>
+        </view>
+      </view>
+      <view class="detail-item" wx:if="{{record.veterinarianDiagnosis}}">
+        <text class="detail-label">兽医诊断</text>
+        <text class="detail-value text-content">{{record.veterinarianDiagnosis}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.veterinarianTreatmentPlan}}">
+        <text class="detail-label">兽医治疗方案</text>
+        <text class="detail-value text-content">{{record.veterinarianTreatmentPlan}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.correctionReason}}">
+        <text class="detail-label">修正原因</text>
+        <text class="detail-value text-content">{{record.correctionReason}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.correctedByName}}">
+        <text class="detail-label">修正人</text>
+        <text class="detail-value">{{record.correctedByName}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.correctedAt}}">
+        <text class="detail-label">修正时间</text>
+        <text class="detail-value">{{record.correctedAt}}</text>
+      </view>
+    </view>
+
+    <!-- 症状描述 -->
+    <view class="detail-section" wx:if="{{record.symptoms}}">
+      <view class="detail-section-title">症状描述</view>
+      <view class="detail-text-content">
+        <text class="detail-text">{{record.symptoms}}</text>
+      </view>
+    </view>
+
+    <!-- 诊断图片 -->
+    <view class="detail-section" wx:if="{{record.images && record.images.length > 0}}">
+      <view class="detail-section-title">
+        {{record.diagnosisType === 'autopsy_analysis' ? '剖检图片' : '症状图片'}}
+        <text class="image-count">({{record.images.length}}张)</text>
+      </view>
+      <view class="diagnosis-images">
+        <view 
+          class="image-item"
+          wx:for="{{record.images}}"
+          wx:key="index"
+          bind:tap="onPreviewImage"
+          data-url="{{item}}"
+        >
+          <t-image 
+            src="{{item}}"
+            mode="aspectFill"
+            width="200rpx"
+            height="200rpx"
+            shape="round"
+            error="加载失败"
+            lazy-load="{{false}}"
+          />
+        </view>
+      </view>
+    </view>
+
+    <!-- 建议用药 -->
+    <view class="detail-section" wx:if="{{record.recommendedMedications && record.recommendedMedications.length > 0}}">
+      <view class="detail-section-title">建议用药</view>
+      <view class="medications-list">
+        <view class="medication-item" wx:for="{{record.recommendedMedications}}" wx:key="index">
+          <text class="medication-name">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 实际治疗记录（如果存在） -->
+    <view class="detail-section treatment-section" wx:if="{{record.actualTreatment}}">
+      <view class="detail-section-title">
+        <text>实际治疗记录</text>
+        <t-tag theme="primary" size="small">已执行</t-tag>
+      </view>
+      <view class="detail-item" wx:if="{{record.actualTreatment.treatmentPlan}}">
+        <text class="detail-label">治疗方案</text>
+        <text class="detail-value text-content">{{record.actualTreatment.treatmentPlan}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.actualTreatment.medications && record.actualTreatment.medications.length > 0}}">
+        <text class="detail-label">用药记录</text>
+        <view class="medications-list-actual">
+          <view class="medication-item-actual" wx:for="{{record.actualTreatment.medications}}" wx:key="index">
+            <view class="medication-info">
+              <text class="medication-name">{{item.name || item}}</text>
+              <text class="medication-detail" wx:if="{{item.dosage}}">{{item.dosage}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="detail-item" wx:if="{{record.actualTreatment.treatmentDate}}">
+        <text class="detail-label">治疗时间</text>
+        <text class="detail-value">{{record.actualTreatment.treatmentDate}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.actualTreatment.outcome}}">
+        <text class="detail-label">治疗结果</text>
+        <text class="detail-value">{{record.actualTreatment.outcome}}</text>
+      </view>
+    </view>
+
+    <!-- 基本信息 -->
+    <view class="detail-section">
+      <view class="detail-section-title">基本信息</view>
+      <view class="detail-item">
+        <text class="detail-label">受影响数量</text>
+        <text class="detail-value">{{record.affectedCount || 0}}只</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">鹅只日龄</text>
+        <text class="detail-value">{{record.dayAge || 0}}天</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.temperature > 0}}">
+        <text class="detail-label">环境温度</text>
+        <text class="detail-value">{{record.temperature}}°C</text>
+      </view>
+      <view class="detail-item" wx:if="{{record.treatmentDuration}}">
+        <text class="detail-label">建议治疗周期</text>
+        <text class="detail-value">{{record.treatmentDuration}}</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">诊断时间</text>
+        <text class="detail-value">{{record.createTime || record.diagnosisDate}}</text>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

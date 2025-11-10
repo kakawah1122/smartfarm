@@ -45,7 +45,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 角色权限映射
     rolePermissionsMap: {
-      'employee': ['basic', 'production.view', 'health.view'],
+      'employee': ['basic', 'production.view', 'production.manage', 'health.view', 'health.manage'],
       'veterinarian': ['basic', 'production.view', 'health.view', 'health.manage'],
       'manager': ['basic', 'production.view', 'production.manage', 'health.view', 'health.manage', 'finance.view', 'finance.manage', 'employee.view'],
       'super_admin': ['all']
@@ -138,8 +138,18 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       })
 
       if (result.result && result.result.success) {
-        const newUsers = result.result.data.users
+        const rawUsers = result.result.data.users
         const pagination = result.result.data.pagination
+        
+        // 标准化用户数据，确保字段一致性
+        const newUsers = rawUsers.map((user: any) => ({
+          ...user,
+          nickname: user.nickname || user.nickName || '未设置昵称',
+          farmName: user.farmName || user.department || '未设置农场',
+          phone: user.phone || '未绑定手机',
+          roleText: this.getUserRoleText(user.role || 'employee'),
+          roleTheme: this.getUserRoleTheme(user.role || 'employee')
+        }))
 
         this.setData({
           userList: reset ? newUsers : [...this.data.userList, ...newUsers],
@@ -187,11 +197,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 计算显示的权限文本
     const displayPermissions = this.getDisplayPermissions(permissions)
     
-    // 格式化用户数据，包括时间
+    // 格式化用户数据
     const formattedUser = {
       ...user,
-      formattedLastLoginTime: user.lastLoginTime ? this.formatTime(user.lastLoginTime) : '从未登录',
-      formattedCreateTime: user.createTime ? this.formatTime(user.createTime) : '未知'
+      status: user.status || 'active', // 确保状态字段存在
+      statusText: this.getUserStatusText(user.status || 'active')
     }
     
     this.setData({
@@ -242,7 +252,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.setData({
           selectedUser: updatedUser,
           originalRole: newRole,
-          roleChanged: false
+          roleChanged: false,
+          showUserDetail: false
         })
         
         // 刷新列表
@@ -250,7 +261,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.loadUserStats()
       }
     } catch (error) {
-      console.error('更新角色失败:', error)
       wx.showToast({
         title: '更新失败',
         icon: 'none'
@@ -305,7 +315,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
               this.loadUserStats()
             }
           } catch (error) {
-            console.error(`${actionText}账户失败:`, error)
             wx.showToast({
               title: `${actionText}失败`,
               icon: 'none'
@@ -346,6 +355,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
+  onUserDetailPopupChange(e: any) {
+    if (!e.detail.visible) {
+      this.closeUserDetail()
+    }
+  },
+
   onPopupVisibleChange(e: any) {
     if (!e.detail.visible) {
       this.closeUserDetail()
@@ -357,7 +372,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   onRoleChange(e: any) {
-    const selectedIndex = e.detail.value
+    const selectedIndex = e.detail.value[0] || e.detail.value
     const selectedRole = this.data.roleOptions[selectedIndex]?.value
     const roleChanged = selectedRole !== this.data.originalRole
     
@@ -416,10 +431,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       'system.admin': '系统管理'
     }
     
-    // 映射并过滤未知权限
-    return permissions
+    // 映射并过滤未知权限，去重
+    const mapped = permissions
       .map(p => permissionMap[p])
       .filter(p => p !== undefined)
+    
+    // 去重
+    return [...new Set(mapped)]
   },
 
   // 工具函数

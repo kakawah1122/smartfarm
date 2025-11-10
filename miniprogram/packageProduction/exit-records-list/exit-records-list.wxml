@@ -15,6 +15,7 @@
     <!-- 搜索栏 -->
     <view class="search-section">
       <t-search 
+        value="{{searchKeyword || ''}}"
         placeholder="搜索客户或出栏号"
         left-icon=""
         bind:change="onSearch"

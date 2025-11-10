@@ -1,0 +1,161 @@
+<!-- 任务详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="任务详情"
+  show-close="{{true}}"
+  show-actions="{{task && !task.completed && !task.isUpcoming}}"
+  confirm-text="{{confirmText}}"
+  cancel-text="关闭"
+  bind:close="onClose"
+  bind:confirm="onConfirm"
+  bind:cancel="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{task}}" class="record-detail-content">
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row">
+          <text class="info-label">任务名称：</text>
+          <text class="info-value auto-align {{fieldMultiline.title ? 'multiline' : ''}}">{{task.title || '未命名任务'}}</text>
+        </view>
+        <view class="divider-line"></view>
+
+        <view class="info-row">
+          <text class="info-label">任务类型：</text>
+          <text class="info-value auto-align {{fieldMultiline.type ? 'multiline' : ''}}">{{task.typeName || '未分类'}}</text>
+        </view>
+        <view class="divider-line"></view>
+
+        <block wx:if="{{task.estimatedTime}}">
+          <view class="info-row">
+            <text class="info-label">预计用时：</text>
+            <text class="info-value auto-align {{fieldMultiline.time ? 'multiline' : ''}}">{{task.estimatedTime}}分钟</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+
+        <block wx:if="{{task.duration && task.dayInSeries}}">
+          <view class="info-row">
+            <text class="info-label">连续任务：</text>
+            <text class="info-value auto-align {{fieldMultiline.duration ? 'multiline' : ''}}">第{{task.dayInSeries}}/{{task.duration}}天</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+
+        <block wx:if="{{task.materials && task.materials.length > 0}}">
+          <view class="info-row">
+            <text class="info-label">所需物料：</text>
+            <text class="info-value materials-text auto-align {{fieldMultiline.materials ? 'multiline' : ''}}">
+              <text wx:for="{{task.materials}}" wx:key="index">{{item}}<text wx:if="{{index < task.materials.length - 1}}">、</text></text>
+            </text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+
+        <block wx:if="{{task.batchNumber}}">
+          <view class="info-row">
+            <text class="info-label">批次编号：</text>
+            <text class="info-value auto-align {{fieldMultiline.batch ? 'multiline' : ''}}">{{task.batchNumber}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+
+        <block wx:if="{{task.dayAge}}">
+          <view class="info-row">
+            <text class="info-label">日龄：</text>
+            <text class="info-value auto-align {{fieldMultiline.age ? 'multiline' : ''}}">第{{task.dayAge}}日龄</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+
+        <block wx:if="{{task.description}}">
+          <view class="info-row info-row-description">
+            <text class="info-label">任务描述：</text>
+            <text class="info-value note-text auto-align {{fieldMultiline.description ? 'multiline' : ''}}">{{task.description}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+
+        <block wx:if="{{task.dosage}}">
+          <view class="info-row info-row-dosage">
+            <text class="info-label">用量：</text>
+            <text class="info-value dosage-text auto-align {{fieldMultiline.dosage ? 'multiline' : ''}}">{{task.dosage}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <!-- 已完成任务的额外信息 -->
+        <view wx:if="{{task.completed}}">
+          <view class="info-row" wx:if="{{task.completedDate}}">
+            <text class="info-label">完成时间：</text>
+            <text class="info-value">{{task.completedDate}}</text>
+          </view>
+          <view class="divider-line" wx:if="{{task.completedDate && task.completedBy}}"></view>
+          <view class="info-row" wx:if="{{task.completedBy}}">
+            <text class="info-label">完成人员：</text>
+            <text class="info-value">{{task.completedBy}}</text>
+          </view>
+          
+          <!-- 用药管理类型的特殊信息 -->
+          <view wx:if="{{task.isMedicationTask && task.medicationDetails}}" class="medication-info-card">
+            <view class="card-title">用药信息</view>
+            <view class="info-row">
+              <text class="info-label">药品名称：</text>
+              <text class="info-value">{{task.medicationDetails.name || '未记录'}}</text>
+            </view>
+            <view class="info-row" wx:if="{{task.medicationDetails.actualDosage}}">
+              <text class="info-label">实际用量：</text>
+              <text class="info-value">{{task.medicationDetails.actualDosage}}</text>
+            </view>
+            <view class="info-row" wx:if="{{task.medicationDetails.method}}">
+              <text class="info-label">用药方式：</text>
+              <text class="info-value">{{task.medicationDetails.method}}</text>
+            </view>
+            <view class="info-row" wx:if="{{task.medicationDetails.batchNumber}}">
+              <text class="info-label">药品批号：</text>
+              <text class="info-value">{{task.medicationDetails.batchNumber}}</text>
+            </view>
+          </view>
+          
+          <!-- 疫苗接种类型的特殊信息 -->
+          <view wx:if="{{task.isVaccineTask && task.vaccineDetails}}" class="vaccine-info-card">
+            <view class="card-title">接种信息</view>
+            <view class="info-row">
+              <text class="info-label">疫苗名称：</text>
+              <text class="info-value">{{task.vaccineDetails.name || '未记录'}}</text>
+            </view>
+            <view class="info-row" wx:if="{{task.vaccineDetails.batchNumber}}">
+              <text class="info-label">疫苗批号：</text>
+              <text class="info-value">{{task.vaccineDetails.batchNumber}}</text>
+            </view>
+            <view class="info-row" wx:if="{{task.vaccineDetails.dosage}}">
+              <text class="info-label">接种剂量：</text>
+              <text class="info-value">{{task.vaccineDetails.dosage}}</text>
+            </view>
+            <view class="info-row" wx:if="{{task.vaccineDetails.count}}">
+              <text class="info-label">接种数量：</text>
+              <text class="info-value">{{task.vaccineDetails.count}}只</text>
+            </view>
+          </view>
+        </view>
+        
+        <view class="info-row info-row-notes" wx:if="{{task.notes}}">
+          <text class="info-label">注意事项：</text>
+          <text class="info-value note-text important-text auto-align {{fieldMultiline.notes ? 'multiline' : ''}}">{{task.notes}}</text>
+        </view>
+
+        <!-- 完成状态放在最下方 -->
+        <view class="divider-line"></view>
+        <view class="info-row">
+          <text class="info-label">完成状态：</text>
+          <view class="status-value">
+            <t-tag theme="{{task.completed ? 'success' : 'primary'}}" size="small">
+              {{task.statusText || '待完成'}}
+            </t-tag>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

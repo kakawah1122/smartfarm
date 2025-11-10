@@ -1156,8 +1156,7 @@ async function notifyAdminsNewReimbursement(db, record) {
     
     await Promise.all(promises)
   } catch (error) {
-    console.error('发送通知失败:', error)
-    // 通知失败不影响主流程
+    // 通知失败不影响主流程，静默处理
   }
 }
 
@@ -1184,8 +1183,7 @@ async function notifyApplicant(db, record, action, approver, reason) {
       }
     })
   } catch (error) {
-    console.error('发送通知失败:', error)
-    // 通知失败不影响主流程
+    // 通知失败不影响主流程，静默处理
   }
 }
 

@@ -1,5 +1,6 @@
 // finance-record-list.ts - 财务记录列表页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 const pageConfig = {
   data: {
@@ -39,7 +40,7 @@ const pageConfig = {
       wx.navigateBack({
         delta: 1,
         fail: (err) => {
-          console.error('返回失败:', err)
+          logger.error('返回失败:', err)
           // 返回失败，跳转到财务管理页面
           wx.redirectTo({
             url: '/packageFinance/finance/finance',
@@ -187,7 +188,7 @@ const pageConfig = {
       }
     } catch (error: any) {
       this.setData({ loading: false })
-      console.error('加载财务记录失败:', error)
+      logger.error('加载财务记录失败:', error)
       wx.showToast({
         title: '加载失败',
         icon: 'none'

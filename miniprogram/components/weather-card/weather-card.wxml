@@ -1,0 +1,75 @@
+<!-- weather-card.wxml - 天气卡片组件 - iOS风格 + 动态天气效果 -->
+<view class="weather-card {{className}}" style="{{weatherBackground}}" bindtap="onCardTap">
+  <!-- 动态天气效果层 -->
+  <view class="weather-animation-layer">
+    <!-- 雨滴效果 -->
+    <view wx:if="{{weatherEffect === 'rain'}}" class="rain-container">
+      <view class="rain" wx:for="{{30}}" wx:key="*this" style="left: {{item * 3.33}}%; animation-delay: {{item * 0.1}}s; animation-duration: {{0.5 + (item % 3) * 0.2}}s;"></view>
+    </view>
+    
+    <!-- 雪花效果 -->
+    <view wx:if="{{weatherEffect === 'snow'}}" class="snow-container">
+      <view class="snowflake" wx:for="{{20}}" wx:key="*this" style="left: {{item * 5}}%; animation-delay: {{item * 0.2}}s; animation-duration: {{3 + (item % 3)}}s;">❄</view>
+    </view>
+    
+    <!-- 云朵飘动效果 -->
+    <view wx:if="{{weatherEffect === 'cloudy'}}" class="cloud-container">
+      <view class="cloud cloud-1">☁️</view>
+      <view class="cloud cloud-2">☁️</view>
+      <view class="cloud cloud-3">☁️</view>
+    </view>
+    
+    <!-- 雷电效果 -->
+    <view wx:if="{{weatherEffect === 'thunder'}}" class="thunder-container">
+      <view class="lightning"></view>
+    </view>
+    
+    <!-- 雾霾效果 -->
+    <view wx:if="{{weatherEffect === 'fog'}}" class="fog-container">
+      <view class="fog-layer fog-layer-1"></view>
+      <view class="fog-layer fog-layer-2"></view>
+      <view class="fog-layer fog-layer-3"></view>
+    </view>
+  </view>
+
+  <view class="card-content">
+    <!-- 顶部：位置信息 -->
+    <view class="weather-header-ios">
+      <view class="location-section">
+        <text class="location-label">我的位置</text>
+        <text class="location-name">{{location.city}}{{location.district}}</text>
+      </view>
+    </view>
+    
+    <!-- 中部：温度和天气状况 -->
+    <view class="temperature-section-ios">
+      <text class="temperature-large {{hasError ? 'error-text' : ''}}">{{weather.temperature}}°</text>
+      <text class="weather-condition-ios {{hasError ? 'error-text' : ''}}">{{weather.condition || '晴'}}</text>
+      <text wx:if="{{hasError}}" class="weather-error-hint-ios" catchtap="onRefresh">点击重试</text>
+      </view>
+    
+    <!-- 底部：详细信息 - 横向滚动列表 -->
+    <view class="weather-details-ios">
+      <view class="detail-item-ios">
+        <text class="detail-value-ios">{{weather.windDirection}}</text>
+        <text class="detail-label-ios">风向</text>
+      </view>
+      <view class="detail-divider-ios"></view>
+      <view class="detail-item-ios">
+        <text class="detail-value-ios">{{weather.windScale}}</text>
+        <text class="detail-label-ios">风力</text>
+      </view>
+      <view class="detail-divider-ios"></view>
+      <view class="detail-item-ios">
+        <text class="detail-value-ios">{{weather.feelsLike}}°</text>
+        <text class="detail-label-ios">体感</text>
+      </view>
+      <view class="detail-divider-ios"></view>
+      <view class="detail-item-ios">
+        <text class="detail-value-ios">{{weather.humidity}}%</text>
+        <text class="detail-label-ios">湿度</text>
+      </view>
+    </view>
+  </view>
+</view>
+

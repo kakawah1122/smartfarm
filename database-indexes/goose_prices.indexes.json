@@ -8,9 +8,20 @@
       "options": {
         "background": true
       }
+    },
+    {
+      "name": "date_-1_createTime_-1",
+      "keys": {
+        "date": -1,
+        "createTime": -1
+      },
+      "options": {
+        "background": true
+      }
     }
   ]
 }
+
 
 
 

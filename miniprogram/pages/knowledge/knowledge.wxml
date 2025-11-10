@@ -44,7 +44,7 @@
               <text class="article-desc" wx:if="{{item.description}}">{{item.description}}</text>
             </view>
             <view class="article-meta">
-            <t-tag theme="{{item.categoryTheme || 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
+            <t-tag theme="{{item.categoryTheme ? item.categoryTheme : 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
             </view>
           </view>
           <view class="article-item-footer">

@@ -88,10 +88,10 @@
 }
 
 /* 必填标识 */
-.item-label.required::before {
+.item-label.required::after {
   content: '*';
   color: var(--td-error-color, #d54941);
-  margin-right: 8rpx;
+  margin-left: 4rpx;
   font-weight: bold;
 }
 
@@ -109,12 +109,13 @@
 .date-input {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .date-text {
   font-size: 30rpx;
   color: var(--td-text-color-primary, #000000);
+  text-align: right;
 }
 
 .date-text:empty::before {
@@ -126,7 +127,7 @@
 .picker-input {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .picker-text {

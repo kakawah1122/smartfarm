@@ -1,0 +1,62 @@
+<!-- 异常反应处理弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="异常反应处理"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="记录异常"
+  cancel-text="取消"
+  bind:close="onClose"
+  bind:confirm="onSubmit"
+  bind:cancel="onClose"
+>
+  <view class="adverse-reaction-content">
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row">
+          <text class="info-label">异常数量：</text>
+          <text class="info-value">{{reactionData.count}}只</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">异常症状：</text>
+          <text class="info-value">{{reactionData.symptoms}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <view class="form-section">
+      <view class="section-title">补充信息</view>
+      <view class="form-row">
+        <text class="form-label">症状等级</text>
+        <picker mode="selector" 
+                range="{{severityOptions}}"
+                range-key="label"
+                value="{{reactionData.severityIndex}}"
+                bindchange="onSeverityChange">
+          <view class="form-input picker-input">
+            {{severityOptions[reactionData.severityIndex] ? severityOptions[reactionData.severityIndex].label : '请选择'}}
+          </view>
+        </picker>
+      </view>
+      <view class="form-row">
+        <text class="form-label">处理措施</text>
+        <textarea class="form-textarea" 
+                  placeholder="请输入已采取的处理措施"
+                  value="{{reactionData.treatment}}"
+                  data-field="treatment"
+                  bindinput="onInput"
+                  maxlength="200" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">后续观察</text>
+        <textarea class="form-textarea" 
+                  placeholder="请输入后续观察要点"
+                  value="{{reactionData.followUp}}"
+                  data-field="followUp"
+                  bindinput="onInput"
+                  maxlength="200" />
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

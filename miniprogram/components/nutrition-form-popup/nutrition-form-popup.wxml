@@ -1,0 +1,89 @@
+<!-- 营养管理表单弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="营养管理"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确认领取"
+  cancel-text="取消"
+  bind:close="onClose"
+  bind:confirm="onSubmit"
+  bind:cancel="onClose"
+>
+  <view class="nutrition-form-content">
+    <!-- 营养品选择 -->
+    <view class="form-section">
+      <view class="section-title">营养品选择</view>
+      <view class="form-row">
+        <text class="form-label required">选择营养品</text>
+        <picker mode="selector" 
+                range="{{availableNutrition}}"
+                range-key="name"
+                bindchange="onNutritionSelect">
+          <view class="form-input picker-input">
+            {{selectedNutrition ? selectedNutrition.name : '请选择营养品'}}
+          </view>
+        </picker>
+        <text wx:if="{{formErrors.nutritionId}}" class="error-text">{{formErrors.nutritionId}}</text>
+      </view>
+      
+      <view wx:if="{{selectedNutrition}}" class="nutrition-info">
+        <view class="info-item">
+          <text class="info-label">当前库存：</text>
+          <text class="info-value">{{selectedNutrition.stock}}{{selectedNutrition.unit}}</text>
+        </view>
+        <view class="info-item" wx:if="{{selectedNutrition.description}}">
+          <text class="info-label">营养品说明：</text>
+          <text class="info-value">{{selectedNutrition.description}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 使用信息 -->
+    <view class="form-section">
+      <view class="section-title">使用信息</view>
+      <view class="form-row">
+        <text class="form-label required">使用数量</text>
+        <input class="form-input" 
+               type="number"
+               placeholder="请输入使用数量"
+               value="{{formData.quantity > 0 ? formData.quantity : ''}}"
+               bindinput="onQuantityInput" />
+        <text wx:if="{{formErrors.quantity}}" class="error-text">{{formErrors.quantity}}</text>
+      </view>
+      <view class="form-row">
+        <text class="form-label">使用剂量</text>
+        <input class="form-input" 
+               placeholder="请输入使用剂量"
+               value="{{formData.dosage}}"
+               data-field="dosage"
+               bindinput="onInput" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">操作员</text>
+        <view class="form-input readonly-input">{{formData.operator}}</view>
+      </view>
+    </view>
+
+    <!-- 备注信息 -->
+    <view class="form-section">
+      <view class="section-title">备注信息</view>
+      <view class="form-row textarea-row">
+        <textarea class="form-textarea" 
+                  placeholder="请输入营养品使用备注信息"
+                  value="{{formData.notes}}"
+                  data-field="notes"
+                  bindinput="onInput"
+                  maxlength="200" />
+      </view>
+    </view>
+
+    <!-- 表单验证错误提示 -->
+    <view wx:if="{{errorList && errorList.length > 0}}" class="form-errors">
+      <view wx:for="{{errorList}}" wx:key="index" class="error-item">
+        <text class="error-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+</bottom-popup>
+

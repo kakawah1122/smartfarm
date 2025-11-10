@@ -472,13 +472,6 @@ const pageConfig = {
     }
   },
 
-  // 兼容原有Tab切换
-  onTabChangeOld(e: any) {
-    const { tab } = e.currentTarget.dataset
-    this.setData({
-      activeTab: tab
-    })
-  },
 
   // 返回上一页功能已在navigation工具中实现
 
@@ -990,22 +983,6 @@ const pageConfig = {
     }
   },
   
-  // 将图片转换为base64
-  async convertImageToBase64(filePath: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      wx.getFileSystemManager().readFile({
-        filePath: filePath,
-        encoding: 'base64',
-        success: (res) => {
-          resolve(`data:image/jpeg;base64,${res.data}`)
-        },
-        fail: (error) => {
-          // 已移除调试日志
-          reject(new Error('图片处理失败'))
-        }
-      })
-    })
-  },
   
   // 从AI盘点结果直接创建出栏记录
   createExitFromAI() {
@@ -1247,21 +1224,19 @@ const pageConfig = {
     })
   },
 
-  // 重新开始盘点（已废弃，保留兼容）
-  restartCount() {
-    this.resetCountData()
-    wx.showToast({
-      title: '已重置，请重新拍照',
-      icon: 'none',
-      duration: 1500
-    })
-  },
 
   // 查看入栏记录详情
   viewEntryRecordDetail(e: any) {
     const record = e.currentTarget.dataset.record
+    // 格式化数据以匹配组件期望的字段
+    const formattedRecord = {
+      ...record,
+      displayQuantity: `${record.quantity}羽`,
+      date: record.entryDate || record.date,
+      healthStatus: record.healthStatus || '良好'
+    }
     this.setData({
-      selectedEntryRecord: record,
+      selectedEntryRecord: formattedRecord,
       showEntryDetailPopup: true
     })
   },
@@ -1269,8 +1244,16 @@ const pageConfig = {
   // 查看出栏记录详情
   viewExitRecordDetail(e: any) {
     const record = e.currentTarget.dataset.record
+    // 格式化数据以匹配组件期望的字段
+    const formattedRecord = {
+      ...record,
+      displayQuantity: `${record.quantity}羽`,
+      date: record.exitDate || record.date,
+      customer: record.customer || record.buyerName || '',
+      exitNumber: record.exitNumber || record.id
+    }
     this.setData({
-      selectedExitRecord: record,
+      selectedExitRecord: formattedRecord,
       showExitDetailPopup: true
     })
   },
@@ -1278,47 +1261,42 @@ const pageConfig = {
   // 关闭入栏详情弹窗
   closeEntryDetailPopup() {
     this.setData({
-      showEntryDetailPopup: false,
-      selectedEntryRecord: null
+      showEntryDetailPopup: false
     })
+    // 延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedEntryRecord: null
+      })
+    }, 300)
   },
 
 
   // 关闭出栏详情弹窗
   closeExitDetailPopup() {
     this.setData({
-      showExitDetailPopup: false,
-      selectedExitRecord: null
+      showExitDetailPopup: false
     })
-  },
-
-  // 入栏弹窗可见性变化
-  onEntryDetailPopupChange(e: any) {
-    const { visible } = e.detail
-    if (!visible) {
+    // 延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
       this.setData({
-        showEntryDetailPopup: false,
-        selectedEntryRecord: null
-      })
-    }
-  },
-
-  // 出栏弹窗可见性变化
-  onExitDetailPopupChange(e: any) {
-    const { visible } = e.detail
-    if (!visible) {
-      this.setData({
-        showExitDetailPopup: false,
         selectedExitRecord: null
       })
-    }
+    }, 300)
   },
+
 
   // 查看物料记录详情
   viewMaterialRecordDetail(e: any) {
     const record = e.currentTarget.dataset.record
+    // 格式化数据以匹配组件期望的字段
+    const formattedRecord = {
+      ...record,
+      displayQuantity: record.quantity || '',
+      targetLocation: record.targetLocation || record.purpose || ''
+    }
     this.setData({
-      selectedMaterialRecord: record,
+      selectedMaterialRecord: formattedRecord,
       showMaterialDetailPopup: true
     })
   },
@@ -1326,21 +1304,16 @@ const pageConfig = {
   // 关闭物料详情弹窗
   closeMaterialDetailPopup() {
     this.setData({
-      showMaterialDetailPopup: false,
-      selectedMaterialRecord: null
+      showMaterialDetailPopup: false
     })
-  },
-
-  // 物料弹窗可见性变化
-  onMaterialDetailPopupChange(e: any) {
-    const { visible } = e.detail
-    if (!visible) {
+    // 延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
       this.setData({
-        showMaterialDetailPopup: false,
         selectedMaterialRecord: null
       })
-    }
-  }
+    }, 300)
+  },
+
 
 }
 

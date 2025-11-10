@@ -68,12 +68,6 @@
   overflow: hidden;
   margin-bottom: 16rpx;
   
-  &.selected {
-    border-color: #3498db;
-    background: #f8fbff;
-    box-shadow: 0 6rpx 20rpx rgba(52, 152, 219, 0.15);
-  }
-  
   &:active {
     transform: scale(0.98);
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
@@ -548,16 +542,9 @@
     padding: 24rpx;
   }
   
-  .employee-avatar {
-    width: 64rpx;
-    height: 64rpx;
-    margin-right: 20rpx;
-  }
-  
   .employee-name {
     font-size: 28rpx;
   }
-  
 }
 
 

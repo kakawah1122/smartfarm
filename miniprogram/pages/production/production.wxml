@@ -61,9 +61,7 @@
           <view class="card list-card">
             <view class="card-header">
               <text class="card-title">最近入栏记录</text>
-              <t-button theme="light" size="small" bind:tap="viewAllEntryRecords" class="view-all-btn light-button">
-                查看全部
-              </t-button>
+              <view class="view-all-btn" bind:tap="viewAllEntryRecords">查看全部</view>
             </view>
             <view class="records-container">
               <!-- 空状态显示 -->
@@ -299,9 +297,7 @@
           <view class="card list-card">
             <view class="card-header">
               <text class="card-title">最近出栏记录</text>
-              <t-button theme="light" size="small" bind:tap="viewAllExitRecords" class="view-all-btn light-button">
-                查看全部
-              </t-button>
+              <view class="view-all-btn" bind:tap="viewAllExitRecords">查看全部</view>
             </view>
             <view class="records-container">
               <!-- 空状态显示 -->
@@ -447,9 +443,7 @@
           <view class="card list-card">
             <view class="card-header">
               <text class="card-title">最近物料记录</text>
-              <t-button theme="light" size="small" bind:tap="viewAllMaterialRecords" class="view-all-btn light-button">
-                查看全部
-              </t-button>
+              <view class="view-all-btn" bind:tap="viewAllMaterialRecords">查看全部</view>
             </view>
             <view class="records-container">
               <!-- 加载状态 -->
@@ -535,260 +529,24 @@
   </view>
 
   <!-- 入栏记录详情弹窗 -->
-  <bottom-popup
+  <entry-record-detail-popup
     visible="{{showEntryDetailPopup}}"
-    title="入栏记录详情"
-    show-close="{{true}}"
-    show-actions="{{false}}"
+    record="{{selectedEntryRecord}}"
     bind:close="closeEntryDetailPopup"
-    bind:visiblechange="onEntryDetailPopupChange"
-  >
-    <view wx:if="{{selectedEntryRecord}}" class="record-detail-content">
-      <view class="info-card">
-        <view class="card-content">
-          <view class="info-row">
-            <text class="info-label">品种：</text>
-            <text class="info-value">{{selectedEntryRecord.breed || selectedEntryRecord.displayTitle}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">批次号：</text>
-            <text class="info-value">{{selectedEntryRecord.batchNumber || selectedEntryRecord.id}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">数量：</text>
-            <text class="info-value">{{selectedEntryRecord.quantity}}羽</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <block wx:if="{{selectedEntryRecord.supplier}}">
-            <view class="info-row">
-              <text class="info-label">供应商：</text>
-              <text class="info-value">{{selectedEntryRecord.supplier}}</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <block wx:if="{{selectedEntryRecord.avgWeight > 0}}">
-            <view class="info-row">
-              <text class="info-label">平均重量：</text>
-              <text class="info-value">{{selectedEntryRecord.avgWeight}}斤</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <view class="info-row">
-            <text class="info-label">操作员：</text>
-            <text class="info-value">{{selectedEntryRecord.operator}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">时间：</text>
-            <text class="info-value">{{selectedEntryRecord.entryDate || selectedEntryRecord.date}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">状态：</text>
-            <view class="status-value">
-              <t-tag theme="{{selectedEntryRecord.status === '已完成' ? 'success' : 'warning'}}" size="small">
-                {{selectedEntryRecord.status}}
-              </t-tag>
-            </view>
-          </view>
-          
-          <block wx:if="{{selectedEntryRecord.notes}}">
-            <view class="divider-line"></view>
-            <view class="info-row">
-              <text class="info-label">备注：</text>
-              <text class="info-value note-text">{{selectedEntryRecord.notes}}</text>
-            </view>
-          </block>
-        </view>
-      </view>
-    </view>
-  </bottom-popup>
+  />
 
   <!-- 出栏记录详情弹窗 -->
-  <bottom-popup
+  <exit-record-detail-popup
     visible="{{showExitDetailPopup}}"
-    title="出栏记录详情"
-    show-close="{{true}}"
-    show-actions="{{false}}"
+    record="{{selectedExitRecord}}"
     bind:close="closeExitDetailPopup"
-    bind:visiblechange="onExitDetailPopupChange"
-  >
-    <view wx:if="{{selectedExitRecord}}" class="record-detail-content">
-      <view class="info-card">
-        <view class="card-content">
-          <view class="info-row">
-            <text class="info-label">品种：</text>
-            <text class="info-value">{{selectedExitRecord.breed || selectedExitRecord.displayTitle}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">批次号：</text>
-            <text class="info-value">{{selectedExitRecord.batchNumber || selectedExitRecord.id}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">数量：</text>
-            <text class="info-value">{{selectedExitRecord.quantity}}羽</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <block wx:if="{{selectedExitRecord.buyerName}}">
-            <view class="info-row">
-              <text class="info-label">买家：</text>
-              <text class="info-value">{{selectedExitRecord.buyerName}}</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <block wx:if="{{selectedExitRecord.avgWeight > 0}}">
-            <view class="info-row">
-              <text class="info-label">平均重量：</text>
-              <text class="info-value">{{selectedExitRecord.avgWeight}}斤</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <block wx:if="{{selectedExitRecord.totalWeight > 0}}">
-            <view class="info-row">
-              <text class="info-label">总重量：</text>
-              <text class="info-value">{{selectedExitRecord.totalWeight}}斤</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <view class="info-row">
-            <text class="info-label">操作员：</text>
-            <text class="info-value">{{selectedExitRecord.operator}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">时间：</text>
-            <text class="info-value">{{selectedExitRecord.exitDate || selectedExitRecord.date}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">状态：</text>
-            <view class="status-value">
-              <t-tag theme="{{selectedExitRecord.status === '已完成' ? 'success' : 'warning'}}" size="small">
-                {{selectedExitRecord.status}}
-              </t-tag>
-            </view>
-          </view>
-          
-          <block wx:if="{{selectedExitRecord.notes}}">
-            <view class="divider-line"></view>
-            <view class="info-row">
-              <text class="info-label">备注：</text>
-              <text class="info-value note-text">{{selectedExitRecord.notes}}</text>
-            </view>
-          </block>
-        </view>
-      </view>
-    </view>
-  </bottom-popup>
+  />
 
   <!-- 物料记录详情弹窗 -->
-  <bottom-popup
+  <material-record-detail-popup
     visible="{{showMaterialDetailPopup}}"
-    title="物料记录详情"
-    show-close="{{true}}"
-    show-actions="{{false}}"
+    record="{{selectedMaterialRecord}}"
     bind:close="closeMaterialDetailPopup"
-    bind:visiblechange="onMaterialDetailPopupChange"
-  >
-    <view wx:if="{{selectedMaterialRecord}}" class="record-detail-content">
-      <view class="info-card">
-        <view class="card-content">
-          <view class="info-row">
-            <text class="info-label">物料名称：</text>
-            <text class="info-value">{{selectedMaterialRecord.name}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">单据号：</text>
-            <text class="info-value">{{selectedMaterialRecord.id}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">分类：</text>
-            <text class="info-value">{{selectedMaterialRecord.category}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">数量：</text>
-            <text class="info-value">{{selectedMaterialRecord.quantity}}{{selectedMaterialRecord.unit}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <block wx:if="{{selectedMaterialRecord.purpose}}">
-            <view class="info-row">
-              <text class="info-label">用途：</text>
-              <text class="info-value">{{selectedMaterialRecord.purpose}}</text>
-            </view>
-            <view class="divider-line"></view>
-          </block>
-          
-          <view class="info-row">
-            <text class="info-label">操作类型：</text>
-            <view class="status-value">
-              <t-tag 
-                theme="light" 
-                size="small"
-                class="{{selectedMaterialRecord.category === '饲料' || selectedMaterialRecord.category === '营养品' ? 'feed-tag' : selectedMaterialRecord.category === '药品' ? 'medicine-tag' : selectedMaterialRecord.category === '设备' ? 'equipment-tag' : 'default-tag'}}"
-              >
-                {{selectedMaterialRecord.type}}
-              </t-tag>
-            </view>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">操作员：</text>
-            <text class="info-value">{{selectedMaterialRecord.operator}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">时间：</text>
-            <text class="info-value">{{selectedMaterialRecord.date}}</text>
-          </view>
-          <view class="divider-line"></view>
-          
-          <view class="info-row">
-            <text class="info-label">状态：</text>
-            <view class="status-value">
-              <t-tag theme="{{selectedMaterialRecord.status === '已完成' ? 'success' : 'warning'}}" size="small">
-                {{selectedMaterialRecord.status}}
-              </t-tag>
-            </view>
-          </view>
-          
-          <block wx:if="{{selectedMaterialRecord.notes}}">
-            <view class="divider-line"></view>
-            <view class="info-row">
-              <text class="info-label">备注：</text>
-              <text class="info-value note-text">{{selectedMaterialRecord.notes}}</text>
-            </view>
-          </block>
-        </view>
-      </view>
-    </view>
-  </bottom-popup>
+  />
 
 </view>

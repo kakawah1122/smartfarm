@@ -249,6 +249,21 @@ Page<PageData, any>({
     nutritionFormErrors: {} as { [key: string]: string },
     nutritionFormErrorList: [] as string[],
     
+    // 异常反应处理弹窗数据
+    showAdverseReactionPopup: false,
+    adverseReactionData: {
+      count: 0,
+      symptoms: '',
+      severityIndex: 0,
+      treatment: '',
+      followUp: ''
+    },
+    severityOptions: [
+      { label: '轻微', value: 'mild' },
+      { label: '中等', value: 'moderate' },
+      { label: '严重', value: 'severe' }
+    ],
+    
     // 治疗统计数据
     treatmentStats: {
       totalTreatments: 0,
@@ -267,6 +282,7 @@ Page<PageData, any>({
     refreshing: false,
     currentBatchId: 'all', // 默认显示全部批次
     currentBatchNumber: '全部批次',
+    currentBatchStockQuantity: 0, // 当前批次存栏数量
     
     // 批次数据
     showBatchDropdown: false,
@@ -3223,7 +3239,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
 
     this.setData({
       selectedTask: task,
-      currentBatchStockQuantity,  // ✅ 设置存栏数量
+      currentBatchStockQuantity: Number(currentBatchStockQuantity) || 0,  // ✅ 设置存栏数量，确保为数字
       vaccineFormData,
       vaccineFormErrors: {}
     })
@@ -3239,14 +3255,16 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 疫苗表单输入处理
+   * 疫苗表单输入处理（适配组件事件）
    */
   onVaccineFormInput(e: any) {
-    const { field } = e.currentTarget.dataset
-    const { value } = e.detail
+    const { field, value } = e.detail || e.currentTarget?.dataset || {}
+    const actualValue = value || e.detail?.value || ''
+    
+    if (!field) return
     
     this.setData({
-      [`vaccineFormData.${field}`]: value
+      [`vaccineFormData.${field}`]: actualValue
     })
 
     // 清除对应字段的错误
@@ -3261,15 +3279,17 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 数值输入处理（费用相关）
+   * 数值输入处理（费用相关，适配组件事件）
    */
   onVaccineNumberInput(e: any) {
-    const { field } = e.currentTarget.dataset
-    const { value } = e.detail
+    const { field, value } = e.detail || e.currentTarget?.dataset || {}
+    const actualValue = value || e.detail?.value || ''
+    
+    if (!field) return
     
     // 如果是接种数量，需要验证不超过存栏数量
     if (field === 'vaccinationCount') {
-      const vaccinationCount = parseInt(value) || 0
+      const vaccinationCount = parseInt(actualValue) || 0
       this.setData({
         [`vaccineFormData.${field}`]: vaccinationCount
       })
@@ -3294,7 +3314,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       }
     } else {
       this.setData({
-        [`vaccineFormData.${field}`]: value
+        [`vaccineFormData.${field}`]: actualValue
       }, () => {
         // 如果是费用相关字段，重新计算总费用
         if (['vaccineCost', 'veterinaryCost', 'otherCost'].includes(field)) {
@@ -3387,12 +3407,16 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 提交疫苗表单
    */
-  async submitVaccineForm() {
+  async submitVaccineForm(e?: any) {
+    // 适配组件事件：如果是从组件传递的事件，使用事件中的formData
+    const formDataFromEvent = e?.detail?.formData
+    const vaccineFormData = formDataFromEvent || this.data.vaccineFormData
+    
     if (!this.validateVaccineForm()) {
       return
     }
 
-    const { selectedTask, vaccineFormData, vaccineRouteOptions } = this.data
+    const { selectedTask, vaccineRouteOptions } = this.data
 
     if (!selectedTask) {
       wx.showToast({
@@ -3512,7 +3536,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     const userInfo = wx.getStorageSync('userInfo')
     this.setData({
       selectedTask: task,
-      currentBatchStockQuantity,  // ✅ 设置存栏数量
+      currentBatchStockQuantity: Number(currentBatchStockQuantity) || 0,  // ✅ 设置存栏数量，确保为数字
       medicationFormData: {
         medicineId: '',
         medicineName: '',
@@ -3568,10 +3592,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 选择药品
+   * 选择药品（适配组件事件）
    */
   onMedicineSelect(e: any) {
-    const index = e.detail.value
+    const index = e.detail?.index ?? e.detail?.value ?? 0
     const selectedMedicine = this.data.availableMedicines[index]
     
     if (selectedMedicine) {
@@ -3595,14 +3619,16 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 用药表单输入处理
+   * 用药表单输入处理（适配组件事件）
    */
   onMedicationFormInput(e: any) {
-    const { field } = e.currentTarget.dataset
-    const { value } = e.detail
+    const { field, value } = e.detail || e.currentTarget?.dataset || {}
+    const actualValue = value || e.detail?.value || ''
+    
+    if (!field) return
     
     this.setData({
-      [`medicationFormData.${field}`]: value
+      [`medicationFormData.${field}`]: actualValue
     })
 
     // 清除对应字段的错误
@@ -3617,11 +3643,11 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 用药数量输入处理
+   * 用药数量输入处理（适配组件事件）
    */
   onMedicationQuantityInput(e: any) {
-    const { value } = e.detail
-    const quantity = parseInt(value) || 0
+    const { value } = e.detail || {}
+    const quantity = parseInt(value?.toString() || '0') || 0
     
     this.setData({
       'medicationFormData.quantity': quantity
@@ -3639,11 +3665,11 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 用药鹅只数量输入处理
+   * 用药鹅只数量输入处理（适配组件事件）
    */
   onMedicationAnimalCountInput(e: any) {
-    const { value } = e.detail
-    const animalCount = parseInt(value) || 0
+    const { value } = e.detail || {}
+    const animalCount = parseInt(value?.toString() || '0') || 0
     
     this.setData({
       'medicationFormData.animalCount': animalCount
@@ -3937,10 +3963,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 选择营养品
+   * 选择营养品（适配组件事件）
    */
   onNutritionSelect(e: any) {
-    const index = e.detail.value
+    const index = e.detail?.index ?? e.detail?.value ?? 0
     const selectedNutrition = this.data.availableNutrition[index]
     
     if (selectedNutrition) {
@@ -3964,14 +3990,16 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 营养表单输入处理
+   * 营养表单输入处理（适配组件事件）
    */
   onNutritionFormInput(e: any) {
-    const { field } = e.currentTarget.dataset
-    const { value } = e.detail
+    const { field, value } = e.detail || e.currentTarget?.dataset || {}
+    const actualValue = value || e.detail?.value || ''
+    
+    if (!field) return
     
     this.setData({
-      [`nutritionFormData.${field}`]: value
+      [`nutritionFormData.${field}`]: actualValue
     })
 
     // 清除对应字段的错误
@@ -3986,11 +4014,11 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 营养数量输入处理
+   * 营养数量输入处理（适配组件事件）
    */
   onNutritionQuantityInput(e: any) {
-    const { value } = e.detail
-    const quantity = parseInt(value) || 0
+    const { value } = e.detail || {}
+    const quantity = parseInt(value?.toString() || '0') || 0
     
     this.setData({
       'nutritionFormData.quantity': quantity
@@ -4073,15 +4101,18 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 提交营养表单
+   * 提交营养表单（适配组件事件）
    */
-  async submitNutritionForm() {
+  async submitNutritionForm(e?: any) {
+    // 适配组件事件：如果是从组件传递的事件，使用事件中的formData
+    const formDataFromEvent = e?.detail?.formData
+    const nutritionFormData = formDataFromEvent || this.data.nutritionFormData
+    
     if (!this.validateNutritionForm()) {
       return
     }
 
     const selectedTask = this.data.selectedTask
-    const { nutritionFormData } = this.data
     
     if (!selectedTask) {
       wx.showToast({
@@ -4169,6 +4200,136 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       })
     } catch (error: any) {
       logger.error('完成任务失败:', error)
+    }
+  },
+
+  /**
+   * 关闭异常反应处理弹窗（符合规范3.4：延迟清空数据）
+   */
+  closeAdverseReactionPopup() {
+    this.setData({
+      showAdverseReactionPopup: false
+    })
+    // ⚠️ 重要：延迟清空数据，避免弹窗关闭动画时数据闪烁
+    setTimeout(() => {
+      this.setData({
+        adverseReactionData: {
+          count: 0,
+          symptoms: '',
+          severityIndex: 0,
+          treatment: '',
+          followUp: ''
+        }
+      })
+    }, 300)
+  },
+
+  /**
+   * 异常反应输入处理（适配组件事件）
+   */
+  onAdverseReactionInput(e: any) {
+    const { field, value } = e.detail || e.currentTarget?.dataset || {}
+    const actualValue = value || e.detail?.value || ''
+    
+    if (!field) return
+    
+    this.setData({
+      [`adverseReactionData.${field}`]: actualValue
+    })
+  },
+
+  /**
+   * 症状等级选择处理（适配组件事件）
+   */
+  onSeverityChange(e: any) {
+    const index = e.detail?.index ?? e.detail?.value ?? 0
+    this.setData({
+      'adverseReactionData.severityIndex': index
+    })
+  },
+
+  /**
+   * 提交异常反应记录（适配组件事件）
+   */
+  async submitAdverseReactionRecord(e?: any) {
+    // 适配组件事件：如果是从组件传递的事件，使用事件中的reactionData
+    const reactionDataFromEvent = e?.detail?.reactionData
+    const reactionData = reactionDataFromEvent || this.data.adverseReactionData
+    
+    if (!reactionData.count || reactionData.count <= 0) {
+      wx.showToast({
+        title: '请输入异常数量',
+        icon: 'error'
+      })
+      return
+    }
+    
+    if (!reactionData.symptoms || reactionData.symptoms.trim() === '') {
+      wx.showToast({
+        title: '请输入异常症状',
+        icon: 'error'
+      })
+      return
+    }
+
+    const { selectedTask } = this.data
+    
+    if (!selectedTask) {
+      wx.showToast({
+        title: '任务信息丢失',
+        icon: 'error'
+      })
+      return
+    }
+
+    const batchId = selectedTask.batchId || selectedTask.batchNumber || this.data.selectedBatchId
+    
+    try {
+      wx.showLoading({ title: '提交中...' })
+
+      // 构建异常反应记录数据
+      const recordData = {
+        taskId: selectedTask._id,
+        batchId: batchId,
+        count: reactionData.count,
+        symptoms: reactionData.symptoms,
+        severity: this.data.severityOptions[reactionData.severityIndex]?.value || 'mild',
+        treatment: reactionData.treatment || '',
+        followUp: reactionData.followUp || '',
+        recordedAt: new Date().toISOString(),
+        recordedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
+      }
+
+      // 调用云函数记录异常反应
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'recordAdverseReaction',
+          recordData: recordData
+        }
+      })
+
+      if (result.result && result.result.success) {
+        wx.hideLoading()
+        wx.showToast({
+          title: '异常反应已记录',
+          icon: 'success'
+        })
+
+        this.closeAdverseReactionPopup()
+        // 📝 优化：统一使用 loadPreventionData 刷新任务列表
+        if (this.data.preventionSubTab === 'today') {
+          this.loadPreventionData()
+        }
+      } else {
+        throw new Error(result.result?.message || '提交失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      wx.showToast({
+        title: error.message || '提交失败，请重试',
+        icon: 'error'
+      })
     }
   },
 

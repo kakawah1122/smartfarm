@@ -1,0 +1,187 @@
+<!-- 疫苗接种表单弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="疫苗接种信息"
+  show-close="{{true}}"
+  bind:close="onClose"
+>
+  <view class="vaccine-form-content">
+    <!-- 兽医信息 -->
+    <view class="form-section">
+      <view class="section-title">兽医信息</view>
+      <view class="form-item">
+        <view class="item-label required">执行兽医</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            placeholder="请输入兽医姓名"
+            value="{{formData.veterinarianName}}"
+            data-field="veterinarianName"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label">联系电话</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            placeholder="请输入联系电话"
+            value="{{formData.veterinarianContact}}"
+            data-field="veterinarianContact"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+    </view>
+
+    <!-- 疫苗信息 -->
+    <view class="form-section">
+      <view class="section-title">疫苗信息</view>
+      <view class="form-item">
+        <view class="item-label required">疫苗名称</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            placeholder="请输入疫苗名称"
+            value="{{formData.vaccineName}}"
+            data-field="vaccineName"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label">生产厂家</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            placeholder="请输入生产厂家"
+            value="{{formData.manufacturer}}"
+            data-field="manufacturer"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label">批次号</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            placeholder="请输入疫苗批次号"
+            value="{{formData.batchNumber}}"
+            data-field="batchNumber"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label required">接种剂量</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            placeholder="请输入接种剂量"
+            value="{{formData.dosage}}"
+            data-field="dosage"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label required">接种数量</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            type="number"
+            placeholder="{{stockQuantity > 0 ? '请输入接种数量（存栏' + stockQuantity + '只）' : '请输入接种数量'}}"
+            value="{{formData.vaccinationCount}}"
+            data-field="vaccinationCount"
+            bindinput="onNumberInput"
+          />
+        </view>
+      </view>
+      <view wx:if="{{formErrors.vaccinationCount}}" class="form-item error-item">
+        <view class="error-text">{{formErrors.vaccinationCount}}</view>
+      </view>
+    </view>
+
+    <!-- 费用信息 -->
+    <view class="form-section">
+      <view class="section-title">费用信息</view>
+      <view class="form-item">
+        <view class="item-label required">疫苗费用</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            type="digit"
+            placeholder="请输入疫苗费用"
+            value="{{formData.vaccineCost}}"
+            data-field="vaccineCost"
+            bindinput="onNumberInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label">兽医费用</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            type="digit"
+            placeholder="请输入兽医费用"
+            value="{{formData.veterinaryCost}}"
+            data-field="veterinaryCost"
+            bindinput="onNumberInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label">其他费用</view>
+        <view class="item-input">
+          <input
+            class="form-input"
+            type="digit"
+            placeholder="请输入其他费用"
+            value="{{formData.otherCost}}"
+            data-field="otherCost"
+            bindinput="onNumberInput"
+          />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="item-label">总费用</view>
+        <view class="item-value">
+          <view class="value-text">{{totalCostFormatted || '¥0.00'}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 备注信息 -->
+    <view class="form-section">
+      <view class="section-title">备注信息</view>
+      <view class="form-item textarea-item">
+        <textarea
+          class="textarea-input"
+          placeholder="请输入接种备注信息"
+          value="{{formData.notes}}"
+          data-field="notes"
+          bindinput="onInput"
+          maxlength="200"
+          auto-height
+        />
+      </view>
+    </view>
+
+    <!-- 表单验证错误提示 -->
+    <view wx:if="{{errorList && errorList.length > 0}}" class="form-errors">
+      <view wx:for="{{errorList}}" wx:key="index" class="error-item">
+        <text class="error-text">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 底部按钮 -->
+    <view class="form-bottom-buttons">
+      <button class="form-button form-button-cancel" bindtap="onClose">取消</button>
+      <button class="form-button form-button-primary" bindtap="onSubmit">完成接种</button>
+    </view>
+  </view>
+</bottom-popup>
+
