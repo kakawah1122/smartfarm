@@ -88,7 +88,8 @@
   <view class="tab-content-container">
     
     <!-- 预防管理 Tab (整合待办+计划+统计+记录) -->
-    <view class="tab-content prevention-content" wx:if="{{activeTab === 'prevention'}}">
+    <block wx:if="{{activeTab === 'prevention'}}">
+      <view class="tab-content prevention-content">
       
       <!-- 进行中子标签（今日待办 - 从 breeding-todo 完整迁移） -->
       <view class="prevention-subtab-content" wx:if="{{preventionSubTab === 'today'}}">
@@ -274,12 +275,13 @@
           </view>
         </view>
       </view>
-
-    </view>
+      </view>
+    </block>
 
 
     <!-- 诊疗管理 Tab -->
-    <view class="tab-content treatment-content" wx:if="{{activeTab === 'treatment'}}">
+    <block wx:if="{{activeTab === 'treatment'}}">
+      <view class="tab-content treatment-content">
       <!-- 诊疗统计 -->
       <view class="treatment-stats">
         <!-- AI诊断卡片（单独一行） -->
@@ -301,7 +303,7 @@
               <view class="css-icon-alert"></view>
             </view>
             <view class="stat-content">
-              <text class="stat-value">{{monitoringData.realTimeStatus.abnormalCount || healthStats.abnormalCount || 0}}</text>
+              <text class="stat-value">{{treatmentData.stats.pendingDiagnosis || 0}}</text>
               <text class="stat-label">待处理</text>
             </view>
           </view>
@@ -323,7 +325,8 @@
               <view class="css-icon-heart"></view>
             </view>
             <view class="stat-content">
-              <text class="stat-value">{{treatmentStats.recoveredCount || 0}}</text>
+              <!-- ✅ 优化：统一使用treatmentData.stats作为数据源 -->
+              <text class="stat-value">{{treatmentData.stats.recoveredCount || treatmentStats.recoveredCount || 0}}</text>
               <text class="stat-label">治愈数</text>
             </view>
           </view>
@@ -334,7 +337,8 @@
               <view class="css-icon-cross"></view>
             </view>
             <view class="stat-content">
-              <text class="stat-value">{{healthStats.deadCount}}</text>
+              <!-- ✅ 优化：统一使用treatmentData.stats作为数据源，保持向后兼容 -->
+              <text class="stat-value">{{treatmentData.stats.deadCount || healthStats.deadCount || 0}}</text>
               <text class="stat-label">死亡数</text>
             </view>
           </view>
@@ -405,10 +409,12 @@
           />
         </view>
       </view>
-    </view>
+      </view>
+    </block>
 
     <!-- 效果分析 Tab -->
-    <view class="tab-content analysis-content" wx:if="{{activeTab === 'analysis'}}">
+    <block wx:if="{{activeTab === 'analysis'}}">
+      <view class="tab-content analysis-content">
       <!-- 存活率分析 -->
       <view class="survival-analysis">
         <view class="survival-cards-grid">
@@ -510,7 +516,8 @@
           </view>
         </view>
       </view>
-    </view>
+      </view>
+    </block>
 
     <!-- 底部安全区域 -->
     <view class="safe-area"></view>
