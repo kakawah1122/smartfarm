@@ -1,5 +1,7 @@
 // 云函数：AI学习案例管理（多特征融合版）
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
+
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
@@ -100,7 +102,7 @@ async function saveCase(event) {
     useCount: 0
   }
   
-  const result = await db.collection('ai_learning_cases').add({
+  const result = await db.collection(COLLECTIONS.AI_LEARNING_CASES).add({
     data: caseData
   })
   
@@ -159,7 +161,7 @@ async function getSimilarCases(event) {
   }
   
   // 查询案例
-  const casesResult = await db.collection('ai_learning_cases')
+  const casesResult = await db.collection(COLLECTIONS.AI_LEARNING_CASES)
     .where(query)
     .orderBy('createTime', 'desc')
     .limit(limit * 2) // 多查询一些，筛选后返回
@@ -167,7 +169,7 @@ async function getSimilarCases(event) {
   
   if (casesResult.data.length === 0) {
     // 如果没有完全匹配的案例，放宽条件
-    const fallbackResult = await db.collection('ai_learning_cases')
+    const fallbackResult = await db.collection(COLLECTIONS.AI_LEARNING_CASES)
       .where({
         accuracy: _.gte(0.85)
       })
@@ -203,7 +205,7 @@ async function getSimilarCases(event) {
   // 标记案例已使用
   const caseIds = casesResult.data.slice(0, limit).map(c => c._id)
   if (caseIds.length > 0) {
-    await db.collection('ai_learning_cases')
+    await db.collection(COLLECTIONS.AI_LEARNING_CASES)
       .where({
         _id: _.in(caseIds)
       })
@@ -258,7 +260,7 @@ function formatScene(sceneFeatures) {
 
 // 获取学习统计
 async function getStats(event) {
-  const stats = await db.collection('ai_learning_cases')
+  const stats = await db.collection(COLLECTIONS.AI_LEARNING_CASES)
     .aggregate()
     .group({
       _id: null,
@@ -287,7 +289,7 @@ async function getStats(event) {
 // 动态阈值更新（根据历史案例）
 async function updateThreshold(event) {
   // 分析最近的案例
-  const recentCases = await db.collection('ai_learning_cases')
+  const recentCases = await db.collection(COLLECTIONS.AI_LEARNING_CASES)
     .orderBy('createTime', 'desc')
     .limit(20)
     .get()

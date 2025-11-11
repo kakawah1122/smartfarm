@@ -52,14 +52,11 @@ Page({
       return
     }
 
-    const mock = this.createMockPriceDataset()
+    // 无缓存数据时显示空状态
     this.setData({
       priceUpdateTime: '--:--',
-      priceBreeds: mock.breeds,
-      priceData: mock.data
-    }, () => {
-      const targetBreed = defaultBreed || 'extraLarge'
-      this.updateCurrentDisplay(targetBreed, defaultTab)
+      priceBreeds: [],
+      priceData: {}
     })
   },
 
@@ -124,89 +121,5 @@ Page({
     })
   },
 
-  createMockPriceDataset() {
-    const breedConfigs = [
-      { key: 'normal', label: '普通种', baseAdult: 12.0, baseGosling: 5.6 },
-      { key: 'large', label: '大种', baseAdult: 13.2, baseGosling: 5.9 },
-      { key: 'extraLarge', label: '特大种', baseAdult: 14.1, baseGosling: 6.2 },
-      { key: 'baisha', label: '白沙鹅', baseAdult: 13.5, baseGosling: 6.0 }
-    ]
-
-    const data = {}
-
-    breedConfigs.forEach((config) => {
-      const adultHistory = this.generatePriceHistory(config.baseAdult, 7, 0.8)
-      const goslingHistory = this.generatePriceHistory(config.baseGosling, 7, 0.5)
-      const adultTrendInfo = this.calculateTrend(adultHistory)
-      const goslingTrendInfo = this.calculateTrend(goslingHistory)
-
-      const latestAdult = adultHistory.length > 0 ? adultHistory[adultHistory.length - 1].value : config.baseAdult
-      const latestGosling = goslingHistory.length > 0 ? goslingHistory[goslingHistory.length - 1].value : config.baseGosling
-
-      data[config.key] = {
-        label: config.label,
-        adult: {
-          price: latestAdult.toFixed(1),
-          trend: adultTrendInfo.trend,
-          change: adultTrendInfo.change
-        },
-        gosling: {
-          price: latestGosling.toFixed(1),
-          trend: goslingTrendInfo.trend,
-          change: goslingTrendInfo.change
-        },
-        history: {
-          adult: adultHistory,
-          gosling: goslingHistory
-        }
-      }
-    })
-
-    return {
-      breeds: breedConfigs.map((item) => ({ key: item.key, label: item.label })),
-      data
-    }
-  },
-
-  generatePriceHistory(base, days, volatility) {
-    const history = []
-    const today = new Date()
-    let previousValue = base
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(today.getDate() - i)
-
-      const fluctuation = (Math.random() * volatility * 2) - volatility
-      const nextValue = Math.max(0, parseFloat((previousValue + fluctuation).toFixed(1)))
-      previousValue = nextValue
-
-      history.push({
-        date: `${date.getMonth() + 1}-${String(date.getDate()).padStart(2, '0')}`,
-        value: nextValue
-      })
-    }
-
-    return history
-  },
-
-  calculateTrend(history) {
-    if (!history || history.length < 2) {
-      return { trend: 0, change: '+0.0' }
-    }
-    const last = history[history.length - 1].value
-    const previous = history[history.length - 2].value
-    const diff = parseFloat((last - previous).toFixed(1))
-
-    let trend = 0
-    if (diff > 0) {
-      trend = 1
-    } else if (diff < 0) {
-      trend = -1
-    }
-    const sign = diff > 0 ? '+' : diff < 0 ? '-' : '+'
-    const change = `${sign}${Math.abs(diff).toFixed(1)}`
-    return { trend, change }
-  }
 })
 

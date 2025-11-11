@@ -1,7 +1,30 @@
 // vaccine-record.ts - 疫苗接种记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
+import type { VaccineFormData, PageOptions, BatchInfo } from '../types/prevention'
+import { 
+  ROUTE_OPTIONS,
+  BATCHES_CACHE_DURATION,
+  VALIDATE_DEBOUNCE_DELAY
+} from '../constants/prevention-options'
 
-const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
+interface PageData {
+  formData: VaccineFormData
+  routeOptions: typeof ROUTE_OPTIONS
+  activeBatches: BatchInfo[]
+  selectedRouteLabel: string
+  selectedRouteIndex: number
+  loading: boolean
+  submitting: boolean
+  showBatchPicker: boolean
+  showRoutePicker: boolean
+  formErrors: Record<string, string>
+  sourceType: string
+  sourceId: string
+  batchesCacheTime: number
+}
+
+const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   data: {
     // 表单数据
     formData: {
@@ -12,7 +35,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       batchNumber: '',
       expiryDate: '',
       dosage: '',
-      route: 'muscle', // muscle|subcutaneous|oral|nasal
+      route: 'muscle',
       targetCount: 0,
       actualCount: 0,
       operator: '',
@@ -20,23 +43,19 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       executionTime: '',
       cost: 0,
       notes: '',
-      adverseReactions: 0, // 不良反应数量
-      nextSchedule: '' // 下次接种时间
+      adverseReactions: 0,
+      nextSchedule: ''
     },
     
-    // 选择器数据
-    routeOptions: [
-      { label: '肌肉注射', value: 'muscle' },
-      { label: '皮下注射', value: 'subcutaneous' },
-      { label: '口服', value: 'oral' },
-      { label: '滴鼻', value: 'nasal' }
-    ],
+    // 使用常量配置
+    routeOptions: ROUTE_OPTIONS,
     
     // 活跃批次列表
-    activeBatches: [] as any[],
+    activeBatches: [],
+    batchesCacheTime: 0,
     
     // 显示文本和索引
-    selectedRouteLabel: '皮下注射',
+    selectedRouteLabel: '肌肉注射',
     selectedRouteIndex: 0,
     
     // 页面状态
@@ -46,27 +65,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     showRoutePicker: false,
     
     // 表单验证
-    formErrors: {} as Record<string, string>,
+    formErrors: {},
     
-    // 来源类型（normal|from_prevention_plan）
+    // 来源类型
     sourceType: 'normal',
     sourceId: ''
   },
 
-  onLoad(options: any) {
-    const { sourceType, sourceId, batchId } = options || {}
-    
-    this.setData({
-      sourceType: sourceType || 'normal',
-      sourceId: sourceId || ''
-    })
-    
-    if (batchId) {
-      this.setData({
-        'formData.batchId': batchId
-      })
+  // 表单验证防抖定时器
+  validateTimer: null as number | null,
+
+  onLoad(options: PageOptions) {
+    // ✅ 合并setData调用
+    const updateData: Record<string, any> = {
+      sourceType: options.sourceType || 'normal',
+      sourceId: options.sourceId || ''
     }
     
+    if (options.batchId) {
+      updateData['formData.batchId'] = options.batchId
+    }
+    
+    this.setData(updateData)
     this.initializeForm()
   },
 
@@ -83,6 +103,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   async onShow() {
+    // ✅ 实现数据缓存机制
+    const now = Date.now()
+    if (this.data.batchesCacheTime && 
+        now - this.data.batchesCacheTime < BATCHES_CACHE_DURATION) {
+      return
+    }
     await this.loadActiveBatches()
   },
 
@@ -104,23 +130,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 加载活跃批次
   async loadActiveBatches() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: { action: 'get_active_batches' }
-      })
+      const result = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
+        'health-management',
+        { action: 'get_active_batches' },
+        { loading: true, loadingText: '加载批次列表...', showError: true }
+      )
       
-      if (result.result && result.result.success) {
+      if (result.success) {
         this.setData({
-          activeBatches: result.result.data.batches || []
+          activeBatches: result.data?.batches || [],
+          batchesCacheTime: Date.now()
         })
       }
     } catch (error) {
-      // 已移除调试日志
+      wx.showToast({
+        title: '加载批次列表失败',
+        icon: 'none'
+      })
     }
   },
 
-  // 表单输入处理
-  onFormInput(e: any) {
+  // 表单输入处理（添加防抖）
+  onFormInput(e: WechatMiniprogram.InputEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -128,11 +159,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       [`formData.${field}`]: value
     })
     
-    this.validateField(field, value)
+    // ✅ 防抖验证
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+    }
+    this.validateTimer = setTimeout(() => {
+      this.validateField(field, value)
+    }, VALIDATE_DEBOUNCE_DELAY)
   },
 
-  // 数字输入处理
-  onNumberInput(e: any) {
+  // 数字输入处理（添加防抖）
+  onNumberInput(e: WechatMiniprogram.InputEvent) {
     const { field } = e.currentTarget.dataset
     const value = parseFloat(e.detail.value) || 0
     
@@ -140,7 +177,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       [`formData.${field}`]: value
     })
     
-    this.validateField(field, value)
+    // ✅ 防抖验证
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+    }
+    this.validateTimer = setTimeout(() => {
+      this.validateField(field, value)
+    }, VALIDATE_DEBOUNCE_DELAY)
   },
 
   // 显示批次选择器
@@ -159,9 +202,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       itemList,
       success: (res) => {
         const selectedBatch = this.data.activeBatches[res.tapIndex]
+        if (!selectedBatch) return
+        
+        // ✅ 合并setData调用
         this.setData({
           'formData.batchId': selectedBatch.batchNumber,
-          'formData.locationId': selectedBatch.location
+          'formData.locationId': selectedBatch.location || ''
         })
         this.validateField('batchId', selectedBatch.batchNumber)
       }
@@ -173,12 +219,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({ showRoutePicker: true })
   },
 
-  onRoutePickerChange(e: any) {
-    const index = e.detail.value
+  onRoutePickerChange(e: WechatMiniprogram.PickerChangeEvent) {
+    const index = e.detail.value as number
     const selectedRoute = this.data.routeOptions[index]
     
+    if (!selectedRoute) return
+    
     this.setData({
-      'formData.route': selectedRoute.value,
+      'formData.route': selectedRoute.value as VaccineFormData['route'],
       showRoutePicker: false
     })
     
@@ -191,57 +239,61 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 日期时间选择器
-  onDateChange(e: any) {
+  onDateChange(e: WechatMiniprogram.PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
+    const value = e.detail.value as string
+    
     this.setData({
-      [`formData.${field}`]: e.detail.value
+      [`formData.${field}`]: value
     })
-    this.validateField(field, e.detail.value)
+    this.validateField(field, value)
   },
 
-  onTimeChange(e: any) {
+  onTimeChange(e: WechatMiniprogram.PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
+    const value = e.detail.value as string
+    
     this.setData({
-      [`formData.${field}`]: e.detail.value
+      [`formData.${field}`]: value
     })
-    this.validateField(field, e.detail.value)
+    this.validateField(field, value)
   },
 
   // 字段验证
-  validateField(field: string, value: any) {
+  validateField(field: string, value: unknown) {
     const errors = { ...this.data.formErrors }
     
     switch (field) {
       case 'batchId':
-        if (!value) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请选择批次'
         } else {
           delete errors[field]
         }
         break
       case 'vaccineName':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请输入疫苗名称'
         } else {
           delete errors[field]
         }
         break
       case 'targetCount':
-        if (!value || value <= 0) {
+        if (!value || (typeof value === 'number' && value <= 0)) {
           errors[field] = '目标接种数量必须大于0'
         } else {
           delete errors[field]
         }
         break
       case 'actualCount':
-        if (value > this.data.formData.targetCount) {
+        if (typeof value === 'number' && value > this.data.formData.targetCount) {
           errors[field] = '实际接种数量不能超过目标数量'
         } else {
           delete errors[field]
         }
         break
       case 'adverseReactions':
-        if (value > this.data.formData.actualCount) {
+        if (typeof value === 'number' && value > this.data.formData.actualCount) {
           errors[field] = '不良反应数量不能超过实际接种数量'
         } else {
           delete errors[field]
@@ -306,10 +358,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         nextSchedule: formData.nextSchedule
       }
       
-      // 调用云函数创建预防记录
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
+      // ✅ 使用CloudApi统一封装
+      const result = await CloudApi.callFunction<{ recordId: string }>(
+        'health-management',
+        {
           action: 'create_prevention_record',
           preventionType: 'vaccine',
           batchId: formData.batchId,
@@ -322,33 +374,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           notes: formData.notes,
           sourceType: this.data.sourceType,
           sourceId: this.data.sourceId
+        },
+        {
+          loading: true,
+          loadingText: '保存中...',
+          showSuccess: true,
+          successText: '疫苗接种记录保存成功'
         }
-      })
+      )
       
-      if (result.result && result.result.success) {
-        wx.showToast({
-          title: '疫苗接种记录保存成功',
-          icon: 'success'
-        })
-        
+      if (result.success) {
         // 如果有不良反应，提示是否进行AI诊断
-        if (formData.adverseReactions > 0) {
-          this.handleAdverseReaction(result.result.data.recordId)
+        if (formData.adverseReactions > 0 && result.data?.recordId) {
+          this.handleAdverseReaction(result.data.recordId)
         } else {
           // 返回上一页
           setTimeout(() => {
             wx.navigateBack()
           }, 1500)
         }
-      } else {
-        throw new Error(result.result?.message || '保存失败')
       }
-    } catch (error: any) {
-      // 已移除调试日志
-      wx.showToast({
-        title: error.message || '保存失败，请重试',
-        icon: 'none'
-      })
+    } catch (error) {
+      // CloudApi已处理错误提示，这里不需要额外处理
     } finally {
       this.setData({ submitting: false })
     }
@@ -368,7 +415,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             url: `/packageAI/ai-diagnosis/ai-diagnosis?sourceType=vaccine_adverse&sourceRecordId=${preventionRecordId}&symptoms=疫苗接种不良反应&affectedCount=${this.data.formData.adverseReactions}`
           })
         } else {
-          // 返回上一页
           wx.navigateBack()
         }
       }

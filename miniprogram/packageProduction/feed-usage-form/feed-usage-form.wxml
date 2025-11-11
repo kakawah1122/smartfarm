@@ -9,7 +9,7 @@
   />
   
   <!-- 表单容器 - 添加顶部间距避免被导航栏遮挡 -->
-  <view class="form-container" style="padding-top: {{totalNavHeight}}rpx;">
+  <view class="form-container">
     
     <!-- 投喂日期 -->
     <view class="form-section">

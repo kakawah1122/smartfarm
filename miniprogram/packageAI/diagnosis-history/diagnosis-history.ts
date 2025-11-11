@@ -1,6 +1,8 @@
 // diagnosis-history.ts - 诊断历史页面
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
+import { processImageUrls } from '../../utils/image-utils'
+import { normalizeDiagnosisRecords, formatDiagnosisTime } from '../../utils/diagnosis-data-utils'
 
 interface DiagnosisRecord {
   _id: string
@@ -143,59 +145,18 @@ const pageConfig = {
 
       let result: any
       
-      // ✅ 当 batchId 为 'all' 或 undefined 时，使用与健康页面相同的数据源
-      if (!batchId) {
-        // 使用 health-management 云函数的 get_dashboard_snapshot，与健康页面保持一致
-        const snapshotResult = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'get_dashboard_snapshot',
-            batchId: 'all',
-            includeDiagnosis: true,
-            diagnosisLimit: this.data.pagination.pageSize * this.data.pagination.page, // 获取足够的数据用于分页
-            includeAbnormalRecords: false
-          }
-        })
-
-        if (snapshotResult.result && snapshotResult.result.success) {
-          const diagnosisRecords = snapshotResult.result.data?.latestDiagnosisRecords || []
-          
-          // 转换为分页格式
-          const total = diagnosisRecords.length
-          const startIndex = (this.data.pagination.page - 1) * this.data.pagination.pageSize
-          const endIndex = startIndex + this.data.pagination.pageSize
-          const paginatedRecords = diagnosisRecords.slice(startIndex, endIndex)
-          
-          result = {
-            result: {
-              success: true,
-              data: {
-                records: paginatedRecords,
-                pagination: {
-                  page: this.data.pagination.page,
-                  pageSize: this.data.pagination.pageSize,
-                  total: total,
-                  totalPages: Math.ceil(total / this.data.pagination.pageSize)
-                }
-              }
-            }
-          }
-        } else {
-          throw new Error('获取诊断记录失败')
+      // ✅ 优化：统一使用 ai-diagnosis 云函数的 get_diagnosis_history 接口
+      // 该接口支持分页，性能更好，且当 batchId 为 undefined 时会查询所有批次
+      result = await wx.cloud.callFunction({
+        name: 'ai-diagnosis',
+        data: {
+          action: 'get_diagnosis_history',
+          batchId: batchId && batchId !== 'all' ? batchId : undefined, // undefined 表示查询所有批次
+          page: this.data.pagination.page,
+          pageSize: this.data.pagination.pageSize,
+          status: this.data.activeStatus === 'all' ? undefined : this.data.activeStatus
         }
-      } else {
-        // 单个批次时，使用 ai-diagnosis 云函数
-        result = await wx.cloud.callFunction({
-          name: 'ai-diagnosis',
-          data: {
-            action: 'get_diagnosis_history',
-            batchId: batchId,
-            page: this.data.pagination.page,
-            pageSize: this.data.pagination.pageSize,
-            status: this.data.activeStatus === 'all' ? undefined : this.data.activeStatus
-          }
-        })
-      }
+      })
 
       // 🔍 调试：输出查询结果
       logger.log('[诊断历史] 查询结果:', {
@@ -207,20 +168,8 @@ const pageConfig = {
       if (result.result && result.result.success) {
         const { records, pagination } = result.result.data
         
-        // ✅ 与健康页面保持一致：处理时间格式并过滤图片数组中的 null 值
-        // ✅ 同时确保 diagnosis 字段存在（健康页面使用 diagnosis，诊断历史页面使用 diagnosisResult）
-        const processedRecords = records.map((record: any) => ({
-          ...record,
-          // ✅ 确保 diagnosis 字段存在（健康页面使用此字段）
-          diagnosis: record.diagnosis || record.diagnosisResult || '未知疾病',
-          // ✅ 确保 diagnosisResult 字段存在（诊断历史页面使用此字段）
-          diagnosisResult: record.diagnosisResult || record.diagnosis || '未知疾病',
-          // ✅ 格式化诊断日期（健康页面使用 diagnosisDate）
-          diagnosisDate: record.diagnosisDate || (record.createTime ? record.createTime.substring(0, 16).replace('T', ' ') : ''),
-          createTime: this.formatDateTime(record.createTime),
-          // ✅ 过滤掉图片数组中的 null 值（与健康页面保持一致）
-          images: (record.images || []).filter((img: any) => img && typeof img === 'string')
-        }))
+        // ✅ 使用公共工具函数标准化数据
+        const processedRecords = normalizeDiagnosisRecords(records)
 
         const existingRecords = this.data.pagination.page === 1 ? [] : this.data.records
         
@@ -269,28 +218,11 @@ const pageConfig = {
   async onViewRecord(e: any) {
     const { record } = e.currentTarget.dataset
     
-    // ✅ 处理图片URL - 转换为临时URL
-    let processedImages = record.images || []
-    
-    // 首先过滤掉无效值
-    processedImages = processedImages.filter((url: any) => url && typeof url === 'string')
-    
-    if (processedImages.length > 0) {
-      try {
-        const tempUrlResult = await wx.cloud.getTempFileURL({
-          fileList: processedImages
-        })
-        
-        if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
-          processedImages = tempUrlResult.fileList
-            .map((item: any) => item.tempFileURL || item.fileID)
-            .filter((url: any) => url && typeof url === 'string')
-        }
-      } catch (urlError) {
-        logger.warn('图片URL转换失败，使用原始URL:', urlError)
-        // 继续使用已过滤的原始图片URL
-      }
-    }
+    // ✅ 使用公共工具函数处理图片URL
+    const processedImages = await processImageUrls(record.images || [], {
+      onlyCloudFiles: false,
+      showErrorToast: false
+    })
     
     this.setData({
       selectedRecord: {

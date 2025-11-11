@@ -91,8 +91,6 @@
   font-weight: bold;
 }
 
-/* 非必填字段对齐样式 - 星号在标签后面，无需特殊对齐 */
-
 /* 输入框容器 */
 .item-input {
   flex: 1;
@@ -165,31 +163,6 @@
 
 /* 文本域特殊样式 */
 .textarea-item {
-  align-items: flex-start;
-  min-height: 120rpx;
-  padding-top: 32rpx;
-  padding-bottom: 32rpx;
-}
-
-.item-textarea {
-  flex: 1;
-  margin-left: 24rpx;
-}
-
-.item-textarea ::deep .t-textarea__control {
-  font-size: 30rpx;
-  color: var(--td-text-color-primary, #000000);
-  text-align: right;
-  min-height: 80rpx;
-}
-
-.item-textarea ::deep .t-textarea__placeholder {
-  color: var(--td-text-color-placeholder, #bbbbbb);
-  text-align: right;
-}
-
-/* 文本域特殊样式 */
-.textarea-item {
   display: flex;
   align-items: flex-start;
   min-height: 120rpx;
@@ -199,6 +172,7 @@
 .item-textarea {
   flex: 1;
   width: 100%;
+  margin-left: 0;
 }
 
 .item-textarea-input {
@@ -336,8 +310,6 @@
     min-height: 100rpx;
   }
 }
-
-/* 加载状态 */
 
 /* 表单验证错误样式 */
 .form-item.error {

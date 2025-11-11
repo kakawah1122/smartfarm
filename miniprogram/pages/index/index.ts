@@ -2405,11 +2405,8 @@ Page({
   /**
    * 导航到知识库页面
    */
-  navigateToKnowledge(e?: any) {
-    // 阻止事件冒泡，避免触发卡片点击
-    if (e && typeof e.stopPropagation === 'function') {
-      e.stopPropagation()
-    }
+  navigateToKnowledge() {
+    // 使用 catchtap 已自动阻止事件冒泡，无需手动调用 stopPropagation
     wx.navigateTo({
       url: '/pages/knowledge/knowledge'
     })

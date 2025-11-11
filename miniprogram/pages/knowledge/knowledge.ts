@@ -22,22 +22,6 @@ const pageConfig = {
     // 文章列表
     articles: [] as any[],
     
-    // 收藏文章
-    collections: [
-      {
-        id: 1,
-        title: '春季鹅群管理要点',
-        collectedDate: '3月15日',
-        articleId: 0
-      },
-      {
-        id: 2,
-        title: '禽流感防控措施',
-        collectedDate: '3月13日',
-        articleId: 2
-      }
-    ],
-    
     filteredArticles: []
   },
 

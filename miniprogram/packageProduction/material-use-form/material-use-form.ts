@@ -219,9 +219,6 @@ const pageConfig = {
     if (!formData.materialName.trim()) {
       errors.push('请选择物料名称')
     }
-    if (!formData.purpose.trim()) {
-      errors.push('请输入领用用途')
-    }
     if (!formData.quantity.trim()) {
       errors.push('请输入领用数量')
     }
@@ -315,10 +312,10 @@ const pageConfig = {
             materialId: selectedMaterial.materialId,
             type: 'use',
             quantity: Number(data.quantity),
-            targetLocation: data.purpose, // 使用用途作为目标位置
+            targetLocation: data.purpose || '', // 使用用途作为目标位置
             operator: '用户',
             status: '已完成',
-            notes: `用途：${data.purpose}${data.remarks ? '，备注：' + data.remarks : ''}`,
+            notes: `${data.purpose ? '用途：' + data.purpose : ''}${data.remarks ? (data.purpose ? '，备注：' : '备注：') + data.remarks : ''}`,
             recordDate: data.useDate
           }
         }

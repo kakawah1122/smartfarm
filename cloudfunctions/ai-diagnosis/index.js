@@ -10,6 +10,8 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+const logger = typeof cloud.logger === 'function' ? cloud.logger() : console
+
 // 引入疾病知识库
 const { getDiseaseKnowledgePrompt } = require('./disease-knowledge')
 
@@ -955,6 +957,8 @@ exports.main = async (event, context) => {
         return await feedbackDiagnosis(event, openid)
       case 'get_diagnosis_stats':
         return await getDiagnosisStats(event, openid)
+      case 'get_pending_diagnosis_count':
+        return await getPendingDiagnosisCount(event, openid)
       default:
         throw new Error('无效的操作类型')
     }
@@ -1565,6 +1569,42 @@ async function getDiagnosisStats(event, openid) {
     return {
       success: false,
       error: error.message
+    }
+  }
+}
+
+// ✅ 获取待处理诊断记录数量（优化：专门用于统计，不返回记录详情）
+async function getPendingDiagnosisCount(event, openid) {
+  try {
+    const { batchId } = event
+
+    // ✅ 优化：只查询待处理的诊断记录（hasTreatment=false）
+    let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+      .where({
+        _openid: openid,
+        isDeleted: false,
+        hasTreatment: false  // ✅ 只统计没有治疗方案的诊断记录
+      })
+
+    if (batchId) {
+      query = query.where({ batchId })
+    }
+
+    // ✅ 使用count()方法，只返回数量，不返回记录详情（性能优化）
+    const countResult = await query.count()
+
+    return {
+      success: true,
+      data: {
+        pendingCount: countResult.total || 0
+      }
+    }
+  } catch (error) {
+    logger.error('获取待处理诊断数量失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '获取待处理诊断数量失败'
     }
   }
 }

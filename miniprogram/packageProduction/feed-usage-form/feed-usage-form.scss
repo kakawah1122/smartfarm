@@ -2,20 +2,20 @@
 
 .feed-usage-form-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--td-bg-color-page, #f5f5f5);
 }
 
 .form-container {
   padding: 20rpx; // 优化：缩小内边距
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 20rpx); /* 状态栏 + 导航栏 + 安全间距 */
   padding-bottom: 120rpx; // 为底部按钮留出空间
-  // padding-top 在 WXML 中动态设置，避免被导航栏遮挡
   box-sizing: border-box;
 }
 
 // 表单区块
 .form-section {
   margin-bottom: 12rpx; // 优化：缩小间距
-  background-color: #fff;
+  background-color: var(--td-bg-color-container, #fff);
   border-radius: 12rpx; // 优化：缩小圆角
   overflow: hidden;
 }
@@ -27,7 +27,7 @@
   justify-content: space-between;
   margin: 20rpx 20rpx 12rpx; // 外边距
   padding: 12rpx 16rpx; // 内边距
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); // 蓝色渐变背景
+  background: linear-gradient(135deg, var(--td-brand-color-1, #f0f7ff) 0%, var(--td-brand-color-2, #e6f0ff) 100%); // 蓝色渐变背景
   border-radius: 8rpx;
   gap: 12rpx; // 元素间距
 }
@@ -35,14 +35,14 @@
 .section-title {
   font-size: 28rpx; // 优化：缩小字体
   font-weight: 600;
-  color: #0052d9; // 优化：蓝色文字
+  color: var(--td-brand-color, #0052d9); // 优化：蓝色文字
   flex-shrink: 0; // 标题不缩小
   
   // 当 section-title 不在 section-header 内时，添加完整的样式
   .form-section > & {
     margin: 20rpx 20rpx 12rpx; // 与卡片保持一致的间距
     padding: 12rpx 16rpx; // 内边距
-    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); // 蓝色渐变背景
+    background: linear-gradient(135deg, var(--td-brand-color-1, #f0f7ff) 0%, var(--td-brand-color-2, #e6f0ff) 100%); // 蓝色渐变背景
     border-radius: 8rpx;
   }
 }
@@ -57,7 +57,7 @@
 
 .tip-text {
   font-size: 22rpx;
-  color: #999; // 浅灰色文字
+  color: var(--td-text-color-placeholder, #999); // 浅灰色文字
   line-height: 1.4;
   white-space: nowrap; // 不换行
 }
@@ -68,7 +68,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12rpx 20rpx; // 优化：缩小内边距
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
   min-height: 60rpx;
   
   &:last-child {
@@ -79,13 +79,13 @@
 .item-label {
   flex-shrink: 0;
   font-size: 26rpx; // 优化：缩小字体
-  color: #333;
+  color: var(--td-text-color-primary, #333);
   margin-right: 16rpx; // 优化：缩小间距
   line-height: 44rpx;
   
   &.required::after {
     content: ' *';
-    color: #e34d59;
+    color: var(--td-error-color, #e34d59);
     margin-left: 4rpx;
     line-height: 44rpx;
   }
@@ -103,7 +103,7 @@
   align-items: center;
   justify-content: flex-end;
   font-size: 26rpx; // 优化：缩小字体
-  color: #333;
+  color: var(--td-text-color-primary, #333);
   line-height: 44rpx;
   width: 100%;
   text-align: right;
@@ -111,7 +111,7 @@
 }
 
 .value-text.placeholder {
-  color: #999;
+  color: var(--td-text-color-placeholder, #999);
 }
 
 .item-input {
@@ -122,7 +122,7 @@
   input {
     flex: 1;
     font-size: 26rpx; // 优化：缩小字体
-    color: #333;
+    color: var(--td-text-color-primary, #333);
     text-align: right;
   }
   
@@ -130,7 +130,7 @@
     flex-shrink: 0;
     margin-left: 12rpx; // 优化：缩小间距
     font-size: 24rpx; // 优化：缩小字体
-    color: #666;
+    color: var(--td-text-color-secondary, #666);
   }
 }
 
@@ -138,8 +138,8 @@
 .stock-info-card {
   margin: 8rpx 20rpx 16rpx; // 优化：缩小间距
   padding: 12rpx 16rpx; // 优化：缩小内边距
-  background: #ffffff; // 优化：白色背景
-  border: 2rpx solid #0052d9; // 优化：蓝色边框
+  background: var(--td-bg-color-container, #ffffff); // 优化：白色背景
+  border: 2rpx solid var(--td-brand-color, #0052d9); // 优化：蓝色边框
   border-radius: 8rpx; // 优化：缩小圆角
 }
 
@@ -151,34 +151,21 @@
 
 .stock-label {
   font-size: 24rpx; // 优化：缩小字体
-  color: #666; // 优化：深灰色文字
+  color: var(--td-text-color-secondary, #666); // 优化：深灰色文字
 }
 
 .stock-value {
   font-size: 32rpx; // 优化：缩小字体
   font-weight: 600;
-  color: #0052d9; // 优化：蓝色文字
-}
-
-.stock-details {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding-top: 12rpx;
-  border-top: 1rpx solid rgba(255, 255, 255, 0.2);
-}
-
-.detail-text {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--td-brand-color, #0052d9); // 优化：蓝色文字
 }
 
 // 成本预览卡片
 .cost-preview-card {
   margin: 8rpx 20rpx 16rpx; // 优化：缩小间距
   padding: 12rpx 16rpx; // 优化：缩小内边距
-  background: #fafafa; // 优化：浅灰背景
-  border: 1rpx solid #f0f0f0; // 优化：浅灰边框
+  background: var(--td-bg-color-container-secondary, #fafafa); // 优化：浅灰背景
+  border: 1rpx solid var(--td-border-level-1-color, #f0f0f0); // 优化：浅灰边框
   border-radius: 8rpx; // 优化：缩小圆角
 }
 
@@ -187,7 +174,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8rpx 0; // 优化：添加垂直内边距
-  border-bottom: 1rpx solid #f0f0f0; // 优化：添加分隔线
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0); // 优化：添加分隔线
   
   &:last-child {
     border-bottom: none; // 优化：最后一项无分隔线
@@ -201,13 +188,13 @@
 
 .cost-label {
   font-size: 24rpx; // 优化：缩小字体
-  color: #666; // 优化：深灰色文字
+  color: var(--td-text-color-secondary, #666); // 优化：深灰色文字
 }
 
 .cost-value {
   font-size: 26rpx; // 优化：缩小字体
   font-weight: 600;
-  color: #0052d9; // 优化：蓝色文字
+  color: var(--td-brand-color, #0052d9); // 优化：蓝色文字
   
   &.primary {
     font-size: 30rpx; // 优化：缩小主要数值字体
@@ -220,7 +207,7 @@
   min-height: 120rpx; // 优化：缩小最小高度
   padding: 12rpx 16rpx; // 优化：缩小内边距
   font-size: 26rpx; // 优化：缩小字体
-  color: #333;
+  color: var(--td-text-color-primary, #333);
   line-height: 1.6;
   box-sizing: border-box;
 }
@@ -233,8 +220,8 @@
   right: 0;
   display: flex;
   padding: 20rpx 24rpx;
-  background-color: #fff;
-  border-top: 1rpx solid #f0f0f0;
+  background-color: var(--td-bg-color-container, #fff);
+  border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
   box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.05);
   z-index: 100;
   

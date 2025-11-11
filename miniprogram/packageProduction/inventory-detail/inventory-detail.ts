@@ -5,6 +5,7 @@ import { createPageWithNavbar } from '../../utils/navigation'
 interface MaterialDetail {
   materialId: string;
   materialName: string;
+  category: string;  // 添加分类字段
   currentStock: number;
   unit: string;
   safetyStock: number;
@@ -119,18 +120,25 @@ const pageConfig = {
       const materials = materialsResult.result.data.materials
       
       // 转换为页面所需的格式
-      const materialsDetails: MaterialDetail[] = materials.map(material => ({
-        materialId: material._id,
-        materialName: material.name,
-        currentStock: Number(material.currentStock) || 0,
-        unit: material.unit,
-        safetyStock: this.getSafetyStock(material.name, material.unit),
-        isLowStock: Number(material.currentStock) <= this.getSafetyStock(material.name, material.unit),
-        supplier: material.supplier || '未知供应商',
-        latestPurchaseDate: material.createTime ? material.createTime.split('T')[0] : new Date().toISOString().split('T')[0],
-        specification: material.specification || '',
-        unitPrice: Number(material.unitPrice) || 0
-      }))
+      const materialsDetails: MaterialDetail[] = materials.map(material => {
+        // 优先使用数据库中的安全库存，如果没有设置则使用默认值
+        const safetyStock = Number(material.safetyStock) || 5
+        const currentStock = Number(material.currentStock) || 0
+        
+        return {
+          materialId: material._id,
+          materialName: material.name,
+          category: material.category || '其他',  // 添加分类字段
+          currentStock: currentStock,
+          unit: material.unit,
+          safetyStock: safetyStock,
+          isLowStock: currentStock <= safetyStock,
+          supplier: material.supplier || '未知供应商',
+          latestPurchaseDate: material.createTime ? material.createTime.split('T')[0] : new Date().toISOString().split('T')[0],
+          specification: material.specification || '',
+          unitPrice: Number(material.unitPrice) || 0
+        }
+      })
       
       // 按物料名称排序
       return materialsDetails.sort((a, b) => a.materialName.localeCompare(b.materialName))
@@ -140,16 +148,11 @@ const pageConfig = {
     }
   },
 
-
-  // 获取安全库存
+  // 获取安全库存（已优化：从数据库读取，不再硬编码）
+  // 注意：此函数已不再使用，保留仅用于向后兼容
   getSafetyStock(materialName: string, unit: string): number {
-    const safetyStockMap: Record<string, number> = {
-      '鹅用配合饲料': 20, // 袋
-      '玉米颗粒': 10,     // 袋  
-      '鹅用维生素': 5,    // 瓶
-      '消毒液': 3         // 桶
-    }
-    return safetyStockMap[materialName] || 5
+    // 默认安全库存值，如果数据库中没有设置则使用此值
+    return 5
   },
 
 
@@ -192,12 +195,12 @@ const pageConfig = {
         break
       case 1: // 饲料类
         filtered = this.data.materialsList.filter(item => 
-          item.materialName.includes('饲料') || item.materialName.includes('玉米') || item.materialName.includes('feed')
+          item.category === '饲料'
         )
         break
       case 2: // 药品类
         filtered = this.data.materialsList.filter(item => 
-          !item.materialName.includes('饲料') && !item.materialName.includes('玉米') && !item.materialName.includes('feed')
+          item.category === '药品'
         )
         break
       case 3: // 库存不足

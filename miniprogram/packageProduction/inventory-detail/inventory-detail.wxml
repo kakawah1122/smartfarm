@@ -20,7 +20,7 @@
             placeholder="搜索物料名称" 
             value="{{searchKeyword}}"
             bind:change="onSearchChange"
-            style="height: 28px; line-height: 28px; font-size: 13px; padding: 4px 10px;"
+            t-class="search-input"
           />
         </view>
         <t-button theme="light" size="small" bind:tap="showFilter" class="light-button filter-button">筛选</t-button>

@@ -62,10 +62,10 @@
 
           <!-- 领用用途 -->
           <view class="form-item">
-            <view class="item-label required">领用用途</view>
+            <view class="item-label">领用用途</view>
             <view class="item-input">
               <t-input
-                placeholder="请输入领用用途，如：1号鹅舍日常投喂"
+                placeholder="请输入领用用途"
                 value="{{formData.purpose}}"
                 bind:change="onFieldChange"
                 data-field="purpose"

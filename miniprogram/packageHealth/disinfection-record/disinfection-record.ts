@@ -1,7 +1,39 @@
 // disinfection-record.ts - 环境消毒记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
+import type { DisinfectionFormData, PageOptions, BatchInfo } from '../types/prevention'
+import { 
+  DISINFECTION_METHOD_OPTIONS,
+  WEATHER_OPTIONS,
+  EFFECTIVENESS_OPTIONS,
+  BATCHES_CACHE_DURATION,
+  VALIDATE_DEBOUNCE_DELAY
+} from '../constants/prevention-options'
 
-const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
+interface PageData {
+  formData: DisinfectionFormData
+  methodOptions: typeof DISINFECTION_METHOD_OPTIONS
+  weatherOptions: typeof WEATHER_OPTIONS
+  effectivenessOptions: typeof EFFECTIVENESS_OPTIONS
+  activeBatches: BatchInfo[]
+  selectedMethodLabel: string
+  selectedWeatherLabel: string
+  selectedEffectivenessLabel: string
+  selectedMethodIndex: number
+  selectedWeatherIndex: number
+  selectedEffectivenessIndex: number
+  loading: boolean
+  submitting: boolean
+  showMethodPicker: boolean
+  showWeatherPicker: boolean
+  showEffectivenessPicker: boolean
+  formErrors: Record<string, string>
+  sourceType: string
+  sourceId: string
+  batchesCacheTime: number
+}
+
+const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   data: {
     // 表单数据
     formData: {
@@ -10,43 +42,27 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       disinfectant: '',
       concentration: '',
       area: 0,
-      method: 'spray', // spray|fumigation|washing|wiping
-      weather: 'sunny', // sunny|cloudy|rainy|windy
+      method: 'spray',
+      weather: 'sunny',
       temperature: 0,
       humidity: 0,
       executionDate: '',
       executionTime: '',
       operator: '',
       cost: 0,
-      effectiveness: 'good', // excellent|good|fair|poor
+      effectiveness: 'good',
       notes: '',
       nextSchedule: ''
     },
     
-    // 选择器数据
-    methodOptions: [
-      { label: '喷雾消毒', value: 'spray' },
-      { label: '熏蒸消毒', value: 'fumigation' },
-      { label: '冲洗消毒', value: 'washing' },
-      { label: '擦拭消毒', value: 'wiping' }
-    ],
-    
-    weatherOptions: [
-      { label: '晴天', value: 'sunny' },
-      { label: '阴天', value: 'cloudy' },
-      { label: '雨天', value: 'rainy' },
-      { label: '风天', value: 'windy' }
-    ],
-    
-    effectivenessOptions: [
-      { label: '优秀', value: 'excellent' },
-      { label: '良好', value: 'good' },
-      { label: '一般', value: 'fair' },
-      { label: '较差', value: 'poor' }
-    ],
+    // 使用常量配置
+    methodOptions: DISINFECTION_METHOD_OPTIONS,
+    weatherOptions: WEATHER_OPTIONS,
+    effectivenessOptions: EFFECTIVENESS_OPTIONS,
     
     // 活跃批次列表
-    activeBatches: [] as any[],
+    activeBatches: [],
+    batchesCacheTime: 0,
     
     // 显示文本
     selectedMethodLabel: '喷雾消毒',
@@ -66,37 +82,42 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     showEffectivenessPicker: false,
     
     // 表单验证
-    formErrors: {} as Record<string, string>,
+    formErrors: {},
     
     // 来源类型
     sourceType: 'normal',
     sourceId: ''
   },
 
-  onLoad(options: any) {
-    const { sourceType, sourceId, batchId, locationId } = options || {}
-    
-    this.setData({
-      sourceType: sourceType || 'normal',
-      sourceId: sourceId || ''
-    })
-    
-    if (batchId) {
-      this.setData({
-        'formData.batchId': batchId
-      })
+  // 表单验证防抖定时器
+  validateTimer: null as number | null,
+
+  onLoad(options: PageOptions) {
+    // ✅ 合并setData调用
+    const updateData: Record<string, any> = {
+      sourceType: options.sourceType || 'normal',
+      sourceId: options.sourceId || ''
     }
     
-    if (locationId) {
-      this.setData({
-        'formData.locationId': locationId
-      })
+    if (options.batchId) {
+      updateData['formData.batchId'] = options.batchId
     }
     
+    if (options.locationId) {
+      updateData['formData.locationId'] = options.locationId
+    }
+    
+    this.setData(updateData)
     this.initializeForm()
   },
 
   async onShow() {
+    // ✅ 实现数据缓存机制
+    const now = Date.now()
+    if (this.data.batchesCacheTime && 
+        now - this.data.batchesCacheTime < BATCHES_CACHE_DURATION) {
+      return
+    }
     await this.loadActiveBatches()
   },
 
@@ -127,6 +148,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const selectedWeather = weatherOptions[weatherIndex]
     const selectedEffectiveness = effectivenessOptions[effectivenessIndex]
     
+    // ✅ 合并setData调用
     this.setData({
       selectedMethodLabel: selectedMethod?.label || '请选择',
       selectedWeatherLabel: selectedWeather?.label || '请选择', 
@@ -140,23 +162,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 加载活跃批次
   async loadActiveBatches() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: { action: 'get_active_batches' }
-      })
+      const result = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
+        'health-management',
+        { action: 'get_active_batches' },
+        { loading: true, loadingText: '加载批次列表...', showError: true }
+      )
       
-      if (result.result && result.result.success) {
+      if (result.success) {
         this.setData({
-          activeBatches: result.result.data.batches || []
+          activeBatches: result.data?.batches || [],
+          batchesCacheTime: Date.now()
         })
       }
     } catch (error) {
-      // 已移除调试日志
+      wx.showToast({
+        title: '加载批次列表失败',
+        icon: 'none'
+      })
     }
   },
 
-  // 表单输入处理
-  onFormInput(e: any) {
+  // 表单输入处理（添加防抖）
+  onFormInput(e: WechatMiniprogram.InputEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -164,11 +191,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       [`formData.${field}`]: value
     })
     
-    this.validateField(field, value)
+    // ✅ 防抖验证
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+    }
+    this.validateTimer = setTimeout(() => {
+      this.validateField(field, value)
+    }, VALIDATE_DEBOUNCE_DELAY)
   },
 
-  // 数字输入处理
-  onNumberInput(e: any) {
+  // 数字输入处理（添加防抖）
+  onNumberInput(e: WechatMiniprogram.InputEvent) {
     const { field } = e.currentTarget.dataset
     const value = parseFloat(e.detail.value) || 0
     
@@ -176,7 +209,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       [`formData.${field}`]: value
     })
     
-    this.validateField(field, value)
+    // ✅ 防抖验证
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+    }
+    this.validateTimer = setTimeout(() => {
+      this.validateField(field, value)
+    }, VALIDATE_DEBOUNCE_DELAY)
   },
 
   // 显示批次选择器
@@ -195,9 +234,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       itemList,
       success: (res) => {
         const selectedBatch = this.data.activeBatches[res.tapIndex]
+        if (!selectedBatch) return
+        
+        // ✅ 合并setData调用
         this.setData({
           'formData.batchId': selectedBatch.batchNumber,
-          'formData.locationId': selectedBatch.location
+          'formData.locationId': selectedBatch.location || ''
         })
         this.validateField('batchId', selectedBatch.batchNumber)
       }
@@ -209,12 +251,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({ showMethodPicker: true })
   },
 
-  onMethodPickerChange(e: any) {
-    const index = e.detail.value
+  onMethodPickerChange(e: WechatMiniprogram.PickerChangeEvent) {
+    const index = e.detail.value as number
     const selectedMethod = this.data.methodOptions[index]
     
+    if (!selectedMethod) return
+    
     this.setData({
-      'formData.method': selectedMethod.value,
+      'formData.method': selectedMethod.value as DisinfectionFormData['method'],
       showMethodPicker: false
     })
     
@@ -231,12 +275,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({ showWeatherPicker: true })
   },
 
-  onWeatherPickerChange(e: any) {
-    const index = e.detail.value
+  onWeatherPickerChange(e: WechatMiniprogram.PickerChangeEvent) {
+    const index = e.detail.value as number
     const selectedWeather = this.data.weatherOptions[index]
     
+    if (!selectedWeather) return
+    
     this.setData({
-      'formData.weather': selectedWeather.value,
+      'formData.weather': selectedWeather.value as DisinfectionFormData['weather'],
       showWeatherPicker: false
     })
     
@@ -252,12 +298,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({ showEffectivenessPicker: true })
   },
 
-  onEffectivenessPickerChange(e: any) {
-    const index = e.detail.value
+  onEffectivenessPickerChange(e: WechatMiniprogram.PickerChangeEvent) {
+    const index = e.detail.value as number
     const selectedEffectiveness = this.data.effectivenessOptions[index]
     
+    if (!selectedEffectiveness) return
+    
     this.setData({
-      'formData.effectiveness': selectedEffectiveness.value,
+      'formData.effectiveness': selectedEffectiveness.value as DisinfectionFormData['effectiveness'],
       showEffectivenessPicker: false
     })
     
@@ -269,64 +317,68 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 日期时间选择器
-  onDateChange(e: any) {
+  onDateChange(e: WechatMiniprogram.PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
+    const value = e.detail.value as string
+    
     this.setData({
-      [`formData.${field}`]: e.detail.value
+      [`formData.${field}`]: value
     })
-    this.validateField(field, e.detail.value)
+    this.validateField(field, value)
   },
 
-  onTimeChange(e: any) {
+  onTimeChange(e: WechatMiniprogram.PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
+    const value = e.detail.value as string
+    
     this.setData({
-      [`formData.${field}`]: e.detail.value
+      [`formData.${field}`]: value
     })
-    this.validateField(field, e.detail.value)
+    this.validateField(field, value)
   },
 
   // 字段验证
-  validateField(field: string, value: any) {
+  validateField(field: string, value: unknown) {
     const errors = { ...this.data.formErrors }
     
     switch (field) {
       case 'locationId':
-        if (!value) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请选择消毒区域'
         } else {
           delete errors[field]
         }
         break
       case 'disinfectant':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请输入消毒剂名称'
         } else {
           delete errors[field]
         }
         break
       case 'concentration':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请输入消毒剂浓度'
         } else {
           delete errors[field]
         }
         break
       case 'area':
-        if (!value || value <= 0) {
+        if (!value || (typeof value === 'number' && value <= 0)) {
           errors[field] = '消毒面积必须大于0'
         } else {
           delete errors[field]
         }
         break
       case 'temperature':
-        if (value < -50 || value > 60) {
+        if (typeof value === 'number' && (value < -50 || value > 60)) {
           errors[field] = '请输入合理的温度值'
         } else {
           delete errors[field]
         }
         break
       case 'humidity':
-        if (value < 0 || value > 100) {
+        if (typeof value === 'number' && (value < 0 || value > 100)) {
           errors[field] = '湿度值应在0-100之间'
         } else {
           delete errors[field]
@@ -388,10 +440,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         humidity: formData.humidity
       }
       
-      // 调用云函数创建预防记录
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
+      // ✅ 使用CloudApi统一封装
+      const result = await CloudApi.callFunction<{ recordId: string }>(
+        'health-management',
+        {
           action: 'create_prevention_record',
           preventionType: 'disinfection',
           batchId: formData.batchId,
@@ -410,33 +462,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           } : null,
           sourceType: this.data.sourceType,
           sourceId: this.data.sourceId
+        },
+        {
+          loading: true,
+          loadingText: '保存中...',
+          showSuccess: true,
+          successText: '环境消毒记录保存成功'
         }
-      })
+      )
       
-      if (result.result && result.result.success) {
-        wx.showToast({
-          title: '环境消毒记录保存成功',
-          icon: 'success'
-        })
-        
+      if (result.success) {
         // 如果消毒效果较差，提示风险评估
-        if (formData.effectiveness === 'poor') {
-          this.handlePoorEffectiveness(result.result.data.recordId)
+        if (formData.effectiveness === 'poor' && result.data?.recordId) {
+          this.handlePoorEffectiveness(result.data.recordId)
         } else {
           // 返回上一页
           setTimeout(() => {
             wx.navigateBack()
           }, 1500)
         }
-      } else {
-        throw new Error(result.result?.message || '保存失败')
       }
-    } catch (error: any) {
-      // 已移除调试日志
-      wx.showToast({
-        title: error.message || '保存失败，请重试',
-        icon: 'none'
-      })
+    } catch (error) {
+      // CloudApi已处理错误提示，这里不需要额外处理
     } finally {
       this.setData({ submitting: false })
     }
@@ -451,10 +498,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       cancelText: '暂不处理',
       success: (res) => {
         if (res.confirm) {
-          // 跳转到健康记录页面或创建预警
           this.createHealthRiskAlert(preventionRecordId)
         } else {
-          // 返回上一页
           wx.navigateBack()
         }
       }
@@ -464,27 +509,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 创建健康风险预警
   async createHealthRiskAlert(preventionRecordId: string) {
     try {
-      await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
+      await CloudApi.callFunction(
+        'health-management',
+        {
           action: 'check_health_alerts',
           triggerType: 'disinfection_poor_effect',
           relatedRecordId: preventionRecordId,
           batchId: this.data.formData.batchId,
           locationId: this.data.formData.locationId
+        },
+        {
+          loading: true,
+          loadingText: '创建监控记录...',
+          showSuccess: true,
+          successText: '已创建健康监控记录'
         }
-      })
-      
-      wx.showToast({
-        title: '已创建健康监控记录',
-        icon: 'success'
-      })
+      )
       
       setTimeout(() => {
         wx.navigateBack()
       }, 1500)
     } catch (error) {
-      // 已移除调试日志
+      // CloudApi已处理错误提示
       wx.navigateBack()
     }
   },

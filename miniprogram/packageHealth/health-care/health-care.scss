@@ -4,9 +4,9 @@
   background-color: #f5f5f5;
   min-height: 100vh;
   
-  .content-container {
-    padding: 20rpx;
-    padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏总高度 + 适当间距 */
+  .page-container {
+    padding: 32rpx 32rpx 0;
+    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
   }
 
   .form-container {
@@ -14,6 +14,7 @@
     border-radius: 16rpx;
     overflow: hidden;
     box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+    margin-bottom: 24rpx;
   }
 
   .section-title {
@@ -65,38 +66,34 @@
       font-size: 28rpx;
       margin-left: 8rpx;
     }
-  }
 
-  .form-group {
-    display: flex;
-    gap: 20rpx;
-
-    .form-item {
-      flex: 1;
-      border-bottom: none;
-      border-right: 1px solid #f0f0f0;
-
-      &:last-child {
-        border-right: none;
-      }
+    .error-text {
+      font-size: 24rpx;
+      color: #e34d59;
+      margin-top: 8rpx;
+      line-height: 1.4;
     }
   }
 
-  .care-type-cards {
+  // 保健类型网格布局
+  .care-type-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20rpx;
     padding: 20rpx 30rpx;
 
-    .type-card {
+    .care-type-item {
       background: #f8f9fa;
       border-radius: 12rpx;
       padding: 24rpx;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
       transition: all 0.2s ease;
       border: 2rpx solid transparent;
 
-      &.selected {
+      &.active {
         background: #e6f3ff;
         border-color: #0052d9;
       }
@@ -105,162 +102,42 @@
         transform: scale(0.98);
       }
 
-      .card-icon {
-        font-size: 40rpx;
+      .care-type-icon {
         margin-bottom: 12rpx;
-        display: block;
-      }
-
-      .card-title {
-        font-size: 28rpx;
-        font-weight: 500;
-        color: #333;
-        margin-bottom: 8rpx;
-      }
-
-      .card-desc {
-        font-size: 22rpx;
-        color: #666;
-        line-height: 1.3;
-      }
-    }
-  }
-
-  .supplement-options {
-    padding: 20rpx 30rpx;
-
-    .supplement-item {
-      background: #f8f9fa;
-      border-radius: 12rpx;
-      padding: 20rpx;
-      margin-bottom: 16rpx;
-      border: 2rpx solid transparent;
-      transition: all 0.2s ease;
-
-      &.selected {
-        background: #e6f3ff;
-        border-color: #0052d9;
-      }
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .supplement-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 8rpx;
+        justify-content: center;
+      }
 
-        .supplement-name {
+      .care-type-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8rpx;
+
+        .care-type-name {
           font-size: 28rpx;
           font-weight: 500;
           color: #333;
         }
 
-        .supplement-dosage {
-          font-size: 24rpx;
-          color: #0052d9;
-          font-weight: 500;
+        .care-type-desc {
+          font-size: 22rpx;
+          color: #666;
+          line-height: 1.3;
         }
       }
-
-      .supplement-purpose {
-        font-size: 24rpx;
-        color: #666;
-        line-height: 1.3;
-      }
     }
   }
 
-  .submit-section {
-    padding: 40rpx 20rpx;
-    background: white;
-    margin-top: 20rpx;
-    border-radius: 16rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-
-    .t-button {
-      height: 88rpx;
-      border-radius: 44rpx;
-      font-size: 32rpx;
-      font-weight: 500;
-    }
-    
-    .t-button--light {
-      --td-button-light-color: #666;
-      --td-button-light-border-color: #d0d0d0;
-      --td-button-light-bg-color: #fff;
-    }
-    
-    .t-button--primary {
-      --td-button-primary-bg-color: #0052d9;
-      --td-button-primary-border-color: #0052d9;
-    }
-  }
-
-  .button-group {
+  // 输入框与操作按钮组合
+  .input-with-action {
     display: flex;
-    gap: 20rpx;
-
-    .t-button {
-      flex: 1;
-    }
-  }
-
-  .validation-error {
-    background: linear-gradient(135deg, #fff5f5 0%, #ffe8ea 100%);
-    border-radius: 12rpx;
-    
-    .form-label {
-      color: #e34d59;
-    }
-  }
-
-  .success-indicator {
-    background: linear-gradient(135deg, #f0faf5 0%, #e6f7f0 100%);
-    border-radius: 12rpx;
-  }
-
-  .loading-container {
-    display: flex;
-    flex-direction: column;
+    gap: 16rpx;
     align-items: center;
-    justify-content: center;
-    height: 400rpx;
 
-    .loading-text {
-      margin-top: 20rpx;
-      font-size: 28rpx;
-      color: #666;
-    }
-  }
-
-  .quick-select-section {
-    background: white;
-    border-radius: 16rpx;
-    margin-bottom: 20rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-
-    .section-header {
-      padding: 30rpx 30rpx 20rpx;
-      border-bottom: 1px solid #f0f0f0;
-
-      .section-title {
-        font-size: 32rpx;
-        font-weight: 600;
-        color: #333;
-        background: transparent;
-        border: none;
-        padding: 0;
-      }
-
-      .section-desc {
-        font-size: 24rpx;
-        color: #666;
-        margin-top: 8rpx;
-        line-height: 1.4;
-      }
+    .t-input {
+      flex: 1;
     }
   }
 }
@@ -285,9 +162,35 @@
   border-radius: 24rpx 24rpx 0 0;
 }
 
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 24rpx;
+  padding: 32rpx 0;
+  
+  .t-button {
+    flex: 1;
+    
+    &.t-button--light {
+      --td-button-light-color: #666;
+      --td-button-light-border-color: #d0d0d0;
+      --td-button-light-bg-color: #fff;
+    }
+    
+    &.t-button--primary {
+      --td-button-primary-bg-color: #0052d9;
+      --td-button-primary-border-color: #0052d9;
+    }
+  }
+}
+
 /* 响应式适配 */
 @media screen and (max-width: 400px) {
   .health-care-page {
+    .page-container {
+      padding: 24rpx 24rpx 0;
+    }
+
     .form-item {
       padding: 24rpx;
     }
@@ -296,14 +199,15 @@
       padding: 24rpx 24rpx 16rpx;
     }
 
-    .submit-section {
-      padding: 30rpx 16rpx;
-    }
-
-    .care-type-cards {
+    .care-type-grid {
       grid-template-columns: 1fr;
       gap: 16rpx;
       padding: 16rpx 24rpx;
+    }
+
+    .action-buttons {
+      gap: 16rpx;
+      padding: 24rpx 0;
     }
   }
 }
@@ -326,20 +230,16 @@
     .form-item .form-label {
       color: #fff;
     }
-    
-    .submit-section {
-      background: #2a2a2a;
-    }
 
-    .care-type-cards .type-card {
+    .care-type-grid .care-type-item {
       background: #3a3a3a;
       color: #fff;
 
-      &.selected {
+      &.active {
         background: #1e3a8a;
       }
 
-      .card-title {
+      .care-type-info .care-type-name {
         color: #fff;
       }
     }

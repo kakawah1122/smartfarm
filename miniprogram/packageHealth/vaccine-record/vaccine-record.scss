@@ -6,46 +6,47 @@
   
   .page-container {
     padding: 32rpx 32rpx 0;
-    padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
+    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
   }
 }
 
 /* 表单容器 */
 .form-container {
+  background: white;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  margin-bottom: 24rpx;
+
   .form-section {
-    background: #fff;
-    border-radius: 16rpx;
-    margin-bottom: 24rpx;
-    overflow: hidden;
-    
     .section-title {
-      padding: 32rpx 32rpx 16rpx;
       font-size: 32rpx;
       font-weight: 600;
-      color: #1a1a1a;
-      border-bottom: 2rpx solid #f0f0f0;
+      color: #333;
+      padding: 30rpx 30rpx 20rpx;
+      background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+      border-radius: 12rpx;
     }
     
     .form-item {
-      padding: 24rpx 32rpx;
-      border-bottom: 2rpx solid #f8f8f8;
+      padding: 30rpx;
+      border-bottom: 1px solid #f0f0f0;
       
       &:last-child {
         border-bottom: none;
       }
       
       .form-label {
-        font-size: 28rpx;
-        color: #1a1a1a;
-        margin-bottom: 16rpx;
+        font-size: 30rpx;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 20rpx;
         display: flex;
         align-items: center;
         
         &.required::after {
-          content: '*';
+          content: ' *';
           color: #e34d59;
-          margin-left: 8rpx;
-          font-size: 24rpx;
         }
       }
       
@@ -58,38 +59,9 @@
       
       .form-tip {
         font-size: 24rpx;
-        color: #999;
-        margin-top: 8rpx;
+        color: #666;
+        margin-top: 12rpx;
         line-height: 1.4;
-      }
-      
-      /* 表单控件样式覆盖 */
-      .t-input {
-        --td-input-bg-color: #fafafa;
-        --td-input-border-color: #e0e0e0;
-        --td-input-font-size: 28rpx;
-        
-        &.t-input--error {
-          --td-input-border-color: #e34d59;
-        }
-      }
-      
-      .t-textarea {
-        --td-textarea-bg-color: #fafafa;
-        --td-textarea-border-color: #e0e0e0;
-        --td-textarea-font-size: 28rpx;
-        min-height: 120rpx;
-      }
-      
-      .t-cell {
-        --td-cell-bg-color: #fafafa;
-        --td-cell-border-color: #e0e0e0;
-        --td-cell-title-font-size: 28rpx;
-        border-radius: 8rpx;
-        
-        &.form-cell-error {
-          --td-cell-border-color: #e34d59;
-        }
       }
     }
   }
@@ -117,16 +89,28 @@
   }
 }
 
-/* 选择器覆盖样式 */
-.t-picker {
-  .t-picker-item {
-    font-size: 28rpx;
-    color: #1a1a1a;
-  }
+/* TDesign组件样式覆盖 */
+:global(.t-input) {
+  --td-input-border-color: transparent;
+  --td-input-border-radius: 0;
+}
+
+:global(.t-textarea) {
+  --td-textarea-border-color: transparent;
+  --td-textarea-border-radius: 0;
+}
+
+:global(.t-cell) {
+  --td-cell-border-color: transparent;
+  --td-cell-padding: 0;
+}
+
+:global(.t-picker__content) {
+  border-radius: 24rpx 24rpx 0 0;
 }
 
 /* 响应式适配 */
-@media (max-width: 375px) {
+@media screen and (max-width: 400px) {
   .vaccine-record-page {
     .page-container {
       padding: 24rpx 24rpx 0;
@@ -135,16 +119,15 @@
     .form-container {
       .form-section {
         .section-title {
-          padding: 24rpx 24rpx 12rpx;
-          font-size: 30rpx;
+          padding: 24rpx 24rpx 16rpx;
         }
         
         .form-item {
-          padding: 20rpx 24rpx;
+          padding: 24rpx;
           
           .form-label {
-            font-size: 26rpx;
-            margin-bottom: 12rpx;
+            font-size: 28rpx;
+            margin-bottom: 16rpx;
           }
         }
       }
@@ -157,57 +140,32 @@
   }
 }
 
-/* 暗色模式适配 */
+/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   .vaccine-record-page {
     background-color: #1a1a1a;
     
     .form-container {
+      background: #2a2a2a;
+      color: #fff;
+      
       .form-section {
-        background: #2a2a2a;
-        
         .section-title {
-          color: #e0e0e0;
-          border-bottom-color: #404040;
+          background: #333;
+          color: #fff;
         }
         
         .form-item {
           border-bottom-color: #404040;
           
           .form-label {
-            color: #e0e0e0;
+            color: #fff;
           }
           
           .form-tip {
             color: #999;
           }
-          
-          .t-input {
-            --td-input-bg-color: #3a3a3a;
-            --td-input-border-color: #505050;
-            --td-input-color: #e0e0e0;
-          }
-          
-          .t-textarea {
-            --td-textarea-bg-color: #3a3a3a;
-            --td-textarea-border-color: #505050;
-            --td-textarea-color: #e0e0e0;
-          }
-          
-          .t-cell {
-            --td-cell-bg-color: #3a3a3a;
-            --td-cell-border-color: #505050;
-            --td-cell-title-color: #e0e0e0;
-          }
         }
-      }
-    }
-    
-    .action-buttons {
-      .t-button--light {
-        --td-button-light-color: #e0e0e0;
-        --td-button-light-border-color: #505050;
-        --td-button-light-bg-color: #3a3a3a;
       }
     }
   }

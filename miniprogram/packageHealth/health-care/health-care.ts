@@ -1,16 +1,51 @@
 // health-care.ts - 保健管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
+import type { HealthCareFormData, PageOptions, BatchInfo } from '../types/prevention'
+import { 
+  CARE_TYPE_OPTIONS, 
+  METHOD_OPTIONS, 
+  EFFECTIVENESS_OPTIONS,
+  COMMON_SUPPLEMENTS,
+  BATCHES_CACHE_DURATION,
+  VALIDATE_DEBOUNCE_DELAY
+} from '../constants/prevention-options'
 
-const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
+interface PageData {
+  formData: HealthCareFormData
+  careTypeOptions: typeof CARE_TYPE_OPTIONS
+  methodOptions: typeof METHOD_OPTIONS
+  effectivenessOptions: typeof EFFECTIVENESS_OPTIONS
+  commonSupplements: typeof COMMON_SUPPLEMENTS
+  activeBatches: BatchInfo[]
+  selectedCareTypeLabel: string
+  selectedMethodLabel: string
+  selectedEffectivenessLabel: string
+  selectedCareTypeIndex: number
+  selectedMethodIndex: number
+  selectedEffectivenessIndex: number
+  loading: boolean
+  submitting: boolean
+  showCareTypePicker: boolean
+  showMethodPicker: boolean
+  showEffectivenessPicker: boolean
+  showSupplementPicker: boolean
+  formErrors: Record<string, string>
+  sourceType: string
+  sourceId: string
+  batchesCacheTime: number
+}
+
+const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   data: {
     // 表单数据
     formData: {
       batchId: '',
       locationId: '',
-      careType: 'nutrition', // nutrition|environment|immunity|growth
+      careType: 'nutrition',
       supplement: '',
       dosage: '',
-      method: 'feed', // feed|water|spray|environment
+      method: 'feed',
       duration: 0,
       purpose: '',
       targetCount: 0,
@@ -24,56 +59,15 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       nextSchedule: ''
     },
     
-    // 保健类型选项
-    careTypeOptions: [
-      { label: '营养补充', value: 'nutrition', icon: 'food', desc: '维生素、矿物质等营养补充' },
-      { label: '环境改善', value: 'environment', icon: 'home', desc: '温度、湿度、通风等环境优化' },
-      { label: '免疫增强', value: 'immunity', icon: 'secured', desc: '提高免疫力的保健措施' },
-      { label: '生长促进', value: 'growth', icon: 'arrow-up', desc: '促进生长发育的保健方案' }
-    ],
-    
-    // 给药方式选项
-    methodOptions: [
-      { label: '饲料添加', value: 'feed' },
-      { label: '饮水添加', value: 'water' },
-      { label: '喷雾给药', value: 'spray' },
-      { label: '环境调节', value: 'environment' }
-    ],
-    
-    effectivenessOptions: [
-      { label: '优秀', value: 'excellent' },
-      { label: '良好', value: 'good' },
-      { label: '一般', value: 'fair' },
-      { label: '较差', value: 'poor' }
-    ],
-    
-    // 常用保健品库
-    commonSupplements: {
-      nutrition: [
-        { name: '维生素C', dosage: '2g/100只', purpose: '增强免疫力' },
-        { name: '维生素E', dosage: '1g/100只', purpose: '抗氧化' },
-        { name: '复合维生素', dosage: '5g/100只', purpose: '全面营养补充' },
-        { name: '电解质', dosage: '10g/100只', purpose: '维持电解质平衡' }
-      ],
-      environment: [
-        { name: '益生菌', dosage: '按说明使用', purpose: '改善肠道环境' },
-        { name: '除臭剂', dosage: '适量喷洒', purpose: '改善空气质量' },
-        { name: '消毒液', dosage: '1:200稀释', purpose: '环境净化' }
-      ],
-      immunity: [
-        { name: '免疫增强剂', dosage: '3g/100只', purpose: '提高免疫力' },
-        { name: '中草药添加剂', dosage: '按配方使用', purpose: '天然免疫调节' },
-        { name: '蜂胶', dosage: '0.5g/只', purpose: '抗菌免疫' }
-      ],
-      growth: [
-        { name: '氨基酸', dosage: '5g/100只', purpose: '促进蛋白质合成' },
-        { name: '钙磷补充剂', dosage: '3g/100只', purpose: '骨骼发育' },
-        { name: '生长因子', dosage: '按说明使用', purpose: '促进生长' }
-      ]
-    },
+    // 使用常量配置
+    careTypeOptions: CARE_TYPE_OPTIONS,
+    methodOptions: METHOD_OPTIONS,
+    effectivenessOptions: EFFECTIVENESS_OPTIONS,
+    commonSupplements: COMMON_SUPPLEMENTS,
     
     // 活跃批次列表
-    activeBatches: [] as any[],
+    activeBatches: [],
+    batchesCacheTime: 0,
     
     // 显示文本和索引
     selectedCareTypeLabel: '营养补充',
@@ -92,37 +86,42 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     showSupplementPicker: false,
     
     // 表单验证
-    formErrors: {} as Record<string, string>,
+    formErrors: {},
     
     // 来源类型
     sourceType: 'normal',
     sourceId: ''
   },
 
-  onLoad(options: any) {
-    const { sourceType, sourceId, batchId, careType } = options || {}
-    
-    this.setData({
-      sourceType: sourceType || 'normal',
-      sourceId: sourceId || ''
-    })
-    
-    if (batchId) {
-      this.setData({
-        'formData.batchId': batchId
-      })
+  // 表单验证防抖定时器
+  validateTimer: null as number | null,
+
+  onLoad(options: PageOptions) {
+    // ✅ 合并setData调用
+    const updateData: Record<string, any> = {
+      sourceType: options.sourceType || 'normal',
+      sourceId: options.sourceId || ''
     }
     
-    if (careType) {
-      this.setData({
-        'formData.careType': careType
-      })
+    if (options.batchId) {
+      updateData['formData.batchId'] = options.batchId
     }
     
+    if (options.careType) {
+      updateData['formData.careType'] = options.careType as HealthCareFormData['careType']
+    }
+    
+    this.setData(updateData)
     this.initializeForm()
   },
 
   async onShow() {
+    // ✅ 实现数据缓存机制
+    const now = Date.now()
+    if (this.data.batchesCacheTime && 
+        now - this.data.batchesCacheTime < BATCHES_CACHE_DURATION) {
+      return
+    }
     await this.loadActiveBatches()
   },
 
@@ -153,6 +152,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     const selectedMethod = methodOptions[methodIndex]
     const selectedEffectiveness = effectivenessOptions[effectivenessIndex]
     
+    // ✅ 合并setData调用
     this.setData({
       selectedCareTypeLabel: selectedCareType?.label || '请选择',
       selectedMethodLabel: selectedMethod?.label || '请选择',
@@ -166,23 +166,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 加载活跃批次
   async loadActiveBatches() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: { action: 'get_active_batches' }
-      })
+      const result = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
+        'health-management',
+        { action: 'get_active_batches' },
+        { loading: true, loadingText: '加载批次列表...', showError: true }
+      )
       
-      if (result.result && result.result.success) {
+      if (result.success) {
         this.setData({
-          activeBatches: result.result.data.batches || []
+          activeBatches: result.data?.batches || [],
+          batchesCacheTime: Date.now()
         })
       }
     } catch (error) {
-      // 已移除调试日志
+      wx.showToast({
+        title: '加载批次列表失败',
+        icon: 'none'
+      })
     }
   },
 
-  // 表单输入处理
-  onFormInput(e: any) {
+  // 表单输入处理（添加防抖）
+  onFormInput(e: WechatMiniprogram.InputEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -190,11 +195,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       [`formData.${field}`]: value
     })
     
-    this.validateField(field, value)
+    // ✅ 防抖验证
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+    }
+    this.validateTimer = setTimeout(() => {
+      this.validateField(field, value)
+    }, VALIDATE_DEBOUNCE_DELAY)
   },
 
-  // 数字输入处理
-  onNumberInput(e: any) {
+  // 数字输入处理（添加防抖）
+  onNumberInput(e: WechatMiniprogram.InputEvent) {
     const { field } = e.currentTarget.dataset
     const value = parseFloat(e.detail.value) || 0
     
@@ -202,7 +213,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       [`formData.${field}`]: value
     })
     
-    this.validateField(field, value)
+    // ✅ 防抖验证
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+    }
+    this.validateTimer = setTimeout(() => {
+      this.validateField(field, value)
+    }, VALIDATE_DEBOUNCE_DELAY)
   },
 
   // 显示批次选择器
@@ -221,9 +238,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       itemList,
       success: (res) => {
         const selectedBatch = this.data.activeBatches[res.tapIndex]
+        // ✅ 合并setData调用
         this.setData({
           'formData.batchId': selectedBatch.batchNumber,
-          'formData.locationId': selectedBatch.location
+          'formData.locationId': selectedBatch.location || ''
         })
         this.validateField('batchId', selectedBatch.batchNumber)
       }
@@ -235,14 +253,16 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({ showCareTypePicker: true })
   },
 
-  onCareTypePickerChange(e: any) {
-    const index = e.detail.value
+  onCareTypePickerChange(e: WechatMiniprogram.PickerChangeEvent) {
+    const index = e.detail.value as number
     const selectedType = this.data.careTypeOptions[index]
     
+    if (!selectedType) return
+    
+    // ✅ 合并setData调用
     this.setData({
-      'formData.careType': selectedType.value,
+      'formData.careType': selectedType.value as HealthCareFormData['careType'],
       showCareTypePicker: false,
-      // 清空相关字段
       'formData.supplement': '',
       'formData.dosage': '',
       'formData.purpose': ''
@@ -261,12 +281,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({ showMethodPicker: true })
   },
 
-  onMethodPickerChange(e: any) {
-    const index = e.detail.value
+  onMethodPickerChange(e: WechatMiniprogram.PickerChangeEvent) {
+    const index = e.detail.value as number
     const selectedMethod = this.data.methodOptions[index]
     
+    if (!selectedMethod) return
+    
     this.setData({
-      'formData.method': selectedMethod.value,
+      'formData.method': selectedMethod.value as HealthCareFormData['method'],
       showMethodPicker: false
     })
     
@@ -282,12 +304,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({ showEffectivenessPicker: true })
   },
 
-  onEffectivenessPickerChange(e: any) {
-    const index = e.detail.value
+  onEffectivenessPickerChange(e: WechatMiniprogram.PickerChangeEvent) {
+    const index = e.detail.value as number
     const selectedEffectiveness = this.data.effectivenessOptions[index]
     
+    if (!selectedEffectiveness) return
+    
     this.setData({
-      'formData.effectiveness': selectedEffectiveness.value,
+      'formData.effectiveness': selectedEffectiveness.value as HealthCareFormData['effectiveness'],
       showEffectivenessPicker: false
     })
     
@@ -301,7 +325,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 常用保健品选择器
   showSupplementSelector() {
     const { careType } = this.data.formData
-    const supplements = this.data.commonSupplements[careType as keyof typeof this.data.commonSupplements] || []
+    const supplements = this.data.commonSupplements[careType] || []
     
     if (supplements.length === 0) {
       wx.showToast({
@@ -317,6 +341,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       itemList,
       success: (res) => {
         const selectedSupplement = supplements[res.tapIndex]
+        if (!selectedSupplement) return
+        
+        // ✅ 合并setData调用
         this.setData({
           'formData.supplement': selectedSupplement.name,
           'formData.dosage': selectedSupplement.dosage,
@@ -329,71 +356,75 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 日期时间选择器
-  onDateChange(e: any) {
+  onDateChange(e: WechatMiniprogram.PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
+    const value = e.detail.value as string
+    
     this.setData({
-      [`formData.${field}`]: e.detail.value
+      [`formData.${field}`]: value
     })
-    this.validateField(field, e.detail.value)
+    this.validateField(field, value)
   },
 
-  onTimeChange(e: any) {
+  onTimeChange(e: WechatMiniprogram.PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
+    const value = e.detail.value as string
+    
     this.setData({
-      [`formData.${field}`]: e.detail.value
+      [`formData.${field}`]: value
     })
-    this.validateField(field, e.detail.value)
+    this.validateField(field, value)
   },
 
   // 字段验证
-  validateField(field: string, value: any) {
+  validateField(field: string, value: unknown) {
     const errors = { ...this.data.formErrors }
     
     switch (field) {
       case 'batchId':
-        if (!value) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请选择目标批次'
         } else {
           delete errors[field]
         }
         break
       case 'supplement':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请输入保健品名称'
         } else {
           delete errors[field]
         }
         break
       case 'dosage':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请输入用法用量'
         } else {
           delete errors[field]
         }
         break
       case 'purpose':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请输入保健目的'
         } else {
           delete errors[field]
         }
         break
       case 'targetCount':
-        if (!value || value <= 0) {
+        if (!value || (typeof value === 'number' && value <= 0)) {
           errors[field] = '目标数量必须大于0'
         } else {
           delete errors[field]
         }
         break
       case 'actualCount':
-        if (value > this.data.formData.targetCount) {
+        if (typeof value === 'number' && value > this.data.formData.targetCount) {
           errors[field] = '实际数量不能超过目标数量'
         } else {
           delete errors[field]
         }
         break
       case 'duration':
-        if (value <= 0) {
+        if (!value || (typeof value === 'number' && value <= 0)) {
           errors[field] = '使用天数必须大于0'
         } else {
           delete errors[field]
@@ -455,10 +486,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         actualCount: formData.actualCount
       }
       
-      // 调用云函数创建预防记录
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
+      // ✅ 使用CloudApi统一封装
+      const result = await CloudApi.callFunction(
+        'health-management',
+        {
           action: 'create_prevention_record',
           preventionType: 'nutrition',
           batchId: formData.batchId,
@@ -477,28 +508,23 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           } : null,
           sourceType: this.data.sourceType,
           sourceId: this.data.sourceId
+        },
+        {
+          loading: true,
+          loadingText: '保存中...',
+          showSuccess: true,
+          successText: '保健管理记录保存成功'
         }
-      })
+      )
       
-      if (result.result && result.result.success) {
-        wx.showToast({
-          title: '保健管理记录保存成功',
-          icon: 'success'
-        })
-        
+      if (result.success) {
         // 返回上一页
         setTimeout(() => {
           wx.navigateBack()
         }, 1500)
-      } else {
-        throw new Error(result.result?.message || '保存失败')
       }
-    } catch (error: any) {
-      // 已移除调试日志
-      wx.showToast({
-        title: error.message || '保存失败，请重试',
-        icon: 'none'
-      })
+    } catch (error) {
+      // CloudApi已处理错误提示，这里不需要额外处理
     } finally {
       this.setData({ submitting: false })
     }

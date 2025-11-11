@@ -112,14 +112,14 @@ const pageConfig = {
           availableBatches: batches
         })
       } else {
-        console.error('加载批次失败:', result.result)
+        // 已移除调试日志，使用用户提示替代
         wx.showToast({
           title: result.result?.message || '加载批次失败',
           icon: 'none'
         })
       }
     } catch (error) {
-      console.error('加载批次异常:', error)
+      // 已移除调试日志，使用用户提示替代
       wx.showToast({
         title: '加载批次失败',
         icon: 'none'

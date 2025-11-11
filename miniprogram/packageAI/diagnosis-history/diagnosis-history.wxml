@@ -39,7 +39,7 @@
         <view class="record-main">
           <!-- 疾病名称 + 置信度标签 -->
           <view class="record-header">
-            <text class="record-name">{{item.diagnosisResult}}</text>
+            <text class="record-name">{{item.diagnosis || item.diagnosisResult}}</text>
             <view class="confidence-badge">
               <text class="confidence-text">置信度 {{item.confidence}}%</text>
             </view>
@@ -71,9 +71,9 @@
             <view class="record-footer">
               <view class="footer-left">
                 <text class="operator-text">AI诊断</text>
-                <text class="date-text">{{item.createTime}}</text>
+                <text class="date-text">{{item.diagnosisDate || item.createTime}}</text>
               </view>
-              <text class="duration-text">周期：{{item.treatmentDuration}}</text>
+              <text class="duration-text" wx:if="{{item.treatmentDuration}}">周期：{{item.treatmentDuration}}</text>
             </view>
           </view>
         </view>

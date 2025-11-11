@@ -1,4 +1,7 @@
 /* health.scss - 健康管理中心完整重构版本 - 基于TDesign设计规范 */
+/* ✅ 导入诊断记录公共样式 */
+@import '../../styles/diagnosis-record.scss';
+
 /* ✅ SCSS变量定义 - 统一管理尺寸和颜色 */
 $spacing-xs: 8rpx;     // 极小间距
 $spacing-sm: 12rpx;    // 小间距
@@ -855,11 +858,45 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           transform: rotate(-45deg);
         }
       }
+      /* ========== AI智能诊断相关样式 ========== */
       .css-icon-ai {
         font-size: 52rpx;
         line-height: 1;
         color: #7C3AED;
       }
+      .stat-icon-ai {
+        background: rgba(124, 58, 237, 0.15);
+      }
+      &.stat-card-ai-diagnosis {
+        background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+        margin-bottom: 16rpx;
+        &::before {
+          background: #7C3AED;
+        }
+        .stat-icon {
+          background: rgba(124, 58, 237, 0.15);
+          width: 80rpx;
+          height: 80rpx;
+        }
+        .stat-content {
+          flex: 1;
+          gap: 6rpx;
+        }
+        .stat-value {
+          color: #7C3AED;
+          font-size: 32rpx;
+          font-weight: 600;
+        }
+        .stat-label {
+          color: #6B21A8;
+          font-size: 24rpx;
+          opacity: 0.85;
+        }
+      }
+      &.stat-card-full-width {
+        grid-column: 1 / -1;
+      }
+      /* ========== AI智能诊断样式结束 ========== */
       .css-icon-heart {
         position: relative;
         width: 32rpx;
@@ -966,9 +1003,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       .stat-icon-cured {
         background: rgba(0, 168, 112, 0.15);
       }
-      .stat-icon-ai {
-        background: rgba(124, 58, 237, 0.15);
-      }
       .stat-icon-abnormal {
         background: rgba(237, 123, 47, 0.15);
       }
@@ -1055,35 +1089,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         .stat-label {
           color: #047857;
         }
-      }
-      &.stat-card-ai-diagnosis {
-        background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
-        margin-bottom: 16rpx;
-        &::before {
-          background: #7C3AED;
-        }
-        .stat-icon {
-          background: rgba(124, 58, 237, 0.15);
-          width: 80rpx;
-          height: 80rpx;
-        }
-        .stat-content {
-          flex: 1;
-          gap: 6rpx;
-        }
-        .stat-value {
-          color: #7C3AED;
-          font-size: 32rpx;
-          font-weight: 600;
-        }
-        .stat-label {
-          color: #6B21A8;
-          font-size: 24rpx;
-          opacity: 0.85;
-        }
-      }
-      &.stat-card-full-width {
-        grid-column: 1 / -1;
       }
       &.stat-card-abnormal {
         background: linear-gradient(135deg, #FFF7E6 0%, #FFE7BA 100%);
@@ -1208,143 +1213,10 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         font-weight: 500;
       }
     }
+    // ✅ 诊断记录样式已移至公共样式文件 diagnosis-record.scss
+    // 保留诊断记录列表容器样式（如果需要特殊样式）
     .diagnosis-records-list {
-      display: flex;
-      flex-direction: column;
-      gap: $spacing-base;
-    }
-    .diagnosis-record-item {
-      background: var(--td-bg-color-container, #ffffff);
-      border-radius: $radius-base;
-      padding: $spacing-base;
-      border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-      transition: all 0.3s ease;
-      &:active {
-        background: var(--td-bg-color-container-active, #f5f5f5);
-        transform: scale(0.98);
-      }
-    }
-    .record-main {
-      display: flex;
-      flex-direction: column;
-      gap: $spacing-sm;
-    }
-    .record-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: $spacing-base;
-      margin-bottom: $spacing-sm;
-    }
-    .record-name {
-      flex: 1;
-      font-size: $font-lg;
-      font-weight: 600;
-      color: var(--td-text-color-primary, #000000);
-      line-height: 1.4;
-    }
-    .confidence-badge {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #4dabf7 0%, #0284c7 100%);
-      padding: $spacing-xs $spacing-base;
-      border-radius: $radius-base;
-      line-height: 1;
-    }
-    .confidence-text {
-      font-size: 22rpx;
-      color: #ffffff;
-      font-weight: 600;
-      line-height: 1;
-      white-space: nowrap;
-    }
-    .record-content {
-      display: flex;
-      flex-direction: column;
-      gap: 10rpx;
-    }
-    .info-row {
-      display: flex;
-      align-items: center;
-      gap: $spacing-xl;
-      flex-wrap: wrap;
-      margin-bottom: 4rpx;
-    }
-    .info-group {
-      display: flex;
-      align-items: center;
-      gap: 6rpx;
-      min-width: 0;
-      flex: 0 1 auto;
-      max-width: 45%;
-      &.full-width {
-        max-width: 100%;
-        flex: 1;
-      }
-    }
-    .info-label {
-      font-size: $font-sm;
-      color: var(--td-text-color-secondary, #666666);
-      font-weight: 500;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .info-value {
-      font-size: 26rpx;
-      color: var(--td-text-color-primary, #000000);
-      font-weight: 400;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-      &.symptoms-value {
-        white-space: normal;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;  // ✅ 添加标准属性以提高兼容性
-        -webkit-box-orient: vertical;
-        overflow: hidden;  // ✅ 确保文本溢出隐藏
-      }
-    }
-    .record-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: $spacing-base;
-      margin-top: $spacing-xs;
-      padding-top: $spacing-sm;
-      border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-    }
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: $spacing-base;
-      flex: 1;
-      overflow: hidden;
-    }
-    .operator-text {
-      font-size: $font-sm;
-      color: var(--td-text-color-secondary, #666666);
-      font-weight: 400;
-      flex-shrink: 0;
-    }
-    .date-text {
-      font-size: $font-sm;
-      color: var(--td-text-color-placeholder, #bbbbbb);
-      font-weight: 400;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .duration-text {
-      font-size: $font-sm;
-      color: var(--td-text-color-secondary, #666666);
-      background: var(--td-bg-color-component, #f3f3f3);
-      padding: 4rpx 10rpx;
-      border-radius: $radius-sm;
-      flex-shrink: 0;
+      // 样式继承自公共样式 .diagnosis-records-list
     }
     .empty-placeholder {
       padding: $spacing-2xl 0;
