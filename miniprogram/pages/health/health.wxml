@@ -345,69 +345,17 @@
         </view>
       </view>
 
-      <!-- 诊断记录 -->
-      <view class="diagnosis-history">
-        <view class="section-header">
-          <text class="section-title">诊断记录</text>
-          <text class="sub-title">（近7天）</text>
-          <text class="more-link" bind:tap="onViewAllDiagnosis">查看全部 ></text>
-        </view>
-        <view class="diagnosis-records-list" wx:if="{{treatmentData.diagnosisHistory.length > 0}}">
-          <view 
-            class="diagnosis-record-item"
-            wx:for="{{treatmentData.diagnosisHistory}}"
-            wx:key="_id"
-            bind:tap="onDiagnosisRecordTap"
-            data-record="{{item}}"
-          >
-            <view class="record-main">
-              <!-- 疾病名称 + 置信度标签 -->
-              <view class="record-header">
-                <text class="record-name">{{item.diagnosis}}</text>
-                <view class="confidence-badge">
-                  <text class="confidence-text">置信度 {{item.confidence}}%</text>
-                </view>
-              </view>
-
-              <!-- 记录内容 -->
-              <view class="record-content">
-                <!-- 第一行：受影响数 + 日龄 -->
-                <view class="info-row">
-                  <view class="info-group">
-                    <text class="info-label">受影响：</text>
-                    <text class="info-value">{{item.affectedCount || 0}}只</text>
-                  </view>
-                  <view class="info-group">
-                    <text class="info-label">日龄：</text>
-                    <text class="info-value">{{item.dayAge || 0}}天</text>
-                  </view>
-                </view>
-
-                <!-- 第二行：症状（如果有） -->
-                <view class="info-row" wx:if="{{item.symptoms}}">
-                  <view class="info-group full-width">
-                    <text class="info-label">症状：</text>
-                    <text class="info-value symptoms-value">{{item.symptoms}}</text>
-                  </view>
-                </view>
-
-                <!-- 第三行：AI诊断 + 日期 + 周期 -->
-                <view class="record-footer">
-                  <view class="footer-left">
-                    <text class="operator-text">AI诊断</text>
-                    <text class="date-text">{{item.diagnosisDate}}</text>
-                  </view>
-                  <text class="duration-text" wx:if="{{item.treatmentDuration}}">周期：{{item.treatmentDuration}}</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-        <view class="empty-placeholder" wx:else>
-          <t-empty 
-            description="近7天暂无诊断记录"
-          />
-        </view>
+      <!-- 诊断历史入口 -->
+      <view class="diagnosis-history-entry">
+        <t-button 
+          block 
+          theme="primary"
+          size="large"
+          bind:tap="onViewAllDiagnosis"
+          t-class="diagnosis-history-btn"
+        >
+          查看诊断历史
+        </t-button>
       </view>
       </view>
     </block>
@@ -444,7 +392,7 @@
           <!-- 防疫用药 -->
           <view class="stat-card stat-card-vaccination clickable" bind:tap="onMedicationCountTap">
             <view class="stat-icon stat-icon-vaccination">
-              <view class="css-icon-check-list"></view>
+              <view class="css-icon-medication"></view>
             </view>
             <view class="stat-content">
               <text class="stat-value">{{preventionData.stats.medicationCount || 0}}</text>

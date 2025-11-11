@@ -275,7 +275,7 @@
       <view class="popup-header">
         <view class="popup-title">修正诊断</view>
         <view class="popup-close" bind:tap="onCancelCorrection">
-          <t-icon name="close" size="40rpx" color="#999" />
+          <text class="popup-close-text">×</text>
         </view>
       </view>
 

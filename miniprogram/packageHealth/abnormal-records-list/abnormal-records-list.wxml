@@ -14,7 +14,7 @@
 
   <!-- 空状态 -->
   <view class="empty-container" wx:if="{{!loading && records.length === 0}}">
-    <t-empty icon="info-circle" description="暂无异常记录" />
+    <text class="empty-text">暂无异常记录</text>
   </view>
 
   <!-- 记录列表 -->

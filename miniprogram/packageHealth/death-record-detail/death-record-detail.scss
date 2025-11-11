@@ -430,6 +430,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+
+  .popup-close-text {
+    font-size: 40rpx;
+    color: #999;
+    line-height: 1;
+  }
 }
 
 .popup-content {

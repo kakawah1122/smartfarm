@@ -22,6 +22,11 @@
   align-items: center;
   justify-content: center;
   height: 50vh;
+
+  .empty-text {
+    font-size: 28rpx;
+    color: #999;
+  }
 }
 
 .records-list {

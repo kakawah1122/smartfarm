@@ -1,0 +1,73 @@
+#!/usr/bin/env node
+/**
+ * 诊断记录数据检查脚本
+ * 用于检查云数据库中是否存在诊断记录
+ */
+
+console.log('🔍 诊断记录数据检查脚本');
+console.log('=' .repeat(60));
+console.log('');
+console.log('请按照以下步骤检查：');
+console.log('');
+console.log('1️⃣  打开微信开发者工具');
+console.log('2️⃣  点击顶部菜单：云开发 → 云控制台');
+console.log('3️⃣  进入"数据库"标签');
+console.log('4️⃣  查找集合：health_ai_diagnosis');
+console.log('');
+console.log('=' .repeat(60));
+console.log('');
+console.log('📊 需要检查的关键字段：');
+console.log('');
+console.log('字段名          说明                    预期值');
+console.log('-'.repeat(60));
+console.log('_openid        用户openid              应该是你的openid');
+console.log('isDeleted      是否删除                应该是 false');
+console.log('batchId        批次ID                  可以为空或任意批次ID');
+console.log('createTime     创建时间                最近的日期时间');
+console.log('diagnosisType  诊断类型                live_diagnosis/necropsy');
+console.log('result         AI诊断结果              应该有 primaryDiagnosis 字段');
+console.log('');
+console.log('=' .repeat(60));
+console.log('');
+console.log('🔧 如果发现问题：');
+console.log('');
+console.log('问题1: 集合不存在或为空');
+console.log('  → 需要先创建诊断记录（通过AI诊断功能）');
+console.log('');
+console.log('问题2: isDeleted 字段为 true');
+console.log('  → 记录被标记为删除，需要修改为 false');
+console.log('  → 或者重新创建新的诊断记录');
+console.log('');
+console.log('问题3: _openid 不匹配');
+console.log('  → 当前用户的openid与记录中的不一致');
+console.log('  → 需要使用同一个微信账号');
+console.log('');
+console.log('问题4: 有记录但前端显示为空');
+console.log('  → 检查微信开发者工具控制台的日志输出');
+console.log('  → 查找 "[诊断历史] 查询参数" 和 "[诊断历史] 查询结果"');
+console.log('');
+console.log('=' .repeat(60));
+console.log('');
+console.log('💡 快速测试步骤：');
+console.log('');
+console.log('1. 在健康页面 → 点击"AI诊断"');
+console.log('2. 上传一张图片进行诊断');
+console.log('3. 等待诊断完成');
+console.log('4. 返回健康页面，查看"诊断记录"区域');
+console.log('5. 点击"查看全部"进入诊断历史页面');
+console.log('');
+console.log('=' .repeat(60));
+console.log('');
+console.log('📝 控制台日志查看：');
+console.log('');
+console.log('在诊断历史页面，打开控制台（Console）查找：');
+console.log('  "[诊断历史] onLoad 接收参数"');
+console.log('  "[诊断历史] 查询参数"');
+console.log('  "[诊断历史] 查询结果"');
+console.log('');
+console.log('这些日志会显示：');
+console.log('  - 接收到的 batchId 参数');
+console.log('  - 实际查询的参数');
+console.log('  - 返回的记录数量');
+console.log('');
+console.log('=' .repeat(60));

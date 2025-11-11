@@ -2,7 +2,7 @@
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 import { processImageUrls } from '../../utils/image-utils'
-import { normalizeDiagnosisRecords, formatDiagnosisTime } from '../../utils/diagnosis-data-utils'
+import { normalizeDiagnosisRecords } from '../../utils/diagnosis-data-utils'
 
 interface DiagnosisRecord {
   _id: string
@@ -17,6 +17,7 @@ interface DiagnosisRecord {
   affectedCount: number
   dayAge: number
   temperature: number
+  images?: string[]
 }
 
 // 页面配置对象
@@ -24,9 +25,6 @@ const pageConfig = {
   data: {
     // 诊断记录列表
     records: [] as DiagnosisRecord[],
-    
-    // 批次ID（从健康页面传递）
-    batchId: undefined as string | undefined,
     
     // 分页信息
     pagination: {
@@ -59,28 +57,23 @@ const pageConfig = {
     hasLoaded: false
   },
 
-  onLoad(options: any) {
-    // ✅ 接收从健康页面传递的 batchId 参数
-    // 如果 batchId 是 'all' 或未传递，则查询所有批次的记录
-    const batchId = options.batchId
-    // 🔍 调试：输出接收到的参数
-    logger.log('[诊断历史] onLoad 接收参数:', { batchId, options })
-    this.setData({ batchId: batchId || undefined })
+  onLoad(this: any) {
+    // ✅ 诊断历史始终显示所有批次的记录，不受批次筛选影响
     this.loadDiagnosisHistory()
   },
 
-  onShow() {
+  onShow(this: any) {
     // ✅ 修复：只在页面已经完成首次加载的情况下刷新数据，避免覆盖首次加载
     if (this.data.hasLoaded) {
       this.refreshData()
     }
   },
 
-  onPullDownRefresh() {
+  onPullDownRefresh(this: any) {
     this.refreshData()
   },
 
-  onReachBottom() {
+  onReachBottom(this: any) {
     this.loadMoreData()
   },
 
@@ -92,7 +85,7 @@ const pageConfig = {
   },
 
   // 刷新数据
-  async refreshData() {
+  async refreshData(this: any) {
     this.setData({
       refreshing: true,
       'pagination.page': 1,
@@ -107,7 +100,7 @@ const pageConfig = {
   },
 
   // 加载更多数据
-  async loadMoreData() {
+  async loadMoreData(this: any) {
     if (!this.data.pagination.hasMore || this.data.loadingMore) {
       return
     }
@@ -123,46 +116,21 @@ const pageConfig = {
   },
 
   // 加载诊断历史
-  async loadDiagnosisHistory(showLoading = true) {
+  async loadDiagnosisHistory(this: any, showLoading = true) {
     if (showLoading) {
       this.setData({ loading: true })
     }
 
     try {
-      // ✅ 与健康页面保持一致：当 batchId 是 'all' 时，使用 health-management 云函数
-      // 这样能确保数据源一致
-      const batchId = this.data.batchId && this.data.batchId !== 'all' 
-        ? this.data.batchId 
-        : undefined
-
-      // 🔍 调试：输出查询参数
-      logger.log('[诊断历史] 查询参数:', {
-        batchId: batchId || 'all (查询所有批次)',
-        page: this.data.pagination.page,
-        pageSize: this.data.pagination.pageSize,
-        status: this.data.activeStatus === 'all' ? undefined : this.data.activeStatus
-      })
-
-      let result: any
-      
-      // ✅ 优化：统一使用 ai-diagnosis 云函数的 get_diagnosis_history 接口
-      // 该接口支持分页，性能更好，且当 batchId 为 undefined 时会查询所有批次
-      result = await wx.cloud.callFunction({
+      // ✅ 诊断记录不受批次筛选影响，始终显示所有批次的记录
+      // ✅ 调用 ai-diagnosis 云函数查询诊断历史
+      const result = await wx.cloud.callFunction({
         name: 'ai-diagnosis',
         data: {
           action: 'get_diagnosis_history',
-          batchId: batchId && batchId !== 'all' ? batchId : undefined, // undefined 表示查询所有批次
           page: this.data.pagination.page,
           pageSize: this.data.pagination.pageSize,
-          status: this.data.activeStatus === 'all' ? undefined : this.data.activeStatus
         }
-      })
-
-      // 🔍 调试：输出查询结果
-      logger.log('[诊断历史] 查询结果:', {
-        success: result.result?.success,
-        recordCount: result.result?.data?.records?.length || 0,
-        total: result.result?.data?.pagination?.total || 0
       })
 
       if (result.result && result.result.success) {
@@ -201,7 +169,7 @@ const pageConfig = {
   },
 
   // 状态筛选切换
-  onStatusChange(e: any) {
+  onStatusChange(this: any, e: any) {
     const { value } = e.detail
     if (value !== this.data.activeStatus) {
       this.setData({ 
@@ -215,7 +183,7 @@ const pageConfig = {
   },
 
   // 查看诊断详情
-  async onViewRecord(e: any) {
+  async onViewRecord(this: any, e: any) {
     const { record } = e.currentTarget.dataset
     
     // ✅ 使用公共工具函数处理图片URL
@@ -234,7 +202,7 @@ const pageConfig = {
   },
 
   // 关闭详情对话框
-  onCloseDetail() {
+  onCloseDetail(this: any) {
     this.setData({
       showDetailDialog: false,
       selectedRecord: null
@@ -242,7 +210,7 @@ const pageConfig = {
   },
 
   // 预览图片
-  onPreviewImage(e: any) {
+  onPreviewImage(this: any, e: any) {
     const { url } = e.currentTarget.dataset
     const images = this.data.selectedRecord?.images || []
     
@@ -255,7 +223,7 @@ const pageConfig = {
   },
 
   // 从详情弹窗创建治疗方案
-  onCreateTreatmentFromDetail() {
+  onCreateTreatmentFromDetail(this: any) {
     const record = this.data.selectedRecord
     if (!record) return
 
@@ -271,7 +239,7 @@ const pageConfig = {
   },
 
   // 创建治疗方案
-  onCreateTreatment(e: any) {
+  onCreateTreatment(this: any, e: any) {
     const { record } = e.currentTarget.dataset
     
     wx.navigateTo({
@@ -280,7 +248,7 @@ const pageConfig = {
   },
 
   // 更新诊断状态
-  async updateDiagnosisStatus(record: DiagnosisRecord, newStatus: string) {
+  async updateDiagnosisStatus(this: any, record: DiagnosisRecord, newStatus: string) {
     try {
       await wx.cloud.callFunction({
         name: 'ai-diagnosis',
@@ -295,7 +263,7 @@ const pageConfig = {
       })
 
       // 更新本地数据
-      const records = this.data.records.map(item => 
+      const records = this.data.records.map((item: DiagnosisRecord) => 
         item._id === record._id ? { ...item, status: newStatus } : item
       )
       
@@ -315,7 +283,7 @@ const pageConfig = {
   },
 
   // 确认诊断
-  onConfirmDiagnosis(e: any) {
+  onConfirmDiagnosis(this: any, e: any) {
     const { record } = e.currentTarget.dataset
     
     wx.showModal({
@@ -330,7 +298,7 @@ const pageConfig = {
   },
 
   // 删除记录
-  onDeleteRecord(e: any) {
+  onDeleteRecord(this: any, e: any) {
     const { record } = e.currentTarget.dataset
     
     wx.showModal({
@@ -347,7 +315,7 @@ const pageConfig = {
   },
 
   // 删除记录
-  async deleteRecord(record: DiagnosisRecord) {
+  async deleteRecord(this: any, record: DiagnosisRecord) {
     try {
       await wx.cloud.callFunction({
         name: 'ai-diagnosis',
@@ -363,7 +331,7 @@ const pageConfig = {
       })
 
       // 从本地数据中移除
-      const records = this.data.records.filter(item => item._id !== record._id)
+      const records = this.data.records.filter((item: DiagnosisRecord) => item._id !== record._id)
       this.setData({ records })
 
       wx.showToast({

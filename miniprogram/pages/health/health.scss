@@ -162,12 +162,13 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         line-height: 1.2;
       }
       &.stat-primary {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        background: linear-gradient(135deg, #1a4d5e 0%, #2c5f6f 100%);
         .stat-value {
-          color: #0284c7;
+          color: #ffffff;
         }
         .stat-label {
-          color: #0369a1;
+          color: #ffffff;
+          opacity: 0.9;
         }
       }
       &.stat-warning {
@@ -181,12 +182,13 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       }
       &.stat-danger,
       &.stat-mortality {
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        background: linear-gradient(135deg, #5c1a3d 0%, #6b2a4d 100%);
         .stat-value {
-          color: #ef4444;
+          color: #ffffff;
         }
         .stat-label {
-          color: #dc2626;
+          color: #ffffff;
+          opacity: 0.9;
         }
       }
       &.stat-info {
@@ -1185,48 +1187,24 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       color: var(--td-text-color-placeholder);
     }
   }
-  .diagnosis-history {
+  // ✅ 诊断历史入口按钮
+  .diagnosis-history-entry {
     background: white;
     border-radius: $radius-md;
     padding: $spacing-lg;
     margin-bottom: $spacing-lg;
     box-shadow: $shadow-base;
-    .section-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: $spacing-base;
-      .section-title {
-        font-size: $font-lg;
-        font-weight: 600;
-        color: var(--td-text-color-primary);
-        margin: 0;
-      }
-      .sub-title {
-        font-size: $font-sm;
-        color: var(--td-text-color-placeholder, #bbbbbb);
-        margin-left: $spacing-xs;
-        flex: 1;
-      }
-      .more-link {
-        font-size: $font-sm;
-        color: var(--td-brand-color);
-        font-weight: 500;
-      }
-    }
-    // ✅ 诊断记录样式已移至公共样式文件 diagnosis-record.scss
-    // 保留诊断记录列表容器样式（如果需要特殊样式）
-    .diagnosis-records-list {
-      // 样式继承自公共样式 .diagnosis-records-list
-    }
-    .empty-placeholder {
-      padding: $spacing-2xl 0;
-      text-align: center;
-      
-      // 移除 t-empty 默认的图标占位
-      t-empty {
-        --td-empty-icon-size: 0;
-        --td-empty-image-height: 0;
-      }
+    
+    // 自定义按钮深色背景（蓝青色系）
+    .diagnosis-history-btn {
+      background: linear-gradient(135deg, #0891B2 0%, #06B6D4 100%) !important;
+      border: none !important;
+      color: white !important;
+      font-weight: 600;
+      font-size: 32rpx;
+      height: 88rpx;
+      border-radius: 16rpx;
+      box-shadow: 0 4rpx 16rpx rgba(8, 145, 178, 0.3);
     }
   }
 }
@@ -2163,14 +2141,14 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 .prevention-stats-analysis {
   padding: $spacing-lg;
   background: white;
-  margin: 0 $spacing-lg $spacing-base;
+  margin: 0 0 $spacing-base 0;
   border-radius: $radius-md;
   box-shadow: $shadow-base;
   
   .stats-grid-two-analysis {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: $spacing-base;
+    gap: 16rpx;
     margin-top: $spacing-base;
   }
 
@@ -2465,6 +2443,35 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     border-left: 2rpx solid white;
     border-bottom: 2rpx solid white;
     transform: rotate(-45deg);
+  }
+}
+.css-icon-medication {
+  position: relative;
+  width: 32rpx;
+  height: 36rpx;
+  background: #059669;
+  border-radius: 2rpx 2rpx 6rpx 6rpx;
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -4rpx;
+    transform: translateX(-50%);
+    width: 20rpx;
+    height: 6rpx;
+    background: #059669;
+    border-radius: 2rpx 2rpx 0 0;
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12rpx;
+    height: 12rpx;
+    border: 2rpx solid white;
+    border-radius: 50%;
   }
 }
 .css-icon-coin {

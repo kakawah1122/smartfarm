@@ -1082,18 +1082,17 @@ async function getDiagnosisHistory(event, openid) {
       batchId, 
       reviewed,
       adopted,
+      recentDays,
       dateRange 
     } = event
 
+    // ✅ 诊断记录不受批次筛选影响，始终显示所有批次的记录
+    // ✅ 使用 neq(true) 而不是 false，兼容没有 isDeleted 字段的旧记录
     let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({
         _openid: openid,
-        isDeleted: false  // ✅ 使用 false 替代 neq(true)，索引性能最优
+        isDeleted: _.neq(true)
       })
-
-    if (batchId) {
-      query = query.where({ batchId })
-    }
     if (reviewed !== undefined) {
       query = query.where({ 'veterinaryReview.reviewed': reviewed })
     }
@@ -1103,6 +1102,14 @@ async function getDiagnosisHistory(event, openid) {
     if (dateRange && dateRange.start && dateRange.end) {
       query = query.where({
         createTime: _.gte(dateRange.start).and(_.lte(dateRange.end))
+      })
+    } else if (recentDays && Number(recentDays) > 0) {
+      const now = new Date()
+      const start = new Date(now.getTime() - Number(recentDays) * 24 * 60 * 60 * 1000)
+      const startISO = start.toISOString()
+      const endISO = now.toISOString()
+      query = query.where({
+        createTime: _.gte(startISO).and(_.lte(endISO))
       })
     }
 

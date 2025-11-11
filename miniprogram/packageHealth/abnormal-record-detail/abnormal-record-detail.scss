@@ -545,6 +545,12 @@
 .popup-close {
   padding: 8rpx;
   cursor: pointer;
+
+  .popup-close-text {
+    font-size: 40rpx;
+    color: #999;
+    line-height: 1;
+  }
 }
 
 .popup-content {

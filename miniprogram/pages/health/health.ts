@@ -1431,13 +1431,12 @@ Page<PageData, any>({
       }
       
       // 4. 获取历史诊断记录（近7天，用于诊断记录列表展示）
+      // ✅ 诊断记录不受批次筛选影响，始终显示所有批次的记录
       const diagnosisParams: any = {
         action: 'get_diagnosis_history',
         page: 1,
         pageSize: 10  // 只取最近10条用于首页展示
-      }
-      if (batchId) {
-        diagnosisParams.batchId = batchId
+        // 注意：不传递 batchId，显示所有批次的诊断记录
       }
       
       // ✅ 并行执行所有API调用（优化：减少总耗时）
@@ -1620,8 +1619,9 @@ Page<PageData, any>({
     if (now - this.lastClickTime < 500) return
     this.lastClickTime = now
     
+    // ✅ 进入诊断历史页面，显示所有批次的诊断记录
     wx.navigateTo({
-      url: `/packageAI/diagnosis-history/diagnosis-history?batchId=${this.data.currentBatchId}`
+      url: `/packageAI/diagnosis-history/diagnosis-history`
     })
   },
 

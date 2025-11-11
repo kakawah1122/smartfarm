@@ -35,28 +35,6 @@
           <view class="diagnosis-reasoning">{{diagnosisType === 'autopsy_analysis' ? (diagnosisResult.primaryCause.reasoning || diagnosisResult.primaryDiagnosis.reasoning) : diagnosisResult.primaryDiagnosis.reasoning}}</view>
         </view>
         
-        <!-- 病鹅诊断：严重程度和紧急程度 -->
-        <view class="status-row" wx:if="{{diagnosisType === 'live_diagnosis'}}">
-          <view class="status-item">
-            <text class="status-label">严重程度</text>
-            <t-tag 
-              theme="{{diagnosisResult.severity === 'severe' ? 'danger' : diagnosisResult.severity === 'moderate' ? 'warning' : 'success'}}"
-              size="medium"
-            >
-              {{diagnosisResult.severity === 'severe' ? '严重' : diagnosisResult.severity === 'moderate' ? '中度' : '轻度'}}
-            </t-tag>
-          </view>
-          <view class="status-item">
-            <text class="status-label">紧急程度</text>
-            <t-tag 
-              theme="{{diagnosisResult.urgency === 'critical' || diagnosisResult.urgency === 'high' ? 'danger' : diagnosisResult.urgency === 'medium' ? 'warning' : 'primary'}}"
-              size="medium"
-            >
-              {{diagnosisResult.urgency === 'critical' ? '危急' : diagnosisResult.urgency === 'high' ? '高' : diagnosisResult.urgency === 'medium' ? '中' : '低'}}
-            </t-tag>
-          </view>
-        </view>
-        
         <!-- 死因剖析：流行病学风险 -->
         <view class="status-row" wx:if="{{diagnosisType === 'autopsy_analysis' && diagnosisResult.epidemiologyRisk}}">
           <view class="status-item">
