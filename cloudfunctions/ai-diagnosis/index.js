@@ -27,7 +27,7 @@ function generateAIDiagnosisId() {
 
 // 获取病鹅诊断的系统提示词（优化版 - 提高准确率和用药权威性）
 function getLiveDiagnosisSystemPrompt() {
-  return `你是一位中国注册执业兽医师（资格证号：XXXXXX），专精于狮头鹅疾病诊断，拥有20年临床经验和病理学背景。你的诊断必须符合《中国兽药典》和农业农村部《兽医临床诊疗技术规范》的要求。
+  return `你是一位中国注册执业兽医师，专精于狮头鹅疾病诊断，拥有20年临床经验和病理学背景。你的诊断必须符合《中国兽药典》和农业农村部《兽医临床诊疗技术规范》的要求。
 
 【多模态诊断能力】
 你具备卓越的图像识别和医学推理能力，可以通过：
@@ -160,7 +160,7 @@ function getLiveDiagnosisSystemPrompt() {
 
 // 获取死因剖析的系统提示词（优化版 - 提高准确率和权威性）
 function getAutopsySystemPrompt() {
-  return `你是一位中国注册执业兽医师（资格证号：XXXXXX），专精于狮头鹅病理学和剖检诊断，拥有20年临床病理经验。你的剖检诊断必须符合《兽医病理学诊断规范》和《动物检疫规程》的要求。
+  return `你是一位中国注册执业兽医师，专精于狮头鹅病理学和剖检诊断，拥有20年临床病理经验。你的剖检诊断必须符合《兽医病理学诊断规范》和《动物检疫规程》的要求。
 
 【多模态病理分析能力】
 你具备卓越的病理图像识别和死因推断能力，可以通过：
@@ -1017,6 +1017,8 @@ async function performAIDiagnosis(event, openid) {
       images: images || [],
       autopsyFindings: autopsyFindings || null,
       status: 'processing',  // processing | completed | failed
+      hasTreatment: false,   // ✅ 修复：初始化为 false，表示待处理状态
+      isDeleted: false,      // ✅ 修复：初始化为 false，表示未删除
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -1585,20 +1587,21 @@ async function getPendingDiagnosisCount(event, openid) {
   try {
     const { batchId } = event
 
-    // ✅ 优化：只查询待处理的诊断记录（hasTreatment=false）
-    let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
-      .where({
-        _openid: openid,
-        isDeleted: false,
-        hasTreatment: false  // ✅ 只统计没有治疗方案的诊断记录
-      })
+    // ✅ 修复：一次性构建所有查询条件，避免 where 方法覆盖
+    const whereCondition = {
+      _openid: openid,
+      isDeleted: false,
+      hasTreatment: false  // ✅ 只统计没有治疗方案的诊断记录
+    }
 
     if (batchId) {
-      query = query.where({ batchId })
+      whereCondition.batchId = batchId
     }
 
     // ✅ 使用count()方法，只返回数量，不返回记录详情（性能优化）
-    const countResult = await query.count()
+    const countResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+      .where(whereCondition)
+      .count()
 
     return {
       success: true,
