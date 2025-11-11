@@ -2417,13 +2417,22 @@ async function getDashboardSnapshot(event, wxContext) {
       }
     }
 
-    const [abnormalResult, diagnosisResult] = await Promise.all([
+    // ✅ 修复：使用专门的 count 查询获取准确的待处理数量
+    const [abnormalResult, diagnosisResult, pendingCountResult] = await Promise.all([
       includeAbnormalRecords
         ? getHealthRecordsByStatus({ batchId: 'all', status: 'abnormal', limit: abnormalLimit }, wxContext)
         : Promise.resolve(null),
       includeDiagnosis
         ? getDiagnosisHistory({ batchId: undefined, limit: diagnosisLimit, page: 1 }, wxContext)
-        : Promise.resolve(null)
+        : Promise.resolve(null),
+      // ✅ 新增：直接查询待处理数量（hasTreatment=false）
+      db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+        .where({
+          _openid: wxContext.OPENID,
+          isDeleted: false,
+          hasTreatment: false
+        })
+        .count()
     ])
 
     const abnormalData = abnormalResult?.success ? abnormalResult.data : { totalCount: 0, recordCount: 0, records: [] }
@@ -2433,11 +2442,10 @@ async function getDashboardSnapshot(event, wxContext) {
 
     if (diagnosisResult?.success && diagnosisResult.data) {
       latestDiagnosisRecords = diagnosisResult.data.records || []
-      pendingDiagnosis = latestDiagnosisRecords.filter((record) => {
-        const status = record.status || ''
-        return status === 'pending' || status === 'pending_confirmation'
-      }).length
     }
+    
+    // ✅ 修复：从专门的 count 查询获取待处理数量，而不是从有限的记录列表中过滤
+    pendingDiagnosis = pendingCountResult?.total || 0
 
     const abnormalCount = abnormalData.totalCount || 0
     const abnormalRecordCount = abnormalData.recordCount || 0
@@ -2889,7 +2897,8 @@ async function getDiagnosisHistory(event, wxContext) {
       batchId,
       limit = 20,
       page = 1,
-      dateRange  // ✅ 支持日期范围筛选
+      dateRange,  // ✅ 支持日期范围筛选
+      recentDays  // ✅ 新增：近N天筛选
     } = event
     const openid = wxContext.OPENID
 
@@ -2899,14 +2908,15 @@ async function getDiagnosisHistory(event, wxContext) {
       ...dbManager.buildNotDeletedCondition(true)
     }
 
-    // 如果指定了批次，添加批次过滤
-    if (batchId && batchId !== 'all') {
-      whereCondition.batchId = batchId
-    }
+    // ✅ 诊断记录不受批次筛选影响，始终显示所有批次的记录
 
-    // ✅ 如果指定了日期范围，添加日期过滤
+    // ✅ 如果指定了日期范围，添加日期过滤；否则若传入 recentDays，则按近N天过滤
     if (dateRange && dateRange.start && dateRange.end) {
       whereCondition.createTime = _.gte(dateRange.start).and(_.lte(dateRange.end + 'T23:59:59'))
+    } else if (recentDays && Number(recentDays) > 0) {
+      const now = new Date()
+      const start = new Date(now.getTime() - Number(recentDays) * 24 * 60 * 60 * 1000)
+      whereCondition.createTime = _.gte(start.toISOString()).and(_.lte(now.toISOString()))
     }
 
     let query = db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS).where(whereCondition)
