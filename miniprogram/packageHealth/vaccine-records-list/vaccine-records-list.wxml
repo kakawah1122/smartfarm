@@ -6,6 +6,7 @@
     title="疫苗记录" 
     showBack="{{true}}" 
     fallbackUrl="/pages/health/health" 
+    bind:back="goBack"
   />
   
   <!-- 加载状态 -->

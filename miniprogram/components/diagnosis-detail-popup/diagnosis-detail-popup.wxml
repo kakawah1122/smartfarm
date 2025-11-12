@@ -158,11 +158,11 @@
       </view>
       <view class="detail-item" wx:if="{{record.treatmentDuration}}">
         <text class="detail-label">建议治疗周期</text>
-        <text class="detail-value">{{record.treatmentDuration}}</text>
+        <text class="detail-value wrap-text">{{record.treatmentDuration}}</text>
       </view>
       <view class="detail-item">
         <text class="detail-label">诊断时间</text>
-        <text class="detail-value">{{record.createTime || record.diagnosisDate}}</text>
+        <text class="detail-value">{{record.diagnosisDate || record.createTime}}</text>
       </view>
     </view>
   </view>

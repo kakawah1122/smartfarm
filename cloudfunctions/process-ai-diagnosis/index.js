@@ -13,6 +13,72 @@ cloud.init({
 
 const db = cloud.database()
 
+// ========== 清洗疾病名称工具函数 ==========
+/**
+ * 清洗疾病名称：移除英文括号部分
+ * 示例：
+ * "小鹅瘟（Gosling Plague）" → "小鹅瘟"
+ * "大肠杆菌病 (E. coli Infection)" → "大肠杆菌病"
+ */
+function cleanDiseaseName(diseaseName) {
+  if (!diseaseName || typeof diseaseName !== 'string') {
+    return diseaseName
+  }
+  
+  const originalName = diseaseName
+  
+  // 移除所有括号及其内容（中文括号和英文括号）
+  const cleanedName = diseaseName
+    .replace(/\s*[\(（][^)）]*?[\)）]\s*/g, '')  // 移除括号及内容和前后空格
+    .trim()  // 移除首尾空格
+  
+  // 调试日志：记录清洗前后的病名
+  if (originalName !== cleanedName) {
+    console.log(`[清洗病名] "${originalName}" → "${cleanedName}"`)
+  }
+  
+  return cleanedName
+}
+
+/**
+ * 递归清洗诊断结果中的所有disease字段
+ */
+function cleanDiseaseNames(diagnosisResult) {
+  if (!diagnosisResult || typeof diagnosisResult !== 'object') {
+    return
+  }
+  
+  // 清洗主要诊断
+  if (diagnosisResult.primaryDiagnosis?.disease) {
+    diagnosisResult.primaryDiagnosis.disease = cleanDiseaseName(diagnosisResult.primaryDiagnosis.disease)
+  }
+  
+  // 清洗主要死因（死因剖析）
+  if (diagnosisResult.primaryCause?.disease) {
+    diagnosisResult.primaryCause.disease = cleanDiseaseName(diagnosisResult.primaryCause.disease)
+  }
+  
+  // 清洗鉴别诊断列表
+  if (Array.isArray(diagnosisResult.differentialDiagnosis)) {
+    diagnosisResult.differentialDiagnosis.forEach(item => {
+      if (item.disease) {
+        item.disease = cleanDiseaseName(item.disease)
+      }
+    })
+  }
+  
+  // 清洗可能死因列表（死因剖析）
+  if (Array.isArray(diagnosisResult.differentialCauses)) {
+    diagnosisResult.differentialCauses.forEach(item => {
+      if (item.disease) {
+        item.disease = cleanDiseaseName(item.disease)
+      }
+    })
+  }
+  
+  console.log('✅ 病名清洗完成')
+}
+
 /**
  * 处理AI诊断任务
  * 支持两种模式：
@@ -227,6 +293,12 @@ async function processTask(diagnosisId) {
       
       // 解析JSON
       diagnosisData = JSON.parse(jsonContent)
+      
+      // ✅ 关键步骤：清洗疾病名称，移除英文括号部分
+      console.log('开始清洗病名...')
+      cleanDiseaseNames(diagnosisData)
+      console.log('病名清洗完成，准备保存到数据库')
+      
     } catch (parseError) {
       console.error('JSON解析失败:', parseError.message)
       // 如果无法解析JSON，尝试提取文本内容

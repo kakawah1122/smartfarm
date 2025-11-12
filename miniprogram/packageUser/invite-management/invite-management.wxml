@@ -251,7 +251,6 @@
           <text class="invite-code-label">邀请码</text>
           <view class="invite-code-box" bind:tap="copyInviteCode">
             <text class="invite-code-value">{{generatedInviteCode}}</text>
-            <text class="copy-hint">点击复制</text>
           </view>
         </view>
         
@@ -265,23 +264,9 @@
       </view>
     </view>
     
-    <view class="create-dialog-footer">
-      <button class="create-btn-cancel" bind:tap="closeCreateDialog">
-        {{isInviteGenerated ? '关闭' : '取消'}}
-      </button>
-      <button 
-        wx:if="{{!isInviteGenerated}}" 
-        class="create-btn-confirm" 
-        bind:tap="createInvite"
-      >
+    <view class="create-dialog-footer" wx:if="{{!isInviteGenerated}}">
+      <button class="create-btn-confirm" bind:tap="createInvite">
         生成邀请码
-      </button>
-      <button 
-        wx:if="{{isInviteGenerated}}" 
-        class="create-btn-copy" 
-        bind:tap="copyInviteCode"
-      >
-        📋 复制邀请码
       </button>
     </view>
   </view>

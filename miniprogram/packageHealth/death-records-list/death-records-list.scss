@@ -60,15 +60,15 @@
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
   
   &.danger {
-    background: linear-gradient(135deg, #e34d59 0%, #ff6b7a 100%);
+    background: linear-gradient(135deg, #b8303c 0%, #c73d48 100%);
   }
   
   &.warning {
-    background: linear-gradient(135deg, #ed7b2f 0%, #ff8f47 100%);
+    background: linear-gradient(135deg, #c85e1f 0%, #d66e2e 100%);
   }
   
   &.primary {
-    background: linear-gradient(135deg, #0052d9 0%, #0066ff 100%);
+    background: linear-gradient(135deg, #003b9e 0%, #004db8 100%);
   }
 }
 

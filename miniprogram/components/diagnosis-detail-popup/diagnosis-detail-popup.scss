@@ -76,6 +76,14 @@
     line-height: 1.5;
     font-size: 26rpx;
   }
+  
+  &.wrap-text {
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.4;
+    text-align: left;
+    max-width: 70%;
+  }
 }
 
 .detail-text-content {

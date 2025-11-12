@@ -83,31 +83,41 @@
           <view class="info-row" wx:if="{{item.treatmentNumber}}">
             <view class="info-group full-width">
               <text class="info-label">编号：</text>
-              <text class="info-value">{{item.treatmentNumber}}</text>
+              <text class="info-value treatment-number">{{item.treatmentNumber}}</text>
             </view>
           </view>
           
-          <!-- 信息行：批次 + 治愈数量 + 治疗数量 -->
+          <!-- 信息行：批次 -->
           <view class="info-row">
-            <view class="info-group">
+            <view class="info-group full-width">
               <text class="info-label">批次：</text>
               <text class="info-value">{{item.batchNumber || item.batchId}}</text>
             </view>
+          </view>
+
+          <!-- 信息行：治愈数量 -->
+          <view class="info-row">
             <view class="info-group">
               <text class="info-label">治愈：</text>
               <text class="info-value cured-count">{{item.outcome.curedCount}} 只</text>
             </view>
-            <view class="info-group" wx:if="{{item.outcome.totalTreated}}">
+          </view>
+
+          <!-- 信息行：治疗数量 -->
+          <view class="info-row" wx:if="{{item.outcome.totalTreated}}">
+            <view class="info-group">
               <text class="info-label">治疗：</text>
               <text class="info-value">{{item.outcome.totalTreated}} 只</text>
             </view>
           </view>
 
-          <!-- 底部：日期 + 记录者 -->
+          <!-- 底部：日期 + 操作用户 -->
           <view class="record-footer">
             <view class="footer-left">
               <text class="date-text">{{item.treatmentDate}}</text>
-              <text class="operator-text" wx:if="{{item.operatorName}}">{{item.operatorName}}</text>
+            </view>
+            <view class="footer-right" wx:if="{{item.operatorName}}">
+              <text class="operator-text">{{item.operatorName}}</text>
             </view>
           </view>
         </view>
@@ -126,4 +136,3 @@
     bind:close="closeDetailPopup"
   />
 </view>
-

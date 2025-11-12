@@ -29,11 +29,7 @@ function generateMaterialCode(category) {
 
 // 生成单据号（根据物料分类）
 function generateRecordNumber(type, category) {
-  const now = new Date()
-  const month = (now.getMonth() + 1).toString().padStart(2, '0')
-  const day = now.getDate().toString().padStart(2, '0')
-  
-  // 根据物料分类生成前缀
+  // 根据物料分类生成前缀（英文缩写）
   let categoryPrefix = 'MAT' // 默认物料
   if (category) {
     const categoryMap = {
@@ -43,15 +39,17 @@ function generateRecordNumber(type, category) {
       '营养品': 'NUT',
       '疫苗': 'VAC',
       '消毒剂': 'DIS',
+      '耗材': 'SUP',      // 耗材 Supplies
       '其他': 'OTH'
     }
     categoryPrefix = categoryMap[category] || 'MAT'
   }
   
-  // 生成5位随机数
-  const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0')
+  // 生成6位随机数
+  const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0')
   
-  return `${categoryPrefix}-${month}${day}${random}`
+  // 格式：物资类型英文缩写 + 6位随机代码（如：MED123456、FEED789012）
+  return `${categoryPrefix}${random}`
 }
 
 exports.main = async (event, context) => {
@@ -619,6 +617,15 @@ async function createMaterialRecord(event, wxContext) {
         operatorName = u.name || u.nickname || u.nickName || '未知'
       }
     } catch (e) {}
+    
+    // 确保 notes 字段是字符串类型
+    let notesValue = recordData.notes || ''
+    if (typeof notesValue === 'object') {
+      console.warn('[创建物料记录] notes 字段是对象类型，尝试转换:', notesValue)
+      notesValue = String(notesValue.value || notesValue.text || JSON.stringify(notesValue))
+    }
+    notesValue = String(notesValue)
+    
     const newRecord = {
       userId: wxContext.OPENID,
       materialId: recordData.materialId,
@@ -631,7 +638,7 @@ async function createMaterialRecord(event, wxContext) {
       targetLocation: recordData.targetLocation || '',
       operator: operatorName,
       status: recordData.status || '已完成',
-      notes: recordData.notes || '',
+      notes: notesValue,
       relatedBatch: recordData.relatedBatch || '',
       recordDate: recordData.recordDate || now.toISOString().split('T')[0],
       createTime: now,

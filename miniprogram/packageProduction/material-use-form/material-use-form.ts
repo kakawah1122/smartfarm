@@ -155,11 +155,19 @@ const pageConfig = {
 
   // 表单字段变化
   onFieldChange(e: any) {
-    const { value } = e.detail
+    // 兼容不同组件的事件格式
+    let value = e.detail.value !== undefined ? e.detail.value : e.detail
+    
+    // 确保value是字符串类型
+    if (typeof value === 'object') {
+      console.warn('[表单字段变化] 检测到对象类型的值，尝试转换为字符串:', value)
+      value = String(value?.value || value || '')
+    }
+    
     const { field } = e.currentTarget.dataset
     
     this.setData({
-      [`formData.${field}`]: value
+      [`formData.${field}`]: String(value || '')
     })
   },
 
@@ -303,6 +311,19 @@ const pageConfig = {
         throw new Error('找不到选定的物料信息')
       }
       
+      // 确保 purpose 和 remarks 是字符串类型
+      const purpose = String(data.purpose || '').trim()
+      const remarks = String(data.remarks || '').trim()
+      
+      // 组装备注字段
+      let notesText = ''
+      if (purpose) {
+        notesText = `用途：${purpose}`
+      }
+      if (remarks) {
+        notesText += (notesText ? '，备注：' : '备注：') + remarks
+      }
+      
       // 直接创建物料使用记录（会自动检查库存并更新）
       const recordResult = await wx.cloud.callFunction({
         name: 'production-material',
@@ -312,10 +333,10 @@ const pageConfig = {
             materialId: selectedMaterial.materialId,
             type: 'use',
             quantity: Number(data.quantity),
-            targetLocation: data.purpose || '', // 使用用途作为目标位置
+            targetLocation: purpose, // 使用用途作为目标位置
             operator: '用户',
             status: '已完成',
-            notes: `${data.purpose ? '用途：' + data.purpose : ''}${data.remarks ? (data.purpose ? '，备注：' : '备注：') + data.remarks : ''}`,
+            notes: notesText,
             recordDate: data.useDate
           }
         }

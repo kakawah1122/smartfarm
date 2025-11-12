@@ -607,6 +607,66 @@ function buildBatchContextSection(batchPromptData) {
   return '\n' + batchLines.join('\n') + '\n'
 }
 
+// 清洗疾病名称：移除英文括号部分
+function cleanDiseaseName(diseaseName) {
+  if (!diseaseName || typeof diseaseName !== 'string') {
+    return diseaseName
+  }
+  
+  const originalName = diseaseName
+  
+  // 移除所有括号及其内容（中文括号和英文括号）
+  // 示例：
+  // "小鹅瘟（Gosling Plague）" → "小鹅瘟"
+  // "大肠杆菌病 (E. coli Infection)" → "大肠杆菌病"
+  // "鹅副黏病毒病（Goose Paramyxovirus）" → "鹅副黏病毒病"
+  const cleanedName = diseaseName
+    .replace(/\s*[\(（][^)）]*?[\)）]\s*/g, '')  // 移除括号及内容和前后空格
+    .trim()  // 移除首尾空格
+  
+  // 调试日志：记录清洗前后的病名
+  if (originalName !== cleanedName) {
+    console.log(`[清洗病名] "${originalName}" → "${cleanedName}"`)
+  }
+  
+  return cleanedName
+}
+
+// 递归清洗诊断结果中的所有disease字段
+function cleanDiseaseNames(diagnosisResult) {
+  if (!diagnosisResult || typeof diagnosisResult !== 'object') {
+    return
+  }
+  
+  // 清洗主要诊断
+  if (diagnosisResult.primaryDiagnosis?.disease) {
+    diagnosisResult.primaryDiagnosis.disease = cleanDiseaseName(diagnosisResult.primaryDiagnosis.disease)
+  }
+  
+  // 清洗主要死因（死因剖析）
+  if (diagnosisResult.primaryCause?.disease) {
+    diagnosisResult.primaryCause.disease = cleanDiseaseName(diagnosisResult.primaryCause.disease)
+  }
+  
+  // 清洗鉴别诊断列表
+  if (Array.isArray(diagnosisResult.differentialDiagnosis)) {
+    diagnosisResult.differentialDiagnosis.forEach(item => {
+      if (item.disease) {
+        item.disease = cleanDiseaseName(item.disease)
+      }
+    })
+  }
+  
+  // 清洗可能死因列表（死因剖析）
+  if (Array.isArray(diagnosisResult.differentialCauses)) {
+    diagnosisResult.differentialCauses.forEach(item => {
+      if (item.disease) {
+        item.disease = cleanDiseaseName(item.disease)
+      }
+    })
+  }
+}
+
 // 调用大模型API进行诊断
 async function callAIModel(inputData) {
   try {
@@ -680,6 +740,9 @@ async function callAIModel(inputData) {
       try {
         // 尝试解析JSON响应
         const diagnosisResult = JSON.parse(aiResponse)
+        
+        // ✅ 清洗疾病名称：移除英文括号部分（如"小鹅瘟（Gosling Plague）" → "小鹅瘟"）
+        cleanDiseaseNames(diagnosisResult)
         
         return {
           success: true,
@@ -1214,7 +1277,7 @@ async function getDiagnosisHistory(event, openid) {
         treatmentDuration = medications[0].duration
       }
       
-      // ✅ 修复：时间格式处理
+      // ✅ 修复：时间格式处理 - iOS兼容格式
       let createTimeStr = ''
       if (record.createdAt) {
         createTimeStr = typeof record.createdAt === 'string' 
@@ -1225,6 +1288,31 @@ async function getDiagnosisHistory(event, openid) {
           ? record.createTime 
           : record.createTime.toISOString()
       }
+      
+      // ✅ 格式化为iOS兼容的日期时间格式
+      const formatDateTimeForIOS = (dateStr) => {
+        if (!dateStr) return ''
+        try {
+          const date = new Date(dateStr)
+          // 检查日期是否有效
+          if (isNaN(date.getTime())) return dateStr
+          
+          // 返回iOS兼容的格式：YYYY-MM-DD HH:mm:ss
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          const hours = String(date.getHours()).padStart(2, '0')
+          const minutes = String(date.getMinutes()).padStart(2, '0')
+          const seconds = String(date.getSeconds()).padStart(2, '0')
+          
+          return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+        } catch (error) {
+          console.error('日期格式化错误:', error)
+          return dateStr
+        }
+      }
+      
+      const formattedDateTime = formatDateTimeForIOS(createTimeStr)
       
       // ✅ 获取关联的实际治疗记录
       const actualTreatment = treatmentMap[record._id]
@@ -1271,7 +1359,7 @@ async function getDiagnosisHistory(event, openid) {
         
         // 时间和批次信息
         createTime: createTimeStr,
-        diagnosisDate: createTimeStr ? createTimeStr.substring(0, 16).replace('T', ' ') : '',
+        diagnosisDate: formattedDateTime,
         batchId: record.batchId || '',
         batchNumber: batchMap[record.batchId] || record.batchNumber || '未知批次',
         

@@ -699,7 +699,6 @@ $spacing-xl: 40rpx;
   padding: 20rpx;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   border-radius: 12rpx;
-  border-left: 6rpx solid $success-color;
 }
 
 .success-icon {
@@ -726,7 +725,7 @@ $spacing-xl: 40rpx;
 
 .invite-code-box {
   background: #f8f9fa;
-  border: 3rpx solid $primary-color;
+  border: 2rpx solid $primary-color;
   border-radius: 12rpx;
   padding: 24rpx;
   text-align: center;

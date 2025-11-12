@@ -2,6 +2,7 @@
 const cloud = require('wx-server-sdk')
 const DatabaseManager = require('./database-manager')
 const { COLLECTIONS } = require('./collections.js')
+const { fixDiagnosisTreatmentStatus } = require('./fix-diagnosis-treatment-status')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -24,6 +25,31 @@ function generateRecordId(prefix) {
   const timestamp = now.getTime().toString().slice(-8)
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
   return `${prefix}${timestamp}${random}`
+}
+
+// 生成物资领用单据号（根据物料分类）
+function generateRecordNumber(category) {
+  // 根据物料分类生成前缀（英文缩写）
+  let categoryPrefix = 'MAT' // 默认物料
+  if (category) {
+    const categoryMap = {
+      '饲料': 'FEED',
+      '药品': 'MED',
+      '设备': 'EQP',
+      '营养品': 'NUT',
+      '疫苗': 'VAC',
+      '消毒剂': 'DIS',
+      '耗材': 'SUP',      // 耗材 Supplies
+      '其他': 'OTH'
+    }
+    categoryPrefix = categoryMap[category] || 'MAT'
+  }
+  
+  // 生成6位随机数
+  const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0')
+  
+  // 格式：物资类型英文缩写 + 6位随机代码（如：MED123456、FEED789012）
+  return `${categoryPrefix}${random}`
 }
 
 // 生成治疗记录编号 ZL-YYYYMMDD-001
@@ -434,10 +460,10 @@ async function getAbnormalRecordDetail(event, wxContext) {
     
     const record = result.data
     
-    // 格式化修正时间（与死亡记录保持一致）
+    // 格式化修正时间（iOS兼容格式：YYYY-MM-DD HH:mm:ss）
     if (record.correctedAt) {
       const date = new Date(record.correctedAt)
-      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
     }
     
     return {
@@ -590,9 +616,13 @@ async function createTreatmentFromAbnormal(event, wxContext) {
             })
           
           // 3. 创建物资领用记录（主记录）
+          // 生成单据号
+          const recordNumber = generateRecordNumber(material.category || med.category || '药品')
+          
           const materialRecordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
             data: {
               type: 'use',
+              recordNumber: recordNumber,  // 添加单据号
               materialId: med.materialId,
               materialCode: material.code || med.materialCode || '',
               materialName: med.name || material.name,
@@ -672,6 +702,34 @@ async function createTreatmentFromAbnormal(event, wxContext) {
             updatedAt: new Date()
           }
         })
+      
+      // ✅ 同步更新 AI 诊断记录的 hasTreatment 字段
+      try {
+        const abnormalRecord = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+          .doc(abnormalRecordId)
+          .field({ diagnosisId: true, relatedDiagnosisId: true })
+          .get()
+        
+        if (abnormalRecord.data) {
+          const diagnosisId = abnormalRecord.data.diagnosisId || abnormalRecord.data.relatedDiagnosisId
+          
+          if (diagnosisId) {
+            await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+              .doc(diagnosisId)
+              .update({
+                data: {
+                  hasTreatment: true,
+                  latestTreatmentId: treatmentResult._id,
+                  updatedAt: new Date()
+                }
+              })
+            console.log(`✅ 直接提交：已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
+          }
+        }
+      } catch (syncError) {
+        console.error('❌ 同步更新 AI 诊断记录失败:', syncError.message)
+        // 不影响主流程
+      }
     } else {
       // 草稿状态，只关联治疗记录ID
       await db.collection(COLLECTIONS.HEALTH_RECORDS)
@@ -1046,7 +1104,39 @@ async function submitTreatmentPlan(event, wxContext) {
         }
       })
     
-    // 3. 记录审计日志
+    // 3. ✅ 同步更新 AI 诊断记录的 hasTreatment 字段
+    try {
+      // 先获取异常记录，获取关联的 diagnosisId
+      const abnormalRecord = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .doc(abnormalRecordId)
+        .field({ diagnosisId: true, relatedDiagnosisId: true })
+        .get()
+      
+      if (abnormalRecord.data) {
+        const diagnosisId = abnormalRecord.data.diagnosisId || abnormalRecord.data.relatedDiagnosisId
+        
+        if (diagnosisId) {
+          // 更新 AI 诊断记录
+          await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+            .doc(diagnosisId)
+            .update({
+              data: {
+                hasTreatment: true,
+                latestTreatmentId: treatmentId,
+                updatedAt: new Date()
+              }
+            })
+          console.log(`✅ 已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
+        } else {
+          console.warn('⚠️ 异常记录缺少关联的诊断ID，无法同步更新 AI 诊断记录')
+        }
+      }
+    } catch (syncError) {
+      console.error('❌ 同步更新 AI 诊断记录失败:', syncError.message)
+      // 不影响主流程，继续执行
+    }
+    
+    // 4. 记录审计日志
     await dbManager.createAuditLog(
       openid,
       'submit_treatment_plan',
@@ -1428,29 +1518,41 @@ async function correctAbnormalDiagnosis(event, wxContext) {
       })
     
     // ✅ 同步更新原始的 AI 诊断记录（如果存在）
-    if (recordResult.data.diagnosisId) {
+    const diagnosisId = recordResult.data.diagnosisId || recordResult.data.relatedDiagnosisId
+    if (diagnosisId) {
       try {
-        await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
-          .doc(recordResult.data.diagnosisId)
-          .update({
-            data: {
-              isCorrected: true,
-              correctedDiagnosis: correctedDiagnosis,
-              correctionReason: veterinarianDiagnosis,
-              veterinarianDiagnosis: veterinarianDiagnosis,
-              veterinarianTreatmentPlan: veterinarianTreatmentPlan || '',
-              aiAccuracyRating: aiAccuracyRating,
-              correctedBy: openid,
-              correctedByName: userName,
-              correctedAt: new Date().toISOString(),
-              updatedAt: new Date()
-            }
-          })
-        debugLog('✅ 已同步更新 AI 诊断记录:', recordResult.data.diagnosisId)
+        // 先检查记录是否存在
+        const diagnosisCheck = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+          .doc(diagnosisId)
+          .get()
+        
+        if (diagnosisCheck.data) {
+          await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+            .doc(diagnosisId)
+            .update({
+              data: {
+                isCorrected: true,
+                correctedDiagnosis: correctedDiagnosis,
+                correctionReason: veterinarianDiagnosis,
+                veterinarianDiagnosis: veterinarianDiagnosis,
+                veterinarianTreatmentPlan: veterinarianTreatmentPlan || '',
+                aiAccuracyRating: aiAccuracyRating,
+                correctedBy: openid,
+                correctedByName: userName,
+                correctedAt: new Date().toISOString(),
+                updatedAt: new Date()
+              }
+            })
+          debugLog('✅ 已同步更新 AI 诊断记录:', diagnosisId)
+        } else {
+          console.warn('⚠️ AI 诊断记录不存在:', diagnosisId)
+        }
       } catch (diagnosisError) {
-        // 如果 AI 诊断记录不存在或更新失败，不影响主流程
-        console.warn('⚠️ 更新 AI 诊断记录失败（可能记录不存在）:', diagnosisError.message)
+        // 如果 AI 诊断记录不存在或更新失败，记录错误但不影响主流程
+        console.error('❌ 更新 AI 诊断记录失败:', diagnosisError.message, '诊断ID:', diagnosisId)
       }
+    } else {
+      console.warn('⚠️ 异常记录缺少关联的诊断ID，无法同步修正信息到诊断历史')
     }
     
     // 记录审计日志
@@ -2709,9 +2811,13 @@ async function addTreatmentMedication(event, wxContext) {
         })
       
       // 2. ✅ 创建物资领用记录（主记录）
+      // 生成单据号
+      const recordNumber = generateRecordNumber(medication.category || '药品')
+      
       const materialRecordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
         data: {
           type: 'use',  // 领用类型
+          recordNumber: recordNumber,  // 添加单据号
           materialId: medication.materialId,
           materialCode: medication.materialCode || '',
           materialName: medication.name,
@@ -3405,6 +3511,9 @@ exports.main = async (event, context) => {
       case 'list_abnormal_records':
         return await listAbnormalRecords(event, wxContext)
       
+      case 'get_cured_records_list':
+        return await getCuredRecordsList(event, wxContext)
+      
       case 'correct_abnormal_diagnosis':
         return await correctAbnormalDiagnosis(event, wxContext)
       
@@ -3435,6 +3544,9 @@ exports.main = async (event, context) => {
       
       case 'update_prevention_effectiveness':
         return await updatePreventionEffectiveness(event, wxContext)
+      
+      case 'fix_diagnosis_treatment_status':
+        return await fixDiagnosisTreatmentStatus(event, wxContext)
 
       default:
         throw new Error(`未知操作: ${action}`)
@@ -4027,9 +4139,13 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
             })
           
           // 3. 创建物资领用记录（主记录）
+          // 生成单据号
+          const recordNumber = generateRecordNumber(material.category || '药品')
+          
           const materialRecordResult = await transaction.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).add({
             data: {
               type: 'use',
+              recordNumber: recordNumber,  // 添加单据号
               materialId: medication.materialId,
               materialCode: material.code || '',
               materialName: medication.name,
@@ -4171,10 +4287,12 @@ async function createTreatmentFromDiagnosis(event, wxContext) {
       console.error('更新异常记录状态失败（不影响主流程）:', updateError)
     }
     
-    // 更新AI诊断记录，关联治疗记录
+    // 更新AI诊断记录，关联治疗记录并标记已有治疗方案
     await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS).doc(diagnosisId).update({
       data: {
+        hasTreatment: true,  // ✅ 标记已有治疗方案
         relatedTreatmentId: result._id,
+        latestTreatmentId: result._id,
         updatedAt: new Date()
       }
     })
@@ -5798,10 +5916,10 @@ async function getDeathRecordDetail(event, wxContext) {
       }
     }
     
-    // 格式化修正时间
+    // 格式化修正时间（iOS兼容格式：YYYY-MM-DD HH:mm:ss）
     if (record.correctedAt) {
       const date = new Date(record.correctedAt)
-      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
     }
     
     return {
@@ -7191,6 +7309,96 @@ async function updatePreventionEffectiveness(event, wxContext) {
       success: false,
       error: error.message,
       message: '更新效果评估失败'
+    }
+  }
+}
+
+/**
+ * 获取治愈记录列表（包含用户昵称）
+ */
+async function getCuredRecordsList(event, wxContext) {
+  try {
+    const openid = wxContext.OPENID
+    
+    // 查询最近1年的治疗记录（不限制用户，查询所有记录）
+    const oneYearAgo = new Date()
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+    
+    const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where({
+        createdAt: _.gte(oneYearAgo)
+        // ⚠️ 不添加 _openid 限制，查询所有用户的记录
+      })
+      .orderBy('createdAt', 'desc')
+      .limit(200)
+      .get()
+    
+    // 过滤出有治愈数的记录（同时排除已删除的记录）
+    const curedRecords = result.data.filter(record => {
+      // 排除已删除的记录
+      if (record.isDeleted === true) return false
+      // 只保留有治愈数的记录
+      return (record.outcome?.curedCount || 0) > 0
+    })
+    
+    // 提取所有唯一的批次ID和用户ID
+    const batchIds = [...new Set(curedRecords.map(r => r.batchId).filter(Boolean))]
+    const userIds = [...new Set(curedRecords.map(r => r._openid || r.createdBy).filter(Boolean))]
+    
+    // 批量查询批次信息
+    const batchMap = new Map()
+    for (let i = 0; i < batchIds.length; i += 20) {
+      const batch = batchIds.slice(i, i + 20)
+      const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .where({
+          _id: _.in(batch)
+        })
+        .field({ _id: true, batchNumber: true })
+        .get()
+      
+      batchResult.data.forEach(b => {
+        batchMap.set(b._id, b.batchNumber)
+      })
+    }
+    
+    // 批量查询用户信息
+    const userMap = new Map()
+    for (let i = 0; i < userIds.length; i += 20) {
+      const batch = userIds.slice(i, i + 20)
+      const userResult = await db.collection(COLLECTIONS.WX_USERS)
+        .where({
+          _openid: _.in(batch)
+        })
+        .field({ _openid: true, nickName: true })
+        .get()
+      
+      userResult.data.forEach(u => {
+        userMap.set(u._openid, u.nickName || '未知用户')
+      })
+    }
+    
+    // 组装数据
+    const records = curedRecords.map(record => ({
+      ...record,
+      batchNumber: batchMap.get(record.batchId) || record.batchId,
+      operatorName: userMap.get(record._openid || record.createdBy) || '未知用户'
+    }))
+    
+    return {
+      success: true,
+      data: {
+        records,
+        total: records.length
+      },
+      message: '获取治愈记录列表成功'
+    }
+    
+  } catch (error) {
+    console.error('❌ 获取治愈记录列表失败:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '获取治愈记录列表失败'
     }
   }
 }

@@ -45,6 +45,20 @@ Page({
     records: [] as TreatmentRecord[]
   },
 
+  dedupeRecordsById(records: any[]): any[] {
+    if (!Array.isArray(records)) return []
+    const seen = new Set<string>()
+    const unique: any[] = []
+    for (const r of records) {
+      const id = r && r._id
+      if (id && !seen.has(id)) {
+        seen.add(id)
+        unique.push(r)
+      }
+    }
+    return unique
+  },
+
   onLoad() {
     this.loadTreatmentRecords()
   },
@@ -85,9 +99,10 @@ Page({
         
         // 批量获取批次号
         const enrichedRecords = await this.enrichRecordsWithBatchNumbers(treatments)
+        const uniqueRecords = this.dedupeRecordsById(enrichedRecords)
         
         this.setData({
-          records: enrichedRecords,
+          records: uniqueRecords,
           loading: false
         })
       } else {

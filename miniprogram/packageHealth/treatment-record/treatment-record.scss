@@ -117,6 +117,169 @@
   }
 }
 
+/* 用药管理选择器包装 */
+.medication-picker-wrapper {
+  padding: 16rpx 32rpx 24rpx;
+}
+
+/* ========== ✅ 药品卡片样式（全局共用） ========== */
+.selected-medications-list {
+  padding: 0 32rpx 24rpx;
+  
+  .medication-card-new {
+    background: #ffffff;
+    border-radius: 16rpx;
+    padding: 32rpx;
+    margin-bottom: 16rpx;
+    border: 2rpx solid #e8eaed;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    // 头部区域
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24rpx;
+      padding-bottom: 20rpx;
+      border-bottom: 2rpx solid #f5f6f7;
+      
+      .drug-info {
+        flex: 1;
+        
+        .drug-name {
+          font-size: 28rpx;
+          font-weight: 600;
+          color: #1a1a1a;
+          display: block;
+          margin-bottom: 8rpx;
+        }
+        
+        .drug-spec {
+          font-size: 26rpx;
+          color: #8a8e99;
+          display: block;
+        }
+      }
+      
+      .delete-icon {
+        width: 56rpx;
+        height: 56rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff1f0;
+        border-radius: 50%;
+        margin-left: 16rpx;
+        flex-shrink: 0;
+        
+        &:active {
+          background: #ffccc7;
+        }
+        
+        .icon-close {
+          font-size: 56rpx;
+          color: #ff4d4f;
+          line-height: 1;
+          font-weight: 300;
+        }
+      }
+    }
+    
+    // ========== ✅ 优化后的输入框排版 ==========
+    .medication-inputs-simple {
+      .input-row-simple {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24rpx;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .label-simple {
+          font-size: 28rpx;
+          font-weight: 600;
+          color: #1a1a1a;
+          width: 100rpx;
+          margin-right: 20rpx;
+          flex-shrink: 0;
+        }
+        
+        .input-field-simple {
+          flex: 1;
+          height: 80rpx;
+          padding: 0 28rpx;
+          font-size: 28rpx;
+          color: #1a1a1a;
+          background: #f7f8fa;
+          border-radius: 12rpx;
+          border: 2rpx solid #e8eaed;
+          transition: all 0.2s ease;
+          
+          &:focus {
+            background: #fff;
+            border-color: #0052d9;
+            box-shadow: 0 0 0 6rpx rgba(0, 82, 217, 0.08);
+          }
+          
+          &.full-width {
+            flex: 1;
+          }
+        }
+        
+        .unit-simple {
+          font-size: 28rpx;
+          color: #646566;
+          font-weight: 500;
+          margin-left: 20rpx;
+          flex-shrink: 0;
+        }
+        
+        .stock-simple {
+          font-size: 26rpx;
+          color: #0052d9;
+          font-weight: 700;
+          padding: 14rpx 24rpx;
+          background: linear-gradient(135deg, #e6f2ff 0%, #f0f7ff 100%);
+          border-radius: 10rpx;
+          border: 2rpx solid #b3d9ff;
+          white-space: nowrap;
+          margin-left: 20rpx;
+          flex-shrink: 0;
+          box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.12);
+        }
+      }
+    }
+  }
+}
+
+.empty-medications {
+  padding: 80rpx 32rpx;
+  text-align: center;
+  background: #fafbfc;
+  border-radius: 12rpx;
+  border: 2rpx dashed #e0e3e8;
+  margin: 0 32rpx 24rpx;
+  
+  .empty-text {
+    font-size: 28rpx;
+    color: #969799;
+    line-height: 1.6;
+    
+    &::before {
+      content: '💊';
+      display: block;
+      font-size: 64rpx;
+      margin-bottom: 16rpx;
+      opacity: 0.5;
+    }
+  }
+}
+
 /* 药物管理 */
 .medication-list {
   padding: 24rpx 32rpx 32rpx;
@@ -761,6 +924,11 @@
       font-size: 28rpx;
       color: #333;
       font-weight: 500;
+      flex: 1;
+      text-align: right;
+      word-break: break-all;
+      white-space: normal;
+      margin-left: 16rpx;
     }
   }
 }
@@ -885,50 +1053,35 @@
     .record-item {
       display: flex;
       align-items: center;
-      gap: 16rpx;
-      padding: 24rpx;
+      justify-content: space-between;
+      padding: 24rpx 32rpx;
       background: white;
       border-radius: 12rpx;
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
       border: 1rpx solid #f0f0f0;
+      gap: 16rpx;
       
-      .record-icon {
-        font-size: 36rpx;
-        flex-shrink: 0;
+      .record-name {
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #333;
+        flex: 1;
+        text-align: left;
       }
       
-      .record-info {
+      .record-dosage {
+        font-size: 24rpx;
+        color: #666;
         flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 8rpx;
-        
-        .record-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          
-          .record-name {
-            font-size: 30rpx;
-            font-weight: 600;
-            color: #333;
-            flex: 1;
-          }
-          
-          .record-spec {
-            font-size: 26rpx;
-            color: #0052d9;
-            font-weight: 500;
-            flex-shrink: 0;
-            margin-left: 16rpx;
-          }
-        }
-        
-        .record-dosage {
-          font-size: 24rpx;
-          color: #666;
-          line-height: 1.5;
-        }
+        text-align: center;
+      }
+      
+      .record-spec {
+        font-size: 28rpx;
+        color: #0052d9;
+        font-weight: 500;
+        flex-shrink: 0;
+        text-align: right;
       }
     }
   }
@@ -1330,6 +1483,7 @@
     flex: 1;
     padding: 40rpx 32rpx;
     overflow-y: auto;
+    box-sizing: border-box;  /* ✅ 修复内容溢出问题 */
   }
   
   .sheet-footer {
@@ -1343,8 +1497,8 @@
 
 // ========== 一体化表单样式 ==========
 .form-section-inline {
-  margin-bottom: 32rpx;
-  padding: 32rpx;
+  margin: 0 0 32rpx 0;  /* ✅ 使用margin而不是padding，避免影响内部元素的布局 */
+  padding: 24rpx;  /* ✅ 减小padding，给内部元素更多空间 */
   background: #fafafa;
   border-radius: 16rpx;
   border: 2rpx solid #f0f0f0;
@@ -1436,164 +1590,13 @@
     }
   }
   
-  // ========== ✅ 全新优化的药品卡片样式 ==========
+  // ========== 药品卡片样式已提取到全局 ==========
+  // 详见上方 .selected-medications-list 全局样式定义
+  
+  // ✅ 覆盖 .form-section-inline 内部的 .selected-medications-list padding
+  // 在弹窗中，.form-section-inline 已经提供了24rpx的padding，所以这里不需要额外的左右padding
   .selected-medications-list {
-    margin-bottom: 24rpx;
-    
-    .medication-card-new {
-      background: #ffffff;
-      border-radius: 16rpx;
-      padding: 32rpx;
-      margin-bottom: 16rpx;
-      border: 2rpx solid #e8eaed;
-      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
-      
-      // 头部区域
-      .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24rpx;
-        padding-bottom: 20rpx;
-        border-bottom: 2rpx solid #f5f6f7;
-        
-        .drug-info {
-          flex: 1;
-          
-          .drug-name {
-            font-size: 34rpx;
-            font-weight: 600;
-            color: #1a1a1a;
-            display: block;
-            margin-bottom: 8rpx;
-          }
-          
-          .drug-spec {
-            font-size: 26rpx;
-            color: #8a8e99;
-            display: block;
-          }
-        }
-        
-        .delete-icon {
-          width: 56rpx;
-          height: 56rpx;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #fff1f0;
-          border-radius: 50%;
-          margin-left: 16rpx;
-          flex-shrink: 0;
-          
-          &:active {
-            background: #ffccc7;
-          }
-          
-          .icon-close {
-            font-size: 56rpx;
-            color: #ff4d4f;
-            line-height: 1;
-            font-weight: 300;
-          }
-        }
-      }
-      
-      // ========== ✅ 优化后的输入框排版 ==========
-      .medication-inputs-simple {
-        .input-row-simple {
-          display: flex;
-          align-items: center;
-          margin-bottom: 24rpx;
-          
-          &:last-child {
-            margin-bottom: 0;
-          }
-          
-          .label-simple {
-            font-size: 32rpx;
-            font-weight: 600;
-            color: #1a1a1a;
-            width: 100rpx;
-            margin-right: 20rpx;
-            flex-shrink: 0;
-          }
-          
-          .input-field-simple {
-            flex: 1;
-            height: 80rpx;
-            padding: 0 28rpx;
-            font-size: 32rpx;
-            color: #1a1a1a;
-            background: #f7f8fa;
-            border-radius: 12rpx;
-            border: 2rpx solid #e8eaed;
-            transition: all 0.2s ease;
-            
-            &:focus {
-              background: #fff;
-              border-color: #0052d9;
-              box-shadow: 0 0 0 6rpx rgba(0, 82, 217, 0.08);
-            }
-            
-            &.full-width {
-              flex: 1;
-            }
-          }
-          
-          .unit-simple {
-            font-size: 30rpx;
-            color: #646566;
-            font-weight: 500;
-            margin-left: 20rpx;
-            flex-shrink: 0;
-          }
-          
-          .stock-simple {
-            font-size: 26rpx;
-            color: #0052d9;
-            font-weight: 700;
-            padding: 14rpx 24rpx;
-            background: linear-gradient(135deg, #e6f2ff 0%, #f0f7ff 100%);
-            border-radius: 10rpx;
-            border: 2rpx solid #b3d9ff;
-            white-space: nowrap;
-            margin-left: 20rpx;
-            flex-shrink: 0;
-            box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.12);
-          }
-        }
-      }
-    }
-  }
-  
-  // ========== ✅ 初始用药管理使用统一样式（与追加用药一致） ==========
-  // medication-item, medication-header, medication-inputs 等样式已在上方定义，这里复用
-  
-  .empty-medications {
-    padding: 80rpx 32rpx;
-    text-align: center;
-    background: #fafbfc;
-    border-radius: 12rpx;
-    border: 2rpx dashed #e0e3e8;
-    
-    .empty-text {
-      font-size: 28rpx;
-      color: #969799;
-      line-height: 1.6;
-      
-      &::before {
-        content: '💊';
-        display: block;
-        font-size: 64rpx;
-        margin-bottom: 16rpx;
-        opacity: 0.5;
-      }
-    }
+    padding: 0 0 16rpx 0;  /* 只保留底部间距 */
   }
   
   // ========== 添加药品区域 ==========
@@ -1636,156 +1639,6 @@
     line-height: 1.6;
     font-weight: 500;
     flex: 1;
-  }
-}
-
-// ========== 追加用药底部弹窗样式（已废弃，保留以防万一）==========
-.medication-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999998;
-}
-
-.medication-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  border-radius: 32rpx 32rpx 0 0;
-  z-index: 999999;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
-  
-  &.show {
-    transform: translateY(0);
-  }
-  
-  .sheet-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 32rpx;
-    border-bottom: 2rpx solid #f0f0f0;
-    flex-shrink: 0;
-    
-    .sheet-title {
-      font-size: 36rpx;
-      font-weight: 600;
-      color: #000;
-    }
-    
-    .close-btn {
-      width: 64rpx;
-      height: 64rpx;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: background 0.2s;
-      
-      &:active {
-        background: #f0f0f0;
-      }
-    }
-  }
-  
-  .sheet-content {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .medication-form-scroll {
-    flex: 1;
-    padding: 32rpx;
-    
-    .form-item {
-      margin-bottom: 32rpx;
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
-      
-      .form-label {
-        font-size: 28rpx;
-        color: #1a1a1a;
-        margin-bottom: 16rpx;
-        display: flex;
-        align-items: center;
-        
-        &.required::after {
-          content: '*';
-          color: #e34d59;
-          margin-left: 8rpx;
-          font-size: 24rpx;
-        }
-      }
-      
-      .native-picker {
-        padding: 24rpx 32rpx;
-        background: #fafafa;
-        border-radius: 8rpx;
-        border: 2rpx solid #e0e0e0;
-        font-size: 28rpx;
-        color: #333;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        
-        .picker-arrow {
-          color: #999;
-          font-size: 24rpx;
-        }
-      }
-      
-      .stock-info {
-        margin-top: 12rpx;
-        font-size: 24rpx;
-        color: #0052d9;
-        padding: 8rpx 16rpx;
-        background: #f0f5ff;
-        border-radius: 8rpx;
-        display: inline-block;
-      }
-    }
-    
-    .form-hint {
-      display: flex;
-      align-items: center;
-      gap: 8rpx;
-      padding: 20rpx;
-      background: #fff8e1;
-      border-radius: 8rpx;
-      border: 1rpx solid #ffe9b8;
-      margin-top: 24rpx;
-      
-      .hint-icon {
-        font-size: 32rpx;
-        flex-shrink: 0;
-      }
-      
-      .hint-text {
-        font-size: 24rpx;
-        color: #e67700;
-        line-height: 1.5;
-      }
-    }
-  }
-  
-  .sheet-footer {
-    padding: 24rpx 32rpx;
-    border-top: 2rpx solid #f0f0f0;
-    background: #fff;
-    flex-shrink: 0;
   }
 }
 

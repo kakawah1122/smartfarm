@@ -50,14 +50,9 @@
         <view class="medication-records" wx:if="{{medications.length > 0}}">
           <view class="records-list">
             <view class="record-item" wx:for="{{medications}}" wx:key="index">
-              <view class="record-icon">💊</view>
-              <view class="record-info">
-                <view class="record-header">
-                  <text class="record-name">{{item.name}}</text>
-                  <text class="record-spec">{{item.quantity}}{{item.unit}}</text>
-                </view>
-                <text class="record-dosage" wx:if="{{item.dosage}}">{{item.dosage}}</text>
-              </view>
+              <text class="record-name">{{item.name}}</text>
+              <text class="record-dosage">{{item.dosage || '-'}}</text>
+              <text class="record-spec">{{item.quantity}}{{item.unit}}</text>
             </view>
           </view>
         </view>
@@ -251,8 +246,7 @@
       <view class="section-title">用药管理</view>
       
       <!-- 选择药品 -->
-      <view class="form-item">
-        <view class="form-label">选择药品</view>
+      <view class="medication-picker-wrapper">
         <picker 
           mode="selector" 
           range="{{filteredMaterials}}" 
@@ -469,45 +463,47 @@
         </view>
         
         <!-- ✅ 已选择的药品列表（统一样式） -->
-        <view class="medication-card-new" wx:for="{{selectedMedications}}" wx:key="materialId">
-          <!-- 头部：药品名称和删除按钮 -->
-          <view class="card-header">
-            <view class="drug-info">
-              <text class="drug-name">{{item.materialName}}</text>
-            </view>
-            <view class="delete-icon" bind:tap="removeMedication" data-index="{{index}}">
-              <text class="icon-close">×</text>
-            </view>
-          </view>
-
-          <!-- 药品信息输入 -->
-          <view class="medication-inputs-simple">
-            <!-- 数量行 -->
-            <view class="input-row-simple">
-              <text class="label-simple">数量</text>
-              <input
-                class="input-field-simple"
-                value="{{item.quantity}}"
-                placeholder="请输入数量（库存: {{item.currentStock}}{{item.unit}}）"
-                type="digit"
-                data-index="{{index}}"
-                data-field="quantity"
-                bind:input="onSelectedMedicationInput"
-              />
-              <text class="unit-simple">{{item.unit}}</text>
+        <view class="selected-medications-list" wx:if="{{selectedMedications.length > 0}}">
+          <view class="medication-card-new" wx:for="{{selectedMedications}}" wx:key="materialId">
+            <!-- 头部：药品名称和删除按钮 -->
+            <view class="card-header">
+              <view class="drug-info">
+                <text class="drug-name">{{item.materialName}}</text>
+              </view>
+              <view class="delete-icon" bind:tap="removeMedication" data-index="{{index}}">
+                <text class="icon-close">×</text>
+              </view>
             </view>
 
-            <!-- 用法行 -->
-            <view class="input-row-simple">
-              <text class="label-simple">用法</text>
-              <input
-                class="input-field-simple full-width"
-                value="{{item.dosage}}"
-                placeholder="如：10mg/kg 每日2次"
-                data-index="{{index}}"
-                data-field="dosage"
-                bind:input="onSelectedMedicationInput"
-              />
+            <!-- 药品信息输入 -->
+            <view class="medication-inputs-simple">
+              <!-- 数量行 -->
+              <view class="input-row-simple">
+                <text class="label-simple">数量</text>
+                <input
+                  class="input-field-simple"
+                  value="{{item.quantity}}"
+                  placeholder="请输入数量（库存: {{item.currentStock}}{{item.unit}}）"
+                  type="digit"
+                  data-index="{{index}}"
+                  data-field="quantity"
+                  bind:input="onSelectedMedicationInput"
+                />
+                <text class="unit-simple">{{item.unit}}</text>
+              </view>
+
+              <!-- 用法行 -->
+              <view class="input-row-simple">
+                <text class="label-simple">用法</text>
+                <input
+                  class="input-field-simple full-width"
+                  value="{{item.dosage}}"
+                  placeholder="如：10mg/kg 每日2次"
+                  data-index="{{index}}"
+                  data-field="dosage"
+                  bind:input="onSelectedMedicationInput"
+                />
+              </view>
             </view>
           </view>
         </view>

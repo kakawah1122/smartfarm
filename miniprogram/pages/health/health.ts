@@ -2976,80 +2976,21 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 查看任务详情（从breeding-todo完整迁移）
+   * 查看任务详情（✅ 优化：立即显示弹窗，异步加载用户信息）
    */
   async viewTaskDetail(e: any) {
+    // ✅ 防抖：避免重复点击
+    const now = Date.now()
+    if (now - this.lastClickTime < 300) return
+    this.lastClickTime = now
+    
     const task = e.currentTarget.dataset.task
     if (!task) return
     
     // ✅ 判断任务是否为即将到来的任务（来自 upcoming 标签）
     const isUpcomingTask = this.data.preventionSubTab === 'upcoming'
     
-    // 处理完成人员字段：如果是 OpenID，尝试查询用户名
-    let completedBy = task.completedBy || ''
-    const originalCompletedBy = completedBy // 保存原始值用于缓存 key
-    if (completedBy) {
-      // 判断是否是 OpenID 格式（通常以 'o' 开头，长度约 28 个字符）
-      const isOpenId = /^o[a-zA-Z0-9]{27}$/.test(completedBy)
-      if (isOpenId) {
-        try {
-          // 先尝试从本地缓存查找
-          try {
-            const cachedUsers = wx.getStorageSync('cached_users') || {}
-            if (cachedUsers[originalCompletedBy]?.nickName) {
-              completedBy = cachedUsers[originalCompletedBy].nickName
-            } else {
-              // 缓存中没有，通过云函数查询用户信息
-              const result = await wx.cloud.callFunction({
-                name: 'user-management',
-                data: {
-                  action: 'get_user_by_openid',
-                  openid: originalCompletedBy
-                }
-              })
-              if (result.result?.success && result.result?.data?.nickName) {
-                completedBy = result.result.data.nickName
-                // 缓存用户信息以便下次使用（使用 OpenID 作为 key）
-                try {
-                  const cachedUsers = wx.getStorageSync('cached_users') || {}
-                  cachedUsers[originalCompletedBy] = {
-                    nickName: result.result.data.nickName,
-                    timestamp: Date.now()
-                  }
-                  wx.setStorageSync('cached_users', cachedUsers)
-                } catch (cacheError) {
-                  // 缓存失败不影响主流程
-                }
-              } else {
-                completedBy = '用户'
-              }
-            }
-          } catch (cacheError) {
-            // 缓存读取失败，直接查询
-            try {
-              const result = await wx.cloud.callFunction({
-                name: 'user-management',
-                data: {
-                  action: 'get_user_by_openid',
-                  openid: originalCompletedBy
-                }
-              })
-              if (result.result?.success && result.result?.data?.nickName) {
-                completedBy = result.result.data.nickName
-              } else {
-                completedBy = '用户'
-              }
-            } catch (error) {
-              completedBy = '用户'
-            }
-          }
-        } catch (error) {
-          completedBy = '用户'
-        }
-      }
-    }
-    
-    // 构建增强的任务数据
+    // ✅ 立即构建基础任务数据并显示弹窗（不等待异步操作）
     const enhancedTask = {
       ...task,
       
@@ -3082,13 +3023,89 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 确保completed状态正确
       completed: task.completed || false,
       completedDate: task.completedDate || '',
-      completedBy: completedBy
+      completedBy: task.completedBy || '加载中...'  // ✅ 先显示加载中
     }
 
+    // ✅ 关键优化：立即显示弹窗，提供即时反馈
     this.setData({
       selectedTask: enhancedTask,
       showTaskDetailPopup: true
     })
+    
+    // ✅ 异步加载用户信息（不阻塞弹窗显示）
+    this.loadCompletedByUserName(task.completedBy)
+  },
+
+  /**
+   * ✅ 新增：异步加载任务完成人员信息（不阻塞UI）
+   */
+  async loadCompletedByUserName(completedBy: string) {
+    if (!completedBy) {
+      // 没有完成人员信息，更新为空
+      this.setData({
+        'selectedTask.completedBy': ''
+      })
+      return
+    }
+    
+    // 判断是否是 OpenID 格式（通常以 'o' 开头，长度约 28 个字符）
+    const isOpenId = /^o[a-zA-Z0-9]{27}$/.test(completedBy)
+    if (!isOpenId) {
+      // 不是OpenID，直接使用原值
+      this.setData({
+        'selectedTask.completedBy': completedBy
+      })
+      return
+    }
+    
+    try {
+      // 先尝试从本地缓存查找
+      const cachedUsers = wx.getStorageSync('cached_users') || {}
+      if (cachedUsers[completedBy]?.nickName) {
+        this.setData({
+          'selectedTask.completedBy': cachedUsers[completedBy].nickName
+        })
+        return
+      }
+      
+      // 缓存中没有，通过云函数查询用户信息
+      const result = await wx.cloud.callFunction({
+        name: 'user-management',
+        data: {
+          action: 'get_user_by_openid',
+          openid: completedBy
+        }
+      })
+      
+      if (result.result?.success && result.result?.data?.nickName) {
+        const userName = result.result.data.nickName
+        
+        // 更新弹窗中的用户名
+        this.setData({
+          'selectedTask.completedBy': userName
+        })
+        
+        // 缓存用户信息以便下次使用
+        try {
+          cachedUsers[completedBy] = {
+            nickName: userName,
+            timestamp: Date.now()
+          }
+          wx.setStorageSync('cached_users', cachedUsers)
+        } catch (cacheError) {
+          // 缓存失败不影响主流程
+        }
+      } else {
+        this.setData({
+          'selectedTask.completedBy': '用户'
+        })
+      }
+    } catch (error) {
+      // 查询失败，显示默认值
+      this.setData({
+        'selectedTask.completedBy': '用户'
+      })
+    }
   },
 
   /**

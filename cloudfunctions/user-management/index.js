@@ -1,5 +1,6 @@
 // user-management/index.js - 用户管理和权限控制云函数
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('../../shared-config/collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -112,7 +113,7 @@ function checkPermission(userRole, requiredPermission) {
 // 验证用户是否为管理员
 async function validateAdminPermission(openid) {
   try {
-    const user = await db.collection('wx_users').where({ _openid: openid }).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).get()
     if (user.data.length === 0) return false
     
     const userRole = user.data[0].role || 'employee'
@@ -143,7 +144,7 @@ async function generateUniqueInviteCode() {
     inviteCode = generateInviteCode()
     
     // 检查是否已存在
-    const existingInvite = await db.collection('wx_user_invites')
+    const existingInvite = await db.collection(COLLECTIONS.WX_USER_INVITES)
       .where({ inviteCode: inviteCode })
       .get()
     
@@ -176,7 +177,7 @@ async function cleanupOldInvites() {
   try {
     // 已移除调试日志
     // 获取所有邀请记录，按创建时间倒序排列
-    const allInvites = await db.collection('wx_user_invites')
+    const allInvites = await db.collection(COLLECTIONS.WX_USER_INVITES)
       .orderBy('createTime', 'desc')
       .get()
 
@@ -188,7 +189,7 @@ async function cleanupOldInvites() {
       // 已移除调试日志
       // 批量删除
       for (const invite of invitesToDelete) {
-        await db.collection('wx_user_invites').doc(invite._id).remove()
+        await db.collection(COLLECTIONS.WX_USER_INVITES).doc(invite._id).remove()
         // 已移除调试日志
       }
 
@@ -273,7 +274,7 @@ async function getUserInfo(event, wxContext) {
   const openid = wxContext.OPENID
   
   try {
-    const user = await db.collection('wx_users').where({ _openid: openid }).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).get()
     
     if (user.data.length === 0) {
       // 如果用户不存在，创建默认用户记录
@@ -291,7 +292,7 @@ async function getUserInfo(event, wxContext) {
         lastLoginTime: new Date().toISOString()
       }
       
-      await db.collection('wx_users').add({ data: newUser })
+      await db.collection(COLLECTIONS.WX_USERS).add({ data: newUser })
       
       return {
         success: true,
@@ -309,7 +310,7 @@ async function getUserInfo(event, wxContext) {
     const userData = user.data[0]
     
     // 更新最后登录时间
-    await db.collection('wx_users').doc(userData._id).update({
+    await db.collection(COLLECTIONS.WX_USERS).doc(userData._id).update({
       data: { lastLoginTime: new Date().toISOString() }
     })
     
@@ -342,7 +343,7 @@ async function getUserByOpenId(event, wxContext) {
   }
   
   try {
-    const user = await db.collection('wx_users').where({ _openid: openid }).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).get()
     
     if (user.data.length === 0) {
       return {
@@ -395,12 +396,12 @@ async function updateUserProfile(event, wxContext) {
     updateData.department = farmNameValue  // 兼容字段，保持一致
   }
   
-  await db.collection('wx_users').where({ _openid: openid }).update({
+  await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).update({
     data: updateData
   })
   
   // 获取更新后的用户信息
-  const updatedUser = await db.collection('wx_users').where({ _openid: openid }).get()
+  const updatedUser = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).get()
   
   if (updatedUser.data.length > 0) {
     const userData = updatedUser.data[0]
@@ -431,7 +432,7 @@ async function listUsers(event, wxContext) {
     throw new Error('无权限查看用户列表')
   }
   
-  let query = db.collection('wx_users')
+  let query = db.collection(COLLECTIONS.WX_USERS)
   
   // 特殊处理：当 role 为 'admin' 时，查询所有管理类角色
   if (role === 'admin') {
@@ -486,17 +487,17 @@ async function getUserStats(event, wxContext) {
   
   try {
     // 获取总用户数
-    const totalUsersResult = await db.collection('wx_users').count()
+    const totalUsersResult = await db.collection(COLLECTIONS.WX_USERS).count()
     const totalUsers = totalUsersResult.total
     
     // 获取活跃用户数（兼容两种字段格式）
     // 新格式：status = 'active'
     // 旧格式：isActive = true
-    const activeUsersWithStatus = await db.collection('wx_users')
+    const activeUsersWithStatus = await db.collection(COLLECTIONS.WX_USERS)
       .where({ status: 'active' })
       .count()
     
-    const activeUsersWithIsActive = await db.collection('wx_users')
+    const activeUsersWithIsActive = await db.collection(COLLECTIONS.WX_USERS)
       .where({ isActive: true })
       .count()
     
@@ -504,7 +505,7 @@ async function getUserStats(event, wxContext) {
     const activeUsers = Math.max(activeUsersWithStatus.total, activeUsersWithIsActive.total)
     
     // 获取管理员数量（包含新旧角色体系）
-    const adminUsersResult = await db.collection('wx_users')
+    const adminUsersResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({
         role: db.command.in(['manager', 'super_admin', 'admin'])
       })
@@ -515,7 +516,7 @@ async function getUserStats(event, wxContext) {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     
-    const recentActiveUsersResult = await db.collection('wx_users')
+    const recentActiveUsersResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({
         lastLoginTime: db.command.gte(thirtyDaysAgo)
       })
@@ -560,12 +561,12 @@ async function updateUserRole(event, wxContext) {
   }
   
   // 不能修改自己的角色（防止锁定）
-  const targetUser = await db.collection('wx_users').doc(targetUserId).get()
+  const targetUser = await db.collection(COLLECTIONS.WX_USERS).doc(targetUserId).get()
   if (targetUser.data._openid === openid) {
     throw new Error('不能修改自己的角色')
   }
   
-  await db.collection('wx_users').doc(targetUserId).update({
+  await db.collection(COLLECTIONS.WX_USERS).doc(targetUserId).update({
     data: {
       role: newRole,
       updateTime: new Date().toISOString()
@@ -607,7 +608,7 @@ async function createInvite(event, wxContext) {
     }
 
     // 获取邀请人信息
-    const inviterResult = await db.collection('wx_users')
+    const inviterResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({ _openid: openid })
       .get()
 
@@ -649,7 +650,7 @@ async function createInvite(event, wxContext) {
     }
 
     // 已移除调试日志
-    const result = await db.collection('wx_user_invites').add({
+    const result = await db.collection(COLLECTIONS.WX_USER_INVITES).add({
       data: inviteData
     })
 
@@ -717,13 +718,13 @@ async function useInvite(event, wxContext) {
     if (finalRole) updateData.role = finalRole
 
     // 标记邀请码为已使用并更新用户信息
-    await db.collection('wx_user_invites').doc(invite._id).update({
+    await db.collection(COLLECTIONS.WX_USER_INVITES).doc(invite._id).update({
       data: updateData
     })
 
     // 更新用户角色和状态
     const userRole = finalRole || invite.defaultRole || 'employee'
-    await db.collection('wx_users').where({ _openid: openid }).update({
+    await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).update({
       data: {
         role: userRole,
         status: 'active',
@@ -758,7 +759,7 @@ async function checkUserPermission(event, wxContext) {
   const openid = wxContext.OPENID
   
   try {
-    const user = await db.collection('wx_users').where({ _openid: openid }).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).get()
     if (user.data.length === 0) {
       return { success: true, data: { hasPermission: false } }
     }
@@ -806,7 +807,7 @@ async function logOperation(event, wxContext) {
       createTime: new Date().toISOString()
     }
     
-    await db.collection('sys_audit_logs').add({ data: log })
+    await db.collection(COLLECTIONS.SYS_AUDIT_LOGS).add({ data: log })
     
     return {
       success: true,
@@ -831,7 +832,7 @@ async function getAuditLogs(event, wxContext) {
     throw new Error('无权限查看审计日志')
   }
   
-  let query = db.collection('sys_audit_logs')
+  let query = db.collection(COLLECTIONS.SYS_AUDIT_LOGS)
   
   if (action) query = query.where({ action })
   if (targetType) query = query.where({ targetType })
@@ -879,7 +880,7 @@ async function listInvites(event, wxContext) {
       throw new Error('无权限查看邀请列表')
     }
 
-    let query = db.collection('wx_user_invites')
+    let query = db.collection(COLLECTIONS.WX_USER_INVITES)
     const where = {}
 
     // 状态筛选
@@ -956,7 +957,7 @@ async function revokeInvite(event, wxContext) {
     }
 
     // 检查邀请是否存在
-    const invite = await db.collection('wx_user_invites').doc(inviteId).get()
+    const invite = await db.collection(COLLECTIONS.WX_USER_INVITES).doc(inviteId).get()
     if (!invite.data) {
       throw new Error('邀请不存在')
     }
@@ -966,7 +967,7 @@ async function revokeInvite(event, wxContext) {
     }
 
     // 更新邀请状态
-    await db.collection('wx_user_invites').doc(inviteId).update({
+    await db.collection(COLLECTIONS.WX_USER_INVITES).doc(inviteId).update({
       data: {
         status: 'revoked',
         revokedTime: new Date(),
@@ -993,7 +994,7 @@ async function deactivateUser(event, wxContext) {
     throw new Error('无权限停用用户')
   }
   
-  await db.collection('wx_users').doc(targetUserId).update({
+  await db.collection(COLLECTIONS.WX_USERS).doc(targetUserId).update({
     data: {
       status: 'inactive',
       updateTime: new Date().toISOString()
@@ -1013,7 +1014,7 @@ async function getUserRoles(event, wxContext) {
   
   try {
     // 查询用户信息
-    const userResult = await db.collection('wx_users')
+    const userResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({ _openid: requestOpenid })
       .get()
     
@@ -1077,7 +1078,7 @@ async function validateInvite(event, wxContext) {
     }
 
     // 查找邀请记录
-    const inviteResult = await db.collection('wx_user_invites')
+    const inviteResult = await db.collection(COLLECTIONS.WX_USER_INVITES)
       .where({ inviteCode: inviteCode.toUpperCase() })
       .get()
 
@@ -1119,7 +1120,7 @@ async function validateInvite(event, wxContext) {
     // 检查是否过期
     if (new Date() > new Date(invite.expiryTime)) {
       // 自动标记为过期
-      await db.collection('wx_user_invites').doc(invite._id).update({
+      await db.collection(COLLECTIONS.WX_USER_INVITES).doc(invite._id).update({
         data: { status: 'expired' }
       })
 
@@ -1212,7 +1213,7 @@ async function resendInvite(event, wxContext) {
     }
 
     // 检查邀请是否存在
-    const invite = await db.collection('wx_user_invites').doc(inviteId).get()
+    const invite = await db.collection(COLLECTIONS.WX_USER_INVITES).doc(inviteId).get()
     if (!invite.data) {
       throw new Error('邀请不存在')
     }
@@ -1224,7 +1225,7 @@ async function resendInvite(event, wxContext) {
     // 延长有效期
     const newExpiryTime = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
 
-    await db.collection('wx_user_invites').doc(inviteId).update({
+    await db.collection(COLLECTIONS.WX_USER_INVITES).doc(inviteId).update({
       data: {
         expiryTime: newExpiryTime,
         lastResendTime: new Date()

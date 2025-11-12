@@ -60,15 +60,15 @@
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
   
   &.success {
-    background: linear-gradient(135deg, #00a870 0%, #00c689 100%);
+    background: linear-gradient(135deg, #007854 0%, #008865 100%);
   }
   
   &.primary {
-    background: linear-gradient(135deg, #0052d9 0%, #0066ff 100%);
+    background: linear-gradient(135deg, #003b9e 0%, #004db8 100%);
   }
   
   &.warning {
-    background: linear-gradient(135deg, #ed7b2f 0%, #ff8f47 100%);
+    background: linear-gradient(135deg, #c85e1f 0%, #d66e2e 100%);
   }
 }
 
@@ -226,21 +226,23 @@
       color: #00a870;
       font-weight: 600;
     }
-
-    &.cost-value {
-      color: #0052d9;
+    
+    // 治疗编号专用样式 - 确保不换行
+    &.treatment-number {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-weight: 600;
-    }
-
-    &.death-count {
-      color: #e34d59;
-      font-weight: 600;
+      color: #666;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
     }
   }
 }
 
 .info-group.full-width {
   flex: 1 1 100%;
+  max-width: none !important;  // 覆盖 :first-child 的 max-width 限制
+  min-width: 0;
 }
 
 // 底部信息栏
@@ -262,6 +264,11 @@
     font-size: 26rpx;
     color: #999;
   }
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
 
   .operator-text {
     font-size: 26rpx;
@@ -275,5 +282,5 @@
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
   min-height: 0;
-    flex-shrink: 0;
-  }
+  flex-shrink: 0;
+}

@@ -130,6 +130,10 @@
     color: #333;
     font-weight: 500;
     line-height: 1.6;
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+    overflow-wrap: anywhere;
     
     &.highlight {
       color: #ed7b2f;
@@ -180,11 +184,10 @@
     // ✅ 移除 flex-wrap，让用药信息在一行显示
   }
 
-  // 第一个info-group（批次号）占更多空间
+  // 第一个info-group（编号）按内容宽度，不占满
   &:first-child {
-    flex: 1 1 auto;
-    min-width: 180rpx;
-    max-width: 400rpx;
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   // 其他info-group固定宽度
@@ -207,6 +210,11 @@
     color: #333;
     font-weight: 500;
     line-height: 1.6;
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     
     &.highlight {
       color: #ed7b2f;
@@ -221,6 +229,16 @@
     &.danger-text {
       color: #e34d59;
       font-weight: 600;
+    }
+    
+    // 治疗编号专用样式 - 确保不换行
+    &.treatment-number {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+      color: #666;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
     }
   }
 }
@@ -252,9 +270,6 @@
   }
 }
 
-.status-tag {
-  /* TDesign tag component */
-}
 
 .safe-area {
   height: constant(safe-area-inset-bottom);
