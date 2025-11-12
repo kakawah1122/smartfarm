@@ -31,10 +31,7 @@
         <view class="divider-line" wx:if="{{record.deathCategory}}"></view>
         <view class="info-row" wx:if="{{record.deathCategory}}">
           <text class="info-label">死亡类别：</text>
-          <text class="info-value">
-            {{record.deathCategory === 'disease' ? '疾病' : 
-              record.deathCategory === 'accident' ? '事故' : 
-              record.deathCategory === 'old_age' ? '衰老' : '其他'}}
+          <text class="info-value">{{record.deathCategory === 'disease' ? '疾病' : record.deathCategory === 'accident' ? '事故' : record.deathCategory === 'old_age' ? '衰老' : '其他'}}
           </text>
         </view>
       </view>
@@ -45,7 +42,6 @@
       <view class="section-title">死亡统计</view>
       <view class="death-summary">
         <view class="death-stat-item danger">
-          <text class="stat-label">死亡数量</text>
           <text class="stat-value">{{record.deathCount}} 只</text>
         </view>
       </view>

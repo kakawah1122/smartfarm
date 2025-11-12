@@ -178,16 +178,16 @@ page {
 /* 已移除未使用的样式：month-selector */
 
 /* 收支对比 */
+
 .comparison-section {
-  background: linear-gradient(135deg, rgba(224, 242, 254, 0.7), rgba(125, 211, 252, 0.7));
-  backdrop-filter: blur(10rpx);
-  -webkit-backdrop-filter: blur(10rpx);
-  padding: 24rpx 12rpx;
-  border-radius: 0;
+  background: linear-gradient(135deg, #08263d, #0f4e7a);
+  backdrop-filter: blur(12rpx);
+  -webkit-backdrop-filter: blur(12rpx);
+  padding: 24rpx 16rpx;
+  border-radius: 20rpx;
   margin: 0 0 24rpx 0;
-  border-top: 1rpx solid rgba(255, 255, 255, 0.3);
-  border-bottom: 1rpx solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10rpx 30rpx rgba(15, 23, 42, 0.35);
   position: relative;
   overflow: hidden;
 }
@@ -195,11 +195,10 @@ page {
 .comparison-section::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1rpx;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(30, 136, 190, 0.25), transparent 55%),
+    radial-gradient(circle at 80% 30%, rgba(21, 94, 139, 0.2), transparent 60%);
+  pointer-events: none;
 }
 
 .comparison-header {
@@ -207,18 +206,21 @@ page {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .comparison-label {
   font-size: 24rpx;
-  color: #666;
+  color: rgba(240, 249, 255, 0.92);
 }
 
 .growth-rate {
   font-size: 24rpx;
-  color: #059669;
+  color: #5ef2aa;
   font-weight: 500;
 }
+
 
 .comparison-data {
   display: flex;
@@ -237,6 +239,7 @@ page {
   min-width: 0; // 允许收缩
 }
 
+
 .data-item:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -245,7 +248,7 @@ page {
   transform: translateY(-50%);
   width: 1rpx;
   height: 60rpx;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.16);
 }
 
 // 数字容器：横向排列数字和单位
@@ -261,6 +264,7 @@ page {
 }
 
 // 数字值：优化字体大小以适应更大的数字（保留2位小数）
+
 .data-value {
   font-size: 44rpx;
   font-weight: bold;
@@ -271,6 +275,7 @@ page {
   max-width: 100%;
   word-break: keep-all; // 保持数字不换行
   white-space: nowrap; // 防止换行
+  color: #f8fbff;
 }
 
 .data-value.success {
@@ -286,13 +291,15 @@ page {
 }
 
 // 单位"万"：使用更小的字体，继承数字颜色但稍淡
+
 .data-item .data-unit {
   font-size: 26rpx;
   font-weight: 500;
   line-height: 50rpx;
   margin-left: 4rpx;
   flex-shrink: 0;
-  opacity: 0.8;
+  opacity: 0.95;
+  color: rgba(236, 245, 255, 0.95);
 }
 
 // 根据data-value的类名设置单位颜色
@@ -311,9 +318,10 @@ page {
   opacity: 0.8;
 }
 
+
 .data-label {
   font-size: 24rpx;
-  color: #666;
+  color: rgba(228, 237, 249, 0.94);
   line-height: 28rpx;
   margin-top: 2rpx;
   white-space: nowrap;
@@ -323,11 +331,11 @@ page {
 .cost-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8rpx;
-  row-gap: 16rpx;
-  column-gap: 8rpx;
-  padding: 0;
-  margin-bottom: 0;
+  gap: 12rpx;
+  row-gap: 24rpx;
+  column-gap: 12rpx;
+  padding: 0 0 32rpx 0;
+  margin-bottom: 32rpx;
   grid-auto-rows: 1fr;
 }
 
@@ -358,25 +366,26 @@ page {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
 }
 
-.cost-item.orange {
-  background: linear-gradient(135deg, rgba(254, 243, 199, 0.75), rgba(251, 191, 36, 0.75));
+/* 成本卡片深色系配色 */
+.cost-item-feed {
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
 }
 
-.cost-item.purple {
-  background: linear-gradient(135deg, rgba(224, 231, 255, 0.75), rgba(129, 140, 248, 0.75));
+.cost-item-gosling {
+  background: linear-gradient(135deg, #064e3b, #047857);
 }
 
-.cost-item.yellow {
-  background: linear-gradient(135deg, rgba(209, 250, 229, 0.75), rgba(52, 211, 153, 0.75));
+.cost-item-medical {
+  background: linear-gradient(135deg, #0c4a6e, #0369a1);
 }
 
-.cost-item.gray {
-  background: linear-gradient(135deg, rgba(254, 226, 226, 0.75), rgba(251, 146, 146, 0.75));
+.cost-item-other {
+  background: linear-gradient(135deg, #1f2937, #4b5563);
 }
 
 .cost-label {
   font-size: 24rpx;
-  color: #1f2937;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 12rpx;
   line-height: 28rpx;
   text-align: center;
@@ -388,7 +397,7 @@ page {
 .cost-value {
   font-size: 40rpx;
   font-weight: bold;
-  color: #111827;
+  color: #ffffff;
   margin-bottom: 8rpx;
   line-height: 44rpx;
   text-align: center;
@@ -398,7 +407,7 @@ page {
 
 .cost-percent {
   font-size: 22rpx;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 26rpx;
   text-align: center;
   position: relative;

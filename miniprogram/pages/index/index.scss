@@ -98,6 +98,7 @@ page {
 /* 价格卡片 - 现代化设计 */
 .price-card {
   padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
+  background: var(--color-bg-primary);
   box-shadow: 0 4rpx 24rpx rgba(16, 185, 129, 0.1);
 }
 
@@ -110,8 +111,8 @@ page {
   align-items: stretch;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(240, 253, 244, 0.85), rgba(239, 246, 255, 0.85));
-  border: 1rpx solid rgba(15, 23, 42, 0.05);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.88), rgba(11, 22, 43, 0.75));
+  border: 1rpx solid rgba(148, 163, 184, 0.24);
 }
 
 .price-item {
@@ -126,6 +127,7 @@ page {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 160rpx;
   box-sizing: border-box;
+  color: #f8fafc;
 }
 
 .price-item:first-child {
@@ -140,7 +142,7 @@ page {
 
 .price-divider {
   width: 2rpx;
-  background: rgba(15, 23, 42, 0.08);
+  background: rgba(148, 163, 184, 0.28);
   margin: 28rpx 0;
   align-self: stretch;
   pointer-events: none;
@@ -157,23 +159,24 @@ page {
 }
 
 .success-bg {
-  background: linear-gradient(135deg, var(--color-success-light), var(--color-success-lighter));
-  border: var(--td-border-level-1-color, 2rpx solid rgba(16, 185, 129, 0.1));
+  background: linear-gradient(135deg, rgba(26, 77, 94, 0.88) 0%, rgba(44, 95, 111, 0.68) 100%);
+  border: 2rpx solid rgba(70, 120, 133, 0.35);
 }
 
 .primary-bg {
-  background: linear-gradient(135deg, var(--color-info-light), var(--color-info-lighter));
-  border: var(--td-border-level-1-color, 2rpx solid rgba(59, 130, 246, 0.1));
+  background: linear-gradient(135deg, rgba(92, 26, 61, 0.86) 0%, rgba(124, 40, 79, 0.66) 100%);
+  border: 2rpx solid rgba(140, 58, 104, 0.34);
 }
 
 .price-label {
   display: block;
   text-align: center;
   font-size: 30rpx;
-  color: var(--color-text-secondary);
+  color: rgba(248, 250, 252, 0.96);
   line-height: 1.2;
   font-weight: var(--font-weight-medium);
   margin-bottom: 12rpx;
+  text-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.45);
 }
 
 .price-value {
@@ -185,6 +188,8 @@ page {
   line-height: 1.1;
   gap: var(--spacing-xs);
   margin-bottom: 8rpx;
+  color: #f8fafc;
+  text-shadow: 0 4rpx 12rpx rgba(15, 23, 42, 0.55);
 }
 
 .price-number {
@@ -195,15 +200,18 @@ page {
 .price-unit {
   font-size: 30rpx;
   font-weight: var(--font-weight-medium);
-  opacity: 0.8;
+  color: rgba(226, 232, 240, 0.9);
+  text-shadow: 0 1rpx 3rpx rgba(15, 23, 42, 0.4);
 }
 
 .success-text {
-  color: var(--color-success);
+  color: #5eead4;
+  text-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.4);
 }
 
 .primary-text {
-  color: var(--primary-blue);
+  color: #bfdbfe;
+  text-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.4);
 }
 
 /* 天气卡片样式已移至 weather-card 组件 */

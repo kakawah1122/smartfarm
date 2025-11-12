@@ -137,7 +137,8 @@
     "navigationBarTextStyle": "black",
     "navigationStyle": "custom"
   },
-  "darkmode": false,
+  "darkmode": true,
+  "themeLocation": "theme.json",
   "permission": {
     "scope.userLocation": {
       "desc": "您的位置信息将用于获取当地天气信息"

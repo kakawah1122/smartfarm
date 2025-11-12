@@ -119,22 +119,22 @@
 
         <!-- 成本构成 -->
         <view class="cost-grid">
-          <view class="cost-item orange">
+          <view class="cost-item cost-item-feed">
             <text class="cost-label">饲料成本</text>
             <text class="cost-value">¥{{overview.feedCost}}万</text>
             <text class="cost-percent">占支出 {{overview.feedPercent}}%</text>
           </view>
-          <view class="cost-item purple">
+          <view class="cost-item cost-item-gosling">
             <text class="cost-label">鹅苗成本</text>
             <text class="cost-value">¥{{overview.goslingCost}}万</text>
             <text class="cost-percent">占支出 {{overview.goslingPercent}}%</text>
           </view>
-          <view class="cost-item yellow">
+          <view class="cost-item cost-item-medical">
             <text class="cost-label">医疗费用</text>
             <text class="cost-value">¥{{overview.medicalCost}}万</text>
             <text class="cost-percent">占支出 {{overview.medicalPercent}}%</text>
           </view>
-          <view class="cost-item gray">
+          <view class="cost-item cost-item-other">
             <text class="cost-label">其他费用</text>
             <text class="cost-value">¥{{overview.otherCost}}万</text>
             <text class="cost-percent">占支出 {{overview.otherPercent}}%</text>

@@ -49,6 +49,11 @@
       </view>
     
     <!-- 底部：详细信息 - 横向滚动列表 -->
+    <view wx:if="{{showUpdateTime}}" class="update-time-badge">
+      <text class="update-time-label">更新于</text>
+      <text class="update-time-value">{{weather.updateTime || '刚刚'}}</text>
+    </view>
+
     <view class="weather-details-ios">
       <view class="detail-item-ios">
         <text class="detail-value-ios">{{weather.windDirection}}</text>

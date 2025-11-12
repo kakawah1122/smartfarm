@@ -4357,25 +4357,8 @@ async function completeTreatmentAsCured(treatmentId, curedCount, wxContext) {
       }
     })
     
-    // 3. 调用财务云函数记录治疗成本
-    if (treatment.totalCost > 0) {
-      try {
-        await cloud.callFunction({
-          name: 'finance-management',
-          data: {
-            action: 'createTreatmentCostRecord',
-            treatmentId: treatmentId,
-            batchId: treatment.batchId,
-            totalCost: treatment.totalCost,
-            diagnosis: treatment.diagnosis,
-            description: `治疗成本 - ${treatment.diagnosis} - ${actualCuredCount}只治愈`
-          }
-        })
-      } catch (financeError) {
-        console.error('记录治疗成本失败:', financeError)
-      }
-    }
-    
+    // 3. 财务成本已在采购阶段入账，这里不再重复写入财务模块
+
     // 4. 更新批次健康数据和健康率
     await updateBatchHealthStatus(treatment.batchId, {
       curedCount: actualCuredCount,
