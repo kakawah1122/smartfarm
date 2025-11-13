@@ -162,10 +162,13 @@ async function createPreventionRecordFromTask(task, taskId, batchId, openid, not
       }
     }
     
-    // 添加成本信息（如果有）
+    // 添加成本信息（如果有）- 用药任务不同步到财务
     if (task.estimatedCost && task.estimatedCost > 0) {
       preventionData.costInfo = {
-        totalCost: parseFloat(task.estimatedCost) || 0
+        totalCost: parseFloat(task.estimatedCost) || 0,
+        // 明确标记用药任务的成本不应同步到财务（因为成本已在采购时计入）
+        shouldSyncToFinance: false,
+        source: 'use'  // 标记为领用类型，不是采购
       }
     }
     
@@ -369,32 +372,6 @@ async function completeVaccineTask(event, wxContext) {
     }
     
     // 已移除调试日志
-    // 4. 创建成本记录（正确的财务流向）
-    if (vaccineRecord.cost && vaccineRecord.cost.total > 0) {
-      const costData = {
-        costType: 'medical',
-        subCategory: 'vaccine',
-        title: `疫苗接种费用 - ${vaccineRecord.vaccine.name}`,
-        description: `批次：${batchId}，接种数量：${vaccineRecord.vaccination.count}只`,
-        amount: vaccineRecord.cost.total,
-        batchId,
-        relatedRecords: [{
-          type: 'prevention',
-          recordId: preventionResult._id
-        }],
-        costBreakdown: {
-          vaccine: vaccineRecord.cost.vaccine || 0,
-          labor: vaccineRecord.cost.veterinary || 0,
-          other: vaccineRecord.cost.other || 0
-        },
-        costDate: getCurrentBeijingDate(),
-        createdBy: openid
-      }
-
-      await dbManager.createCostRecord(costData)
-      // 已移除调试日志
-    }
-
     // 4. 更新概览统计
     try {
       await dbManager.updateOverviewStats(batchId, 'prevention')

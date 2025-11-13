@@ -1700,23 +1700,7 @@ async function createTreatmentRecord(event, wxContext) {
       }
     }
 
-    // 如果有治疗费用，创建成本记录
-    if (treatmentCost > 0) {
-      await dbManager.createCostRecord({
-        costType: 'medical',
-        subCategory: 'treatment',
-        title: `治疗费用 - ${diagnosis}`,
-        description: `批次：${batchId}，治疗数量：${affectedCount}只`,
-        amount: treatmentCost,
-        batchId,
-        relatedRecords: [{
-          type: 'treatment',
-          recordId: result._id
-        }],
-        costDate: new Date().toISOString().split('T')[0],
-        createdBy: openid
-      })
-    }
+    // 财务成本仅在采购环节入账，健康模块内部保留成本信息即可
 
     // 记录审计日志
     await dbManager.createAuditLog(
@@ -4809,7 +4793,7 @@ async function getOngoingTreatments(batchId, wxContext) {
       query = query.where({ batchId })
     }
     
-    const records = await query.orderBy('treatmentDate', 'desc').get()
+    const records = await query.orderBy('createdAt', 'desc').get()
     
     // ✅ 在代码中过滤进行中的治疗记录（包含 ongoing 和 pending）
     const ongoingTreatments = records.data.filter(r => {
@@ -7250,21 +7234,27 @@ async function completePreventionTask(event, wxContext) {
         }
       })
     
-    // ========== 7. 创建财务成本记录（如果有成本） ==========
+    // ========== 7. 创建财务成本记录（仅在开启财务入账时） ==========
     let costRecordId = null
-    if (preventionData.costInfo && preventionData.costInfo.totalCost > 0) {
-      debugLog('[预防任务] 创建成本记录', { 
-        ...logContext, 
-        amount: preventionData.costInfo.totalCost 
+    const shouldSyncToFinance = Boolean(
+      preventionData?.costInfo?.totalCost > 0 &&
+      (preventionData?.costInfo?.shouldSyncToFinance === true || preventionData?.costInfo?.source === 'purchase')
+    )
+
+    if (shouldSyncToFinance) {
+      debugLog('[预防任务] 创建成本记录', {
+        ...logContext,
+        amount: preventionData.costInfo.totalCost,
+        source: preventionData.costInfo.source || 'manual'
       })
-      
+
       try {
         const costResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
           .add({
             data: {
               farmId: task.farmId || '',
               batchId,
-              category: preventionData.preventionType === 'vaccine' ? 'vaccine' : 
+              category: preventionData.preventionType === 'vaccine' ? 'vaccine' :
                        preventionData.preventionType === 'disinfection' ? 'disinfection' : 'medicine',
               amount: preventionData.costInfo.totalCost,
               costDate: preventionData.preventionDate,
@@ -7272,19 +7262,27 @@ async function completePreventionTask(event, wxContext) {
               relatedRecordId: recordResult._id,
               userId: openid,
               isDeleted: false,
-              createdAt: new Date()
+              createdAt: new Date(),
+              syncSource: preventionData.costInfo.source || 'manual',
+              syncTriggeredAt: new Date()
             }
           })
-        
+
         costRecordId = costResult._id
         debugLog('[预防任务] 成本记录创建成功', { ...logContext, costRecordId })
       } catch (costError) {
         // 成本记录创建失败不影响主流程
-        console.error('[预防任务] 创建成本记录失败', { 
-          ...logContext, 
-          error: costError.message 
+        console.error('[预防任务] 创建成本记录失败', {
+          ...logContext,
+          error: costError.message
         })
       }
+    } else if (preventionData?.costInfo?.totalCost > 0) {
+      debugLog('[预防任务] 跳过财务入账，仅保留健康记录成本', {
+        ...logContext,
+        amount: preventionData.costInfo.totalCost,
+        source: preventionData.costInfo?.source || 'use'
+      })
     }
     
     // ========== 8. 记录审计日志 ==========

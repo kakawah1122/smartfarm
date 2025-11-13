@@ -1043,22 +1043,28 @@ async function getAllFinanceRecords(event, wxContext) {
     // 说明：投喂记录只用于批次成本分析，财务记录列表显示饲料采购记录
 
     // 6. 获取物料采购记录（饲料、药品、其他物料）
-    let purchaseQuery = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).where({
-      isDeleted: false,
-      type: 'purchase'
-    })
+    // 使用 _.and() 合并所有查询条件，确保 type: 'purchase' 条件生效
+    const purchaseConditions = [
+      { isDeleted: false },
+      { type: 'purchase' }
+    ]
+    
     if (dateRange) {
-      purchaseQuery = purchaseQuery.where(
+      purchaseConditions.push(
         _.or([
           { recordDate: _.gte(startDateStr).and(_.lte(endDateStr)) },
           { createTime: _.gte(startDate).and(_.lte(endDate)) }
         ])
       )
     }
+    
     if (batchId) {
-      purchaseQuery = purchaseQuery.where({ relatedBatch: batchId })
+      purchaseConditions.push({ relatedBatch: batchId })
     }
-    const purchaseResult = await purchaseQuery.get()
+    
+    const purchaseResult = await db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
+      .where(_.and(purchaseConditions))
+      .get()
     
     // 查询物料信息来判断类型和获取物料名称
     for (const record of purchaseResult.data) {

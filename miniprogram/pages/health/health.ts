@@ -3950,7 +3950,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
                 totalCost: totalCost,
                 unitPrice: unitPrice,
                 quantity: quantity,
-                unit: medicationRecord.unit
+                unit: medicationRecord.unit,
+                shouldSyncToFinance: false,
+                source: 'use'
               },
               notes: medicationRecord.notes,
               effectiveness: 'pending'
