@@ -1044,8 +1044,12 @@ async function getAllFinanceRecords(event, wxContext) {
 
     // 6. 获取物料采购记录（饲料、药品、其他物料）
     // 使用 _.and() 合并所有查询条件，确保 type: 'purchase' 条件生效
+    // 兼容没有 isDeleted 字段的旧记录
     const purchaseConditions = [
-      { isDeleted: false },
+      _.or([
+        { isDeleted: false },
+        { isDeleted: _.exists(false) }  // 兼容没有 isDeleted 字段的记录
+      ]),
       { type: 'purchase' }
     ]
     

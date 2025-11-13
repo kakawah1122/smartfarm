@@ -1189,6 +1189,7 @@ async function purchaseInbound(event, wxContext) {
         notes: materialData.notes || '',
         relatedBatch: materialData.batchId || '',
         recordDate: materialData.recordDate || getCurrentBeijingDate(),
+        isDeleted: false, // 添加软删除标记
         createTime: now,
         updateTime: now
       }

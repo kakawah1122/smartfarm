@@ -3,7 +3,7 @@ import { createPageWithNavbar } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
 
-const pageConfig = {
+const pageConfig: any = {
   options: {
     styleIsolation: 'shared'
   },
@@ -736,7 +736,7 @@ const pageConfig = {
       'feed': '饲料成本',
       'health': '医疗费用',
       'labor': '其他费用',     // 人工归入其他费用
-      'facility': '其他费用',  // 设施归入其他费用
+      'facility': '设施成本',  // 设施成本单独显示
       'other': '其他费用',     // 其他归入其他费用
       'loss': '损失费用',
       'death_loss': '死亡损失',
@@ -920,7 +920,7 @@ const pageConfig = {
       const lastYearStart = new Date(currentYear - 1, currentMonth, 1).toISOString()
       const lastYearEnd = new Date(currentYear - 1, currentMonth + 1, 0, 23, 59, 59).toISOString()
 
-      const [currentResult, lastYearResult] = await Promise.all([
+      const [currentResult] = await Promise.all([
         CloudApi.callFunction<any>(
           'finance-management',
           {
@@ -1265,13 +1265,13 @@ const pageConfig = {
           .orderBy('deathDate', 'desc')
           .limit(3)
           .get()
-          .then(res => {
+          .then((res: any) => {
             return {
               recentDeaths: res.data || [],
               totalDeaths: (res.data || []).reduce((sum: number, r: any) => sum + (r.deathCount || 0), 0)
             }
           })
-          .catch(err => {
+          .catch((err: any) => {
             logger.warn('健康数据加载失败:', err)
             return null
           })
@@ -1280,7 +1280,7 @@ const pageConfig = {
       // 鹅价数据：尝试从全局状态获取
       let goosePriceData = null
       try {
-        const app = getApp<IAppOption>()
+        const app = getApp<any>()
         if (app.globalData && app.globalData.goosePrice) {
           goosePriceData = app.globalData.goosePrice
         }
@@ -1302,11 +1302,16 @@ const pageConfig = {
       }
     } catch (error) {
       logger.error('加载模块数据失败:', error)
+      return {
+        production: null,
+        health: false,
+        goosePrice: false
+      }
     }
   },
 
   // AI分析完成事件
-  onAnalysisComplete(e: any) {
+  onAnalysisComplete(_e: any) {
     // AI财务分析完成，可以在这里处理分析结果
   },
 
