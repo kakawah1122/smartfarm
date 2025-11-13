@@ -83,6 +83,11 @@
   color: #999999;
 }
 
+/* 卡片内容区域 */
+
+/* 主要诊断卡片 */
+/* 主要诊断卡片：移除边框，保持简洁 */
+
 .confidence-badge {
   display: flex;
   align-items: baseline;
@@ -118,8 +123,10 @@
   padding: 16rpx 20rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
+  /* 移除左边框 */
 }
 
+/* 鉴别诊断 */
 .differential-list {
   display: flex;
   flex-direction: column;
@@ -133,6 +140,7 @@
   padding: 16rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
+  /* 移除左边框 */
 }
 
 .diff-name {
@@ -151,7 +159,9 @@
   border-radius: 20rpx;
 }
 
+/* 立即措施卡片 */
 .action-card {
+  /* 移除左边框 */
   background: #ffffff;
 }
 
@@ -168,6 +178,7 @@
   padding: 20rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
+  /* 移除边框 */
 }
 
 .action-number {
@@ -192,10 +203,14 @@
   padding-top: 6rpx;
 }
 
+/* 药物治疗卡片 */
+/* 药物治疗卡片：已移除左边框，保持简洁 */
+
 .medication-box {
   background: #f8f9fa;
   padding: 24rpx;
   border-radius: 16rpx;
+  /* 移除边框 */
   margin-bottom: 20rpx;
   
   &:last-child {
@@ -241,6 +256,7 @@
   color: #333333;
 }
 
+/* 简单列表样式 */
 .simple-list {
   display: flex;
   flex-direction: column;
@@ -278,6 +294,7 @@
   line-height: 1.6;
 }
 
+/* 操作按钮 */
 .result-actions {
   display: flex;
   flex-direction: column;
@@ -332,11 +349,11 @@
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: var(--td-brand-color, #0052d9);
+  color: #0052d9; /* 蓝色文字 */
   padding: 12rpx 16rpx;
-  background: linear-gradient(135deg, rgba(0, 82, 217, 0.08), rgba(0, 132, 244, 0.08));
-  border-radius: 12rpx;
-  margin: -24rpx -16rpx 12rpx -16rpx;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); /* 蓝色渐变背景 */
+  border-radius: 8rpx;
+  margin: -24rpx -16rpx 8rpx -16rpx; /* 负margin抵消form-section的padding，保持与出栏页面一致的视觉位置 */
   display: block;
 }
 
@@ -567,12 +584,35 @@
 
 /* ✨ 图片上传样式 - 增强版 */
 
+// 标题区域
+.section-header-with-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
 
+.image-benefit-badge {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 16rpx;
+  background: linear-gradient(135deg, rgba(0, 82, 217, 0.1) 0%, rgba(0, 132, 244, 0.1) 100%);
+  border-radius: 20rpx;
+}
+
+.benefit-text {
+  font-size: 24rpx;
+  color: #0052d9;
+  font-weight: 500;
+}
+
+// ✨ 拍摄建议卡片
 .photo-tips-card {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   margin-bottom: 20rpx;
-  background: linear-gradient(135deg, rgba(0, 82, 217, 0.05) 0%, rgba(0, 132, 244, 0.05) 100%);
 }
 
 .photo-tips-card.autopsy-tips-card {
@@ -611,6 +651,26 @@
   line-height: 1.6;
 }
 
+.image-upload-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.uploaded-image-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.uploaded-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+  border: 2rpx solid var(--td-border-level-1-color);
+}
+
 .image-delete-btn {
   position: absolute;
   top: 8rpx;
@@ -629,6 +689,85 @@
     transform: scale(0.9);
     background: rgba(255, 255, 255, 1);
   }
+}
+
+.delete-icon-x {
+  position: relative;
+  width: 24rpx;
+  height: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.x-line {
+  position: absolute;
+  width: 24rpx;
+  height: 4rpx;
+  background: #ff3b30;
+  border-radius: 2rpx;
+}
+
+.x-line-1 {
+  transform: rotate(45deg);
+}
+
+.x-line-2 {
+  transform: rotate(-45deg);
+}
+
+.upload-placeholder {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--td-bg-color-container);
+  border: 2rpx dashed var(--td-border-level-2-color);
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.95);
+    background: var(--td-bg-color-container-hover);
+  }
+  
+  // ✨ 首次上传强调样式
+  &.first-upload {
+    border: 2rpx dashed #0052d9;
+    background: linear-gradient(135deg, rgba(0, 82, 217, 0.05) 0%, rgba(0, 132, 244, 0.05) 100%);
+  }
+}
+
+.upload-text {
+  display: block;
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary);
+  margin-top: 8rpx;
+  text-align: center;
+  width: 100%;
+  
+  &.upload-text-primary {
+    color: #0052d9;
+    font-weight: 600;
+    font-size: 28rpx;
+  }
+}
+
+.upload-hint {
+  display: block;
+  font-size: 22rpx;
+  color: #999999;
+  margin-top: 4rpx;
+  text-align: center;
+  width: 100%;
+}
+
+// ✨ 新版三宫格上传样式
+.image-upload-grid-three {
+  display: flex;
+  gap: 16rpx;
+  justify-content: space-between;
 }
 
 .upload-box-item {
@@ -846,6 +985,10 @@
   
   .secondary-actions {
     grid-template-columns: 1fr;
+  }
+  
+  .image-upload-container {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
