@@ -209,7 +209,7 @@
       <view class="ai-medication-suggestions">
         <view class="suggestion-item" wx:for="{{aiMedicationSuggestions}}" wx:key="index">
           <view class="suggestion-header">
-            <text class="med-name">💊 {{item.name}}</text>
+            <text class="med-name">{{item.name}}</text>
           </view>
           <view class="suggestion-details">
             <view class="detail-row" wx:if="{{item.dosage}}">

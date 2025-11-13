@@ -578,7 +578,7 @@ function buildBatchContextSection(batchPromptData) {
       const medications = Array.isArray(record.medications) && record.medications.length > 0
         ? record.medications.map(m => m.name).join('、')
         : '未记录药物'
-      batchLines.push(`  💊 ${record.treatmentDate || '未知'} | ${record.diagnosis || '未知'} | 用药：${medications}`)
+      batchLines.push(`  ${record.treatmentDate || '未知'} | ${record.diagnosis || '未知'} | 用药：${medications}`)
     })
   }
 
@@ -587,7 +587,7 @@ function buildBatchContextSection(batchPromptData) {
     batchLines.push('\n【死亡记录（含AI修正对比）】')
     deathHistory.slice(0, 3).forEach(record => {
       const correctionMark = record.correctedDiagnosis && record.aiDiagnosis !== record.correctedDiagnosis
-        ? `❌ AI初判"${record.aiDiagnosis}" → ✅ 兽医确诊"${record.correctedDiagnosis}"`
+        ? `AI初判"${record.aiDiagnosis}" → 兽医确诊"${record.correctedDiagnosis}"`
         : `${record.aiDiagnosis || '未知'}`
       const rating = record.aiAccuracyRating ? `(${record.aiAccuracyRating}★)` : ''
       batchLines.push(`  ${record.deathDate || '未知'} | ${record.deathCount || 0}只 | ${correctionMark} ${rating}`)
