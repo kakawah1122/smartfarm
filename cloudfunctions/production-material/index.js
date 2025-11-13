@@ -682,7 +682,7 @@ async function createMaterialRecord(event, wxContext) {
     // 确保 notes 字段是字符串类型
     let notesValue = recordData.notes || ''
     if (typeof notesValue === 'object') {
-      console.warn('[创建物料记录] notes 字段是对象类型，尝试转换:', notesValue)
+      debugLog('[创建物料记录] notes 字段是对象类型，尝试转换', notesValue)
       notesValue = String(notesValue.value || notesValue.text || JSON.stringify(notesValue))
     }
     notesValue = String(notesValue)

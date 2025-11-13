@@ -473,7 +473,7 @@ async function getTodos(event, wxContext) {
     // 验证返回的任务日龄是否匹配
     const mismatchedTasks = tasksResult.data.filter(task => task.dayAge !== dayAge)
     if (mismatchedTasks.length > 0) {
-      console.warn(`[getTodos] 警告：查询日龄 ${dayAge} 的任务，但返回了 ${mismatchedTasks.length} 个日龄不匹配的任务`, {
+      debugLog(`[getTodos] 查询日龄 ${dayAge} 的任务返回了 ${mismatchedTasks.length} 个不匹配的日龄`, {
         batchId,
         expectedDayAge: dayAge,
         mismatchedTasks: mismatchedTasks.map(t => ({ id: t._id, title: t.title, dayAge: t.dayAge }))

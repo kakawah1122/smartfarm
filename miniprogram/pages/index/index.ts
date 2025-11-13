@@ -1,5 +1,6 @@
 // index.ts - 清理版本，只使用和风天气地理编码
 import { checkPageAuth } from '../../utils/auth-guard'
+import { logger } from '../../utils/logger'
 import { getCurrentBeijingDate } from '../../utils/util'
 import {
   TYPE_NAMES,
@@ -713,7 +714,7 @@ Page({
           goslingUnit: '/羽'
         }
       })
-      console.error('获取鹅价数据失败:', error)
+      logger.error('获取鹅价数据失败:', error)
       return false
     }
   },
@@ -1429,7 +1430,7 @@ Page({
       }
       wx.setStorageSync('weather_cache', cacheData)
     } catch (error: any) {
-      console.error('检查天气更新失败:', error)
+      logger.error('检查天气更新失败:', error)
     }
   },
 
@@ -1451,7 +1452,7 @@ Page({
     try {
       wx.removeStorageSync('weather_cache')
     } catch (error: any) {
-      console.error('获取天气缓存失败:', error)
+      logger.error('获取天气缓存失败:', error)
     }
   },
 
@@ -1483,7 +1484,7 @@ Page({
             // 静默更新成功，不显示任何提示
           }).catch((error: any) => {
             // 静默失败，不干扰用户体验，继续使用缓存数据
-            console.warn('静默刷新天气失败:', error)
+            logger.warn('静默刷新天气失败:', error)
           })
         }, 500)
       } else {
@@ -1493,7 +1494,7 @@ Page({
         }
       }
     } catch (error: any) {
-      console.error('检查并自动刷新天气失败:', error)
+      logger.error('检查并自动刷新天气失败:', error)
     }
   },
 
@@ -1708,7 +1709,7 @@ Page({
         })
       }
     } catch (error: any) {
-      console.error('获取营养品库存失败:', error)
+      logger.error('获取营养品库存失败:', error)
       wx.showToast({
         title: '网络异常，请重试',
         icon: 'error'

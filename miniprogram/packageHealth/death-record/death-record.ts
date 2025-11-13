@@ -1,6 +1,7 @@
 // death-record.ts - 死亡记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
 import { markHomepageNeedSync } from '../../utils/global-sync'
+import { logger } from '../../utils/logger'
 
 const pageConfig = {
   data: {
@@ -214,7 +215,7 @@ const pageConfig = {
       }
     } catch (error) {
       // 查询失败，静默处理
-      console.error('加载批次信息失败:', error)
+      logger.error('加载批次信息失败:', error)
     }
   },
 
@@ -235,7 +236,7 @@ const pageConfig = {
       })
     } catch (error) {
       // 计算失败，静默处理
-      console.error('计算财务损失失败:', error)
+      logger.error('计算财务损失失败:', error)
     }
   },
 

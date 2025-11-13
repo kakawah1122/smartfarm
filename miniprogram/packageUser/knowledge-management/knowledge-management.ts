@@ -760,7 +760,7 @@ const pageConfig = {
       wx.navigateBack({
         delta: 1,
         fail: (err) => {
-          console.error('返回失败:', err)
+          logger.error('返回失败:', err)
           // 返回失败，跳转到个人中心页面（tabBar页面）
           wx.switchTab({
             url: '/pages/profile/profile',

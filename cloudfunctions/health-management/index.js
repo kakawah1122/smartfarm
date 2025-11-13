@@ -120,7 +120,7 @@ async function checkPermission(openid, module, action, resourceId = null) {
       .get()
     
     if (!userResult.data || userResult.data.length === 0) {
-      console.warn('[权限验证] 用户不存在', { openid, module, action })
+      debugLog('[权限验证] 用户不存在', { openid, module, action })
       return false
     }
     
@@ -145,7 +145,7 @@ async function checkPermission(openid, module, action, resourceId = null) {
       
       if (!roleResult.data || roleResult.data.length === 0) {
       // 如果角色定义不存在，使用默认权限
-      console.warn('[权限验证] 角色定义不存在', { userRole, module, action })
+      debugLog('[权限验证] 角色定义不存在', { userRole, module, action })
       return false
       }
       
@@ -158,7 +158,7 @@ async function checkPermission(openid, module, action, resourceId = null) {
       )
       
       if (!modulePermission) {
-      console.warn('[权限验证] 无模块权限', { userRole, module, action, availableModules: permissions.map(p => p.module) })
+      debugLog('[权限验证] 无模块权限', { userRole, module, action, availableModules: permissions.map(p => p.module) })
       return false
       }
       
@@ -168,7 +168,7 @@ async function checkPermission(openid, module, action, resourceId = null) {
         return true
     }
     
-    console.warn('[权限验证] 无操作权限', { userRole, module, action, availableActions: modulePermission.actions })
+    debugLog('[权限验证] 无操作权限', { userRole, module, action, availableActions: modulePermission.actions })
     return false
     
   } catch (error) {
@@ -747,7 +747,7 @@ async function createTreatmentFromAbnormal(event, wxContext) {
                   updatedAt: new Date()
                 }
               })
-            console.log(`✅ 直接提交：已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
+            debugLog(`✅ 直接提交：已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
           }
         }
       } catch (syncError) {
@@ -972,7 +972,7 @@ async function createDeathFromVaccine(event, wxContext) {
       if (userInfo.data.length > 0) {
         operatorName = userInfo.data[0].name || userInfo.data[0].nickName || '未知'
       } else {
-        console.warn('[疫苗死亡] 未找到用户信息, openid:', openid.substring(0, 8) + '...')
+        debugLog('[疫苗死亡] 未找到用户信息', openid.substring(0, 8) + '...')
       }
     } catch (userError) {
       console.error('[疫苗死亡] 获取用户信息失败:', userError)
@@ -1150,9 +1150,9 @@ async function submitTreatmentPlan(event, wxContext) {
                 updatedAt: new Date()
               }
             })
-          console.log(`✅ 已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
+          debugLog(`✅ 已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
         } else {
-          console.warn('⚠️ 异常记录缺少关联的诊断ID，无法同步更新 AI 诊断记录')
+          debugLog('⚠️ 异常记录缺少关联的诊断ID，无法同步更新 AI 诊断记录')
         }
       }
     } catch (syncError) {
@@ -1570,14 +1570,14 @@ async function correctAbnormalDiagnosis(event, wxContext) {
             })
           debugLog('✅ 已同步更新 AI 诊断记录:', diagnosisId)
         } else {
-          console.warn('⚠️ AI 诊断记录不存在:', diagnosisId)
+          debugLog('⚠️ AI 诊断记录不存在:', diagnosisId)
         }
       } catch (diagnosisError) {
         // 如果 AI 诊断记录不存在或更新失败，记录错误但不影响主流程
         console.error('❌ 更新 AI 诊断记录失败:', diagnosisError.message, '诊断ID:', diagnosisId)
       }
     } else {
-      console.warn('⚠️ 异常记录缺少关联的诊断ID，无法同步修正信息到诊断历史')
+      debugLog('⚠️ 异常记录缺少关联的诊断ID，无法同步修正信息到诊断历史')
     }
     
     // 记录审计日志
@@ -1695,7 +1695,7 @@ async function createTreatmentRecord(event, wxContext) {
           })
         debugLog('✅ 已同步治疗信息到AI诊断记录:', diagnosisId)
       } catch (syncError) {
-        console.warn('⚠️ 同步治疗信息到AI诊断记录失败:', syncError.message)
+        debugLog('⚠️ 同步治疗信息到AI诊断记录失败:', syncError.message)
         // 不影响主流程
       }
     }
@@ -1815,7 +1815,7 @@ async function updateTreatmentRecord(event, wxContext) {
           debugLog('✅ 已同步治疗更新到AI诊断记录:', treatmentRecord.data.diagnosisId)
         }
       } catch (syncError) {
-        console.warn('⚠️ 同步治疗更新到AI诊断记录失败:', syncError.message)
+        debugLog('⚠️ 同步治疗更新到AI诊断记录失败:', syncError.message)
         // 不影响主流程
       }
     }
@@ -3810,7 +3810,7 @@ async function createDeathRecord(event, wxContext) {
       if (userInfo.data.length > 0) {
         operatorName = userInfo.data[0].name || userInfo.data[0].nickName || '未知'
       } else {
-        console.warn('[标准死亡] 未找到用户信息, openid:', openid.substring(0, 8) + '...')
+        debugLog('[标准死亡] 未找到用户信息', openid.substring(0, 8) + '...')
       }
     } catch (userError) {
       console.error('[标准死亡] 获取用户信息失败:', userError)
@@ -5284,7 +5284,7 @@ async function updateTreatmentProgress(event, wxContext) {
             batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
             debugLog('通过批次号查询成功，批次号:', batchNumber, '文档ID:', batchDocId)
           } else {
-            console.warn('未找到批次信息:', treatment.batchId)
+            debugLog('未找到批次信息:', treatment.batchId)
             // 批次不存在，使用默认值
             batchNumber = treatment.batchId
           }
@@ -5313,7 +5313,7 @@ async function updateTreatmentProgress(event, wxContext) {
       }
       
       if (unitCost === 0) {
-        console.warn(`❌ 批次 ${batchNumber} (文档ID: ${batchDocId}) 缺少入栏单价`)
+        debugLog(`❌ 批次 ${batchNumber} (文档ID: ${batchDocId}) 缺少入栏单价`)
         throw new Error(`批次 ${batchNumber} 缺少入栏单价，请先补充批次入栏单价`)
       }
       
@@ -5899,7 +5899,7 @@ async function getDeathRecordsList(event, wxContext) {
       const operatorOpenid = record._openid || record.operator || record.createdBy || record.reportedBy
       
       if (!operatorOpenid) {
-        console.warn('[死亡记录列表] 记录缺少操作员openid:', record._id)
+        debugLog('[死亡记录列表] 记录缺少操作员openid:', record._id)
         return {
           ...record,
           operatorName: '系统记录'
@@ -5920,7 +5920,7 @@ async function getDeathRecordsList(event, wxContext) {
             operatorName
           }
         } else {
-          console.warn('[死亡记录列表] 未找到用户信息, openid:', operatorOpenid.substring(0, 8) + '...')
+          debugLog('[死亡记录列表] 未找到用户信息', operatorOpenid.substring(0, 8) + '...')
           return {
             ...record,
             operatorName: '未知用户'
@@ -6160,7 +6160,7 @@ async function correctDeathDiagnosis(event, wxContext) {
           })
         debugLog('✅ 已同步更新 AI 诊断记录:', record.aiDiagnosisId)
       } catch (feedbackError) {
-        console.warn('⚠️ 更新 AI 诊断记录失败（可能记录不存在）:', feedbackError.message)
+        debugLog('⚠️ 更新 AI 诊断记录失败（可能记录不存在）:', feedbackError.message)
         // 不影响主流程
       }
     }
@@ -6197,7 +6197,7 @@ async function getTodayPreventionTasks(event, wxContext) {
     debugLog('[首页预防待办] 开始权限验证', logContext)
     const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
     if (!hasPermission) {
-      console.warn('[首页预防待办] 权限不足', logContext)
+      debugLog('[首页预防待办] 权限不足', logContext)
       return {
         success: false,
         errorCode: 'PERMISSION_DENIED',
@@ -6360,7 +6360,7 @@ async function getPreventionTimeline(event, wxContext) {
     debugLog('[时间线] 开始权限验证', logContext)
     const hasPermission = await checkPermission(openid, 'health', 'view', batchId)
     if (!hasPermission) {
-      console.warn('[时间线] 权限不足', logContext)
+      debugLog('[时间线] 权限不足', logContext)
       return {
         success: false,
         errorCode: 'PERMISSION_DENIED',
@@ -6548,7 +6548,7 @@ async function getBatchPreventionComparison(event, wxContext) {
     debugLog('[批次对比] 开始权限验证', logContext)
     const hasPermission = await checkPermission(openid, 'health', 'view', null)
     if (!hasPermission) {
-      console.warn('[批次对比] 权限不足', logContext)
+      debugLog('[批次对比] 权限不足', logContext)
       return {
         success: false,
         errorCode: 'PERMISSION_DENIED',
@@ -6720,7 +6720,7 @@ async function getPreventionDashboard(event, wxContext) {
     debugLog('[预防管理] 权限验证结果:', hasPermission)
     
     if (!hasPermission) {
-      console.warn('[预防管理] 权限不足', logContext)
+      debugLog('[预防管理] 权限不足', logContext)
       return {
         success: false,
         errorCode: 'PERMISSION_DENIED',
@@ -7128,7 +7128,7 @@ async function completePreventionTask(event, wxContext) {
     debugLog('[预防任务] 开始权限验证', { ...logContext, taskId, batchId })
     const hasPermission = await checkPermission(openid, 'health', 'create', batchId)
     if (!hasPermission) {
-      console.warn('[预防任务] 权限不足', logContext)
+      debugLog('[预防任务] 权限不足', logContext)
       return {
         success: false,
         errorCode: 'PERMISSION_DENIED',
@@ -7152,7 +7152,7 @@ async function completePreventionTask(event, wxContext) {
       .get()
     
     if (!taskResult.data) {
-      console.warn('[预防任务] 任务不存在', { ...logContext, taskId })
+      debugLog('[预防任务] 任务不存在', { ...logContext, taskId })
       return {
         success: false,
         errorCode: 'TASK_NOT_FOUND',
@@ -7162,7 +7162,7 @@ async function completePreventionTask(event, wxContext) {
     
     const task = taskResult.data
     if (task.completed) {
-      console.warn('[预防任务] 任务已完成', { ...logContext, taskId })
+      debugLog('[预防任务] 任务已完成', { ...logContext, taskId })
       return {
         success: false,
         errorCode: 'TASK_COMPLETED',

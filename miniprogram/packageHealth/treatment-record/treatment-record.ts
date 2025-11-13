@@ -1,6 +1,7 @@
 // treatment-record.ts - 治疗记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
 import { markHomepageNeedSync } from '../../utils/global-sync'
+import { logger } from '../../utils/logger'
 
 interface Medication {
   medicationId?: string
@@ -402,7 +403,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       }
     } catch (error: any) {
       wx.hideLoading()
-      console.error('❌ 加载诊断信息失败:', error)
+      logger.error('❌ 加载诊断信息失败:', error)
       wx.showToast({
         title: error.message || '加载诊断信息失败',
         icon: 'none',
@@ -535,7 +536,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       }
     } catch (error) {
       // 查询失败，保持使用 batchId
-      console.error('加载批次号失败:', error)
+      logger.error('加载批次号失败:', error)
     }
   },
 

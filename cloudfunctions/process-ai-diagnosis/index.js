@@ -13,6 +13,13 @@ cloud.init({
 
 const db = cloud.database()
 
+const debugEnabled = process.env.DEBUG_LOG === 'true'
+const debugLog = (...args) => {
+  if (debugEnabled) {
+    console.info(...args)
+  }
+}
+
 // ========== 清洗疾病名称工具函数 ==========
 /**
  * 清洗疾病名称：移除英文括号部分
@@ -34,7 +41,7 @@ function cleanDiseaseName(diseaseName) {
   
   // 调试日志：记录清洗前后的病名
   if (originalName !== cleanedName) {
-    console.log(`[清洗病名] "${originalName}" → "${cleanedName}"`)
+    debugLog(`[清洗病名] "${originalName}" → "${cleanedName}"`)
   }
   
   return cleanedName
@@ -76,7 +83,7 @@ function cleanDiseaseNames(diagnosisResult) {
     })
   }
   
-  console.log('✅ 病名清洗完成')
+  debugLog('✅ 病名清洗完成')
 }
 
 /**
@@ -295,9 +302,9 @@ async function processTask(diagnosisId) {
       diagnosisData = JSON.parse(jsonContent)
       
       // ✅ 关键步骤：清洗疾病名称，移除英文括号部分
-      console.log('开始清洗病名...')
+      debugLog('开始清洗病名...')
       cleanDiseaseNames(diagnosisData)
-      console.log('病名清洗完成，准备保存到数据库')
+      debugLog('病名清洗完成，准备保存到数据库')
       
     } catch (parseError) {
       console.error('JSON解析失败:', parseError.message)

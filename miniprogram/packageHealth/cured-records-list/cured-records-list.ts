@@ -1,6 +1,8 @@
 // miniprogram/packageHealth/cured-records-list/cured-records-list.ts
 // 治愈记录列表页面
 
+import { logger } from '../../utils/logger'
+
 interface CuredRecord {
   _id: string
   batchId: string
@@ -83,7 +85,7 @@ Page({
 
       if (!result.result || !result.result.success) {
         const errorMsg = result.result?.error || result.errMsg || '查询失败'
-        console.error('云函数调用失败:', errorMsg)
+        logger.error('云函数调用失败:', errorMsg)
         throw new Error(errorMsg)
       }
 
@@ -133,13 +135,13 @@ Page({
       })
 
     } catch (error: any) {
-      console.error('云函数查询失败，尝试降级到客户端查询:', error)
+      logger.error('云函数查询失败，尝试降级到客户端查询:', error)
       
       // 降级：使用客户端直接查询
       try {
         await this.loadRecordsFromClient()
       } catch (clientError: any) {
-        console.error('客户端查询也失败:', clientError)
+        logger.error('客户端查询也失败:', clientError)
         wx.showToast({
           title: clientError.message || '加载失败',
           icon: 'none'
@@ -249,7 +251,7 @@ Page({
         operatorName: '当前用户'  // 客户端查询时使用占位符
       }))
     } catch (error) {
-      console.error('获取批次号失败:', error)
+      logger.error('获取批次号失败:', error)
       return records.map(record => ({
         ...record,
         operatorName: '当前用户'
@@ -296,7 +298,7 @@ Page({
       wx.navigateBack({
         delta: 1,
         fail: (err) => {
-          console.error('返回失败:', err)
+          logger.error('返回失败:', err)
           // 返回失败，跳转到健康管理页面
           wx.redirectTo({
             url: '/pages/health/health',

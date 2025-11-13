@@ -79,7 +79,7 @@ Page({
         this.setEmptyState()
       }
     } catch (error) {
-      console.error('加载鹅价数据失败:', error)
+      logger.error('加载鹅价数据失败:', error)
       this.setEmptyState()
     }
   },

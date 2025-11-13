@@ -1,4 +1,5 @@
 import { createPageWithNavbar } from '../../../utils/navigation'
+import { logger } from '../../../utils/logger'
 
 interface ArticleDetail {
   id: number
@@ -40,7 +41,7 @@ const pageConfig = {
         themeClass: this.getThemeClass(article.categoryTheme)
       })
     } catch (error) {
-      console.error('文章详情加载失败', error)
+      logger.error('文章详情加载失败', error)
       wx.showToast({
         title: '文章加载失败',
         icon: 'none'

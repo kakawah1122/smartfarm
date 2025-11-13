@@ -1306,12 +1306,12 @@ function validateCount(count, expectedRange) {
   
   // 如果计数远超预期范围（>150%），记录警告但仍返回
   if (count > expectedRange.max * 1.5) {
-    console.warn(`⚠️ 计数异常：${count}只（预期${expectedRange.min}-${expectedRange.max}）`)
+    debugLog(`⚠️ 计数异常：${count}只（预期${expectedRange.min}-${expectedRange.max}）`)
   }
   
   // 如果计数为负数或0，返回默认值
   if (!count || count < 0) {
-    console.warn('⚠️ 计数无效，返回0')
+    debugLog('⚠️ 计数无效，返回0')
     return 0
   }
   

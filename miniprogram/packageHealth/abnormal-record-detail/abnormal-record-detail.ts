@@ -407,7 +407,7 @@ Page({
       }
     } catch (error: any) {
       wx.hideLoading()
-      console.error('确认死亡归档失败:', error)
+      logger.error('确认死亡归档失败:', error)
       wx.showToast({
         title: error.message || '归档失败，请重试',
         icon: 'none'

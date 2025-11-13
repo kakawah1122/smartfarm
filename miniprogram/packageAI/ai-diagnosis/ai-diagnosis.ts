@@ -1,5 +1,6 @@
 // ai-diagnosis.ts - AI智能诊断页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 type AnyObject = Record<string, any>
 type SymptomOption = { id: string; name: string; checked: boolean }
@@ -40,7 +41,7 @@ function normalizeCloudResult<T = AnyObject>(
     try {
       return JSON.parse(trimmed) as CloudResponse<T>
     } catch (e) {
-      console.error('云函数返回的字符串结果无法解析为JSON', e)
+      logger.error('云函数返回的字符串结果无法解析为JSON', e)
       return null
     }
   }
@@ -208,7 +209,7 @@ const pageConfig: AnyObject = {
       }
     } catch (error: any) {
       wx.hideLoading()
-      console.error('加载批次列表失败:', error)
+      logger.error('加载批次列表失败:', error)
       wx.showModal({
         title: '加载失败',
         content: error.message || '无法加载批次列表，请重试',
@@ -438,7 +439,7 @@ const pageConfig: AnyObject = {
           })
         } catch (error: any) {
           wx.hideLoading()
-          console.error('图片上传失败:', error)
+          logger.error('图片上传失败:', error)
           wx.showToast({
             title: '图片上传失败，请重试',
             icon: 'none'
@@ -541,7 +542,7 @@ const pageConfig: AnyObject = {
           })
         } catch (error: any) {
           wx.hideLoading()
-          console.error('图片上传失败:', error)
+          logger.error('图片上传失败:', error)
           wx.showToast({
             title: '图片上传失败，请重试',
             icon: 'none'
@@ -771,15 +772,15 @@ const pageConfig: AnyObject = {
         this.pollDiagnosisResult(diagnosisId)
       } else {
         const errorMsg = result?.message || result?.error || '诊断提交失败'
-        console.error('====== ai-diagnosis 返回错误 ======')
-        console.error('错误信息:', errorMsg)
+        logger.error('====== ai-diagnosis 返回错误 ======')
+        logger.error('错误信息:', errorMsg)
         throw new Error(errorMsg)
       }
     } catch (error: any) {
-      console.error('====== 诊断提交失败 ======')
-      console.error('错误类型:', error.errCode)
-      console.error('错误信息:', error.errMsg || error.message)
-      console.error('完整错误:', error)
+      logger.error('====== 诊断提交失败 ======')
+      logger.error('错误类型:', error.errCode)
+      logger.error('错误信息:', error.errMsg || error.message)
+      logger.error('完整错误:', error)
       
       // 提交失败时才停止加载
       this.setData({ submitting: false })
@@ -838,7 +839,7 @@ const pageConfig: AnyObject = {
             try {
               diagnosisResult = JSON.parse(task.result)
             } catch (e) {
-              console.error('❌ JSON解析失败:', e)
+              logger.error('❌ JSON解析失败:', e)
               throw new Error('诊断结果格式错误')
             }
           }
@@ -854,10 +855,10 @@ const pageConfig: AnyObject = {
           // wx.showToast({ title: '诊断完成', icon: 'success' })
         } else if (task.status === 'failed') {
           // ✨ 诊断失败
-          console.error('====== 诊断失败详情 ======')
-          console.error('错误信息:', task.error)
-          console.error('任务ID:', diagnosisId)
-          console.error('完整任务:', task)
+          logger.error('====== 诊断失败详情 ======')
+          logger.error('错误信息:', task.error)
+          logger.error('任务ID:', diagnosisId)
+          logger.error('完整任务:', task)
           
           this.setData({
             diagnosisStatus: 'failed',
@@ -912,7 +913,7 @@ const pageConfig: AnyObject = {
           }
         }
       } catch (error: any) {
-        console.error(`轮询失败: ${error.message}`)
+        logger.error(`轮询失败: ${error.message}`)
         
         // 继续轮询，直到超时
         if (retries < maxRetries) {
@@ -963,7 +964,7 @@ const pageConfig: AnyObject = {
         }
       }
     } catch (error) {
-      console.error('采纳AI建议失败:', error)
+      logger.error('采纳AI建议失败:', error)
       wx.showToast({
         title: '操作失败',
         icon: 'none'
@@ -1030,7 +1031,7 @@ const pageConfig: AnyObject = {
       }
     } catch (error: any) {
       wx.hideLoading()
-      console.error('创建治疗记录失败:', error)
+      logger.error('创建治疗记录失败:', error)
       
       // 显示详细错误信息
       const errorMsg = error.message || error.errMsg || '创建治疗记录失败'

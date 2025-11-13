@@ -25,13 +25,20 @@ cloud.init({
 
 const db = cloud.database()
 
+const debugEnabled = process.env.DEBUG_LOG === 'true'
+const debugLog = (...args) => {
+  if (debugEnabled) {
+    console.info(...args)
+  }
+}
+
 /**
  * 修复 AI 诊断记录的治疗状态
  */
 async function fixDiagnosisTreatmentStatus(event, wxContext) {
   try {
     const openid = wxContext.OPENID
-    console.log(`🔧 开始修复用户 ${openid} 的诊断记录治疗状态...`)
+    debugLog(`🔧 开始修复用户 ${openid} 的诊断记录治疗状态...`)
     
     // 1. 查询所有状态为 'treating' 的异常记录
     const treatingRecords = await db.collection(COLLECTIONS.HEALTH_RECORDS)
@@ -50,7 +57,7 @@ async function fixDiagnosisTreatmentStatus(event, wxContext) {
       })
       .get()
     
-    console.log(`📊 找到 ${treatingRecords.data.length} 条治疗中的异常记录`)
+    debugLog(`📊 找到 ${treatingRecords.data.length} 条治疗中的异常记录`)
     
     if (treatingRecords.data.length === 0) {
       return {
@@ -74,7 +81,7 @@ async function fixDiagnosisTreatmentStatus(event, wxContext) {
       const diagnosisId = record.diagnosisId || record.relatedDiagnosisId
       
       if (!diagnosisId) {
-        console.warn(`⚠️ 异常记录 ${record._id} 缺少诊断ID，跳过`)
+        debugLog(`⚠️ 异常记录 ${record._id} 缺少诊断ID，跳过`)
         skippedCount++
         continue
       }
@@ -87,14 +94,14 @@ async function fixDiagnosisTreatmentStatus(event, wxContext) {
           .get()
         
         if (!diagnosisRecord.data) {
-          console.warn(`⚠️ AI 诊断记录 ${diagnosisId} 不存在，跳过`)
+          debugLog(`⚠️ AI 诊断记录 ${diagnosisId} 不存在，跳过`)
           skippedCount++
           continue
         }
         
         // 如果已经是 true，跳过
         if (diagnosisRecord.data.hasTreatment === true) {
-          console.log(`✅ AI 诊断记录 ${diagnosisId} 已经标记为有治疗，跳过`)
+          debugLog(`✅ AI 诊断记录 ${diagnosisId} 已经标记为有治疗，跳过`)
           skippedCount++
           continue
         }
@@ -110,7 +117,7 @@ async function fixDiagnosisTreatmentStatus(event, wxContext) {
             }
           })
         
-        console.log(`✅ 已修复 AI 诊断记录 ${diagnosisId}`)
+        debugLog(`✅ 已修复 AI 诊断记录 ${diagnosisId}`)
         fixedCount++
       } catch (error) {
         console.error(`❌ 修复失败 - 诊断ID: ${diagnosisId}`, error.message)
@@ -122,7 +129,7 @@ async function fixDiagnosisTreatmentStatus(event, wxContext) {
       }
     }
     
-    console.log(`🎉 修复完成！总计：${treatingRecords.data.length}，已修复：${fixedCount}，跳过：${skippedCount}，失败：${errors.length}`)
+    debugLog(`🎉 修复完成！总计：${treatingRecords.data.length}，已修复：${fixedCount}，跳过：${skippedCount}，失败：${errors.length}`)
     
     return {
       success: true,

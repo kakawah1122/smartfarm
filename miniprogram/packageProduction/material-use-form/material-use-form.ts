@@ -1,5 +1,6 @@
 // material-use-form.ts - 物料领用表单页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 // 表单数据接口
 interface MaterialUseFormData {
@@ -160,7 +161,7 @@ const pageConfig = {
     
     // 确保value是字符串类型
     if (typeof value === 'object') {
-      console.warn('[表单字段变化] 检测到对象类型的值，尝试转换为字符串:', value)
+      logger.warn('[表单字段变化] 检测到对象类型的值，尝试转换为字符串:', value)
       value = String(value?.value || value || '')
     }
     

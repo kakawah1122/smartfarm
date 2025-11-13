@@ -1,6 +1,7 @@
 // notification-settings.ts - 通知设置页面
 import { createPageWithNavbar } from '../../utils/navigation'
 import { getSubscriptionTemplates, SubscriptionTemplate } from '../../utils/notification-config'
+import { logger } from '../../utils/logger'
 
 type SubscriptionStatus = 'accept' | 'reject' | 'ban' | 'filter' | 'unknown'
 type RenderStatus = SubscriptionStatus | 'global-off' | 'unconfigured'
@@ -195,7 +196,7 @@ const pageConfig = {
         this.loadNotificationSettings()
       },
       fail: (err) => {
-        console.error('订阅消息失败:', err)
+        logger.error('订阅消息失败:', err)
         const errCode = err?.errCode as number | undefined
         const message = (errCode && SUBSCRIBE_FAIL_TIPS[errCode]) || '订阅失败，请稍后重试'
         wx.showToast({

@@ -36,6 +36,10 @@ interface DeathRecord {
   displayFindings?: string
 }
 
+import { createPageWithNavbar } from '../../utils/navigation'
+import { formatDateTime } from '../../utils/health-utils'
+import { logger } from '../../utils/logger'
+
 Page({
   data: {
     loading: true,
@@ -255,7 +259,7 @@ Page({
       wx.navigateBack({
         delta: 1,
         fail: (err) => {
-          console.error('返回失败:', err)
+          logger.error('返回失败:', err)
           // 返回失败，跳转到健康管理页面
           wx.redirectTo({
             url: '/pages/health/health',
