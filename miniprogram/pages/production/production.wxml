@@ -498,14 +498,6 @@
                           <text class="date-text">{{item.date}}</text>
                           <text class="operator-text">{{item.operator}}</text>
                         </view>
-                        <t-tag 
-                          theme="{{item.status === '已完成' ? 'success' : 'primary'}}" 
-                          size="small"
-                          variant="light"
-                          class="status-tag"
-                        >
-                          {{item.status || '已完成'}}
-                        </t-tag>
                       </view>
                     </view>
                   </view>

@@ -403,10 +403,7 @@
 
 .operator-text {
   font-size: 24rpx;
-  color: #0052d9;
-  background: #e6f0ff;
-  padding: 6rpx 16rpx;
-  border-radius: 8rpx;
+  color: var(--td-text-color-secondary, #666);
   font-weight: 500;
   flex-shrink: 0;
 }
