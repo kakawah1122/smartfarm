@@ -91,7 +91,7 @@ Component({
     },
 
     // 刷新事件
-    onRefresh(e: any) {
+    onRefresh() {
       // 阻止冒泡，避免触发卡片点击
       this.triggerEvent('refresh')
     },

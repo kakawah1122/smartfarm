@@ -95,8 +95,8 @@
       </view>
     </view>
 
-    <!-- AI建议 -->
-    <view class="info-section" wx:if="{{record.aiRecommendation}}">
+    <!-- AI建议（仅病鹅诊断显示） -->
+    <view class="info-section" wx:if="{{record.aiRecommendation && !isAutopsyRecord}}">
       <view class="section-title">
         <text class="title-text">AI治疗建议</text>
       </view>
@@ -250,30 +250,27 @@
     <!-- 底部操作按钮 -->
     <view class="action-buttons" wx:if="{{record.status === 'abnormal'}}">
       <view class="buttons-row">
-        <!-- 未修正时显示修正按钮 -->
         <t-button 
           theme="light" 
           size="large" 
           bind:tap="correctDiagnosis" 
-          wx:if="{{!record.isCorrected}}"
           block
         >
-          修正结果
-        </t-button>
-        <!-- 已修正时显示重新修正按钮 -->
-        <t-button 
-          theme="light" 
-          size="large" 
-          bind:tap="correctDiagnosis" 
-          wx:if="{{record.isCorrected}}"
-          block
-        >
-          重新修正
+          {{record.isCorrected ? '重新修正' : '修正结果'}}
         </t-button>
         <t-button 
           theme="primary" 
           size="large" 
+          bind:tap="confirmDeath"
+          block
+        >
+          确定归档
+        </t-button>
+        <t-button 
+          theme="light" 
+          size="large" 
           bind:tap="createTreatmentPlan"
+          wx:if="{{!isAutopsyRecord}}"
           block
         >
           制定治疗方案

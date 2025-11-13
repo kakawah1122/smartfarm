@@ -34,19 +34,6 @@
           <view class="diagnosis-name">{{diagnosisType === 'autopsy_analysis' ? (diagnosisResult.primaryCause.disease || diagnosisResult.primaryDiagnosis.disease) : diagnosisResult.primaryDiagnosis.disease}}</view>
           <view class="diagnosis-reasoning">{{diagnosisType === 'autopsy_analysis' ? (diagnosisResult.primaryCause.reasoning || diagnosisResult.primaryDiagnosis.reasoning) : diagnosisResult.primaryDiagnosis.reasoning}}</view>
         </view>
-        
-        <!-- 死因剖析：流行病学风险 -->
-        <view class="status-row" wx:if="{{diagnosisType === 'autopsy_analysis' && diagnosisResult.epidemiologyRisk}}">
-          <view class="status-item">
-            <text class="status-label">传播风险</text>
-            <t-tag 
-              theme="{{diagnosisResult.epidemiologyRisk === 'high' ? 'danger' : diagnosisResult.epidemiologyRisk === 'medium' ? 'warning' : 'success'}}"
-              size="medium"
-            >
-              {{diagnosisResult.epidemiologyRisk === 'high' ? '高风险' : diagnosisResult.epidemiologyRisk === 'medium' ? '中等' : '低风险'}}
-            </t-tag>
-          </view>
-        </view>
       </view>
 
       <!-- 鉴别诊断/可能死因卡片 -->
@@ -213,20 +200,22 @@
         <text class="section-title">基本信息</text>
         
         <!-- 诊断类型选择 -->
-        <view class="form-row">
+        <view class="form-row diagnosis-type-row">
           <text class="form-label">诊断类型</text>
-          <picker 
-            class="form-picker"
-            mode="selector"
-            range="{{diagnosisTypeOptions}}"
-            range-key="label"
-            value="{{diagnosisTypePickerIndex}}"
+          <radio-group 
+            class="diagnosis-type-group"
             bindchange="onDiagnosisTypeChange"
+            value="{{diagnosisType}}"
           >
-            <view class="picker-value">
-              {{diagnosisTypeOptions[diagnosisTypePickerIndex].label}}
-            </view>
-          </picker>
+            <label 
+              class="diagnosis-type-option"
+              wx:for="{{diagnosisTypeOptions}}"
+              wx:key="value"
+            >
+              <radio value="{{item.value}}" checked="{{diagnosisType === item.value}}" />
+              <text class="option-label">{{item.label}}</text>
+            </label>
+          </radio-group>
         </view>
         
         <!-- 批次选择 -->
@@ -351,29 +340,24 @@
 
       <!-- 图片上传 - ✨ 增强版 -->
       <view class="form-section">
-        <text class="section-title">{{diagnosisType === 'autopsy_analysis' ? '剖检照片（强烈建议）' : '上传症状图片（可选）'}}</text>
+        <text class="section-title">{{diagnosisType === 'autopsy_analysis' ? '剖检照片' : '上传症状图片'}}</text>
         
         <!-- ✨ 拍摄建议 -->
         <view class="photo-tips-card" wx:if="{{diagnosisType === 'live_diagnosis'}}">
           <view class="tips-title">
-            <t-icon name="lightbulb" size="18" color="#ed7b2f" />
-            <text class="tips-title-text">拍摄建议（可提高诊断准确性）</text>
+            <text class="tips-title-text">拍摄建议</text>
           </view>
           <view class="tips-list">
             <view class="tip-item">
-              <text class="tip-number">1</text>
               <text class="tip-text">粪便照片：拍摄清晰、光线充足，能看清颜色和性状</text>
             </view>
             <view class="tip-item">
-              <text class="tip-number">2</text>
               <text class="tip-text">病鹅姿态：全身照，能看清精神状态和异常姿势</text>
             </view>
             <view class="tip-item">
-              <text class="tip-number">3</text>
               <text class="tip-text">局部病变：肛门周围、眼部、肢体等异常部位特写</text>
             </view>
             <view class="tip-item">
-              <text class="tip-number">4</text>
               <text class="tip-text">避免模糊：请勿抖动，确保对焦清晰</text>
             </view>
           </view>
@@ -382,24 +366,19 @@
         <!-- 死因剖析拍摄建议 -->
         <view class="photo-tips-card autopsy-tips-card" wx:if="{{diagnosisType === 'autopsy_analysis'}}">
           <view class="tips-title">
-            <t-icon name="lightbulb" size="18" color="#e34d59" />
-            <text class="tips-title-text">剖检拍照要点（重要）</text>
+            <text class="tips-title-text">剖检拍照要点</text>
           </view>
           <view class="tips-list">
             <view class="tip-item">
-              <text class="tip-number">1</text>
               <text class="tip-text">打开腹腔后整体拍摄，能看到肝脏、肠道、心脏等主要器官</text>
             </view>
             <view class="tip-item">
-              <text class="tip-number">2</text>
               <text class="tip-text">发现异常的器官单独特写（如肝脏有白点、肠道出血等）</text>
             </view>
             <view class="tip-item">
-              <text class="tip-number">3</text>
               <text class="tip-text">光线充足、对焦清晰，能看清器官颜色和病变</text>
             </view>
             <view class="tip-item">
-              <text class="tip-number">4</text>
               <text class="tip-text">建议拍摄2-4张不同角度的照片</text>
             </view>
           </view>

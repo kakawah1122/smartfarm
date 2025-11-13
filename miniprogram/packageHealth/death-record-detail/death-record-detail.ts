@@ -112,8 +112,48 @@ Page({
           }
         }
 
+        const displayDeathCause = (record.isCorrected && record.correctedCause)
+          ? record.correctedCause
+          : (record.deathCause || '未知死因')
+
+        const meaningfulTexts: string[] = []
+        const pushIfMeaningful = (text?: string) => {
+          if (!text) {
+            return
+          }
+          const trimmed = text.trim()
+          if (!trimmed || trimmed === '无明显生前症状') {
+            return
+          }
+          meaningfulTexts.push(trimmed)
+        }
+
+        if (record.autopsyFindings) {
+          if (typeof record.autopsyFindings === 'string') {
+            pushIfMeaningful(record.autopsyFindings)
+          } else if (typeof record.autopsyFindings === 'object') {
+            const abnormalities = record.autopsyFindings.abnormalities
+            if (Array.isArray(abnormalities) && abnormalities.length > 0) {
+              pushIfMeaningful(abnormalities.join('、'))
+            }
+            pushIfMeaningful(record.autopsyFindings.description)
+          }
+        }
+
+        pushIfMeaningful(record.description)
+        pushIfMeaningful(record.symptomsText)
+
+        const displayFindings = meaningfulTexts
+          .filter((value, index, self) => self.indexOf(value) === index)
+          .join('；')
+
         this.setData({
-          record: { ...record, autopsyImages: processedImages },
+          record: {
+            ...record,
+            autopsyImages: processedImages,
+            displayDeathCause,
+            displayFindings
+          },
           diagnosisResult: diagnosisResult || {},
           loading: false
         })

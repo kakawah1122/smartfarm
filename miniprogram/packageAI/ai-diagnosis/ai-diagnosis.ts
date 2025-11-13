@@ -1,6 +1,10 @@
 // ai-diagnosis.ts - AI智能诊断页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+type AnyObject = Record<string, any>
+type SymptomOption = { id: string; name: string; checked: boolean }
+type AutopsyAbnormality = { id: string; name: string; checked: boolean }
+
 type CloudResponseSuccess<T> = {
   success: true
   data?: T
@@ -17,8 +21,8 @@ type CloudResponseFailure = {
 
 type CloudResponse<T> = CloudResponseSuccess<T> | CloudResponseFailure
 
-function normalizeCloudResult<T = WechatMiniprogram.AnyObject>(
-  result: WechatMiniprogram.Cloud.CallFunctionResult
+function normalizeCloudResult<T = AnyObject>(
+  result: any
 ): CloudResponse<T> | null {
   const payload = result?.result
 
@@ -49,7 +53,7 @@ function normalizeCloudResult<T = WechatMiniprogram.AnyObject>(
 }
 
 // 页面配置对象
-const pageConfig = {
+const pageConfig: AnyObject = {
   data: {
     // 诊断类型
     diagnosisType: 'live_diagnosis' as 'live_diagnosis' | 'autopsy_analysis',
@@ -57,7 +61,6 @@ const pageConfig = {
       { label: '病鹅诊断', value: 'live_diagnosis' },
       { label: '死因剖析', value: 'autopsy_analysis' }
     ],
-    diagnosisTypePickerIndex: 0,
     
     // 输入数据
     symptoms: '',
@@ -84,7 +87,7 @@ const pageConfig = {
       { id: 'respiratory', name: '呼吸困难', checked: false },
       { id: 'discharge', name: '鼻眼分泌物', checked: false },
       { id: 'lameness', name: '跛行', checked: false }
-    ],
+    ] as SymptomOption[],
     
     // 死因剖析专用：常见异常快捷选择
     autopsyAbnormalities: [
@@ -98,7 +101,7 @@ const pageConfig = {
       { id: 'lung_black', name: '肺部发黑', checked: false },
       { id: 'heart_spots', name: '心脏有白点', checked: false },
       { id: 'heart_fluid', name: '心脏积液', checked: false }
-    ],
+    ] as AutopsyAbnormality[],
     autopsyDescription: '', // 自由描述剖检所见
     
     // AI诊断结果
@@ -224,12 +227,15 @@ const pageConfig = {
   },
 
   // 诊断类型选择器变化
-  onDiagnosisTypeChange(e: any) {
-    const index = parseInt(e.detail.value)
-    const selectedType = this.data.diagnosisTypeOptions[index]
+  onDiagnosisTypeChange(e: WechatMiniprogram.RadioGroupChange) {
+    const selectedValue = e.detail.value
+    const selectedType = this.data.diagnosisTypeOptions.find((item: { label: string; value: string }) => item.value === selectedValue)
     
+    if (!selectedType) {
+      return
+    }
+
     this.setData({
-      diagnosisTypePickerIndex: index,
       diagnosisType: selectedType.value as 'live_diagnosis' | 'autopsy_analysis',
       // 切换类型时清空相关字段
       affectedCount: '',
@@ -238,17 +244,23 @@ const pageConfig = {
       images: [],
       validImagesCount: 0,
       autopsyDescription: '',
-      commonSymptoms: this.data.commonSymptoms.map(item => ({ ...item, checked: false })),
-      autopsyAbnormalities: this.data.autopsyAbnormalities.map(item => ({ ...item, checked: false }))
+      commonSymptoms: this.data.commonSymptoms.map((item: SymptomOption) => ({ ...item, checked: false })),
+      autopsyAbnormalities: this.data.autopsyAbnormalities.map((item: AutopsyAbnormality) => ({ ...item, checked: false }))
     }, () => {
       this.validateForm()
     })
   },
 
+  // 兼容旧事件名
+  onDeleteImage(e: WechatMiniprogram.TouchEvent) {
+    this.onRemoveImage(e)
+  },
+
   // 批次选择器变化
-  onBatchPickerChange(e: any) {
-    const index = parseInt(e.detail.value)
-    const selectedBatch = this.data.availableBatches[index]
+  onBatchPickerChange(e: WechatMiniprogram.PickerChange) {
+    const rawValue = Array.isArray(e.detail.value) ? e.detail.value[0] : e.detail.value
+    const index = parseInt(String(rawValue), 10)
+    const selectedBatch = this.data.availableBatches[index] as AnyObject
     
     if (selectedBatch) {
       this.setData({
@@ -328,17 +340,17 @@ const pageConfig = {
   },
 
   // 点击症状标签填充到输入框（支持切换）
-  onSymptomTagTap(e: any) {
-    const { index } = e.currentTarget.dataset
-    const symptoms = [...this.data.commonSymptoms]
+  onSymptomTagTap(e: WechatMiniprogram.TouchEvent) {
+    const { index } = e.currentTarget.dataset as { index: number }
+    const symptoms = [...this.data.commonSymptoms] as SymptomOption[]
     
     // 切换选中状态
     symptoms[index].checked = !symptoms[index].checked
     
     // 收集所有选中的症状名称
     const selectedSymptoms = symptoms
-      .filter(item => item.checked)
-      .map(item => item.name)
+      .filter((item: SymptomOption) => item.checked)
+      .map((item: SymptomOption) => item.name)
     
     // 拼接成文本（用顿号分隔）
     const symptomsText = selectedSymptoms.join('、')
@@ -379,7 +391,7 @@ const pageConfig = {
         
         try {
           // ✨ 压缩并上传所有图片到云存储
-          const uploadPromises = res.tempFiles.map(async (file) => {
+          const uploadPromises = res.tempFiles.map(async (file: WechatMiniprogram.MediaFile) => {
             // ✅ 更激进的压缩（减小文件大小，避免API限制）
             let finalPath = file.tempFilePath
             try {
@@ -390,13 +402,13 @@ const pageConfig = {
                 compressedHeight: 1024   // ✨ 限制最大高度1024px
               })
               finalPath = compressResult.tempFilePath
-            } catch (compressError) {
+            } catch (_compressError) {
               // 压缩失败则使用原图
             }
             
             const timestamp = Date.now()
             const random = Math.floor(Math.random() * 10000)
-            const ext = file.tempFilePath.split('.').pop()
+            const ext = file.tempFilePath.split('.').pop() || 'jpg'
             const cloudPath = `ai-diagnosis/${timestamp}_${random}.${ext}`
             
             const uploadResult = await wx.cloud.uploadFile({
@@ -408,7 +420,7 @@ const pageConfig = {
           })
           
           const uploadedFileIDs = await Promise.all(uploadPromises)
-          const allImages = [...this.data.images, ...uploadedFileIDs]
+          const allImages: string[] = [...this.data.images, ...uploadedFileIDs]
           const maxImages = this.data.diagnosisType === 'autopsy_analysis' ? 4 : 2
           
           wx.hideLoading()
@@ -433,7 +445,7 @@ const pageConfig = {
           })
         }
       },
-      fail: (error) => {
+      fail: (_error) => {
         wx.showToast({
           title: '图片选择失败',
           icon: 'none'
@@ -443,12 +455,12 @@ const pageConfig = {
   },
 
   // 删除图片
-  onDeleteImage(e: any) {
-    const { index } = e.currentTarget.dataset
-    const images = [...this.data.images]
+  onRemoveImage(e: WechatMiniprogram.TouchEvent) {
+    const { index } = e.currentTarget.dataset as { index: number }
+    const images = [...this.data.images] as string[]
     images.splice(index, 1)
     
-    const validCount = images.filter(img => img).length
+    const validCount = images.filter((img: string) => Boolean(img)).length
     
     this.setData({ 
       images,
@@ -459,9 +471,9 @@ const pageConfig = {
   },
 
   // 选择单张图片上传到指定位置
-  onChooseSingleImage(e: any) {
-    const { index } = e.currentTarget.dataset
-    const targetIndex = parseInt(index)
+  onChooseSingleImage(e: WechatMiniprogram.TouchEvent) {
+    const { index } = e.currentTarget.dataset as { index: number | string }
+    const targetIndex = typeof index === 'number' ? index : parseInt(index, 10)
     
     // 检查该位置是否已有图片
     if (this.data.images[targetIndex]) {
@@ -493,14 +505,14 @@ const pageConfig = {
               compressedHeight: 1024
             })
             finalPath = compressResult.tempFilePath
-          } catch (compressError) {
+          } catch (_compressError) {
             // 压缩失败则使用原图
           }
           
           // 上传到云存储
           const timestamp = Date.now()
           const random = Math.floor(Math.random() * 10000)
-          const ext = file.tempFilePath.split('.').pop()
+          const ext = file.tempFilePath.split('.').pop() || 'jpg'
           const cloudPath = `ai-diagnosis/${timestamp}_${random}.${ext}`
           
           const uploadResult = await wx.cloud.uploadFile({
@@ -513,7 +525,7 @@ const pageConfig = {
           // 更新images数组，在指定位置插入图片
           const newImages = [...this.data.images]
           newImages[targetIndex] = uploadResult.fileID
-          const validCount = newImages.filter(img => img).length
+          const validCount = newImages.filter((img) => Boolean(img)).length
           
           this.setData({
             images: newImages,
@@ -536,23 +548,12 @@ const pageConfig = {
           })
         }
       },
-      fail: (error) => {
+      fail: (_error) => {
         wx.showToast({
           title: '图片选择失败',
           icon: 'none'
         })
       }
-    })
-  },
-
-  // 预览图片
-  onPreviewImage(e: any) {
-    const { src } = e.currentTarget.dataset
-    // 过滤掉undefined的图片
-    const validImages = this.data.images.filter(img => img)
-    wx.previewImage({
-      current: src,
-      urls: validImages
     })
   },
 
@@ -689,8 +690,8 @@ const pageConfig = {
         
         // 收集勾选的异常
         const selectedAbnormalities = this.data.autopsyAbnormalities
-          .filter(item => item.checked)
-          .map(item => item.name)
+          .filter((item: AutopsyAbnormality) => item.checked)
+          .map((item: AutopsyAbnormality) => item.name)
         
         diagnosisData.deathCount = deathCount
         diagnosisData.symptoms = symptoms ? symptoms.split(/[、，,；;]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0) : []
@@ -739,7 +740,7 @@ const pageConfig = {
       const result = normalizeCloudResult<{ diagnosisId: string; status: string }>(rawResult)
 
       if (result?.success && result.data) {
-        const { diagnosisId, status } = result.data
+        const { diagnosisId } = result.data
         
         
         // ✨ 保存诊断ID并开始轮询（不显示轮询UI）
@@ -996,7 +997,9 @@ const pageConfig = {
       
       const result = normalizeCloudResult<{ treatmentId: string }>(rawResult)
 
-      if (result?.success && result.data) {
+      if (result && result.success && result.data) {
+        const { treatmentId } = result.data
+
         wx.showToast({
           title: '治疗记录已创建',
           icon: 'success'
@@ -1005,7 +1008,7 @@ const pageConfig = {
         // 跳转到治疗记录页面
         setTimeout(() => {
           wx.navigateTo({
-            url: `/packageHealth/treatment-record/treatment-record?treatmentId=${result.data.treatmentId}`
+            url: `/packageHealth/treatment-record/treatment-record?treatmentId=${treatmentId}`
           })
         }, 1500)
       } else {
@@ -1053,17 +1056,21 @@ const pageConfig = {
       
       const result = normalizeCloudResult<{ deathRecordId: string }>(rawResult)
 
-      if (result?.success && result.data) {
+      if (result && result.success && result.data) {
+        const { deathRecordId } = result.data
+
         wx.showToast({
           title: '记录成功',
           icon: 'success',
           duration: 1500
         })
-        
-        // 静默跳转到死亡记录详情页面（使用 redirectTo 替换当前页面）
+
         setTimeout(() => {
+          const targetId = deathRecordId ? encodeURIComponent(deathRecordId) : ''
           wx.redirectTo({
-            url: `/packageHealth/death-record-detail/death-record-detail?id=${result.data.deathRecordId}`
+            url: targetId
+              ? `/packageHealth/death-records-list/death-records-list?recordId=${targetId}`
+              : '/packageHealth/death-records-list/death-records-list'
           })
         }, 1500)
       } else {
@@ -1112,23 +1119,93 @@ const pageConfig = {
       wx.showLoading({ title: '保存中...' })
       
       const diagnosis = this.data.diagnosisResult
-      const affectedCount = parseInt(this.data.affectedCount) || 0
-      
-      // 准备异常记录数据
-      const recordData = {
+      const diagnosisType = this.data.diagnosisType
+      const isAutopsy = diagnosisType === 'autopsy_analysis'
+
+      const primaryResult = isAutopsy
+        ? (diagnosis.primaryCause || diagnosis.primaryDiagnosis || null)
+        : (diagnosis.primaryDiagnosis || diagnosis.primaryCause || null)
+
+      const recordAffectedCount = isAutopsy
+        ? (parseInt(this.data.deathCount, 10) || diagnosis.deathCount || 0)
+        : (parseInt(this.data.affectedCount, 10) || diagnosis.affectedCount || 0)
+
+      let recordSymptoms = this.data.symptoms
+      if (isAutopsy) {
+        if (!recordSymptoms && this.data.autopsyDescription) {
+          recordSymptoms = this.data.autopsyDescription
+        }
+        if (!recordSymptoms && typeof diagnosis.symptomsText === 'string') {
+          recordSymptoms = diagnosis.symptomsText
+        }
+      }
+
+      const recordDiagnosis = primaryResult?.disease || '待确定'
+      const recordConfidence = typeof primaryResult?.confidence === 'number'
+        ? primaryResult.confidence
+        : (diagnosis.primaryDiagnosis?.confidence || diagnosis.primaryCause?.confidence || 0)
+
+      let diagnosisDetails: AnyObject | null = primaryResult ? { ...primaryResult } : null
+      if (diagnosisDetails) {
+        if (isAutopsy) {
+          diagnosisDetails = {
+            ...diagnosisDetails,
+            autopsyEvidence: diagnosis.primaryCause?.autopsyEvidence || diagnosisDetails.autopsyEvidence || [],
+            pathologicalFindings: diagnosis.pathologicalFindings || null,
+            differentialCauses: diagnosis.differentialCauses || diagnosis.differentialDiagnosis || []
+          }
+        } else {
+          diagnosisDetails = {
+            ...diagnosisDetails,
+            differentialDiagnosis: diagnosis.differentialDiagnosis || []
+          }
+        }
+      }
+
+      let aiRecommendation: AnyObject | null = diagnosis.treatmentRecommendation || diagnosis.recommendations || null
+      if (isAutopsy) {
+        const preventionAdvice = diagnosis.preventionAdvice || diagnosis.preventionMeasures || []
+        const biosecurityAdvice = diagnosis.biosecurityAdvice || []
+        const followUp = diagnosis.followUp || null
+        const supportive: string[] = []
+
+        if (Array.isArray(preventionAdvice) && preventionAdvice.length > 0) {
+          supportive.push(...preventionAdvice)
+        }
+        if (Array.isArray(biosecurityAdvice) && biosecurityAdvice.length > 0) {
+          supportive.push(...biosecurityAdvice)
+        }
+
+        aiRecommendation = (supportive.length > 0 || followUp)
+          ? {
+              supportive,
+              preventionAdvice,
+              biosecurityAdvice,
+              followUp
+            }
+          : null
+      }
+
+      const recordData: AnyObject = {
         action: 'create_abnormal_record',
+        diagnosisType,
         diagnosisId: this.data.diagnosisId,
         batchId: this.data.selectedBatchId,
         batchNumber: this.data.selectedBatchNumber,
-        affectedCount: affectedCount,
-        symptoms: this.data.symptoms,
-        diagnosis: diagnosis.primaryDiagnosis?.disease || '待确定',
-        diagnosisConfidence: diagnosis.primaryDiagnosis?.confidence || 0,
-        diagnosisDetails: diagnosis.primaryDiagnosis || null, // 保存完整的诊断详情
+        affectedCount: recordAffectedCount,
+        symptoms: recordSymptoms,
+        diagnosis: recordDiagnosis,
+        diagnosisConfidence: recordConfidence,
+        diagnosisDetails: diagnosisDetails,
         severity: diagnosis.severity || 'unknown',
         urgency: diagnosis.urgency || 'unknown',
-        aiRecommendation: diagnosis.treatmentRecommendation || diagnosis.recommendations,
+        aiRecommendation,
         images: this.data.images || []
+      }
+
+      if (isAutopsy) {
+        recordData.autopsyDescription = this.data.autopsyDescription || ''
+        recordData.deathCount = recordAffectedCount
       }
       
       
@@ -1182,7 +1259,7 @@ const pageConfig = {
             affectedCount: '',  // 重置为空字符串
             images: [],
             validImagesCount: 0,
-            commonSymptoms: this.data.commonSymptoms.map(item => ({ ...item, checked: false }))
+            commonSymptoms: this.data.commonSymptoms.map((item: SymptomOption) => ({ ...item, checked: false }))
           })
           this.validateForm()
         }

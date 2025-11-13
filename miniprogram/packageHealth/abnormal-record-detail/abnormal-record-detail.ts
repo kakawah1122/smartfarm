@@ -8,6 +8,7 @@ interface AbnormalRecord {
   checkDate: string
   affectedCount: number
   symptoms: string
+  diagnosisType?: 'live_diagnosis' | 'autopsy_analysis'
   diagnosis: string
   diagnosisConfidence: number
   diagnosisDetails?: {
@@ -24,6 +25,9 @@ interface AbnormalRecord {
   aiRecommendation: any
   images: string[]
   diagnosisId: string
+  autopsyDescription?: string
+  deathCount?: number
+  totalDeathCount?: number
   createdAt: string
   isCorrected?: boolean
   correctedDiagnosis?: string
@@ -34,11 +38,16 @@ interface AbnormalRecord {
   correctedAt?: string
 }
 
+type ConfirmDeathOptions = {
+  returnBehavior?: 'detail' | 'back'
+}
+
 Page({
   data: {
     loading: true,
     recordId: '',
     record: null as AbnormalRecord | null,
+    isAutopsyRecord: false,
     
     // 修正弹窗
     showCorrectionDialog: false,
@@ -46,7 +55,6 @@ Page({
     correctionForm: {
       correctedDiagnosis: '',
       veterinarianDiagnosis: '',
-      veterinarianTreatmentPlan: '',
       aiAccuracyRating: 0
     },
     
@@ -116,8 +124,12 @@ Page({
           }
         }
 
+        const derivedDiagnosisType = record.diagnosisType
+          || (record.autopsyDescription || record.totalDeathCount || record.deathCount ? 'autopsy_analysis' : 'live_diagnosis')
+
         this.setData({
-          record: { ...record, aiRecommendation, images: processedImages },
+          record: { ...record, aiRecommendation, images: processedImages, diagnosisType: derivedDiagnosisType },
+          isAutopsyRecord: derivedDiagnosisType === 'autopsy_analysis',
           loading: false
         })
       } else {
@@ -168,7 +180,6 @@ Page({
         correctionForm: {
           correctedDiagnosis: this.data.record.correctedDiagnosis || '',
           veterinarianDiagnosis: this.data.record.correctionReason || '',
-          veterinarianTreatmentPlan: this.data.record.veterinarianTreatmentPlan || '',
           aiAccuracyRating: this.data.record.aiAccuracyRating || 3
         }
       })
@@ -180,7 +191,6 @@ Page({
         correctionForm: {
           correctedDiagnosis: '',
           veterinarianDiagnosis: '',
-          veterinarianTreatmentPlan: '',
           aiAccuracyRating: 3
         }
       })
@@ -224,7 +234,6 @@ Page({
           recordId: this.data.record!._id,
           correctedDiagnosis: form.correctedDiagnosis,
           veterinarianDiagnosis: form.veterinarianDiagnosis,
-          veterinarianTreatmentPlan: form.veterinarianTreatmentPlan,
           aiAccuracyRating: form.aiAccuracyRating
         }
       })
@@ -235,15 +244,21 @@ Page({
         wx.showToast({
           title: '修正成功',
           icon: 'success',
-          duration: 2000
+          duration: 1500
         })
         
         this.setData({ showCorrectionDialog: false })
         
-        // 刷新详情
-        setTimeout(() => {
-          this.loadRecordDetail(this.data.recordId)
-        }, 1000)
+        if (this.data.isAutopsyRecord) {
+          setTimeout(() => {
+            this.confirmDeath({ returnBehavior: 'back' })
+          }, 800)
+        } else {
+          // 刷新详情
+          setTimeout(() => {
+            this.loadRecordDetail(this.data.recordId)
+          }, 1000)
+        }
       } else {
         throw new Error(result.result?.error || '提交失败')
       }
@@ -272,12 +287,6 @@ Page({
     })
   },
 
-  onVeterinarianTreatmentPlanChange(e: any) {
-    this.setData({
-      'correctionForm.veterinarianTreatmentPlan': e.detail.value
-    })
-  },
-
   onRatingChange(e: any) {
     const rating = e.currentTarget.dataset.rating
     this.setData({
@@ -292,6 +301,10 @@ Page({
     const { record } = this.data
     
     if (!record) return
+    if (this.data.isAutopsyRecord) {
+      wx.showToast({ title: '死因剖析记录无需制定治疗方案', icon: 'none' })
+      return
+    }
 
     // 优先使用修正后的诊断，否则使用AI诊断
     const finalDiagnosis = record.isCorrected && record.correctedDiagnosis 
@@ -302,5 +315,103 @@ Page({
     wx.navigateTo({
       url: `/packageHealth/treatment-record/treatment-record?abnormalRecordId=${record._id}&batchId=${record.batchId}&diagnosis=${encodeURIComponent(finalDiagnosis)}`
     })
+  },
+
+  /**
+   * 死因剖析：确认死亡并归档
+   */
+  async confirmDeath(options?: ConfirmDeathOptions) {
+    const { record, isAutopsyRecord } = this.data
+
+    const returnBehavior = options?.returnBehavior || 'detail'
+
+    if (!record) return
+
+    if (!isAutopsyRecord) {
+      // 病鹅诊断不支持直接归档
+      wx.showToast({ title: '请通过治疗流程处理该记录', icon: 'none' })
+      return
+    }
+
+    const deathCount = record.totalDeathCount || record.deathCount || record.affectedCount || 0
+
+    if (deathCount <= 0) {
+      wx.showToast({ title: '请先在诊断中填写死亡数量', icon: 'none' })
+      return
+    }
+
+    wx.showLoading({ title: '归档中...' })
+
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'health-management',
+        data: {
+          action: 'create_death_record_with_finance',
+          diagnosisId: record.diagnosisId,
+          batchId: record.batchId,
+          deathCount,
+          deathCause: record.diagnosis || '待确定',
+          deathCategory: 'disease',
+          autopsyFindings: record.autopsyDescription || record.symptoms || '',
+          diagnosisResult: record.diagnosisDetails || null,
+          images: record.images || []
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.result && result.result.success) {
+        const deathRecordId = result.result.data?.deathRecordId
+
+        wx.showToast({
+          title: '已归档至死亡记录',
+          icon: 'success',
+          duration: 1500
+        })
+
+        setTimeout(() => {
+          if (returnBehavior === 'back') {
+            const pages = getCurrentPages()
+            if (pages.length > 1) {
+              wx.navigateBack({
+                delta: 1,
+                fail: () => {
+                  wx.redirectTo({
+                    url: '/packageHealth/death-records-list/death-records-list',
+                    fail: () => {
+                      wx.switchTab({ url: '/pages/index/index' })
+                    }
+                  })
+                }
+              })
+            } else {
+              wx.redirectTo({
+                url: '/packageHealth/death-records-list/death-records-list',
+                fail: () => {
+                  wx.switchTab({ url: '/pages/index/index' })
+                }
+              })
+            }
+          } else if (deathRecordId) {
+            wx.redirectTo({
+              url: `/packageHealth/death-records-list/death-records-list?recordId=${encodeURIComponent(deathRecordId)}`
+            })
+          } else {
+            wx.redirectTo({
+              url: '/packageHealth/death-records-list/death-records-list'
+            })
+          }
+        }, 1500)
+      } else {
+        throw new Error(result.result?.error || result.result?.message || '归档失败')
+      }
+    } catch (error: any) {
+      wx.hideLoading()
+      console.error('确认死亡归档失败:', error)
+      wx.showToast({
+        title: error.message || '归档失败，请重试',
+        icon: 'none'
+      })
+    }
   }
 })

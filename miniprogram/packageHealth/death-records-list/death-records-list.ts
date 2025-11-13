@@ -25,10 +25,15 @@ interface DeathRecord {
   operatorName?: string
   description?: string
   createdAt?: any
+  symptomsText?: string
+  autopsyFindings?: any
+  correctedByName?: string
   // 格式化字段
   formattedTotalLoss?: string
   formattedCostPerAnimal?: string
   formattedTreatmentCost?: string
+  displayDeathCause?: string
+  displayFindings?: string
 }
 
 Page({
@@ -45,10 +50,18 @@ Page({
     
     // 详情弹窗
     showDetailPopup: false,
-    selectedRecord: null as DeathRecord | null
+    selectedRecord: null as DeathRecord | null,
+
+    // 指定加载后自动展开的记录
+    pendingRecordId: ''
   },
 
-  onLoad() {
+  onLoad(options?: Record<string, any>) {
+    if (options && typeof options.recordId === 'string' && options.recordId.trim()) {
+      this.setData({
+        pendingRecordId: options.recordId
+      })
+    }
     this.loadDeathRecords()
   },
 
@@ -110,18 +123,68 @@ Page({
           totalLoss += loss
           
           const costPerAnimal = deathCount > 0 ? (loss / deathCount) : 0
-          
+
+          const displayDeathCause = (record.isCorrected && record.correctedCause)
+            ? record.correctedCause
+            : (record.deathCause || '未知死因')
+
+          const meaningfulTexts: string[] = []
+
+          const pushIfMeaningful = (text?: string) => {
+            if (!text) {
+              return
+            }
+            const trimmed = text.trim()
+            if (!trimmed || trimmed === '无明显生前症状') {
+              return
+            }
+            meaningfulTexts.push(trimmed)
+          }
+
+          if (record.autopsyFindings) {
+            if (typeof record.autopsyFindings === 'string') {
+              pushIfMeaningful(record.autopsyFindings)
+            } else if (typeof record.autopsyFindings === 'object') {
+              const abnormalities = record.autopsyFindings.abnormalities
+              if (Array.isArray(abnormalities) && abnormalities.length > 0) {
+                pushIfMeaningful(abnormalities.join('、'))
+              }
+              pushIfMeaningful(record.autopsyFindings.description)
+            }
+          }
+
+          pushIfMeaningful(record.description)
+          pushIfMeaningful(record.symptomsText)
+
+          const displayFindings = meaningfulTexts
+            .filter((value, index, self) => self.indexOf(value) === index)
+            .join('；')
+
           return {
             ...record,
             deathCount: deathCount,
             formattedTotalLoss: loss.toFixed(2),
             formattedCostPerAnimal: costPerAnimal.toFixed(2),
-            formattedTreatmentCost: treatmentCost.toFixed(2)
+            formattedTreatmentCost: treatmentCost.toFixed(2),
+            displayDeathCause,
+            displayFindings
           }
         })
         
         const avgLossPerAnimal = totalDeath > 0 ? (totalLoss / totalDeath) : 0
         
+        const pendingRecordId = this.data.pendingRecordId || ''
+        let selectedRecord = this.data.selectedRecord
+        let showDetailPopup = this.data.showDetailPopup
+
+        if (pendingRecordId) {
+          const targetRecord = records.find((record: DeathRecord) => record._id === pendingRecordId)
+          if (targetRecord) {
+            selectedRecord = targetRecord
+            showDetailPopup = true
+          }
+        }
+
         this.setData({
           records,
           stats: {
@@ -129,7 +192,10 @@ Page({
             totalLoss: parseFloat(totalLoss.toFixed(2)),
             avgLossPerAnimal: parseFloat(avgLossPerAnimal.toFixed(2))
           },
-          loading: false
+          loading: false,
+          selectedRecord,
+          showDetailPopup,
+          pendingRecordId: ''
         })
       } else {
         throw new Error(result.result?.error || '加载失败')

@@ -59,11 +59,11 @@
               </view>
             </view>
 
-            <!-- 第二行：症状（如果有） -->
-            <view class="info-row" wx:if="{{item.symptoms}}">
+            <!-- 第二行：症状/异常描述（如果有） -->
+            <view class="info-row" wx:if="{{item.symptoms || item.symptomsText}}">
               <view class="info-group full-width">
                 <text class="info-label">症状：</text>
-                <text class="info-value symptoms-value">{{item.symptoms}}</text>
+                <text class="info-value symptoms-value">{{item.symptomsText || item.symptoms || '无明显症状'}}</text>
               </view>
             </view>
 

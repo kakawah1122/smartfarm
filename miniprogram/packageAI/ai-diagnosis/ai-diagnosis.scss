@@ -16,9 +16,9 @@
 .diagnosis-result {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
-  padding-top: 40rpx; /* 增加诊断结果页面顶部间距 */
-  padding-bottom: 40rpx;
+  gap: 16rpx;
+  padding-top: 32rpx; /* 调整顶部留白，更紧凑 */
+  padding-bottom: 32rpx;
 }
 
 /* 诊断头部卡片 */
@@ -83,14 +83,10 @@
   color: #999999;
 }
 
-.card-body {
-  /* 卡片内容区域 */
-}
+/* 卡片内容区域 */
 
 /* 主要诊断卡片 */
-.primary-card {
-  /* 移除边框，保持简洁 */
-}
+/* 主要诊断卡片：移除边框，保持简洁 */
 
 .confidence-badge {
   display: flex;
@@ -130,39 +126,18 @@
   /* 移除左边框 */
 }
 
-.status-row {
-  display: flex;
-  gap: 16rpx;
-  margin-top: 24rpx;
-  padding-top: 24rpx;
-  border-top: 2rpx solid #f0f0f0;
-}
-
-.status-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.status-label {
-  font-size: 24rpx;
-  color: #999999;
-}
-
 /* 鉴别诊断 */
 .differential-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 .differential-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20rpx;
+  padding: 16rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
   /* 移除左边框 */
@@ -229,9 +204,7 @@
 }
 
 /* 药物治疗卡片 */
-.medication-card {
-  /* 移除左边框 */
-}
+/* 药物治疗卡片：已移除左边框，保持简洁 */
 
 .medication-box {
   background: #f8f9fa;
@@ -287,14 +260,14 @@
 .simple-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 .simple-list-item {
   display: flex;
   align-items: flex-start;
-  gap: 16rpx;
-  padding: 16rpx 0;
+  gap: 12rpx;
+  padding: 12rpx 0;
 }
 
 .list-dot {
@@ -303,7 +276,7 @@
   height: 12rpx;
   background: #ed7b2f;
   border-radius: 50%;
-  margin-top: 12rpx;
+  margin-top: 8rpx;
 }
 
 .prevention-dot {
@@ -318,7 +291,7 @@
   flex: 1;
   font-size: 28rpx;
   color: #333333;
-  line-height: 1.8;
+  line-height: 1.6;
 }
 
 /* 操作按钮 */
@@ -401,6 +374,27 @@
   }
 }
 
+.diagnosis-type-row {
+  align-items: flex-start;
+}
+
+.diagnosis-type-group {
+  display: flex;
+  gap: 24rpx;
+}
+
+.diagnosis-type-option {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.diagnosis-type-option .option-label {
+  line-height: 1.6;
+}
+
 .form-label {
   width: 160rpx;
   flex-shrink: 0;
@@ -467,20 +461,22 @@
 .form-picker {
   flex: 1;
   margin: 0 12rpx;
+  display: flex;
 }
 
 .picker-value {
-  padding: 16rpx 40rpx 16rpx 20rpx;
-  background: white;
+  padding: 16rpx 20rpx;
+  background: var(--td-bg-color-container);
   border-radius: 8rpx;
-  border: 2rpx solid var(--td-border-level-1-color);
+  border: none;
   font-size: 30rpx;
   color: var(--td-text-color-primary);
-  position: relative;
   transition: all 0.3s ease;
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  gap: 8rpx;
+  width: 100%;
   
   &.placeholder {
     color: var(--td-text-color-placeholder);
@@ -488,8 +484,8 @@
   
   // 点击效果
   &:active {
-    border-color: var(--td-brand-color);
-    background: var(--td-bg-color-container);
+    background: white;
+    box-shadow: 0 0 0 2rpx var(--td-brand-color);
   }
 }
 
@@ -516,9 +512,9 @@
 .symptom-tags-inline {
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx;
-  margin-bottom: 16rpx;
-  padding: 16rpx;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+  padding: 12rpx;
   background: var(--td-bg-color-container);
   border-radius: 12rpx;
 }
@@ -527,7 +523,7 @@
   display: flex;
   align-items: center;
   gap: 4rpx;
-  padding: 10rpx 18rpx;
+  padding: 8rpx 14rpx;
   background: white;
   border: 2rpx solid var(--td-border-level-2-color);
   border-radius: 24rpx;
@@ -613,10 +609,14 @@
 
 // ✨ 拍摄建议卡片
 .photo-tips-card {
-  background: linear-gradient(135deg, #fff8f0 0%, #fff4e8 100%);
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   margin-bottom: 20rpx;
+}
+
+.photo-tips-card.autopsy-tips-card {
+  background: linear-gradient(135deg, #fff0f2 0%, #ffe6eb 100%);
 }
 
 .tips-title {
@@ -641,20 +641,7 @@
 .tip-item {
   display: flex;
   align-items: flex-start;
-  gap: 12rpx;
-}
-
-.tip-number {
-  flex-shrink: 0;
-  width: 38rpx;
-  height: 38rpx;
-  line-height: 38rpx;
-  text-align: center;
-  background: #ed7b2f;
-  color: #ffffff;
-  font-size: 24rpx;
-  font-weight: 600;
-  border-radius: 50%;
+  gap: 0;
 }
 
 .tip-text {
@@ -662,7 +649,6 @@
   font-size: 26rpx;
   color: #333333;
   line-height: 1.6;
-  padding-top: 4rpx;
 }
 
 .image-upload-container {
@@ -950,24 +936,6 @@
   height: 120rpx;
 }
 
-/* 死因剖析专用样式 */
-.autopsy-tips {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 16rpx; // 减小内边距
-  background: rgba(237, 123, 47, 0.08);
-  border-radius: 8rpx;
-  margin-bottom: 16rpx; // 减小下边距
-}
-
-.tips-text {
-  flex: 1;
-  font-size: 26rpx;
-  color: #ed7b2f;
-  line-height: 1.4; // 减小行高
-}
-
 // 异常标签选中状态
 .symptom-tag-inline.tag-checked {
   background: rgba(0, 82, 217, 0.1);
@@ -1057,16 +1025,5 @@
 .diagnosis-result {
   animation: fadeInUp 0.6s ease-out;
 }
-
-.diagnosis-item {
-  animation: fadeInUp 0.4s ease-out;
-  animation-fill-mode: both;
-}
-
-.diagnosis-item:nth-child(1) { animation-delay: 0.1s; }
-.diagnosis-item:nth-child(2) { animation-delay: 0.2s; }
-.diagnosis-item:nth-child(3) { animation-delay: 0.3s; }
-.diagnosis-item:nth-child(4) { animation-delay: 0.4s; }
-.diagnosis-item:nth-child(5) { animation-delay: 0.5s; }
 
 /* 轮询进度样式已移除，使用按钮加载状态替代 */

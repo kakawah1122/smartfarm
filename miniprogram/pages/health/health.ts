@@ -7,7 +7,7 @@ import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopD
 import { clearAllHealthCache, clearBatchCache } from './modules/health-data-loader'
 import { isVaccineTask, isMedicationTask, isNutritionTask, groupTasksByBatch, calculateCurrentAge } from '../../utils/health-utils'
 import { processImageUrls } from '../../utils/image-utils'
-import { normalizeDiagnosisRecord, normalizeDiagnosisRecords } from '../../utils/diagnosis-data-utils'
+import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisRecord } from '../../utils/diagnosis-data-utils'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -38,6 +38,25 @@ function setCachedAllBatchesData(data: any) {
   } catch (error) {
     // 缓存失败不影响主流程
   }
+}
+
+function sortDiagnosisByRecency(records: DiagnosisRecord[]): DiagnosisRecord[] {
+  const getTimeValue = (item: DiagnosisRecord): number => {
+    const rawTime = item.createTime || item.diagnosisDate || ''
+    if (!rawTime) return 0
+
+    let parsed: number
+    if (rawTime.includes('T')) {
+      parsed = Date.parse(rawTime)
+    } else {
+      // 兼容 iOS：将 "YYYY-MM-DD HH:mm" 转换为可解析格式
+      parsed = Date.parse(rawTime.replace(/-/g, '/'))
+    }
+
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
+
+  return [...records].sort((a, b) => getTimeValue(b) - getTimeValue(a))
 }
 
 interface HealthStats {
@@ -495,6 +514,7 @@ Page<PageData, any>({
         // ✅ 优化：只清除当前批次的缓存，而不是全部缓存
         if (this.data.currentBatchId === 'all') {
           this.invalidateAllBatchesCache()
+          clearBatchCache('all')
         } else {
           clearBatchCache(this.data.currentBatchId)
         }
@@ -950,9 +970,9 @@ Page<PageData, any>({
         'treatmentData.stats.totalTreatmentCost': healthData.totalTreatmentCost,
         'treatmentData.stats.cureRate': parseFloat(healthData.cureRate || '0'),
         'treatmentData.stats.ongoingAnimalsCount': healthData.totalOngoing,
-        'treatmentData.diagnosisHistory': normalizeDiagnosisRecords(healthData.latestDiagnosisRecords || []),
+        'treatmentData.diagnosisHistory': sortDiagnosisByRecency(normalizeDiagnosisRecords(healthData.latestDiagnosisRecords || [])),
         'monitoringData.realTimeStatus.abnormalCount': healthData.abnormalRecordCount,
-        'monitoringData.abnormalList': healthData.abnormalRecords || []
+        'monitoringData.abnormalList': sortDiagnosisByRecency(normalizeDiagnosisRecords(healthData.abnormalRecords || []))
       })
     } catch (error: any) {
       // 后台刷新失败时静默处理
@@ -1021,7 +1041,7 @@ Page<PageData, any>({
       )
       
       // ✅ 处理诊断历史：使用公共工具函数标准化数据
-      const diagnosisHistory = normalizeDiagnosisRecords(data.diagnosisHistory || [])
+      const diagnosisHistory = sortDiagnosisByRecency(normalizeDiagnosisRecords(data.diagnosisHistory || []))
       
       // 处理异常记录
       const abnormalRecords = data.abnormalRecords || []
@@ -1079,7 +1099,7 @@ Page<PageData, any>({
         
         // 监控数据 - 使用数据路径形式
         'monitoringData.realTimeStatus.abnormalCount': abnormalCount,
-        'monitoringData.abnormalList': abnormalRecords
+        'monitoringData.abnormalList': sortDiagnosisByRecency(normalizeDiagnosisRecords(abnormalRecords))
       })
       
     } catch (error: any) {
@@ -1392,9 +1412,9 @@ Page<PageData, any>({
           'treatmentStats.recoveredCount': aggregatedData.totalCured || 0,  // 保持向后兼容
           'treatmentStats.ongoingCount': aggregatedData.totalOngoingRecords || 0,
           'treatmentStats.recoveryRate': (aggregatedData.cureRate || 0) + '%',
-          'treatmentData.diagnosisHistory': normalizeDiagnosisRecords(aggregatedData.latestDiagnosisRecords || []),
+          'treatmentData.diagnosisHistory': sortDiagnosisByRecency(normalizeDiagnosisRecords(aggregatedData.latestDiagnosisRecords || [])),
           'monitoringData.realTimeStatus.abnormalCount': aggregatedData.abnormalRecordCount || 0,
-          'monitoringData.abnormalList': aggregatedData.abnormalRecords || []
+          'monitoringData.abnormalList': sortDiagnosisByRecency(normalizeDiagnosisRecords(aggregatedData.abnormalRecords || []))
         })
 
         return
