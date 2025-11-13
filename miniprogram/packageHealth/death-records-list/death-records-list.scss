@@ -152,6 +152,36 @@
   flex-shrink: 0;
 }
 
+// 修正信息样式
+.correction-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 12rpx;
+  padding: 8rpx 12rpx;
+  background: #f0f9ff;
+  border-radius: 8rpx;
+  border-left: 4rpx solid #0ea5e9;
+
+  .original-cause {
+    font-size: 22rpx;
+    color: #64748b;
+    text-decoration: line-through;
+  }
+
+  .arrow {
+    font-size: 20rpx;
+    color: #0ea5e9;
+    font-weight: bold;
+  }
+
+  .corrected-cause {
+    font-size: 22rpx;
+    color: #0ea5e9;
+    font-weight: 500;
+  }
+}
+
 // 记录内容
 .record-content {
   padding: 24rpx 32rpx;

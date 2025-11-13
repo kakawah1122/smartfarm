@@ -353,13 +353,16 @@ async function createAbnormalRecord(event, wxContext) {
       batchNumber,
       affectedCount,
       symptoms,
+      diagnosisType = 'live_diagnosis',
       diagnosis,
       diagnosisConfidence,
       diagnosisDetails,  // 新增：完整的诊断详情
       severity,
       urgency,
       aiRecommendation,
-      images
+      images,
+      autopsyDescription,
+      deathCount
     } = event
     const openid = wxContext.OPENID
 
@@ -388,6 +391,7 @@ async function createAbnormalRecord(event, wxContext) {
       diagnosisId,  // 保留原字段名兼容性
       relatedDiagnosisId: diagnosisId,  // ✅ 统一使用 relatedDiagnosisId 字段名
       recordType: 'ai_diagnosis',
+      diagnosisType,
       checkDate: new Date().toISOString().split('T')[0],
       reporter: openid,
       reporterName: userName,  // 添加记录者名称
@@ -401,6 +405,9 @@ async function createAbnormalRecord(event, wxContext) {
       urgency: urgency || 'unknown',
       aiRecommendation: aiRecommendation || null,
       images: images || [],
+      autopsyDescription: autopsyDescription || '',
+      deathCount: deathCount || (diagnosisType === 'autopsy_analysis' ? affectedCount || 0 : 0),
+      totalDeathCount: deathCount || (diagnosisType === 'autopsy_analysis' ? affectedCount || 0 : 0),
       isDeleted: false,  // 添加isDeleted字段
       createdAt: new Date(),
       updatedAt: new Date()
@@ -1181,6 +1188,7 @@ async function getAbnormalRecords(event, wxContext) {
     
     const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .where(whereCondition)
+      .orderBy('createdAt', 'desc')
       .orderBy('checkDate', 'desc')
       .get()
     
@@ -5728,6 +5736,26 @@ async function createDeathRecordWithFinance(event, wxContext) {
       }
     }
     
+    // 4.1 ✅ 同步更新AI诊断记录的处理状态，避免继续计入待处理
+    if (diagnosisId) {
+      try {
+        await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+          .doc(diagnosisId)
+          .update({
+            data: {
+              hasTreatment: true, // ✅ 标记已有处置（死亡归档）
+              status: 'archived',
+              resolutionType: 'death_record',
+              relatedDeathRecordId: deathRecordId,
+              latestTreatmentId: null,
+              updatedAt: new Date()
+            }
+          })
+      } catch (aiUpdateError) {
+        console.error('[AI死因剖析] 更新诊断状态失败（不影响主流程）:', aiUpdateError)
+      }
+    }
+
     // 5. 更新批次存栏量
     try {
       await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
@@ -5777,7 +5805,7 @@ async function getDeathRecordsList(event, wxContext) {
         { createdBy: openid, isDeleted: false },  // ✅ 兼容 createdBy 字段
         { reportedBy: openid, isDeleted: false }  // ✅ 兼容 reportedBy 字段（旧版）
       ]))
-      .orderBy('deathDate', 'desc')
+      .orderBy('createdAt', 'desc')
       .limit(100)
       .get()
     

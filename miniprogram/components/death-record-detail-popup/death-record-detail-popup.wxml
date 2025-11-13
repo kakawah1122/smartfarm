@@ -16,7 +16,7 @@
       <view class="info-card">
         <view class="info-row">
           <text class="info-label">死亡原因：</text>
-          <text class="info-value">{{record.deathCause || '未知'}}</text>
+          <text class="info-value">{{record.displayDeathCause || record.deathCause || '未知'}}</text>
         </view>
         <view class="divider-line"></view>
         <view class="info-row">
@@ -33,6 +33,12 @@
           <text class="info-label">死亡类别：</text>
           <text class="info-value">{{record.deathCategory === 'disease' ? '疾病' : record.deathCategory === 'accident' ? '事故' : record.deathCategory === 'old_age' ? '衰老' : '其他'}}
           </text>
+        </view>
+        <!-- 症状/异常描述 -->
+        <view class="divider-line" wx:if="{{record.displayFindings}}"></view>
+        <view class="info-row" wx:if="{{record.displayFindings}}">
+          <text class="info-label">症状/异常：</text>
+          <text class="info-value symptoms-text">{{record.displayFindings}}</text>
         </view>
       </view>
     </view>
@@ -77,15 +83,30 @@
     <!-- 修正信息 -->
     <view class="detail-section" wx:if="{{record.isCorrected}}">
       <view class="section-title">修正信息</view>
-      <view class="info-card">
-        <view class="info-row">
-          <text class="info-label">修正原因：</text>
-          <text class="info-value">{{record.correctedCause}}</text>
+      <view class="info-card correction-card">
+        <!-- 诊断对比 -->
+        <view class="diagnosis-comparison" wx:if="{{record.deathCause && record.correctedCause}}">
+          <view class="original-diagnosis">
+            <text class="diagnosis-label">原诊断：</text>
+            <text class="diagnosis-value original">{{record.deathCause}}</text>
+          </view>
+          <view class="correction-arrow">↓</view>
+          <view class="corrected-diagnosis">
+            <text class="diagnosis-label">修正为：</text>
+            <text class="diagnosis-value corrected">{{record.correctedCause}}</text>
+          </view>
         </view>
-        <view class="divider-line" wx:if="{{record.correctedBy}}"></view>
-        <view class="info-row" wx:if="{{record.correctedBy}}">
+        
+        <!-- 修正详情 -->
+        <view class="divider-line" wx:if="{{record.correctionReason}}"></view>
+        <view class="info-row" wx:if="{{record.correctionReason}}">
+          <text class="info-label">修正依据：</text>
+          <text class="info-value">{{record.correctionReason}}</text>
+        </view>
+        <view class="divider-line" wx:if="{{record.correctedByName || record.correctedBy}}"></view>
+        <view class="info-row" wx:if="{{record.correctedByName || record.correctedBy}}">
           <text class="info-label">修正人：</text>
-          <text class="info-value">{{record.correctedBy}}</text>
+          <text class="info-value">{{record.correctedByName || record.correctedBy}}</text>
         </view>
         <view class="divider-line" wx:if="{{record.correctedAt}}"></view>
         <view class="info-row" wx:if="{{record.correctedAt}}">
