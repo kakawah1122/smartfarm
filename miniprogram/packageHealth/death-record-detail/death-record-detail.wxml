@@ -48,19 +48,19 @@
         </view>
         <view class="info-row">
           <text class="info-label">单位成本</text>
-          <text class="info-value">¥{{record.unitCost || 0}}/只</text>
+          <text class="info-value">¥{{record.unitCostDisplay || '0.00'}}/只</text>
         </view>
         <view class="info-row" wx:if="{{record.breedingCost && record.breedingCost > 0}}">
           <text class="info-label">饲养成本</text>
-          <text class="info-value">¥{{record.breedingCost}}</text>
+          <text class="info-value">¥{{record.breedingCostDisplay || '0.00'}}</text>
         </view>
         <view class="info-row" wx:if="{{record.treatmentCost && record.treatmentCost > 0}}">
           <text class="info-label">治疗成本</text>
-          <text class="info-value treatment-cost">¥{{record.treatmentCost}}</text>
+          <text class="info-value treatment-cost">¥{{record.treatmentCostDisplay || '0.00'}}</text>
         </view>
         <view class="info-row">
           <text class="info-label">财务损失</text>
-          <text class="info-value loss">¥{{record.financeLoss || 0}}</text>
+          <text class="info-value loss">¥{{record.financeLossDisplay || '0.00'}}</text>
         </view>
       </view>
     </view>
@@ -99,22 +99,22 @@
       <view class="diagnosis-result">
         <view class="result-header">
           <text class="result-title">主要死因</text>
-          <view class="confidence-badge" wx:if="{{diagnosisResult.primaryCause}}">
-            <text class="confidence-number">{{diagnosisResult.primaryCause.confidence || diagnosisResult.primaryDiagnosis.confidence}}</text>
+          <view class="confidence-badge" wx:if="{{primaryResult}}">
+            <text class="confidence-number">{{primaryResult.confidence || 0}}</text>
             <text class="confidence-unit">%</text>
           </view>
         </view>
-        <text class="disease-name">{{record.deathCause}}</text>
-        <text class="reasoning" wx:if="{{diagnosisResult.primaryCause}}">{{diagnosisResult.primaryCause.reasoning || diagnosisResult.primaryDiagnosis.reasoning}}</text>
+        <text class="disease-name">{{record.displayDeathCause}}</text>
+        <text class="reasoning" wx:if="{{primaryResult && primaryResult.reasoning}}">{{primaryResult.reasoning}}</text>
       </view>
 
       <!-- 鉴别诊断 -->
-      <view class="differential-section" wx:if="{{diagnosisResult.differentialCauses && diagnosisResult.differentialCauses.length > 0}}">
+      <view class="differential-section" wx:if="{{differentialList.length > 0}}">
         <text class="section-title">可能死因</text>
         <view class="differential-list">
           <view 
             class="diff-item"
-            wx:for="{{diagnosisResult.differentialCauses}}" 
+            wx:for="{{differentialList}}" 
             wx:key="index"
           >
             <text class="diff-disease">{{item.disease}}</text>
@@ -124,12 +124,12 @@
       </view>
 
       <!-- 预防建议 -->
-      <view class="prevention-section" wx:if="{{diagnosisResult.preventionAdvice || diagnosisResult.preventionMeasures}}">
+      <view class="prevention-section" wx:if="{{preventionList.length > 0}}">
         <text class="section-title">预防建议</text>
         <view class="prevention-list">
           <view 
             class="prevention-item"
-            wx:for="{{diagnosisResult.preventionAdvice || diagnosisResult.preventionMeasures}}" 
+            wx:for="{{preventionList}}" 
             wx:key="index"
           >
             <view class="item-dot"></view>
@@ -168,10 +168,10 @@
       </view>
 
       <!-- 剖检所见 -->
-      <view class="autopsy-findings" wx:if="{{record.autopsyFindings}}">
+      <view class="autopsy-findings" wx:if="{{hasStructuredAutopsyFindings || record.displayFindings}}">
         <text class="subsection-title">观察到的异常</text>
         <view class="findings-content">
-          <view class="abnormalities" wx:if="{{record.autopsyFindings.abnormalities && record.autopsyFindings.abnormalities.length > 0}}">
+          <view class="abnormalities" wx:if="{{record.autopsyFindings && record.autopsyFindings.abnormalities && record.autopsyFindings.abnormalities.length > 0}}">
             <view 
               class="abnormality-tag"
               wx:for="{{record.autopsyFindings.abnormalities}}" 
@@ -180,7 +180,7 @@
               {{item}}
             </view>
           </view>
-          <text class="findings-description" wx:if="{{record.autopsyFindings.description}}">{{record.autopsyFindings.description}}</text>
+          <text class="findings-description" wx:if="{{record.displayFindings}}">{{record.displayFindings}}</text>
         </view>
       </view>
     </view>

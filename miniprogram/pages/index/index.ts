@@ -1,5 +1,6 @@
 // index.ts - 清理版本，只使用和风天气地理编码
 import { checkPageAuth } from '../../utils/auth-guard'
+import { getCurrentBeijingDate } from '../../utils/util'
 import {
   TYPE_NAMES,
   isMedicationTask,
@@ -39,6 +40,8 @@ interface VaccineFormData {
   notes: string
 }
 
+type PriceBreed = { key: string; label: string }
+
 Page({
   data: {
     // 状态栏信息
@@ -71,7 +74,7 @@ Page({
     
     // 鹅价数据（数据库字段：goslingBreeds鹅苗, meatBreeds肉鹅）
     priceUpdateTime: '',
-    priceBreeds: [],
+    priceBreeds: [] as PriceBreed[],
     currentPriceBreed: 'extraLarge',
     currentPriceBreedLabel: '',
     goosePriceData: {} as Record<string, any>,
@@ -190,8 +193,8 @@ Page({
   // 初始化状态栏
   initStatusBar() {
     try {
-      const windowInfo = wx.getWindowInfo()
-      const statusBarHeight = windowInfo.statusBarHeight || 44
+      const systemInfo = wx.getSystemInfoSync()
+      const statusBarHeight = systemInfo.statusBarHeight || 44
       const now = new Date()
       const timeStr = now.toTimeString().slice(0, 5)
       
@@ -547,7 +550,7 @@ Page({
         
         // 直接使用数据库的品种数据，不做映射
         const goosePriceData: Record<string, any> = {}
-        const displayBreeds: Array<{ key: string; label: string }> = []
+        const displayBreeds: PriceBreed[] = []
 
         // 格式化价格范围的辅助函数
         const formatPriceRange = (min: number | null, max: number | null, range: string) => {
@@ -671,7 +674,7 @@ Page({
 
         this.setData({
           priceUpdateTime: updateTime,
-          priceBreeds: displayBreeds,
+          priceBreeds: displayBreeds as PriceBreed[],
           goosePriceData
         }, () => {
           this.updateDisplayedPrice(targetBreed)
@@ -710,6 +713,7 @@ Page({
           goslingUnit: '/羽'
         }
       })
+      console.error('获取鹅价数据失败:', error)
       return false
     }
   },
@@ -916,7 +920,7 @@ Page({
    * 注意：首页已不再显示待办列表UI，但此方法仍被checkAndSyncTaskStatus()和syncTaskStatusFromGlobal()调用
    * 保留此方法以保持代码结构完整性，实际同步逻辑已移至全局状态管理
    */
-  syncSingleTaskStatus(taskId: string, completed: boolean) {
+  syncSingleTaskStatus(_taskId: string, _completed: boolean) {
     // 首页已不再显示待办列表，此方法保留以兼容其他页面调用
     // 实际同步逻辑已移至全局状态管理
   },
@@ -1326,7 +1330,7 @@ Page({
   /**
    * 简化版本：立即更新首页UI中的任务完成状态（已移除首页待办列表）
    */
-  updateTaskCompletionStatusInUI(taskId: string, completed: boolean) {
+  updateTaskCompletionStatusInUI(_taskId: string, _completed: boolean) {
     // 首页已不再显示待办列表，此方法保留以兼容其他页面调用
     // 实际同步逻辑已移至全局状态管理
   },
@@ -1425,7 +1429,7 @@ Page({
       }
       wx.setStorageSync('weather_cache', cacheData)
     } catch (error: any) {
-      // 已移除调试日志
+      console.error('检查天气更新失败:', error)
     }
   },
 
@@ -1447,7 +1451,7 @@ Page({
     try {
       wx.removeStorageSync('weather_cache')
     } catch (error: any) {
-      // 已移除调试日志
+      console.error('获取天气缓存失败:', error)
     }
   },
 
@@ -1479,6 +1483,7 @@ Page({
             // 静默更新成功，不显示任何提示
           }).catch((error: any) => {
             // 静默失败，不干扰用户体验，继续使用缓存数据
+            console.warn('静默刷新天气失败:', error)
           })
         }, 500)
       } else {
@@ -1488,7 +1493,7 @@ Page({
         }
       }
     } catch (error: any) {
-      // 已移除调试日志
+      console.error('检查并自动刷新天气失败:', error)
     }
   },
 
@@ -1519,8 +1524,7 @@ Page({
   // 计算当前日龄（与详情页逻辑保持一致）
   calculateCurrentAge(entryDate: string): number {
     // 只比较日期部分，不考虑具体时间（与 utils/breeding-schedule.js 保持一致）
-    const today = new Date()
-    const todayDateStr = today.toISOString().split('T')[0] // YYYY-MM-DD
+    const todayDateStr = getCurrentBeijingDate() // ✅ 使用北京时间
     
     // 确保入栏日期也是 YYYY-MM-DD 格式
     const entryDateStr = entryDate.split('T')[0] // 移除可能的时间部分
@@ -1704,7 +1708,7 @@ Page({
         })
       }
     } catch (error: any) {
-      // 已移除调试日志
+      console.error('获取营养品库存失败:', error)
       wx.showToast({
         title: '网络异常，请重试',
         icon: 'error'
@@ -2048,7 +2052,7 @@ Page({
         operator: medicationFormData.operator || '用户',
         status: '已完成',
         notes: `用途：${purpose}${medicationFormData.dosage ? '，剂量：' + medicationFormData.dosage : ''}${medicationFormData.notes ? '，备注：' + medicationFormData.notes : ''}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}`,
-        recordDate: new Date().toISOString().split('T')[0]
+        recordDate: getCurrentBeijingDate()
       }
 
       // 首页构建的记录数据
@@ -2213,7 +2217,7 @@ Page({
         operator: nutritionFormData.operator || '用户',
         status: '已完成',
         notes: `任务：${selectedTask.title}，批次：${selectedTask.batchNumber || selectedTask.batchId || ''}${nutritionFormData.dosage ? '，剂量：' + nutritionFormData.dosage : ''}${nutritionFormData.notes ? '，备注：' + nutritionFormData.notes : ''}`,
-        recordDate: new Date().toISOString().split('T')[0]
+        recordDate: getCurrentBeijingDate()
       }
 
       // 首页构建的营养记录数据

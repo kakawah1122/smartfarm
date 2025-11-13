@@ -70,8 +70,7 @@ export function getTodayTasks(batchId: string, dayAge: number) {
  * @returns 当前日龄
  */
 export function calculateDayAge(entryDate: string): number {
-  const today = new Date()
-  const todayDateStr = today.toISOString().split('T')[0]
+  const todayDateStr = getCurrentBeijingDate() // ✅ 使用北京时间
   const entryDateStr = entryDate.split('T')[0]
   
   const todayDate = new Date(todayDateStr + 'T00:00:00')
@@ -82,6 +81,8 @@ export function calculateDayAge(entryDate: string): number {
   
   return diffDays + 1
 }
+
+import { formatTime, getCurrentBeijingDate } from './util'
 
 /**
  * 格式化任务描述

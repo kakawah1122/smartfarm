@@ -693,9 +693,23 @@ const pageConfig: AnyObject = {
           .filter((item: AutopsyAbnormality) => item.checked)
           .map((item: AutopsyAbnormality) => item.name)
         
+        // ✅ 修复：合并症状和剖检描述，不再默认设置"无明显生前症状"
+        const autopsyDesc = this.data.autopsyDescription.trim()
+        let combinedDescription = ''
+        
+        if (symptoms && autopsyDesc && symptoms !== autopsyDesc) {
+          combinedDescription = `生前症状：${symptoms}；剖检发现：${autopsyDesc}`
+        } else if (symptoms) {
+          combinedDescription = symptoms
+        } else if (autopsyDesc) {
+          combinedDescription = autopsyDesc
+        } else {
+          combinedDescription = '无明显生前症状'
+        }
+        
         diagnosisData.deathCount = deathCount
-        diagnosisData.symptoms = symptoms ? symptoms.split(/[、，,；;]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0) : []
-        diagnosisData.symptomsText = symptoms || '无明显生前症状'
+        diagnosisData.symptoms = combinedDescription ? combinedDescription.split(/[、，,；;]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0) : []
+        diagnosisData.symptomsText = combinedDescription
         diagnosisData.autopsyFindings = {
           abnormalities: selectedAbnormalities,
           description: this.data.autopsyDescription

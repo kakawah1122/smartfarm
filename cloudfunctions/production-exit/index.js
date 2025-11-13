@@ -1,6 +1,68 @@
 // cloudfunctions/production-exit/index.js
 // 出栏管理云函数
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
+
+function getCurrentBeijingDate() {
+  try {
+    const now = new Date()
+    const beijingDate = now.toLocaleDateString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    return beijingDate.replace(/\//g, '-')
+  } catch (error) {
+    console.error('获取北京时间日期失败，使用UTC+8偏移:', error)
+    const now = new Date()
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    return beijingTime.toISOString().split('T')[0]
+  }
+}
+
+function formatBeijingTime(date, format = 'datetime') {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+
+  if (isNaN(dateObj.getTime())) {
+    return ''
+  }
+
+  try {
+    const beijingTimeStr = dateObj.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
+
+    const standardFormat = beijingTimeStr.replace(/\//g, '-')
+
+    if (format === 'date') {
+      return standardFormat.split(' ')[0]
+    }
+    return standardFormat
+  } catch (error) {
+    console.error('北京时间格式化失败，使用降级处理:', error)
+    const beijingTime = new Date(dateObj.getTime() + 8 * 60 * 60 * 1000)
+    const year = beijingTime.getUTCFullYear()
+    const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(beijingTime.getUTCDate()).padStart(2, '0')
+
+    if (format === 'date') {
+      return `${year}-${month}-${day}`
+    }
+
+    const hour = String(beijingTime.getUTCHours()).padStart(2, '0')
+    const minute = String(beijingTime.getUTCMinutes()).padStart(2, '0')
+    const second = String(beijingTime.getUTCSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+  }
+}
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -253,7 +315,7 @@ async function createExitRecord(event, wxContext) {
     totalWeight: finalTotalWeight, // 保存计算后的总重量
     unitPrice: unitPriceNum,
     totalRevenue: totalRevenue,
-    exitDate: recordData.exitDate || now.toISOString().split('T')[0],
+    exitDate: recordData.exitDate || getCurrentBeijingDate(),
     deliveryDate: recordData.deliveryDate || '',
     operator: operatorName,
     status: recordData.status || '待出栏',
@@ -489,8 +551,8 @@ async function getRecentExitTrend(dateRange) {
   
   const records = await db.collection('prod_batch_exits')
     .where({
-      exitDate: _.gte(startDate.toISOString().split('T')[0])
-               .and(_.lte(endDate.toISOString().split('T')[0]))
+      exitDate: _.gte(formatBeijingTime(startDate, 'date'))
+               .and(_.lte(formatBeijingTime(endDate, 'date')))
     })
     .get()
   

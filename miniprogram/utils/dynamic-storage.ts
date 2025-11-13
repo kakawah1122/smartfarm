@@ -285,31 +285,61 @@ export class DynamicStorageManager {
   }
   
   /**
-   * 生成时间后缀
+   * 生成时间后缀（基于北京时间）
    * @param date 日期对象
    * @param granularity 时间粒度
    * @returns 时间后缀字符串
    */
   private static generateTimeSuffix(date: Date, granularity: string): string {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const quarter = Math.ceil(month / 3);
-    const week = this.getWeekOfYear(date);
-    
-    switch (granularity) {
-      case 'year':
-        return `${year}`;
-      case 'quarter':
-        return `${year}-Q${quarter}`;
-      case 'month':
-        return `${year}-${month.toString().padStart(2, '0')}`;
-      case 'week':
-        return `${year}-W${week.toString().padStart(2, '0')}`;
-      case 'day':
-        return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-      default:
-        return `${year}-${month.toString().padStart(2, '0')}`;
+    try {
+      // ✅ 使用北京时间
+      const beijingDate = new Date(date.toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai'
+      }))
+      
+      const year = beijingDate.getFullYear();
+      const month = beijingDate.getMonth() + 1;
+      const day = beijingDate.getDate();
+      const quarter = Math.ceil(month / 3);
+      const week = this.getWeekOfYear(beijingDate);
+      
+      switch (granularity) {
+        case 'year':
+          return `${year}`;
+        case 'quarter':
+          return `${year}-Q${quarter}`;
+        case 'month':
+          return `${year}-${month.toString().padStart(2, '0')}`;
+        case 'week':
+          return `${year}-W${week.toString().padStart(2, '0')}`;
+        case 'day':
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        default:
+          return `${year}-${month.toString().padStart(2, '0')}`;
+      }
+    } catch (error) {
+      console.error('北京时间转换失败，使用本地时间:', error)
+      // 降级处理
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const quarter = Math.ceil(month / 3);
+      const week = this.getWeekOfYear(date);
+      
+      switch (granularity) {
+        case 'year':
+          return `${year}`;
+        case 'quarter':
+          return `${year}-Q${quarter}`;
+        case 'month':
+          return `${year}-${month.toString().padStart(2, '0')}`;
+        case 'week':
+          return `${year}-W${week.toString().padStart(2, '0')}`;
+        case 'day':
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        default:
+          return `${year}-${month.toString().padStart(2, '0')}`;
+      }
     }
   }
   
@@ -366,15 +396,29 @@ export class DynamicStorageManager {
   }
   
   /**
-   * 格式化日期为字符串
+   * 格式化日期为字符串（基于北京时间）
    * @param date 日期对象
    * @returns 格式化字符串
    */
   private static formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}${month}${day}`;
+    try {
+      // ✅ 使用北京时间
+      const beijingDate = new Date(date.toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai'
+      }))
+      
+      const year = beijingDate.getFullYear();
+      const month = (beijingDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = beijingDate.getDate().toString().padStart(2, '0');
+      return `${year}${month}${day}`;
+    } catch (error) {
+      console.error('北京时间格式化失败，使用本地时间:', error)
+      // 降级处理
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}${month}${day}`;
+    }
   }
   
   /**

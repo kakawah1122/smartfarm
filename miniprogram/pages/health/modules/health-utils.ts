@@ -26,6 +26,8 @@ export function getSeverityColor(severity: string): string {
   return colorMap[severity] || '#d9d9d9'
 }
 
+import { formatTime } from '../../../utils/util'
+
 /**
  * 获取健康状态图标
  */
@@ -80,8 +82,8 @@ export function initDateRange(days: number = 30): { start: string; end: string }
   start.setDate(start.getDate() - days)
 
   return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0]
+    start: formatTime(start, 'date'),
+    end: formatTime(end, 'date')
   }
 }
 

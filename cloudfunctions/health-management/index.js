@@ -467,10 +467,27 @@ async function getAbnormalRecordDetail(event, wxContext) {
     
     const record = result.data
     
-    // 格式化修正时间（iOS兼容格式：YYYY-MM-DD HH:mm:ss）
+    // ✅ 格式化修正时间为北京时间（YYYY-MM-DD HH:mm:ss）
     if (record.correctedAt) {
       const date = new Date(record.correctedAt)
-      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+      try {
+        // 使用北京时间
+        const beijingTimeStr = date.toLocaleString('zh-CN', {
+          timeZone: 'Asia/Shanghai',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        })
+        record.correctedAt = beijingTimeStr.replace(/\//g, '-').replace(/\s/, ' ')
+      } catch (error) {
+        console.error('北京时间格式化失败，使用降级处理:', error)
+        // 降级处理
+        record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+      }
     }
     
     return {
@@ -3061,7 +3078,10 @@ async function getDiagnosisHistory(event, wxContext) {
       
       // ✅ 修复：直接从顶层字段读取，而不是从 input.animalInfo
       const symptoms = record.symptomsText || (Array.isArray(record.symptoms) ? record.symptoms.join('、') : '') || ''
-      const affectedCount = record.affectedCount || 0
+      // ✅ 修复：死因剖析使用deathCount，病鹅诊断使用affectedCount
+      const affectedCount = record.diagnosisType === 'autopsy_analysis' 
+        ? (record.deathCount || 0) 
+        : (record.affectedCount || 0)
       const dayAge = record.dayAge || 0
       
       return {
@@ -3118,10 +3138,30 @@ async function getDiagnosisHistory(event, wxContext) {
         })(),
         diagnosisDate: (() => {
           const createTimeStr = record.createdAt || record.createTime || ''
-          const timeStr = typeof createTimeStr === 'string' 
-            ? createTimeStr 
-            : (createTimeStr.toISOString ? createTimeStr.toISOString() : '')
-          return timeStr ? timeStr.substring(0, 16).replace('T', ' ') : ''
+          if (!createTimeStr) return ''
+          
+          try {
+            const date = new Date(createTimeStr)
+            if (isNaN(date.getTime())) return ''
+            
+            // ✅ 使用 toLocaleString 转换为北京时间
+            const beijingTimeStr = date.toLocaleString('zh-CN', {
+              timeZone: 'Asia/Shanghai',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            })
+            
+            // 转换为标准格式 YYYY-MM-DD HH:mm:ss
+            return beijingTimeStr.replace(/\//g, '-').replace(/\s/, ' ')
+          } catch (error) {
+            console.error('日期格式化错误:', error)
+            return ''
+          }
         })(),
         batchId: record.batchId || '',
         batchNumber: record.batchNumber || '未知批次',
@@ -5646,6 +5686,41 @@ async function createDeathRecordWithFinance(event, wxContext) {
       console.error('获取用户信息失败:', userError)
     }
     
+    // ✅ 获取AI诊断记录的修正状态（如果存在）
+    let aiDiagnosisCorrection = null
+    if (diagnosisId) {
+      try {
+        const aiDiagnosisResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+          .doc(diagnosisId)
+          .get()
+        
+        if (aiDiagnosisResult.data && aiDiagnosisResult.data.isCorrected) {
+          aiDiagnosisCorrection = {
+            isCorrected: true,
+            originalAiCause: aiDiagnosisResult.data.result?.primaryCause?.disease || aiDiagnosisResult.data.result?.primaryDiagnosis?.disease || deathCause,
+            correctedCause: aiDiagnosisResult.data.correctedDiagnosis || deathCause,
+            correctionReason: aiDiagnosisResult.data.correctionReason || aiDiagnosisResult.data.veterinarianDiagnosis || '',
+            correctionType: aiDiagnosisResult.data.correctionType || 'veterinarian_correction',
+            aiAccuracyRating: aiDiagnosisResult.data.aiAccuracyRating || 3,
+            correctedBy: aiDiagnosisResult.data.correctedBy || openid,
+            correctedByName: aiDiagnosisResult.data.correctedByName || userName,
+            correctedAt: aiDiagnosisResult.data.correctedAt || new Date()
+          }
+          
+          // 如果已修正，使用修正后的死因作为记录的死因
+          deathCause = aiDiagnosisCorrection.correctedCause
+          
+          debugLog('[AI死因剖析] 检测到AI诊断已修正:', {
+            原始死因: aiDiagnosisCorrection.originalAiCause,
+            修正死因: aiDiagnosisCorrection.correctedCause,
+            修正依据: aiDiagnosisCorrection.correctionReason
+          })
+        }
+      } catch (aiDiagnosisError) {
+        console.error('获取AI诊断修正状态失败（不影响主流程）:', aiDiagnosisError)
+      }
+    }
+    
     // 创建死亡记录
     const deathRecordData = {
       _openid: openid,
@@ -5670,6 +5745,21 @@ async function createDeathRecordWithFinance(event, wxContext) {
         calculationMethod: 'entry_unit_price',
         treatmentCost: 0
       },
+      // ✅ 同步AI诊断的修正状态到死亡记录
+      ...(aiDiagnosisCorrection ? {
+        isCorrected: aiDiagnosisCorrection.isCorrected,
+        originalAiCause: aiDiagnosisCorrection.originalAiCause,
+        correctedCause: aiDiagnosisCorrection.correctedCause,
+        correctionReason: aiDiagnosisCorrection.correctionReason,
+        correctionType: aiDiagnosisCorrection.correctionType,
+        aiAccuracyRating: aiDiagnosisCorrection.aiAccuracyRating,
+        correctedBy: aiDiagnosisCorrection.correctedBy,
+        correctedByName: aiDiagnosisCorrection.correctedByName,
+        correctedAt: aiDiagnosisCorrection.correctedAt,
+        veterinarianNote: `从AI诊断修正：${aiDiagnosisCorrection.correctionReason}`
+      } : {
+        isCorrected: false
+      }),
       operator: openid,
       operatorName: userName,  // ✅ 使用标准字段名
       reporterName: userName,
@@ -5927,10 +6017,27 @@ async function getDeathRecordDetail(event, wxContext) {
       }
     }
     
-    // 格式化修正时间（iOS兼容格式：YYYY-MM-DD HH:mm:ss）
+    // ✅ 格式化修正时间为北京时间（YYYY-MM-DD HH:mm:ss）
     if (record.correctedAt) {
       const date = new Date(record.correctedAt)
-      record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+      try {
+        // 使用北京时间
+        const beijingTimeStr = date.toLocaleString('zh-CN', {
+          timeZone: 'Asia/Shanghai',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        })
+        record.correctedAt = beijingTimeStr.replace(/\//g, '-').replace(/\s/, ' ')
+      } catch (error) {
+        console.error('北京时间格式化失败，使用降级处理:', error)
+        // 降级处理
+        record.correctedAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+      }
     }
     
     return {

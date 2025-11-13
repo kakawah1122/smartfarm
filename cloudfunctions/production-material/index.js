@@ -3,6 +3,67 @@
 const cloud = require('wx-server-sdk')
 const { COLLECTIONS } = require('./collections.js')
 
+function getCurrentBeijingDate() {
+  try {
+    const now = new Date()
+    const beijingDate = now.toLocaleDateString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    return beijingDate.replace(/\//g, '-')
+  } catch (error) {
+    console.error('获取北京时间日期失败，使用UTC+8偏移:', error)
+    const now = new Date()
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    return beijingTime.toISOString().split('T')[0]
+  }
+}
+
+function formatBeijingTime(date, format = 'datetime') {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+
+  if (isNaN(dateObj.getTime())) {
+    return ''
+  }
+
+  try {
+    const beijingTimeStr = dateObj.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
+
+    const standardFormat = beijingTimeStr.replace(/\//g, '-')
+
+    if (format === 'date') {
+      return standardFormat.split(' ')[0]
+    }
+    return standardFormat
+  } catch (error) {
+    console.error('北京时间格式化失败，使用降级处理:', error)
+    const beijingTime = new Date(dateObj.getTime() + 8 * 60 * 60 * 1000)
+    const year = beijingTime.getUTCFullYear()
+    const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(beijingTime.getUTCDate()).padStart(2, '0')
+
+    if (format === 'date') {
+      return `${year}-${month}-${day}`
+    }
+
+    const hour = String(beijingTime.getUTCHours()).padStart(2, '0')
+    const minute = String(beijingTime.getUTCMinutes()).padStart(2, '0')
+    const second = String(beijingTime.getUTCSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+  }
+}
+
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
@@ -640,7 +701,7 @@ async function createMaterialRecord(event, wxContext) {
       status: recordData.status || '已完成',
       notes: notesValue,
       relatedBatch: recordData.relatedBatch || '',
-      recordDate: recordData.recordDate || now.toISOString().split('T')[0],
+      recordDate: recordData.recordDate || getCurrentBeijingDate(),
       createTime: now,
       updateTime: now
     }
@@ -1127,7 +1188,7 @@ async function purchaseInbound(event, wxContext) {
         status: '已完成',
         notes: materialData.notes || '',
         relatedBatch: materialData.batchId || '',
-        recordDate: materialData.recordDate || now.toISOString().split('T')[0],
+        recordDate: materialData.recordDate || getCurrentBeijingDate(),
         createTime: now,
         updateTime: now
       }
@@ -1513,7 +1574,7 @@ async function getCurrentStockCountWrapper(event, wxContext) {
     throw new Error('缺少批次ID')
   }
   
-  const date = recordDate || new Date().toISOString().split('T')[0]
+  const date = recordDate || getCurrentBeijingDate()
   const stockInfo = await getCurrentStockCount(batchId, date)
   
   return {
@@ -1538,7 +1599,7 @@ async function recordFeedUsage(event, wxContext) {
   try {
     return await db.runTransaction(async transaction => {
       const now = new Date()
-      const recordDate = feedData.recordDate || now.toISOString().split('T')[0]
+      const recordDate = feedData.recordDate || getCurrentBeijingDate()
       
       // 1. 获取批次信息
       const batchEntry = await transaction.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(feedData.batchId).get()
@@ -1743,7 +1804,7 @@ async function getBatchFeedCost(event, wxContext) {
     const batchInfo = batchEntry.data
     
     // 2. 获取当前存栏数
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentBeijingDate()
     const stockInfo = await getCurrentStockCount(batchId, today)
     
     // 3. 获取所有投喂记录

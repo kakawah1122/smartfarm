@@ -1,6 +1,79 @@
 // cloudfunctions/production-dashboard/index.js
 // 生产管理仪表盘云函数 - 提供统一的统计数据
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
+
+function getCurrentBeijingDate() {
+  try {
+    const now = new Date()
+    const beijingDate = now.toLocaleDateString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    return beijingDate.replace(/\//g, '-')
+  } catch (error) {
+    console.error('获取北京时间日期失败，使用UTC+8偏移:', error)
+    const now = new Date()
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    return beijingTime.toISOString().split('T')[0]
+  }
+}
+
+function getBeijingDateWithOffset(daysOffset = 0) {
+  try {
+    const now = new Date()
+    const targetDate = new Date(now.getTime() + daysOffset * 24 * 60 * 60 * 1000)
+    return formatBeijingTime(targetDate, 'date')
+  } catch (error) {
+    console.error('计算偏移日期失败:', error)
+    return getCurrentBeijingDate()
+  }
+}
+
+function formatBeijingTime(date, format = 'datetime') {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+
+  if (isNaN(dateObj.getTime())) {
+    return ''
+  }
+
+  try {
+    const beijingTimeStr = dateObj.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
+
+    const standardFormat = beijingTimeStr.replace(/\//g, '-')
+
+    if (format === 'date') {
+      return standardFormat.split(' ')[0]
+    }
+    return standardFormat
+  } catch (error) {
+    console.error('北京时间格式化失败，使用降级处理:', error)
+    const beijingTime = new Date(dateObj.getTime() + 8 * 60 * 60 * 1000)
+    const year = beijingTime.getUTCFullYear()
+    const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(beijingTime.getUTCDate()).padStart(2, '0')
+
+    if (format === 'date') {
+      return `${year}-${month}-${day}`
+    }
+
+    const hour = String(beijingTime.getUTCHours()).padStart(2, '0')
+    const minute = String(beijingTime.getUTCMinutes()).padStart(2, '0')
+    const second = String(beijingTime.getUTCSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+  }
+}
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -208,8 +281,8 @@ async function getMaterialOverview() {
     totalValue += value
   })
   
-  // 获取今日物料动态
-  const today = new Date().toISOString().split('T')[0]
+  // ✅ 获取今日物料动态（使用北京时间）
+  const today = getCurrentBeijingDate()
   const todayRecords = await db.collection('prod_material_records')
     .where({ recordDate: today })
     .get()
@@ -328,10 +401,9 @@ async function getMaterialOverview() {
 
 // 获取最近趋势
 async function getRecentTrends() {
-  const endDate = new Date()
-  const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const startDateStr = startDate.toISOString().split('T')[0]
-  const endDateStr = endDate.toISOString().split('T')[0]
+  // ✅ 使用北京时间获取最近7天数据
+  const endDateStr = getCurrentBeijingDate()
+  const startDateStr = getBeijingDateWithOffset(-7)
   
   // 获取最近7天的数据
   const [entryRecords, exitRecords, materialRecords] = await Promise.all([
@@ -376,7 +448,8 @@ function groupByDate(records, dateField, valueField) {
 // 获取每日统计
 async function getDailyStats(event, wxContext) {
   const { date } = event
-  const targetDate = date || new Date().toISOString().split('T')[0]
+  // ✅ 使用北京时间获取每日统计
+  const targetDate = date || getCurrentBeijingDate()
   
   // 获取当日各类数据
   const [entryRecords, exitRecords, materialRecords] = await Promise.all([

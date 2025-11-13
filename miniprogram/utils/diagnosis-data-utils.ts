@@ -31,15 +31,31 @@ export function normalizeDiagnosisRecord(record: any): DiagnosisRecord {
   // 统一诊断日期字段：优先使用 diagnosisDate，如果没有则从 createTime 格式化
   let diagnosisDate = record.diagnosisDate
   if (!diagnosisDate && record.createTime) {
-    // 将 ISO 格式转换为 YYYY-MM-DD HH:mm
+    // ✅ 将 ISO 格式转换为北京时间 YYYY-MM-DD HH:mm
     const date = new Date(record.createTime)
     if (!isNaN(date.getTime())) {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hour = String(date.getHours()).padStart(2, '0')
-      const minute = String(date.getMinutes()).padStart(2, '0')
-      diagnosisDate = `${year}-${month}-${day} ${hour}:${minute}`
+      try {
+        // 使用toLocaleString确保显示北京时间
+        const beijingTimeStr = date.toLocaleString('zh-CN', {
+          timeZone: 'Asia/Shanghai',
+          year: 'numeric',
+          month: '2-digit', 
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        })
+        
+        diagnosisDate = beijingTimeStr.replace(/\//g, '-').replace(/\s/, ' ')
+      } catch (error) {
+        // 降级处理：如果toLocaleString失败，使用本地时间
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hour = String(date.getHours()).padStart(2, '0')
+        const minute = String(date.getMinutes()).padStart(2, '0')
+        diagnosisDate = `${year}-${month}-${day} ${hour}:${minute}`
+      }
     }
   }
 

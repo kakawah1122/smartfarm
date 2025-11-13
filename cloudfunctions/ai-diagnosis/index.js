@@ -1028,6 +1028,8 @@ exports.main = async (event, context) => {
         return await adoptDiagnosis(event, openid)
       case 'feedback_diagnosis':
         return await feedbackDiagnosis(event, openid)
+      case 'update_diagnosis_status':
+        return await updateDiagnosisStatus(event, openid)
       case 'get_diagnosis_stats':
         return await getDiagnosisStats(event, openid)
       case 'get_pending_diagnosis_count':
@@ -1274,7 +1276,10 @@ async function getDiagnosisHistory(event, openid) {
       
       // ✅ 修复：直接从顶层字段读取，而不是从 input.animalInfo
       const symptoms = record.symptomsText || (Array.isArray(record.symptoms) ? record.symptoms.join('、') : '') || ''
-      const affectedCount = record.affectedCount || 0
+      // ✅ 修复：死因剖析使用deathCount，病鹅诊断使用affectedCount
+      const affectedCount = record.diagnosisType === 'autopsy_analysis' 
+        ? (record.deathCount || 0) 
+        : (record.affectedCount || 0)
       const dayAge = record.dayAge || 0
       
       // ✅ 修复：治疗周期的获取逻辑
@@ -1299,7 +1304,7 @@ async function getDiagnosisHistory(event, openid) {
           : record.createTime.toISOString()
       }
       
-      // ✅ 格式化为iOS兼容的日期时间格式
+      // ✅ 格式化为北京时间的日期时间格式（UTC+8）
       const formatDateTimeForIOS = (dateStr) => {
         if (!dateStr) return ''
         try {
@@ -1307,15 +1312,20 @@ async function getDiagnosisHistory(event, openid) {
           // 检查日期是否有效
           if (isNaN(date.getTime())) return dateStr
           
-          // 返回iOS兼容的格式：YYYY-MM-DD HH:mm:ss
-          const year = date.getFullYear()
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const day = String(date.getDate()).padStart(2, '0')
-          const hours = String(date.getHours()).padStart(2, '0')
-          const minutes = String(date.getMinutes()).padStart(2, '0')
-          const seconds = String(date.getSeconds()).padStart(2, '0')
+          // ✅ 使用 toLocaleString 转换为北京时间，避免手动时区计算错误
+          const beijingTimeStr = date.toLocaleString('zh-CN', {
+            timeZone: 'Asia/Shanghai',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          })
           
-          return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+          // 转换为标准格式 YYYY-MM-DD HH:mm:ss
+          return beijingTimeStr.replace(/\//g, '-').replace(/\s/, ' ')
         } catch (error) {
           console.error('日期格式化错误:', error)
           return dateStr
@@ -1607,6 +1617,75 @@ async function feedbackDiagnosis(event, openid) {
     return {
       success: false,
       error: error.message
+    }
+  }
+}
+
+// 更新诊断状态（含软删除）
+async function updateDiagnosisStatus(event, openid) {
+  try {
+    const { diagnosisId, status, updateData = {} } = event
+
+    if (!diagnosisId) {
+      throw new Error('诊断ID不能为空')
+    }
+
+    const recordResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+      .doc(diagnosisId)
+      .get()
+
+    if (!recordResult.data) {
+      throw new Error('诊断记录不存在')
+    }
+
+    if (recordResult.data._openid !== openid) {
+      throw new Error('无权更新该诊断记录')
+    }
+
+    const allowedStatus = new Set([
+      'processing',
+      'completed',
+      'failed',
+      'pending_confirmation',
+      'adopted',
+      'confirmed',
+      'deleted'
+    ])
+
+    const updates = {
+      updateTime: new Date().toISOString()
+    }
+
+    if (typeof status === 'string') {
+      if (!allowedStatus.has(status)) {
+        throw new Error('不支持的诊断状态')
+      }
+      updates.status = status
+    }
+
+    const allowedFields = ['isDeleted', 'deletedAt', 'hasTreatment']
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(updateData, field)) {
+        updates[field] = updateData[field]
+      }
+    })
+
+    await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+      .doc(diagnosisId)
+      .update({
+        data: updates
+      })
+
+    return {
+      success: true,
+      message: '诊断状态更新成功'
+    }
+  } catch (error) {
+    // 已移除调试日志
+    return {
+      success: false,
+      error: error.message,
+      message: error.message || '更新诊断状态失败'
     }
   }
 }

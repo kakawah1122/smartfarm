@@ -1,6 +1,6 @@
 // health/health.ts - 健康管理页面（模块化优化版）
 import CloudApi from '../../utils/cloud-api'
-import { formatTime } from '../../utils/util'
+import { formatTime, getCurrentBeijingDate } from '../../utils/util'
 import { logger } from '../../utils/logger'
 import * as HealthStatsCalculator from './modules/health-stats-calculator'
 import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopDataWatcher as stopHealthDataWatcher } from './modules/health-watchers'
@@ -563,8 +563,8 @@ Page<PageData, any>({
 
     this.setData({
       dateRange: {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0]
+        start: formatTime(start, 'date'),
+        end: formatTime(end, 'date')
       }
     })
   },
@@ -1461,6 +1461,7 @@ Page<PageData, any>({
       
       // ✅ 并行执行所有API调用（优化：减少总耗时）
       let pendingDiagnosisResult: any, costResult: any, abnormalResult: any, diagnosisResult: any
+      let costData: any = {}
       
       if (aggregatedStats) {
         // 如果已有聚合数据，只并行执行必要的调用
@@ -2330,7 +2331,24 @@ Page<PageData, any>({
         .get()
       
       if (result.data && result.data.length > 0) {
-        const completedTasks = result.data.map((task: any) => ({
+        type CompletedTaskItem = {
+          _id: string
+          id: string
+          taskId: string
+          title: string
+          taskName: string
+          type: string
+          completedDate: string
+          completedBy: string
+          batchNumber: string
+          batchId: string
+          dayAge: number
+          completed: boolean
+          description: string
+          notes: string
+        }
+
+        const completedTasks: CompletedTaskItem[] = result.data.map((task: any): CompletedTaskItem => ({
           _id: task._id,
           id: task._id,
           taskId: task.taskId || task._id,
@@ -2348,7 +2366,7 @@ Page<PageData, any>({
         }))
         
         // ✅ 按完成时间重新排序（在内存中排序）
-        completedTasks.sort((a, b) => {
+        completedTasks.sort((a: CompletedTaskItem, b: CompletedTaskItem) => {
           const dateA = a.completedDate ? new Date(a.completedDate).getTime() : 0
           const dateB = b.completedDate ? new Date(b.completedDate).getTime() : 0
           return dateB - dateA  // 倒序：最新的在前
@@ -2526,8 +2544,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
 
     this.setData({
       dateRange: {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0]
+        start: formatTime(start, 'date'),
+        end: formatTime(end, 'date')
       }
     })
 
@@ -3526,10 +3544,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     }
 
     // 构建预防数据（符合云函数期望的格式）
-    const now = new Date()
     const preventionData = {
       preventionType: 'vaccine',
-      preventionDate: now.toISOString().split('T')[0], // 格式: YYYY-MM-DD
+      preventionDate: getCurrentBeijingDate(), // ✅ 使用北京时间
       vaccineInfo: {
         name: vaccineFormData.vaccineName,
         manufacturer: vaccineFormData.manufacturer,
@@ -3885,7 +3902,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         dosage: medicationFormData.dosage,
         notes: medicationFormData.notes,
         operator: medicationFormData.operator,
-        useDate: new Date().toISOString().split('T')[0],
+        useDate: getCurrentBeijingDate(),
         createTime: new Date().toISOString()
       }
 
@@ -4233,7 +4250,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         operator: nutritionFormData.operator || '用户',
         status: '已完成',
         notes: `任务：${selectedTask.title}，批次：${batchId}${nutritionFormData.dosage ? '，剂量：' + nutritionFormData.dosage : ''}${nutritionFormData.notes ? '，备注：' + nutritionFormData.notes : ''}`,
-        recordDate: new Date().toISOString().split('T')[0]
+        recordDate: getCurrentBeijingDate()
       }
 
       const result = await wx.cloud.callFunction({

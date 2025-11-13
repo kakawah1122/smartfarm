@@ -1,5 +1,13 @@
 import { logger } from '../../utils/logger'
+import { formatDateTime } from '../../utils/health-utils'
 // miniprogram/packageHealth/death-record-detail/death-record-detail.ts
+
+type AnyObject = Record<string, any>
+
+interface AutopsyFindingsNormalized {
+  abnormalities: string[]
+  description?: string
+}
 
 interface DeathRecord {
   _id: string
@@ -8,16 +16,15 @@ interface DeathRecord {
   deathDate: string
   deathCount: number
   deathCause: string
-  financeLoss: number
-  unitCost: number
+  financeLoss?: number | string
+  unitCost?: number | string
+  breedingCost?: number | string
+  treatmentCost?: number | string
   source?: string  // ✅ 来源标识：'treatment' 治疗记录 | 'ai_diagnosis' AI死因剖析
   aiDiagnosisId: string
-  diagnosisResult: any
+  diagnosisResult: AnyObject
   autopsyImages?: string[]
-  autopsyFindings?: {
-    abnormalities: string[]
-    description: string
-  }
+  autopsyFindings?: AutopsyFindingsNormalized | string | null
   isCorrected: boolean
   correctedCause?: string
   correctionReason?: string
@@ -27,6 +34,59 @@ interface DeathRecord {
   correctedBy?: string
   correctedByName?: string
   correctedAt?: string
+  description?: string
+  symptomsText?: string
+  displayDeathCause?: string
+  displayFindings?: string
+  unitCostDisplay?: string
+  breedingCostDisplay?: string
+  treatmentCostDisplay?: string
+  financeLossDisplay?: string
+}
+
+const ensureArray = (value: any): any[] => (Array.isArray(value) ? value : [])
+
+const formatCurrency = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') {
+    return '0.00'
+  }
+
+  const numeric = typeof value === 'number' ? value : parseFloat(String(value))
+  if (Number.isNaN(numeric) || !Number.isFinite(numeric)) {
+    return '0.00'
+  }
+
+  return numeric.toFixed(2)
+}
+
+const normalizeAutopsyFindings = (raw: any): AutopsyFindingsNormalized | null => {
+  if (!raw) {
+    return null
+  }
+
+  if (typeof raw === 'string') {
+    const description = raw.trim()
+    return description ? { abnormalities: [], description } : null
+  }
+
+  if (typeof raw === 'object') {
+    const abnormalities = ensureArray(raw.abnormalities)
+      .map((item: any) => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean)
+
+    const description = typeof raw.description === 'string' ? raw.description.trim() : ''
+
+    if (!abnormalities.length && !description) {
+      return null
+    }
+
+    return {
+      abnormalities,
+      ...(description ? { description } : {})
+    }
+  }
+
+  return null
 }
 
 Page({
@@ -35,6 +95,10 @@ Page({
     recordId: '',
     record: {} as DeathRecord,
     diagnosisResult: {} as any,
+    primaryResult: null as AnyObject | null,
+    differentialList: [] as AnyObject[],
+    preventionList: [] as string[],
+    hasStructuredAutopsyFindings: false,
     
     // 修正弹窗
     showCorrectionDialog: false,
@@ -75,7 +139,7 @@ Page({
       })
 
       if (result.result && result.result.success) {
-        const record = result.result.data
+        const record = result.result.data as DeathRecord
         
         // 解析诊断结果
         let diagnosisResult = record.diagnosisResult
@@ -116,6 +180,8 @@ Page({
           ? record.correctedCause
           : (record.deathCause || '未知死因')
 
+        const normalizedAutopsyFindings = normalizeAutopsyFindings(record.autopsyFindings)
+
         const meaningfulTexts: string[] = []
         const pushIfMeaningful = (text?: string) => {
           if (!text) {
@@ -128,16 +194,11 @@ Page({
           meaningfulTexts.push(trimmed)
         }
 
-        if (record.autopsyFindings) {
-          if (typeof record.autopsyFindings === 'string') {
-            pushIfMeaningful(record.autopsyFindings)
-          } else if (typeof record.autopsyFindings === 'object') {
-            const abnormalities = record.autopsyFindings.abnormalities
-            if (Array.isArray(abnormalities) && abnormalities.length > 0) {
-              pushIfMeaningful(abnormalities.join('、'))
-            }
-            pushIfMeaningful(record.autopsyFindings.description)
+        if (normalizedAutopsyFindings) {
+          if (normalizedAutopsyFindings.abnormalities.length > 0) {
+            pushIfMeaningful(normalizedAutopsyFindings.abnormalities.join('、'))
           }
+          pushIfMeaningful(normalizedAutopsyFindings.description)
         }
 
         pushIfMeaningful(record.description)
@@ -147,14 +208,34 @@ Page({
           .filter((value, index, self) => self.indexOf(value) === index)
           .join('；')
 
+        const primaryResult = diagnosisResult && (diagnosisResult.primaryCause || diagnosisResult.primaryDiagnosis) || null
+        const differentialListRaw = ensureArray(diagnosisResult && diagnosisResult.differentialCauses)
+        const differentialList = differentialListRaw.length > 0
+          ? differentialListRaw
+          : ensureArray(diagnosisResult && diagnosisResult.differentialDiagnosis)
+        const preventionListRaw = ensureArray(diagnosisResult && diagnosisResult.preventionAdvice)
+        const preventionList = preventionListRaw.length > 0
+          ? preventionListRaw
+          : ensureArray(diagnosisResult && diagnosisResult.preventionMeasures)
+
         this.setData({
           record: {
             ...record,
             autopsyImages: processedImages,
+            autopsyFindings: normalizedAutopsyFindings,
             displayDeathCause,
-            displayFindings
+            displayFindings,
+            unitCostDisplay: formatCurrency(record.unitCost),
+            breedingCostDisplay: formatCurrency(record.breedingCost),
+            treatmentCostDisplay: formatCurrency(record.treatmentCost),
+            financeLossDisplay: formatCurrency(record.financeLoss),
+            correctedAt: record.correctedAt ? formatDateTime(record.correctedAt) : record.correctedAt
           },
           diagnosisResult: diagnosisResult || {},
+          primaryResult,
+          differentialList,
+          preventionList,
+          hasStructuredAutopsyFindings: Boolean(normalizedAutopsyFindings),
           loading: false
         })
       } else {

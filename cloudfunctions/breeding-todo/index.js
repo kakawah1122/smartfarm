@@ -3,6 +3,78 @@ const cloud = require('wx-server-sdk')
 const DatabaseManager = require('./database-manager')
 const { COLLECTIONS } = require('./collections.js')
 
+function getCurrentBeijingDate() {
+  try {
+    const now = new Date()
+    const beijingDate = now.toLocaleDateString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    return beijingDate.replace(/\//g, '-')
+  } catch (error) {
+    console.error('获取北京时间日期失败，使用UTC+8偏移:', error)
+    const now = new Date()
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    return beijingTime.toISOString().split('T')[0]
+  }
+}
+
+function formatBeijingTime(date, format = 'datetime') {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+
+  if (isNaN(dateObj.getTime())) {
+    return ''
+  }
+
+  try {
+    const beijingTimeStr = dateObj.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
+
+    const standardFormat = beijingTimeStr.replace(/\//g, '-')
+
+    if (format === 'date') {
+      return standardFormat.split(' ')[0]
+    }
+    return standardFormat
+  } catch (error) {
+    console.error('北京时间格式化失败，使用降级处理:', error)
+    const beijingTime = new Date(dateObj.getTime() + 8 * 60 * 60 * 1000)
+    const year = beijingTime.getUTCFullYear()
+    const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(beijingTime.getUTCDate()).padStart(2, '0')
+
+    if (format === 'date') {
+      return `${year}-${month}-${day}`
+    }
+
+    const hour = String(beijingTime.getUTCHours()).padStart(2, '0')
+    const minute = String(beijingTime.getUTCMinutes()).padStart(2, '0')
+    const second = String(beijingTime.getUTCSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+  }
+}
+
+function getBeijingDateWithOffset(daysOffset = 0) {
+  try {
+    const now = new Date()
+    const targetDate = new Date(now.getTime() + daysOffset * 24 * 60 * 60 * 1000)
+    return formatBeijingTime(targetDate, 'date')
+  } catch (error) {
+    console.error('计算偏移日期失败:', error)
+    return getCurrentBeijingDate()
+  }
+}
+
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
@@ -29,9 +101,7 @@ function generateTaskRecordId() {
 
 // 计算跟进日期（N天后）
 function getFollowUpDate(daysAfter) {
-  const date = new Date()
-  date.setDate(date.getDate() + daysAfter)
-  return date.toISOString().split('T')[0]
+  return getBeijingDateWithOffset(daysAfter)
 }
 
 // 根据任务类型自动创建预防记录
@@ -57,7 +127,7 @@ async function createPreventionRecordFromTask(task, taskId, batchId, openid, not
       batchId,
       batchNumber: task.batchNumber || '',
       preventionType,
-      preventionDate: new Date().toISOString().split('T')[0],
+      preventionDate: getCurrentBeijingDate(),
       notes: notes || task.description || '',
       operator: openid,
       operatorName: '',
@@ -236,7 +306,7 @@ async function completeVaccineTask(event, wxContext) {
     const preventionData = {
       batchId,
       preventionType: 'vaccine',
-      preventionDate: new Date().toISOString().split('T')[0],
+      preventionDate: getCurrentBeijingDate(),
       vaccineInfo: {
         name: vaccineRecord.vaccine.name,
         manufacturer: vaccineRecord.vaccine.manufacturer || '',
@@ -270,7 +340,7 @@ async function completeVaccineTask(event, wxContext) {
       const healthRecordData = {
         batchId,
         recordType: 'vaccine_record',
-        checkDate: new Date().toISOString().split('T')[0],
+        checkDate: getCurrentBeijingDate(),
         inspector: openid,
         totalCount: vaccineRecord.vaccination.count || 0,
         healthyCount: vaccineRecord.vaccination.count || 0,
@@ -317,7 +387,7 @@ async function completeVaccineTask(event, wxContext) {
           labor: vaccineRecord.cost.veterinary || 0,
           other: vaccineRecord.cost.other || 0
         },
-        costDate: new Date().toISOString().split('T')[0],
+        costDate: getCurrentBeijingDate(),
         createdBy: openid
       }
 
@@ -585,7 +655,7 @@ async function createMissingTasks(batchId, userId) {
           duration: task.duration || 1,
           dayInSeries: task.dayInSeries || 1,
           notes: task.notes || '',
-          scheduledDate: taskDate.toISOString().split('T')[0],
+          scheduledDate: formatBeijingTime(taskDate, 'date'),
           status: 'pending',
           isCompleted: false,
           // 🔥 新增：默认完成状态字段

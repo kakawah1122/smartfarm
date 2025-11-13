@@ -194,21 +194,76 @@ export function calculateCurrentAge(entryDate: string): number {
 }
 
 /**
- * 格式化日期
+ * 格式化日期（北京时间）
  */
 export function formatDate(date: string | Date, format: string = 'YYYY-MM-DD'): string {
   const d = typeof date === 'string' ? new Date(date) : date
   
   if (isNaN(d.getTime())) return ''
   
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  
-  return format
-    .replace('YYYY', String(year))
-    .replace('MM', month)
-    .replace('DD', day)
+  try {
+    // ✅ 使用北京时间
+    const beijingTimeStr = d.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    
+    const [year, month, day] = beijingTimeStr.split('/').map(s => s.padStart(2, '0'))
+    
+    return format
+      .replace('YYYY', year)
+      .replace('MM', month)
+      .replace('DD', day)
+  } catch (error) {
+    console.error('日期格式化错误:', error)
+    // 降级处理
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    
+    return format
+      .replace('YYYY', String(year))
+      .replace('MM', month)
+      .replace('DD', day)
+  }
+}
+
+/**
+ * 格式化日期时间（北京时间）
+ */
+export function formatDateTime(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date
+
+  if (isNaN(d.getTime())) {
+    return ''
+  }
+
+  try {
+    const beijingTimeStr = d.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
+
+    return beijingTimeStr.replace(/\//g, '-').replace(/\s+/, ' ')
+  } catch (error) {
+    console.error('日期时间格式化错误:', error)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hour = String(d.getHours()).padStart(2, '0')
+    const minute = String(d.getMinutes()).padStart(2, '0')
+    const second = String(d.getSeconds()).padStart(2, '0')
+
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+  }
 }
 
 /**

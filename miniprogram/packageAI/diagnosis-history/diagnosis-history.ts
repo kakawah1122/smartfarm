@@ -14,11 +14,28 @@ interface DiagnosisRecord {
   confidence: number
   status: string
   createTime: string
+  diagnosisDate?: string
   affectedCount: number
   dayAge: number
   temperature: number
   images?: string[]
 }
+
+const getRecordTimestamp = (record: DiagnosisRecord): number => {
+  const timeStr = record.createTime || record.diagnosisDate || ''
+  if (!timeStr) return 0
+
+  let parsed = Date.parse(timeStr)
+  if (!Number.isNaN(parsed)) {
+    return parsed
+  }
+
+  parsed = Date.parse(timeStr.replace(/-/g, '/'))
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const sortRecordsByLatest = (records: DiagnosisRecord[]): DiagnosisRecord[] =>
+  [...records].sort((a, b) => getRecordTimestamp(b) - getRecordTimestamp(a))
 
 // 页面配置对象
 const pageConfig = {
@@ -140,9 +157,10 @@ const pageConfig = {
         const processedRecords = normalizeDiagnosisRecords(records)
 
         const existingRecords = this.data.pagination.page === 1 ? [] : this.data.records
-        
+        const mergedRecords = [...existingRecords, ...processedRecords]
+
         this.setData({
-          records: [...existingRecords, ...processedRecords],
+          records: sortRecordsByLatest(mergedRecords),
           pagination: {
             ...pagination,
             hasMore: pagination.page < pagination.totalPages

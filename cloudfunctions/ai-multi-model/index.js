@@ -2,6 +2,24 @@ const cloud = require('wx-server-sdk')
 const axios = require('axios')
 const { COLLECTIONS } = require('./collections.js')
 
+function getCurrentBeijingDate() {
+  try {
+    const now = new Date()
+    const beijingDate = now.toLocaleDateString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    return beijingDate.replace(/\//g, '-')
+  } catch (error) {
+    console.error('获取北京时间日期失败，使用UTC+8偏移:', error)
+    const now = new Date()
+    const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    return beijingTime.toISOString().split('T')[0]
+  }
+}
+
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
@@ -320,7 +338,7 @@ class DailyCostController {
   
   // 获取今日已用额度
   async getTodayUsage() {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentBeijingDate()
     
     try {
       const { data } = await this.db.collection(COLLECTIONS.SYS_AI_USAGE)
@@ -468,7 +486,7 @@ class DailyCostController {
   
   // 记录调用成本
   async recordUsage(modelId, cost, tokens) {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentBeijingDate()
     
     try {
       await this.db.collection(COLLECTIONS.SYS_AI_USAGE).add({
@@ -691,7 +709,7 @@ class AIModelManager {
 
     try {
       // 检查今日用量
-      const today = new Date().toISOString().split('T')[0]
+      const today = getCurrentBeijingDate()
       const usage = await this.usageCollection
         .where({
           modelId,
@@ -773,7 +791,7 @@ class AIModelManager {
   // ========== 使用量记录和缓存方法 ==========
   // 记录使用量
   async recordUsage(modelId, response) {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentBeijingDate()
     
     try {
       const existingRecord = await this.usageCollection
@@ -1506,7 +1524,7 @@ async function handleChatCompletion(event, manager) {
 // 获取使用统计
 async function getUsageStats(event, manager) {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentBeijingDate()
     const stats = await manager.usageCollection
       .where({
         date: today

@@ -259,6 +259,7 @@
           {{record.isCorrected ? '重新修正' : '修正结果'}}
         </t-button>
         <t-button 
+          wx:if="{{isAutopsyRecord}}"
           theme="primary" 
           size="large" 
           bind:tap="confirmDeath"
