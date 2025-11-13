@@ -20,7 +20,7 @@ interface DeathRecord {
   unitCost?: number | string
   breedingCost?: number | string
   treatmentCost?: number | string
-  source?: string  // ✅ 来源标识：'treatment' 治疗记录 | 'ai_diagnosis' AI死因剖析
+  source?: string // ✅ 来源标识：'treatment' 治疗记录 | 'ai_diagnosis' AI死因剖析
   aiDiagnosisId: string
   diagnosisResult: AnyObject
   autopsyImages?: string[]
@@ -44,7 +44,70 @@ interface DeathRecord {
   financeLossDisplay?: string
 }
 
-const ensureArray = (value: any): any[] => (Array.isArray(value) ? value : [])
+interface CorrectionForm {
+  correctedCause: string
+  veterinarianDiagnosis: string
+  aiAccuracyRating: number
+}
+
+interface PreviewDataset {
+  index: number
+}
+
+interface RatingDataset {
+  rating?: number | string
+}
+
+interface LoadOptions {
+  id?: string
+}
+
+interface CloudFunctionSuccess<T> {
+  success: true
+  data: T
+}
+
+interface CloudFunctionFailure {
+  success: false
+  error?: string
+}
+
+type DeathRecordResponse = CloudFunctionSuccess<DeathRecord> | CloudFunctionFailure
+
+type CorrectionPayload = CorrectionForm & { isConfirmed?: boolean }
+
+type PageData = {
+  loading: boolean
+  recordId: string
+  record: DeathRecord
+  diagnosisResult: AnyObject
+  primaryResult: AnyObject | null
+  differentialList: AnyObject[]
+  preventionList: string[]
+  hasStructuredAutopsyFindings: boolean
+  showCorrectionDialog: boolean
+  originalCause: string
+  correctionForm: CorrectionForm
+  ratingHints: string[]
+}
+
+type PageCustom = {
+  loadRecordDetail: (recordId: string) => Promise<void>
+  onPreviewImage: (event: WechatMiniprogram.TouchEvent<PreviewDataset>) => void
+  onCorrectDiagnosis: () => void
+  onConfirmDiagnosis: () => Promise<void>
+  onReCorrect: () => void
+  onSubmitCorrection: () => Promise<void>
+  submitCorrection: (data: CorrectionPayload) => Promise<void>
+  onCancelCorrection: () => void
+  onCorrectedCauseChange: (event: WechatMiniprogram.Input) => void
+  onVeterinarianDiagnosisChange: (event: WechatMiniprogram.Input) => void
+  onRatingChange: (event: WechatMiniprogram.TouchEvent<RatingDataset>) => void
+}
+
+type PageInstance = WechatMiniprogram.Page.Instance<PageData, PageCustom>
+
+const ensureArray = <T>(value: T | T[] | undefined): T[] => (Array.isArray(value) ? value : [])
 
 const formatCurrency = (value: unknown): string => {
   if (value === null || value === undefined || value === '') {
@@ -70,8 +133,8 @@ const normalizeAutopsyFindings = (raw: any): AutopsyFindingsNormalized | null =>
   }
 
   if (typeof raw === 'object') {
-    const abnormalities = ensureArray(raw.abnormalities)
-      .map((item: any) => (typeof item === 'string' ? item.trim() : ''))
+    const abnormalities = ensureArray<string>(raw.abnormalities)
+      .map(item => (typeof item === 'string' ? item.trim() : ''))
       .filter(Boolean)
 
     const description = typeof raw.description === 'string' ? raw.description.trim() : ''
@@ -89,96 +152,91 @@ const normalizeAutopsyFindings = (raw: any): AutopsyFindingsNormalized | null =>
   return null
 }
 
-Page({
-  data: {
-    loading: true,
-    recordId: '',
-    record: {} as DeathRecord,
-    diagnosisResult: {} as any,
-    primaryResult: null as AnyObject | null,
-    differentialList: [] as AnyObject[],
-    preventionList: [] as string[],
-    hasStructuredAutopsyFindings: false,
-    
-    // 修正弹窗
-    showCorrectionDialog: false,
-    originalCause: '', // 原死因，用于占位符
-    correctionForm: {
-      correctedCause: '',
-      veterinarianDiagnosis: '', // 兽医诊断（必填）
-      aiAccuracyRating: 0
-    },
-    
-    // 评分提示
-    ratingHints: ['很不准确', '不太准确', '基本准确', '比较准确', '非常准确']
-  },
+const initialCorrectionForm: CorrectionForm = {
+  correctedCause: '',
+  veterinarianDiagnosis: '',
+  aiAccuracyRating: 0
+}
 
-  onLoad(options: any) {
+const initialPageData: PageData = {
+  loading: true,
+  recordId: '',
+  record: {} as DeathRecord,
+  diagnosisResult: {},
+  primaryResult: null,
+  differentialList: [],
+  preventionList: [],
+  hasStructuredAutopsyFindings: false,
+  showCorrectionDialog: false,
+  originalCause: '',
+  correctionForm: initialCorrectionForm,
+  ratingHints: ['很不准确', '不太准确', '基本准确', '比较准确', '非常准确']
+}
+
+const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
+  data: initialPageData,
+
+  onLoad(options: LoadOptions) {
+    const page = this as PageInstance
+
     if (options.id) {
-      this.setData({ recordId: options.id })
-      this.loadRecordDetail(options.id)
+      page.setData({ recordId: options.id })
+      void page.loadRecordDetail(options.id)
     } else {
       wx.showToast({ title: '记录ID缺失', icon: 'none' })
       setTimeout(() => wx.navigateBack(), 1500)
     }
   },
 
-  /**
-   * 加载记录详情
-   */
   async loadRecordDetail(recordId: string) {
-    this.setData({ loading: true })
+    const page = this as PageInstance
+    page.setData({ loading: true })
 
     try {
       const result = await wx.cloud.callFunction({
         name: 'health-management',
         data: {
           action: 'get_death_record_detail',
-          recordId: recordId
+          recordId
         }
       })
 
-      if (result.result && result.result.success) {
-        const record = result.result.data as DeathRecord
-        
-        // 解析诊断结果
+      const response = result.result as DeathRecordResponse | undefined
+
+      if (response && response.success) {
+        const record = response.data
+
         let diagnosisResult = record.diagnosisResult
         if (typeof diagnosisResult === 'string') {
           try {
             diagnosisResult = JSON.parse(diagnosisResult)
-          } catch (e) {
-            // 解析失败，使用原始数据
+          } catch (error) {
             diagnosisResult = {}
           }
         }
 
-        // 处理剖检图片，转换为临时URL并过滤无效值
         let processedImages = record.autopsyImages || []
-        
-        // ✅ 首先过滤掉原始数据中的无效值
-        processedImages = processedImages.filter((url: any) => url && typeof url === 'string')
-        
+        processedImages = processedImages.filter((url): url is string => Boolean(url) && typeof url === 'string')
+
         if (processedImages.length > 0) {
           try {
             const tempUrlResult = await wx.cloud.getTempFileURL({
               fileList: processedImages
             })
-            
+
             if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
               processedImages = tempUrlResult.fileList
-                .map((item: any) => item.tempFileURL || item.fileID)
-                .filter((url: any) => url && typeof url === 'string') // 过滤掉无效的URL
+                .map((item: { tempFileURL?: string; fileID?: string }) => item.tempFileURL || item.fileID)
+                .filter((url: string | undefined): url is string => Boolean(url) && typeof url === 'string')
             }
           } catch (urlError) {
-            // 图片URL转换失败，静默处理
-            // 继续使用已过滤的原始图片URL（不影响显示）
             logger.warn('剖检图片URL转换失败，使用原始URL:', urlError)
           }
         }
 
-        const displayDeathCause = (record.isCorrected && record.correctedCause)
+        const displayDeathCause = record.isCorrected && record.correctedCause
           ? record.correctedCause
-          : (record.deathCause || '未知死因')
+          : record.deathCause || '未知死因'
 
         const normalizedAutopsyFindings = normalizeAutopsyFindings(record.autopsyFindings)
 
@@ -208,17 +266,20 @@ Page({
           .filter((value, index, self) => self.indexOf(value) === index)
           .join('；')
 
-        const primaryResult = diagnosisResult && (diagnosisResult.primaryCause || diagnosisResult.primaryDiagnosis) || null
+        const primaryResult =
+          (diagnosisResult && (diagnosisResult.primaryCause || diagnosisResult.primaryDiagnosis)) || null
         const differentialListRaw = ensureArray(diagnosisResult && diagnosisResult.differentialCauses)
-        const differentialList = differentialListRaw.length > 0
-          ? differentialListRaw
-          : ensureArray(diagnosisResult && diagnosisResult.differentialDiagnosis)
+        const differentialList =
+          differentialListRaw.length > 0
+            ? differentialListRaw
+            : ensureArray(diagnosisResult && diagnosisResult.differentialDiagnosis)
         const preventionListRaw = ensureArray(diagnosisResult && diagnosisResult.preventionAdvice)
-        const preventionList = preventionListRaw.length > 0
-          ? preventionListRaw
-          : ensureArray(diagnosisResult && diagnosisResult.preventionMeasures)
+        const preventionList =
+          preventionListRaw.length > 0
+            ? preventionListRaw
+            : ensureArray(diagnosisResult && diagnosisResult.preventionMeasures)
 
-        this.setData({
+        page.setData({
           record: {
             ...record,
             autopsyImages: processedImages,
@@ -239,92 +300,85 @@ Page({
           loading: false
         })
       } else {
-        throw new Error(result.result?.error || '加载失败')
+        throw new Error(response?.error || result.errMsg || '加载失败')
       }
-    } catch (error: any) {
-      // 加载失败，已显示错误提示
+    } catch (error) {
       wx.showToast({
-        title: error.message || '加载失败',
+        title: (error as Error).message || '加载失败',
         icon: 'none'
       })
-      this.setData({ loading: false })
+      page.setData({ loading: false })
     }
   },
 
-  /**
-   * 预览剖检图片
-   */
-  onPreviewImage(e: any) {
-    const { index } = e.currentTarget.dataset
-    const images = this.data.record.autopsyImages || []
-    
+  onPreviewImage(event) {
+    const page = this as PageInstance
+    const { index } = event.currentTarget.dataset as PreviewDataset
+    const images = page.data.record.autopsyImages || []
+
+    if (typeof index !== 'number' || !images[index]) {
+      return
+    }
+
     wx.previewImage({
       current: images[index],
       urls: images
     })
   },
 
-  /**
-   * 修正诊断
-   */
   onCorrectDiagnosis() {
-    // 保存原死因用于占位符显示
-    const currentCause = this.data.record.deathCause || ''
-    
-    this.setData({
+    const page = this as PageInstance
+    const currentCause = page.data.record.deathCause || ''
+
+    page.setData({
       showCorrectionDialog: true,
-      originalCause: currentCause, // 保存原死因
+      originalCause: currentCause,
       correctionForm: {
-        correctedCause: '', // 默认为空，使用占位符提示
-        veterinarianDiagnosis: '', // 兽医诊断（必填）
-        aiAccuracyRating: 3 // 默认3星（基本准确）
+        correctedCause: '',
+        veterinarianDiagnosis: '',
+        aiAccuracyRating: 3
       }
     })
   },
 
-  /**
-   * 确认AI诊断无误
-   */
   async onConfirmDiagnosis() {
+    const page = this as PageInstance
+
     wx.showModal({
       title: '确认诊断',
       content: '确认AI诊断结果准确无误？此操作将标记为"已确认"。',
-      success: async (res) => {
+      success: async res => {
         if (res.confirm) {
-          await this.submitCorrection({
-            correctedCause: this.data.record.deathCause,
+          await page.submitCorrection({
+            correctedCause: page.data.record.deathCause,
             veterinarianDiagnosis: '确认AI诊断准确',
             aiAccuracyRating: 5,
-            isConfirmed: true // 标记为确认而非修正
+            isConfirmed: true
           })
         }
       }
     })
   },
 
-  /**
-   * 重新修正
-   */
   onReCorrect() {
-    const currentCause = this.data.record.deathCause || ''
-    this.setData({
+    const page = this as PageInstance
+    const currentCause = page.data.record.deathCause || ''
+
+    page.setData({
       showCorrectionDialog: true,
       originalCause: currentCause,
       correctionForm: {
-        correctedCause: this.data.record.correctedCause || '',
-        veterinarianDiagnosis: this.data.record.correctionReason || '', // 兼容旧数据
-        aiAccuracyRating: this.data.record.aiAccuracyRating || 3
+        correctedCause: page.data.record.correctedCause || '',
+        veterinarianDiagnosis: page.data.record.correctionReason || '',
+        aiAccuracyRating: page.data.record.aiAccuracyRating || 3
       }
     })
   },
 
-  /**
-   * 提交修正
-   */
   async onSubmitCorrection() {
-    const form = this.data.correctionForm
+    const page = this as PageInstance
+    const form = page.data.correctionForm
 
-    // 验证表单
     if (!form.correctedCause) {
       wx.showToast({ title: '请输入修正后的死因', icon: 'none' })
       return
@@ -338,13 +392,11 @@ Page({
       return
     }
 
-    await this.submitCorrection(form)
+    await page.submitCorrection(form)
   },
 
-  /**
-   * 提交修正数据
-   */
-  async submitCorrection(data: any) {
+  async submitCorrection(data) {
+    const page = this as PageInstance
     wx.showLoading({ title: '提交中...', mask: true })
 
     try {
@@ -352,65 +404,66 @@ Page({
         name: 'health-management',
         data: {
           action: 'correct_death_diagnosis',
-          recordId: this.data.recordId,
+          recordId: page.data.recordId,
           correctedCause: data.correctedCause,
-          correctionReason: data.veterinarianDiagnosis, // 兽医诊断作为修正依据
+          correctionReason: data.veterinarianDiagnosis,
           aiAccuracyRating: data.aiAccuracyRating,
           isConfirmed: data.isConfirmed || false
         }
       })
 
-      if (result.result && result.result.success) {
+      const response = result.result as { success?: boolean; error?: string } | undefined
+
+      if (response && response.success) {
         wx.hideLoading()
         wx.showToast({ title: '提交成功', icon: 'success' })
-        
-        // 关闭弹窗
-        this.setData({ showCorrectionDialog: false })
-        
-        // 重新加载详情
+
+        page.setData({ showCorrectionDialog: false })
+
         setTimeout(() => {
-          this.loadRecordDetail(this.data.recordId)
+          void page.loadRecordDetail(page.data.recordId)
         }, 1000)
       } else {
-        throw new Error(result.result?.error || '提交失败')
+        throw new Error(response?.error || result.errMsg || '提交失败')
       }
-    } catch (error: any) {
+    } catch (error) {
       wx.hideLoading()
-      // 提交失败，已显示错误提示
       wx.showToast({
-        title: error.message || '提交失败',
+        title: (error as Error).message || '提交失败',
         icon: 'none'
       })
     }
   },
 
-  /**
-   * 取消修正
-   */
   onCancelCorrection() {
-    this.setData({ showCorrectionDialog: false })
+    const page = this as PageInstance
+    page.setData({ showCorrectionDialog: false })
   },
 
-  /**
-   * 表单输入处理
-   */
-  onCorrectedCauseChange(e: any) {
-    this.setData({
-      'correctionForm.correctedCause': e.detail.value
+  onCorrectedCauseChange(event) {
+    const page = this as PageInstance
+    page.setData({
+      'correctionForm.correctedCause': event.detail.value
     })
   },
 
-  onVeterinarianDiagnosisChange(e: any) {
-    this.setData({
-      'correctionForm.veterinarianDiagnosis': e.detail.value
+  onVeterinarianDiagnosisChange(event) {
+    const page = this as PageInstance
+    page.setData({
+      'correctionForm.veterinarianDiagnosis': event.detail.value
     })
   },
 
-  onRatingChange(e: any) {
-    const rating = e.currentTarget.dataset.rating
-    this.setData({
-      'correctionForm.aiAccuracyRating': rating
+  onRatingChange(event) {
+    const page = this as PageInstance
+    const ratingRaw = event.currentTarget.dataset.rating
+    const rating = typeof ratingRaw === 'string' ? Number(ratingRaw) : ratingRaw || 0
+
+    page.setData({
+      'correctionForm.aiAccuracyRating': rating || 0
     })
   }
-})
+}
+
+Page(pageConfig)
 
