@@ -1,42 +1,12 @@
 // miniprogram/packageHealth/cured-records-list/cured-records-list.ts
 // 治愈记录列表页面
 
+import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
+import type { CuredRecord as BaseCuredRecord } from '../types/treatment'
+import { formatCuredRecords } from '../utils/data-utils'
 
-interface CuredRecord {
-  _id: string
-  batchId: string
-  batchNumber: string
-  diagnosis: {
-    confirmed?: string
-    preliminary?: string
-  }
-  treatmentType: string
-  treatmentDate: string
-  outcome: {
-    totalTreated: number
-    curedCount: number
-    deathCount: number
-    status: string
-    curedCost?: number
-    curedMedicationCost?: number
-  }
-  cost: {
-    total: number
-    medication: number
-  }
-  medications: any[]
-  treatmentPlan: {
-    primary?: string
-  }
-  completedAt?: string
-  createdAt?: any
-  isDeleted?: boolean
-  operatorName?: string
-  formattedCuredCost?: string
-  formattedMedicationCost?: string
-  formattedCostPerAnimal?: string
-}
 interface RecordStats {
   totalCured: number
   totalCost: number
@@ -48,18 +18,24 @@ interface RecordTapDataset {
   id: string
 }
 
+type DerivedCuredRecord = BaseCuredRecord & {
+  formattedCuredCost: string
+  formattedMedicationCost: string
+  formattedCostPerAnimal: string
+}
+
 type PageData = {
-  records: CuredRecord[]
+  records: DerivedCuredRecord[]
   loading: boolean
   stats: RecordStats
   showDetailPopup: boolean
-  selectedRecord: CuredRecord | null
+  selectedRecord: DerivedCuredRecord | null
 }
 
 type PageCustom = {
   loadCuredRecords: () => Promise<void>
   loadRecordsFromClient: () => Promise<void>
-  enrichRecordsWithBatchNumbers: (records: CuredRecord[]) => Promise<CuredRecord[]>
+  enrichRecordsWithBatchNumbers: (records: BaseCuredRecord[]) => Promise<BaseCuredRecord[]>
   onRecordTap: (event: WechatMiniprogram.CustomEvent<RecordTapDataset>) => void
   closeDetailPopup: () => void
   goBack: (
@@ -107,30 +83,23 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
     try {
       page.setData({ loading: true })
 
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
+      const response = await CloudApi.callFunction<{ records: BaseCuredRecord[] }>(
+        'health-management',
+        {
           action: 'get_cured_records_list'
+        },
+        {
+          loading: true,
+          loadingText: '加载治愈记录...',
+          showError: false
         }
-      })
+      )
 
-      type CloudResult = {
-        success: boolean
-        data: {
-          records: CuredRecord[]
-        }
-        error?: string
+      if (!response.success) {
+        throw new Error(response.error || '查询失败')
       }
 
-      const cloudResult = result.result as CloudResult | undefined
-
-      if (!cloudResult || !cloudResult.success) {
-        const errorMsg = cloudResult?.error || result.errMsg || '查询失败'
-        logger.error('云函数调用失败:', errorMsg)
-        throw new Error(errorMsg)
-      }
-
-      const curedRecords = [...cloudResult.data.records]
+      const curedRecords = [...(response.data?.records ?? [])]
 
       curedRecords.sort((a, b) => {
         const timeA = a.completedAt || a.createdAt || new Date(0)
@@ -138,36 +107,11 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
         return new Date(timeB).getTime() - new Date(timeA).getTime()
       })
 
-      let totalCured = 0
-      let totalCost = 0
-      let totalMedicationCost = 0
-
-      const formattedRecords: CuredRecord[] = curedRecords.map(record => {
-        totalCured += record.outcome.curedCount || 0
-        totalCost += record.outcome.curedCost || 0
-        totalMedicationCost += record.outcome.curedMedicationCost || 0
-
-        return {
-          ...record,
-          formattedCuredCost: (record.outcome.curedCost || 0).toFixed(2),
-          formattedMedicationCost: (record.outcome.curedMedicationCost || 0).toFixed(2),
-          formattedCostPerAnimal:
-            record.outcome.curedCount > 0
-              ? ((record.outcome.curedCost || 0) / record.outcome.curedCount).toFixed(2)
-              : '0.00'
-        }
-      })
-
-      const avgCostPerAnimal = totalCured > 0 ? totalCost / totalCured : 0
+      const { derivedRecords, stats } = formatCuredRecords(curedRecords)
 
       page.setData({
-        records: formattedRecords,
-        stats: {
-          totalCured,
-          totalCost: parseFloat(totalCost.toFixed(2)),
-          totalMedicationCost: parseFloat(totalMedicationCost.toFixed(2)),
-          avgCostPerAnimal: parseFloat(avgCostPerAnimal.toFixed(2))
-        },
+        records: derivedRecords,
+        stats,
         loading: false
       })
     } catch (error) {
@@ -203,7 +147,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
       .limit(200)
       .get()
 
-    const allRecords = result.data as CuredRecord[]
+    const allRecords = result.data as BaseCuredRecord[]
     const curedRecords = allRecords.filter(record => {
       if (record.isDeleted === true) return false
       return (record.outcome?.curedCount || 0) > 0
@@ -215,43 +159,17 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
       return new Date(timeB).getTime() - new Date(timeA).getTime()
     })
 
-    let totalCured = 0
-    let totalCost = 0
-    let totalMedicationCost = 0
-
-    const records = curedRecords.map(record => {
-      totalCured += record.outcome.curedCount || 0
-      totalCost += record.outcome.curedCost || 0
-      totalMedicationCost += record.outcome.curedMedicationCost || 0
-
-      return {
-        ...record,
-        formattedCuredCost: (record.outcome.curedCost || 0).toFixed(2),
-        formattedMedicationCost: (record.outcome.curedMedicationCost || 0).toFixed(2),
-        formattedCostPerAnimal:
-          record.outcome.curedCount > 0
-            ? ((record.outcome.curedCost || 0) / record.outcome.curedCount).toFixed(2)
-            : '0.00'
-      }
-    })
-
-    const enrichedRecords = await this.enrichRecordsWithBatchNumbers(records)
-
-    const avgCostPerAnimal = totalCured > 0 ? totalCost / totalCured : 0
+    const enrichedRecords = await this.enrichRecordsWithBatchNumbers(curedRecords)
+    const { derivedRecords, stats } = formatCuredRecords(enrichedRecords)
 
     page.setData({
-      records: enrichedRecords,
-      stats: {
-        totalCured,
-        totalCost: parseFloat(totalCost.toFixed(2)),
-        totalMedicationCost: parseFloat(totalMedicationCost.toFixed(2)),
-        avgCostPerAnimal: parseFloat(avgCostPerAnimal.toFixed(2))
-      },
+      records: derivedRecords,
+      stats,
       loading: false
     })
   },
 
-  async enrichRecordsWithBatchNumbers(records: CuredRecord[]): Promise<CuredRecord[]> {
+  async enrichRecordsWithBatchNumbers(records: BaseCuredRecord[]): Promise<BaseCuredRecord[]> {
     if (!records || records.length === 0) {
       return []
     }
@@ -354,4 +272,4 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
   }
 }
 
-Page(pageConfig)
+Page(createPageWithNavbar(pageConfig))

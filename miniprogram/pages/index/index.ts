@@ -194,13 +194,43 @@ Page({
   // 初始化状态栏
   initStatusBar() {
     try {
-      const systemInfo = wx.getSystemInfoSync()
-      const statusBarHeight = systemInfo.statusBarHeight || 44
       const now = new Date()
       const timeStr = now.toTimeString().slice(0, 5)
-      
+
+      const getWindowInfo = (wx as WechatMiniprogram.Wx & { getWindowInfo?: () => { statusBarHeight?: number } }).getWindowInfo
+
+      if (typeof getWindowInfo === 'function') {
+        const windowInfo = getWindowInfo()
+        const statusBarHeight = windowInfo.statusBarHeight || 44
+
+        this.setData({
+          statusBarHeight,
+          statusBarText: `${timeStr} • 中国移动 • 100%`
+        })
+        return
+      }
+
+      if (typeof wx.getSystemInfo === 'function') {
+        wx.getSystemInfo({
+          success: (res) => {
+            const statusBarHeight = res.statusBarHeight || 44
+            this.setData({
+              statusBarHeight,
+              statusBarText: `${timeStr} • 中国移动 • 100%`
+            })
+          },
+          fail: () => {
+            this.setData({
+              statusBarHeight: 44,
+              statusBarText: `${timeStr} • 中国移动 • 100%`
+            })
+          }
+        })
+        return
+      }
+
       this.setData({
-        statusBarHeight,
+        statusBarHeight: 44,
         statusBarText: `${timeStr} • 中国移动 • 100%`
       })
     } catch (error: any) {

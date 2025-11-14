@@ -1,48 +1,15 @@
+import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
 import { formatDateTime } from '../../utils/health-utils'
+import type {
+  DeathRecord,
+  AutopsyFindingsNormalized,
+  DiagnosisResult,
+  AnyObject
+} from '../types/death-record'
+import { ensureArray, resolveTempFileURLs } from '../utils/data-utils'
 // miniprogram/packageHealth/death-record-detail/death-record-detail.ts
-
-type AnyObject = Record<string, any>
-
-interface AutopsyFindingsNormalized {
-  abnormalities: string[]
-  description?: string
-}
-
-interface DeathRecord {
-  _id: string
-  batchId: string
-  batchNumber: string
-  deathDate: string
-  deathCount: number
-  deathCause: string
-  financeLoss?: number | string
-  unitCost?: number | string
-  breedingCost?: number | string
-  treatmentCost?: number | string
-  source?: string // ✅ 来源标识：'treatment' 治疗记录 | 'ai_diagnosis' AI死因剖析
-  aiDiagnosisId: string
-  diagnosisResult: AnyObject
-  autopsyImages?: string[]
-  autopsyFindings?: AutopsyFindingsNormalized | string | null
-  isCorrected: boolean
-  correctedCause?: string
-  correctionReason?: string
-  correctionType?: string
-  aiAccuracyRating?: number
-  veterinarianNote?: string
-  correctedBy?: string
-  correctedByName?: string
-  correctedAt?: string
-  description?: string
-  symptomsText?: string
-  displayDeathCause?: string
-  displayFindings?: string
-  unitCostDisplay?: string
-  breedingCostDisplay?: string
-  treatmentCostDisplay?: string
-  financeLossDisplay?: string
-}
 
 interface CorrectionForm {
   correctedCause: string
@@ -62,26 +29,14 @@ interface LoadOptions {
   id?: string
 }
 
-interface CloudFunctionSuccess<T> {
-  success: true
-  data: T
-}
-
-interface CloudFunctionFailure {
-  success: false
-  error?: string
-}
-
-type DeathRecordResponse = CloudFunctionSuccess<DeathRecord> | CloudFunctionFailure
-
 type CorrectionPayload = CorrectionForm & { isConfirmed?: boolean }
 
 type PageData = {
   loading: boolean
   recordId: string
   record: DeathRecord
-  diagnosisResult: AnyObject
-  primaryResult: AnyObject | null
+  diagnosisResult: DiagnosisResult
+  primaryResult: string | null
   differentialList: AnyObject[]
   preventionList: string[]
   hasStructuredAutopsyFindings: boolean
@@ -103,11 +58,10 @@ type PageCustom = {
   onCorrectedCauseChange: (event: WechatMiniprogram.Input) => void
   onVeterinarianDiagnosisChange: (event: WechatMiniprogram.Input) => void
   onRatingChange: (event: WechatMiniprogram.TouchEvent<RatingDataset>) => void
+  goBack: () => void
 }
 
 type PageInstance = WechatMiniprogram.Page.Instance<PageData, PageCustom>
-
-const ensureArray = <T>(value: T | T[] | undefined): T[] => (Array.isArray(value) ? value : [])
 
 const formatCurrency = (value: unknown): string => {
   if (value === null || value === undefined || value === '') {
@@ -162,7 +116,7 @@ const initialPageData: PageData = {
   loading: true,
   recordId: '',
   record: {} as DeathRecord,
-  diagnosisResult: {},
+  diagnosisResult: {} as DiagnosisResult,
   primaryResult: null,
   differentialList: [],
   preventionList: [],
@@ -193,121 +147,128 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
     page.setData({ loading: true })
 
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
+      const response = await CloudApi.callFunction<DeathRecord>(
+        'health-management',
+        {
           action: 'get_death_record_detail',
           recordId
+        },
+        {
+          loading: true,
+          loadingText: '加载记录详情...',
+          showError: false
         }
-      })
+      )
 
-      const response = result.result as DeathRecordResponse | undefined
-
-      if (response && response.success) {
-        const record = response.data
-
-        let diagnosisResult = record.diagnosisResult
-        if (typeof diagnosisResult === 'string') {
-          try {
-            diagnosisResult = JSON.parse(diagnosisResult)
-          } catch (error) {
-            diagnosisResult = {}
-          }
-        }
-
-        let processedImages = record.autopsyImages || []
-        processedImages = processedImages.filter((url): url is string => Boolean(url) && typeof url === 'string')
-
-        if (processedImages.length > 0) {
-          try {
-            const tempUrlResult = await wx.cloud.getTempFileURL({
-              fileList: processedImages
-            })
-
-            if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
-              processedImages = tempUrlResult.fileList
-                .map((item: { tempFileURL?: string; fileID?: string }) => item.tempFileURL || item.fileID)
-                .filter((url: string | undefined): url is string => Boolean(url) && typeof url === 'string')
-            }
-          } catch (urlError) {
-            logger.warn('剖检图片URL转换失败，使用原始URL:', urlError)
-          }
-        }
-
-        const displayDeathCause = record.isCorrected && record.correctedCause
-          ? record.correctedCause
-          : record.deathCause || '未知死因'
-
-        const normalizedAutopsyFindings = normalizeAutopsyFindings(record.autopsyFindings)
-
-        const meaningfulTexts: string[] = []
-        const pushIfMeaningful = (text?: string) => {
-          if (!text) {
-            return
-          }
-          const trimmed = text.trim()
-          if (!trimmed || trimmed === '无明显生前症状') {
-            return
-          }
-          meaningfulTexts.push(trimmed)
-        }
-
-        if (normalizedAutopsyFindings) {
-          if (normalizedAutopsyFindings.abnormalities.length > 0) {
-            pushIfMeaningful(normalizedAutopsyFindings.abnormalities.join('、'))
-          }
-          pushIfMeaningful(normalizedAutopsyFindings.description)
-        }
-
-        pushIfMeaningful(record.description)
-        pushIfMeaningful(record.symptomsText)
-
-        const displayFindings = meaningfulTexts
-          .filter((value, index, self) => self.indexOf(value) === index)
-          .join('；')
-
-        const primaryResult =
-          (diagnosisResult && (diagnosisResult.primaryCause || diagnosisResult.primaryDiagnosis)) || null
-        const differentialListRaw = ensureArray(diagnosisResult && diagnosisResult.differentialCauses)
-        const differentialList =
-          differentialListRaw.length > 0
-            ? differentialListRaw
-            : ensureArray(diagnosisResult && diagnosisResult.differentialDiagnosis)
-        const preventionListRaw = ensureArray(diagnosisResult && diagnosisResult.preventionAdvice)
-        const preventionList =
-          preventionListRaw.length > 0
-            ? preventionListRaw
-            : ensureArray(diagnosisResult && diagnosisResult.preventionMeasures)
-
-        page.setData({
-          record: {
-            ...record,
-            autopsyImages: processedImages,
-            autopsyFindings: normalizedAutopsyFindings,
-            displayDeathCause,
-            displayFindings,
-            unitCostDisplay: formatCurrency(record.unitCost),
-            breedingCostDisplay: formatCurrency(record.breedingCost),
-            treatmentCostDisplay: formatCurrency(record.treatmentCost),
-            financeLossDisplay: formatCurrency(record.financeLoss),
-            correctedAt: record.correctedAt ? formatDateTime(record.correctedAt) : record.correctedAt
-          },
-          diagnosisResult: diagnosisResult || {},
-          primaryResult,
-          differentialList,
-          preventionList,
-          hasStructuredAutopsyFindings: Boolean(normalizedAutopsyFindings),
-          loading: false
-        })
-      } else {
-        throw new Error(response?.error || result.errMsg || '加载失败')
+      if (!response.success || !response.data) {
+        throw new Error(response.error || '加载失败')
       }
+
+      const record = response.data
+
+      let diagnosisResultData: DiagnosisResult = {} as DiagnosisResult
+      const rawDiagnosis = record.diagnosisResult
+
+      if (typeof rawDiagnosis === 'string') {
+        try {
+          diagnosisResultData = JSON.parse(rawDiagnosis) as DiagnosisResult
+        } catch (parseError) {
+          logger.warn('诊断结果解析失败，使用空对象:', parseError)
+          diagnosisResultData = {} as DiagnosisResult
+        }
+      } else if (rawDiagnosis && typeof rawDiagnosis === 'object') {
+        diagnosisResultData = rawDiagnosis as DiagnosisResult
+      }
+
+      const processedImages = await resolveTempFileURLs(ensureArray<string>(record.autopsyImages))
+
+      const displayDeathCause = record.isCorrected && record.correctedCause
+        ? record.correctedCause
+        : record.deathCause || '未知死因'
+
+      const normalizedAutopsyFindings = normalizeAutopsyFindings(record.autopsyFindings)
+
+      const meaningfulTexts: string[] = []
+      const pushIfMeaningful = (text?: string) => {
+        if (!text) {
+          return
+        }
+        const trimmed = text.trim()
+        if (!trimmed || trimmed === '无明显生前症状') {
+          return
+        }
+        meaningfulTexts.push(trimmed)
+      }
+
+      if (normalizedAutopsyFindings) {
+        if (normalizedAutopsyFindings.abnormalities.length > 0) {
+          pushIfMeaningful(normalizedAutopsyFindings.abnormalities.join('、'))
+        }
+        pushIfMeaningful(normalizedAutopsyFindings.description)
+      }
+
+      pushIfMeaningful(record.description)
+      pushIfMeaningful(record.symptomsText)
+
+      const displayFindings = meaningfulTexts
+        .filter((value, index, self) => self.indexOf(value) === index)
+        .join('；')
+
+      const primaryResult =
+        diagnosisResultData.primaryCause || diagnosisResultData.primaryDiagnosis || null
+      const differentialListRaw = ensureArray<AnyObject>(diagnosisResultData.differentialCauses)
+      const differentialList =
+        differentialListRaw.length > 0
+          ? differentialListRaw
+          : ensureArray<AnyObject>(diagnosisResultData.differentialDiagnosis)
+      const preventionListRaw = ensureArray<string>(diagnosisResultData.preventionAdvice)
+      const preventionList =
+        preventionListRaw.length > 0
+          ? preventionListRaw
+          : ensureArray<string>(diagnosisResultData.preventionMeasures)
+
+      page.setData({
+        record: {
+          ...record,
+          diagnosisResult: diagnosisResultData,
+          autopsyImages: processedImages,
+          autopsyFindings: normalizedAutopsyFindings,
+          displayDeathCause,
+          displayFindings,
+          unitCostDisplay: formatCurrency(record.unitCost),
+          breedingCostDisplay: formatCurrency(record.breedingCost),
+          treatmentCostDisplay: formatCurrency(record.treatmentCost),
+          financeLossDisplay: formatCurrency(record.financeLoss),
+          correctedAt: record.correctedAt ? formatDateTime(record.correctedAt) : record.correctedAt
+        },
+        diagnosisResult: diagnosisResultData,
+        primaryResult,
+        differentialList,
+        preventionList,
+        hasStructuredAutopsyFindings: Boolean(normalizedAutopsyFindings),
+        loading: false
+      })
     } catch (error) {
       wx.showToast({
         title: (error as Error).message || '加载失败',
         icon: 'none'
       })
       page.setData({ loading: false })
+    }
+  },
+
+  goBack() {
+    const pages = getCurrentPages()
+
+    if (pages.length > 1) {
+      wx.navigateBack({
+        delta: 1,
+        fail: () => {
+          wx.switchTab({ url: '/pages/index/index' })
+        }
+      })
+    } else {
+      wx.switchTab({ url: '/pages/index/index' })
     }
   },
 
@@ -397,39 +358,35 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
 
   async submitCorrection(data) {
     const page = this as PageInstance
-    wx.showLoading({ title: '提交中...', mask: true })
 
-    try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'correct_death_diagnosis',
-          recordId: page.data.recordId,
-          correctedCause: data.correctedCause,
-          correctionReason: data.veterinarianDiagnosis,
-          aiAccuracyRating: data.aiAccuracyRating,
-          isConfirmed: data.isConfirmed || false
-        }
-      })
-
-      const response = result.result as { success?: boolean; error?: string } | undefined
-
-      if (response && response.success) {
-        wx.hideLoading()
-        wx.showToast({ title: '提交成功', icon: 'success' })
-
-        page.setData({ showCorrectionDialog: false })
-
-        setTimeout(() => {
-          void page.loadRecordDetail(page.data.recordId)
-        }, 1000)
-      } else {
-        throw new Error(response?.error || result.errMsg || '提交失败')
+    const response = await CloudApi.callFunction(
+      'health-management',
+      {
+        action: 'correct_death_diagnosis',
+        recordId: page.data.recordId,
+        correctedCause: data.correctedCause,
+        correctionReason: data.veterinarianDiagnosis,
+        aiAccuracyRating: data.aiAccuracyRating,
+        isConfirmed: data.isConfirmed || false
+      },
+      {
+        loading: true,
+        loadingText: '提交中...',
+        showError: false
       }
-    } catch (error) {
-      wx.hideLoading()
+    )
+
+    if (response.success) {
+      wx.showToast({ title: '提交成功', icon: 'success' })
+
+      page.setData({ showCorrectionDialog: false })
+
+      setTimeout(() => {
+        void page.loadRecordDetail(page.data.recordId)
+      }, 1000)
+    } else {
       wx.showToast({
-        title: (error as Error).message || '提交失败',
+        title: response.error || '提交失败',
         icon: 'none'
       })
     }
@@ -465,5 +422,5 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
   }
 }
 
-Page(pageConfig)
+Page(createPageWithNavbar(pageConfig))
 

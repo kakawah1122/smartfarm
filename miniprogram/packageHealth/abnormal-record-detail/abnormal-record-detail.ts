@@ -1,144 +1,163 @@
+import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
+import type { AbnormalRecord, AbnormalDiagnosisDetails } from '../types/abnormal'
+import { ensureArray, resolveTempFileURLs } from '../utils/data-utils'
 // miniprogram/packageHealth/abnormal-record-detail/abnormal-record-detail.ts
-
-interface AbnormalRecord {
-  _id: string
-  batchId: string
-  batchNumber: string
-  checkDate: string
-  affectedCount: number
-  symptoms: string
-  diagnosisType?: 'live_diagnosis' | 'autopsy_analysis'
-  diagnosis: string
-  diagnosisConfidence: number
-  diagnosisDetails?: {
-    disease: string
-    confidence: number
-    reasoning?: string
-    pathogen?: string
-    transmission?: string
-    symptoms?: string[]
-  }
-  severity: string
-  urgency: string
-  status: string
-  aiRecommendation: any
-  images: string[]
-  diagnosisId: string
-  autopsyDescription?: string
-  deathCount?: number
-  totalDeathCount?: number
-  createdAt: string
-  isCorrected?: boolean
-  correctedDiagnosis?: string
-  correctionReason?: string
-  aiAccuracyRating?: number
-  correctedBy?: string
-  correctedByName?: string
-  correctedAt?: string
-}
 
 type ConfirmDeathOptions = {
   returnBehavior?: 'detail' | 'back'
 }
 
-Page({
-  data: {
-    loading: true,
-    recordId: '',
-    record: null as AbnormalRecord | null,
-    isAutopsyRecord: false,
-    
-    // 修正弹窗
-    showCorrectionDialog: false,
-    originalDiagnosis: '',
-    correctionForm: {
-      correctedDiagnosis: '',
-      veterinarianDiagnosis: '',
-      aiAccuracyRating: 0
-    },
-    
-    // 评分提示
-    ratingHints: ['很不准确', '不太准确', '基本准确', '比较准确', '非常准确']
-  },
+interface CorrectionForm {
+  correctedDiagnosis: string
+  veterinarianDiagnosis: string
+  aiAccuracyRating: number
+}
 
-  onLoad(options: any) {
+interface AbnormalDetailData {
+  loading: boolean
+  recordId: string
+  record: AbnormalRecord | null
+  isAutopsyRecord: boolean
+  showCorrectionDialog: boolean
+  originalDiagnosis: string
+  correctionForm: CorrectionForm
+  ratingHints: string[]
+}
+
+interface PreviewDataset {
+  url: string
+}
+
+interface RatingDataset {
+  rating?: number | string
+}
+
+type AbnormalDetailPageInstance = WechatMiniprogram.Page.Instance<AbnormalDetailData, AbnormalDetailPageCustom>
+
+type AbnormalDetailPageCustom = {
+  loadRecordDetail: (recordId: string) => Promise<void>
+  preventMove: () => void
+  previewImage: (event: WechatMiniprogram.TouchEvent<PreviewDataset>) => void
+  correctDiagnosis: () => void
+  onSubmitCorrection: () => Promise<void>
+  onCancelCorrection: () => void
+  onCorrectedDiagnosisChange: (event: WechatMiniprogram.Input) => void
+  onVeterinarianDiagnosisChange: (event: WechatMiniprogram.Input) => void
+  onRatingChange: (event: WechatMiniprogram.TouchEvent<RatingDataset>) => void
+  createTreatmentPlan: () => void
+  confirmDeath: (options?: ConfirmDeathOptions) => Promise<void>
+}
+
+const initialCorrectionForm: CorrectionForm = {
+  correctedDiagnosis: '',
+  veterinarianDiagnosis: '',
+  aiAccuracyRating: 0
+}
+
+const initialData: AbnormalDetailData = {
+  loading: true,
+  recordId: '',
+  record: null,
+  isAutopsyRecord: false,
+  showCorrectionDialog: false,
+  originalDiagnosis: '',
+  correctionForm: initialCorrectionForm,
+  ratingHints: ['很不准确', '不太准确', '基本准确', '比较准确', '非常准确']
+}
+
+const normalizeRecommendation = (recommendation: unknown): AbnormalDiagnosisDetails | string | null => {
+  if (!recommendation) {
+    return null
+  }
+
+  if (typeof recommendation === 'string') {
+    try {
+      return JSON.parse(recommendation) as AbnormalDiagnosisDetails
+    } catch (error) {
+      logger.warn('AI 建议解析失败，使用原始文本:', recommendation)
+      return recommendation
+    }
+  }
+
+  if (typeof recommendation === 'object') {
+    return recommendation as AbnormalDiagnosisDetails
+  }
+
+  return null
+}
+
+const deriveDiagnosisType = (record: AbnormalRecord): AbnormalRecord['diagnosisType'] => {
+  if (record.diagnosisType) {
+    return record.diagnosisType
+  }
+
+  if (record.autopsyDescription || record.totalDeathCount || record.deathCount) {
+    return 'autopsy_analysis'
+  }
+
+  return 'live_diagnosis'
+}
+
+const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDetailPageCustom> = {
+  data: initialData,
+
+  onLoad(options: Record<string, string>) {
+    const page = this as AbnormalDetailPageInstance
+
     if (options.id) {
-      this.setData({ recordId: options.id })
-      this.loadRecordDetail(options.id)
+      page.setData({ recordId: options.id })
+      void page.loadRecordDetail(options.id)
     } else {
       wx.showToast({ title: '记录ID缺失', icon: 'none' })
       setTimeout(() => wx.navigateBack(), 1500)
     }
   },
 
-  /**
-   * 加载记录详情
-   */
   async loadRecordDetail(recordId: string) {
-    this.setData({ loading: true })
+    const page = this as AbnormalDetailPageInstance
+    page.setData({ loading: true })
 
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
+      const response = await CloudApi.callFunction<AbnormalRecord>(
+        'health-management',
+        {
           action: 'get_abnormal_record_detail',
-          recordId: recordId
+          recordId
+        },
+        {
+          loading: true,
+          loadingText: '加载记录详情...',
+          showError: false
         }
-      })
+      )
 
-      if (result.result && result.result.success) {
-        const record = result.result.data
-
-        // 预处理 aiRecommendation
-        let aiRecommendation = record.aiRecommendation
-        if (typeof aiRecommendation === 'string') {
-          try {
-            aiRecommendation = JSON.parse(aiRecommendation)
-          } catch (e) {
-            // AI建议解析失败，使用原始文本
-          }
-        }
-
-        // 转换图片为临时URL
-        let processedImages = record.images || []
-        
-        // ✅ 首先过滤掉原始数据中的无效值
-        processedImages = processedImages.filter((url: any) => url && typeof url === 'string')
-        
-        if (processedImages.length > 0) {
-          try {
-            const tempUrlResult = await wx.cloud.getTempFileURL({
-              fileList: processedImages
-            })
-            
-            if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
-              processedImages = tempUrlResult.fileList
-                .map((item: any) => item.tempFileURL || item.fileID)
-                .filter((url: any) => url && typeof url === 'string') // 过滤掉无效的URL
-            }
-          } catch (urlError) {
-            // 图片URL转换失败，静默处理
-            // 继续使用已过滤的原始图片URL（不影响显示）
-            logger.warn('图片URL转换失败，使用原始URL:', urlError)
-          }
-        }
-
-        const derivedDiagnosisType = record.diagnosisType
-          || (record.autopsyDescription || record.totalDeathCount || record.deathCount ? 'autopsy_analysis' : 'live_diagnosis')
-
-        this.setData({
-          record: { ...record, aiRecommendation, images: processedImages, diagnosisType: derivedDiagnosisType },
-          isAutopsyRecord: derivedDiagnosisType === 'autopsy_analysis',
-          loading: false
-        })
-      } else {
-        throw new Error(result.result?.error || '加载失败')
+      if (!response.success || !response.data) {
+        throw new Error(response.error || '加载失败')
       }
-    } catch (error: any) {
-      // 加载失败，已显示错误提示
+
+      const record = response.data
+
+      const aiRecommendation = normalizeRecommendation(record.aiRecommendation)
+
+      const processedImages = await resolveTempFileURLs(ensureArray<string>(record.images))
+
+      const derivedDiagnosisType = deriveDiagnosisType(record)
+
+      page.setData({
+        record: {
+          ...record,
+          aiRecommendation: aiRecommendation ?? record.aiRecommendation,
+          images: processedImages,
+          diagnosisType: derivedDiagnosisType
+        },
+        isAutopsyRecord: derivedDiagnosisType === 'autopsy_analysis',
+        loading: false
+      })
+    } catch (error) {
       wx.showToast({
-        title: error.message || '加载失败',
+        title: (error as Error).message || '加载失败',
         icon: 'none'
       })
       setTimeout(() => wx.navigateBack(), 1500)
@@ -152,12 +171,15 @@ Page({
     // 空方法，用于阻止事件冒泡
   },
 
-  /**
-   * 预览图片
-   */
-  previewImage(e: any) {
-    const { url } = e.currentTarget.dataset
-    const images = this.data.record?.images || []
+  previewImage(event: WechatMiniprogram.TouchEvent<PreviewDataset>) {
+    const page = this as AbnormalDetailPageInstance
+    const { url } = event.currentTarget.dataset as PreviewDataset
+    const images = ensureArray(page.data.record?.images)
+
+    if (!url || images.length === 0) {
+      return
+    }
+
     wx.previewImage({
       current: url,
       urls: images
@@ -168,24 +190,27 @@ Page({
    * 修正诊断结果 - 显示修正弹窗
    */
   correctDiagnosis() {
-    if (!this.data.record) return
-    
-    const currentDiagnosis = this.data.record.diagnosis || '待诊断'
-    
-    // 如果已经修正过，预填充原来的修正数据
-    if (this.data.record.isCorrected) {
-      this.setData({
+    const page = this as AbnormalDetailPageInstance
+    const record = page.data.record
+
+    if (!record) {
+      return
+    }
+
+    const currentDiagnosis = record.diagnosis || '待诊断'
+
+    if (record.isCorrected) {
+      page.setData({
         showCorrectionDialog: true,
         originalDiagnosis: currentDiagnosis,
         correctionForm: {
-          correctedDiagnosis: this.data.record.correctedDiagnosis || '',
-          veterinarianDiagnosis: this.data.record.correctionReason || '',
-          aiAccuracyRating: this.data.record.aiAccuracyRating || 3
+          correctedDiagnosis: record.correctedDiagnosis || '',
+          veterinarianDiagnosis: record.correctionReason || '',
+          aiAccuracyRating: record.aiAccuracyRating || 3
         }
       })
     } else {
-      // 首次修正，表单为空
-      this.setData({
+      page.setData({
         showCorrectionDialog: true,
         originalDiagnosis: currentDiagnosis,
         correctionForm: {
@@ -208,15 +233,20 @@ Page({
    * 提交修正
    */
   async onSubmitCorrection() {
-    const form = this.data.correctionForm
+    const page = this as AbnormalDetailPageInstance
+    const form = page.data.correctionForm
+    const record = page.data.record
 
-    // 验证表单
+    if (!record) {
+      return
+    }
+
     if (!form.correctedDiagnosis) {
       wx.showToast({ title: '请输入修正后的诊断', icon: 'none' })
       return
     }
     if (!form.veterinarianDiagnosis) {
-      wx.showToast({ title: '请输入兽医诊断依据', icon: 'none' })
+      wx.showToast({ title: '请输入兽医诊断', icon: 'none' })
       return
     }
     if (form.aiAccuracyRating === 0) {
@@ -224,49 +254,39 @@ Page({
       return
     }
 
-    try {
-      wx.showLoading({ title: '提交中...' })
-
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'correct_abnormal_diagnosis',
-          recordId: this.data.record!._id,
-          correctedDiagnosis: form.correctedDiagnosis,
-          veterinarianDiagnosis: form.veterinarianDiagnosis,
-          aiAccuracyRating: form.aiAccuracyRating
-        }
-      })
-
-      wx.hideLoading()
-
-      if (result.result && result.result.success) {
-        wx.showToast({
-          title: '修正成功',
-          icon: 'success',
-          duration: 1500
-        })
-        
-        this.setData({ showCorrectionDialog: false })
-        
-        if (this.data.isAutopsyRecord) {
-          setTimeout(() => {
-            this.confirmDeath({ returnBehavior: 'back' })
-          }, 800)
-        } else {
-          // 刷新详情
-          setTimeout(() => {
-            this.loadRecordDetail(this.data.recordId)
-          }, 1000)
-        }
-      } else {
-        throw new Error(result.result?.error || '提交失败')
+    const response = await CloudApi.callFunction(
+      'health-management',
+      {
+        action: 'correct_abnormal_diagnosis',
+        recordId: record._id,
+        correctedDiagnosis: form.correctedDiagnosis,
+        veterinarianDiagnosis: form.veterinarianDiagnosis,
+        aiAccuracyRating: form.aiAccuracyRating
+      },
+      {
+        loading: true,
+        loadingText: '提交中...',
+        showError: false
       }
-    } catch (error: any) {
-      wx.hideLoading()
-      // 提交失败，已显示错误提示
+    )
+
+    if (response.success) {
+      wx.showToast({ title: '修正成功', icon: 'success', duration: 1500 })
+
+      page.setData({ showCorrectionDialog: false })
+
+      if (page.data.isAutopsyRecord) {
+        setTimeout(() => {
+          void page.confirmDeath({ returnBehavior: 'back' })
+        }, 800)
+      } else {
+        setTimeout(() => {
+          void page.loadRecordDetail(page.data.recordId)
+        }, 1000)
+      }
+    } else {
       wx.showToast({
-        title: error.message || '提交失败',
+        title: response.error || '提交失败',
         icon: 'none'
       })
     }
@@ -275,20 +295,23 @@ Page({
   /**
    * 表单输入处理
    */
-  onCorrectedDiagnosisChange(e: any) {
+  onCorrectedDiagnosisChange(event: WechatMiniprogram.Input) {
+    const value = event.detail.value
     this.setData({
-      'correctionForm.correctedDiagnosis': e.detail.value
+      'correctionForm.correctedDiagnosis': value
     })
   },
 
-  onVeterinarianDiagnosisChange(e: any) {
+  onVeterinarianDiagnosisChange(event: WechatMiniprogram.Input) {
+    const value = event.detail.value
     this.setData({
-      'correctionForm.veterinarianDiagnosis': e.detail.value
+      'correctionForm.veterinarianDiagnosis': value
     })
   },
 
-  onRatingChange(e: any) {
-    const rating = e.currentTarget.dataset.rating
+  onRatingChange(event: WechatMiniprogram.TouchEvent<RatingDataset>) {
+    const ratingRaw = event.currentTarget.dataset.rating
+    const rating = typeof ratingRaw === 'string' ? Number(ratingRaw) : Number(ratingRaw || 0)
     this.setData({
       'correctionForm.aiAccuracyRating': rating
     })
@@ -298,20 +321,22 @@ Page({
    * 创建治疗方案 - 直接跳转到治疗记录页面
    */
   createTreatmentPlan() {
-    const { record } = this.data
-    
-    if (!record) return
-    if (this.data.isAutopsyRecord) {
+    const page = this as AbnormalDetailPageInstance
+    const record = page.data.record
+
+    if (!record) {
+      return
+    }
+
+    if (page.data.isAutopsyRecord) {
       wx.showToast({ title: '死因剖析记录无需制定治疗方案', icon: 'none' })
       return
     }
 
-    // 优先使用修正后的诊断，否则使用AI诊断
-    const finalDiagnosis = record.isCorrected && record.correctedDiagnosis 
-      ? record.correctedDiagnosis 
+    const finalDiagnosis = record.isCorrected && record.correctedDiagnosis
+      ? record.correctedDiagnosis
       : record.diagnosis
 
-    // 直接跳转到治疗记录页面，传递异常记录信息
     wx.navigateTo({
       url: `/packageHealth/treatment-record/treatment-record?abnormalRecordId=${record._id}&batchId=${record.batchId}&diagnosis=${encodeURIComponent(finalDiagnosis)}`
     })
@@ -340,28 +365,28 @@ Page({
       return
     }
 
-    wx.showLoading({ title: '归档中...' })
+    const response = await CloudApi.callFunction<{ deathRecordId?: string }>(
+      'health-management',
+      {
+        action: 'create_death_record_with_finance',
+        diagnosisId: record.diagnosisId,
+        batchId: record.batchId,
+        deathCount,
+        deathCause: record.diagnosis || '待确定',
+        deathCategory: 'disease',
+        autopsyFindings: record.autopsyDescription || record.symptoms || '',
+        diagnosisResult: record.diagnosisDetails || null,
+        images: ensureArray(record.images)
+      },
+      {
+        loading: true,
+        loadingText: '归档中...',
+        showError: false
+      }
+    )
 
-    try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'create_death_record_with_finance',
-          diagnosisId: record.diagnosisId,
-          batchId: record.batchId,
-          deathCount,
-          deathCause: record.diagnosis || '待确定',
-          deathCategory: 'disease',
-          autopsyFindings: record.autopsyDescription || record.symptoms || '',
-          diagnosisResult: record.diagnosisDetails || null,
-          images: record.images || []
-        }
-      })
-
-      wx.hideLoading()
-
-      if (result.result && result.result.success) {
-        const deathRecordId = result.result.data?.deathRecordId
+    if (response.success) {
+      const deathRecordId = response.data?.deathRecordId
 
         wx.showToast({
           title: '已归档至死亡记录',
@@ -402,16 +427,14 @@ Page({
             })
           }
         }, 1500)
-      } else {
-        throw new Error(result.result?.error || result.result?.message || '归档失败')
-      }
-    } catch (error: any) {
-      wx.hideLoading()
-      logger.error('确认死亡归档失败:', error)
+    } else {
+      logger.error('确认死亡归档失败:', response.error)
       wx.showToast({
-        title: error.message || '归档失败，请重试',
+        title: response.error || '归档失败，请重试',
         icon: 'none'
       })
     }
   }
-})
+}
+
+Page(createPageWithNavbar(pageConfig))

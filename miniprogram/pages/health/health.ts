@@ -1247,6 +1247,7 @@ Page<PageData, any>({
     // 显示详细错误信息
     const errorMsg = lastError?.message || lastError?.error || '未知错误'
     const errorCode = lastError?.errorCode || 'UNKNOWN'
+    logger.error('[loadPreventionData] 最终失败', { errorCode, errorMsg })
     wx.showToast({
       title: `加载失败: ${errorCode}`,
       icon: 'none',
@@ -1745,7 +1746,6 @@ Page<PageData, any>({
       let roi: string | number = '-'
       
       if (hasData && totalCost > 0) {
-        const deadAnimals = this.data.healthStats.deadCount || 0
         const curedAnimals = this.data.treatmentStats?.recoveredCount || 0
         
         // 每只动物的平均价值估算（元）- TODO: 后续可从配置或数据库获取
@@ -2338,7 +2338,9 @@ Page<PageData, any>({
           title: string
           taskName: string
           type: string
+          completedAt: string
           completedDate: string
+          completedTimestamp: number
           completedBy: string
           batchNumber: string
           batchId: string
@@ -2348,30 +2350,64 @@ Page<PageData, any>({
           notes: string
         }
 
-        const completedTasks: CompletedTaskItem[] = result.data.map((task: any): CompletedTaskItem => ({
-          _id: task._id,
-          id: task._id,
-          taskId: task.taskId || task._id,
-          title: task.title || task.taskName,
-          taskName: task.title || task.taskName,
-          type: task.type || task.taskType,
-          completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
-          completedBy: task.completedBy || '用户',
-          batchNumber: task.batchNumber || task.batchId,
-          batchId: task.batchId,
-          dayAge: task.dayAge || 0,
-          completed: true,
-          description: task.description || '',
-          notes: task.notes || task.completionNotes || ''
-        }))
-        
-        // ✅ 按完成时间重新排序（在内存中排序）
-        completedTasks.sort((a: CompletedTaskItem, b: CompletedTaskItem) => {
-          const dateA = a.completedDate ? new Date(a.completedDate).getTime() : 0
-          const dateB = b.completedDate ? new Date(b.completedDate).getTime() : 0
-          return dateB - dateA  // 倒序：最新的在前
+        const parseTimestamp = (value: string, fallback?: string): number => {
+          if (value) {
+            const isoLike = value.includes('T') ? value : value.replace(' ', 'T')
+            const parsedIso = Date.parse(isoLike)
+            if (!Number.isNaN(parsedIso)) {
+              return parsedIso
+            }
+
+            const parsedSlash = Date.parse(value.replace(/-/g, '/'))
+            if (!Number.isNaN(parsedSlash)) {
+              return parsedSlash
+            }
+          }
+
+          if (fallback) {
+            const fallbackIso = fallback.includes('T') ? fallback : fallback.replace(' ', 'T')
+            const parsedFallbackIso = Date.parse(fallbackIso)
+            if (!Number.isNaN(parsedFallbackIso)) {
+              return parsedFallbackIso
+            }
+
+            const parsedFallbackSlash = Date.parse(fallback.replace(/-/g, '/'))
+            if (!Number.isNaN(parsedFallbackSlash)) {
+              return parsedFallbackSlash
+            }
+          }
+
+          return 0
+        }
+
+        const completedTasks: CompletedTaskItem[] = result.data.map((task: any): CompletedTaskItem => {
+          const completedAt = task.completedAt || ''
+          const completedTimestamp = parseTimestamp(completedAt, task.createdAt || task.createTime)
+          const completedDate = completedTimestamp > 0 ? formatTime(new Date(completedTimestamp), 'datetime') : ''
+
+          return {
+            _id: task._id,
+            id: task._id,
+            taskId: task.taskId || task._id,
+            title: task.title || task.taskName,
+            taskName: task.title || task.taskName,
+            type: task.type || task.taskType,
+            completedAt,
+            completedDate,
+            completedTimestamp,
+            completedBy: task.completedBy || '用户',
+            batchNumber: task.batchNumber || task.batchId,
+            batchId: task.batchId,
+            dayAge: task.dayAge || 0,
+            completed: true,
+            description: task.description || '',
+            notes: task.notes || task.completionNotes || ''
+          }
         })
-        
+
+        // ✅ 按完成时间重新排序（在内存中排序）
+        completedTasks.sort((a: CompletedTaskItem, b: CompletedTaskItem) => b.completedTimestamp - a.completedTimestamp)
+
         // 按批次分组
         const historyTasksByBatch = this.groupHistoryTasksByBatch(completedTasks)
         this.setData({ historyTasksByBatch })

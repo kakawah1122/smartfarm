@@ -1,197 +1,151 @@
 // health-inspection.ts - 健康巡检页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import CloudApi from '../../utils/cloud-api'
+import type { BatchInfo } from '../types/prevention'
+import type {
+  AbnormalFinding,
+  HealthInspectionData,
+  InspectionCategory,
+  InspectionItem,
+  InspectionResult
+} from '../types/inspection'
+import {
+  createDefaultAbnormalForm,
+  createDefaultCategories,
+  createDefaultFormData,
+  createDefaultInspectionItems,
+  createDefaultStats,
+  INSPECTION_BATCHES_CACHE_DURATION
+} from '../constants/inspection-defaults'
 
-interface InspectionItem {
-  id: string
-  name: string
-  category: string
-  checked: boolean
-  result: 'normal' | 'abnormal' | 'not_checked'
-  notes?: string
-}
+const getDefaultActiveCategory = (categories: InspectionCategory[]): string => categories[0]?.id || 'spirit'
 
-const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
-  data: {
-    // 表单数据
-    formData: {
-      batchId: '',
-      locationId: '',
-      inspector: '',
-      inspectionDate: '',
-      inspectionTime: '',
-      totalInspected: 0,
-      abnormalCount: 0,
-      notes: ''
-    },
+const createInitialPageData = (): HealthInspectionData => {
+  const inspectionCategories = createDefaultCategories()
 
-    // 计算属性
-    calculatedStats: {
-      abnormalDiscoveryRate: '0.0', // 异常发现率 (已格式化)
-      normalCount: 0, // 正常个体数量
-      completionRate: '0.0' // 巡检完成率
-    },
-    
-    // 巡检项目
-    inspectionItems: [
-      // 精神状态
-      { id: 'spirit_active', name: '精神活跃', category: 'spirit', checked: true, result: 'not_checked' },
-      { id: 'spirit_alert', name: '反应敏捷', category: 'spirit', checked: true, result: 'not_checked' },
-      { id: 'spirit_group', name: '群体活动', category: 'spirit', checked: true, result: 'not_checked' },
-      
-      // 食欲状况
-      { id: 'appetite_eating', name: '正常采食', category: 'appetite', checked: true, result: 'not_checked' },
-      { id: 'appetite_drinking', name: '正常饮水', category: 'appetite', checked: true, result: 'not_checked' },
-      { id: 'appetite_compete', name: '争食表现', category: 'appetite', checked: true, result: 'not_checked' },
-      
-      // 呼吸状态
-      { id: 'respiratory_normal', name: '呼吸平稳', category: 'respiratory', checked: true, result: 'not_checked' },
-      { id: 'respiratory_no_cough', name: '无咳嗽', category: 'respiratory', checked: true, result: 'not_checked' },
-      { id: 'respiratory_no_discharge', name: '无鼻涕', category: 'respiratory', checked: true, result: 'not_checked' },
-      
-      // 排泄状况
-      { id: 'excretion_normal', name: '粪便正常', category: 'excretion', checked: true, result: 'not_checked' },
-      { id: 'excretion_color', name: '颜色正常', category: 'excretion', checked: true, result: 'not_checked' },
-      { id: 'excretion_frequency', name: '频次正常', category: 'excretion', checked: true, result: 'not_checked' },
-      
-      // 外观体态
-      { id: 'appearance_posture', name: '体态正常', category: 'appearance', checked: true, result: 'not_checked' },
-      { id: 'appearance_feather', name: '羽毛整洁', category: 'appearance', checked: true, result: 'not_checked' },
-      { id: 'appearance_eyes', name: '眼部清亮', category: 'appearance', checked: true, result: 'not_checked' },
-      
-      // 行为表现
-      { id: 'behavior_walking', name: '行走正常', category: 'behavior', checked: true, result: 'not_checked' },
-      { id: 'behavior_social', name: '群体互动', category: 'behavior', checked: true, result: 'not_checked' },
-      { id: 'behavior_rest', name: '休息状态', category: 'behavior', checked: true, result: 'not_checked' }
-    ] as InspectionItem[],
-    
-    // 巡检类别
-    inspectionCategories: [
-      { id: 'spirit', name: '精神状态', icon: 'mood', color: '#0052d9' },
-      { id: 'appetite', name: '食欲状况', icon: 'food', color: '#00a870' },
-      { id: 'respiratory', name: '呼吸状态', icon: 'gesture-breath', color: '#ed7b2f' },
-      { id: 'excretion', name: '排泄状况', icon: 'undertake-delivery', color: '#7356f1' },
-      { id: 'appearance', name: '外观体态', icon: 'user-visible', color: '#f59a23' },
-      { id: 'behavior', name: '行为表现', icon: 'gesture-wipe', color: '#e34d59' }
-    ],
-    
-    // 异常发现记录
-    abnormalFindings: [] as Array<{
-      id: string
-      itemId: string
-      itemName: string
-      description: string
-      affectedCount: number
-      severity: 'mild' | 'moderate' | 'severe'
-    }>,
-    
-    // 活跃批次列表
-    activeBatches: [] as any[],
-    
-    // 页面状态
-    loading: false,
+  return {
+    formData: createDefaultFormData(),
+    inspectionItems: createDefaultInspectionItems(),
+    inspectionCategories,
+    abnormalFindings: [],
+    activeBatches: [],
+    activeCategory: getDefaultActiveCategory(inspectionCategories),
+    calculatedStats: createDefaultStats(),
+    formErrors: {},
     submitting: false,
     showAbnormalDialog: false,
-    currentAbnormalItem: null as InspectionItem | null,
-    activeCategory: 'spirit',
-    showBatchPicker: false,
-    
-    // 表单验证
-    formErrors: {} as Record<string, string>,
-    
-    // 临时异常记录表单
-    abnormalForm: {
-      description: '',
-      affectedCount: 1,
-      severity: 'mild'
-    }
-  },
+    currentAbnormalItem: null,
+    abnormalForm: createDefaultAbnormalForm(),
+    loadingBatches: false,
+    batchesCacheTime: null
+  }
+}
 
-  onLoad(options: any) {
-    const { batchId, locationId } = options || {}
-    
-    if (batchId) {
-      this.setData({
-        'formData.batchId': batchId
-      })
-    }
-    
-    if (locationId) {
-      this.setData({
-        'formData.locationId': locationId
-      })
-    }
-    
+type FormFieldKey = keyof HealthInspectionData['formData']
+type AbnormalFormField = keyof HealthInspectionData['abnormalForm']
+type AbnormalSeverity = AbnormalFinding['severity']
+
+interface ValueChangeDetail {
+  value: string
+}
+
+interface DatasetEvent<T extends Record<string, unknown>, Detail = any> {
+  detail: Detail
+  currentTarget: {
+    dataset: T
+  }
+}
+
+interface HealthInspectionPageOptions {
+  batchId?: string
+  locationId?: string
+}
+
+type EffectivenessLevel = 'excellent' | 'good' | 'poor'
+
+interface InspectionRecordPayload {
+  inspector: string
+  inspectionItems: string[]
+  abnormalFindings: string[]
+  totalInspected: number
+  abnormalCount: number
+  notes: string
+  itemResults: Array<{
+    itemId: string
+    itemName: string
+    result: InspectionResult
+  }>
+}
+
+interface CreateInspectionRecordPayload {
+  action: 'create_prevention_record'
+  preventionType: 'inspection'
+  batchId: string
+  locationId: string
+  inspectionRecord: InspectionRecordPayload
+  executionDate: string
+  executionTime: string
+  operator: string
+  effectiveness: EffectivenessLevel
+}
+
+interface CreateInspectionRecordResponse {
+  recordId: string
+}
+
+const normalizeInspectionResult = (value: string | undefined): InspectionResult => {
+  switch (value) {
+    case 'normal':
+    case 'abnormal':
+    case 'not_checked':
+      return value
+    default:
+      return 'not_checked'
+  }
+}
+
+const pageConfig: WechatMiniprogram.Page.Options<HealthInspectionData, WechatMiniprogram.Page.CustomOption> = {
+  data: createInitialPageData(),
+
+
+  onLoad(options: HealthInspectionPageOptions = {}) {
     this.initializeForm()
+
+    const updates: Record<string, unknown> = {}
+
+    if (options.batchId) {
+      updates['formData.batchId'] = options.batchId
+    }
+
+    if (options.locationId) {
+      updates['formData.locationId'] = options.locationId
+    }
+
+    if (Object.keys(updates).length > 0) {
+      this.setData(updates)
+    }
   },
 
   async onShow() {
+    const { batchesCacheTime, loadingBatches } = this.data
+
+    if (loadingBatches) {
+      return
+    }
+
+    if (batchesCacheTime && Date.now() - batchesCacheTime < INSPECTION_BATCHES_CACHE_DURATION) {
+      return
+    }
+
     await this.loadActiveBatches()
   },
 
-  // 初始化表单
-  initializeForm() {
-    const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    const timeNow = now.toTimeString().split(' ')[0].substring(0, 5)
-    
-    this.setData({
-      'formData.inspectionDate': today,
-      'formData.inspectionTime': timeNow,
-      'formData.inspector': '当前检查员'
-    })
-    
-    this.calculateStats()
-  },
-
-  // 计算统计数据
-  calculateStats() {
-    const { formData } = this.data
-    const totalInspected = formData.totalInspected || 0
-    const abnormalCount = formData.abnormalCount || 0
-    const normalCount = Math.max(0, totalInspected - abnormalCount)
-    
-    // 计算异常发现率
-    const abnormalDiscoveryRate = totalInspected > 0 
-      ? (abnormalCount / totalInspected * 100).toFixed(1)
-      : '0.0'
-    
-    // 计算巡检完成率（基于已检查的项目）
-    const checkedItems = this.data.inspectionItems.filter(item => item.result !== 'not_checked')
-    const completionRate = this.data.inspectionItems.length > 0
-      ? (checkedItems.length / this.data.inspectionItems.length * 100).toFixed(1)
-      : '0.0'
-    
-    this.setData({
-      calculatedStats: {
-        abnormalDiscoveryRate,
-        normalCount,
-        completionRate
-      }
-    })
-  },
-
-  // 加载活跃批次
-  async loadActiveBatches() {
-    try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: { action: 'get_active_batches' }
-      })
-      
-      if (result.result && result.result.success) {
-        this.setData({
-          activeBatches: result.result.data.batches || []
-        })
-      }
-    } catch (error) {
-      // 已移除调试日志
-    }
-  },
 
   // 表单输入处理
-  onFormInput(e: any) {
+  onFormInput(e: DatasetEvent<{ field: FormFieldKey }, ValueChangeDetail>) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
+
     
     this.setData({
       [`formData.${field}`]: value
@@ -201,9 +155,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 数字输入处理
-  onNumberInput(e: any) {
+  onNumberInput(e: DatasetEvent<{ field: FormFieldKey }, ValueChangeDetail>) {
     const { field } = e.currentTarget.dataset
     const value = parseInt(e.detail.value) || 0
+
     
     this.setData({
       [`formData.${field}`]: value
@@ -227,7 +182,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       return
     }
     
-    const itemList = this.data.activeBatches.map(batch => batch.displayName)
+    const itemList = this.data.activeBatches.map((batch: BatchInfo) => batch.displayName)
     
     wx.showActionSheet({
       itemList,
@@ -235,25 +190,28 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         const selectedBatch = this.data.activeBatches[res.tapIndex]
         this.setData({
           'formData.batchId': selectedBatch.batchNumber,
-          'formData.locationId': selectedBatch.location
+          'formData.locationId': selectedBatch.location || ''
         })
         this.validateField('batchId', selectedBatch.batchNumber)
+        this.validateField('locationId', selectedBatch.location || '')
       }
     })
   },
 
   // 切换巡检类别
-  onCategoryChange(e: any) {
+  onCategoryChange(e: DatasetEvent<{ category: string }>) {
     const { category } = e.currentTarget.dataset
     this.setData({ activeCategory: category })
   },
 
   // 切换巡检项目选择状态
-  onItemToggle(e: any) {
+  onItemToggle(e: DatasetEvent<{ itemId: string }>) {
     const { itemId } = e.currentTarget.dataset
-    const items = this.data.inspectionItems.map(item => {
+    const items = this.data.inspectionItems.map((item: InspectionItem): InspectionItem => {
       if (item.id === itemId) {
-        return { ...item, checked: !item.checked, result: !item.checked ? 'not_checked' : item.result }
+        const checked = !item.checked
+        const result: InspectionResult = checked ? 'not_checked' : item.result
+        return { ...item, checked, result }
       }
       return item
     })
@@ -262,9 +220,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 设置巡检项目结果
-  onItemResultChange(e: any) {
-    const { itemId, result } = e.currentTarget.dataset
-    const items = this.data.inspectionItems.map(item => {
+  onItemResultChange(e: DatasetEvent<{ itemId: string; result: InspectionResult }>) {
+    const { itemId, result: rawResult } = e.currentTarget.dataset
+    const result = normalizeInspectionResult(rawResult)
+    const items = this.data.inspectionItems.map((item: InspectionItem): InspectionItem => {
       if (item.id === itemId) {
         return { ...item, result }
       }
@@ -275,21 +234,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 如果标记为异常，显示异常记录对话框
     if (result === 'abnormal') {
-      const abnormalItem = items.find(item => item.id === itemId)
+      const abnormalItem = items.find((item: InspectionItem) => item.id === itemId)
       this.setData({
         currentAbnormalItem: abnormalItem,
         showAbnormalDialog: true,
-        abnormalForm: {
-          description: '',
-          affectedCount: 1,
-          severity: 'mild'
-        }
+        abnormalForm: createDefaultAbnormalForm()
       })
     }
   },
 
   // 异常记录对话框处理
-  onAbnormalFormInput(e: any) {
+  onAbnormalFormInput(e: DatasetEvent<{ field: AbnormalFormField }, ValueChangeDetail>) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -298,7 +253,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  onAbnormalSeverityChange(e: any) {
+  onAbnormalSeverityChange(e: DatasetEvent<{ severity: AbnormalSeverity }>) {
     const { severity } = e.currentTarget.dataset
     this.setData({
       'abnormalForm.severity': severity
@@ -322,13 +277,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 检查是否已存在该项目的异常记录
     const existingIndex = abnormalFindings.findIndex(finding => finding.itemId === currentAbnormalItem.id)
     
-    const newFinding = {
+    const newFinding: AbnormalFinding = {
       id: `abnormal_${currentAbnormalItem.id}_${Date.now()}`,
       itemId: currentAbnormalItem.id,
       itemName: currentAbnormalItem.name,
       description: abnormalForm.description,
       affectedCount: abnormalForm.affectedCount,
-      severity: abnormalForm.severity as 'mild' | 'moderate' | 'severe'
+      severity: abnormalForm.severity
     }
     
     let updatedFindings
@@ -341,14 +296,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       updatedFindings = [...abnormalFindings, newFinding]
     }
     
-    this.setData({
-      abnormalFindings: updatedFindings,
-      showAbnormalDialog: false,
-      currentAbnormalItem: null
-    })
-    
-    // 重新计算异常总数
-    this.updateAbnormalCount()
+    this.setData(
+      {
+        abnormalFindings: updatedFindings,
+        showAbnormalDialog: false,
+        currentAbnormalItem: null
+      },
+      () => {
+        // 重新计算异常总数
+        this.updateAbnormalCount()
+      }
+    )
   },
 
   // 取消异常记录
@@ -356,16 +314,16 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 将对应项目的结果重置为未检查
     const { currentAbnormalItem } = this.data
     if (currentAbnormalItem) {
-      const items = this.data.inspectionItems.map(item => {
+      const updatedItems = this.data.inspectionItems.map((item: InspectionItem): InspectionItem => {
         if (item.id === currentAbnormalItem.id) {
           return { ...item, result: 'not_checked' }
         }
         return item
       })
       
-      this.setData({ inspectionItems: items })
+      this.setData({ inspectionItems: updatedItems })
     }
-    
+
     this.setData({
       showAbnormalDialog: false,
       currentAbnormalItem: null
@@ -373,7 +331,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 删除异常记录
-  deleteAbnormalFinding(e: any) {
+  deleteAbnormalFinding(e: DatasetEvent<{ findingId: string }>) {
     const { findingId } = e.currentTarget.dataset
     
     wx.showModal({
@@ -381,22 +339,27 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       content: '是否删除这条异常记录？',
       success: (res) => {
         if (res.confirm) {
-          const updatedFindings = this.data.abnormalFindings.filter(finding => finding.id !== findingId)
-          this.setData({ abnormalFindings: updatedFindings })
-          
-          // 将对应巡检项目结果重置
-          const finding = this.data.abnormalFindings.find(f => f.id === findingId)
-          if (finding) {
-            const items = this.data.inspectionItems.map(item => {
-              if (item.id === finding.itemId) {
-                return { ...item, result: 'not_checked' }
-              }
-              return item
-            })
-            this.setData({ inspectionItems: items })
-          }
-          
-          this.updateAbnormalCount()
+          const { abnormalFindings, inspectionItems } = this.data
+          const targetFinding = abnormalFindings.find(f => f.id === findingId)
+          const updatedFindings = abnormalFindings.filter(finding => finding.id !== findingId)
+          const updatedItems = targetFinding
+            ? inspectionItems.map((item: InspectionItem): InspectionItem => {
+                if (item.id === targetFinding.itemId) {
+                  return { ...item, result: 'not_checked' }
+                }
+                return item
+              })
+            : inspectionItems
+
+          this.setData(
+            {
+              abnormalFindings: updatedFindings,
+              inspectionItems: updatedItems
+            },
+            () => {
+              this.updateAbnormalCount()
+            }
+          )
         }
       }
     })
@@ -405,13 +368,18 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 更新异常个体总数
   updateAbnormalCount() {
     const totalAbnormal = this.data.abnormalFindings.reduce((sum, finding) => sum + finding.affectedCount, 0)
-    this.setData({
-      'formData.abnormalCount': totalAbnormal
-    })
+    this.setData(
+      {
+        'formData.abnormalCount': totalAbnormal
+      },
+      () => {
+        this.calculateStats()
+      }
+    )
   },
 
   // 日期时间选择器
-  onDateChange(e: any) {
+  onDateChange(e: DatasetEvent<{ field: FormFieldKey }, ValueChangeDetail>) {
     const { field } = e.currentTarget.dataset
     this.setData({
       [`formData.${field}`]: e.detail.value
@@ -419,7 +387,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.validateField(field, e.detail.value)
   },
 
-  onTimeChange(e: any) {
+  onTimeChange(e: DatasetEvent<{ field: FormFieldKey }, ValueChangeDetail>) {
     const { field } = e.currentTarget.dataset
     this.setData({
       [`formData.${field}`]: e.detail.value
@@ -501,60 +469,62 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     try {
       const { formData, inspectionItems, abnormalFindings } = this.data
-      
-      // 构建巡检记录数据
-      const inspectionRecord = {
+      const selectedItems = inspectionItems.filter((item: InspectionItem) => item.checked)
+
+      const inspectionRecord: InspectionRecordPayload = {
         inspector: formData.inspector,
-        inspectionItems: inspectionItems.filter(item => item.checked).map(item => item.name),
-        abnormalFindings: abnormalFindings.map(finding => finding.description),
+        inspectionItems: selectedItems.map(item => item.name),
+        abnormalFindings: abnormalFindings.map((finding: AbnormalFinding) => finding.description),
         totalInspected: formData.totalInspected,
         abnormalCount: formData.abnormalCount,
         notes: formData.notes,
-        itemResults: inspectionItems.filter(item => item.checked).map(item => ({
+        itemResults: selectedItems.map(item => ({
           itemId: item.id,
           itemName: item.name,
           result: item.result
         }))
       }
-      
-      // 调用云函数创建预防记录
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'create_prevention_record',
-          preventionType: 'inspection',
-          batchId: formData.batchId,
-          locationId: formData.locationId,
-          inspectionRecord,
-          executionDate: formData.inspectionDate,
-          executionTime: formData.inspectionTime,
-          operator: formData.inspector,
-          effectiveness: abnormalFindings.length === 0 ? 'excellent' : (abnormalFindings.length > 3 ? 'poor' : 'good')
+
+      const payload: CreateInspectionRecordPayload = {
+        action: 'create_prevention_record',
+        preventionType: 'inspection',
+        batchId: formData.batchId,
+        locationId: formData.locationId,
+        inspectionRecord,
+        executionDate: formData.inspectionDate,
+        executionTime: formData.inspectionTime,
+        operator: formData.inspector,
+        effectiveness: this.deriveEffectiveness(abnormalFindings.length)
+      }
+
+      const response = await CloudApi.callFunction<CreateInspectionRecordResponse>(
+        'health-management',
+        payload,
+        {
+          loading: true,
+          loadingText: '保存中...',
+          showError: false,
+          showSuccess: true,
+          successText: '健康巡检记录保存成功'
         }
-      })
-      
-      if (result.result && result.result.success) {
-        wx.showToast({
-          title: '健康巡检记录保存成功',
-          icon: 'success'
-        })
-        
-        // 如果有异常发现，提示是否进行AI诊断
+      )
+
+      if (response.success && response.data?.recordId) {
         if (abnormalFindings.length > 0) {
-          this.handleAbnormalFindings(result.result.data.recordId)
+          this.handleAbnormalFindings(response.data.recordId)
         } else {
-          // 返回上一页
           setTimeout(() => {
             wx.navigateBack()
           }, 1500)
         }
+      } else if (!response.success) {
+        throw new Error(response.error || '保存失败')
       } else {
-        throw new Error(result.result?.message || '保存失败')
+        throw new Error('保存结果异常，请稍后重试')
       }
-    } catch (error: any) {
-      // 已移除调试日志
+    } catch (error) {
       wx.showToast({
-        title: error.message || '保存失败，请重试',
+        title: (error as Error).message || '保存失败，请重试',
         icon: 'none'
       })
     } finally {
@@ -594,9 +564,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       content: '是否将所有已选择的巡检项目标记为正常？',
       success: (res) => {
         if (res.confirm) {
-          const items = this.data.inspectionItems.map(item => {
+          const items = this.data.inspectionItems.map((item: InspectionItem): InspectionItem => {
             if (item.checked) {
-              return { ...item, result: 'normal' }
+              return { ...item, result: 'normal' as InspectionResult }
             }
             return item
           })
@@ -604,8 +574,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           this.setData({ 
             inspectionItems: items,
             abnormalFindings: []
+          }, () => {
+            this.updateAbnormalCount()
           })
-          this.updateAbnormalCount()
         }
       }
     })
@@ -618,27 +589,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       content: '是否清空所有已填写的信息？',
       success: (res) => {
         if (res.confirm) {
-          this.initializeForm()
-          
-          // 重置巡检项目
-          const resetItems = this.data.inspectionItems.map(item => ({
-            ...item,
-            checked: true,
-            result: 'not_checked'
-          }))
-          
+          const resetItems = createDefaultInspectionItems()
           this.setData({
-            formData: {
-              ...this.data.formData,
-              batchId: '',
-              locationId: '',
-              totalInspected: 0,
-              abnormalCount: 0,
-              notes: ''
-            },
-            inspectionItems: resetItems,
-            abnormalFindings: [],
-            formErrors: {}
+            inspectionItems: resetItems
+          }, () => {
+            this.initializeForm()
           })
         }
       }
@@ -648,6 +603,93 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 返回上一页
   goBack() {
     wx.navigateBack()
+  },
+
+  deriveEffectiveness(abnormalCount: number): EffectivenessLevel {
+    if (abnormalCount === 0) {
+      return 'excellent'
+    }
+
+    if (abnormalCount > 3) {
+      return 'poor'
+    }
+
+    return 'good'
+  },
+
+  async loadActiveBatches() {
+    if (this.data.loadingBatches) {
+      return
+    }
+
+    this.setData({ loadingBatches: true })
+
+    try {
+      const response = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
+        'health-management',
+        { action: 'get_active_batches' },
+        { showError: false }
+      )
+
+      if (response.success && Array.isArray(response.data?.batches)) {
+        this.setData({
+          activeBatches: response.data.batches,
+          batchesCacheTime: Date.now()
+        })
+      } else {
+        wx.showToast({
+          title: response.error || '批次加载失败',
+          icon: 'none'
+        })
+      }
+    } catch (error) {
+      wx.showToast({
+        title: (error as Error).message || '批次加载失败',
+        icon: 'none'
+      })
+    } finally {
+      this.setData({ loadingBatches: false })
+    }
+  },
+
+  initializeForm() {
+    const activeCategory = getDefaultActiveCategory(
+      this.data.inspectionCategories.length > 0 ? this.data.inspectionCategories : createDefaultCategories()
+    )
+
+    this.setData({
+      formData: createDefaultFormData(),
+      abnormalFindings: [],
+      abnormalForm: createDefaultAbnormalForm(),
+      calculatedStats: createDefaultStats(),
+      formErrors: {},
+      submitting: false,
+      showAbnormalDialog: false,
+      currentAbnormalItem: null,
+      activeCategory
+    }, () => {
+      this.calculateStats()
+    })
+  },
+
+  calculateStats() {
+    const { inspectionItems, formData } = this.data
+    const checkedItems = inspectionItems.filter(item => item.checked)
+    const completedItems = checkedItems.filter(item => item.result !== 'not_checked')
+    const totalInspected = formData.totalInspected
+    const abnormalCount = formData.abnormalCount
+
+    const abnormalDiscoveryRate = totalInspected > 0 ? ((abnormalCount / totalInspected) * 100).toFixed(1) : '0.0'
+    const completionRate = checkedItems.length > 0 ? ((completedItems.length / checkedItems.length) * 100).toFixed(1) : '0.0'
+    const normalCount = Math.max(totalInspected - abnormalCount, 0)
+
+    this.setData({
+      calculatedStats: {
+        abnormalDiscoveryRate,
+        normalCount,
+        completionRate
+      }
+    })
   }
 }
 
