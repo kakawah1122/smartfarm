@@ -43,7 +43,7 @@ page {
 .card {
   background: rgba(255, 255, 255, 0.85);
   border-radius: 20rpx;
-  margin: 12rpx 24rpx; /* 统一边距 */
+  margin: 12rpx 16rpx; /* 与生产管理页保持一致 */
   box-shadow: none;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -216,8 +216,8 @@ page {
 
 /* 天气卡片样式已移至 weather-card 组件 */
 .weather-card {
-  margin-left: 24rpx !important;
-  margin-right: 24rpx !important;
+  margin-left: 16rpx !important;
+  margin-right: 16rpx !important;
   margin-top: 10rpx !important;
   margin-bottom: 12rpx !important;
   display: block !important;
@@ -229,7 +229,7 @@ page {
 /* 响应式设计 */
 @media screen and (max-width: 480px) {
   .card {
-    margin: 12rpx 24rpx; /* 统一边距 */
+    margin: 12rpx 16rpx; /* 与生产管理页保持一致 */
   }
   
   .card-content {
@@ -279,20 +279,20 @@ page {
   }
   
   .card {
-    margin-left: max(24rpx, calc(24rpx + var(--safe-area-inset-left, 0)));
-    margin-right: max(24rpx, calc(24rpx + var(--safe-area-inset-right, 0)));
+    margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0)));
+    margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0)));
   }
   
   /* 确保天气卡片也使用相同的margin */
   .weather-card {
-    margin-left: max(24rpx, calc(24rpx + var(--safe-area-inset-left, 0))) !important;
-    margin-right: max(24rpx, calc(24rpx + var(--safe-area-inset-right, 0))) !important;
+    margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0))) !important;
+    margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0))) !important;
   }
   
   /* 详情页天气卡片 */
   .current-weather-card {
-    margin-left: max(24rpx, calc(24rpx + var(--safe-area-inset-left, 0))) !important;
-    margin-right: max(24rpx, calc(24rpx + var(--safe-area-inset-right, 0))) !important;
+    margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0))) !important;
+    margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0))) !important;
   }
 }
 

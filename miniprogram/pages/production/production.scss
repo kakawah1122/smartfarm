@@ -21,8 +21,7 @@
 .production-overview {
   padding: 24rpx;
   background: white;
-  margin-top: 32rpx; /* 增加顶部安全间距 */
-  margin-bottom: 16rpx;
+  margin: 32rpx 16rpx 16rpx 16rpx; /* 增加顶部安全间距，左右边距16rpx */
 }
 
 .overview-grid {
@@ -90,18 +89,18 @@
 
 /* TDesign原生Tab内容 */
 .tab-content {
-  padding: 8rpx 16rpx calc(32rpx + var(--safe-area-inset-bottom, 0));
+  padding: 8rpx 0 calc(32rpx + var(--safe-area-inset-bottom, 0));
 }
 
 /* TDesign物料管理区域 */
 .material-section {
-  margin: 16rpx 0;
+  margin: 16rpx 16rpx;
 }
 
 
 /* TDesign原生列表区域 */
 .quick-action {
-  margin: 16rpx 0 32rpx 0;
+  margin: 8rpx 16rpx 16rpx 16rpx;
 }
 
 /* 按钮内容居中 - 简化版本 */
@@ -231,7 +230,7 @@
 
 /* TDesign原生卡片 */
 .card {
-  margin: 24rpx 0;
+  margin: 24rpx 16rpx;
 }
 
 .card-header {
@@ -269,7 +268,7 @@
 
 /* TDesign原生列表卡片 */
 .list-card {
-  margin: 24rpx 0;
+  margin: 24rpx 16rpx;
 }
 
 /* TDesign原生记录样式 */
@@ -511,10 +510,13 @@
   }
 
   /* 记录列表响应式 */
-  .list-section,
+  .list-section {
+    margin: 12rpx 0;
+  }
+  
   .card,
   .list-card {
-    margin: 12rpx 0;
+    margin: 12rpx 16rpx;
   }
 
   .record-item {

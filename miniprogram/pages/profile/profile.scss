@@ -22,7 +22,7 @@
 .list-container {
   flex: 1;
   height: 0; /* 关键：设置为0，让flex:1生效 */
-  padding: 16rpx 24rpx 0 24rpx; /* 底部不设置padding，由safe-area处理 */
+  padding: 16rpx 16rpx 0 16rpx; /* 底部不设置padding，由safe-area处理 */
   box-sizing: border-box;
 }
 

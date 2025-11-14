@@ -452,14 +452,14 @@
             </view>
           </view>
 
-          <!-- 投入回报率 -->
-          <view class="stat-card stat-card-roi">
-            <view class="stat-icon stat-icon-roi">
-              <view class="css-icon-growth"></view>
+          <!-- 饲养成本 -->
+          <view class="stat-card stat-card-feeding-cost">
+            <view class="stat-icon stat-icon-feeding-cost">
+              <view class="css-icon-feed"></view>
             </view>
             <view class="stat-content">
-              <text class="stat-value">{{analysisData.costAnalysis.roi === '-' ? '-' : (analysisData.costAnalysis.roi || 0) + ':1'}}</text>
-              <text class="stat-label">投入回报率</text>
+              <text class="stat-value">¥{{analysisData.costAnalysis.feedingCost || 0}}</text>
+              <text class="stat-label">饲养成本</text>
             </view>
           </view>
         </view>

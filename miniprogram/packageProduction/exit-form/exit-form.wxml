@@ -50,7 +50,6 @@
             <view class="item-label required">批次ID</view>
             <view class="item-input batch-picker-input">
               <text class="picker-text {{formData.batchId ? '' : 'placeholder'}}">{{formData.batchId || '请选择入栏批次（从入栏批次选择）'}}</text>
-              <t-icon name="chevron-down" size="32" color="#c8c9cc" />
             </view>
           </view>
 

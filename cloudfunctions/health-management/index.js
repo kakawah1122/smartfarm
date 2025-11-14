@@ -19,6 +19,57 @@ const debugLog = (...args) => {
   }
 }
 
+async function getAllAccessibleTreatmentRecords(wxContext, where) {
+  try {
+    const hasPermissionHelper = typeof dbManager.getAccessibleBatchIds === 'function'
+    const accessibleBatchIds = hasPermissionHelper
+      ? await dbManager.getAccessibleBatchIds(wxContext.OPENID)
+      : null
+
+    if (hasPermissionHelper) {
+      if (!accessibleBatchIds || accessibleBatchIds.length === 0) {
+        return []
+      }
+    }
+
+    const filter = { ...where }
+
+    if (hasPermissionHelper) {
+      if (!filter.batchId) {
+        filter.batchId = _.in(accessibleBatchIds)
+      } else if (typeof filter.batchId === 'string' && !accessibleBatchIds.includes(filter.batchId)) {
+        return []
+      }
+    }
+
+    const results = []
+    const pageSize = 100
+    let fetched = 0
+    let hasMore = true
+
+    while (hasMore) {
+      const res = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+        .where(filter)
+        .skip(fetched)
+        .limit(pageSize)
+        .get()
+
+      if (!res.data || res.data.length === 0) {
+        break
+      }
+
+      results.push(...res.data)
+      fetched += res.data.length
+      hasMore = res.data.length === pageSize
+    }
+
+    return results
+  } catch (error) {
+    console.error('[getAllAccessibleTreatmentRecords] 获取治疗记录失败:', error)
+    return []
+  }
+}
+
 // 生成记录ID
 function generateRecordId(prefix) {
   const now = new Date()
@@ -48,8 +99,8 @@ function generateRecordNumber(category) {
   // 生成6位随机数
   const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0')
   
-  // 格式：物资类型英文缩写 + 6位随机代码（如：MED123456、FEED789012）
-  return `${categoryPrefix}${random}`
+  // 格式：物资类型英文缩写-6位随机代码（如：MED-123456、FEED-789012）
+  return `${categoryPrefix}-${random}`
 }
 
 // 生成治疗记录编号 ZL-YYYYMMDD-001
@@ -2880,23 +2931,13 @@ async function addTreatmentMedication(event, wxContext) {
         createdBy: openid
       }
       
-      // ✅ 更新治疗记录（添加用药并累加成本，按实际用药数分摊）
-      const totalTreatedAnimals = treatment.outcome?.totalTreated || 1
-      const curedCount = treatment.outcome?.curedCount || 0
-      const deathCount = treatment.outcome?.deathCount || 0
-      const remainingCount = totalTreatedAnimals - curedCount - deathCount
-      
-      
-      // ✅ 计算追加用药的单只成本（给剩余的鹅用）
-      const medicationCostPerAnimal = remainingCount > 0 ? medicationCost / remainingCount : 0
-      
-      // ✅ 换算到总数（用于统一按总数分摊）
-      const normalizedMedicationCost = medicationCostPerAnimal * totalTreatedAnimals
-      
-      // ✅ 累加到总成本
-      const currentMedicationCost = treatment.cost?.medication || treatment.totalCost || 0
-      const newTotalCost = currentMedicationCost + normalizedMedicationCost
-      
+      // ✅ 更新治疗记录的累计成本
+      const previousMedicationCost = Number(treatment.cost?.medication || 0)
+      const baseTotalCost = Number(treatment.cost?.total || treatment.totalCost || 0)
+
+      const updatedMedicationCost = parseFloat((previousMedicationCost + medicationCost).toFixed(2))
+      const updatedTotalCost = parseFloat((baseTotalCost + medicationCost).toFixed(2))
+
       await transaction.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
         .doc(treatmentId)
         .update({
@@ -2910,9 +2951,9 @@ async function addTreatmentMedication(event, wxContext) {
               category: medication.category
             }),
             treatmentHistory: _.push(medicationRecord),
-            'cost.medication': parseFloat(newTotalCost.toFixed(2)),
-            'cost.total': parseFloat(newTotalCost.toFixed(2)),
-            totalCost: parseFloat(newTotalCost.toFixed(2)),  // 兼容字段
+            'cost.medication': updatedMedicationCost,
+            'cost.total': updatedTotalCost,
+            totalCost: updatedTotalCost,  // 兼容字段
             updateTime: db.serverDate()
           }
         })
@@ -4834,6 +4875,11 @@ function calculateBatchTreatmentStats(records) {
     return record.outcome?.status || record.treatmentStatus || record.status || ''
   }
 
+  const getTreatmentCost = (record) => {
+    const rawTotal = record?.cost?.total ?? record?.totalCost ?? 0
+    return Number(rawTotal) || 0
+  }
+
   const getTotalTreated = (record) => {
     const outcomeTotal = typeof record.outcome === 'object' ? record.outcome?.totalTreated : undefined
     return outcomeTotal ?? record.totalTreated ?? record.affectedCount ?? record.initialCount ?? 0
@@ -4855,7 +4901,7 @@ function calculateBatchTreatmentStats(records) {
     return Number(record.deathCount ?? record.diedCount ?? 0) || 0
   }
 
-  const totalCost = records.reduce((sum, r) => sum + (r.totalCost || 0), 0)
+  const totalCost = records.reduce((sum, r) => sum + getTreatmentCost(r), 0)
 
   const ongoingRecords = records.filter(r => {
     const status = normalizeStatus(r)
@@ -4881,7 +4927,7 @@ function calculateBatchTreatmentStats(records) {
   const cureRate = totalTreated > 0 ? ((totalCuredAnimals / totalTreated) * 100).toFixed(1) : 0
 
   return {
-    totalCost: totalCost.toFixed(2),
+    totalCost: Number(totalCost.toFixed(2)),
     treatmentCount: records.length,
     ongoingCount,
     ongoingAnimalsCount,
@@ -4913,22 +4959,22 @@ async function calculateBatchTreatmentCosts(event, wxContext) {
       }
     }
     
-    // 构建查询条件
-    let query = db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-      .where({
-        isDeleted: false,
-        batchId: _.in(batchIds)
-      })
+    // ✅ 添加用户权限过滤：只查询用户有权限的批次记录
+    const baseWhere = {
+      isDeleted: false,
+      batchId: _.in(batchIds),
+      _openid: openid  // 关键修复：添加用户权限过滤
+    }
     
     // 添加日期范围过滤
     if (dateRange && dateRange.start && dateRange.end) {
-      query = query.where({
-        treatmentDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
-      })
+      baseWhere.treatmentDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
     }
     
-    // 一次性查询所有批次的治疗记录
-    const result = await query.get()
+    // 一次性查询所有批次的治疗记录（仅限用户有权限的记录）
+    const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where(baseWhere)
+      .get()
     
     // 按批次ID分组
     const recordsByBatch = {}
@@ -4977,26 +5023,34 @@ async function calculateTreatmentCost(event, wxContext) {
     const { batchId, dateRange } = event
     const openid = wxContext.OPENID
     
-    // ✅ 添加 openid 过滤，确保只查询当前用户的数据
-    let query = db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-      .where({ 
-        _openid: openid,  // ✅ 添加用户过滤
-        isDeleted: false 
-      })
-    
+    const baseWhere = {
+      isDeleted: false
+    }
+
     if (batchId && batchId !== 'all') {
-      query = query.where({ batchId })
+      baseWhere.batchId = batchId
     }
-    
+
     if (dateRange && dateRange.start && dateRange.end) {
-      query = query.where({
-        treatmentDate: _.gte(dateRange.start).and(_.lte(dateRange.end))
-      })
+      baseWhere.treatmentDate = _.gte(dateRange.start).and(_.lte(dateRange.end))
     }
-    
-    const records = await query.get()
-    const stats = calculateBatchTreatmentStats(records.data)
-    
+
+    let records = []
+
+    if (!batchId || batchId === 'all') {
+      records = await getAllAccessibleTreatmentRecords(wxContext, baseWhere)
+    } else {
+      const query = db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+        .where({
+          ...baseWhere,
+          _openid: openid
+        })
+      const result = await query.get()
+      records = result.data
+    }
+
+    const stats = calculateBatchTreatmentStats(records)
+
     return {
       success: true,
       data: stats

@@ -138,35 +138,6 @@
       </view>
     </view>
 
-    <!-- ROI分析 -->
-    <view class="roi-card">
-      <text class="card-title">投资回报率分析</text>
-      <view class="roi-overview">
-        <view class="roi-main">
-          <text class="roi-value">{{roi.roiRatio}}:1</text>
-          <text class="roi-label">投资回报比</text>
-        </view>
-        <view class="roi-details">
-          <view class="roi-item">
-            <text class="roi-desc">总投入</text>
-            <text class="roi-amount">¥{{roi.totalInvestment}}</text>
-          </view>
-          <view class="roi-item">
-            <text class="roi-desc">避免损失</text>
-            <text class="roi-amount success">¥{{roi.preventedLoss}}</text>
-          </view>
-          <view class="roi-item">
-            <text class="roi-desc">实际损失</text>
-            <text class="roi-amount warning">¥{{roi.actualLoss}}</text>
-          </view>
-          <view class="roi-item">
-            <text class="roi-desc">净收益</text>
-            <text class="roi-amount primary">¥{{roi.netBenefit}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
     <!-- 优化建议 -->
     <view class="suggestions-card">
       <text class="card-title">优化建议</text>

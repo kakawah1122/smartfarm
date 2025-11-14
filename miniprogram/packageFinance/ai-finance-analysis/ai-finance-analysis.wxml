@@ -64,10 +64,6 @@
             <text class="detail-label">利润率分析：</text>
             <text class="detail-value">{{analysisResult.profitability.profitMargin}}</text>
           </view>
-          <view wx:if="{{analysisResult.profitability.roi}}" class="detail-item">
-            <text class="detail-label">投资回报率：</text>
-            <text class="detail-value">{{analysisResult.profitability.roi}}</text>
-          </view>
           <view wx:if="{{analysisResult.profitability.efficiency}}" class="detail-item">
             <text class="detail-label">经营效率：</text>
             <text class="detail-value">{{analysisResult.profitability.efficiency}}</text>

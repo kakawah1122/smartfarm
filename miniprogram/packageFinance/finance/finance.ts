@@ -534,6 +534,7 @@ const pageConfig: any = {
         expense: formatToWan(expense),
         profit: formatToWan(profit),
         profitColorClass: profitColorClass,
+        expenseColorClass: 'danger', // 总支出显示红色
         growthRate: data.profit?.growth || '0',
         feedCost: formatToWan(costBreakdown.feedCost || 0),
         feedPercent: calculatePercent(costBreakdown.feedCost || 0),

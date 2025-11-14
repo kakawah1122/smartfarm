@@ -51,7 +51,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 /* 批次筛选和Tab导航卡片组 */
 .filter-tabs-card {
   background: white;
-  margin: 0 $spacing-lg $spacing-base;
+  margin: 0 16rpx $spacing-base;
   border-radius: $radius-md;
   box-shadow: $shadow-base;
   overflow: hidden;  /* ✅ 恢复hidden，保持卡片裁剪 */
@@ -111,7 +111,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 .health-stats-section {
   padding: $spacing-lg;
   background: white;
-  margin: 0 0 $spacing-base 0;
+  margin: 0 16rpx $spacing-base 16rpx;
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1221,7 +1221,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   
   // 存活率卡片容器 - 全宽显示
   .survival-cards-grid {
-    // 移除了标题栏，不需要上边距
+    margin-bottom: 20rpx;
   }
   
   // 存活率卡片样式 - 左中右三栏布局
@@ -2742,17 +2742,17 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         color: #B45309;
       }
     }
-    &.stat-card-roi {
-      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+    &.stat-card-feeding-cost {
+      background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
       .stat-icon {
-        background: rgba(124, 58, 237, 0.15);
+        background: rgba(34, 197, 94, 0.15);
       }
       .stat-value {
-        color: #7C3AED;
+        color: #22C55E;
         font-size: 36rpx;
       }
       .stat-label {
-        color: #6B21A8;
+        color: #15803D;
       }
     }
   }

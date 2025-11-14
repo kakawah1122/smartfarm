@@ -12,7 +12,11 @@
       <!-- Logo区域 -->
       <view class="login-header">
         <view class="login-logo">
-          <text class="logo-emoji">🏢</text>
+          <image
+            class="project-logo-image"
+            src="/assets/project-logo.png"
+            mode="aspectFit"
+          />
         </view>
         <view class="login-title">智慧养鹅</view>
         <view class="login-subtitle">现代化养殖场管理平台</view>

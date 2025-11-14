@@ -2142,6 +2142,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         
         this.closeAddMedicationDialog()
         
+        // ✅ 清除健康管理主页面缓存，确保返回时显示最新数据
+        try {
+          wx.removeStorageSync('health_cache_all_batches_snapshot_v1')
+        } catch (error) {
+          // 清除缓存失败不影响主流程
+        }
+        
         // 重新加载治疗详情
         setTimeout(() => {
           this.loadTreatmentDetail(treatmentId)

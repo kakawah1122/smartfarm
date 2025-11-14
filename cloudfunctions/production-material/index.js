@@ -109,8 +109,8 @@ function generateRecordNumber(type, category) {
   // 生成6位随机数
   const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0')
   
-  // 格式：物资类型英文缩写 + 6位随机代码（如：MED123456、FEED789012）
-  return `${categoryPrefix}${random}`
+  // 格式：物资类型英文缩写-6位随机代码（如：MED-123456、FEED-789012）
+  return `${categoryPrefix}-${random}`
 }
 
 exports.main = async (event, context) => {

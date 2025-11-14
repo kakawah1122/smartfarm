@@ -49,7 +49,7 @@
             <view class="item-label required">物料名称</view>
             <view class="item-input">
               <t-input
-                placeholder="请输入物料名称，如：优质鹅用饲料"
+                placeholder="请输入物料名称"
                 value="{{formData.materialName}}"
                 bind:change="onFieldChange"
                 data-field="materialName"

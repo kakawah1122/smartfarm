@@ -71,7 +71,7 @@ function clearOverviewCache() {
   }
 }
 
-const pageConfig = {
+const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOption, WechatMiniprogram.Page.CustomOption> = {
   data: {
     activeTab: 'entry',
     
@@ -189,7 +189,7 @@ const pageConfig = {
       
       // 标记数据已加载
       this.setData({ isDataLoaded: true })
-    } catch (error) {
+    } catch (error: any) {
       logger.error('加载数据失败:', error)
     }
   },
@@ -395,7 +395,7 @@ const pageConfig = {
       } else {
         this.setData({ entryRecords: [], isEmpty: true })
       }
-    } catch (error) {
+    } catch (error: any) {
       this.setData({ entryRecords: [], isEmpty: true })
     }
   },
@@ -447,7 +447,7 @@ const pageConfig = {
       } else {
         this.setData({ exitRecords: [] })
       }
-    } catch (error) {
+    } catch (error: any) {
       this.setData({ exitRecords: [] })
     }
   },
@@ -476,7 +476,7 @@ const pageConfig = {
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 转换数据格式以匹配优化后的界面显示
-        const formattedRecords = records.map(record => {
+        const formattedRecords = records.map((record: any) => {
           // 判断记录类型
           let displayType = '领用'
           let displayDescription = ''
@@ -514,14 +514,24 @@ const pageConfig = {
           }
         })
         
+        const sortedRecords = formattedRecords.sort((a: any, b: any) => {
+          const parseTime = (value: any) => {
+            if (!value) return 0
+            const timeValue = value instanceof Date ? value : new Date(value)
+            const timestamp = timeValue.getTime()
+            return Number.isNaN(timestamp) ? 0 : timestamp
+          }
+          return parseTime(b.createTime || b.date || b.recordDate) - parseTime(a.createTime || a.date || a.recordDate)
+        })
+
         this.setData({
-          materialRecords: formattedRecords,
-          isEmpty: formattedRecords.length === 0
+          materialRecords: sortedRecords.slice(0, 5),
+          isEmpty: sortedRecords.length === 0
         })
       } else {
         this.setData({ materialRecords: [] })
       }
-    } catch (error) {
+    } catch (error: any) {
       this.setData({ materialRecords: [] })
     }
   },
@@ -648,7 +658,7 @@ const pageConfig = {
   viewAllMaterialRecords() {
     wx.navigateTo({
       url: '/packageProduction/material-records-list/material-records-list',
-      fail: (error) => {
+      fail: (_error) => {
         // 已移除调试日志
         wx.showToast({
           title: '页面跳转失败',
@@ -663,7 +673,7 @@ const pageConfig = {
   viewAllEntryRecords() {
     wx.navigateTo({
       url: '/packageProduction/entry-records-list/entry-records-list',
-      fail: (error) => {
+      fail: (_error) => {
         // 已移除调试日志
         wx.showToast({
           title: '页面跳转失败',
@@ -678,7 +688,7 @@ const pageConfig = {
   viewAllExitRecords() {
     wx.navigateTo({
       url: '/packageProduction/exit-records-list/exit-records-list',
-      fail: (error) => {
+      fail: (_error) => {
         // 已移除调试日志
         wx.showToast({
           title: '页面跳转失败',
@@ -703,6 +713,11 @@ const pageConfig = {
   
   // 启动AI盘点功能
   startAICount() {
+    if (this.data.aiCount?.active) {
+      this.closeAICount()
+      return
+    }
+
     // 已移除调试日志
     this.setData({
       'aiCount.active': true,
@@ -754,7 +769,7 @@ const pageConfig = {
         icon: 'success',
         duration: 1000
       })
-    } catch (error) {
+    } catch (error: any) {
       // 用户取消不显示错误
       if (error.errMsg && error.errMsg.includes('cancel')) {
         return
@@ -965,7 +980,7 @@ const pageConfig = {
         })
       }
       
-    } catch (error) {
+    } catch (error: any) {
       
       this.setData({
         'aiCount.loading': false,
@@ -1082,7 +1097,7 @@ const pageConfig = {
         success: true,
         fileID: result.fileID
       }
-    } catch (error) {
+    } catch (error: any) {
       // 已移除调试日志
       return {
         success: false,
@@ -1142,7 +1157,7 @@ const pageConfig = {
         // 导航成功后关闭AI盘点界面
         this.closeAICount()
       },
-      fail: (error) => {
+      fail: (_error: any) => {
         // 已移除调试日志
         wx.showToast({
           title: '跳转失败，请重试',
@@ -1209,7 +1224,7 @@ const pageConfig = {
       // 刷新页面数据
       this.refreshData()
       
-    } catch (error) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       

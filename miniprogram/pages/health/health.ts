@@ -130,6 +130,9 @@ interface PageData {
   currentBatchId: string
   currentBatchNumber: string
   
+  // 加载状态标志
+  isLoadingPrevention?: boolean
+  
   // 批次数据
   showBatchDropdown: boolean
   availableBatches: any[]
@@ -307,6 +310,9 @@ Page<PageData, any>({
     currentBatchNumber: '全部批次',
     currentBatchStockQuantity: 0, // 当前批次存栏数量
     
+    // 加载状态标志
+    isLoadingPrevention: false,
+    
     // 批次数据
     showBatchDropdown: false,
     availableBatches: [],
@@ -389,7 +395,7 @@ Page<PageData, any>({
         preventionCost: 0,
         treatmentCost: 0,
         totalCost: 0,
-        roi: '-'
+        feedingCost: 0
       }
     },
     activeAlerts: [],
@@ -444,19 +450,28 @@ Page<PageData, any>({
     // ✅ 后台清理孤儿任务（不阻塞页面加载）
     this.cleanOrphanTasksInBackground()
     
-    // 先加载批次列表，然后加载数据
-    await this.loadAvailableBatches()
-    await this.loadHealthData()
-    
-    // 默认加载第一个Tab的数据（预防管理Tab需要同时加载监控数据）
-    await this.loadTabData(this.data.activeTab)
-    
-    // ✅ 如果是预防管理标签页，确保加载今日任务
-    // 📝 优化：统一使用 loadPreventionData，不再回退到 loadTodayTasks
-    if (this.data.activeTab === 'prevention' && this.data.preventionSubTab === 'today') {
-      if (!this.data.todayTasksByBatch || this.data.todayTasksByBatch.length === 0) {
-        await this.loadPreventionData()
-      }
+    // ✅ 性能优化：并行加载基础数据，提升加载速度
+    try {
+      // 显示加载状态
+      this.setData({ loading: true })
+      
+      // 并行加载批次列表和健康数据
+      await Promise.all([
+        this.loadAvailableBatches(),
+        this.loadHealthData(true) // 静默加载，避免重复loading
+      ])
+      
+      // 加载当前标签的数据
+      await this.loadTabData(this.data.activeTab)
+      
+    } catch (error: any) {
+      console.error('[onLoad] 页面加载失败:', error)
+      wx.showToast({
+        title: '页面加载失败',
+        icon: 'error'
+      })
+    } finally {
+      this.setData({ loading: false })
     }
   },
 
@@ -841,9 +856,9 @@ Page<PageData, any>({
           healthyCount: healthData.actualHealthyCount,
           sickCount: healthData.sickCount,
           deadCount: healthData.deadCount,
-          // 没有入栏数据时显示 "-"
-          healthyRate: healthData.totalAnimals > 0 ? (healthData.healthyRate + '%') : '-',
-          mortalityRate: healthData.totalAnimals > 0 ? (healthData.mortalityRate + '%') : '-',
+          // ✅ 优化：使用原始入栏数判断，避免显示"-"
+          healthyRate: originalQuantity > 0 ? (healthData.healthyRate + '%') : (healthData.totalAnimals > 0 ? (healthData.healthyRate + '%') : '计算中...'),
+          mortalityRate: originalQuantity > 0 ? (healthData.mortalityRate + '%') : (healthData.totalAnimals > 0 ? (healthData.mortalityRate + '%') : '计算中...'),
           abnormalCount: healthData.abnormalRecordCount,
           treatingCount: healthData.totalOngoingRecords,
           originalQuantity: originalQuantity  // ✅ 保存原始入栏数
@@ -1150,17 +1165,24 @@ Page<PageData, any>({
     const MAX_RETRIES = 2
     let lastError: any = null
     
-    // ✅ 使用循环实现重试，避免递归调用导致的作用域问题
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    // ✅ 性能优化：添加加载状态，避免重复请求
+    if (this.isLoadingPrevention) {
+      return
+    }
+    this.isLoadingPrevention = true
+    
     try {
-      // 调用新的预防管理仪表盘云函数
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'getPreventionDashboard',
-          batchId: this.data.currentBatchId || 'all'
-        }
-      })
+      // ✅ 使用循环实现重试，避免递归调用导致的作用域问题
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          // 调用新的预防管理仪表盘云函数
+          const result = await wx.cloud.callFunction({
+            name: 'health-management',
+            data: {
+              action: 'getPreventionDashboard',
+              batchId: this.data.currentBatchId || 'all'
+            }
+          })
 
       const response = result.result as any
 
@@ -1288,6 +1310,9 @@ Page<PageData, any>({
         totalCost: 0
       }
       })
+    } finally {
+      this.isLoadingPrevention = false
+    }
   },
 
   /**
@@ -1742,19 +1767,23 @@ Page<PageData, any>({
       const treatmentCost = this.data.treatmentData?.stats?.totalTreatmentCost || 0
       const totalCost = preventionCost + treatmentCost
       
-      // ✅ 优化：简化 ROI 计算逻辑
-      let roi: string | number = '-'
-      
-      if (hasData && totalCost > 0) {
-        const curedAnimals = this.data.treatmentStats?.recoveredCount || 0
+      // 获取饲养成本数据
+      let feedingCost = 0
+      try {
+        const feedCostResult = await wx.cloud.callFunction({
+          name: 'finance-management',
+          data: {
+            action: 'get_cost_stats',
+            dateRange: this.data.dateRange
+          }
+        })
         
-        // 每只动物的平均价值估算（元）- TODO: 后续可从配置或数据库获取
-        const animalValue = 100
-        
-        // 简化计算：基于治愈数量计算回报
-        // 治愈的动物如果没有治疗就会死亡，通过治疗避免了损失
-        const benefit = curedAnimals * animalValue
-        roi = (benefit / totalCost).toFixed(1)
+        if (feedCostResult.result && feedCostResult.result.success) {
+          feedingCost = feedCostResult.result.data.feedCost || 0
+        }
+      } catch (error) {
+        console.warn('获取饲养成本失败:', error)
+        feedingCost = 0
       }
       
       // 更新分析数据
@@ -1768,7 +1797,7 @@ Page<PageData, any>({
           preventionCost: preventionCost,
           treatmentCost: treatmentCost,
           totalCost: totalCost,
-          roi: roi
+          feedingCost: feedingCost
         }
       })
     } catch (error: any) {
@@ -1784,7 +1813,7 @@ Page<PageData, any>({
           preventionCost: 0,
           treatmentCost: 0,
           totalCost: 0,
-          roi: '-'
+          feedingCost: 0
         }
       })
     }
@@ -2350,31 +2379,95 @@ Page<PageData, any>({
           notes: string
         }
 
-        const parseTimestamp = (value: string, fallback?: string): number => {
-          if (value) {
-            const isoLike = value.includes('T') ? value : value.replace(' ', 'T')
+        const parseTimestamp = (value: unknown, fallback?: unknown): number => {
+          const parseStringDate = (text: string): number => {
+            if (!text) {
+              return Number.NaN
+            }
+
+            const trimmed = text.trim()
+            if (!trimmed) {
+              return Number.NaN
+            }
+
+            const isoLike = trimmed.includes('T') ? trimmed : trimmed.replace(' ', 'T')
             const parsedIso = Date.parse(isoLike)
             if (!Number.isNaN(parsedIso)) {
               return parsedIso
             }
 
-            const parsedSlash = Date.parse(value.replace(/-/g, '/'))
+            const parsedSlash = Date.parse(trimmed.replace(/-/g, '/'))
             if (!Number.isNaN(parsedSlash)) {
               return parsedSlash
             }
+
+            return Number.NaN
           }
 
-          if (fallback) {
-            const fallbackIso = fallback.includes('T') ? fallback : fallback.replace(' ', 'T')
-            const parsedFallbackIso = Date.parse(fallbackIso)
-            if (!Number.isNaN(parsedFallbackIso)) {
-              return parsedFallbackIso
+          const convertToTimestamp = (input: unknown): number => {
+            if (input == null) {
+              return Number.NaN
             }
 
-            const parsedFallbackSlash = Date.parse(fallback.replace(/-/g, '/'))
-            if (!Number.isNaN(parsedFallbackSlash)) {
-              return parsedFallbackSlash
+            if (typeof input === 'number') {
+              return Number.isFinite(input) ? input : Number.NaN
             }
+
+            if (input instanceof Date) {
+              return input.getTime()
+            }
+
+            if (typeof input === 'string') {
+              return parseStringDate(input)
+            }
+
+            if (typeof input === 'object') {
+              const candidate = input as Record<string, unknown>
+
+              if (typeof candidate.getTime === 'function') {
+                const timeValue = (candidate.getTime as () => unknown)()
+                if (typeof timeValue === 'number') {
+                  return timeValue
+                }
+              }
+
+              if (typeof candidate.milliseconds === 'number') {
+                return candidate.milliseconds
+              }
+
+              if (typeof candidate.seconds === 'number') {
+                return candidate.seconds * 1000
+              }
+
+              if (typeof candidate.timestamp === 'number') {
+                return candidate.timestamp
+              }
+
+              if (typeof candidate.time === 'number') {
+                return candidate.time
+              }
+
+              if (typeof candidate.$date === 'number') {
+                return candidate.$date
+              }
+
+              if (typeof candidate.$numberLong === 'string') {
+                const parsedLong = Number(candidate.$numberLong)
+                return Number.isNaN(parsedLong) ? Number.NaN : parsedLong
+              }
+            }
+
+            return Number.NaN
+          }
+
+          const primary = convertToTimestamp(value)
+          if (!Number.isNaN(primary)) {
+            return primary
+          }
+
+          const fallbackTimestamp = convertToTimestamp(fallback)
+          if (!Number.isNaN(fallbackTimestamp)) {
+            return fallbackTimestamp
           }
 
           return 0

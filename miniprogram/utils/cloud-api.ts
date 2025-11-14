@@ -6,6 +6,7 @@ interface CloudApiResponse<T = any> {
   data?: T
   error?: string
   message?: string
+  errorDetail?: string
 }
 
 interface CloudApiOptions {

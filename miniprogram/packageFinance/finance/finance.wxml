@@ -109,7 +109,7 @@
             </view>
             <view class="data-item">
               <view class="data-value-wrapper">
-                <text class="data-value success">{{overview.expense}}</text>
+                <text class="data-value {{overview.expenseColorClass}}">{{overview.expense}}</text>
                 <text class="data-unit">万</text>
               </view>
               <text class="data-label">总支出</text>

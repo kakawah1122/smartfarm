@@ -215,7 +215,7 @@ page {
 .card {
   background: var(--color-bg-primary, #ffffff);
   border-radius: var(--radius-lg, 16rpx);
-  margin: var(--spacing-lg, 24rpx) var(--spacing-xl, 32rpx) var(--spacing-lg, 24rpx) var(--spacing-xl, 32rpx);
+  margin: var(--spacing-lg, 24rpx) 16rpx;
   box-shadow: var(--shadow-base, 0 2rpx 12rpx rgba(0, 0, 0, 0.1));
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

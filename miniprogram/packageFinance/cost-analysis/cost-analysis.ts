@@ -21,14 +21,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 月度趋势（默认空数组，从服务器加载）
     monthlyTrend: [],
 
-    // 成本效益分析（默认空值，从服务器加载）
-    roi: {
-      totalInvestment: 0,
-      preventedLoss: 0,
-      actualLoss: 0,
-      netBenefit: 0,
-      roiRatio: 0
-    },
 
     // 对比分析（默认空值，从服务器加载）
     comparison: {
@@ -71,13 +63,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           },
           costBreakdown: data.costBreakdown || [],
           monthlyTrend: data.monthlyTrend || [],
-          roi: data.roi || {
-            totalInvestment: 0,
-            preventedLoss: 0,
-            actualLoss: 0,
-            netBenefit: 0,
-            roiRatio: 0
-          },
           comparison: data.comparison || {
             lastMonth: 0,
             lastYear: 0,
@@ -141,7 +126,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             overview: this.data.overview,
             costBreakdown: this.data.costBreakdown,
             monthlyTrend: this.data.monthlyTrend,
-            roi: this.data.roi,
             suggestions: this.data.suggestions
           }
         }

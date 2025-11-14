@@ -288,7 +288,6 @@ Component({
   "profitability": {
     "summary": "盈利能力总体评价（结合狮头鹅养殖特点）",
     "profitMargin": "利润率分析（与行业标准对比）",
-    "roi": "投资回报率分析（考虑养殖周期）",
     "efficiency": "经营效率分析（存栏周转率、饲料转化率等）"
   },
   "costStructure": {

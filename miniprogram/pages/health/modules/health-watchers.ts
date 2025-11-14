@@ -1,19 +1,21 @@
 import { logger } from '../../../utils/logger'
 // health-watchers.ts - 健康数据实时监听模块
 
+type DatabaseRealtimeListener = {
+  close?: () => void | Promise<void>
+}
+
+type WatcherKey = 'healthRecordsWatcher' | 'deathRecordsWatcher' | 'treatmentRecordsWatcher'
+
 export interface WatcherManager {
-  healthRecordsWatcher: WechatMiniprogram.DBRealtimeListener | null
-  deathRecordsWatcher: WechatMiniprogram.DBRealtimeListener | null
-  treatmentRecordsWatcher: WechatMiniprogram.DBRealtimeListener | null
+  healthRecordsWatcher: DatabaseRealtimeListener | null
+  deathRecordsWatcher: DatabaseRealtimeListener | null
+  treatmentRecordsWatcher: DatabaseRealtimeListener | null
   refreshTimer: ReturnType<typeof setTimeout> | null
   initTimer: ReturnType<typeof setTimeout> | null
   readyTimer: ReturnType<typeof setTimeout> | null
   isActive: boolean
-  watcherStates: {
-    healthRecordsWatcher: boolean
-    deathRecordsWatcher: boolean
-    treatmentRecordsWatcher: boolean
-  }
+  watcherStates: Record<WatcherKey, boolean>
 }
 
 export interface StartWatcherOptions {
@@ -74,6 +76,20 @@ export function startDataWatcher(
   // 标记为活跃状态
   manager.isActive = true
 
+  const setWatcherRef = (key: WatcherKey, watcher: DatabaseRealtimeListener | null) => {
+    switch (key) {
+      case 'healthRecordsWatcher':
+        manager.healthRecordsWatcher = watcher
+        break
+      case 'deathRecordsWatcher':
+        manager.deathRecordsWatcher = watcher
+        break
+      case 'treatmentRecordsWatcher':
+        manager.treatmentRecordsWatcher = watcher
+        break
+    }
+  }
+
   // 重置watcher状态为未就绪
   manager.watcherStates.healthRecordsWatcher = false
   manager.watcherStates.deathRecordsWatcher = false
@@ -88,7 +104,7 @@ export function startDataWatcher(
     }
 
     // ✅ 安全的watcher初始化函数
-    const safeInitWatcher = (collectionName: string, watcherKey: keyof WatcherManager) => {
+    const safeInitWatcher = (collectionName: string, watcherKey: WatcherKey) => {
       try {
         // 最后一次检查活跃状态
         if (!manager.isActive) {
@@ -133,7 +149,7 @@ export function startDataWatcher(
               }
               
               // 清除watcher引用和状态
-              manager[watcherKey] = null
+              setWatcherRef(watcherKey, null)
               if (watcherKey === 'healthRecordsWatcher' || watcherKey === 'deathRecordsWatcher' || watcherKey === 'treatmentRecordsWatcher') {
                 manager.watcherStates[watcherKey] = false
               }
@@ -141,7 +157,7 @@ export function startDataWatcher(
           })
         
         // 只在成功创建后赋值
-        manager[watcherKey] = watcher
+        setWatcherRef(watcherKey, watcher)
       } catch (error: any) {
         const errorMsg = error?.message || error?.errMsg || String(error)
         
@@ -161,7 +177,7 @@ export function startDataWatcher(
           logger.warn(`Failed to init ${collectionName} watcher:`, errorMsg)
         }
         
-        manager[watcherKey] = null
+        setWatcherRef(watcherKey, null)
       }
     }
 
@@ -187,6 +203,33 @@ export function startDataWatcher(
 export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
   if (!watchers) {
     return
+  }
+
+  const getWatcherRef = (key: WatcherKey): DatabaseRealtimeListener | null => {
+    switch (key) {
+      case 'healthRecordsWatcher':
+        return watchers.healthRecordsWatcher
+      case 'deathRecordsWatcher':
+        return watchers.deathRecordsWatcher
+      case 'treatmentRecordsWatcher':
+        return watchers.treatmentRecordsWatcher
+      default:
+        return null
+    }
+  }
+
+  const setWatcherRef = (key: WatcherKey, listener: DatabaseRealtimeListener | null) => {
+    switch (key) {
+      case 'healthRecordsWatcher':
+        watchers.healthRecordsWatcher = listener
+        break
+      case 'deathRecordsWatcher':
+        watchers.deathRecordsWatcher = listener
+        break
+      case 'treatmentRecordsWatcher':
+        watchers.treatmentRecordsWatcher = listener
+        break
+    }
   }
 
   // 标记为非活跃状态，防止正在初始化的监听器继续执行
@@ -229,10 +272,8 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
   }
 
   // ✅ 安全关闭watcher的辅助函数
-  const safeCloseWatcher = (
-    watcher: WechatMiniprogram.DBRealtimeListener | null,
-    watcherName: 'healthRecordsWatcher' | 'deathRecordsWatcher' | 'treatmentRecordsWatcher'
-  ): void => {
+  const safeCloseWatcher = (watcherName: WatcherKey): void => {
+    const watcher = getWatcherRef(watcherName)
     if (!watcher) {
       return
     }
@@ -241,33 +282,39 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
     if (!watchers.watcherStates[watcherName]) {
       // watcher还未就绪（WebSocket可能还在连接中），直接置空引用
       // 不调用close()，避免"ws readyState invalid"等错误
-      watchers[watcherName] = null
+      setWatcherRef(watcherName, null)
       watchers.watcherStates[watcherName] = false
       return
     }
 
     // watcher已就绪，可以安全关闭
-    try {
-      watcher.close()
-    } catch (error: any) {
-      // ✅ 增强的错误过滤：完全静默已知的非致命错误
+    const handleCloseError = (error: any) => {
       const errorMsg = error?.message || error?.errMsg || String(error || '')
-      
+
       if (!isNonFatalError(errorMsg)) {
-        // 只记录未知的、可能真正有问题的错误
         logger.warn(`Error closing ${watcherName}:`, errorMsg)
       }
-      // 对于已知的非致命错误，完全静默处理
+      // 已知的非致命错误保持静默
+    }
+
+    try {
+      const closeResult = watcher.close?.()
+
+      if (closeResult && typeof (closeResult as PromiseLike<unknown>).then === 'function') {
+        ;(closeResult as PromiseLike<unknown>).then(null, handleCloseError)
+      }
+    } catch (error: any) {
+      handleCloseError(error)
     } finally {
-      watchers[watcherName] = null
+      setWatcherRef(watcherName, null)
       watchers.watcherStates[watcherName] = false
     }
   }
 
   // 使用安全关闭函数处理所有watcher
-  safeCloseWatcher(watchers.healthRecordsWatcher, 'healthRecordsWatcher')
-  safeCloseWatcher(watchers.deathRecordsWatcher, 'deathRecordsWatcher')
-  safeCloseWatcher(watchers.treatmentRecordsWatcher, 'treatmentRecordsWatcher')
+  safeCloseWatcher('healthRecordsWatcher')
+  safeCloseWatcher('deathRecordsWatcher')
+  safeCloseWatcher('treatmentRecordsWatcher')
 }
 
 
