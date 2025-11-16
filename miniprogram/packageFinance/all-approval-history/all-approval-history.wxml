@@ -120,11 +120,11 @@
         <view class="divider-line"></view>
         
         <block wx:if="{{selectedApprovalItem.description}}">
-          <view class="info-row">
+          <view class="divider-line"></view>
+          <view class="info-row" style="align-items: flex-start;">
             <text class="info-label">说明：</text>
             <text class="info-value note-text" user-select>{{selectedApprovalItem.description}}</text>
           </view>
-          <view class="divider-line"></view>
         </block>
         
         <view class="info-row">
@@ -154,7 +154,7 @@
           </view>
           <block wx:if="{{selectedApprovalItem.rejectReason}}">
             <view class="divider-line"></view>
-            <view class="info-row">
+            <view class="info-row" style="align-items: flex-start;">
               <text class="info-label">拒绝原因：</text>
               <text class="info-value note-text danger" user-select>{{selectedApprovalItem.rejectReason}}</text>
             </view>
