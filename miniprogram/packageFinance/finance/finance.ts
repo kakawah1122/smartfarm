@@ -1089,7 +1089,7 @@ const pageConfig: any = {
   // 拒绝原因输入变化
   onRejectReasonChange(e: any) {
     this.setData({
-      rejectReason: e.detail.value || e.detail
+      rejectReason: e.detail.value ?? ''
     })
   },
   
