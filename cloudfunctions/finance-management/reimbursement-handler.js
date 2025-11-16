@@ -382,25 +382,30 @@ async function approveReimbursement(db, _, event, wxContext) {
   // 发送通知给申请人
   await notifyApplicant(db, record.data, 'approved', userInfo)
   // 创建审批日志（用于审计追踪）
-  await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
-    data: {
-      _openid: record.data._openid || record.data.userId,  // 申请人openid
-      recordType: 'reimbursement',  // 审批类型
-      recordId: reimbursementId,  // 关联的报销记录ID
-      status: APPROVAL_STATUS.APPROVED,  // 审批状态
-      approvers: [openid],  // 审批人列表
-      approvalTime: now,  // 审批时间
-      approvalRemark: remark || '',  // 审批备注
-      metadata: {
-        typeName: record.data.reimbursement?.typeName || '',
-        amount: record.data.amount || 0,
-        approverInfo: approverInfo,
-        operator: record.data.operator || ''
-      },
-      createTime: now,
-      updateTime: now
-    }
-  })
+  try {
+    await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
+      data: {
+        _openid: record.data._openid || record.data.userId,  // 申请人openid
+        recordType: 'reimbursement',  // 审批类型
+        recordId: reimbursementId,  // 关联的报销记录ID
+        status: APPROVAL_STATUS.APPROVED,  // 审批状态
+        approvers: [wxContext.OPENID],  // 审批人列表（修复：使用wxContext.OPENID）
+        approvalTime: now,  // 审批时间
+        approvalRemark: remark || '',  // 审批备注
+        metadata: {
+          typeName: record.data.reimbursement?.typeName || '',
+          amount: record.data.amount || 0,
+          approverInfo: approverInfo,
+          operator: record.data.operator || ''
+        },
+        createTime: now,
+        updateTime: now
+      }
+    })
+  } catch (error) {
+    console.error('创建审批日志失败:', error)
+    // 日志创建失败不影响主流程
+  }
   
   return {
     success: true,
@@ -484,25 +489,30 @@ async function rejectReimbursement(db, _, event, wxContext) {
   await notifyApplicant(db, record.data, 'rejected', userInfo, reason)
   
   // 创建审批日志（用于审计追踪）
-  await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
-    data: {
-      _openid: record.data._openid || record.data.userId,  // 申请人openid
-      recordType: 'reimbursement',  // 审批类型
-      recordId: reimbursementId,  // 关联的报销记录ID
-      status: APPROVAL_STATUS.REJECTED,  // 审批状态
-      approvers: [openid],  // 审批人列表
-      approvalTime: now,  // 审批时间
-      rejectionReason: reason,  // 拒绝原因
-      metadata: {
-        typeName: record.data.reimbursement?.typeName || '',
-        amount: record.data.amount || 0,
-        approverInfo: approverInfo,
-        operator: record.data.operator || ''
-      },
-      createTime: now,
-      updateTime: now
-    }
-  })
+  try {
+    await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
+      data: {
+        _openid: record.data._openid || record.data.userId,  // 申请人openid
+        recordType: 'reimbursement',  // 审批类型
+        recordId: reimbursementId,  // 关联的报销记录ID
+        status: APPROVAL_STATUS.REJECTED,  // 审批状态
+        approvers: [wxContext.OPENID],  // 审批人列表（修复：使用wxContext.OPENID）
+        approvalTime: now,  // 审批时间
+        rejectionReason: reason,  // 拒绝原因
+        metadata: {
+          typeName: record.data.reimbursement?.typeName || '',
+          amount: record.data.amount || 0,
+          approverInfo: approverInfo,
+          operator: record.data.operator || ''
+        },
+        createTime: now,
+        updateTime: now
+      }
+    })
+  } catch (error) {
+    console.error('创建审批日志失败:', error)
+    // 日志创建失败不影响主流程
+  }
   
   return {
     success: true,
