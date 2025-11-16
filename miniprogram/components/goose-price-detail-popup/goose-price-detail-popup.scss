@@ -83,15 +83,11 @@
 
 // 记录底部
 .record-footer {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 8rpx !important;
   padding-top: 16rpx !important;
   border-top: 2rpx dashed #e0e0e0 !important;
 }
 
-.record-operator,
-.record-time {
+.record-operator {
   font-size: 24rpx !important;
   color: #999 !important;
 }

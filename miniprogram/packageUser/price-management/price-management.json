@@ -3,7 +3,6 @@
     "navigation-bar": "/components/navigation-bar/navigation-bar",
     "t-button": "tdesign-miniprogram/button/button",
     "t-input": "tdesign-miniprogram/input/input",
-    "t-message": "tdesign-miniprogram/message/message",
     "t-loading": "tdesign-miniprogram/loading/loading",
     "t-cell": "tdesign-miniprogram/cell/cell",
     "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",

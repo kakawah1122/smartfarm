@@ -43,7 +43,6 @@
       <!-- 记录信息 -->
       <view class="record-footer">
         <text class="record-operator">操作员：{{item.operator}}</text>
-        <text class="record-time">创建时间：{{item.createTime}}</text>
       </view>
     </view>
   </view>

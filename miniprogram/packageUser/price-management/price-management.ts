@@ -40,12 +40,19 @@ interface BatchPreviewData {
 }
 
 interface HistoryItem {
-  _id: string
   date: string
+  recordCount: number
   source: string
-  updateTime: Date
-  goslingBreeds?: BaseBreed[]
-  meatBreeds?: BaseBreed[]
+  updateTime: any
+  allRecords: {
+    _id: any
+    date: string
+    source: string
+    createTime: any
+    operator: string
+    goslingBreeds: any[]
+    meatBreeds: any[]
+  }[]
 }
 
 interface ParsedBreedItem {
@@ -303,11 +310,6 @@ function buildBatchPreviewData(parsed: ParsedBatchGoosePriceResult): BatchPrevie
 }
 
 Page({
-  // 获取 message 组件实例的辅助方法
-  getMessage() {
-    return this.selectComponent('#t-message')
-  },
-
   data: {
     uploadedImageUrl: '',
     uploadedImageFileID: '',
@@ -385,13 +387,10 @@ Page({
 
     // 验证数据
     if (!manualData.date) {
-      const message = this.getMessage()
-      if (message) {
-        message.warning({
-        offset: [20, 32],
-        content: '请选择日期'
+      wx.showToast({
+        title: '请选择日期',
+        icon: 'none'
       })
-      }
       return
     }
 
@@ -445,13 +444,10 @@ Page({
     })
 
     if (goslingBreeds.length === 0 && meatBreeds.length === 0) {
-      const message = this.getMessage()
-      if (message) {
-        message.warning({
-        offset: [20, 32],
-        content: '请至少录入一组价格数据'
+      wx.showToast({
+        title: '请至少录入一组价格数据',
+        icon: 'none'
       })
-      }
       return
     }
 
@@ -477,22 +473,15 @@ Page({
           updateTime: db.serverDate()
         }
 
+      let successMessage = ''
+      
       if (existingResult.data.length > 0) {
         // 2. 已存在：更新该记录
         const existingId = existingResult.data[0]._id
         await db.collection('goose_prices').doc(existingId).update({
           data: saveData
-      })
-
-      wx.hideLoading()
-      const message = this.getMessage()
-      if (message) {
-        message.success({
-          offset: [20, 32],
-          content: `已更新 ${manualData.date} 的价格数据`,
-          duration: 2000
         })
-      }
+        successMessage = `已更新 ${manualData.date} 的价格数据`
       } else {
         // 3. 不存在：新增记录
         await db.collection('goose_prices').add({
@@ -501,16 +490,7 @@ Page({
             createTime: db.serverDate()
           }
         })
-
-        wx.hideLoading()
-        const message = this.getMessage()
-        if (message) {
-          message.success({
-        offset: [20, 32],
-          content: `已保存 ${manualData.date} 的价格数据`,
-        duration: 2000
-      })
-        }
+        successMessage = `已保存 ${manualData.date} 的价格数据`
       }
 
       // 清空表单
@@ -534,15 +514,19 @@ Page({
         this.loadHistory()
       }, 500)
 
+      wx.hideLoading()
+      wx.showToast({
+        title: successMessage,
+        icon: 'success',
+        duration: 2000
+      })
+
     } catch (error: any) {
       wx.hideLoading()
-      const message = this.getMessage()
-      if (message) {
-        message.error({
-        offset: [20, 32],
-        content: '保存失败：' + error.message
+      wx.showToast({
+        title: '保存失败：' + error.message,
+        icon: 'none'
       })
-      }
     }
   },
 
@@ -555,11 +539,6 @@ Page({
       sizeType: ['compressed'],  // 使用压缩图片
       success: async (res) => {
         try {
-          wx.showLoading({
-            title: '处理中...',
-            mask: true
-          })
-
           let tempFilePath = res.tempFiles[0].tempFilePath
           const fileSize = res.tempFiles[0].size
 
@@ -572,8 +551,10 @@ Page({
                 quality: 60  // 压缩质量60%
               })
               tempFilePath = compressRes.tempFilePath
+              wx.hideLoading()
             } catch (compressError) {
               // 压缩失败，使用原图
+              wx.hideLoading()
             }
           }
 
@@ -594,38 +575,29 @@ Page({
           const fileInfo = tempUrlRes.fileList && tempUrlRes.fileList[0]
           const tempUrl = fileInfo?.tempFileURL || ''
 
-        this.setData({
+          this.setData({
             uploadedImageUrl: tempUrl || uploadRes.fileID,
             uploadedImageFileID: uploadRes.fileID
-        })
-        
-        const message = this.getMessage()
-        if (message) {
-          message.success({
-          offset: [20, 32],
-          content: '图片上传成功'
-        })
-        }
-        } catch (error: any) {
-          const message = this.getMessage()
-          if (message) {
-            message.error({
-            offset: [20, 32],
-            content: '图片上传失败，请重试'
           })
-          }
-        } finally {
+        
           wx.hideLoading()
+          wx.showToast({
+            title: '图片上传成功',
+            icon: 'success'
+          })
+        } catch (error: any) {
+          wx.hideLoading()
+          wx.showToast({
+            title: '图片上传失败，请重试',
+            icon: 'none'
+          })
         }
       },
       fail: () => {
-        const message = this.getMessage()
-        if (message) {
-          message.error({
-          offset: [20, 32],
-          content: '选择图片失败'
+        wx.showToast({
+          title: '选择图片失败',
+          icon: 'none'
         })
-        }
       }
     })
   },
@@ -740,13 +712,10 @@ Page({
     const { uploadedImageFileID } = this.data
 
     if (!uploadedImageFileID) {
-      const message = this.getMessage()
-      if (message) {
-        message.warning({
-        offset: [20, 32],
-        content: '请先上传截图'
+      wx.showToast({
+        title: '请先上传截图',
+        icon: 'none'
       })
-      }
       return
     }
 
@@ -795,14 +764,11 @@ Page({
     } catch (error: any) {
       this.setData({ recognizing: false })
 
-      const message = this.getMessage()
-      if (message) {
-        message.error({
-        offset: [20, 32],
-        content: error.message || 'AI识别失败，请重试或使用手动录入',
+      wx.showToast({
+        title: error.message || 'AI识别失败，请重试或使用手动录入',
+        icon: 'none',
         duration: 3000
       })
-      }
     }
   },
 

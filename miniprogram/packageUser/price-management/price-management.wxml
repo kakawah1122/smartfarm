@@ -232,8 +232,6 @@
     </scroll-view>
   </view>
 
-  <t-message id="t-message" />
-
   <!-- 价格详情弹窗 -->
   <goose-price-detail
     visible="{{showDetailPopup}}"
