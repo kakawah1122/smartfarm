@@ -1,0 +1,68 @@
+<!-- 分析历史详情弹窗组件 -->
+<bottom-popup
+  visible="{{visible}}"
+  title="分析详情"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="确定"
+  bind:close="onClose"
+  bind:confirm="onClose"
+  bind:visiblechange="onVisibleChange"
+>
+  <view wx:if="{{processedRecord}}" class="analysis-detail-content">
+    <!-- 基本信息卡片 -->
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row compact">
+          <text class="info-label">分析时间：</text>
+          <text class="info-value">{{processedRecord.formattedDate}}</text>
+          <text class="info-separator">|</text>
+          <text class="info-label">类型：</text>
+          <text class="info-value">{{processedRecord.analysisType}}</text>
+        </view>
+        
+        <view class="info-row" wx:if="{{processedRecord.customQuery}}">
+          <text class="info-label">分析需求：</text>
+          <text class="info-value">{{processedRecord.customQuery}}</text>
+        </view>
+        
+        <view class="info-row" wx:if="{{processedRecord.summary}}">
+          <text class="info-label">分析摘要：</text>
+          <text class="info-value">{{processedRecord.summary}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 详细分析结果 -->
+    <view class="analysis-sections" wx:if="{{processedRecord.expandedResult.length > 0}}">
+      <view 
+        class="analysis-section {{item.type}}-section"
+        wx:for="{{processedRecord.expandedResult}}"
+        wx:key="type"
+      >
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-indicator {{item.type}}-indicator"></view>
+            <text class="section-title">{{item.title}}</text>
+          </view>
+        </view>
+        
+        <view class="section-content">
+          <view wx:if="{{item.summary}}" class="summary-text">{{item.summary}}</view>
+          
+          <view wx:if="{{item.details.length > 0}}" class="details-list">
+            <view 
+              class="detail-item"
+              wx:for="{{item.details}}"
+              wx:for-item="detail"
+              wx:key="label"
+            >
+              <text class="detail-label">{{detail.label}}：</text>
+              <text class="detail-value">{{detail.value}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</bottom-popup>

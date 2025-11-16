@@ -169,8 +169,8 @@
             >
               <view class="record-left">
                 <view class="record-content">
-                  <view class="record-title">{{item.title}}</view>
-                  <view class="record-desc">{{item.description}}</view>
+                  <text class="record-title" user-select>{{item.title}}</text>
+                  <text class="record-desc" user-select>{{item.description}}</text>
                   <view class="record-footer">
                     <text class="record-time">{{item.date}}</text>
                   </view>
@@ -202,20 +202,35 @@
             goose-price-data="{{goosePriceData}}"
             bind:analysisComplete="onAnalysisComplete"
             bind:analysisError="onAnalysisError"
+            bind:historyAdded="refreshAnalysisHistory"
           />
+        </view>
+      </view>
+      
+      <!-- 分析历史按钮 -->
+      <view class="card">
+        <view class="card-content">
+          <t-button theme="light" size="large" bind:tap="viewAllAnalysisHistory" class="history-button analysis-history-btn" block>
+            <view class="button-content">
+              <t-icon name="time" size="40rpx" color="#0052d9" />
+              <text class="button-text">财务分析历史</text>
+              <t-icon name="chevron-right" size="32rpx" color="#0052d9" />
+            </view>
+          </t-button>
         </view>
       </view>
     </view>
 
     <!-- 审批管理页面 -->
     <view wx:if="{{activeTab === 'approval'}}" class="tab-content">
+      <!-- 待审批事项 -->
       <view class="card">
         <view class="card-content">
           <view class="card-header">
             <text class="card-title">待审批事项</text>
           </view>
           
-          <view class="approval-list">
+          <view class="approval-list" wx:if="{{approvalItems.length > 0}}">
             <view 
               wx:for="{{approvalItems}}" 
               wx:key="id"
@@ -225,8 +240,8 @@
             >
               <view class="approval-left">
                 <view class="approval-content">
-                  <view class="approval-title">{{item.applicant}} - {{item.title}}</view>
-                  <view class="approval-desc">{{item.description}}</view>
+                  <text class="approval-title" user-select>{{item.applicant}} - {{item.title}}</text>
+                  <text class="approval-desc" user-select>{{item.description}}</text>
                   <view class="approval-footer">
                     <text class="approval-time">提交时间：{{item.submitTime}}</text>
                   </view>
@@ -239,6 +254,23 @@
               </view>
             </view>
           </view>
+          
+          <view wx:else class="empty-state">
+            <t-empty description="暂无待审批事项" />
+          </view>
+        </view>
+      </view>
+      
+      <!-- 审批历史按钮 -->
+      <view class="card">
+        <view class="card-content">
+          <t-button theme="light" size="large" bind:tap="viewAllApprovalHistory" class="history-button approval-history-btn" block>
+            <view class="button-content">
+              <t-icon name="time-filled" size="40rpx" color="#0052d9" />
+              <text class="button-text">审批历史记录</text>
+              <t-icon name="chevron-right" size="32rpx" color="#0052d9" />
+            </view>
+          </t-button>
         </view>
       </view>
     </view>
@@ -290,20 +322,20 @@
         <view class="card-content">
           <view class="info-row">
             <text class="info-label">申请人：</text>
-            <text class="info-value">{{selectedApprovalItem.applicant}}</text>
+            <text class="info-value" user-select>{{selectedApprovalItem.applicant}}</text>
           </view>
           <view class="divider-line"></view>
           
           <view class="info-row">
             <text class="info-label">申请类型：</text>
-            <text class="info-value">{{selectedApprovalItem.title}}</text>
+            <text class="info-value" user-select>{{selectedApprovalItem.title}}</text>
           </view>
           <view class="divider-line"></view>
           
           <block wx:if="{{selectedApprovalItem.description}}">
             <view class="info-row">
               <text class="info-label">说明：</text>
-              <text class="info-value note-text">{{selectedApprovalItem.description}}</text>
+              <text class="info-value note-text" user-select>{{selectedApprovalItem.description}}</text>
             </view>
             <view class="divider-line"></view>
           </block>
@@ -351,4 +383,11 @@
       </view>
     </view>
   </bottom-popup>
+  
+  <!-- 分析历史详情弹窗 -->
+  <analysis-history-detail-popup
+    visible="{{showAnalysisDetailPopup}}"
+    record="{{selectedAnalysisItem}}"
+    bind:close="closeAnalysisDetailPopup"
+  />
 </view>

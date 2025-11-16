@@ -17,7 +17,8 @@
     "compileHotReLoad": true,
     "bigPackageSizeSupport": false,
     "checkInvalidKey": true,
-    "ignoreDevUnusedFiles": true
+    "ignoreDevUnusedFiles": true,
+    "disableAIPerformanceAnalysis": true
   },
   "cloudfunctionRoot": "cloudfunctions/",
   "cloudbaseRoot": "cloudfunctions/",

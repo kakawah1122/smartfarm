@@ -17,6 +17,35 @@
       .query-input-wrapper {
         .query-textarea {
           margin-bottom: 0;
+          min-height: 80rpx;
+          background: rgba(248, 250, 252, 0.6);
+          border-radius: 12rpx;
+          padding: 20rpx;
+          font-size: 28rpx;
+        }
+      }
+      
+      .history-tips {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16rpx;
+        padding: 0 4rpx;
+        
+        .history-count {
+          font-size: 24rpx;
+          color: #86909c;
+        }
+        
+        .history-link {
+          font-size: 24rpx;
+          color: #0052d9;
+          text-decoration: underline;
+          cursor: pointer;
+          
+          &:active {
+            opacity: 0.7;
+          }
         }
       }
     }
@@ -384,6 +413,149 @@
         white-space: pre-wrap;
         word-break: break-word;
       }
+    }
+  }
+}
+
+// 历史记录弹窗样式
+.history-popup {
+  background: #ffffff;
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32rpx;
+    border-bottom: 1rpx solid #e5e8eb;
+    
+    .history-title {
+      font-size: 34rpx;
+      font-weight: 600;
+      color: #1d2129;
+    }
+    
+    .history-close {
+      font-size: 28rpx;
+      color: #0052d9;
+      padding: 8rpx 16rpx;
+      
+      &:active {
+        opacity: 0.7;
+      }
+    }
+    
+    .history-view-all {
+      font-size: 28rpx;
+      color: #0052d9;
+      padding: 8rpx 16rpx;
+      
+      &:active {
+        opacity: 0.7;
+      }
+    }
+  }
+  
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    
+    .history-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 400rpx;
+    }
+    
+    .history-items {
+      padding: 20rpx;
+      
+      .history-item {
+        background: #f8fafb;
+        border-radius: 16rpx;
+        padding: 24rpx;
+        margin-bottom: 16rpx;
+        border: 1rpx solid #e5e8eb;
+        transition: all 0.2s ease;
+        
+        &:active {
+          background: #f2f4f7;
+          transform: scale(0.98);
+        }
+        
+        .history-item-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12rpx;
+          
+          .history-item-date {
+            font-size: 24rpx;
+            color: #86909c;
+          }
+          
+          .history-item-type {
+            font-size: 22rpx;
+            color: #0052d9;
+            background: rgba(0, 82, 217, 0.08);
+            padding: 4rpx 12rpx;
+            border-radius: 8rpx;
+          }
+        }
+        
+        .history-item-content {
+          margin-bottom: 12rpx;
+          
+          .history-item-query {
+            display: block;
+            font-size: 28rpx;
+            color: #1d2129;
+            font-weight: 500;
+            margin-bottom: 8rpx;
+            line-height: 1.5;
+          }
+          
+          .history-item-summary {
+            display: block;
+            font-size: 26rpx;
+            color: #4e5969;
+            line-height: 1.6;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+          }
+        }
+        
+        .history-item-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          
+          .history-item-range {
+            font-size: 24rpx;
+            color: #86909c;
+            background: rgba(134, 144, 156, 0.08);
+            padding: 4rpx 12rpx;
+            border-radius: 8rpx;
+          }
+        }
+      }
+    }
+  }
+  
+  .history-actions {
+    padding: 20rpx 32rpx 32rpx;
+    border-top: 1rpx solid #e5e8eb;
+    
+    .history-clear-btn {
+      width: 100%;
     }
   }
 }

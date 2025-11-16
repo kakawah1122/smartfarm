@@ -74,7 +74,10 @@
         "cost-analysis/cost-analysis",
         "reimbursement-list/reimbursement-list",
         "finance-record-list/finance-record-list",
-        "manual-record-form/manual-record-form"
+        "manual-record-form/manual-record-form",
+        "ai-finance-analysis/ai-finance-analysis",
+        "all-analysis-history/all-analysis-history",
+        "all-approval-history/all-approval-history"
       ]
     },
     {

@@ -4,6 +4,7 @@
     "finance-record-detail": "/components/finance-record-detail-popup/finance-record-detail-popup",
     "bottom-popup": "/components/bottom-popup/bottom-popup",
     "ai-finance-analysis": "/packageFinance/ai-finance-analysis/ai-finance-analysis",
+    "analysis-history-detail-popup": "../../components/analysis-history-detail-popup/analysis-history-detail-popup",
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-tabs": "tdesign-miniprogram/tabs/tabs",
     "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",

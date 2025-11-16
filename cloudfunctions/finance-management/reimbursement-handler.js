@@ -571,39 +571,69 @@ async function getMyReimbursementStats(db, _, event, wxContext) {
   const now = new Date()
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const { startDate, endDate } = getMonthRange(currentMonth)
+  const $ = db.command.aggregate  // 获取聚合命令
   
-  // 查询本月已通过的报销（只统计已审批通过的）
-  const monthlyResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
-    .where({
-      _openid: wxContext.OPENID,
-      isReimbursement: true,
-      'reimbursement.status': APPROVAL_STATUS.APPROVED,
-      date: _.gte(startDate).and(_.lte(endDate)),
-      isDeleted: _.neq(true)
-    })
-    .get()
-  
-  const monthlyAmount = monthlyResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
-  
-  // 查询累计已通过的报销（只统计已审批通过的）
-  const totalResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
-    .where({
-      _openid: wxContext.OPENID,
-      isReimbursement: true,
-      'reimbursement.status': APPROVAL_STATUS.APPROVED,
-      isDeleted: _.neq(true)
-    })
-    .get()
-  
-  const totalAmount = totalResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
-  
-  return {
-    success: true,
-    data: {
-      monthlyAmount: monthlyAmount,
-      totalAmount: totalAmount,
-      monthlyCount: monthlyResult.data.length,
-      totalCount: totalResult.data.length
+  try {
+    // 并行执行两个查询以提高性能
+    const [monthlyResult, totalResult] = await Promise.all([
+      // 本月统计 - 使用聚合管道
+      db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+        .aggregate()
+        .match({
+          _openid: wxContext.OPENID,
+          isReimbursement: true,
+          'reimbursement.status': APPROVAL_STATUS.APPROVED,
+          date: _.gte(startDate).and(_.lte(endDate)),
+          isDeleted: _.neq(true)
+        })
+        .group({
+          _id: null,
+          totalAmount: $.sum('$amount'),
+          count: $.sum(1)
+        })
+        .end(),
+      
+      // 累计统计 - 使用聚合管道
+      db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
+        .aggregate()
+        .match({
+          _openid: wxContext.OPENID,
+          isReimbursement: true,
+          'reimbursement.status': APPROVAL_STATUS.APPROVED,
+          isDeleted: _.neq(true)
+        })
+        .group({
+          _id: null,
+          totalAmount: $.sum('$amount'),
+          count: $.sum(1)
+        })
+        .end()
+    ])
+    
+    // 提取统计结果
+    const monthlyStats = monthlyResult.list?.[0] || { totalAmount: 0, count: 0 }
+    const totalStats = totalResult.list?.[0] || { totalAmount: 0, count: 0 }
+    
+    return {
+      success: true,
+      data: {
+        monthlyAmount: monthlyStats.totalAmount || 0,
+        totalAmount: totalStats.totalAmount || 0,
+        monthlyCount: monthlyStats.count || 0,
+        totalCount: totalStats.count || 0
+      }
+    }
+  } catch (error) {
+    console.error('获取报销统计失败:', error)
+    // 降级方案：返回默认值
+    return {
+      success: true,
+      data: {
+        monthlyAmount: 0,
+        totalAmount: 0,
+        monthlyCount: 0,
+        totalCount: 0
+      }
     }
   }
 }

@@ -1,0 +1,215 @@
+// 全部审批历史页面
+import CloudApi from '../../utils/cloud-api'
+
+Page({
+  data: {
+    // 审批历史记录列表
+    approvalHistory: [] as any[],
+    
+    // 加载状态
+    loading: false,
+    loadingMore: false,
+    
+    // 分页
+    currentPage: 1,
+    pageSize: 20,
+    hasMore: true,
+    
+    // 弹窗
+    showDetailPopup: false,
+    selectedApprovalItem: null as any,
+    
+    // 空状态
+    isEmpty: false
+  },
+
+  onLoad() {
+    this.loadApprovalHistory()
+  },
+  
+  // 返回上一页
+  goBack() {
+    wx.navigateBack({
+      fail: () => {
+        // 如果没有上一页，返回财务管理页
+        wx.redirectTo({
+          url: '/packageFinance/finance/finance'
+        })
+      }
+    })
+  },
+  
+  // 加载审批历史
+  async loadApprovalHistory(append: boolean = false) {
+    if (this.data.loading || this.data.loadingMore) return
+    
+    this.setData({
+      [append ? 'loadingMore' : 'loading']: true
+    })
+    
+    try {
+      const result = await CloudApi.callFunction<any>(
+        'finance-management',
+        {
+          action: 'get_all_reimbursements',
+          page: append ? this.data.currentPage + 1 : 1,
+          pageSize: this.data.pageSize,
+          status: 'all' // 获取所有状态
+        },
+        {
+          showError: false
+        }
+      )
+      
+      if (result.success && result.data?.records) {
+        const records = result.data.records
+          .filter((record: any) => 
+            record.reimbursement?.status === 'approved' || 
+            record.reimbursement?.status === 'rejected' ||
+            record.reimbursement?.status === 'pending'
+          )
+          .map((item: any) => this.formatApprovalItem(item))
+        
+        const newList = append ? [...this.data.approvalHistory, ...records] : records
+        const hasMore = records.length >= this.data.pageSize
+        
+        this.setData({
+          approvalHistory: newList,
+          hasMore,
+          isEmpty: newList.length === 0,
+          currentPage: append ? this.data.currentPage + 1 : 1
+        })
+      } else {
+        if (!append) {
+          this.setData({ isEmpty: true })
+        }
+        this.setData({ hasMore: false })
+      }
+      
+    } catch (error) {
+      console.error('加载审批历史失败:', error)
+      wx.showToast({
+        title: '加载失败',
+        icon: 'none'
+      })
+      
+      if (!append) {
+        this.setData({ isEmpty: true })
+      }
+    } finally {
+      this.setData({
+        loading: false,
+        loadingMore: false
+      })
+    }
+  },
+  
+  // 格式化审批项
+  formatApprovalItem(record: any): any {
+    // 获取申请人信息
+    const applicant = record.operatorName || record.operator || '未知'
+    
+    // 获取报销类型名称
+    const typeName = record.reimbursement?.typeName || 
+                    this.getReimbursementTypeTitle(record.reimbursement?.type) || 
+                    '报销申请'
+    
+    // 格式化日期
+    const date = record.reimbursement?.approvedAt || 
+                record.reimbursement?.rejectedAt || 
+                record.createTime
+    const formattedDate = date ? new Date(date).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : '未知时间'
+    
+    return {
+      id: record._id || record.recordId,
+      type: 'expense',
+      applicant: applicant,
+      title: typeName,
+      description: record.reimbursement?.reason || record.description || '',
+      amount: this.formatAmount(record.amount),
+      status: record.reimbursement?.status || 'pending',
+      formattedDate: formattedDate,
+      rejectReason: record.reimbursement?.rejectReason || '',
+      approvedBy: record.reimbursement?.approvedBy || '',
+      rejectedBy: record.reimbursement?.rejectedBy || '',
+      submitTime: this.formatSubmitTime(record.createTime)
+    }
+  },
+  
+  // 获取报销类型标题
+  getReimbursementTypeTitle(type: string): string {
+    const typeMap: any = {
+      'feed': '饲料采购',
+      'medicine': '兽药疫苗',
+      'equipment': '设备维护',
+      'utility': '水电燃料',
+      'labor': '人工费用',
+      'transport': '运输费用',
+      'office': '办公用品',
+      'other': '其他费用'
+    }
+    return typeMap[type] || '其他费用'
+  },
+  
+  // 格式化金额
+  formatAmount(amount: number | undefined): string {
+    if (!amount || isNaN(amount)) return '0.00'
+    return amount.toFixed(2)
+  },
+  
+  // 格式化提交时间
+  formatSubmitTime(createTime: string | number | Date | undefined): string {
+    if (!createTime) return '未知时间'
+    
+    const date = new Date(createTime)
+    if (isNaN(date.getTime())) return '未知时间'
+    
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}/${month}/${day} ${hours}:${minutes}`
+  },
+  
+  // 点击历史记录项
+  onClickHistoryItem(e: any) {
+    const { item } = e.currentTarget.dataset
+    this.setData({
+      selectedApprovalItem: item,
+      showDetailPopup: true
+    })
+  },
+  
+  // 关闭详情弹窗
+  closeDetailPopup() {
+    this.setData({
+      showDetailPopup: false
+    })
+    // 延迟清空数据，避免动画时闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedApprovalItem: null
+      })
+    }, 300)
+  },
+  
+  // 下拉刷新
+  async onPullDownRefresh() {
+    await this.loadApprovalHistory()
+    wx.stopPullDownRefresh()
+  },
+  
+  // 上拉加载更多
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loadingMore) {
+      this.loadApprovalHistory(true)
+    }
+  }
+})

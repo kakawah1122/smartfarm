@@ -1,0 +1,166 @@
+<!--all-approval-history.wxml - 全部审批历史页面-->
+<page-meta page-style="{{ 'overflow: ' + (showDetailPopup ? 'hidden' : 'visible') }}"></page-meta>
+
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="全部审批历史"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 历史记录列表 -->
+    <view class="history-list" wx:if="{{!loading}}">
+      <!-- 空状态 -->
+      <view wx:if="{{isEmpty}}" class="empty-container">
+        <t-empty 
+          icon="info-circle"
+          description="暂无审批历史"
+        />
+      </view>
+      
+      <!-- 记录列表 -->
+      <view wx:else class="history-items">
+        <view 
+          class="history-card"
+          wx:for="{{approvalHistory}}"
+          wx:key="id"
+          bind:tap="onClickHistoryItem"
+          data-item="{{item}}"
+        >
+          <!-- 卡片头部 -->
+          <view class="card-header">
+            <text class="applicant-name" user-select>{{item.applicant}}</text>
+            <t-tag 
+              theme="{{item.status === 'approved' ? 'success' : item.status === 'rejected' ? 'danger' : 'default'}}"
+              size="small"
+            >
+              {{item.status === 'approved' ? '已通过' : item.status === 'rejected' ? '已拒绝' : '待审批'}}
+            </t-tag>
+          </view>
+          
+          <!-- 卡片内容 -->
+          <view class="card-content">
+            <view class="approval-info">
+              <text class="approval-type" user-select>{{item.title}}</text>
+              <text class="approval-desc" user-select wx:if="{{item.description}}">{{item.description}}</text>
+            </view>
+          </view>
+          
+          <!-- 卡片底部 -->
+          <view class="card-footer">
+            <text class="approval-amount">¥{{item.amount}}</text>
+            <text class="approval-date">{{item.formattedDate}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 加载更多 -->
+      <view wx:if="{{!isEmpty && hasMore}}" class="load-more">
+        <view wx:if="{{loadingMore}}" class="loading-more">
+          <t-loading theme="circular" size="40rpx" />
+          <text class="loading-text">加载中...</text>
+        </view>
+        <view wx:else class="load-more-tip">
+          <text>上拉加载更多</text>
+        </view>
+      </view>
+      
+      <!-- 没有更多 -->
+      <view wx:if="{{!isEmpty && !hasMore && approvalHistory.length > 0}}" class="no-more">
+        <text>已加载全部记录</text>
+      </view>
+    </view>
+    
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <t-loading theme="circular" size="60rpx" />
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+</view>
+
+<!-- 详情弹窗 -->
+<bottom-popup
+  visible="{{showDetailPopup}}"
+  title="审批详情"
+  show-close="{{true}}"
+  show-actions="{{false}}"
+  bind:close="closeDetailPopup"
+>
+  <view wx:if="{{selectedApprovalItem}}" class="approval-detail-content">
+    <view class="info-card">
+      <view class="card-content">
+        <view class="info-row">
+          <text class="info-label">申请人：</text>
+          <text class="info-value" user-select>{{selectedApprovalItem.applicant}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">申请类型：</text>
+          <text class="info-value" user-select>{{selectedApprovalItem.title}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">审批状态：</text>
+          <view class="info-value">
+            <t-tag 
+              theme="{{selectedApprovalItem.status === 'approved' ? 'success' : selectedApprovalItem.status === 'rejected' ? 'danger' : 'default'}}"
+              size="small"
+            >
+              {{selectedApprovalItem.status === 'approved' ? '已通过' : selectedApprovalItem.status === 'rejected' ? '已拒绝' : '待审批'}}
+            </t-tag>
+          </view>
+        </view>
+        <view class="divider-line"></view>
+        
+        <block wx:if="{{selectedApprovalItem.description}}">
+          <view class="info-row">
+            <text class="info-label">说明：</text>
+            <text class="info-value note-text" user-select>{{selectedApprovalItem.description}}</text>
+          </view>
+          <view class="divider-line"></view>
+        </block>
+        
+        <view class="info-row">
+          <text class="info-label">申请金额：</text>
+          <text class="info-value amount-text expense">-¥{{selectedApprovalItem.amount}}</text>
+        </view>
+        <view class="divider-line"></view>
+        
+        <view class="info-row">
+          <text class="info-label">提交时间：</text>
+          <text class="info-value">{{selectedApprovalItem.submitTime}}</text>
+        </view>
+        
+        <block wx:if="{{selectedApprovalItem.status === 'approved' && selectedApprovalItem.approvedBy}}">
+          <view class="divider-line"></view>
+          <view class="info-row">
+            <text class="info-label">审批人：</text>
+            <text class="info-value" user-select>{{selectedApprovalItem.approvedBy}}</text>
+          </view>
+        </block>
+        
+        <block wx:if="{{selectedApprovalItem.status === 'rejected'}}">
+          <view class="divider-line"></view>
+          <view class="info-row">
+            <text class="info-label">拒绝人：</text>
+            <text class="info-value" user-select>{{selectedApprovalItem.rejectedBy || '管理员'}}</text>
+          </view>
+          <block wx:if="{{selectedApprovalItem.rejectReason}}">
+            <view class="divider-line"></view>
+            <view class="info-row">
+              <text class="info-label">拒绝原因：</text>
+              <text class="info-value note-text danger" user-select>{{selectedApprovalItem.rejectReason}}</text>
+            </view>
+          </block>
+        </block>
+      </view>
+    </view>
+  </view>
+</bottom-popup>

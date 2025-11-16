@@ -7,9 +7,10 @@
       <view class="query-input-wrapper">
         <t-textarea
           value="{{customQuery}}"
-          placeholder="例如：分析医疗费用偏高的原因，或重点关注饲料成本优化，或评估出栏时机对利润的影响等..."
+          placeholder="输入您关注的问题（选填）"
           maxlength="200"
           bind:change="onQueryInput"
+          autosize="{{autosize}}"
           class="query-textarea"
         />
       </view>
@@ -59,14 +60,14 @@
           </view>
         </view>
         <view class="section-content">
-          <view class="summary-text">{{analysisResult.profitability.summary || ''}}</view>
+          <text class="summary-text" user-select>{{analysisResult.profitability.summary || ''}}</text>
           <view wx:if="{{analysisResult.profitability.profitMargin}}" class="detail-item">
             <text class="detail-label">利润率分析：</text>
-            <text class="detail-value">{{analysisResult.profitability.profitMargin}}</text>
+            <text class="detail-value" user-select>{{analysisResult.profitability.profitMargin}}</text>
           </view>
           <view wx:if="{{analysisResult.profitability.efficiency}}" class="detail-item">
             <text class="detail-label">经营效率：</text>
-            <text class="detail-value">{{analysisResult.profitability.efficiency}}</text>
+            <text class="detail-value" user-select>{{analysisResult.profitability.efficiency}}</text>
           </view>
         </view>
       </view>
@@ -80,14 +81,14 @@
           </view>
         </view>
         <view class="section-content">
-          <view class="summary-text">{{analysisResult.costStructure.summary || ''}}</view>
+          <text class="summary-text" user-select>{{analysisResult.costStructure.summary || ''}}</text>
           <view wx:if="{{analysisResult.costStructure.breakdown}}" class="detail-item">
             <text class="detail-label">成本分解：</text>
-            <text class="detail-value">{{analysisResult.costStructure.breakdown}}</text>
+            <text class="detail-value" user-select>{{analysisResult.costStructure.breakdown}}</text>
           </view>
           <view wx:if="{{analysisResult.costStructure.optimization}}" class="detail-item">
             <text class="detail-label">优化潜力：</text>
-            <text class="detail-value">{{analysisResult.costStructure.optimization}}</text>
+            <text class="detail-value" user-select>{{analysisResult.costStructure.optimization}}</text>
           </view>
         </view>
       </view>
@@ -101,18 +102,18 @@
           </view>
         </view>
         <view class="section-content">
-          <view class="summary-text">{{analysisResult.cashFlow.summary || ''}}</view>
+          <text class="summary-text" user-select>{{analysisResult.cashFlow.summary || ''}}</text>
           <view wx:if="{{analysisResult.cashFlow.incomeFlow}}" class="detail-item">
             <text class="detail-label">收入流：</text>
-            <text class="detail-value">{{analysisResult.cashFlow.incomeFlow}}</text>
+            <text class="detail-value" user-select>{{analysisResult.cashFlow.incomeFlow}}</text>
           </view>
           <view wx:if="{{analysisResult.cashFlow.expenseFlow}}" class="detail-item">
             <text class="detail-label">支出流：</text>
-            <text class="detail-value">{{analysisResult.cashFlow.expenseFlow}}</text>
+            <text class="detail-value" user-select>{{analysisResult.cashFlow.expenseFlow}}</text>
           </view>
           <view wx:if="{{analysisResult.cashFlow.stability}}" class="detail-item">
             <text class="detail-label">稳定性：</text>
-            <text class="detail-value">{{analysisResult.cashFlow.stability}}</text>
+            <text class="detail-value" user-select>{{analysisResult.cashFlow.stability}}</text>
           </view>
         </view>
       </view>
@@ -126,18 +127,18 @@
           </view>
         </view>
         <view class="section-content">
-          <view class="summary-text">{{analysisResult.trend.summary || ''}}</view>
+          <text class="summary-text" user-select>{{analysisResult.trend.summary || ''}}</text>
           <view wx:if="{{analysisResult.trend.incomeTrend}}" class="detail-item">
             <text class="detail-label">收入趋势：</text>
-            <text class="detail-value">{{analysisResult.trend.incomeTrend}}</text>
+            <text class="detail-value" user-select>{{analysisResult.trend.incomeTrend}}</text>
           </view>
           <view wx:if="{{analysisResult.trend.expenseTrend}}" class="detail-item">
             <text class="detail-label">支出趋势：</text>
-            <text class="detail-value">{{analysisResult.trend.expenseTrend}}</text>
+            <text class="detail-value" user-select>{{analysisResult.trend.expenseTrend}}</text>
           </view>
           <view wx:if="{{analysisResult.trend.profitTrend}}" class="detail-item">
             <text class="detail-label">利润趋势：</text>
-            <text class="detail-value">{{analysisResult.trend.profitTrend}}</text>
+            <text class="detail-value" user-select>{{analysisResult.trend.profitTrend}}</text>
           </view>
         </view>
       </view>
@@ -151,18 +152,18 @@
           </view>
         </view>
         <view class="section-content">
-          <view class="summary-text">{{analysisResult.risk.summary || ''}}</view>
+          <text class="summary-text" user-select>{{analysisResult.risk.summary || ''}}</text>
           <view wx:if="{{analysisResult.risk.financialRisk}}" class="detail-item">
             <text class="detail-label">财务风险：</text>
-            <text class="detail-value">{{analysisResult.risk.financialRisk}}</text>
+            <text class="detail-value" user-select>{{analysisResult.risk.financialRisk}}</text>
           </view>
           <view wx:if="{{analysisResult.risk.operationalRisk}}" class="detail-item">
             <text class="detail-label">经营风险：</text>
-            <text class="detail-value">{{analysisResult.risk.operationalRisk}}</text>
+            <text class="detail-value" user-select>{{analysisResult.risk.operationalRisk}}</text>
           </view>
           <view wx:if="{{analysisResult.risk.recommendations}}" class="detail-item">
             <text class="detail-label">风险控制建议：</text>
-            <text class="detail-value">{{analysisResult.risk.recommendations}}</text>
+            <text class="detail-value" user-select>{{analysisResult.risk.recommendations}}</text>
           </view>
         </view>
       </view>
@@ -176,7 +177,7 @@
           </view>
         </view>
         <view class="section-content">
-          <view class="summary-text">{{analysisResult.suggestions.summary || ''}}</view>
+          <text class="summary-text" user-select>{{analysisResult.suggestions.summary || ''}}</text>
           
           <!-- 立即执行 -->
           <view wx:if="{{analysisResult.suggestions.immediate && analysisResult.suggestions.immediate.length > 0}}" class="suggestions-group">
@@ -189,7 +190,7 @@
                 wx:for-item="suggestion"
               >
                 <text class="suggestion-index">{{index + 1}}.</text>
-                <text class="suggestion-text">{{suggestion}}</text>
+                <text class="suggestion-text" user-select>{{suggestion}}</text>
               </view>
             </view>
           </view>
@@ -205,7 +206,7 @@
                 wx:for-item="suggestion"
               >
                 <text class="suggestion-index">{{index + 1}}.</text>
-                <text class="suggestion-text">{{suggestion}}</text>
+                <text class="suggestion-text" user-select>{{suggestion}}</text>
               </view>
             </view>
           </view>
@@ -221,7 +222,7 @@
                 wx:for-item="suggestion"
               >
                 <text class="suggestion-index">{{index + 1}}.</text>
-                <text class="suggestion-text">{{suggestion}}</text>
+                <text class="suggestion-text" user-select>{{suggestion}}</text>
               </view>
             </view>
           </view>
@@ -237,7 +238,7 @@
                 wx:for-item="suggestion"
               >
                 <text class="suggestion-index">{{index + 1}}.</text>
-                <text class="suggestion-text">{{suggestion}}</text>
+                <text class="suggestion-text" user-select>{{suggestion}}</text>
               </view>
             </view>
           </view>
@@ -248,7 +249,7 @@
 
     <!-- 文本格式结果 -->
     <view wx:else class="text-result">
-      <view class="text-content">{{analysisResult.rawText}}</view>
+      <text class="text-content" user-select>{{analysisResult.rawText}}</text>
     </view>
     
     <!-- 修正分析区域 -->
@@ -269,11 +270,11 @@
       </view>
       
       <view class="refinement-actions">
-        <t-button theme="light" size="large" bind:tap="clearAnalysis" class="restart-btn">
-          重新分析
-        </t-button>
         <t-button theme="primary" size="large" bind:tap="refineAnalysis" class="refine-btn">
           修正分析
+        </t-button>
+        <t-button theme="light" size="large" bind:tap="archiveAnalysis" class="restart-btn">
+          分析归档
         </t-button>
       </view>
     </view>

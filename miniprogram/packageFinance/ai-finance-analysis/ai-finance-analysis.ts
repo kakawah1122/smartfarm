@@ -1,36 +1,36 @@
 import { logger } from '../../utils/logger'
 // ai-finance-analysis.ts - AI财务分析组件
+
+// 定义集合名称常量（小程序端不支持require共享配置）
+const COLLECTIONS = {
+  FINANCE_ANALYSIS_HISTORY: 'finance_analysis_history'
+}
 Component({
   properties: {
     // 财务数据（从父组件传入）
     financeData: {
       type: Object,
-      value: null,
-      optionalTypes: [null]
+      value: null as any
     },
     // 时间范围（可选，可能为 null 或 undefined）
     dateRange: {
       type: Object,
-      value: null,
-      optionalTypes: [null]
+      value: null as any
     },
     // 可选：生产数据（如果父组件已加载，直接传入，避免重复调用云函数）
     productionData: {
       type: Object,
-      value: null,
-      optionalTypes: [null]
+      value: null as any
     },
     // 可选：健康数据
     healthData: {
       type: Object,
-      value: null,
-      optionalTypes: [null]
+      value: null as any
     },
     // 可选：鹅价数据
     goosePriceData: {
       type: Object,
-      value: null,
-      optionalTypes: [null]
+      value: null as any
     }
   },
 
@@ -49,6 +49,12 @@ Component({
     // 修正分析输入
     refinementQuery: '',
     
+    // 输入框动态高度配置
+    autosize: {
+      minHeight: 80,
+      maxHeight: 200
+    },
+    
     // 分析维度
     analysisDimensions: [
       { key: 'profitability', label: '盈利能力分析', icon: '💰' },
@@ -61,6 +67,48 @@ Component({
   },
 
   methods: {
+    
+    // 保存分析到历史
+    async saveToHistory(analysisResult: any, customQuery: string = '') {
+      try {
+        const db = wx.cloud.database()
+        const dateRange = this.properties.dateRange
+        
+        await db.collection(COLLECTIONS.FINANCE_ANALYSIS_HISTORY).add({
+          data: {
+            analysisResult,
+            customQuery,
+            dateRange,
+            dateRangeText: this.getDateRangeText(dateRange),
+            createTime: db.serverDate(),
+            financeData: {
+              // 保存基本财务数据用于快速预览
+              income: this.properties.financeData?.income?.total || 0,
+              expense: this.properties.financeData?.expense?.total || 0,
+              profit: this.properties.financeData?.profit?.total || 0
+            }
+          }
+        })
+        
+        // 触发事件通知父组件
+        this.triggerEvent('historyAdded')
+      } catch (error) {
+        logger.warn('保存到历史记录失败:', error)
+        // 不影响用户体验，静默失败
+      }
+    },
+    
+    // 获取日期范围文本
+    getDateRangeText(dateRange: any): string {
+      if (!dateRange || !dateRange.start || !dateRange.end) {
+        return '全部时间'
+      }
+      
+      const start = new Date(dateRange.start).toLocaleDateString('zh-CN')
+      const end = new Date(dateRange.end).toLocaleDateString('zh-CN')
+      return `${start} - ${end}`
+    },
+    
     // 收集多模块数据
     // 带超时保护的Promise包装
     withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T, dataSource: string): Promise<T> {
@@ -143,7 +191,7 @@ Component({
     collectGoosePriceData() {
       try {
         // 1. 尝试从全局状态获取（首页可能已加载）
-        const app = getApp<IAppOption>()
+        const app = getApp() as any
         if (app.globalData && app.globalData.goosePrice) {
           return Promise.resolve(app.globalData.goosePrice)
         }
@@ -221,7 +269,7 @@ Component({
           const aiResponse = result.result.data.content
           
           // 解析AI返回的结果
-          const analysisResult = this.parseAnalysisResult(aiResponse, financeData)
+          const analysisResult = this.parseAnalysisResult(aiResponse)
           
           this.setData({
             analysisResult,
@@ -632,7 +680,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
     },
 
     // 解析AI返回的分析结果
-    parseAnalysisResult(aiResponse: string, financeData: any): any {
+    parseAnalysisResult(aiResponse: string): any {
       try {
         // 尝试解析JSON格式
         const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
@@ -680,10 +728,11 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
               // 格式化为易读的字符串
               const lines = entries.map(([k, v]) => {
                 const formattedValue = deepConvertToString(v, depth + 1)
-                return `${k}: ${formattedValue}`
+                return `${k}：${formattedValue}`
               })
               
-              return lines.join('\n')
+              // 使用分号分隔而不是换行符，这样在页面上能正确显示
+              return lines.join('；')
             }
             
             return String(value)
@@ -695,27 +744,82 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
               return breakdown
             }
             if (typeof breakdown !== 'object' || breakdown === null) {
-              return String(breakdown)
+              return String(breakdown || '')
             }
             
-            // 字段名映射
+            // 字段名映射（包含更多可能的字段）
             const fieldMap: any = {
-              feedCostPercentage: '饲料成本占比',
-              feedCost: '饲料成本',
+              feedCostPercentage: '饯料成本占比',
+              feedCost: '饯料成本',
+              feedPercentage: '饯料占比',
               gooseChickCostPercentage: '鹅苗成本占比',
               gooseChickCost: '鹅苗成本',
               goslingCostPercentage: '鹅苗成本占比',
               goslingCost: '鹅苗成本',
+              goslingPercentage: '鹅苗占比',
               medicalCostPercentage: '医疗费用占比',
               medicalCost: '医疗费用',
+              medicalPercentage: '医疗占比',
               otherCostPercentage: '其他费用占比',
-              otherCost: '其他费用'
+              otherCost: '其他费用',
+              otherPercentage: '其他占比',
+              采购策略和疾病防控: '采购策略和疾病防控',
+              percentage: '占比',
+              amount: '金额',
+              category: '类别',
+              item: '项目'
+            }
+            
+            // 如果是数组，直接转换为字符串
+            if (Array.isArray(breakdown)) {
+              return breakdown.map((item, index) => {
+                if (typeof item === 'object' && item !== null) {
+                  // 如果数组元素是对象，格式化每个对象
+                  const formattedFields = Object.entries(item).map(([k, v]) => {
+                    const label = fieldMap[k] || k  // 使用字段映射
+                    let value = v
+                    // 格式化值
+                    if (typeof v === 'number') {
+                      if (k.toLowerCase().includes('percentage') || k.toLowerCase().includes('percent')) {
+                        value = v.toFixed(2) + '%'
+                      } else if (k.toLowerCase().includes('amount') && v > 1000) {
+                        value = '¥' + (v / 10000).toFixed(2) + '万'
+                      } else if (k.toLowerCase().includes('amount')) {
+                        value = '¥' + v.toFixed(0)
+                      } else {
+                        value = v.toFixed(2)
+                      }
+                    }
+                    return `${label}：${value}`
+                  }).join('，')
+                  return `${index + 1}. ${formattedFields}`
+                }
+                return `${index + 1}. ${String(item)}`
+              }).join('；')
             }
             
             const lines: string[] = []
             for (const [key, value] of Object.entries(breakdown)) {
               const label = fieldMap[key] || key
-              const val = typeof value === 'number' ? value.toFixed(2) + '%' : String(value)
+              
+              // 智能格式化值
+              let val = ''
+              if (typeof value === 'number') {
+                // 判断是百分比还是金额
+                if (key.toLowerCase().includes('percentage') || key.toLowerCase().includes('percent')) {
+                  val = value.toFixed(2) + '%'
+                } else if (value > 1000) {
+                  val = '¥' + (value / 10000).toFixed(2) + '万'
+                } else {
+                  val = value.toFixed(2)
+                }
+              } else if (typeof value === 'object' && value !== null) {
+                // 如果值还是对象，递归处理
+                val = deepConvertToString(value, 1)
+              } else {
+                val = String(value || '')
+              }
+              
               lines.push(`${label}：${val}`)
             }
             
@@ -748,8 +852,15 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
                 const subObj: any = {}
                 for (const [subKey, subValue] of Object.entries(value)) {
                   // 特殊处理breakdown字段
-                  if (subKey === 'breakdown' && typeof subValue === 'object') {
-                    subObj[subKey] = formatCostBreakdown(subValue)
+                  if (subKey === 'breakdown') {
+                    // breakdown字段总是格式化为字符串
+                    if (typeof subValue === 'string') {
+                      subObj[subKey] = subValue
+                    } else if (typeof subValue === 'object' && subValue !== null) {
+                      subObj[subKey] = formatCostBreakdown(subValue)
+                    } else {
+                      subObj[subKey] = String(subValue || '')
+                    }
                   } else if (Array.isArray(subValue)) {
                     subObj[subKey] = subValue.map(item => String(item))
                   } else if (typeof subValue === 'object' && subValue !== null) {
@@ -821,6 +932,54 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
         customQuery: '',
         refinementQuery: ''
       })
+    },
+    
+    // 分析归档
+    async archiveAnalysis() {
+      const { analysisResult, customQuery } = this.data
+      
+      if (!analysisResult) {
+        wx.showToast({
+          title: '没有可归档的分析结果',
+          icon: 'none'
+        })
+        return
+      }
+      
+      wx.showLoading({
+        title: '归档中...',
+        mask: true
+      })
+      
+      try {
+        // 保存到历史记录
+        await this.saveToHistory(analysisResult, customQuery)
+        
+        wx.showToast({
+          title: '归档成功',
+          icon: 'success'
+        })
+        
+        // 触发事件通知父组件刷新历史
+        this.triggerEvent('historyAdded')
+        
+        // 清空当前分析结果
+        this.setData({
+          analysisResult: null,
+          analysisError: null,
+          customQuery: '',
+          refinementQuery: ''
+        })
+        
+      } catch (error) {
+        logger.error('归档失败:', error)
+        wx.showToast({
+          title: '归档失败',
+          icon: 'none'
+        })
+      } finally {
+        wx.hideLoading()
+      }
     },
     
     // 修正输入变化

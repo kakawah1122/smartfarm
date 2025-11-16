@@ -1,0 +1,88 @@
+<!--all-analysis-history.wxml - 全部分析历史页面-->
+<page-meta page-style="{{ 'overflow: ' + (showDetailPopup ? 'hidden' : 'visible') }}"></page-meta>
+
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar 
+    title="全部分析历史"
+    show-back="true"
+    show-menu="false"
+  />
+  
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 历史记录列表 -->
+    <view class="history-list" wx:if="{{!loading}}">
+      <!-- 空状态 -->
+      <view wx:if="{{isEmpty}}" class="empty-container">
+        <t-empty 
+          icon="info-circle"
+          description="暂无分析历史"
+        />
+      </view>
+      
+      <!-- 记录列表 -->
+      <view wx:else class="history-items">
+        <view 
+          class="history-card"
+          wx:for="{{analysisHistory}}"
+          wx:key="_id"
+          bind:tap="onClickHistoryItem"
+          data-item="{{item}}"
+        >
+          <!-- 卡片内容 -->
+          <view class="card-content">
+            <!-- 自定义查询 -->
+            <view wx:if="{{item.customQuery}}" class="custom-query">
+              <text class="query-label">分析需求：</text>
+              <text class="query-text" user-select>{{item.customQuery}}</text>
+            </view>
+            
+            <!-- 分析摘要 -->
+            <view class="summary-section">
+              <text class="summary-text" user-select>{{item.summary}}</text>
+            </view>
+          </view>
+          
+          <!-- 卡片底部 -->
+          <view class="card-footer">
+            <text class="analysis-date">{{item.formattedDate}}</text>
+            <t-tag theme="primary" size="small" class="analysis-type-tag">
+              {{item.customQuery ? '自定义分析' : '全面分析'}}
+            </t-tag>
+          </view>
+          
+        </view>
+      </view>
+      
+      <!-- 加载更多 -->
+      <view wx:if="{{!isEmpty && hasMore}}" class="load-more">
+        <view wx:if="{{loadingMore}}" class="loading-more">
+          <t-loading theme="circular" size="40rpx" />
+          <text class="loading-text">加载中...</text>
+        </view>
+        <view wx:else class="load-more-tip">
+          <text>上拉加载更多</text>
+        </view>
+      </view>
+      
+      <!-- 没有更多 -->
+      <view wx:if="{{!isEmpty && !hasMore && analysisHistory.length > 0}}" class="no-more">
+        <text>已加载全部记录</text>
+      </view>
+    </view>
+    
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <t-loading theme="circular" size="60rpx" />
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+</view>
+
+<!-- 详情弹窗 -->
+<analysis-history-detail-popup
+  visible="{{showDetailPopup}}"
+  record="{{selectedAnalysisItem}}"
+  bind:close="closeDetailPopup"
+/>

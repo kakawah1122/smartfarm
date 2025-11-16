@@ -10,6 +10,10 @@ const pageConfig: any = {
   data: {
     activeTab: 'records',
     
+    // 分析历史详情弹窗（仅用于从全部历史页面跳转回来时）
+    showAnalysisDetailPopup: false,
+    selectedAnalysisItem: null as any,
+    
     // 时间筛选 - 第一级：类型选择
     filterType: 'all', // 'all', 'month', 'quarter', 'year', 'custom'
     filterTypeLabel: '全部',
@@ -92,6 +96,9 @@ const pageConfig: any = {
     // 审批事项（从数据库加载）
     approvalItems: [],
     
+    // 审批历史已改为按钮跳转，不需要在主页加载
+    // approvalHistory: [] as any[],
+    
     filteredRecords: [],
     
     // 显示的记录列表（只显示前5条）
@@ -116,6 +123,11 @@ const pageConfig: any = {
     
     // 加载财务数据
     this.loadFinanceData()
+    
+    // 不再需要在主页加载历史记录，改为按钮直接跳转
+    // this.loadAnalysisHistory()  
+    // this.loadApprovalHistory()
+    
     // 加载财务记录
     this.loadFinanceRecords()
     // 加载审批事项
@@ -1322,6 +1334,190 @@ const pageConfig: any = {
     wx.showToast({
       title: '分析失败，请重试',
       icon: 'none'
+    })
+  },
+  
+  // 加载分析历史
+  async loadAnalysisHistory() {
+    try {
+      const db = wx.cloud.database()
+      const result = await db.collection('finance_analysis_history')
+        .where({
+          _openid: '{openid}'
+        })
+        .orderBy('createTime', 'desc')
+        .limit(5)  // 只显示最近5条
+        .get()
+      
+      const historyList = (result.data || []).map((item: any) => ({
+        ...item,
+        formattedDate: new Date(item.createTime).toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        summary: this.extractSummary(item.analysisResult)
+      }))
+      
+      this.setData({
+        analysisHistory: historyList
+      })
+    } catch (error) {
+      console.error('加载分析历史失败:', error)
+    }
+  },
+  
+  // 提取分析摘要
+  extractSummary(result: any): string {
+    if (!result) return '暂无摘要'
+    
+    if (result.format === 'text') {
+      return (result.rawText || '').substring(0, 50) + '...'
+    }
+    
+    // JSON格式，提取关键信息
+    const summaries = []
+    
+    if (result.profitability?.summary) {
+      summaries.push(result.profitability.summary)
+    }
+    
+    if (result.costStructure?.summary) {
+      summaries.push(result.costStructure.summary)
+    }
+    
+    if (result.suggestions?.summary) {
+      summaries.push(result.suggestions.summary)
+    }
+    
+    return summaries.length > 0 
+      ? summaries.join('；').substring(0, 80) + '...'
+      : '分析完成'
+  },
+  
+  // 刷新分析历史（现在只是一个占位函数，因为历史已改为按钮跳转）
+  refreshAnalysisHistory() {
+    // 不需要在主页加载历史，用户可以点击按钮查看
+    // this.loadAnalysisHistory()
+  },
+  
+  // 显示分析详情
+  showAnalysisDetail(e: any) {
+    const item = e.currentTarget.dataset.item
+    this.setData({
+      selectedAnalysisItem: item,
+      showAnalysisDetailPopup: true
+    })
+  },
+  
+  // 关闭分析详情弹窗
+  closeAnalysisDetailPopup() {
+    this.setData({
+      showAnalysisDetailPopup: false
+    })
+    // 延迟清空数据，避免动画时闪烁
+    setTimeout(() => {
+      this.setData({
+        selectedAnalysisItem: null
+      })
+    }, 300)
+  },
+  
+  // 查看全部分析历史
+  viewAllAnalysisHistory() {
+    wx.navigateTo({
+      url: '/packageFinance/all-analysis-history/all-analysis-history'
+    })
+  },
+  
+  // 加载审批历史
+  async loadApprovalHistory() {
+    try {
+      const result = await CloudApi.callFunction<any>(
+        'finance-management',
+        {
+          action: 'get_all_reimbursements', // 获取所有报销记录（已审批的）
+          page: 1,
+          pageSize: 5, // 只显示最近5条
+          status: 'all' // 获取所有状态
+        },
+        {
+          showError: false
+        }
+      )
+
+      if (result.success && result.data?.records) {
+        const approvalHistory = result.data.records
+          .filter((record: any) => 
+            record.reimbursement?.status === 'approved' || 
+            record.reimbursement?.status === 'rejected'
+          )
+          .slice(0, 5) // 只取前5条
+          .map((record: any) => {
+            // 获取申请人信息
+            const applicant = record.operatorName || record.operator || '未知'
+            
+            // 获取报销类型名称
+            const typeName = record.reimbursement?.typeName || 
+                           this.getReimbursementTypeTitle(record.reimbursement?.type) || 
+                           '报销申请'
+            
+            // 格式化日期
+            const date = record.reimbursement?.approvedAt || record.reimbursement?.rejectedAt || record.createTime
+            const formattedDate = date ? new Date(date).toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : '未知时间'
+            
+            return {
+              id: record._id || record.recordId,
+              type: 'expense',
+              applicant: applicant,
+              title: typeName,
+              description: record.reimbursement?.reason || record.description || '',
+              amount: this.formatAmount(record.amount),
+              status: record.reimbursement?.status || 'pending',
+              formattedDate: formattedDate,
+              rejectReason: record.reimbursement?.rejectReason || '',
+              approvedBy: record.reimbursement?.approvedBy || '',
+              rejectedBy: record.reimbursement?.rejectedBy || ''
+            }
+          })
+
+        this.setData({
+          approvalHistory: approvalHistory
+        })
+      } else {
+        this.setData({
+          approvalHistory: []
+        })
+      }
+    } catch (error: any) {
+      logger.error('加载审批历史失败:', error)
+      this.setData({
+        approvalHistory: []
+      })
+    }
+  },
+  
+  // 查看全部审批历史
+  viewAllApprovalHistory() {
+    wx.navigateTo({
+      url: '/packageFinance/all-approval-history/all-approval-history'
+    })
+  },
+  
+  // 查看审批历史详情
+  viewApprovalHistoryDetail(e: any) {
+    const { item } = e.currentTarget.dataset
+    this.setData({
+      selectedApprovalItem: item,
+      showApprovalPopup: true
     })
   },
 

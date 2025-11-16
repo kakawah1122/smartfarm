@@ -328,6 +328,10 @@ exports.main = async (event, context) => {
       case 'get_all_finance_records':
         return await getAllFinanceRecords(event, wxContext)
       
+      // AI财务分析历史管理
+      case 'clear_analysis_history':
+        return await clearAnalysisHistory(event, wxContext)
+      
       default:
         throw new Error('无效的操作类型')
     }
@@ -1260,6 +1264,34 @@ async function getAllFinanceRecords(event, wxContext) {
       success: false,
       error: error.message,
       message: '获取财务记录失败'
+    }
+  }
+}
+
+// 清空AI财务分析历史
+async function clearAnalysisHistory(event, wxContext) {
+  try {
+    const openid = wxContext.OPENID
+    
+    // 批量删除当前用户的所有分析历史记录
+    const deleteResult = await db.collection(COLLECTIONS.FINANCE_ANALYSIS_HISTORY)
+      .where({
+        _openid: openid
+      })
+      .remove()
+    
+    return {
+      success: true,
+      data: {
+        removed: deleteResult.stats.removed
+      },
+      message: `成功清空${deleteResult.stats.removed}条分析历史`
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '清空分析历史失败'
     }
   }
 }

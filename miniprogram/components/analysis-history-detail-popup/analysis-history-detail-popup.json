@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "bottom-popup": "../bottom-popup/bottom-popup"
+  }
+}

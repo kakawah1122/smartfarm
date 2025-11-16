@@ -15,7 +15,7 @@
 }
 
 .page-content {
-  padding: 32rpx;
+  padding: 24rpx;  // 与列表页保持一致
   padding-bottom: 200rpx; // 底部按钮高度 + 安全区域
 }
 
@@ -23,8 +23,8 @@
 .info-card {
   background: white;
   border-radius: 16rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  padding: 24rpx;  // 减小内边距
+  margin-bottom: 20rpx;  // 减小底部间距
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 
   &:last-child {
@@ -36,8 +36,8 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
-  margin-bottom: 24rpx;
-  padding-bottom: 16rpx;
+  margin-bottom: 20rpx;  // 减小底部间距
+  padding-bottom: 12rpx;  // 减小底部内边距
   border-bottom: 1rpx solid #f0f0f0;
 
   .title-text {
@@ -52,8 +52,8 @@
 .info-section {
   background: white;
   border-radius: 16rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  padding: 24rpx;  // 减小内边距
+  margin-bottom: 20rpx;  // 减小底部间距
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 
   &:last-child {
@@ -65,8 +65,8 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
-  margin-bottom: 24rpx;
-  padding: 12rpx 16rpx;
+  margin-bottom: 20rpx;  // 减小底部间距
+  padding: 10rpx 14rpx;  // 减小内边距
   background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); /* 蓝色渐变背景 */
   border-radius: 8rpx;
 
@@ -82,7 +82,7 @@
 .info-rows {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 20rpx;  // 减小行间距
 }
 
 .info-row {
@@ -114,11 +114,11 @@
 .diagnosis-content {
   background: linear-gradient(135deg, #f8f9ff 0%, #fff8f0 100%);
   border-radius: 16rpx;
-  padding: 24rpx;
+  padding: 20rpx;  // 减小内边距
   border: 1rpx solid #e8e8ff;
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 16rpx;  // 减小间距
 }
 
 .diagnosis-name-row {
@@ -174,7 +174,7 @@
 
 // 症状描述
 .symptoms-content {
-  padding: 24rpx;
+  padding: 20rpx;  // 减小内边距
   background: #fff8f0;
   border-radius: 12rpx;
   border: 1rpx solid #ffe4c4;

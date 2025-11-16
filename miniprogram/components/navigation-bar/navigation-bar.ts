@@ -19,7 +19,8 @@ Component({
     statusBarHeight: 44,
     navBarHeight: 44,
     capsuleWidth: 87,
-    capsuleRight: 0  // 胶囊按钮右侧总宽度（包含间距）
+    capsuleRight: 0,  // 胶囊按钮右侧总宽度（包含间距）
+    isNavigating: false  // 防止重复点击的标志
   },
 
   attached() {
@@ -30,8 +31,9 @@ Component({
     // 设置导航栏信息
     setNavigationBarInfo() {
       try {
-        // 获取系统信息
-        const windowInfo = wx.getWindowInfo()
+        // 使用新的API获取窗口信息
+        // 使用类型断言绕过TypeScript类型检查（类型定义文件还未更新）
+        const windowInfo = (wx as any).getWindowInfo ? (wx as any).getWindowInfo() : wx.getSystemInfoSync()
         const statusBarHeight = windowInfo.statusBarHeight || 44
         
         // 获取胶囊按钮信息
@@ -58,23 +60,40 @@ Component({
     },
 
     goBack() {
-      // 先触发返回事件，允许页面自定义返回逻辑
-      this.triggerEvent('back', {}, { bubbles: true, composed: true })
-      
-      // 检查页面是否有自定义的 goBack 方法
-      const pages = getCurrentPages()
-      if (pages.length > 0) {
-        const currentPage = pages[pages.length - 1]
-        if (currentPage && typeof currentPage.goBack === 'function') {
-          // 页面有自定义返回逻辑，不执行默认返回
-          // 页面的 goBack 方法会通过 bind:back 事件被调用
-          return
-        }
+      // 防止重复点击
+      if (this.data.isNavigating) {
+        console.log('正在处理返回操作，请勿重复点击')
+        return
       }
       
-      // 页面没有自定义返回逻辑，执行默认返回
+      // 设置导航标志
+      this.setData({ isNavigating: true })
+      
+      // 清除导航标志的函数
+      const clearNavigating = () => {
+        setTimeout(() => {
+          this.setData({ isNavigating: false })
+        }, 500) // 500ms后允许再次点击
+      }
+      
+      // 检查当前页面是否定义了goBack方法（通常表示页面绑定了back事件）
+      const pages = getCurrentPages()
+      const currentPage = pages.length > 0 ? pages[pages.length - 1] : null
+      const hasBackEventListener = currentPage && typeof (currentPage as any).goBack === 'function'
+      
+      if (hasBackEventListener) {
+        // 如果页面绑定了back事件，只触发事件，让页面处理返回逻辑
+        this.triggerEvent('back', {}, { bubbles: true, composed: true })
+        clearNavigating()
+        return
+      }
+      
+      // 如果页面没有绑定back事件，执行默认返回
       wx.navigateBack({
         delta: 1,
+        success: () => {
+          clearNavigating()
+        },
         fail: () => {
           // 返回失败时的处理
           const fallbackUrl = this.properties.fallbackUrl
@@ -83,17 +102,20 @@ Component({
             // 如果指定了备用页面，跳转到备用页面
             wx.redirectTo({
               url: fallbackUrl,
+              success: clearNavigating,
               fail: () => {
                 // 备用页面跳转失败，尝试跳转到首页
                 wx.switchTab({
-                  url: '/pages/index/index'
+                  url: '/pages/index/index',
+                  complete: clearNavigating
                 })
               }
             })
           } else {
             // 没有指定备用页面，跳转到首页
             wx.switchTab({
-              url: '/pages/index/index'
+              url: '/pages/index/index',
+              complete: clearNavigating
             })
           }
         }
