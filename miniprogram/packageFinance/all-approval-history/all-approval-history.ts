@@ -192,6 +192,14 @@ Page({
       })
     }, 300)
   },
+
+  // 弹窗visible状态变化（支持点击遮罩层关闭）
+  onDetailPopupVisibleChange(e: any) {
+    const { visible } = e.detail
+    if (!visible && this.data.showDetailPopup) {
+      this.closeDetailPopup()
+    }
+  },
   
   // 下拉刷新
   async onPullDownRefresh() {

@@ -90,6 +90,7 @@
   show-close="{{true}}"
   show-actions="{{false}}"
   bind:close="closeDetailPopup"
+  bind:visiblechange="onDetailPopupVisibleChange"
 >
   <view wx:if="{{selectedApprovalItem}}" class="approval-detail-content">
     <view class="info-card">
