@@ -483,26 +483,24 @@ page {
   line-height: 42rpx;
   margin-bottom: 8rpx;
   word-break: break-all;
+  display: block;
 }
 
 .approval-desc {
   font-size: 24rpx;
   color: #6b7280;
   line-height: 34rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 16rpx;
   word-break: break-all;
+  display: block;
+  
+  /* 当描述为空时不占用空间 */
+  &:empty {
+    display: none;
+  }
 }
 
-.approval-footer {
-  display: flex;
-  align-items: center;
-}
-
-.approval-time {
-  font-size: 22rpx;
-  color: #9ca3af;
-  line-height: 32rpx;
-}
+// 移除了不再使用的 .approval-footer 和 .approval-time 样式
 
 .approval-right {
   display: flex;

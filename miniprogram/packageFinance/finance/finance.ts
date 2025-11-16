@@ -835,6 +835,31 @@ const pageConfig: any = {
     return `${year}/${month}/${day} ${hours}:${minutes}`
   },
 
+  // 格式化日期（只显示年月日）
+  formatDateOnly(dateStr: string | number): string {
+    if (!dateStr) return ''
+    
+    let date: Date
+    
+    // 如果是数字（时间戳），直接创建日期对象
+    if (typeof dateStr === 'number') {
+      date = new Date(dateStr)
+    } else {
+      // 如果是字符串，使用 parseDate 解析
+      date = this.parseDate(dateStr)
+    }
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+      return String(dateStr) // 如果解析失败，返回原字符串
+    }
+    
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}/${month}/${day}`
+  },
+
   // 加载审批事项
   async loadApprovalItems() {
     try {
@@ -888,34 +913,9 @@ const pageConfig: any = {
     }
   },
 
-  // 格式化提交时间
+  // 格式化提交时间（显示年月日）
   formatSubmitTime(dateStr: string): string {
-    if (!dateStr) return ''
-    const date = this.parseDate(dateStr)
-    
-    // 检查日期是否有效
-    if (isNaN(date.getTime())) {
-      return dateStr
-    }
-    
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(hours / 24)
-
-    if (days === 0) {
-      if (hours === 0) {
-        const minutes = Math.floor(diff / (1000 * 60))
-        return minutes <= 0 ? '刚刚' : `${minutes}分钟前`
-      }
-      return `今天 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-    } else if (days === 1) {
-      return `昨天 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-    } else if (days < 7) {
-      return `${days}天前`
-    } else {
-      return this.formatDate(dateStr)
-    }
+    return this.formatDateOnly(dateStr)
   },
 
   // 加载财务报表

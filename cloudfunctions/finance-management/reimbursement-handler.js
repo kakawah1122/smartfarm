@@ -381,6 +381,26 @@ async function approveReimbursement(db, _, event, wxContext) {
   
   // 发送通知给申请人
   await notifyApplicant(db, record.data, 'approved', userInfo)
+  // 创建审批日志（用于审计追踪）
+  await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
+    data: {
+      _openid: record.data._openid || record.data.userId,  // 申请人openid
+      recordType: 'reimbursement',  // 审批类型
+      recordId: reimbursementId,  // 关联的报销记录ID
+      status: APPROVAL_STATUS.APPROVED,  // 审批状态
+      approvers: [openid],  // 审批人列表
+      approvalTime: now,  // 审批时间
+      approvalRemark: remark || '',  // 审批备注
+      metadata: {
+        typeName: record.data.reimbursement?.typeName || '',
+        amount: record.data.amount || 0,
+        approverInfo: approverInfo,
+        operator: record.data.operator || ''
+      },
+      createTime: now,
+      updateTime: now
+    }
+  })
   
   return {
     success: true,
@@ -462,6 +482,27 @@ async function rejectReimbursement(db, _, event, wxContext) {
   
   // 发送通知给申请人
   await notifyApplicant(db, record.data, 'rejected', userInfo, reason)
+  
+  // 创建审批日志（用于审计追踪）
+  await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
+    data: {
+      _openid: record.data._openid || record.data.userId,  // 申请人openid
+      recordType: 'reimbursement',  // 审批类型
+      recordId: reimbursementId,  // 关联的报销记录ID
+      status: APPROVAL_STATUS.REJECTED,  // 审批状态
+      approvers: [openid],  // 审批人列表
+      approvalTime: now,  // 审批时间
+      rejectionReason: reason,  // 拒绝原因
+      metadata: {
+        typeName: record.data.reimbursement?.typeName || '',
+        amount: record.data.amount || 0,
+        approverInfo: approverInfo,
+        operator: record.data.operator || ''
+      },
+      createTime: now,
+      updateTime: now
+    }
+  })
   
   return {
     success: true,
@@ -1217,6 +1258,70 @@ async function notifyApplicant(db, record, action, approver, reason) {
   }
 }
 
+/**
+ * 获取审批历史记录
+ */
+async function getApprovalHistory(db, _, event, wxContext) {
+  const { page = 1, pageSize = 20, status = 'all' } = event
+  const openid = wxContext.OPENID
+  
+  try {
+    // 构建查询条件
+    let query = db.collection(COLLECTIONS.SYS_APPROVAL_LOGS)
+    
+    // 根据用户角色设置查询条件
+    const userInfo = await getUserInfo(db, openid)
+    if (userInfo.role === 'super_admin' || userInfo.role === 'manager') {
+      // 管理员可以看到所有审批记录
+      if (status !== 'all') {
+        query = query.where({ status })
+      }
+    } else {
+      // 普通用户只能看到自己相关的审批记录
+      query = query.where(
+        _.or([
+          { _openid: openid },  // 自己申请的
+          { approvers: openid }  // 自己审批的
+        ])
+      )
+      if (status !== 'all') {
+        query = query.where({ status })
+      }
+    }
+    
+    // 获取总数
+    const countResult = await query.count()
+    const total = countResult.total
+    
+    // 分页查询
+    const skip = (page - 1) * pageSize
+    const result = await query
+      .orderBy('createTime', 'desc')
+      .skip(skip)
+      .limit(pageSize)
+      .get()
+    
+    return {
+      success: true,
+      data: {
+        records: result.data,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('获取审批历史失败:', error)
+    return {
+      success: false,
+      error: error.message || '获取审批历史失败'
+    }
+  }
+}
+
 // 导出模块
 module.exports = {
   createReimbursement,
@@ -1227,8 +1332,7 @@ module.exports = {
   rejectReimbursement,
   getFinanceOverview,
   getMyReimbursementStats,
+  getApprovalHistory,
   REIMBURSEMENT_TYPES,
   APPROVAL_STATUS
 }
-
-

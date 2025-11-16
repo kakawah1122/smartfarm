@@ -241,10 +241,7 @@
               <view class="approval-left">
                 <view class="approval-content">
                   <text class="approval-title" user-select>{{item.applicant}} - {{item.title}}</text>
-                  <text class="approval-desc" user-select>{{item.description}}</text>
-                  <view class="approval-footer">
-                    <text class="approval-time">提交时间：{{item.submitTime}}</text>
-                  </view>
+                  <text wx:if="{{item.description}}" class="approval-desc" user-select>{{item.description}}</text>
                 </view>
               </view>
               <view class="approval-right">

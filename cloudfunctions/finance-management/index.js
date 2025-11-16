@@ -325,6 +325,8 @@ exports.main = async (event, context) => {
         return await reimbursementHandler.getFinanceOverview(db, _, event, wxContext)
       case 'get_my_reimbursement_stats':
         return await reimbursementHandler.getMyReimbursementStats(db, _, event, wxContext)
+      case 'get_approval_history':
+        return await reimbursementHandler.getApprovalHistory(db, _, event, wxContext)
       case 'get_all_finance_records':
         return await getAllFinanceRecords(event, wxContext)
       

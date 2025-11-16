@@ -51,7 +51,7 @@ Page({
       const result = await CloudApi.callFunction<any>(
         'finance-management',
         {
-          action: 'get_all_reimbursements',
+          action: 'get_approval_history',
           page: append ? this.data.currentPage + 1 : 1,
           pageSize: this.data.pageSize,
           status: 'all' // 获取所有状态
@@ -62,22 +62,16 @@ Page({
       )
       
       if (result.success && result.data?.records) {
-        const records = result.data.records
-          .filter((record: any) => 
-            record.reimbursement?.status === 'approved' || 
-            record.reimbursement?.status === 'rejected' ||
-            record.reimbursement?.status === 'pending'
-          )
-          .map((item: any) => this.formatApprovalItem(item))
+        const records = result.data.records.map((item: any) => this.formatApprovalItem(item))
         
         const newList = append ? [...this.data.approvalHistory, ...records] : records
-        const hasMore = records.length >= this.data.pageSize
+        const hasMore = result.data.pagination.page < result.data.pagination.totalPages
         
         this.setData({
           approvalHistory: newList,
           hasMore,
           isEmpty: newList.length === 0,
-          currentPage: append ? this.data.currentPage + 1 : 1
+          currentPage: result.data.pagination.page
         })
       } else {
         if (!append) {
@@ -107,16 +101,13 @@ Page({
   // 格式化审批项
   formatApprovalItem(record: any): any {
     // 获取申请人信息
-    const applicant = record.operatorName || record.operator || '未知'
+    const applicant = record.metadata?.operator || '未知'
     
     // 获取报销类型名称
-    const typeName = record.reimbursement?.typeName || 
-                    this.getReimbursementTypeTitle(record.reimbursement?.type) || 
-                    '报销申请'
+    const typeName = record.metadata?.typeName || '报销申请'
     
     // 格式化日期
-    const date = record.reimbursement?.approvedAt || 
-                record.reimbursement?.rejectedAt || 
+    const date = record.approvalTime || 
                 record.createTime
     const formattedDate = date ? new Date(date).toLocaleString('zh-CN', {
       year: 'numeric',
@@ -128,17 +119,19 @@ Page({
     
     return {
       id: record._id || record.recordId,
+      recordId: record.recordId,  // 关联的报销记录ID
       type: 'expense',
       applicant: applicant,
       title: typeName,
-      description: record.reimbursement?.reason || record.description || '',
-      amount: this.formatAmount(record.amount),
-      status: record.reimbursement?.status || 'pending',
+      description: record.metadata?.reason || '',
+      amount: this.formatAmount(record.metadata?.amount),
+      status: record.status || 'pending',
       formattedDate: formattedDate,
-      rejectReason: record.reimbursement?.rejectReason || '',
-      approvedBy: record.reimbursement?.approvedBy || '',
-      rejectedBy: record.reimbursement?.rejectedBy || '',
-      submitTime: this.formatSubmitTime(record.createTime)
+      rejectReason: record.rejectionReason || '',
+      approvedBy: record.metadata?.approverInfo?.name || '',
+      rejectedBy: record.status === 'rejected' ? (record.metadata?.approverInfo?.name || '') : '',
+      submitTime: this.formatSubmitTime(record.createTime),
+      approvalRemark: record.approvalRemark || ''
     }
   },
   

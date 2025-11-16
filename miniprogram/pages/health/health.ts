@@ -436,7 +436,6 @@ Page<PageData, any>({
       })
       
       if (result.result?.success && result.result?.fixedCount > 0) {
-        console.log(`✅ 成功修复 ${result.result.fixedCount} 条治疗记录`)
         // 修复后刷新数据
         this.invalidateAllBatchesCache()
       }
@@ -3153,8 +3152,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           await this.loadAnalysisData()
           break
       }
-      
-      console.log(`✅ 批次切换完成: ${this.data.currentBatchNumber}`)
       
     } catch (error) {
       console.error('刷新批次数据失败:', error)
