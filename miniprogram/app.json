@@ -87,20 +87,6 @@
       ]
     }
   ],
-  "preloadRule": {
-    "pages/index/index": {
-      "network": "all",
-      "packages": ["production"]
-    },
-    "pages/production/production": {
-      "network": "all",
-      "packages": ["production"]
-    },
-    "pages/health/health": {
-      "network": "all",
-      "packages": ["health"]
-    }
-  },
   "tabBar": {
     "color": "#999",
     "selectedColor": "#0052d9",

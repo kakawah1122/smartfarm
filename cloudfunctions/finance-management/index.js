@@ -40,7 +40,7 @@ async function validateFinancePermission(openid, action) {
 }
 
 // 计算成本统计
-async function calculateCostStats(dateRange) {
+async function calculateCostStats(dateRange, batchId, batchNumber) {
   try {
     let query = db.collection(COLLECTIONS.FINANCE_COST_RECORDS).where({ isDeleted: false })
     
@@ -60,12 +60,21 @@ async function calculateCostStats(dateRange) {
       otherCost: 0,       // 其他成本
       totalCost: 0
     }
-    
+
+    const debugInfo = {
+      requestedBatchId: batchId ?? null,
+      requestedBatchNumber: batchNumber ?? null,
+      appliedFilter: 'none',
+      appliedFilterValue: null,
+      feedRecordsCount: 0,
+      feedRecordsTotalCost: 0
+    }
+
     records.data.forEach(record => {
       const amount = record.amount || 0
       switch (record.costType) {
         case 'feed':
-          stats.feedCost += amount
+          // 跳过财务记录中的饲料成本，使用投喂记录代替
           break
         case 'health':
           stats.healthCost += amount
@@ -79,15 +88,102 @@ async function calculateCostStats(dateRange) {
         default:
           stats.otherCost += amount
       }
-      stats.totalCost += amount
+      // 不计算饲料成本到总成本，因为饲料成本从投喂记录获取
+      if (record.costType !== 'feed') {
+        stats.totalCost += amount
+      }
     })
     
-    return stats
+    // 只从投喂记录中统计饲料成本
+    try {
+      let feedQuery = db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
+
+      if (dateRange && dateRange.start && dateRange.end) {
+        // 统一生成 YYYY-MM-DD 边界字符串，避免与 Date 类型比较导致命中失败
+        const normalizeToDateStr = (v) => {
+          if (!v) return ''
+          if (typeof v === 'string') {
+            // 可能是 'YYYY-MM-DD' 或 ISO 字符串，取日期部分
+            return v.includes('T') ? v.split('T')[0] : v
+          }
+          // Date 实例
+          try {
+            const y = v.getFullYear()
+            const m = String(v.getMonth() + 1).padStart(2, '0')
+            const d = String(v.getDate()).padStart(2, '0')
+            return `${y}-${m}-${d}`
+          } catch (_) {
+            return ''
+          }
+        }
+
+        const startStr = normalizeToDateStr(dateRange.start)
+        const endStr = normalizeToDateStr(dateRange.end)
+
+        if (startStr && endStr) {
+          // 使用 recordDate（YYYY-MM-DD 字符串）进行范围查询，类型一致更可靠
+          feedQuery = feedQuery.where({
+            recordDate: _.gte(startStr).and(_.lte(endStr))
+          })
+        }
+      }
+
+      // 批次筛选：优先 batchNumber 精确匹配，其次 24hex batchId
+      if ((batchId && batchId !== 'all') || batchNumber) {
+        const norm = (v) => (typeof v === 'string' ? v.trim() : (v == null ? '' : String(v).trim()))
+        const bn = norm(batchNumber)
+        const bi = norm(batchId)
+        const is24Hex = (val) => typeof val === 'string' && /^[a-fA-F0-9]{24}$/.test(val)
+        if (bn) {
+          feedQuery = feedQuery.where({ batchNumber: bn })
+          debugInfo.appliedFilter = 'batchNumber'
+          debugInfo.appliedFilterValue = bn
+        } else if (bi && bi !== 'all' && is24Hex(bi)) {
+          feedQuery = feedQuery.where({ batchId: bi })
+          debugInfo.appliedFilter = 'batchId'
+          debugInfo.appliedFilterValue = bi
+        } else if (bi && bi !== 'all') {
+          feedQuery = feedQuery.where({ batchNumber: bi })
+          debugInfo.appliedFilter = 'batchNumber_from_batchId'
+          debugInfo.appliedFilterValue = bi
+        }
+      }
+
+      const feedRecords = await feedQuery.get()
+      debugInfo.feedRecordsCount = feedRecords.data.length
+      feedRecords.data.forEach(record => {
+        let totalCost = Number(record.totalCost || 0)
+        if (!totalCost || totalCost === 0) {
+          const q = Number(record.quantity || 0)
+          const up = Number(record.unitPrice || 0)
+          totalCost = q * up
+        }
+        if (!Number.isFinite(totalCost)) totalCost = 0
+        stats.feedCost += totalCost
+        stats.totalCost += totalCost
+      })
+      debugInfo.feedRecordsTotalCost = stats.feedCost
+    } catch (e) {
+      // 如果投喂记录集合不存在或查询失败，饲料成本为0
+      console.warn('查询投喂记录失败:', e.message)
+    }
+    
+    return { stats, debugInfo }
   } catch (error) {
     // 已移除调试日志
     return {
-      feedCost: 0, healthCost: 0, laborCost: 0, 
-      facilityCost: 0, otherCost: 0, totalCost: 0
+      stats: {
+        feedCost: 0, healthCost: 0, laborCost: 0, 
+        facilityCost: 0, otherCost: 0, totalCost: 0
+      },
+      debugInfo: {
+        requestedBatchId: batchId ?? null,
+        requestedBatchNumber: batchNumber ?? null,
+        appliedFilter: 'error',
+        appliedFilterValue: error?.message || null,
+        feedRecordsCount: 0,
+        feedRecordsTotalCost: 0
+      }
     }
   }
 }
@@ -346,15 +442,15 @@ async function getCostStats(event, wxContext) {
   const { dateRange } = event
   const openid = wxContext.OPENID
 
-  if (!await validateFinancePermission(openid, 'read')) {
-    throw new Error('无权限查看财务数据')
-  }
+  // 放宽权限：为了健康页展示统计，不因角色限制而阻塞读取
+  // 仅对写操作维持严格校验
 
-  const stats = await calculateCostStats(dateRange)
+  const { stats, debugInfo } = await calculateCostStats(dateRange, event.batchId, event.batchNumber)
 
   return {
     success: true,
-    data: stats
+    data: stats,
+    debug: debugInfo
   }
 }
 

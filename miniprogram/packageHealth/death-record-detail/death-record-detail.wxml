@@ -1,7 +1,7 @@
 <view class="detail-page">
   
   <!-- 自定义导航栏 -->
-  <navigation-bar title="死亡记录详情" showBack="{{true}}" />
+  <navigation-bar title="死亡记录详情" showBack="{{true}}" bind:back="goBack" />
   
   <!-- 加载中 -->
   <view class="loading-container" wx:if="{{loading}}">

@@ -90,37 +90,63 @@
       <view class="detail-card">
         <view class="card-content">
           <view class="info-row">
-            <text class="info-label">物料名称：</text>
+            <text class="info-label">物料：</text>
             <text class="info-value">{{selectedMaterial.materialName}}</text>
           </view>
+          <view class="divider-line"></view>
+
+          <view class="info-row">
+            <text class="info-label">分类：</text>
+            <text class="info-value">{{selectedMaterial.category || '—'}}</text>
+          </view>
+          <view class="divider-line"></view>
+
           <view class="info-row">
             <text class="info-label">当前库存：</text>
             <text class="info-value stock-value">{{selectedMaterial.currentStock}} {{selectedMaterial.unit}}</text>
           </view>
+          <view class="divider-line"></view>
+
           <view class="info-row">
             <text class="info-label">安全库存：</text>
             <text class="info-value">{{selectedMaterial.safetyStock}} {{selectedMaterial.unit}}</text>
           </view>
+          <view class="divider-line"></view>
+
           <view class="info-row">
             <text class="info-label">库存状态：</text>
-            <text class="info-value status-badge {{selectedMaterial.isLowStock ? 'low-stock' : 'normal-stock'}}">{{selectedMaterial.isLowStock ? '库存不足' : '库存正常'}}</text>
+            <view class="info-value status-value">
+              <text class="status-badge {{selectedMaterial.isLowStock ? 'low-stock' : 'normal-stock'}}">{{selectedMaterial.isLowStock ? '库存不足' : '库存正常'}}</text>
+            </view>
           </view>
+          <view class="divider-line"></view>
+
           <view class="info-row">
             <text class="info-label">供应商：</text>
             <text class="info-value">{{selectedMaterial.supplier}}</text>
           </view>
+          <view class="divider-line"></view>
+
           <view class="info-row">
             <text class="info-label">最新入库：</text>
             <text class="info-value">{{selectedMaterial.latestPurchaseDate}}</text>
           </view>
-          <view class="info-row" wx:if="{{selectedMaterial.specification}}">
-            <text class="info-label">规格：</text>
-            <text class="info-value">{{selectedMaterial.specification}}</text>
-          </view>
-          <view class="info-row" wx:if="{{selectedMaterial.unitPrice}}">
-            <text class="info-label">单价：</text>
-            <text class="info-value price-value">￥{{selectedMaterial.unitPrice}}/{{selectedMaterial.unit}}</text>
-          </view>
+
+          <block wx:if="{{selectedMaterial.specification}}">
+            <view class="divider-line"></view>
+            <view class="info-row">
+              <text class="info-label">规格：</text>
+              <text class="info-value">{{selectedMaterial.specification}}</text>
+            </view>
+          </block>
+
+          <block wx:if="{{selectedMaterial.unitPrice}}">
+            <view class="divider-line"></view>
+            <view class="info-row">
+              <text class="info-label">单价：</text>
+              <text class="info-value price-value">￥{{selectedMaterial.unitPrice}}/{{selectedMaterial.unit}}</text>
+            </view>
+          </block>
         </view>
       </view>
     </view>

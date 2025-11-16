@@ -14,6 +14,7 @@ const COLLECTIONS = {
   PROD_MATERIALS: 'prod_materials',
   PROD_MATERIAL_RECORDS: 'prod_material_records',
   PROD_INVENTORY_LOGS: 'prod_inventory_logs',
+  PROD_FEED_USAGE_RECORDS: 'feed_usage_records',  // 饲料投喂记录
   PRODUCTION_BATCHES: 'production_batches',
 
   // 健康管理模块 (Health Management)
@@ -73,6 +74,7 @@ const COLLECTION_MODULES = {
     COLLECTIONS.PROD_MATERIALS,
     COLLECTIONS.PROD_MATERIAL_RECORDS,
     COLLECTIONS.PROD_INVENTORY_LOGS,
+    COLLECTIONS.PROD_FEED_USAGE_RECORDS,
     COLLECTIONS.PRODUCTION_BATCHES
   ],
   

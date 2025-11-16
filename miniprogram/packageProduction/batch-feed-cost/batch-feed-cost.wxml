@@ -5,6 +5,7 @@
     title="批次饲养成本"
     show-back="{{true}}"
     fallbackUrl="/pages/production/production"
+    bind:back="goBack"
   />
   
   <!-- 批次选择器 - 添加顶部间距避免被导航栏遮挡 -->

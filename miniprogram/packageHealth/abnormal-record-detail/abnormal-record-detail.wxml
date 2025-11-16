@@ -4,7 +4,8 @@
   <navigation-bar 
     title="异常记录详情" 
     showBack="{{true}}" 
-    fallbackUrl="/packageHealth/abnormal-records-list/abnormal-records-list" 
+    fallbackUrl="/packageHealth/abnormal-records-list/abnormal-records-list"
+    bind:back="goBack"
   />
 
   <!-- 加载状态 -->

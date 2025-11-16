@@ -363,21 +363,13 @@
     <!-- 效果分析 Tab -->
     <block wx:if="{{activeTab === 'analysis'}}">
       <view class="tab-content analysis-content">
-      <!-- 存活率分析 -->
-      <view class="survival-analysis">
-        <view class="survival-cards-grid">
-          <!-- 存活率卡片 -->
-          <view class="stat-card stat-card-survival-rate">
-            <view class="stat-icon stat-icon-survival-rate">
-              <view class="css-icon-heart-pulse"></view>
-          </view>
-            <view class="stat-content">
-              <text class="stat-label">存活率</text>
-            </view>
-            <view class="stat-value-wrapper">
-              <text class="stat-value">{{analysisData.survivalAnalysis.rate === '-' ? '-' : analysisData.survivalAnalysis.rate + '%'}}</text>
-            </view>
-          </view>
+      <!-- 存活率卡片 -->
+      <view class="stat-card stat-card-survival-rate">
+        <view class="stat-content">
+          <text class="stat-label">存活率</text>
+        </view>
+        <view class="stat-value-wrapper">
+          <text class="stat-value">{{analysisData.survivalAnalysis.rate === '-' ? '-' : analysisData.survivalAnalysis.rate + '%'}}</text>
         </view>
       </view>
 
@@ -441,17 +433,6 @@
             </view>
           </view>
           
-          <!-- 总成本 -->
-          <view class="stat-card stat-card-total-cost">
-            <view class="stat-icon stat-icon-total-cost">
-              <view class="css-icon-total"></view>
-            </view>
-            <view class="stat-content">
-              <text class="stat-value">¥{{analysisData.costAnalysis.totalCost || 0}}</text>
-              <text class="stat-label">总成本</text>
-            </view>
-          </view>
-
           <!-- 饲养成本 -->
           <view class="stat-card stat-card-feeding-cost">
             <view class="stat-icon stat-icon-feeding-cost">
@@ -460,6 +441,17 @@
             <view class="stat-content">
               <text class="stat-value">¥{{analysisData.costAnalysis.feedingCost || 0}}</text>
               <text class="stat-label">饲养成本</text>
+            </view>
+          </view>
+
+          <!-- 总成本 -->
+          <view class="stat-card stat-card-total-cost">
+            <view class="stat-icon stat-icon-total-cost">
+              <view class="css-icon-total"></view>
+            </view>
+            <view class="stat-content">
+              <text class="stat-value">¥{{analysisData.costAnalysis.totalCost || 0}}</text>
+              <text class="stat-label">总成本</text>
             </view>
           </view>
         </view>
