@@ -533,8 +533,7 @@ async function getAllTemplates(event, wxContext) {
     } catch (error) {
       // 如果集合不存在，尝试创建
       if (error.errCode === -502005 || (error.message && error.message.includes('not exist'))) {
-        console.log('集合不存在，尝试创建...')
-        
+
         try {
           // 创建一个初始化记录来建立集合
           await db.collection(COLLECTIONS.TASK_TEMPLATES).add({
@@ -548,7 +547,7 @@ async function getAllTemplates(event, wxContext) {
               updateTime: db.serverDate()
             }
           })
-          console.log('集合创建成功')
+
           templates = []
         } catch (initError) {
           console.error('创建集合失败:', initError)
@@ -776,9 +775,7 @@ async function getTemplateTasks(event, wxContext) {
 async function parseTemplateFile(event, wxContext) {
   const { fileID, fileType } = event
   const openid = wxContext.OPENID
-  
-  console.log('开始解析文件:', fileID, fileType)
-  
+
   try {
     // 下载文件
     const downloadResult = await cloud.downloadFile({
@@ -912,9 +909,7 @@ async function parseTemplateFile(event, wxContext) {
     }).catch(err => {
       console.error('删除临时文件失败:', err)
     })
-    
-    console.log('解析完成，任务数量:', parsedData.tasks.length)
-    
+
     return {
       success: true,
       data: parsedData
@@ -1055,9 +1050,7 @@ async function saveImportedTemplate(event, wxContext) {
 async function createTemplate(event, wxContext) {
   const { templateName, description } = event
   const openid = wxContext.OPENID
-  
-  console.log('创建模板:', templateName, openid)
-  
+
   try {
     // 检查模板名称是否已存在
     const existingTemplate = await db.collection(COLLECTIONS.TASK_TEMPLATES)
@@ -1090,9 +1083,7 @@ async function createTemplate(event, wxContext) {
           updateTime: db.serverDate()
         }
       })
-    
-    console.log('模板创建成功:', addResult._id)
-    
+
     return {
       success: true,
       message: '模板创建成功',

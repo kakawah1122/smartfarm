@@ -1169,8 +1169,7 @@ async function updateBatchTemplates(event, wxContext) {
                   data: batch
                 })
             }
-            
-            console.log(`为批次 ${batchId} 生成了 ${tasks.length} 个任务`)
+
           }
         }
       }

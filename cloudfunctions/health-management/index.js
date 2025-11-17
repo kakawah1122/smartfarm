@@ -287,7 +287,7 @@ async function createPreventionRecord(event, wxContext) {
         }
         
         await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).add({ data: financeRecordData })
-        console.log('[预防成本] 财务记录创建成功', financeRecordData.recordId)
+
       } catch (financeError) {
         console.error('[预防成本] 创建财务记录失败:', financeError)
         // 不影响主流程，继续执行
@@ -455,7 +455,6 @@ async function createAbnormalRecord(event, wxContext) {
     } = event
     const openid = wxContext.OPENID
 
-
     const db = cloud.database()
 
     // 获取用户信息
@@ -501,7 +500,6 @@ async function createAbnormalRecord(event, wxContext) {
       createdAt: new Date(),
       updatedAt: new Date()
     }
-
 
     // 使用health_records collection，但状态为abnormal
     const result = await db.collection(COLLECTIONS.HEALTH_RECORDS).add({
@@ -2420,16 +2418,14 @@ async function getAllBatchesHealthSummary(event, wxContext) {
   try {
     // ✅ 修复：同时支持 userId 和 _openid 字段，兼容不同的批次记录格式
     // 获取该用户的所有入栏批次
-    console.log('[getAllBatchesHealthSummary] 开始查询批次，openid:', wxContext.OPENID)
-    
+
     const allBatchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where(_.or([
         { userId: wxContext.OPENID },
         { _openid: wxContext.OPENID }
       ]))
       .get()
-    
-    console.log('[getAllBatchesHealthSummary] 查询到批次数量:', allBatchesResult.data.length)
+
     if (allBatchesResult.data.length > 0) {
       console.log('[getAllBatchesHealthSummary] 第一个批次示例:', JSON.stringify(allBatchesResult.data[0]))
     }
@@ -2467,7 +2463,7 @@ async function getAllBatchesHealthSummary(event, wxContext) {
       // 1. 必须未删除
       const isNotDeleted = record.isDeleted !== true
       if (!isNotDeleted) {
-        console.log(`[批次过滤-删除] ${record.batchNumber}: 已删除`)
+
         return false
       }
       
@@ -2482,16 +2478,12 @@ async function getAllBatchesHealthSummary(event, wxContext) {
       const isNewBatch = totalExited === 0
       
       const shouldKeep = hasRemaining || isNewBatch
-      
-      console.log(`[批次过滤] ${record.batchNumber}: quantity=${quantity}, totalExited=${totalExited}, isNewBatch=${isNewBatch}, 保留=${shouldKeep}`)
-      
+
       return shouldKeep
     })
-    
-    console.log('[getAllBatchesHealthSummary] 过滤后的批次数量:', batches.length)
-    
+
     if (batches.length === 0) {
-      console.log('[getAllBatchesHealthSummary] 没有有效批次，返回空数据')
+
       return {
         success: true,
         data: {
@@ -2722,26 +2714,23 @@ async function getDashboardSnapshot(event, wxContext) {
       return await getHealthOverview({ batchId }, wxContext)
     }
 
-    console.log('[getDashboardSnapshot] 开始获取健康面板数据')
-    
     const summaryResult = await getAllBatchesHealthSummary({}, wxContext)
 
     if (!summaryResult.success) {
-      console.log('[getDashboardSnapshot] 获取批次汇总失败:', summaryResult.error)
+
       return summaryResult
     }
 
     const summaryData = summaryResult.data || {}
     const batches = summaryData.batches || []
-    
-    console.log('[getDashboardSnapshot] 批次数量:', batches.length)
+
     if (batches.length > 0) {
       console.log('[getDashboardSnapshot] 第一个批次:', JSON.stringify(batches[0]))
     }
 
     // ✅ 需要获取原始入栏数量，用于正确计算死亡率
     const batchIds = batches.map(batch => batch.batchId || batch._id).filter(Boolean)
-    console.log('[getDashboardSnapshot] 提取的 batchIds:', batchIds)
+
     let originalTotalQuantity = 0
     
     if (batchIds.length > 0) {
@@ -2874,8 +2863,7 @@ async function getDashboardSnapshot(event, wxContext) {
 async function getHealthDashboardComplete(event, wxContext) {
   try {
     const { batchId = 'all' } = event || {}
-    
-    console.log('[getHealthDashboardComplete] 开始获取完整数据, batchId:', batchId)
+
     const startTime = Date.now()
     
     // 如果是单批次模式，直接使用现有的完整数据接口
@@ -2913,8 +2901,7 @@ async function getHealthDashboardComplete(event, wxContext) {
     ])
     
     const endTime = Date.now()
-    console.log(`[getHealthDashboardComplete] 完成，耗时: ${endTime - startTime}ms`)
-    
+
     if (!dashboardResult.success) {
       return dashboardResult
     }
@@ -4505,8 +4492,7 @@ async function getDeathStats(event, wxContext) {
  */
 async function fixTreatmentRecordsOpenId(event, wxContext) {
   try {
-    console.log('[修复] 开始修复治疗记录的 _openid 字段...')
-    
+
     // 查询当前用户创建但没有 _openid 的记录
     const records = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
@@ -4523,9 +4509,7 @@ async function fixTreatmentRecordsOpenId(event, wxContext) {
         fixedCount: 0
       }
     }
-    
-    console.log(`[修复] 发现 ${records.data.length} 条需要修复的记录`)
-    
+
     // 批量更新
     let fixedCount = 0
     const updatePromises = records.data.map(record => {
@@ -4538,7 +4522,7 @@ async function fixTreatmentRecordsOpenId(event, wxContext) {
         })
         .then(() => {
           fixedCount++
-          console.log(`[修复] 成功修复记录 ${record._id}`)
+
         })
         .catch(err => {
           console.error(`[修复] 修复记录 ${record._id} 失败:`, err)
@@ -4546,9 +4530,7 @@ async function fixTreatmentRecordsOpenId(event, wxContext) {
     })
     
     await Promise.all(updatePromises)
-    
-    console.log(`[修复] 完成，成功修复 ${fixedCount}/${records.data.length} 条记录`)
-    
+
     return {
       success: true,
       message: `成功修复 ${fixedCount} 条记录`,
@@ -7999,9 +7981,7 @@ async function syncVaccineCostsToFinance(event, wxContext) {
     
     const preventionResult = await query.limit(100).get()
     const preventionRecords = preventionResult.data
-    
-    console.log(`[疫苗成本同步] 找到 ${preventionRecords.length} 条有成本的疫苗记录`)
-    
+
     // 2. 查询已存在的财务记录，避免重复创建
     const preventionIds = preventionRecords.map(r => r._id)
     const existingFinanceResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).where({
@@ -8015,9 +7995,7 @@ async function syncVaccineCostsToFinance(event, wxContext) {
     
     // 3. 过滤出需要同步的记录
     const recordsToSync = preventionRecords.filter(r => !existingFinanceMap.has(r._id))
-    
-    console.log(`[疫苗成本同步] 需要同步 ${recordsToSync.length} 条记录`)
-    
+
     if (dryRun) {
       return {
         success: true,

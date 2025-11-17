@@ -90,7 +90,6 @@ const debugLog = (...args) => {
   }
 }
 
-
 // 生成任务记录ID
 function generateTaskRecordId() {
   const now = new Date()
@@ -367,7 +366,7 @@ async function completeVaccineTask(event, wxContext) {
         }
         
         await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).add({ data: financeRecordData })
-        console.log('[疫苗成本] 财务记录创建成功', financeRecordData.recordId)
+
       } catch (financeError) {
         console.error('[疫苗成本] 创建财务记录失败:', financeError)
         // 不影响主流程，继续执行

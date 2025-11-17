@@ -13,7 +13,7 @@ class HealthBusinessLogic {
    * 一次性返回该批次所有需要的数据
    */
   async calculateBatchHealthStats(batchId) {
-    console.log('[BLL] 计算批次健康统计, batchId:', batchId)
+
     const startTime = Date.now()
 
     // ✅ 并行查询所有需要的数据
@@ -56,7 +56,7 @@ class HealthBusinessLogic {
    * ✅ 计算所有批次健康统计（汇总版）
    */
   async calculateAllBatchesHealthStats() {
-    console.log('[BLL] 计算所有批次健康统计')
+
     const startTime = Date.now()
 
     const batches = await this.dal.getAllActiveBatches()

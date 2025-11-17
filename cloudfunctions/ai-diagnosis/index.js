@@ -636,7 +636,7 @@ function cleanDiseaseName(diseaseName) {
   
   // 调试日志：记录清洗前后的病名
   if (originalName !== cleanedName) {
-    console.log(`[清洗病名] "${originalName}" → "${cleanedName}"`)
+
   }
   
   return cleanedName
@@ -1105,7 +1105,6 @@ async function performAIDiagnosis(event, openid) {
 
     // 使用微信自动生成的_id
     const diagnosisId = addResult._id
-
 
     // ✨ 触发后台处理任务（异步）
     // ⚠️ 注意：即使触发超时，任务仍在数据库中，会自动重试或在控制台配置超时

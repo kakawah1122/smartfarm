@@ -475,33 +475,22 @@
                       </view>
                     </view>
 
-                    <!-- 记录内容 - 双列布局，分行显示 -->
+                    <!-- 记录内容 - 分行显示 -->
                     <view class="record-content">
-                      <!-- 第一行：单据 + 数量 -->
-                      <view class="info-grid" wx:if="{{item.recordNumber || item.quantity}}">
-                        <view class="info-column left-column">
-                          <view class="info-item" wx:if="{{item.recordNumber}}">
-                            <text class="info-label">单据：</text>
-                            <text class="info-value">{{item.recordNumber}}</text>
-                          </view>
-                        </view>
-                        <view class="info-column right-column">
-                          <view class="info-item" wx:if="{{item.quantity}}">
-                            <text class="info-label">数量：</text>
-                            <text class="info-value quantity-value">{{item.quantity}}</text>
-                          </view>
-                        </view>
+                      <!-- 第一行：单据 -->
+                      <view class="info-row" wx:if="{{item.recordNumber}}">
+                        <text class="info-label">单据：</text>
+                        <text class="info-value">{{item.recordNumber}}</text>
                       </view>
                       <!-- 第二行：分类 -->
-                      <view class="info-grid" wx:if="{{item.category}}">
-                        <view class="info-column left-column">
-                          <view class="info-item">
-                            <text class="info-label">分类：</text>
-                            <text class="info-value">{{item.category}}</text>
-                          </view>
-                        </view>
-                        <view class="info-column right-column">
-                        </view>
+                      <view class="info-row" wx:if="{{item.category}}">
+                        <text class="info-label">分类：</text>
+                        <text class="info-value">{{item.category}}</text>
+                      </view>
+                      <!-- 第三行：数量 -->
+                      <view class="info-row" wx:if="{{item.quantity}}">
+                        <text class="info-label">数量：</text>
+                        <text class="info-value quantity-value">{{item.quantity}}</text>
                       </view>
 
                       <!-- 底部：日期 + 操作员 -->
