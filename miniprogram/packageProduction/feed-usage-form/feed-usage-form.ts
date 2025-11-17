@@ -1,6 +1,10 @@
 // feed-usage-form.ts - 饲料投喂记录表单页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+// TypeScript 类型说明：
+// createPageWithNavbar 返回的对象会被 Page() 转换为页面实例
+// 运行时会自动注入 setData 等方法，这里的类型错误可以忽略
+
 // 表单数据接口
 interface FeedUsageFormData {
   recordDate: string        // 投喂日期
@@ -13,7 +17,7 @@ interface FeedUsageFormData {
   notes: string           // 备注
 }
 
-const pageConfig = {
+const pageConfig: any = {
   data: {
     // 表单数据
     formData: {
@@ -32,11 +36,11 @@ const pageConfig = {
     
     // 批次选择相关
     availableBatches: [] as any[],
-    showBatchPicker: false,
+    batchOptions: [] as string[],
+    batchPickerIndex: 0,
     
     // 饲料选择相关
     availableFeeds: [] as any[],
-    showFeedPicker: false,
     
     // 存栏信息
     currentStock: 0,
@@ -108,18 +112,33 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const batches = result.result.data || []
-        this.setData({
-          availableBatches: batches
+        
+        // 生成批次选项
+        const batchOptions = batches.map((batch: any) => {
+          const info = batch.breed || `存栏${batch.currentStock || batch.currentCount || 0}只`
+          return `${batch.batchNumber} (${info})`
         })
+        
+        this.setData({
+          availableBatches: batches,
+          batchOptions: batchOptions
+        })
+        
+        // 如果没有活跃批次，提示用户
+        if (batches.length === 0) {
+          wx.showModal({
+            title: '提示',
+            content: '当前没有活跃批次，请先在生产管理中创建入栏批次',
+            showCancel: false
+          })
+        }
       } else {
-        // 已移除调试日志，使用用户提示替代
         wx.showToast({
           title: result.result?.message || '加载批次失败',
           icon: 'none'
         })
       }
     } catch (error) {
-      // 已移除调试日志，使用用户提示替代
       wx.showToast({
         title: '加载批次失败',
         icon: 'none'
@@ -155,26 +174,10 @@ const pageConfig = {
     }
   },
 
-  // 显示批次选择器
-  showBatchPicker() {
-    if (this.data.availableBatches.length === 0) {
-      wx.showToast({
-        title: '暂无活跃批次',
-        icon: 'none'
-      })
-      return
-    }
-    
-    const batchOptions = this.data.availableBatches.map(batch => 
-      `${batch.batchNumber} (${batch.breed})`
-    )
-    
-    wx.showActionSheet({
-      itemList: batchOptions,
-      success: (res) => {
-        this.onBatchSelected(res.tapIndex)
-      }
-    })
+  // 批次选择改变（原生 picker）
+  onBatchChange(e: any) {
+    const index = e.detail.value
+    this.onBatchSelected(index)
   },
 
   // 选择批次
@@ -191,6 +194,7 @@ const pageConfig = {
       this.setData({
         'formData.batchId': selectedBatch._id,
         'formData.batchNumber': selectedBatch.batchNumber,
+        batchPickerIndex: index,
         currentStock: currentStock,
         stockInfo: null  // 清空详细信息
       })
@@ -204,7 +208,7 @@ const pageConfig = {
   async updateStockInfo() {
     // 如果已经有批次，重新获取批次信息以更新存栏数
     if (this.data.formData.batchId) {
-      const batch = this.data.availableBatches.find(b => b._id === this.data.formData.batchId)
+      const batch = this.data.availableBatches.find((b: any) => b._id === this.data.formData.batchId)
       if (batch) {
         const currentStock = batch.currentStock || batch.currentQuantity || 0
         this.setData({
@@ -225,7 +229,7 @@ const pageConfig = {
       return
     }
     
-    const feedOptions = this.data.availableFeeds.map(feed => 
+    const feedOptions = this.data.availableFeeds.map((feed: any) => 
       `${feed.name} (库存: ${feed.currentStock}${feed.unit})`
     )
     

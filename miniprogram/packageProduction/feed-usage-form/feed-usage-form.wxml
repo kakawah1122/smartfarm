@@ -40,15 +40,22 @@
         </view>
       </picker>
       
-      <!-- 选择批次 -->
-      <view class="form-item" bindtap="showBatchPicker">
-        <view class="item-label required">选择批次</view>
-        <view class="item-value">
-          <view class="value-text {{formData.batchNumber ? '' : 'placeholder'}}">
-            {{formData.batchNumber || '请选择批次'}}
+      <!-- 选择批次（使用原生 picker）-->
+      <picker 
+        mode="selector" 
+        range="{{batchOptions}}"
+        value="{{batchPickerIndex}}"
+        bindchange="onBatchChange"
+      >
+        <view class="form-item">
+          <view class="item-label required">选择批次</view>
+          <view class="item-value">
+            <view class="value-text {{formData.batchNumber ? '' : 'placeholder'}}">
+              {{formData.batchNumber || '请选择批次'}}
+            </view>
           </view>
         </view>
-      </view>
+      </picker>
       
       <!-- 当前存栏数 -->
       <view wx:if="{{formData.batchId && currentStock >= 0}}" class="stock-info-card">
@@ -145,4 +152,3 @@
   </view>
   
 </view>
-
