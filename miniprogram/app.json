@@ -63,7 +63,11 @@
         "role-management/role-management",
         "role-migration/role-migration",
         "price-management/price-management",
-        "knowledge-management/knowledge-management"
+        "knowledge-management/knowledge-management",
+        "lifecycle-management/lifecycle-management",
+        "lifecycle-task-edit/lifecycle-task-edit",
+        "batch-template-config/batch-template-config",
+        "lifecycle-task-detail/lifecycle-task-detail"
       ]
     },
     {

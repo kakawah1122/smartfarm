@@ -22,7 +22,6 @@
         <view class="status-row">
           <text class="status-label">授权状态</text>
           <view class="status-badge {{authorized ? 'authorized' : 'unauthorized'}}">
-            <t-icon name="{{authorized ? 'check-circle-filled' : 'close-circle-filled'}}" size="28rpx" />
             <text>{{authorized ? '已授权' : '未授权'}}</text>
           </view>
         </view>
@@ -39,7 +38,8 @@
           <text class="contract-name">{{privacyContractName}}</text>
           <t-button 
             theme="primary" 
-            size="small" 
+            size="small"
+            t-class="contract-btn"
             bind:tap="openPrivacyContract">
             查看协议
           </t-button>

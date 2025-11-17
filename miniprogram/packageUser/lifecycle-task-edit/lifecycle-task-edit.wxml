@@ -1,0 +1,168 @@
+<!-- 养殖周期任务编辑页面 -->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar
+    title="{{mode === 'add' ? '添加任务' : '编辑任务'}}"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 日龄信息 -->
+    <view class="day-info-card">
+      <text class="day-label">任务日龄</text>
+      <text class="day-value">第{{dayAge}}日龄</text>
+    </view>
+    
+    <!-- 表单区域 -->
+    <view class="form-section">
+      <!-- 任务标题 -->
+      <view class="form-item">
+        <view class="form-label required">任务标题</view>
+        <t-input
+          value="{{formData.title}}"
+          placeholder="请输入任务标题"
+          bind:change="onTitleInput"
+          clearable
+        />
+      </view>
+      
+      <!-- 任务类型 -->
+      <view class="form-item">
+        <view class="form-label required">任务类型</view>
+        <picker
+          mode="selector"
+          range="{{taskTypes}}"
+          range-key="label"
+          value="{{taskTypeIndex}}"
+          bind:change="onTypeChange"
+        >
+          <view class="picker-value">
+            <text>{{taskTypeIndex >= 0 ? taskTypes[taskTypeIndex].label : '请选择任务类型'}}</text>
+            <t-icon name="chevron-right" size="40rpx" color="#999" />
+          </view>
+        </picker>
+      </view>
+      
+      <!-- 任务分类 - 根据任务类型自动设置，隐藏此字段避免重复 -->
+      
+      <!-- 优先级 -->
+      <view class="form-item">
+        <view class="form-label">优先级</view>
+        <picker
+          mode="selector"
+          range="{{priorities}}"
+          range-key="label"
+          value="{{priorityIndex}}"
+          bind:change="onPriorityChange"
+        >
+          <view class="picker-value">
+            <text>{{priorities[priorityIndex].label}}</text>
+            <t-icon name="chevron-right" size="40rpx" color="#999" />
+          </view>
+        </picker>
+      </view>
+      
+      <!-- 任务描述 -->
+      <view class="form-item">
+        <view class="form-label required">任务描述</view>
+        <t-textarea
+          value="{{formData.description}}"
+          placeholder="请输入任务描述"
+          bind:change="onDescriptionInput"
+          maxlength="500"
+          indicator
+        />
+      </view>
+      
+      <!-- 用量（药物和疫苗类型显示） -->
+      <view class="form-item" wx:if="{{formData.type === 'medication' || formData.type === 'vaccine'}}">
+        <view class="form-label">用量说明</view>
+        <t-input
+          value="{{formData.dosage}}"
+          placeholder="如：1.2ml/只"
+          bind:change="onDosageInput"
+          clearable
+        />
+      </view>
+      
+      <!-- 持续天数 -->
+      <view class="form-item" wx:if="{{formData.type === 'medication'}}">
+        <view class="form-label">持续天数</view>
+        <view class="input-group">
+          <t-input
+            type="number"
+            value="{{formData.duration}}"
+            placeholder="1"
+            bind:change="onDurationInput"
+          />
+          <text class="input-suffix">天</text>
+        </view>
+      </view>
+      
+      <!-- 系列中的第几天 -->
+      <view class="form-item" wx:if="{{formData.type === 'medication' && formData.duration > 1}}">
+        <view class="form-label">系列中第几天</view>
+        <view class="input-group">
+          <t-input
+            type="number"
+            value="{{formData.dayInSeries}}"
+            placeholder="1"
+            bind:change="onDayInSeriesInput"
+          />
+          <text class="input-suffix">天</text>
+        </view>
+      </view>
+      
+      <!-- 预计耗时 -->
+      <view class="form-item">
+        <view class="form-label">预计耗时</view>
+        <view class="input-group">
+          <t-input
+            type="number"
+            value="{{formData.estimatedTime}}"
+            placeholder="0"
+            bind:change="onEstimatedTimeInput"
+          />
+          <text class="input-suffix">分钟</text>
+        </view>
+      </view>
+      
+      <!-- 所需材料 -->
+      <view class="form-item">
+        <view class="form-label">所需材料</view>
+        <t-textarea
+          value="{{formData.materials}}"
+          placeholder="请输入所需材料，多个材料用逗号分隔"
+          bind:change="onMaterialsInput"
+          maxlength="200"
+        />
+      </view>
+      
+      <!-- 备注 -->
+      <view class="form-item">
+        <view class="form-label">备注说明</view>
+        <t-textarea
+          value="{{formData.notes}}"
+          placeholder="请输入备注说明"
+          bind:change="onNotesInput"
+          maxlength="300"
+        />
+      </view>
+    </view>
+    
+    <!-- 底部按钮 -->
+    <view class="bottom-actions">
+      <t-button
+        theme="primary"
+        size="large"
+        bind:tap="saveTask"
+        block
+      >
+        保存任务
+      </t-button>
+    </view>
+  </view>
+</view>

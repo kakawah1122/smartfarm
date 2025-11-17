@@ -29,35 +29,19 @@ page {
   font-weight: 600;
   color: #333;
   margin-bottom: 24rpx;
-}
-
-/* 功能介绍卡片标题居中 */
-.features-card .card-title {
   text-align: center;
 }
 
 /* 应用信息卡片 */
 .app-info-card {
   text-align: center;
-  padding: 60rpx 32rpx 40rpx;
-}
-
-.app-logo {
-  font-size: 120rpx;
-  line-height: 1;
-  margin-bottom: 32rpx;
+  padding: 40rpx 32rpx;
 }
 
 .app-name {
   font-size: 48rpx;
   font-weight: 600;
   color: #333;
-  margin-bottom: 12rpx;
-}
-
-.app-version {
-  font-size: 26rpx;
-  color: #999;
   margin-bottom: 20rpx;
 }
 
@@ -78,35 +62,18 @@ page {
 .feature-item {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16rpx;
-  padding: 32rpx 28rpx;
+  padding: 28rpx 24rpx;
   border-radius: 24rpx;
   text-align: center;
-  min-height: 160rpx;
+  min-height: 120rpx;
   box-sizing: border-box;
   overflow: hidden;
   border: 1rpx solid transparent;
   box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(6rpx);
   --feature-accent: #0052d9;
-}
-
-.feature-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 48rpx;
-  color: var(--feature-accent);
-  margin-bottom: 4rpx;
-}
-
-.feature-emoji {
-  font-size: inherit;
-  line-height: 1;
 }
 
 .feature-item-single {

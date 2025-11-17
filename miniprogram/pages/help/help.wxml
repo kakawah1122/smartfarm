@@ -29,10 +29,16 @@
     <!-- 联系方式 -->
     <view class="card card-contact">
       <view class="card-title">联系我们</view>
-      <t-cell-group>
-        <t-cell title="客服电话" note="请通过小程序内联系功能联系我们" />
-        <t-cell title="工作时间" note="周一至周五 9:00-18:00" />
-      </t-cell-group>
+      <view class="contact-list">
+        <view class="contact-item">
+          <view class="contact-label">客服电话</view>
+          <view class="contact-value">请通过小程序内联系功能联系我们</view>
+        </view>
+        <view class="contact-item">
+          <view class="contact-label">工作时间</view>
+          <view class="contact-value">周一至周五 9:00-18:00</view>
+        </view>
+      </view>
     </view>
 
     <!-- 底部安全区域 -->

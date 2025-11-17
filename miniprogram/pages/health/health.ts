@@ -3627,7 +3627,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       batchNumber: '',
       dosage: '0.5ml/只',
       routeIndex: 0,
-      vaccinationCount: 0,
+      vaccinationCount: currentBatchStockQuantity,  // 默认填充存栏数量
       location: '',
       vaccineCost: '',
       veterinaryCost: '',
@@ -3857,7 +3857,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         vaccineCost: parseFloat(vaccineFormData.vaccineCost || '0'),
         veterinaryCost: parseFloat(vaccineFormData.veterinaryCost || '0'),
         otherCost: parseFloat(vaccineFormData.otherCost || '0'),
-        totalCost: vaccineFormData.totalCost
+        totalCost: vaccineFormData.totalCost,
+        // ✅ 重要：标记疫苗接种费用需要同步到财务系统
+        // 疫苗接种是养殖场的重要成本项，应当记入财务管理
+        shouldSyncToFinance: true
       },
       notes: vaccineFormData.notes
     }

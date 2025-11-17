@@ -169,8 +169,10 @@
             >
               <view class="record-left">
                 <view class="record-content">
-                  <text class="record-title" user-select>{{item.title}}</text>
-                  <text class="record-desc" user-select>{{item.description}}</text>
+                  <view class="record-main-info">
+                    <text class="record-title" user-select>{{item.title}}</text>
+                    <text wx:if="{{item.description}}" class="record-desc" user-select>{{item.description}}</text>
+                  </view>
                   <view class="record-footer">
                     <text class="record-time">{{item.date}}</text>
                   </view>

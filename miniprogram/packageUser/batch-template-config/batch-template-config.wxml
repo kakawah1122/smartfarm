@@ -1,0 +1,106 @@
+<!-- 批次模板配置页面 -->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar
+    title="批次模板配置"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <!-- 内容区域 -->
+  <view class="content-wrapper" style="--status-bar-height: {{statusBarHeight}}px; --navbar-height: {{navBarHeight}}px;">
+    <!-- 加载中提示 -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <t-loading theme="circular" size="50rpx" text="加载中..." />
+    </view>
+    
+    <!-- 内容 -->
+    <view wx:else>
+    
+    <!-- 批次列表 -->
+    <view class="batch-list">
+      <view class="section-header">
+        <text class="title">批次模板配置</text>
+        <text class="subtitle">共{{batchList.length}}个活跃批次</text>
+      </view>
+      
+      <!-- 批次卡片 -->
+      <view wx:for="{{batchList}}" wx:key="id" class="batch-card">
+        <view class="batch-header">
+          <view class="batch-info">
+            <text class="batch-name">{{item.batchName}}</text>
+            <view class="batch-meta">
+              <text class="entry-date">入栏：{{item.entryDate}}</text>
+              <text class="day-age">第{{item.currentDayAge}}日龄</text>
+              <text class="count">{{item.currentCount || item.entryCount}}只</text>
+            </view>
+          </view>
+          <view class="batch-status configured">
+            已配置
+          </view>
+        </view>
+        
+        <!-- 模板选择 -->
+        <view class="template-selector">
+          <text class="selector-label">养殖模板：</text>
+          <picker 
+            mode="selector" 
+            range="{{templates}}" 
+            range-key="name"
+            value="{{item.templateIndex >= 0 ? item.templateIndex : 0}}"
+            data-batch-id="{{item.id}}"
+            data-batch-index="{{index}}"
+            bind:change="onTemplateChange"
+          >
+            <view class="picker-content">
+              <text class="template-name">{{item.templateName || '选择模板'}}</text>
+              <t-icon name="chevron-down" size="32rpx" color="#999" />
+            </view>
+          </picker>
+        </view>
+        
+        <!-- 今日任务预览 -->
+        <view wx:if="{{item.templateId && item.todayTasks.length > 0}}" class="today-tasks">
+          <view class="tasks-header">
+            <text class="tasks-title">今日任务（第{{item.currentDayAge}}日龄）</text>
+            <text class="tasks-count">{{item.todayTasks.length}}项</text>
+          </view>
+          <view class="tasks-preview">
+            <view wx:for="{{item.todayTasks}}" wx:for-item="task" wx:key="id" class="task-tag">
+              <t-tag theme="primary" size="small">{{task.title}}</t-tag>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 无任务提示 -->
+        <view wx:elif="{{item.templateId}}" class="no-tasks">
+          <t-icon name="check-circle" size="32rpx" color="#52c41a" />
+          <text>今日暂无任务</text>
+        </view>
+      </view>
+      
+      <!-- 空状态 -->
+      <view wx:if="{{batchList.length === 0}}" class="empty-state">
+        <t-empty icon="info-circle" description="暂无批次数据">
+          <view slot="describe">
+            <text class="empty-desc">请先在生产管理中创建入栏批次</text>
+            <view class="empty-action">
+              <t-button theme="primary" size="medium" bind:tap="goToProduction">
+                前往入栏管理
+              </t-button>
+            </view>
+          </view>
+        </t-empty>
+      </view>
+    </view>
+    
+    <!-- 底部操作 -->
+    <view wx:if="{{batchList.length > 0}}" class="bottom-actions">
+      <t-button theme="primary" size="large" block bind:tap="saveConfig">
+        保存配置
+      </t-button>
+    </view>
+    </view>
+  </view>
+</view>

@@ -339,6 +339,38 @@
   gap: 4rpx;
 }
 
+/* 双列布局容器 */
+.info-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 32rpx;
+  margin-bottom: 12rpx;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.info-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  
+  &.left-column {
+    align-items: flex-start;
+  }
+  
+  &.right-column {
+    align-items: flex-end;
+  }
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
 /* 信息行 - 分行显示 */
 .info-row {
   display: flex;
@@ -357,7 +389,6 @@
   flex-shrink: 0;
   line-height: 1.6;
   white-space: nowrap;
-  min-width: 80rpx;
 }
 
 .info-value {
@@ -365,7 +396,6 @@
   color: var(--td-text-color-primary, #333);
   font-weight: 500;
   line-height: 1.6;
-  flex: 1;
   word-wrap: break-word;
   
   &.quantity-value {
@@ -386,25 +416,15 @@
   border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
 }
 
-.footer-left {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  flex: 1;
-  overflow: hidden;
-}
-
 .date-text {
   font-size: 26rpx;
   color: var(--td-text-color-placeholder, #999);
-  flex: 1;
 }
 
 .operator-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: var(--td-text-color-secondary, #666);
   font-weight: 500;
-  flex-shrink: 0;
 }
 
 .status-tag {
@@ -545,10 +565,6 @@
     font-size: 24rpx;
   }
   
-  .footer-left {
-    gap: 12rpx;
-  }
-  
   .operator-text,
   .date-text,
   .health-text {
@@ -581,11 +597,24 @@
     max-width: none;
   }
   
+  /* 双列布局在小屏幕上的适配 */
+  .info-grid {
+    gap: 16rpx;
+  }
+  
+  .info-column {
+    font-size: 24rpx;
+    
+    &.right-column {
+      align-items: flex-start; /* 小屏幕上改为左对齐 */
+    }
+  }
+  
   .record-name {
     font-size: 26rpx;
   }
   
-  .footer-left {
+  .record-footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 4rpx;

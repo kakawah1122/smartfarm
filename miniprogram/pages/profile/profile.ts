@@ -1,5 +1,4 @@
 // profile.ts - 个人中心页面逻辑
-import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 
 // 报销类型配置 - 养殖场景
@@ -20,7 +19,8 @@ const ADMIN_FUNCTIONS = [
   { id: 2, label: '邀请管理', page: '/packageUser/invite-management/invite-management' },
   { id: 3, label: '财务管理', page: '/packageFinance/finance/finance' },
   { id: 4, label: '鹅价管理', page: '/packageUser/price-management/price-management' },
-  { id: 5, label: '文章管理', page: '/packageUser/knowledge-management/knowledge-management' }
+  { id: 5, label: '文章管理', page: '/packageUser/knowledge-management/knowledge-management' },
+  { id: 6, label: '任务管理', page: '/packageUser/lifecycle-management/lifecycle-management' }
 ]
 
 // 系统设置配置
@@ -31,7 +31,7 @@ const SYSTEM_SETTINGS = [
   { id: 4, label: '帮助中心', action: 'help' }
 ]
 
-const pageConfig = {
+Page({
   data: {
     // 用户信息
     userInfo: {
@@ -133,7 +133,7 @@ const pageConfig = {
   async loadUserInfo() {
     try {
       const app = getApp<IAppOption>()
-      const userInfo = app.globalData.userInfo || wx.getStorageSync('userInfo')
+      const userInfo: any = app.globalData?.userInfo || wx.getStorageSync('userInfo')
       
       if (!userInfo) {
         throw new Error('未登录')
@@ -159,6 +159,7 @@ const pageConfig = {
         'userInfo.farm': userInfo.farmName || userInfo.department || '智慧养殖场',
         'userInfo.phone': userInfo.phone || '未设置',
         'userInfo.avatarUrl': userInfo.avatarUrl || '/assets/icons/profile.png',
+        'userInfo.workYears': workYears,
         isAdmin: isAdmin,
         userRole: userInfo.role
       })
@@ -211,7 +212,7 @@ const pageConfig = {
       wx.showLoading({ title: '上传中...' })
       
       // 获取图片信息，检查文件大小
-      const imageInfo = await wx.getImageInfo({ src: avatarUrl })
+      // const imageInfo = await wx.getImageInfo({ src: avatarUrl })
       const fileManager = wx.getFileSystemManager()
       const fileStats = fileManager.statSync(avatarUrl)
       
@@ -250,8 +251,10 @@ const pageConfig = {
       
       if (result.result && result.result.success) {
         const app = getApp<IAppOption>()
-        app.globalData.userInfo.avatarUrl = uploadResult.fileID
-        wx.setStorageSync('userInfo', app.globalData.userInfo)
+        if (app.globalData && app.globalData.userInfo) {
+          app.globalData.userInfo.avatarUrl = uploadResult.fileID
+          wx.setStorageSync('userInfo', app.globalData.userInfo)
+        }
         
         this.setData({
           'userInfo.avatarUrl': uploadResult.fileID
@@ -279,6 +282,7 @@ const pageConfig = {
         amount: '',
         date: today,
         description: '',
+        detail: '',
         vouchers: []
       }
     })
@@ -439,9 +443,10 @@ const pageConfig = {
       success: (res) => {
         if (res.confirm) {
           const app = getApp<IAppOption>()
-          app.globalData.openid = undefined
-          app.globalData.isLoggedIn = false
-          app.globalData.userInfo = undefined
+          const globalData: any = app.globalData || {}
+          globalData.openid = undefined
+          globalData.isLoggedIn = false
+          globalData.userInfo = undefined
           
           wx.removeStorageSync('openid')
           wx.removeStorageSync('userInfo')
@@ -624,13 +629,14 @@ const pageConfig = {
       if (result.result && result.result.success) {
         // 更新本地用户信息
         const app = getApp<IAppOption>()
-        if (app.globalData.userInfo) {
-          app.globalData.userInfo.nickName = nickName.trim()
-          app.globalData.userInfo.nickname = nickName.trim()
-          app.globalData.userInfo.phone = phone.trim()
-          app.globalData.userInfo.farmName = farmName.trim()
-          app.globalData.userInfo.department = farmName.trim()
-          wx.setStorageSync('userInfo', app.globalData.userInfo)
+        if (app.globalData) {
+          const userInfo: any = app.globalData.userInfo
+          userInfo.nickName = nickName.trim()
+          userInfo.nickname = nickName.trim()
+          userInfo.phone = phone.trim()
+          userInfo.farmName = farmName.trim()
+          userInfo.department = farmName.trim()
+          wx.setStorageSync('userInfo', userInfo)
         }
         
         // 更新页面显示
@@ -653,8 +659,6 @@ const pageConfig = {
       })
     }
   }
-}
-
-Page(createPageWithNavbar(pageConfig))
+})
 
 

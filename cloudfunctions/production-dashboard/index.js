@@ -150,9 +150,9 @@ async function getEntryOverview(dateRange) {
   const entryRecords = await entryQuery.get()
   const entryData = entryRecords.data
   
-  const totalEntryQuantity = entryData.reduce((sum, record) => sum + (record.quantity || 0), 0)
+  const totalEntryQuantity = entryData.reduce((sum, record) => sum + (Number(record.quantity) || 0), 0)
   const completedRecords = entryData.filter(record => record.status === '已完成')
-  const completedQuantity = completedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0)
+  const completedQuantity = completedRecords.reduce((sum, record) => sum + (Number(record.quantity) || 0), 0)
   const totalBatches = entryData.length
   
   // 获取出栏记录来计算存栏数量
@@ -166,7 +166,7 @@ async function getEntryOverview(dateRange) {
   
   const exitRecords = await exitQuery.get()
   const exitData = exitRecords.data
-  const totalExitQuantity = exitData.reduce((sum, record) => sum + (record.quantity || 0), 0)
+  const totalExitQuantity = exitData.reduce((sum, record) => sum + (Number(record.quantity) || 0), 0)
   
   // 获取死亡记录来计算存栏数量
   let deathQuery = db.collection('health_death_records')
@@ -179,7 +179,7 @@ async function getEntryOverview(dateRange) {
   
   const deathRecords = await deathQuery.get()
   const deathData = deathRecords.data
-  const totalDeathQuantity = deathData.reduce((sum, record) => sum + (record.deathCount || 0), 0)
+  const totalDeathQuantity = deathData.reduce((sum, record) => sum + (Number(record.deathCount) || 0), 0)
   
   // 计算存栏数量 = 入栏总数 - 出栏总数 - 死亡总数
   const stockQuantity = Math.max(0, totalEntryQuantity - totalExitQuantity - totalDeathQuantity)
@@ -191,7 +191,7 @@ async function getEntryOverview(dateRange) {
     if (!breedStats[breed]) {
       breedStats[breed] = { quantity: 0, batches: 0 }
     }
-    breedStats[breed].quantity += record.quantity || 0
+    breedStats[breed].quantity += Number(record.quantity) || 0
     breedStats[breed].batches += 1
   })
   
@@ -219,13 +219,13 @@ async function getExitOverview(dateRange) {
   const records = await query.get()
   const data = records.data
   
-  const totalQuantity = data.reduce((sum, record) => sum + (record.quantity || 0), 0)
-  const totalRevenue = data.reduce((sum, record) => sum + (record.totalRevenue || 0), 0)
+  const totalQuantity = data.reduce((sum, record) => sum + (Number(record.quantity) || 0), 0)
+  const totalRevenue = data.reduce((sum, record) => sum + (Number(record.totalRevenue) || 0), 0)
   const totalBatches = new Set(data.map(record => record.batchNumber)).size
   
   // 计算平均重量
   const totalWeight = data.reduce((sum, record) => 
-    sum + ((record.quantity || 0) * (record.avgWeight || 0)), 0)
+    sum + ((Number(record.quantity) || 0) * (Number(record.avgWeight) || 0)), 0)
   const avgWeight = totalQuantity > 0 ? (totalWeight / totalQuantity).toFixed(1) : '0.0'
   
   // 按状态统计
@@ -235,8 +235,8 @@ async function getExitOverview(dateRange) {
     if (!statusStats[status]) {
       statusStats[status] = { quantity: 0, revenue: 0 }
     }
-    statusStats[status].quantity += record.quantity || 0
-    statusStats[status].revenue += record.totalRevenue || 0
+    statusStats[status].quantity += Number(record.quantity) || 0
+    statusStats[status].revenue += Number(record.totalRevenue) || 0
   })
   
   return {
@@ -460,15 +460,15 @@ async function getDailyStats(event, wxContext) {
   
   // 统计入栏
   const entryStats = {
-    totalQuantity: entryRecords.data.reduce((sum, r) => sum + (r.quantity || 0), 0),
+    totalQuantity: entryRecords.data.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0),
     totalBatches: entryRecords.data.length,
-    totalAmount: entryRecords.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+    totalAmount: entryRecords.data.reduce((sum, r) => sum + (Number(r.totalAmount) || 0), 0)
   }
   
   // 统计出栏
   const exitStats = {
-    totalQuantity: exitRecords.data.reduce((sum, r) => sum + (r.quantity || 0), 0),
-    totalRevenue: exitRecords.data.reduce((sum, r) => sum + (r.totalRevenue || 0), 0),
+    totalQuantity: exitRecords.data.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0),
+    totalRevenue: exitRecords.data.reduce((sum, r) => sum + (Number(r.totalRevenue) || 0), 0),
     totalBatches: new Set(exitRecords.data.map(r => r.batchNumber)).size
   }
   
@@ -477,10 +477,10 @@ async function getDailyStats(event, wxContext) {
   const useRecords = materialRecords.data.filter(r => r.type === 'use')
   
   const materialStats = {
-    purchaseQuantity: purchaseRecords.reduce((sum, r) => sum + (r.quantity || 0), 0),
-    purchaseAmount: purchaseRecords.reduce((sum, r) => sum + (r.totalAmount || 0), 0),
-    useQuantity: useRecords.reduce((sum, r) => sum + (r.quantity || 0), 0),
-    useAmount: useRecords.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+    purchaseQuantity: purchaseRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0),
+    purchaseAmount: purchaseRecords.reduce((sum, r) => sum + (Number(r.totalAmount) || 0), 0),
+    useQuantity: useRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0),
+    useAmount: useRecords.reduce((sum, r) => sum + (Number(r.totalAmount) || 0), 0)
   }
   
   return {
@@ -605,9 +605,9 @@ async function getProductionFlow(event, wxContext) {
       .where({ batchNumber: entry.batchNumber })
       .get()
     
-    const totalExited = exitRecords.data.reduce((sum, r) => sum + (r.quantity || 0), 0)
-    const totalDeaths = deathRecords.data.reduce((sum, r) => sum + (r.deathCount || 0), 0)
-    const currentStock = entry.quantity - totalExited - totalDeaths
+    const totalExited = exitRecords.data.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)
+    const totalDeaths = deathRecords.data.reduce((sum, r) => sum + (Number(r.deathCount) || 0), 0)
+    const currentStock = Number(entry.quantity) - totalExited - totalDeaths
     
     // 修正存活率计算：存活率 = (入栏数量 - 死亡数量) / 入栏数量 * 100%
     const survivalRate = entry.quantity > 0 ? 

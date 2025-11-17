@@ -1,0 +1,197 @@
+<!-- 任务管理页面 -->
+<wxs module="utils" src="./lifecycle-management.wxs"></wxs>
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar
+    title="任务管理"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 骨架屏 -->
+    <view class="skeleton-loader" wx:if="{{showSkeleton}}">
+      <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="skeleton-item title"></view>
+        <view class="skeleton-item desc"></view>
+        <view class="skeleton-item meta"></view>
+      </view>
+    </view>
+    
+    <!-- 模板列表 -->
+    <view class="template-list" wx:elif="{{!selectedTemplate}}">
+      <view class="section-header">
+        <text class="section-title">选择模板查看任务</text>
+      </view>
+      
+      <view class="template-cards">
+        <view 
+          wx:for="{{templateList}}" 
+          wx:key="id" 
+          class="template-card"
+          bind:tap="selectTemplate"
+          data-template="{{item}}"
+        >
+          <view class="template-info">
+            <text class="template-name">{{item.name}}</text>
+            <text class="template-desc">{{item.description || '暂无描述'}}</text>
+          </view>
+          <view class="template-meta">
+            <text class="task-total">共{{item.taskCount || 0}}个任务</text>
+            <t-icon name="chevron-right" size="40rpx" color="#999" />
+          </view>
+        </view>
+      </view>
+      
+      <!-- 空状态 -->
+      <view wx:if="{{templateList.length === 0}}" class="empty-container">
+        <t-empty
+          icon="info-circle"
+          description="暂无模板"
+        >
+          <t-button
+            slot="action"
+            theme="primary"
+            bind:tap="importTemplate"
+          >
+            导入标准模板
+          </t-button>
+        </t-empty>
+      </view>
+      
+      <!-- 底部操作按钮 -->
+      <view class="bottom-actions">
+        <t-button
+          theme="light"
+          size="medium"
+          block
+          bind:tap="goToBatchConfig"
+        >
+          批次配置
+        </t-button>
+        <t-button
+          theme="light"
+          size="medium"
+          block
+          bind:tap="importTemplate"
+        >
+          导入模板
+        </t-button>
+        <t-button
+          theme="primary"
+          size="medium"
+          block
+          bind:tap="createNewTemplate"
+        >
+          新建模板
+        </t-button>
+      </view>
+    </view>
+    
+    <!-- 任务列表（选择模板后显示） -->
+    <view 
+      class="task-groups" 
+      wx:if="{{selectedTemplate}}"
+    >
+      
+      <!-- 模板信息栏 -->
+      <view class="template-info-bar">
+        <view class="info-content">
+          <text class="template-name">{{selectedTemplate.name}}</text>
+          <text class="template-desc">{{selectedTemplate.description || '暂无描述'}}</text>
+        </view>
+      </view>
+      
+      <!-- 日龄分组 -->
+      <view wx:for="{{groupedTasks}}" wx:key="dayAge" class="day-group">
+        <!-- 整体卡片容器 -->
+        <view class="day-card">
+          <!-- 日龄标题 -->
+          <view 
+            class="day-header"
+            bind:tap="toggleDayExpand"
+            data-day-age="{{item.dayAge}}"
+          >
+            <text class="day-age">第{{item.dayAge}}日龄</text>
+            <text class="task-count">{{item.taskCount}}个任务</text>
+            <view class="add-btn" bind:tap="addTask" data-day-age="{{item.dayAge}}" catchtap>
+              添加
+            </view>
+          </view>
+          
+          <!-- 虚线分隔（展开时显示） -->
+          <view wx:if="{{expandedGroups[item.dayAge]}}" class="header-divider"></view>
+          
+          <!-- 任务列表 -->
+          <view
+            class="tasks-container"
+            wx:if="{{expandedGroups[item.dayAge]}}"
+          >
+          <block
+            wx:for="{{item.tasks}}"
+            wx:for-item="task"
+            wx:for-index="taskIndex"
+            wx:key="id"
+          >
+            <t-swipe-cell
+              data-day-age="{{item.dayAge}}"
+              data-task-id="{{task.id}}"
+            >
+              <view class="task-item">
+                <view class="task-header">
+                  <text class="task-title">{{task.title}}</text>
+                  <view class="task-meta">
+                    <t-tag theme="primary" size="small">{{task.category}}</t-tag>
+                    <t-tag
+                      wx:if="{{task.priority}}"
+                      theme="{{utils.getPriorityTheme(task.priority)}}"
+                      size="small"
+                    >
+                      {{utils.getPriorityText(task.priority)}}优先级
+                    </t-tag>
+                  </view>
+                </view>
+                
+                <view class="task-content">
+                  <text class="task-description">{{task.description}}</text>
+                  <view wx:if="{{task.dosage}}" class="task-detail">
+                    <text class="detail-label">用量：</text>
+                    <text class="detail-value">{{task.dosage}}</text>
+                  </view>
+                  <view wx:if="{{task.duration}}" class="task-detail">
+                    <text class="detail-label">持续天数：</text>
+                    <text class="detail-value">{{task.duration}}天</text>
+                  </view>
+                </view>
+              </view>
+              <view slot="right" class="swipe-right-wrapper">
+                <view 
+                  class="swipe-btn-edit"
+                  bind:tap="editTask"
+                  data-day-age="{{item.dayAge}}"
+                  data-task-id="{{task.id}}"
+                >
+                  编辑
+                </view>
+                <view 
+                  class="swipe-btn-delete"
+                  bind:tap="deleteTask"
+                  data-day-age="{{item.dayAge}}"
+                  data-task-id="{{task.id}}"
+                  data-task-title="{{task.title}}"
+                >
+                  删除
+                </view>
+              </view>
+            </t-swipe-cell>
+            <!-- 虚线分隔 -->
+            <view wx:if="{{taskIndex < item.tasks.length - 1}}" class="task-divider"></view>
+          </block>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

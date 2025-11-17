@@ -586,11 +586,10 @@ Page({
   /**
    * 打开疫苗表单 - 与首页保持一致
    */
-  openVaccineForm(task: Task) {
-    this.initVaccineFormData(task)
+  async openVaccineForm(task: Task) {
+    await this.initVaccineFormData(task)
     this.setData({
       showVaccineFormPopup: true,
-      showTaskDetail: false,
       showTaskDetailPopup: false
     })
   },
@@ -655,7 +654,32 @@ Page({
   /**
    * 初始化疫苗表单数据
    */
-  initVaccineFormData(task: Task) {
+  async initVaccineFormData(task: Task) {
+    // 获取当前批次的存栏数量
+    let currentBatchStockQuantity = 0
+    const batchId = this.data.currentBatchId
+    if (batchId) {
+      try {
+        const batchResult = await wx.cloud.callFunction({
+          name: 'production-entry',
+          data: { action: 'getActiveBatches' }
+        })
+        
+        if (batchResult.result?.success) {
+          const activeBatches = batchResult.result.data || []
+          const currentBatch = activeBatches.find((b: any) => b._id === batchId)
+          if (currentBatch) {
+            currentBatchStockQuantity = currentBatch.currentStock || 
+                                       currentBatch.currentQuantity || 
+                                       currentBatch.currentCount || 
+                                       0
+          }
+        }
+      } catch (error) {
+        console.error('获取批次存栏数失败:', error)
+      }
+    }
+
     const vaccineFormData: VaccineFormData = {
       veterinarianName: '',
       veterinarianContact: '',
@@ -664,7 +688,7 @@ Page({
       batchNumber: '',
       dosage: '0.5ml/只',
       routeIndex: 0,
-      vaccinationCount: 0,
+      vaccinationCount: currentBatchStockQuantity,  // 默认填充存栏数量
       location: '',
       vaccineCost: '',
       veterinaryCost: '',

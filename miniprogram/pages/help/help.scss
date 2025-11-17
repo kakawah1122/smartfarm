@@ -86,14 +86,36 @@ page {
     color: #7a3514;
   }
 
-  .t-cell-group {
-    background: transparent;
+  .contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24rpx;
   }
 
-  .t-cell {
-    --td-cell-border-color: rgba(237, 123, 47, 0.16);
-    --td-cell-note-color: #ea7200;
-    --td-cell-title-color: #7a3514;
+  .contact-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+    padding: 20rpx 0;
+    border-bottom: 1rpx solid rgba(237, 123, 47, 0.16);
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+
+  .contact-label {
+    font-size: 24rpx;
+    font-weight: 500;
+    color: #7a3514;
+  }
+
+  .contact-value {
+    font-size: 26rpx;
+    color: #ea7200;
+    line-height: 1.5;
+    word-break: break-all;
   }
 }
 

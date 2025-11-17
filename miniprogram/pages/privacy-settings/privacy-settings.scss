@@ -145,9 +145,8 @@ page {
 }
 
 .status-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8rpx;
   font-size: 26rpx;
   font-weight: 500;
   padding: 6rpx 16rpx;
@@ -192,6 +191,15 @@ page {
   font-size: 26rpx;
   color: #666;
   line-height: 1.6;
+}
+
+/* 查看协议按钮 */
+.contract-btn {
+  padding: 6rpx 16rpx !important;
+  height: auto !important;
+  min-height: 48rpx !important;
+  font-size: 24rpx !important;
+  line-height: 1.4 !important;
 }
 
 /* 说明列表 */

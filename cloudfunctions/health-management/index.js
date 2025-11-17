@@ -257,6 +257,43 @@ async function createPreventionRecord(event, wxContext) {
 
     const result = await dbManager.createPreventionRecord(recordData)
 
+    // 如果有成本信息，创建财务记录
+    if (costInfo && costInfo.totalCost > 0) {
+      try {
+        const financeRecordData = {
+          recordId: 'PREV' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+          costType: 'health',
+          costCategory: preventionType === 'vaccine' ? 'vaccine' : 'prevention',
+          sourceType: 'prevention_record',
+          sourceRecordId: result._id,
+          batchId,
+          amount: costInfo.totalCost,
+          description: preventionType === 'vaccine' ? 
+            `疫苗接种 - ${vaccineInfo?.name || ''}` : 
+            `预防措施 - ${preventionType}`,
+          details: {
+            preventionType,
+            preventionRecordId: result._id,
+            laborCost: costInfo.laborCost || 0,
+            materialCost: costInfo.vaccineCost || costInfo.materialCost || 0,
+            otherCost: costInfo.otherCost || 0,
+            veterinarian: veterinarianInfo?.name || ''
+          },
+          status: 'confirmed',
+          createTime: new Date().toISOString(),
+          updateTime: new Date().toISOString(),
+          isDeleted: false,
+          _openid: openid
+        }
+        
+        await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).add({ data: financeRecordData })
+        console.log('[预防成本] 财务记录创建成功', financeRecordData.recordId)
+      } catch (financeError) {
+        console.error('[预防成本] 创建财务记录失败:', financeError)
+        // 不影响主流程，继续执行
+      }
+    }
+
     // 记录审计日志
     await dbManager.createAuditLog(
       openid,
@@ -1999,7 +2036,129 @@ async function getHealthOverview(event, wxContext) {
   }
 }
 
-// 获取健康统计数据
+/**
+ * 获取健康统计数据（优化版 - 使用聚合管道）
+ * 减少查询次数，提升性能
+ */
+async function getHealthStatisticsOptimized(batchId) {
+  try {
+    const $ = db.command.aggregate
+    
+    // 并行执行所有必要的统计查询
+    const [
+      batchResult,
+      abnormalStats,
+      treatmentStats,
+      deathStats
+    ] = await Promise.all([
+      // 1. 获取批次信息
+      db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get(),
+      
+      // 2. 异常统计 - 使用聚合管道
+      db.collection(COLLECTIONS.HEALTH_RECORDS)
+        .aggregate()
+        .match({
+          batchId,
+          recordType: 'ai_diagnosis',
+          status: 'abnormal',
+          isDeleted: _.neq(true)
+        })
+        .group({
+          _id: null,
+          totalAbnormal: $.sum('$affectedCount')
+        })
+        .end(),
+      
+      // 3. 治疗统计 - 使用聚合管道
+      db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+        .aggregate()
+        .match({
+          batchId,
+          isDeleted: _.neq(true)
+        })
+        .project({
+          status: '$outcome.status',
+          totalTreated: '$outcome.totalTreated'
+        })
+        .group({
+          _id: null,
+          ongoingCount: $.sum($.cond({
+            if: $.or([
+              $.eq(['$status', 'ongoing']),
+              $.eq(['$status', 'pending'])
+            ]),
+            then: '$totalTreated',
+            else: 0
+          })),
+          totalTreated: $.sum('$totalTreated')
+        })
+        .end(),
+      
+      // 4. 死亡统计 - 使用聚合管道
+      db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+        .aggregate()
+        .match({
+          batchId,
+          isDeleted: false
+        })
+        .group({
+          _id: null,
+          totalDead: $.sum('$deathCount')
+        })
+        .end()
+    ])
+    
+    // 处理查询结果
+    if (!batchResult.data) {
+      throw new Error('批次不存在')
+    }
+    
+    const batch = batchResult.data
+    const originalQuantity = batch.quantity || 0
+    
+    // 提取统计数据
+    const abnormalCount = abnormalStats.list?.[0]?.totalAbnormal || 0
+    const treatingCount = treatmentStats.list?.[0]?.ongoingCount || 0
+    const totalTreatedAnimals = treatmentStats.list?.[0]?.totalTreated || 0
+    const deadCount = deathStats.list?.[0]?.totalDead || 0
+    
+    // 计算关键指标
+    const totalAnimals = originalQuantity - deadCount
+    const sickCount = abnormalCount + treatingCount
+    const healthyCount = Math.max(0, totalAnimals - sickCount)
+    const healthyRate = totalAnimals > 0 ? ((healthyCount / totalAnimals) * 100).toFixed(1) : 100
+    const mortalityRate = originalQuantity > 0 ? ((deadCount / originalQuantity) * 100).toFixed(2) : 0
+    
+    return {
+      totalChecks: 0, // 可根据需要补充
+      totalAnimals,
+      healthyCount,
+      sickCount,
+      deadCount,
+      healthyRate,
+      mortalityRate,
+      abnormalCount,
+      treatingCount,
+      originalQuantity
+    }
+    
+  } catch (error) {
+    console.error('获取健康统计失败:', error)
+    return {
+      totalChecks: 0,
+      totalAnimals: 0,
+      healthyCount: 0,
+      sickCount: 0,
+      deadCount: 0,
+      healthyRate: 0,
+      mortalityRate: 0,
+      abnormalCount: 0,
+      treatingCount: 0
+    }
+  }
+}
+
+// 获取健康统计数据（原版保留，用于兼容）
 async function getHealthStatistics(batchId, dateRange) {
   try {
     // 获取批次信息
@@ -3410,7 +3569,8 @@ async function getBatchCompleteData(event, wxContext) {
     promises.push(
       (async () => {
         try {
-          const stats = await getHealthStatistics(batchId, null)
+          // ✅ 使用优化版本，提升性能
+          const stats = await getHealthStatisticsOptimized(batchId)
           result.healthStats = stats
         } catch (error) {
           console.error('获取健康统计失败:', error)
@@ -3487,18 +3647,73 @@ async function getBatchCompleteData(event, wxContext) {
       promises.push(
         (async () => {
           try {
-            // 查询治疗记录
-            const treatmentRecords = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-              .where({ 
+            // ✅ 优化：使用聚合管道计算治疗统计，避免获取大量数据
+            const $ = db.command.aggregate
+            
+            const treatmentStatsResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+              .aggregate()
+              .match({
                 _openid: openid,
                 batchId,
-                isDeleted: false 
+                isDeleted: false
               })
-              .get()
+              .project({
+                status: $.cond({
+                  if: $.eq([$.type(['$outcome']), 'string']),
+                  then: '$outcome',
+                  else: $.ifNull(['$outcome.status', '$treatmentStatus', '$status', ''])
+                }),
+                cost: $.ifNull(['$cost.total', '$totalCost', 0]),
+                totalTreated: $.ifNull(['$outcome.totalTreated', '$totalTreated', '$affectedCount', '$initialCount', 0]),
+                curedCount: $.ifNull(['$outcome.curedCount', '$outcome.totalCured', '$outcome.recoveredCount', '$curedCount', '$totalCured', '$recoveredCount', 0]),
+                deathCount: $.ifNull(['$outcome.deathCount', '$outcome.diedCount', '$deathCount', '$diedCount', 0])
+              })
+              .group({
+                _id: null,
+                totalCost: $.sum('$cost'),
+                treatmentCount: $.sum(1),
+                ongoingCount: $.sum($.cond({
+                  if: $.or([
+                    $.eq(['$status', 'ongoing']),
+                    $.eq(['$status', 'pending'])
+                  ]),
+                  then: 1,
+                  else: 0
+                })),
+                totalTreated: $.sum('$totalTreated'),
+                totalCuredAnimals: $.sum('$curedCount'),
+                totalDiedAnimals: $.sum('$deathCount'),
+                curedRecords: $.sum($.cond({
+                  if: $.eq(['$status', 'cured']),
+                  then: 1,
+                  else: 0
+                })),
+                diedRecords: $.sum($.cond({
+                  if: $.eq(['$status', 'died']),
+                  then: 1,
+                  else: 0
+                }))
+              })
+              .end()
             
-            // 计算统计
-            const stats = calculateBatchTreatmentStats(treatmentRecords.data)
-            result.treatmentStats = stats
+            const statsData = treatmentStatsResult.list?.[0] || {}
+            const cureRate = statsData.totalTreated > 0 
+              ? ((statsData.totalCuredAnimals / statsData.totalTreated) * 100).toFixed(1) 
+              : 0
+            
+            result.treatmentStats = {
+              totalCost: Number((statsData.totalCost || 0).toFixed(2)),
+              treatmentCount: statsData.treatmentCount || 0,
+              ongoingCount: statsData.ongoingCount || 0,
+              ongoingAnimalsCount: 0, // 需要单独计算
+              curedCount: statsData.curedRecords || 0,
+              diedCount: statsData.diedRecords || 0,
+              totalTreated: statsData.totalTreated || 0,
+              totalCuredAnimals: statsData.totalCuredAnimals || 0,
+              totalDiedAnimals: statsData.totalDiedAnimals || 0,
+              deadCount: statsData.totalDiedAnimals || 0,
+              cureRate
+            }
           } catch (error) {
             console.error('获取治疗统计失败:', error)
             result.treatmentStats = null
@@ -3512,27 +3727,36 @@ async function getBatchCompleteData(event, wxContext) {
       promises.push(
         (async () => {
           try {
-            // 调用ai-diagnosis云函数获取诊断历史
-            const diagnosisResult = await cloud.callFunction({
-              name: 'ai-diagnosis',
-              data: {
-                action: 'get_diagnosis_history',
+            // ✅ 优化：直接查询诊断记录，避免云函数嵌套调用
+            const diagnosisResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+              .where({
                 batchId: batchId,
-                page: 1,
-                pageSize: diagnosisLimit
-              }
-            })
+                isDeleted: _.neq(true)
+              })
+              .orderBy('diagnosisTime', 'desc')
+              .limit(diagnosisLimit)
+              .field({
+                _id: true,
+                batchId: true,
+                diagnosisTime: true,
+                diagnosisType: true,
+                symptoms: true,
+                diagnosis: true,
+                deathCount: true,
+                affectedCount: true,
+                severity: true,
+                images: true,
+                treatmentPlan: true,
+                medicationSuggestions: true
+              })
+              .get()
             
-            if (diagnosisResult.result && diagnosisResult.result.success) {
-              const records = diagnosisResult.result.data?.records || []
-              // 过滤图片中的null值
-              result.diagnosisHistory = records.map(record => ({
-                ...record,
-                images: (record.images || []).filter(img => img && typeof img === 'string')
-              }))
-            } else {
-              result.diagnosisHistory = []
-            }
+            const records = diagnosisResult.data || []
+            // 过滤图片中的null值
+            result.diagnosisHistory = records.map(record => ({
+              ...record,
+              images: (record.images || []).filter(img => img && typeof img === 'string')
+            }))
           } catch (error) {
             console.error('获取诊断历史失败:', error)
             result.diagnosisHistory = []
@@ -3573,15 +3797,16 @@ async function getBatchCompleteData(event, wxContext) {
       promises.push(
         (async () => {
           try {
-            const pendingResult = await cloud.callFunction({
-              name: 'ai-diagnosis',
-              data: {
-                action: 'get_pending_diagnosis_count',
-                batchId: batchId
-              }
-            })
+            // ✅ 优化：直接查询待诊断记录数量，避免云函数嵌套调用
+            const pendingResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+              .where({
+                batchId: batchId,
+                isDeleted: _.neq(true),
+                treatmentStatus: _.in(['pending', null, ''])  // 待处理状态
+              })
+              .count()
             
-            result.pendingDiagnosisCount = pendingResult.result?.data?.count || 0
+            result.pendingDiagnosisCount = pendingResult.total || 0
           } catch (error) {
             console.error('获取待诊断数量失败:', error)
             result.pendingDiagnosisCount = 0
@@ -3786,6 +4011,9 @@ exports.main = async (event, context) => {
       
       case 'fix_treatment_records_openid':
         return await fixTreatmentRecordsOpenId(event, wxContext)
+      
+      case 'sync_vaccine_costs_to_finance':
+        return await syncVaccineCostsToFinance(event, wxContext)
 
       default:
         throw new Error(`未知操作: ${action}`)
@@ -7532,10 +7760,24 @@ async function completePreventionTask(event, wxContext) {
     
     // ========== 7. 创建财务成本记录（仅在开启财务入账时） ==========
     let costRecordId = null
-    const shouldSyncToFinance = Boolean(
-      preventionData?.costInfo?.totalCost > 0 &&
-      (preventionData?.costInfo?.shouldSyncToFinance === true || preventionData?.costInfo?.source === 'purchase')
-    )
+    // 优化：疫苗接种费用默认同步到财务系统
+    // 1. 如果明确设置了 shouldSyncToFinance，使用该值
+    // 2. 如果是采购类型（source === 'purchase'），同步
+    // 3. 对于疫苗接种（vaccine），默认同步（这是常见的成本项）
+    let shouldSyncToFinance = false
+    if (preventionData?.costInfo?.totalCost > 0) {
+      if (preventionData?.costInfo?.shouldSyncToFinance !== undefined) {
+        // 明确设置了同步标记
+        shouldSyncToFinance = Boolean(preventionData.costInfo.shouldSyncToFinance)
+      } else if (preventionData?.costInfo?.source === 'purchase') {
+        // 采购类型，需要同步
+        shouldSyncToFinance = true
+      } else if (preventionData?.preventionType === 'vaccine') {
+        // 疫苗接种默认同步到财务
+        shouldSyncToFinance = true
+        debugLog('[预防任务] 疫苗接种费用默认同步到财务系统', logContext)
+      }
+    }
 
     if (shouldSyncToFinance) {
       debugLog('[预防任务] 创建成本记录', {
@@ -7550,17 +7792,26 @@ async function completePreventionTask(event, wxContext) {
             data: {
               farmId: task.farmId || '',
               batchId,
+              // ✅ 重要：必须设置costType字段，finance-management依赖此字段
+              costType: 'health',  // 疫苗属于健康成本
               category: preventionData.preventionType === 'vaccine' ? 'vaccine' :
                        preventionData.preventionType === 'disinfection' ? 'disinfection' : 'medicine',
               amount: preventionData.costInfo.totalCost,
-              costDate: preventionData.preventionDate,
-              description: `预防任务：${task.taskName}`,
+              date: preventionData.preventionDate,  // 使用date字段
+              costDate: preventionData.preventionDate,  // 保留兼容
+              description: preventionData.preventionType === 'vaccine' 
+                ? `疫苗接种 - ${preventionData.vaccineInfo?.name || '疫苗'}`
+                : preventionData.preventionType === 'disinfection' 
+                ? `消毒管理 - ${preventionData.disinfectantInfo?.name || '消毒'}`
+                : `医疗费用 - ${preventionData.medicineInfo?.name || task.taskName || '健康管理'}`,
               relatedRecordId: recordResult._id,
               userId: openid,
               isDeleted: false,
+              createTime: new Date().toISOString(),  // 使用标准化时间格式
               createdAt: new Date(),
               syncSource: preventionData.costInfo.source || 'manual',
-              syncTriggeredAt: new Date()
+              syncTriggeredAt: new Date(),
+              _openid: openid  // 确保设置_openid
             }
           })
 
@@ -7721,6 +7972,135 @@ async function updatePreventionEffectiveness(event, wxContext) {
       success: false,
       error: error.message,
       message: '更新效果评估失败'
+    }
+  }
+}
+
+/**
+ * 同步历史疫苗成本到财务系统
+ */
+async function syncVaccineCostsToFinance(event, wxContext) {
+  try {
+    const openid = wxContext.OPENID
+    const { startDate, endDate, dryRun = false } = event
+    
+    // 1. 查询预防记录中有成本但未同步到财务的疫苗记录
+    let query = db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS).where({
+      preventionType: 'vaccine',
+      'costInfo.totalCost': _.gt(0)
+    })
+    
+    // 如果指定了日期范围
+    if (startDate && endDate) {
+      query = query.where({
+        preventionDate: _.gte(startDate).and(_.lte(endDate))
+      })
+    }
+    
+    const preventionResult = await query.limit(100).get()
+    const preventionRecords = preventionResult.data
+    
+    console.log(`[疫苗成本同步] 找到 ${preventionRecords.length} 条有成本的疫苗记录`)
+    
+    // 2. 查询已存在的财务记录，避免重复创建
+    const preventionIds = preventionRecords.map(r => r._id)
+    const existingFinanceResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).where({
+      sourceType: _.in(['vaccine_task', 'prevention_record']),
+      sourceRecordId: _.in(preventionIds)
+    }).get()
+    
+    const existingFinanceMap = new Map(
+      existingFinanceResult.data.map(r => [r.sourceRecordId, r])
+    )
+    
+    // 3. 过滤出需要同步的记录
+    const recordsToSync = preventionRecords.filter(r => !existingFinanceMap.has(r._id))
+    
+    console.log(`[疫苗成本同步] 需要同步 ${recordsToSync.length} 条记录`)
+    
+    if (dryRun) {
+      return {
+        success: true,
+        message: '试运行完成（未实际创建记录）',
+        data: {
+          totalRecords: preventionRecords.length,
+          existingRecords: existingFinanceResult.data.length,
+          recordsToSync: recordsToSync.length,
+          records: recordsToSync.map(r => ({
+            id: r._id,
+            date: r.preventionDate,
+            vaccine: r.vaccineInfo?.name || '未知疫苗',
+            cost: r.costInfo?.totalCost || 0
+          }))
+        }
+      }
+    }
+    
+    // 4. 批量创建财务记录
+    let successCount = 0
+    let failedCount = 0
+    const failedRecords = []
+    
+    for (const record of recordsToSync) {
+      try {
+        const financeRecordData = {
+          recordId: 'SYNC' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+          costType: 'health',
+          costCategory: 'vaccine',
+          sourceType: 'prevention_record',
+          sourceRecordId: record._id,
+          batchId: record.batchId,
+          amount: record.costInfo.totalCost,
+          description: `疫苗接种 - ${record.vaccineInfo?.name || ''}`,
+          details: {
+            preventionType: 'vaccine',
+            preventionRecordId: record._id,
+            vaccineName: record.vaccineInfo?.name || '',
+            laborCost: record.costInfo?.laborCost || 0,
+            materialCost: record.costInfo?.vaccineCost || record.costInfo?.materialCost || 0,
+            otherCost: record.costInfo?.otherCost || 0,
+            veterinarian: record.veterinarianInfo?.name || '',
+            syncedFrom: 'historical_data',
+            syncDate: new Date().toISOString()
+          },
+          date: record.preventionDate,
+          status: 'confirmed',
+          createTime: record.createTime || record.createdAt || new Date().toISOString(),
+          updateTime: new Date().toISOString(),
+          isDeleted: false,
+          _openid: record._openid || record.operator || openid
+        }
+        
+        await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).add({ data: financeRecordData })
+        successCount++
+      } catch (error) {
+        console.error(`[疫苗成本同步] 创建财务记录失败:`, error)
+        failedCount++
+        failedRecords.push({
+          id: record._id,
+          error: error.message
+        })
+      }
+    }
+    
+    return {
+      success: true,
+      message: `同步完成：成功 ${successCount} 条，失败 ${failedCount} 条`,
+      data: {
+        totalRecords: preventionRecords.length,
+        existingRecords: existingFinanceResult.data.length,
+        syncedCount: successCount,
+        failedCount: failedCount,
+        failedRecords: failedRecords
+      }
+    }
+    
+  } catch (error) {
+    console.error('[疫苗成本同步] 错误:', error)
+    return {
+      success: false,
+      error: error.message,
+      message: '同步疫苗成本失败'
     }
   }
 }

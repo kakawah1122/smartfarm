@@ -1,0 +1,26 @@
+// 任务管理页面的WXS辅助函数
+
+// 获取优先级文字
+function getPriorityText(priority) {
+  var text = {
+    'high': '高',
+    'medium': '中',
+    'low': '低'
+  }
+  return text[priority] || '中'
+}
+
+// 获取优先级主题
+function getPriorityTheme(priority) {
+  var theme = {
+    'high': 'danger',
+    'medium': 'warning',
+    'low': 'default'
+  }
+  return theme[priority] || 'default'
+}
+
+module.exports = {
+  getPriorityText: getPriorityText,
+  getPriorityTheme: getPriorityTheme
+}

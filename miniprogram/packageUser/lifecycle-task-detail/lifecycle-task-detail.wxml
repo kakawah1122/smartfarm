@@ -1,0 +1,111 @@
+<!-- 养殖周期任务详情页面 -->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <navigation-bar
+    title="任务详情"
+    show-back="true"
+    show-menu="false"
+    bind:back="goBack"
+  />
+  
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 任务基本信息 -->
+    <view class="task-info-card">
+      <view class="task-header">
+        <text class="task-title">{{taskData.title}}</text>
+        <view class="task-badges">
+          <t-tag theme="primary" size="medium">第{{dayAge}}日龄</t-tag>
+          <t-tag theme="{{priorityTheme}}" size="medium">{{priorityText}}</t-tag>
+        </view>
+      </view>
+      
+      <view class="task-meta">
+        <view class="meta-item">
+          <text class="meta-label">任务类型</text>
+          <text class="meta-value">{{taskData.category}}</text>
+        </view>
+        <view class="meta-item" wx:if="{{taskData.estimatedTime}}">
+          <text class="meta-label">预计用时</text>
+          <text class="meta-value">{{taskData.estimatedTime}}分钟</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 任务描述 -->
+    <view class="detail-section">
+      <view class="section-header">
+        <text class="section-title">任务描述</text>
+      </view>
+      <view class="section-content">
+        <text class="task-description">{{taskData.description || '暂无描述'}}</text>
+      </view>
+    </view>
+    
+    <!-- 用药信息 -->
+    <view class="detail-section" wx:if="{{taskData.dosage || taskData.duration}}">
+      <view class="section-header">
+        <text class="section-title">用药信息</text>
+      </view>
+      <view class="section-content">
+        <view class="info-item" wx:if="{{taskData.dosage}}">
+          <text class="info-label">用量：</text>
+          <text class="info-value">{{taskData.dosage}}</text>
+        </view>
+        <view class="info-item" wx:if="{{taskData.duration}}">
+          <text class="info-label">持续天数：</text>
+          <text class="info-value">{{taskData.duration}}天</text>
+        </view>
+        <view class="info-item" wx:if="{{taskData.dayInSeries && taskData.duration > 1}}">
+          <text class="info-label">进度：</text>
+          <text class="info-value">第{{taskData.dayInSeries}}/{{taskData.duration}}天</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 所需材料 -->
+    <view class="detail-section" wx:if="{{taskData.materials && taskData.materials.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">所需材料</text>
+      </view>
+      <view class="section-content">
+        <view wx:for="{{taskData.materials}}" wx:key="index" class="material-item">
+          <t-icon name="check-circle" size="32rpx" color="#52c41a" />
+          <text class="material-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 备注信息 -->
+    <view class="detail-section" wx:if="{{taskData.notes}}">
+      <view class="section-header">
+        <text class="section-title">备注</text>
+      </view>
+      <view class="section-content">
+        <text class="notes-text">{{taskData.notes}}</text>
+      </view>
+    </view>
+    
+    <!-- 相关日龄任务 -->
+    <view class="detail-section" wx:if="{{relatedTasks.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">同日其他任务</text>
+      </view>
+      <view class="section-content">
+        <view wx:for="{{relatedTasks}}" wx:key="id" class="related-task-item" bind:tap="switchTask" data-task="{{item}}">
+          <view class="related-task-info">
+            <text class="related-task-title">{{item.title}}</text>
+            <t-tag theme="default" size="small">{{item.category}}</t-tag>
+          </view>
+          <t-icon name="chevron-right" size="40rpx" color="#999" />
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 底部操作栏 -->
+  <view class="bottom-actions">
+    <t-button theme="light" size="large" bind:tap="editTask">编辑任务</t-button>
+    <t-button theme="primary" size="large" bind:tap="goBack">返回</t-button>
+  </view>
+</view>

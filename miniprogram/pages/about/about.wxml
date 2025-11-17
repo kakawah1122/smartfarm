@@ -11,9 +11,7 @@
   <scroll-view class="scroll-container" scroll-y style="padding-top: {{totalNavHeight}}rpx;">
     <!-- 应用信息卡片 -->
     <view class="card app-info-card">
-      <view class="app-logo">🦢</view>
       <view class="app-name">{{appName}}</view>
-      <view class="app-version">{{appVersion}}</view>
       <view class="app-description">{{appDescription}}</view>
     </view>
 
@@ -38,9 +36,6 @@
           wx:for-index="index"
           class="feature-item feature-item--{{feature.theme}} {{features.length % 2 === 1 && index === features.length - 1 ? 'feature-item-single' : ''}}"
         >
-          <view class="feature-icon">
-            <text class="feature-emoji">{{feature.emoji}}</text>
-          </view>
           <view class="feature-text">{{feature.title}}</view>
         </view>
       </view>

@@ -338,7 +338,43 @@ async function completeVaccineTask(event, wxContext) {
 
     const preventionResult = await dbManager.createPreventionRecord(preventionData)
     
-    // 3. 同时创建健康记录用于追踪疫苗接种对健康的影响
+    // 3. 创建财务成本记录（疫苗成本需要计入财务管理）
+    if (vaccineRecord.cost && vaccineRecord.cost.total > 0) {
+      try {
+        const financeRecordData = {
+          recordId: 'VAC' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+          costType: 'health',
+          costCategory: 'vaccine',
+          sourceType: 'vaccine_task',
+          sourceRecordId: preventionResult._id,
+          batchId,
+          amount: vaccineRecord.cost.total,
+          description: `疫苗接种 - ${vaccineRecord.vaccine.name}`,
+          details: {
+            vaccineName: vaccineRecord.vaccine.name,
+            vaccineCost: vaccineRecord.cost.vaccine || 0,
+            laborCost: vaccineRecord.cost.veterinary || 0,
+            otherCost: vaccineRecord.cost.other || 0,
+            veterinarian: vaccineRecord.veterinarian.name,
+            taskId: taskId,
+            preventionRecordId: preventionResult._id
+          },
+          status: 'confirmed',
+          createTime: new Date().toISOString(),
+          updateTime: new Date().toISOString(),
+          isDeleted: false,
+          _openid: openid
+        }
+        
+        await db.collection(COLLECTIONS.FINANCE_COST_RECORDS).add({ data: financeRecordData })
+        console.log('[疫苗成本] 财务记录创建成功', financeRecordData.recordId)
+      } catch (financeError) {
+        console.error('[疫苗成本] 创建财务记录失败:', financeError)
+        // 不影响主流程，继续执行
+      }
+    }
+    
+    // 4. 同时创建健康记录用于追踪疫苗接种对健康的影响
     try {
       const healthRecordData = {
         batchId,

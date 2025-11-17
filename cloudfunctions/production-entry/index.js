@@ -114,37 +114,59 @@ async function createInitialHealthCheck(batchId, batchNumber, quantity, operator
   }
 }
 
-// 创建批次待办事项
+// 创建批次待办事项（基于模板）
 // ⚠️ 注意：userId 仅用于记录批次创建者，查询任务时不应使用 userId 过滤
 // 所有用户共享同一批次的任务，避免任务重复
-async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
+async function createBatchTodos(batchId, batchNumber, entryDate, userId, templateId = 'default') {
   // 已移除调试日志
   const batchTodos = []
   const now = new Date()
   
-  // 获取所有有任务的日龄
-  const taskDays = getAllTaskDays()
+  // 根据模板获取任务配置
+  let templateTasks = {}
   
-  for (const dayAge of taskDays) {
-    const tasks = getTasksByAge(dayAge)
+  if (templateId === 'default') {
+    // 使用默认的标准养殖计划
+    const taskDays = getAllTaskDays()
+    
+    for (const dayAge of taskDays) {
+      const tasks = getTasksByAge(dayAge)
+      templateTasks[dayAge] = tasks
+    }
+  } else {
+    // 查询自定义模板（如果需要的话）
+    // 这里暂时只用默认模板
+    const taskDays = getAllTaskDays()
+    
+    for (const dayAge of taskDays) {
+      const tasks = getTasksByAge(dayAge)
+      templateTasks[dayAge] = tasks
+    }
+  }
+  
+  // 为每个日龄生成任务
+  for (const [dayAge, tasks] of Object.entries(templateTasks)) {
+    const dayAgeNum = parseInt(dayAge)
     
     // 计算该日龄对应的日期
     const entryDateTime = new Date(entryDate + 'T00:00:00')
-    const taskDate = new Date(entryDateTime.getTime() + (dayAge - 1) * 24 * 60 * 60 * 1000)
+    const taskDate = new Date(entryDateTime.getTime() + (dayAgeNum - 1) * 24 * 60 * 60 * 1000)
     
     for (const task of tasks) {
-      batchTodos.push({
+      // 确保所有字段都有值
+      const taskData = {
         batchId,
         batchNumber,
-        dayAge,
-        taskId: task.id,
-        type: task.type,
-        priority: task.priority,
-        title: task.title,
-        description: task.description,
-        category: task.category,
+        dayAge: dayAgeNum,
+        taskId: task.id || `${batchId}_${dayAge}_${Math.random().toString(36).slice(2)}`,
+        type: task.type || 'inspection',
+        priority: task.priority || 'medium',
+        // 确保 title 和 description 有明确的值
+        title: task.title || '未命名任务',
+        description: task.description || task.title || '暂无描述',
+        category: task.category || '健康管理',
         estimatedTime: task.estimatedTime || 0,
-        materials: task.materials || [],
+        materials: Array.isArray(task.materials) ? task.materials : [],
         dosage: task.dosage || '',
         duration: task.duration || 1,
         dayInSeries: task.dayInSeries || 1,
@@ -158,11 +180,16 @@ async function createBatchTodos(batchId, batchNumber, entryDate, userId) {
         completedAt: null,
         completedBy: null,
         completionNotes: '',
+        // 添加模板信息
+        templateId: templateId,
+        templateName: templateId === 'default' ? '默认模板' : templateId,
         // ⚠️ userId 仅记录创建者，不用于任务查询过滤
         createdBy: userId,  // 改名为 createdBy 更清晰
         createTime: now,
         updateTime: now
-      })
+      }
+      
+      batchTodos.push(taskData)
     }
   }
   
@@ -215,12 +242,13 @@ async function fixBatchTasks(event, wxContext) {
     }).remove()
     
     // 已移除调试日志
-    // 重新创建完整的任务
+    // 重新创建完整的任务（使用批次的模板）
     const todoCount = await createBatchTodos(
       batchId,
       batch.batchNumber,
       batch.entryDate,
-      openid
+      openid,
+      batch.templateId || 'default'  // 使用批次的模板或默认模板
     )
     
     // 已移除调试日志
@@ -240,6 +268,148 @@ async function fixBatchTasks(event, wxContext) {
       success: false,
       error: error.message,
       message: `批次任务修复失败: ${error.message}`
+    }
+  }
+}
+
+// 修复批次模板信息
+async function fixBatchTemplateInfo(event, wxContext) {
+  try {
+    // 查询所有没有 templateId 的批次
+    const result = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .where({
+        status: _.neq('archived')  // 只修复非归档批次
+      })
+      .get()
+    
+    let fixedCount = 0
+    const results = []
+    
+    for (const batch of result.data) {
+      // 检查是否缺少模板信息
+      if (!batch.templateId) {
+        await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+          .doc(batch._id)
+          .update({
+            data: {
+              templateId: 'default',
+              templateName: '默认模板',
+              updateTime: new Date()
+            }
+          })
+        
+        fixedCount++
+        results.push({
+          batchNumber: batch.batchNumber,
+          fixed: true
+        })
+      } else {
+        results.push({
+          batchNumber: batch.batchNumber,
+          fixed: false,
+          reason: '已有模板信息'
+        })
+      }
+    }
+    
+    return {
+      success: true,
+      data: {
+        total: result.data.length,
+        fixed: fixedCount,
+        results
+      },
+      message: `成功修复 ${fixedCount} 个批次的模板信息`
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '修复失败'
+    }
+  }
+}
+
+// 修复所有活跃批次的任务
+async function fixAllBatchTasks(event, wxContext) {
+  const openid = wxContext.OPENID
+  
+  try {
+    // 获取所有活跃的批次
+    const batchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .where({
+        status: _.neq('archived')  // 非归档状态
+      })
+      .limit(50)  // 限制数量避免超时
+      .get()
+    
+    if (!batchesResult.data || batchesResult.data.length === 0) {
+      return {
+        success: true,
+        message: '没有需要修复的批次'
+      }
+    }
+    
+    const results = []
+    let successCount = 0
+    let failedCount = 0
+    
+    // 逐个修复批次任务
+    for (const batch of batchesResult.data) {
+      try {
+        // 删除旧任务
+        const deleteResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+          .where({
+            batchId: batch._id
+          })
+          .remove()
+        
+        // 重新创建任务
+        const todoCount = await createBatchTodos(
+          batch._id,
+          batch.batchNumber,
+          batch.entryDate,
+          openid,
+          batch.templateId || 'default'
+        )
+        
+        results.push({
+          batchId: batch._id,
+          batchNumber: batch.batchNumber,
+          success: true,
+          oldTaskCount: deleteResult.stats?.removed || 0,
+          newTaskCount: todoCount
+        })
+        
+        successCount++
+        
+      } catch (error) {
+        results.push({
+          batchId: batch._id,
+          batchNumber: batch.batchNumber,
+          success: false,
+          error: error.message
+        })
+        failedCount++
+      }
+    }
+    
+    return {
+      success: true,
+      data: {
+        total: batchesResult.data.length,
+        success: successCount,
+        failed: failedCount,
+        results
+      },
+      message: `修复完成：成功 ${successCount} 个，失败 ${failedCount} 个`
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: '修复失败'
     }
   }
 }
@@ -266,8 +436,14 @@ exports.main = async (event, context) => {
         return await getActiveBatches(event, wxContext)
       case 'getBatchDetail':
         return await getBatchDetail(event, wxContext)
-      case 'fixBatchTasks':
+      case 'fix_batch_tasks':
         return await fixBatchTasks(event, wxContext)
+      case 'fix_all_batch_tasks':
+        return await fixAllBatchTasks(event, wxContext)
+      case 'fix_batch_template_info':
+        return await fixBatchTemplateInfo(event, wxContext)
+      case 'update_batch_templates':
+        return await updateBatchTemplates(event, wxContext)
       default:
         throw new Error('无效的操作类型')
     }
@@ -347,8 +523,10 @@ async function createEntryRecord(event, wxContext) {
     throw new Error('缺少必填字段：品种、供应商、数量')
   }
   
-  if (recordData.quantity <= 0) {
-    throw new Error('数量必须大于0')
+  // 确保quantity是数字类型
+  const quantity = Number(recordData.quantity)
+  if (isNaN(quantity) || quantity <= 0) {
+    throw new Error('数量必须是大于0的有效数字')
   }
   
   // 使用用户提供的批次ID，如果没有则自动生成批次号
@@ -371,20 +549,20 @@ async function createEntryRecord(event, wxContext) {
   }
 
   const newRecord = {
-    userId: wxContext.OPENID,
+    ...recordData,
     batchNumber,
-    breed: recordData.breed,
-    quality: recordData.quality || '',
-    supplier: recordData.supplier,
-    quantity: Number(recordData.quantity),
-    unitPrice: Number(recordData.unitPrice) || 0,
-    totalAmount: Number(recordData.quantity) * (Number(recordData.unitPrice) || 0),
-    purchaseDate: recordData.purchaseDate || getCurrentBeijingDate(),
     entryDate: recordData.entryDate || getCurrentBeijingDate(),
-    operator: userName, // 使用查询到的用户名而不是传入的operator
-    status: recordData.status || 'active',
-    notes: recordData.notes || '',
-    photos: recordData.photos || [],
+    userId: wxContext.OPENID,
+    operator: userName,
+    status: '已完成',
+    quantity: Number(recordData.quantity),  // 确保存储为数字
+    unitPrice: Number(recordData.unitPrice) || 0,
+    totalAmount: Number(recordData.totalAmount) || 0,
+    currentQuantity: Number(recordData.quantity),
+    deadCount: 0,
+    currentCount: Number(recordData.quantity),
+    templateId: 'default',  // 新批次默认使用默认模板
+    templateName: '默认模板',
     location: recordData.location || {},
     isDeleted: false, // 明确设置未删除标志
     createTime: now,
@@ -396,13 +574,14 @@ async function createEntryRecord(event, wxContext) {
   })
   
   // 已移除调试日志
-  // 创建批次待办事项
+  // 创建批次待办事项（使用模板）
   try {
     const todoCount = await createBatchTodos(
       result._id,           // 批次ID
       batchNumber,          // 批次号
       newRecord.entryDate,  // 入栏日期
-      wxContext.OPENID      // 用户ID
+      wxContext.OPENID,     // 用户ID
+      'default'             // 默认模板
     )
     // 已移除调试日志
   } catch (todoError) {
@@ -852,6 +1031,172 @@ async function getBatchDetail(event, wxContext) {
     return {
       success: false,
       error: error.message
+    }
+  }
+}
+
+// 批量更新批次模板配置
+async function updateBatchTemplates(event, wxContext) {
+  const { updates } = event
+  const openid = wxContext.OPENID
+  
+  try {
+    if (!updates || !Array.isArray(updates)) {
+      throw new Error('更新数据格式错误')
+    }
+    
+    // 批量更新批次模板和生成任务
+    const updatePromises = updates.map(async (update) => {
+      const { batchId, templateId, templateName } = update
+      
+      if (!batchId) {
+        console.warn('跳过无效的批次ID:', update)
+        return null
+      }
+      
+      // 1. 更新批次的模板信息
+      const updateData = {
+        templateId: templateId || null,
+        templateName: templateName || null,
+        updateTime: db.serverDate()
+      }
+      
+      await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+        .doc(batchId)
+        .update(updateData)
+      
+      // 2. 删除该批次的旧任务计划
+      await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+        .where({
+          batchId: batchId
+        })
+        .remove()
+      
+      // 3. 如果有模板，生成新的任务计划
+      if (templateId) {
+        // 获取批次信息
+        const batchDoc = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+          .doc(batchId)
+          .get()
+        
+        if (batchDoc.data) {
+          const batch = batchDoc.data
+          
+          // 获取模板的任务配置
+          let templateTasks = {}
+          
+          // 如果是默认模板，使用标准养殖计划
+          if (templateId === 'default') {
+            Object.keys(BREEDING_SCHEDULE).forEach(dayAge => {
+              templateTasks[dayAge] = BREEDING_SCHEDULE[dayAge]
+            })
+          } else {
+            // 查询自定义模板
+            const templateDoc = await db.collection(COLLECTIONS.TASK_TEMPLATES)
+              .doc(templateId)
+              .get()
+            
+            if (templateDoc.data) {
+              const template = templateDoc.data
+              
+              // 将任务按日龄分组
+              if (template.tasks && Array.isArray(template.tasks)) {
+                template.tasks.forEach(task => {
+                  const dayAge = task.dayAge || 1
+                  if (!templateTasks[dayAge]) {
+                    templateTasks[dayAge] = []
+                  }
+                  templateTasks[dayAge].push(task)
+                })
+              }
+            }
+          }
+          
+          // 为每个日龄生成任务
+          const tasks = []
+          const now = new Date()
+          
+          for (const [dayAge, dayTasks] of Object.entries(templateTasks)) {
+            if (Array.isArray(dayTasks)) {
+              const dayAgeNum = parseInt(dayAge)
+              // 计算该日龄对应的日期
+              const entryDateTime = new Date(batch.entryDate + 'T00:00:00')
+              const taskDate = new Date(entryDateTime.getTime() + (dayAgeNum - 1) * 24 * 60 * 60 * 1000)
+              
+              for (const task of dayTasks) {
+                tasks.push({
+                  batchId: batchId,
+                  batchNumber: batch.batchNumber,
+                  dayAge: dayAgeNum,
+                  taskId: `${batchId}_${dayAge}_${task.id || Math.random().toString(36).slice(2)}`,
+                  // 确保所有关键字段都有值
+                  title: task.title || '未命名任务',
+                  description: task.description || task.title || '暂无描述',
+                  type: task.type || 'inspection',
+                  category: task.category || '健康管理',
+                  priority: task.priority || 'medium',
+                  dosage: task.dosage || '',
+                  duration: task.duration || 1,
+                  dayInSeries: task.dayInSeries || 1,
+                  estimatedTime: task.estimatedTime || 0,
+                  materials: Array.isArray(task.materials) ? task.materials : [],
+                  notes: task.notes || '',
+                  scheduledDate: formatBeijingTime(taskDate, 'date'),
+                  targetDate: formatBeijingTime(taskDate, 'date'),
+                  status: 'pending',
+                  isCompleted: false,
+                  completed: false,
+                  completedAt: null,
+                  completedBy: null,
+                  completionNotes: '',
+                  templateId: templateId,
+                  templateName: templateName,
+                  createdBy: openid,
+                  createTime: db.serverDate(),
+                  updateTime: db.serverDate()
+                })
+              }
+            }
+          }
+          
+          // 批量插入任务
+          if (tasks.length > 0) {
+            // 分批插入，每批最多20条
+            for (let i = 0; i < tasks.length; i += 20) {
+              const batch = tasks.slice(i, i + 20)
+              await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+                .add({
+                  data: batch
+                })
+            }
+            
+            console.log(`为批次 ${batchId} 生成了 ${tasks.length} 个任务`)
+          }
+        }
+      }
+      
+      return { batchId, success: true }
+    })
+    
+    // 执行所有更新
+    const results = await Promise.all(updatePromises)
+    
+    // 统计成功更新的数量
+    const successCount = results.filter(r => r !== null && r.success).length
+    
+    return {
+      success: true,
+      data: {
+        total: updates.length,
+        success: successCount,
+        message: `成功更新${successCount}个批次的模板配置`
+      }
+    }
+  } catch (error) {
+    console.error('批量更新批次模板失败:', error)
+    return {
+      success: false,
+      error: error.message || '更新失败'
     }
   }
 }

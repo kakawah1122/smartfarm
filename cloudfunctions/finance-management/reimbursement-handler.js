@@ -752,7 +752,7 @@ async function getRevenueSumByDateRange(db, _, startDate, endDate, batchId = nul
   }
   
   const financeResult = await financeQuery.get()
-  totalRevenue += financeResult.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+  totalRevenue += financeResult.data.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
   
   // 2. 从出栏记录汇总销售收入
   // 注意：出栏记录可能没有 exitReason 字段，只要 totalRevenue > 0 就认为是销售
@@ -784,7 +784,7 @@ async function getRevenueSumByDateRange(db, _, startDate, endDate, batchId = nul
   const exitResult = await exitQuery.get()
   // 只统计有收入的出栏记录
   totalRevenue += exitResult.data.reduce((sum, r) => {
-    const revenue = r.totalRevenue || 0
+    const revenue = Number(r.totalRevenue) || 0
     return revenue > 0 ? sum + revenue : sum
   }, 0)
   
@@ -846,7 +846,7 @@ async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) 
     return false
   })
   
-  totalCost += filteredFinanceRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
+  totalCost += filteredFinanceRecords.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
   
   // 2. 从入栏记录汇总采购成本（鹅苗采购）
   let entryQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
@@ -875,7 +875,7 @@ async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) 
   }
   
   const entryResult = await entryQuery.get()
-  totalCost += entryResult.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+  totalCost += entryResult.data.reduce((sum, r) => sum + (Number(r.totalAmount) || 0), 0)
   
   // 3. 从投喂记录汇总饲料成本
   let feedQuery = db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
@@ -903,7 +903,7 @@ async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) 
   }
   
   const feedResult = await feedQuery.get()
-  totalCost += feedResult.data.reduce((sum, r) => sum + (r.totalCost || 0), 0)
+  totalCost += feedResult.data.reduce((sum, r) => sum + (Number(r.totalCost) || 0), 0)
   
   // 4. 从采购记录汇总物料采购成本
   let purchaseQuery = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
@@ -929,7 +929,7 @@ async function getCostSumByDateRange(db, _, startDate, endDate, batchId = null) 
   }
   
   const purchaseResult = await purchaseQuery.get()
-  totalCost += purchaseResult.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+  totalCost += purchaseResult.data.reduce((sum, r) => sum + (Number(r.totalAmount) || 0), 0)
   
   return totalCost
 }
@@ -995,7 +995,7 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
   })
   
   filteredFinanceRecords.forEach(record => {
-    const amount = record.amount || 0
+    const amount = Number(record.amount) || 0
     
     // 如果是报销记录，根据报销类型分类
     if (record.isReimbursement && record.reimbursement) {
@@ -1061,7 +1061,7 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
   // 注意：财务概览按采购金额统计（现金流），批次分析按实际使用统计（成本核算）
   for (const record of purchaseResult.data) {
     // 计算金额：优先使用 totalAmount，如果没有则用 quantity * unitPrice
-    let amount = record.totalAmount || 0
+    let amount = Number(record.totalAmount) || 0
     if (amount === 0 && record.quantity && record.unitPrice) {
       amount = Number(record.quantity) * Number(record.unitPrice)
     }
@@ -1144,7 +1144,7 @@ async function getCostBreakdownByDateRange(db, _, startDate, endDate, batchId = 
   }
   
   const entryResult = await entryQuery.get()
-  breakdown.goslingCost += entryResult.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+  breakdown.goslingCost += entryResult.data.reduce((sum, r) => sum + (Number(r.totalAmount) || 0), 0)
   
   const totalExpense = breakdown.feedCost + breakdown.goslingCost + breakdown.medicalCost + breakdown.otherCost
   

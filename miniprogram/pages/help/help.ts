@@ -29,21 +29,20 @@ const pageConfig = {
 
   onLoad() {
     // 可以在这里加载更多帮助内容
-  },
-
-  /**
-   * 返回上一页
-   */
-  goBack() {
-    wx.navigateBack({
-      fail: () => {
-        wx.switchTab({
-          url: '/pages/profile/profile'
-        })
-      }
-    })
   }
 }
 
-Page(createPageWithNavbar(pageConfig))
+// 使用工具函数创建页面并重写goBack方法
+const page = createPageWithNavbar(pageConfig)
+page.goBack = function() {
+  wx.navigateBack({
+    fail: () => {
+      wx.switchTab({
+        url: '/pages/profile/profile'
+      })
+    }
+  })
+}
+
+Page(page)
 

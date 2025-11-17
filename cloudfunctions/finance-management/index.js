@@ -985,7 +985,7 @@ async function getAllFinanceRecords(event, wxContext) {
         type: 'income',
         source: 'finance',
         revenueType: record.revenueType,
-        amount: record.amount || 0,
+        amount: Number(record.amount) || 0,  // 确保转换为数字
         description: record.description || '收入记录',
         date: record.date || record.createTime,
         createTime: record.createTime,
@@ -1046,7 +1046,7 @@ async function getAllFinanceRecords(event, wxContext) {
         type: 'expense',
         source: 'finance',
         costType: record.costType,
-        amount: record.amount || 0,
+        amount: Number(record.amount) || 0,  // 确保转换为数字
         description: record.description || '支出记录',
         date: record.date || record.createTime,
         createTime: record.createTime,
@@ -1083,7 +1083,7 @@ async function getAllFinanceRecords(event, wxContext) {
     const exitResult = await exitQuery.get()
     exitResult.data.forEach(record => {
       // 只处理有收入的出栏记录（销售）
-      const revenue = record.totalRevenue || 0
+      const revenue = Number(record.totalRevenue) || 0  // 确保转换为数字
       if (revenue > 0) {
         records.push({
           id: `exit_${record._id}`,  // 添加前缀避免id重复
@@ -1129,7 +1129,7 @@ async function getAllFinanceRecords(event, wxContext) {
         type: 'expense',
         source: 'entry',
         costType: 'other',
-        amount: record.totalAmount || 0,
+        amount: Number(record.totalAmount) || 0,  // 确保转换为数字
         description: `入栏采购 - ${record.breed || '品种'} - ${record.batchNumber || ''} - ${record.supplier || '供应商'}`,
         date: record.entryDate || record.purchaseDate || record.createTime,
         createTime: record.createTime,
@@ -1202,7 +1202,7 @@ async function getAllFinanceRecords(event, wxContext) {
       }
       
       // 计算总金额
-      let amount = record.totalAmount || 0
+      let amount = Number(record.totalAmount) || 0  // 确保转换为数字
       if (amount === 0 && record.quantity && record.unitPrice) {
         amount = Number(record.quantity) * Number(record.unitPrice)
       }
