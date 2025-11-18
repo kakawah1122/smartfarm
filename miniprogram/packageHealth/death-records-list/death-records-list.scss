@@ -1,6 +1,8 @@
 // miniprogram/packageHealth/death-records-list/death-records-list.scss
 // 死亡记录列表页面样式 - 按照项目Flex布局规范
 
+@import "../../styles/health-vars.scss";
+
 /* 页面容器 */
 .page-container {
   height: 100vh;
@@ -56,7 +58,7 @@
   justify-content: center;
   gap: 12rpx;
   padding: 28rpx 16rpx;
-  border-radius: 16rpx;
+  border-radius: $health-card-radius;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
   
   &.danger {
@@ -112,9 +114,9 @@
 
 .record-card {
   background: #fff;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  border-radius: $health-card-radius;
+  box-shadow: $health-card-shadow;
+  transition: all $health-transition-normal ease;
   overflow: hidden;
   
   &:active {
@@ -129,8 +131,8 @@
 
 // 记录头部
 .record-header {
-  padding: 24rpx 32rpx 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: $health-card-padding 32rpx 20rpx;
+  border-bottom: $health-border-width $health-border-style $health-border-light;
 }
 
 .record-title-row {
@@ -141,9 +143,9 @@
 }
 
 .record-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
+  font-size: $health-title-size;
+  font-weight: $health-title-weight;
+  color: $health-text-primary;
   line-height: 1.4;
   flex: 1;
 }
@@ -184,7 +186,7 @@
 
 // 记录内容
 .record-content {
-  padding: 24rpx 32rpx;
+  padding: $health-card-padding 32rpx;
 }
 
 // 信息行布局 - 分行显示
@@ -198,33 +200,33 @@
   }
   
   .info-label {
-    font-size: 26rpx;
-    color: #999;
+    font-size: $health-label-size;
+    color: $health-label-color;
     margin-right: 8rpx;
     flex-shrink: 0;
-    line-height: 1.6;
+    line-height: $health-label-line-height;
     white-space: nowrap;
     min-width: 80rpx;
   }
 
   .info-value {
-    font-size: 28rpx;
-    color: #333;
-    font-weight: 500;
-    line-height: 1.6;
+    font-size: $health-value-size;
+    color: $health-value-color;
+    font-weight: $health-value-weight;
+    line-height: $health-value-line-height;
     flex: 1;
     word-wrap: break-word;
     
     &.death-count {
-      color: #e34d59;
+      color: $health-danger-color;
       font-weight: 600;
-      font-size: 30rpx;
+      font-size: $health-number-size;
     }
 
     &.loss-value {
-      color: #ed7b2f;
+      color: $health-warning-color;
       font-weight: 600;
-      font-size: 30rpx;
+      font-size: $health-number-size;
     }
   }
 }
@@ -234,19 +236,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #f0f0f0;
+  margin-top: $health-footer-margin-top;
+  padding-top: $health-footer-padding-top;
+  border-top: $health-border-width $health-border-style $health-border-light;
 
   .date-text {
-    font-size: 26rpx;
-    color: #999;
+    font-size: $health-date-size;
+    color: $health-text-placeholder;
     flex: 1;
   }
 
   .operator-text {
-    font-size: 26rpx;
-    color: #666;
+    font-size: $health-date-size;
+    color: $health-text-secondary;
     font-weight: 500;
     flex-shrink: 0;
   }
