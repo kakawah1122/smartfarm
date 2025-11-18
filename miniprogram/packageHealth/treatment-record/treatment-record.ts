@@ -1278,7 +1278,6 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   goBack() {
     // 防止重复触发
     if ((this as any).__isNavigatingBack) {
-      console.log('正在返回，请勿重复操作')
       return
     }
     

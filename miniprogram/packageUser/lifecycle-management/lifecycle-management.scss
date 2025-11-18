@@ -104,7 +104,7 @@
 
 // 任务列表区域样式
 .task-groups {
-  padding: 0 24rpx 20rpx;
+  padding: 24rpx 24rpx 20rpx; /* 优化：增加顶部 padding 从 0 到 24rpx */
   height: 100%;
   overflow-y: auto;
   

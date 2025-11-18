@@ -21,7 +21,6 @@
     <scroll-view 
       class="popup-content" 
       scroll-y 
-      enhanced 
       show-scrollbar="{{false}}"
     >
       <slot></slot>

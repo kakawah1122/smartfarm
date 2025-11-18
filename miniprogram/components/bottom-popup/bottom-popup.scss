@@ -60,7 +60,8 @@
 /* 内容区域（可滚动） */
 .popup-content {
   flex: 1;
-  height: 0; /* 关键：配合 flex:1 使高度自适应 */
+  min-height: 200rpx; /* 修复真机问题：确保有最小高度 */
+  max-height: calc(85vh - 200rpx); /* 限制最大高度，预留头部和按钮空间 */
   padding: 16rpx 24rpx; /* 优化：缩小 padding，减少空白 */
   box-sizing: border-box;
   /* 移除 overflow-y，由 scroll-view 组件自己控制滚动 */

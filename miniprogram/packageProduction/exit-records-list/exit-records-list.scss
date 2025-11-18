@@ -110,7 +110,39 @@ page {
 .record-content {
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  gap: 8rpx;
+}
+
+/* 双列布局容器 */
+.info-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 32rpx;
+  margin-bottom: 12rpx;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.info-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  
+  &.left-column {
+    align-items: flex-start;
+  }
+  
+  &.right-column {
+    align-items: flex-end;
+  }
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 /* 信息行 */
@@ -132,21 +164,20 @@ page {
 }
 
 .info-label {
-  font-size: 24rpx;
-  color: var(--td-text-color-secondary, #666666);
-  font-weight: 500;
-  white-space: nowrap;
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary, #999);
+  margin-right: 8rpx;
   flex-shrink: 0;
+  line-height: 1.6;
+  white-space: nowrap;
 }
 
 .info-value {
-  font-size: 26rpx;
-  color: var(--td-text-color-primary, #000000);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
+  font-size: 28rpx;
+  color: var(--td-text-color-primary, #333);
+  font-weight: 500;
+  line-height: 1.6;
+  word-wrap: break-word;
 }
 
 /* 记录底部 */
@@ -155,33 +186,20 @@ page {
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  margin-top: 8rpx;
-  padding-top: 12rpx;
-  border-top: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-}
-
-.footer-left {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  flex: 1;
-  overflow: hidden;
-}
-
-.operator-text {
-  font-size: 24rpx;
-  color: var(--td-text-color-secondary, #666666);
-  font-weight: 400;
-  flex-shrink: 0;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
 }
 
 .date-text {
-  font-size: 24rpx;
-  color: var(--td-text-color-placeholder, #bbbbbb);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 26rpx;
+  color: var(--td-text-color-placeholder, #999);
+}
+
+.operator-text {
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary, #666);
+  font-weight: 500;
 }
 
 /* 出栏特有：总重量显示 */
@@ -268,6 +286,10 @@ page {
     font-size: 28rpx;
   }
   
+  .info-grid {
+    gap: 24rpx;
+  }
+  
   .info-row {
     gap: 16rpx;
   }
@@ -279,20 +301,16 @@ page {
   }
   
   .info-label {
-    font-size: 22rpx;
-  }
-  
-  .info-value {
     font-size: 24rpx;
   }
   
-  .footer-left {
-    gap: 12rpx;
+  .info-value {
+    font-size: 26rpx;
   }
   
   .operator-text,
   .date-text {
-    font-size: 22rpx;
+    font-size: 24rpx;
   }
   
   .weight-text {
@@ -302,6 +320,19 @@ page {
 
 /* 针对极小屏幕的特殊处理 */
 @media screen and (max-width: 320px) {
+  .info-grid {
+    flex-direction: column;
+    gap: 8rpx;
+  }
+  
+  .info-column {
+    width: 100%;
+    
+    &.right-column {
+      align-items: flex-start;
+    }
+  }
+  
   .info-row {
     flex-direction: column;
     align-items: flex-start;
@@ -321,11 +352,7 @@ page {
   .record-footer {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8rpx;
-  }
-  
-  .footer-left {
-    width: 100%;
+    gap: 4rpx;
   }
   
   .total-weight {

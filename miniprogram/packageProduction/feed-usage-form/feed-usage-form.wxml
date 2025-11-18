@@ -17,7 +17,6 @@
       <view class="section-header">
         <view class="section-title">投喂信息</view>
         <view class="usage-tip">
-          <t-icon name="info-circle" size="22rpx" color="#999" />
           <text class="tip-text">建议每周记录一次，填写本周投喂总量</text>
         </view>
       </view>

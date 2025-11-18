@@ -53,37 +53,47 @@
             </view>
           </view>
 
-          <!-- 记录内容 -->
+          <!-- 记录内容 - 双列布局，分行显示 -->
           <view class="record-content">
             <!-- 第一行：出栏号 + 数量 -->
-            <view class="info-row">
-              <view class="info-group">
-                <text class="info-label">出栏号：</text>
-                <text class="info-value">{{item.exitNumber}}</text>
+            <view class="info-grid">
+              <view class="info-column left-column">
+                <view class="info-item">
+                  <text class="info-label">出栏号：</text>
+                  <text class="info-value">{{item.exitNumber}}</text>
+                </view>
               </view>
-              <view class="info-group">
-                <text class="info-label">数量：</text>
-                <text class="info-value">{{item.displayQuantity}}</text>
+              <view class="info-column right-column">
+                <view class="info-item">
+                  <text class="info-label">数量：</text>
+                  <text class="info-value">{{item.displayQuantity}}</text>
+                </view>
               </view>
             </view>
-
             <!-- 第二行：客户 + 品种 -->
-            <view class="info-row">
-              <view class="info-group" wx:if="{{item.customer}}">
-                <text class="info-label">客户：</text>
-                <text class="info-value">{{item.customer}}</text>
+            <view class="info-grid" wx:if="{{item.customer || item.breed}}">
+              <view class="info-column left-column">
+                <view class="info-item" wx:if="{{item.customer}}">
+                  <text class="info-label">客户：</text>
+                  <text class="info-value">{{item.customer}}</text>
+                </view>
               </view>
-              <view class="info-group" wx:if="{{item.breed}}">
-                <text class="info-label">品种：</text>
-                <text class="info-value">{{item.breed}}</text>
+              <view class="info-column right-column">
+                <view class="info-item" wx:if="{{item.breed}}">
+                  <text class="info-label">品种：</text>
+                  <text class="info-value">{{item.breed}}</text>
+                </view>
               </view>
             </view>
-
-            <!-- 第三行：批次号 -->
-            <view class="info-row" wx:if="{{item.batchNumber}}">
-              <view class="info-group">
-                <text class="info-label">批次：</text>
-                <text class="info-value">{{item.batchNumber}}</text>
+            <!-- 第三行：批次 -->
+            <view class="info-grid" wx:if="{{item.batchNumber}}">
+              <view class="info-column left-column">
+                <view class="info-item">
+                  <text class="info-label">批次：</text>
+                  <text class="info-value">{{item.batchNumber}}</text>
+                </view>
+              </view>
+              <view class="info-column right-column">
               </view>
             </view>
 
@@ -99,15 +109,10 @@
               </view>
             </view>
 
-            <!-- 第五行：操作员 + 日期 + 状态 -->
+            <!-- 底部：日期 + 操作员 -->
             <view class="record-footer">
-              <view class="footer-left">
-                <text class="operator-text">{{item.operator}}</text>
-                <text class="date-text">{{item.date}}</text>
-              </view>
-              <t-tag theme="{{item.status === '已交付' ? 'success' : 'primary'}}" size="small" class="status-tag">
-                {{item.status}}
-              </t-tag>
+              <text class="date-text">{{item.date}}</text>
+              <text class="operator-text">{{item.operator}}</text>
             </view>
           </view>
 

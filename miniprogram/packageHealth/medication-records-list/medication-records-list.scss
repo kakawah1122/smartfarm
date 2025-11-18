@@ -302,7 +302,7 @@
 .footer-left {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  flex: 1;
 
   .date-text {
     font-size: 26rpx;
@@ -313,6 +313,7 @@
     font-size: 26rpx;
     color: #666;
     font-weight: 500;
+    margin-left: auto;
   }
 }
 

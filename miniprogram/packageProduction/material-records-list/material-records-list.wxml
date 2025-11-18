@@ -67,58 +67,28 @@
             </view>
           </view>
 
-          <!-- 记录内容 -->
+          <!-- 记录内容 - 分行显示 -->
           <view class="record-content">
-            <!-- 第一行：单据号 + 分类 -->
-            <view class="info-row">
-              <view class="info-group">
-                <text class="info-label">单据：</text>
-                <text class="info-value">{{item.recordNumber}}</text>
-              </view>
-              <view class="info-group">
-                <text class="info-label">分类：</text>
-                <text class="info-value">{{item.category}}</text>
-              </view>
+            <!-- 第一行：单据 -->
+            <view class="info-row" wx:if="{{item.recordNumber}}">
+              <text class="info-label">单据：</text>
+              <text class="info-value">{{item.recordNumber}}</text>
+            </view>
+            <!-- 第二行：分类 -->
+            <view class="info-row" wx:if="{{item.category}}">
+              <text class="info-label">分类：</text>
+              <text class="info-value">{{item.category}}</text>
+            </view>
+            <!-- 第三行：数量 -->
+            <view class="info-row" wx:if="{{item.quantity}}">
+              <text class="info-label">数量：</text>
+              <text class="info-value quantity-value">{{item.displayQuantity}}</text>
             </view>
 
-            <!-- 第二行：类型 + 数量 -->
-            <view class="info-row">
-              <view class="info-group">
-                <text class="info-label">类型：</text>
-                <text class="info-value">{{item.type}}</text>
-              </view>
-              <view class="info-group">
-                <text class="info-label">数量：</text>
-                <text class="info-value">{{item.displayQuantity}}</text>
-              </view>
-            </view>
-
-            <!-- 第三行：供应商/用途 -->
-            <view class="info-row" wx:if="{{item.supplier || item.targetLocation}}">
-              <view class="info-group" wx:if="{{item.supplier}}">
-                <text class="info-label">供应商：</text>
-                <text class="info-value">{{item.supplier}}</text>
-              </view>
-              <view class="info-group" wx:if="{{item.targetLocation}}">
-                <text class="info-label">用途：</text>
-                <text class="info-value">{{item.targetLocation}}</text>
-              </view>
-            </view>
-
-            <!-- 第四行：操作员 + 日期 + 状态 -->
+            <!-- 底部：日期 + 操作员 -->
             <view class="record-footer">
-              <view class="footer-left">
-                <text class="operator-text">{{item.operator}}</text>
-                <text class="date-text">{{item.date}}</text>
-              </view>
-              <t-tag 
-                theme="{{item.status === '已完成' ? 'success' : 'primary'}}" 
-                size="small"
-                variant="light"
-                class="status-tag"
-              >
-                {{item.status}}
-              </t-tag>
+              <text class="date-text">{{item.date}}</text>
+              <text class="operator-text">{{item.operator}}</text>
             </view>
           </view>
 
