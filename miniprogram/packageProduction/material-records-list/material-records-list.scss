@@ -1,6 +1,8 @@
 /* pages/material-records-list/material-records-list.scss */
 /* TDesign物料记录列表页面样式 */
 
+@import "../../styles/record-common.scss";
+
 page {
   background-color: var(--td-bg-color-page, #f5f5f5);
 }
@@ -85,106 +87,58 @@ page {
   gap: 16rpx;
 }
 
-/* 记录项样式 */
+/* ==================== 使用通用样式，减少代码重复 ==================== */
+
+/* 记录项样式 - 继承通用样式 */
 .record-item {
-  background: var(--td-bg-color-container, #ffffff);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-  transition: all 0.3s ease;
+  @extend .record-item-base;
 }
 
-.record-item:active {
-  transform: scale(0.98);
-  background: var(--td-bg-color-component-hover, #f8f8f8);
-}
-
-/* 记录头部 */
 .record-header {
-  margin-bottom: 12rpx;
+  @extend .record-header-base;
 }
 
 .record-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
+  @extend .record-title-row-base;
 }
 
 .record-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: var(--td-text-color-primary, #000000);
-  line-height: 1.4;
-  flex: 1;
+  @extend .record-name-base;
 }
 
-.record-type-tag {
-  flex-shrink: 0;
-}
-
-/* 记录内容 */
 .record-content {
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
+  @extend .record-content-base;
+  gap: 10rpx; /* 物料记录特定间距 */
 }
 
-/* 信息行 - 分行显示 */
+/* 单行布局 - 继承通用样式 */
 .info-row {
-  display: flex;
-  align-items: center;
-  padding: 6rpx 0;
-  
-  &:last-child {
-    padding-bottom: 0;
-  }
+  @extend .info-row-base;
 }
 
 .info-label {
-  font-size: 26rpx;
-  color: var(--td-text-color-secondary, #999);
-  margin-right: 8rpx;
-  flex-shrink: 0;
-  line-height: 1.6;
-  white-space: nowrap;
+  @extend .info-label-base;
 }
 
 .info-value {
-  font-size: 28rpx;
-  color: var(--td-text-color-primary, #333);
-  font-weight: 500;
-  line-height: 1.6;
-  word-wrap: break-word;
-  
-  &.quantity-value {
-    color: #0052d9;
-    font-weight: 600;
-    font-size: 30rpx;
-  }
+  @extend .info-value-base;
 }
 
-/* 记录底部 */
 .record-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-  margin-top: 16rpx;
-  padding-top: 16rpx;
-  border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
+  @extend .record-footer-base;
 }
 
 .date-text {
-  font-size: 26rpx;
-  color: var(--td-text-color-placeholder, #999);
+  @extend .date-text-base;
 }
 
 .operator-text {
-  font-size: 26rpx;
-  color: var(--td-text-color-secondary, #666);
-  font-weight: 500;
+  @extend .operator-text-base;
+}
+
+/* 页面特定样式（如果有） */
+.record-type-tag {
+  flex-shrink: 0;
 }
 
 
