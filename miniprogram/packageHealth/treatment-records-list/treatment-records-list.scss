@@ -1,6 +1,8 @@
 // miniprogram/packageHealth/treatment-records-list/treatment-records-list.scss
 // 治疗记录列表页面样式 - 按照项目Flex布局规范
 
+@import "../../styles/health-vars.scss";
+
 /* 页面容器 */
 .treatment-records-page {
   height: 100vh;
@@ -52,9 +54,9 @@
 
 .record-card {
   background: white;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  border-radius: $health-card-radius;
+  box-shadow: $health-card-shadow;
+  transition: all $health-transition-normal ease;
   overflow: hidden;
 
   &:active {
@@ -64,8 +66,8 @@
 }
 
 .record-header {
-  padding: 24rpx 32rpx 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: $health-card-padding 32rpx 20rpx;
+  border-bottom: $health-border-width solid $health-border-light;
 }
 
 .record-title-row {
@@ -76,9 +78,9 @@
 }
 
 .record-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
+  font-size: $health-title-size;
+  font-weight: $health-title-weight;
+  color: $health-text-primary;
   line-height: 1.4;
   flex: 1;
   min-width: 0;
@@ -89,7 +91,7 @@
 }
 
 .record-content {
-  padding: 24rpx 32rpx;
+  padding: $health-card-padding 32rpx;
 }
 
 // 信息行布局
@@ -117,45 +119,45 @@
   }
 
   .info-label {
-    font-size: 26rpx;
-    color: #999;
+    font-size: $health-label-size;
+    color: $health-label-color;
     margin-right: 8rpx;
     flex-shrink: 0;
-    line-height: 1.6;
+    line-height: $health-label-line-height;
     white-space: nowrap;
   }
 
   .info-value {
-    font-size: 28rpx;
-    color: #333;
-    font-weight: 500;
-    line-height: 1.6;
+    font-size: $health-value-size;
+    color: $health-value-color;
+    font-weight: $health-value-weight;
+    line-height: $health-value-line-height;
     flex: 1;
     min-width: 0;
     word-break: break-all;
     overflow-wrap: anywhere;
     
     &.highlight {
-      color: #ed7b2f;
+      color: $health-warning-color;
       font-weight: 600;
     }
 
     &.success-text {
-      color: #00a870;
+      color: $health-success-color;
       font-weight: 600;
     }
 
     &.danger-text {
-      color: #e34d59;
+      color: $health-danger-color;
       font-weight: 600;
     }
   }
 
   .treatment-plan-text {
     flex: 1;
-    font-size: 28rpx;
-    color: #666;
-    line-height: 1.6;
+    font-size: $health-value-size;
+    color: $health-text-secondary;
+    line-height: $health-value-line-height;
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -164,10 +166,10 @@
   // ✅ 用药信息样式
   .medication-value {
     flex: 1;
-    font-size: 28rpx;
-    color: #333;
-    font-weight: 500;
-    line-height: 1.6;
+    font-size: $health-value-size;
+    color: $health-value-color;
+    font-weight: $health-value-weight;
+    line-height: $health-value-line-height;
     white-space: normal;
     word-wrap: break-word;
   }
@@ -197,19 +199,19 @@
   }
 
   .info-label {
-    font-size: 26rpx;
-    color: #999;
+    font-size: $health-label-size;
+    color: $health-label-color;
     margin-right: 8rpx;
     flex-shrink: 0;
-    line-height: 1.6;
+    line-height: $health-label-line-height;
     white-space: nowrap;
   }
 
   .info-value {
-    font-size: 28rpx;
-    color: #333;
-    font-weight: 500;
-    line-height: 1.6;
+    font-size: $health-value-size;
+    color: $health-value-color;
+    font-weight: $health-value-weight;
+    line-height: $health-value-line-height;
     flex: 0 1 auto;
     min-width: 0;
     white-space: nowrap;
@@ -217,17 +219,17 @@
     text-overflow: ellipsis;
     
     &.highlight {
-      color: #ed7b2f;
+      color: $health-warning-color;
       font-weight: 600;
     }
 
     &.success-text {
-      color: #00a870;
+      color: $health-success-color;
       font-weight: 600;
     }
 
     &.danger-text {
-      color: #e34d59;
+      color: $health-danger-color;
       font-weight: 600;
     }
     
@@ -237,7 +239,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       font-weight: 600;
-      color: #666;
+      color: $health-text-secondary;
       font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
     }
   }
@@ -248,24 +250,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #f0f0f0;
+  margin-top: $health-footer-margin-top;
+  padding-top: $health-footer-padding-top;
+  border-top: $health-border-width solid $health-border-light;
 }
 
 .footer-left {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: $health-footer-gap;
 
   .date-text {
-    font-size: 26rpx;
-    color: #999;
+    font-size: $health-date-size;
+    color: $health-text-placeholder;
   }
 
   .operator-text {
-    font-size: 26rpx;
-    color: #666;
+    font-size: $health-date-size;
+    color: $health-text-secondary;
     font-weight: 500;
   }
 }
