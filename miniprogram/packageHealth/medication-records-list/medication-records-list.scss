@@ -1,6 +1,8 @@
 // miniprogram/packageHealth/medication-records-list/medication-records-list.scss
 // 用药记录列表页面样式
 
+@import "../../styles/health-vars.scss";
+
 .medication-records-page {
   min-height: 100vh;
   background: #f5f5f5;
@@ -43,7 +45,7 @@
   justify-content: center;
   gap: 12rpx;
   padding: 28rpx 16rpx;
-  border-radius: 16rpx;
+  border-radius: $health-card-radius;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
   
   &.primary {
@@ -101,15 +103,15 @@
 }
 
 .tip-title {
-  font-size: 32rpx;
-  color: #333;
+  font-size: $health-title-size;
+  color: $health-text-primary;
   font-weight: 500;
 }
 
 .tip-subtitle {
-  font-size: 26rpx;
-  color: #999;
-  line-height: 1.6;
+  font-size: $health-label-size;
+  color: $health-text-placeholder;
+  line-height: $health-label-line-height;
 }
 
 // ============ 记录列表 ============
@@ -130,10 +132,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16rpx 20rpx;
-  background: rgba(0, 82, 217, 0.08);
-  border-radius: 16rpx 16rpx 0 0;
-  border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
+  padding: $health-batch-header-padding;
+  background: $health-batch-bg;
+  border-radius: $health-batch-radius $health-batch-radius 0 0;
+  border-bottom: $health-border-width solid $health-border-primary;
   min-height: 56rpx;
   
   .batch-group-info {
@@ -145,18 +147,18 @@
   }
   
   .batch-group-title {
-    font-size: 28rpx;
+    font-size: $health-value-size;
     font-weight: 600;
-    color: #0052d9;
+    color: $health-batch-color;
     line-height: 1.4;
   }
   
   .batch-record-count {
-    background: #0052d9;
-    color: white;
+    background: $health-batch-count-bg;
+    color: $health-batch-count-color;
     padding: 4rpx 12rpx;
-    border-radius: 8rpx;
-    font-size: 22rpx;
+    border-radius: $health-tag-radius;
+    font-size: $health-small-size;
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
@@ -165,9 +167,9 @@
 
 .batch-records-list {
   background: white;
-  border-radius: 0 0 16rpx 16rpx;
-  padding: 20rpx;
-  border: 1rpx solid #f0f0f0;
+  border-radius: 0 0 $health-batch-radius $health-batch-radius;
+  padding: $health-batch-list-padding;
+  border: $health-border-width solid $health-border-light;
   border-top: none;
   
   .record-card {
@@ -181,10 +183,10 @@
 
 .record-card {
   background: #fff;
-  border-radius: 16rpx;
+  border-radius: $health-card-radius;
   margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  box-shadow: $health-card-shadow;
+  transition: all $health-transition-normal ease;
   overflow: hidden;
   
   &:active {
@@ -195,8 +197,8 @@
 
 // 记录头部
 .record-header {
-  padding: 24rpx 32rpx 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: $health-card-padding 32rpx 20rpx;
+  border-bottom: $health-border-width solid $health-border-light;
 }
 
 .record-title-row {
@@ -206,9 +208,9 @@
 }
 
 .record-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
+  font-size: $health-title-size;
+  font-weight: $health-title-weight;
+  color: $health-text-primary;
   line-height: 1.4;
   flex: 1;
 }
@@ -219,7 +221,7 @@
 
 // 记录内容
 .record-content {
-  padding: 24rpx 32rpx;
+  padding: $health-card-padding 32rpx;
 }
 
 // 信息行布局
@@ -258,32 +260,32 @@
   }
 
   .info-label {
-    font-size: 26rpx;
-    color: #999;
+    font-size: $health-label-size;
+    color: $health-label-color;
     margin-right: 8rpx;
     flex-shrink: 0;
-    line-height: 1.6;
+    line-height: $health-label-line-height;
     white-space: nowrap;
   }
 
   .info-value {
-    font-size: 28rpx;
-    color: #333;
-    font-weight: 500;
+    font-size: $health-value-size;
+    color: $health-value-color;
+    font-weight: $health-value-weight;
     text-align: left;
     
     &.cost-value {
-      color: #ed7b2f;
-      font-weight: 600;
+      color: $health-cost-color;
+      font-weight: $health-cost-weight;
     }
     
     &.effectiveness-value {
-      color: #00a870;
+      color: $health-effectiveness-excellent;
       font-weight: 600;
     }
     
     &.pending-value {
-      color: #999;
+      color: $health-effectiveness-pending;
       font-style: italic;
     }
   }
@@ -294,9 +296,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #f0f0f0;
+  margin-top: $health-footer-margin-top;
+  padding-top: $health-footer-padding-top;
+  border-top: $health-border-width solid $health-border-light;
 }
 
 .footer-left {
@@ -305,13 +307,13 @@
   flex: 1;
 
   .date-text {
-    font-size: 26rpx;
-    color: #999;
+    font-size: $health-date-size;
+    color: $health-text-placeholder;
   }
 
   .operator-text {
-    font-size: 26rpx;
-    color: #666;
+    font-size: $health-date-size;
+    color: $health-text-secondary;
     font-weight: 500;
     margin-left: auto;
   }
