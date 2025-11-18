@@ -137,7 +137,7 @@ async function getOverviewStats(event, wxContext) {
 
 // 获取入栏概览
 async function getEntryOverview(dateRange) {
-  let entryQuery = db.collection('prod_batch_entries')
+  let entryQuery = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
   
   // 只有在明确提供日期范围时才过滤
   if (dateRange && dateRange.start && dateRange.end) {
@@ -156,7 +156,7 @@ async function getEntryOverview(dateRange) {
   const totalBatches = entryData.length
   
   // 获取出栏记录来计算存栏数量
-  let exitQuery = db.collection('prod_batch_exits')
+  let exitQuery = db.collection(COLLECTIONS.PROD_BATCH_EXITS)
   if (dateRange && dateRange.start && dateRange.end) {
     // 如果有日期范围，出栏也要在相同范围内过滤
     exitQuery = exitQuery.where({
@@ -169,7 +169,7 @@ async function getEntryOverview(dateRange) {
   const totalExitQuantity = exitData.reduce((sum, record) => sum + (Number(record.quantity) || 0), 0)
   
   // 获取死亡记录来计算存栏数量
-  let deathQuery = db.collection('health_death_records')
+  let deathQuery = db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
   if (dateRange && dateRange.start && dateRange.end) {
     // 如果有日期范围，死亡记录也要在相同范围内过滤
     deathQuery = deathQuery.where({
@@ -206,7 +206,7 @@ async function getEntryOverview(dateRange) {
 
 // 获取出栏概览
 async function getExitOverview(dateRange) {
-  let query = db.collection('prod_batch_exits')
+  let query = db.collection(COLLECTIONS.PROD_BATCH_EXITS)
   
   // 只有在明确提供日期范围时才过滤
   if (dateRange && dateRange.start && dateRange.end) {
@@ -250,7 +250,7 @@ async function getExitOverview(dateRange) {
 
 // 获取物料概览
 async function getMaterialOverview() {
-  const materials = await db.collection('prod_materials')
+  const materials = await db.collection(COLLECTIONS.PROD_MATERIALS)
     .where({ isActive: true })
     .get()
   
@@ -283,7 +283,7 @@ async function getMaterialOverview() {
   
   // ✅ 获取今日物料动态（使用北京时间）
   const today = getCurrentBeijingDate()
-  const todayRecords = await db.collection('prod_material_records')
+  const todayRecords = await db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
     .where({ recordDate: today })
     .get()
   
@@ -407,13 +407,13 @@ async function getRecentTrends() {
   
   // 获取最近7天的数据
   const [entryRecords, exitRecords, materialRecords] = await Promise.all([
-    db.collection('prod_batch_entries')
+    db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where({ entryDate: _.gte(startDateStr).and(_.lte(endDateStr)) })
       .get(),
-    db.collection('prod_batch_exits')
+    db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({ exitDate: _.gte(startDateStr).and(_.lte(endDateStr)) })
       .get(),
-    db.collection('prod_material_records')
+    db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
       .where({ recordDate: _.gte(startDateStr).and(_.lte(endDateStr)) })
       .get()
   ])
@@ -453,9 +453,9 @@ async function getDailyStats(event, wxContext) {
   
   // 获取当日各类数据
   const [entryRecords, exitRecords, materialRecords] = await Promise.all([
-    db.collection('prod_batch_entries').where({ entryDate: targetDate }).get(),
-    db.collection('prod_batch_exits').where({ exitDate: targetDate }).get(),
-    db.collection('prod_material_records').where({ recordDate: targetDate }).get()
+    db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).where({ entryDate: targetDate }).get(),
+    db.collection(COLLECTIONS.PROD_BATCH_EXITS).where({ exitDate: targetDate }).get(),
+    db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).where({ recordDate: targetDate }).get()
   ])
   
   // 统计入栏
@@ -507,13 +507,13 @@ async function getMonthlyReport(event, wxContext) {
   
   // 获取月度数据
   const [entryRecords, exitRecords, materialRecords] = await Promise.all([
-    db.collection('prod_batch_entries')
+    db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where({ entryDate: _.gte(startDate).and(_.lte(endDate)) })
       .get(),
-    db.collection('prod_batch_exits')
+    db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({ exitDate: _.gte(startDate).and(_.lte(endDate)) })
       .get(),
-    db.collection('prod_material_records')
+    db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS)
       .where({ recordDate: _.gte(startDate).and(_.lte(endDate)) })
       .get()
   ])
@@ -586,7 +586,7 @@ async function getMonthlyReport(event, wxContext) {
 // 获取生产流程数据
 async function getProductionFlow(event, wxContext) {
   // 获取所有入栏批次
-  const entryRecords = await db.collection('prod_batch_entries')
+  const entryRecords = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
     .where({ status: '已完成' })
     .orderBy('entryDate', 'desc')
     .limit(20)
@@ -596,12 +596,12 @@ async function getProductionFlow(event, wxContext) {
   
   for (const entry of entryRecords.data) {
     // 获取对应的出栏记录
-    const exitRecords = await db.collection('prod_batch_exits')
+    const exitRecords = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({ batchNumber: entry.batchNumber })
       .get()
     
     // 获取对应的死亡记录
-    const deathRecords = await db.collection('health_death_records')
+    const deathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({ batchNumber: entry.batchNumber })
       .get()
     
@@ -638,7 +638,7 @@ async function getSystemAlerts(event, wxContext) {
   const alerts = []
   
   // 检查低库存预警
-  const lowStockMaterials = await db.collection('prod_materials')
+  const lowStockMaterials = await db.collection(COLLECTIONS.PROD_MATERIALS)
     .where({ 
       isActive: true,
       currentStock: _.lte(db.command.field('safetyStock'))
@@ -657,7 +657,7 @@ async function getSystemAlerts(event, wxContext) {
   })
   
   // 检查长期未出栏的批次
-  const longTermBatches = await db.collection('prod_batch_entries')
+  const longTermBatches = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
     .where({ 
       status: '已完成',
       entryDate: _.lte(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
@@ -665,7 +665,7 @@ async function getSystemAlerts(event, wxContext) {
     .get()
   
   for (const batch of longTermBatches.data) {
-    const exitRecords = await db.collection('prod_batch_exits')
+    const exitRecords = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({ batchNumber: batch.batchNumber })
       .get()
     

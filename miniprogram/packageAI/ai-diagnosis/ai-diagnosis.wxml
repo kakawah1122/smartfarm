@@ -10,6 +10,14 @@
   <!-- 页面内容 -->
   <view class="page-content">
     
+    <!-- 免责声明 -->
+    <view class="disclaimer-banner">
+      <view class="disclaimer-icon">⚠️</view>
+      <view class="disclaimer-content">
+        <text class="disclaimer-text">AI诊断仅供参考，不替代专业兽医诊断</text>
+      </view>
+    </view>
+    
     <!-- 诊断结果展示 - 全新设计 -->
     <view class="diagnosis-result" wx:if="{{diagnosisResult && diagnosisStatus === 'completed'}}">
       

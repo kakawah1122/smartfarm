@@ -214,9 +214,7 @@
         <view class="card-content">
           <t-button theme="light" size="large" bind:tap="viewAllAnalysisHistory" class="history-button analysis-history-btn" block>
             <view class="button-content">
-              <t-icon name="time" size="40rpx" color="#0052d9" />
               <text class="button-text">财务分析历史</text>
-              <t-icon name="chevron-right" size="32rpx" color="#0052d9" />
             </view>
           </t-button>
         </view>
@@ -265,9 +263,7 @@
         <view class="card-content">
           <t-button theme="light" size="large" bind:tap="viewAllApprovalHistory" class="history-button approval-history-btn" block>
             <view class="button-content">
-              <t-icon name="time-filled" size="40rpx" color="#0052d9" />
               <text class="button-text">审批历史记录</text>
-              <t-icon name="chevron-right" size="32rpx" color="#0052d9" />
             </view>
           </t-button>
         </view>

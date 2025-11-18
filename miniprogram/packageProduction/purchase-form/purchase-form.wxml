@@ -70,7 +70,6 @@
               <view class="item-label required">物料分类</view>
               <view class="item-input picker-input">
                 <text class="picker-text">{{formData.category || '请选择物料分类'}}</text>
-                <t-icon name="chevron-right" size="32" color="#c8c9cc" />
               </view>
             </view>
           </picker>

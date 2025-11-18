@@ -5,6 +5,10 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
+// 引入集合配置
+const { COLLECTIONS } = require('./collections.js')
+
+
 const db = cloud.database()
 
 // 云函数入口函数
@@ -20,7 +24,7 @@ exports.main = async (event, context) => {
     if (checkOnly) {
       try {
         // 已移除调试日志
-        const userQuery = await db.collection('wx_users').where({
+        const userQuery = await db.collection(COLLECTIONS.WX_USERS).where({
           _openid: OPENID
         }).get()
         
@@ -71,7 +75,7 @@ exports.main = async (event, context) => {
     // 检查是否已有用户存在，如果没有则第一个用户自动成为超级管理员
     let isFirstUser = false
     try {
-      const allUsersQuery = await db.collection('wx_users').count()
+      const allUsersQuery = await db.collection(COLLECTIONS.WX_USERS).count()
       isFirstUser = allUsersQuery.total === 0
       // 已移除调试日志
     } catch (countError) {
@@ -142,7 +146,7 @@ exports.main = async (event, context) => {
       let userQuery = null
       
       try {
-        userQuery = await db.collection('wx_users').where({
+        userQuery = await db.collection(COLLECTIONS.WX_USERS).where({
           _openid: OPENID
         }).get()
       } catch (queryError) {
@@ -158,7 +162,7 @@ exports.main = async (event, context) => {
         // 用户不存在，创建新用户记录
         
         try {
-          const createResult = await db.collection('wx_users').add({
+          const createResult = await db.collection(COLLECTIONS.WX_USERS).add({
             data: userInfo
           })
           
@@ -181,7 +185,7 @@ exports.main = async (event, context) => {
         user = userQuery.data[0]
         
         try {
-          await db.collection('wx_users').doc(user._id).update({
+          await db.collection(COLLECTIONS.WX_USERS).doc(user._id).update({
             data: {
               lastLoginTime: new Date(),
               loginCount: db.command.inc(1)

@@ -2,13 +2,13 @@
 
 .bottom-popup-content {
   border-radius: 32rpx 32rpx 0 0 !important;
-  max-height: 80vh !important;
+  max-height: 85vh !important; /* 优化：增加到 85vh，减少底部空白 */
   padding: 0 !important;
 }
 
 .bottom-popup-container {
   padding: 0;
-  max-height: 80vh;
+  max-height: 85vh; /* 优化：与上面保持一致 */
   height: auto;
   background: #ffffff;
   display: flex;
@@ -21,7 +21,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 40rpx 32rpx 24rpx;
+  padding: 32rpx 24rpx 20rpx; /* 优化：缩小 padding */
   border-bottom: 2rpx solid #f0f0f0;
   background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   border-radius: 32rpx 32rpx 0 0;
@@ -60,25 +60,24 @@
 /* 内容区域（可滚动） */
 .popup-content {
   flex: 1;
-  padding: 24rpx 32rpx 24rpx 32rpx;
+  height: 0; /* 关键：配合 flex:1 使高度自适应 */
+  padding: 16rpx 24rpx; /* 优化：缩小 padding，减少空白 */
   box-sizing: border-box;
-  min-height: 0; /* 修复 flex 滚动问题 */
-  max-height: calc(80vh - 120rpx); /* 确保有足够的滚动空间 */
-  overflow-y: auto;
+  /* 移除 overflow-y，由 scroll-view 组件自己控制滚动 */
 }
 
 /* 操作按钮 */
 .popup-actions {
   background: #ffffff;
   border-top: 1rpx solid #f0f0f0;
-  padding: 24rpx 40rpx constant(safe-area-inset-bottom);
-  padding: 24rpx 40rpx env(safe-area-inset-bottom);
+  padding: 16rpx 24rpx constant(safe-area-inset-bottom); /* 优化：缩小 padding */
+  padding: 16rpx 24rpx env(safe-area-inset-bottom);
   flex-shrink: 0;
 }
 
 .action-buttons {
   display: flex;
-  gap: 24rpx;
+  gap: 16rpx; /* 优化：缩小按钮间距 */
 }
 
 .secondary-button {

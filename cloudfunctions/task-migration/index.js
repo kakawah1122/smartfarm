@@ -1,5 +1,6 @@
 // task-migration/index.js - 任务数据迁移云函数
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -15,7 +16,7 @@ exports.main = async (event, context) => {
     if (action === 'addCompletedField') {
       // 已移除调试日志
       // 查询所有没有completed字段的任务
-      const tasksResult = await db.collection('task_batch_schedules')
+      const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
         .where({
           completed: db.command.exists(false)
         })
@@ -37,7 +38,7 @@ exports.main = async (event, context) => {
       for (let i = 0; i < tasksResult.data.length; i += batchSize) {
         const batch = tasksResult.data.slice(i, i + batchSize)
         const promises = batch.map(task => 
-          db.collection('task_batch_schedules').doc(task._id).update({
+          db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).doc(task._id).update({
             data: {
               completed: false,
               completedAt: null,
@@ -65,14 +66,14 @@ exports.main = async (event, context) => {
     else if (action === 'migrateCompletedTasks') {
       // 已移除调试日志
       // 获取所有完成记录
-      const completionsResult = await db.collection('task_completions').get()
+      const completionsResult = await db.collection(COLLECTIONS.TASK_COMPLETIONS).get()
       // 已移除调试日志
       let syncedCount = 0
       
       for (const completion of completionsResult.data) {
         try {
           // 更新对应的任务记录
-          const updateResult = await db.collection('task_batch_schedules')
+          const updateResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
             .doc(completion.taskId)
             .update({
               data: {
@@ -104,14 +105,14 @@ exports.main = async (event, context) => {
     
     else if (action === 'checkMigrationStatus') {
       // 检查迁移状态
-      const totalTasks = await db.collection('task_batch_schedules').count()
-      const tasksWithCompleted = await db.collection('task_batch_schedules')
+      const totalTasks = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).count()
+      const tasksWithCompleted = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
         .where({
           completed: db.command.exists(true)
         })
         .count()
       
-      const completedTasks = await db.collection('task_batch_schedules')
+      const completedTasks = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
         .where({
           completed: true
         })

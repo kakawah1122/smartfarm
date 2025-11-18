@@ -45,8 +45,20 @@
     <t-loading theme="spinner" size="40rpx" text="加载中..." />
   </view>
 
+  <!-- 错误状态 -->
+  <view wx:elif="{{!loading && loadError}}" class="empty-container">
+    <t-empty description="加载失败，请重试">
+      <t-button theme="primary" size="medium" bind:tap="loadUserList">重新加载</t-button>
+    </t-empty>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{!loading && userList.length === 0}}" class="empty-container">
+    <t-empty description="暂无用户数据" />
+  </view>
+
   <!-- 用户列表 -->
-  <view wx:if="{{!loading && userList.length > 0}}" class="content-container">
+  <view wx:elif="{{!loading && userList.length > 0}}" class="content-container">
     <view class="user-list">
       <view
         wx:for="{{userList}}"
@@ -86,11 +98,6 @@
           >
             {{item.roleText}}
           </t-tag>
-        </view>
-
-        <!-- 右侧箭头 -->
-        <view class="user-arrow">
-          <t-icon name="chevron-right" size="16" color="#c8c9cc" />
         </view>
       </view>
     </view>

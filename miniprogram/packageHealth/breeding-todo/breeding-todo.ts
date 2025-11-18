@@ -2,6 +2,7 @@
 import CloudApi from '../../utils/cloud-api'
 import { formatTime } from '../../utils/util'
 import { TYPE_NAMES, isMedicationTask, isNutritionTask } from '../../utils/breeding-schedule'
+import { PaginationHelper, DataCache } from './breeding-todo-pagination'
 
 interface Task {
   _id: string
@@ -95,6 +96,12 @@ Page({
     upcomingTasks: [] as any[],
     historyTasks: [] as any[],
     taskOverlaps: [] as any[],
+    
+    // 分页配置
+    upcomingPagination: PaginationHelper.createConfig(20),
+    historyPagination: PaginationHelper.createConfig(20),
+    displayedUpcomingTasks: [] as any[],
+    displayedHistoryTasks: [] as any[],
     
     // 疫苗表单数据
     showVaccineFormPopup: false,
@@ -1078,10 +1085,22 @@ Page({
   },
 
   /**
-   * 加载所有批次的即将到来任务
+   * 加载所有批次的即将到来任务（优化版，支持分页）
    */
   async loadAllUpcomingTasks() {
     try {
+      // 检查缓存
+      const cacheKey = `upcoming_tasks_${this.data.showAllBatches}`
+      const cachedData = DataCache.get(cacheKey)
+      
+      if (cachedData) {
+        this.setData({ 
+          upcomingTasks: cachedData,
+          displayedUpcomingTasks: PaginationHelper.paginate(cachedData, this.data.upcomingPagination)
+        })
+        return
+      }
+      
       // 获取活跃批次
       const batchResult = await wx.cloud.callFunction({
         name: 'production-entry',
@@ -1091,12 +1110,15 @@ Page({
       const activeBatches = batchResult.result?.data || []
       
       if (activeBatches.length === 0) {
-        this.setData({ upcomingTasks: [] })
+        this.setData({ 
+          upcomingTasks: [],
+          displayedUpcomingTasks: [] 
+        })
         return
       }
 
-      // 为每个活跃批次加载未来一周的任务
-      const upcomingTasksPromises = activeBatches.map(async (batch: any): Promise<any[]> => {
+      // 分批加载，避免一次性加载过多
+      const loadBatchTasks = async (batch: any): Promise<any[]> => {
         try {
           const currentDayAge = this.calculateCurrentAge(batch.entryDate)
           const result = await CloudApi.getWeeklyTodos(batch._id, currentDayAge + 1)
@@ -1104,7 +1126,7 @@ Page({
           if (result.success && result.data) {
             return Object.keys(result.data)
               .map(taskDayAge => parseInt(taskDayAge))
-              .filter(dayAge => dayAge > currentDayAge) // 只显示未来的任务
+              .filter(dayAge => dayAge > currentDayAge)
               .map(dayAge => ({
                 dayAge: dayAge,
                 tasks: result.data[dayAge.toString()].map((task: any) => ({
@@ -1118,9 +1140,14 @@ Page({
         } catch (error) {
           return []
         }
-      })
-
-      const upcomingTasksResults = await Promise.all(upcomingTasksPromises)
+      }
+      
+      // 使用分批加载
+      const upcomingTasksResults = await PaginationHelper.batchLoad(
+        loadBatchTasks,
+        activeBatches,
+        5 // 每批处理5个批次
+      )
       
       // 合并所有批次的任务并按日龄分组
       const mergedTasks: {[key: number]: any[]} = {}
@@ -1141,11 +1168,43 @@ Page({
         tasks: mergedTasks[parseInt(dayAge)]
       })).sort((a, b) => a.dayAge - b.dayAge)
 
-      this.setData({ upcomingTasks: sortedUpcomingTasks })
+      // 缓存数据
+      DataCache.set(cacheKey, sortedUpcomingTasks, 5)
+      
+      // 更新分页配置
+      const updatedPagination = PaginationHelper.updateConfig(
+        this.data.upcomingPagination,
+        sortedUpcomingTasks.length
+      )
+      
+      // 设置数据和分页显示
+      this.setData({ 
+        upcomingTasks: sortedUpcomingTasks,
+        upcomingPagination: updatedPagination,
+        displayedUpcomingTasks: PaginationHelper.paginate(sortedUpcomingTasks, updatedPagination)
+      })
 
     } catch (error) {
-      this.setData({ upcomingTasks: [] })
+      this.setData({ 
+        upcomingTasks: [],
+        displayedUpcomingTasks: [] 
+      })
     }
+  },
+  
+  /**
+   * 加载更多即将到来的任务
+   */
+  loadMoreUpcomingTasks() {
+    if (!this.data.upcomingPagination.hasMore) return
+    
+    const nextPagination = PaginationHelper.nextPage(this.data.upcomingPagination)
+    const moreData = PaginationHelper.paginate(this.data.upcomingTasks, nextPagination)
+    
+    this.setData({
+      upcomingPagination: nextPagination,
+      displayedUpcomingTasks: [...this.data.displayedUpcomingTasks, ...moreData]
+    })
   },
 
   /**

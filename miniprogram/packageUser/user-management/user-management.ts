@@ -8,6 +8,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     loading: true,
     loadingMore: false,
     hasMore: true,
+    loadError: false,
     
     // 权限相关
     userInfo: null,
@@ -94,7 +95,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      // 已移除调试日志
+      console.error('用户统计加载失败:', error)
+      // 统计数据加载失败不阻塞页面显示
     }
   },
 
@@ -102,7 +104,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   async loadUserList(reset = true) {
     try {
       if (reset) {
-        this.setData({ loading: true, page: 1 })
+        this.setData({ loading: true, page: 1, loadError: false })
       } else {
         this.setData({ loadingMore: true })
       }
@@ -161,15 +163,15 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       } else {
         throw new Error(result.result?.message || '加载失败')
       }
-    } catch (error) {
-      // 已移除调试日志
+    } catch (error: any) {
       this.setData({
         loading: false,
-        loadingMore: false
+        loadingMore: false,
+        loadError: true
       })
       
       // 权限不足提示
-      if (error.message?.includes('权限不足')) {
+      if (error.message?.includes('权限不足') || error.errMsg?.includes('权限不足')) {
         wx.showModal({
           title: '权限不足',
           content: '您没有用户管理权限，请联系超级管理员',
@@ -187,7 +189,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 显示用户详情弹窗
   openUserDetail(user: any) {
     const currentRoleIndex = this.data.roleOptions.findIndex(
-      option => option.value === user.role
+      (option: { label: string; value: string }) => option.value === user.role
     )
     
     // 获取当前角色的权限
@@ -443,7 +445,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 工具函数
   getUserRoleText(role: string): string {
     if (!role) return '员工'
-    const roleMap = {
+    const roleMap: Record<string, string> = {
       // 新角色系统
       'super_admin': '超级管理员',
       'manager': '经理',
@@ -459,7 +461,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   getUserRoleTheme(role: string): string {
     if (!role) return 'default'
-    const themeMap = {
+    const themeMap: Record<string, string> = {
       // 新角色系统
       'super_admin': 'danger',
       'manager': 'warning',
@@ -475,7 +477,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   getUserStatusText(status: string): string {
     if (!status) return '正常'
-    const statusMap = {
+    const statusMap: Record<string, string> = {
       'active': '正常',
       'disabled': '禁用',
       'suspended': '暂停'
@@ -485,7 +487,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   getUserStatusTheme(status: string): string {
     if (!status) return 'success'
-    const themeMap = {
+    const themeMap: Record<string, string> = {
       'active': 'success',
       'disabled': 'danger',
       'suspended': 'warning'

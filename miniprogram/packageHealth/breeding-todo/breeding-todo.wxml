@@ -119,8 +119,8 @@
 
         <t-tab-panel label="即将到来" value="upcoming">
           <!-- 即将到来的任务 -->
-          <view wx:if="{{upcomingTasks.length > 0}}" class="upcoming-tasks">
-            <view wx:for="{{upcomingTasks}}" wx:key="dayAge" class="upcoming-day-group">
+          <view wx:if="{{displayedUpcomingTasks.length > 0}}" class="upcoming-tasks">
+            <view wx:for="{{displayedUpcomingTasks}}" wx:key="dayAge" class="upcoming-day-group">
               <!-- 日期标题 -->
               <view class="upcoming-day-header">
                 <view class="day-info">
@@ -154,6 +154,14 @@
               </view>
             </view>
           </view>
+          
+          <!-- 加载更多按钮 -->
+          <view wx:if="{{displayedUpcomingTasks.length > 0 && upcomingPagination.hasMore}}" class="load-more-container">
+            <t-button theme="light" block bind:tap="loadMoreUpcomingTasks" size="small">
+              <text wx:if="{{!upcomingPagination.loading}}"> 加载更多</text>
+              <text wx:else>加载中...</text>
+            </t-button>
+          </view>
 
           <!-- 无即将到来的任务 -->
           <view wx:else class="modern-empty-state">
@@ -165,8 +173,8 @@
 
         <t-tab-panel label="已完成" value="history">
           <!-- 历史任务记录 -->
-          <view wx:if="{{historyTasks.length > 0}}" class="history-tasks">
-            <view wx:for="{{historyTasks}}" wx:key="id" class="history-task-item" bind:tap="viewTaskDetail" data-task="{{item}}">
+          <view wx:if="{{displayedHistoryTasks.length > 0}}" class="history-tasks">
+            <view wx:for="{{displayedHistoryTasks}}" wx:key="id" class="history-task-item" bind:tap="viewTaskDetail" data-task="{{item}}">
               <view class="history-task-main">
                 <view class="history-task-left">
                   <view class="completion-icon">
@@ -186,6 +194,14 @@
                 </view>
               </view>
             </view>
+          </view>
+          
+          <!-- 加载更多按钮 -->
+          <view wx:if="{{displayedHistoryTasks.length > 0 && historyPagination.hasMore}}" class="load-more-container">
+            <t-button theme="light" block bind:tap="loadMoreHistoryTasks" size="small">
+              <text wx:if="{{!historyPagination.loading}}"> 加载更多</text>
+              <text wx:else>加载中...</text>
+            </t-button>
           </view>
 
           <view wx:else class="modern-empty-state">

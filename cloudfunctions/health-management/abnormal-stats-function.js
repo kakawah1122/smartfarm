@@ -7,7 +7,7 @@ async function getAbnormalStatistics(event, wxContext) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     
     // 获取所有健康记录进行统计
-    const allRecords = await db.collection('health_records')
+    const allRecords = await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .orderBy('createTime', 'desc')
       .get()
     

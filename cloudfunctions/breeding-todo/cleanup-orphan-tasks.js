@@ -2,6 +2,7 @@
 // 在云开发控制台的云函数中手动执行此脚本
 
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
@@ -22,7 +23,7 @@ async function cleanupAllOrphanTasks() {
   
   try {
     // 1. 获取所有存在的批次ID
-    const batchesResult = await db.collection('prod_batch_entries')
+    const batchesResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .field({ _id: true })
       .get()
     
@@ -40,7 +41,7 @@ async function cleanupAllOrphanTasks() {
     }
     
     // 2. 查询所有任务
-    const allTasksResult = await db.collection('task_batch_schedules')
+    const allTasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
       .field({ _id: true, batchId: true, batchNumber: true, title: true })
       .get()
     
@@ -81,7 +82,7 @@ async function cleanupAllOrphanTasks() {
     for (let i = 0; i < orphanTasks.length; i += batchSize) {
       const batch = orphanTasks.slice(i, i + batchSize)
       const deletePromises = batch.map(task => 
-        db.collection('task_batch_schedules').doc(task._id).remove()
+        db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).doc(task._id).remove()
       )
       
       try {

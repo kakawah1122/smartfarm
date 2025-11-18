@@ -1,5 +1,13 @@
 <!--ai-finance-analysis.wxml - AI财务分析组件-->
 <view class="ai-finance-analysis">
+  <!-- 免责声明 -->
+  <view class="disclaimer-banner">
+    <view class="disclaimer-icon">ℹ️</view>
+    <view class="disclaimer-content">
+      <text class="disclaimer-text">AI分析基于历史数据，仅供决策参考</text>
+    </view>
+  </view>
+  
   <!-- 分析操作区域 -->
   <view wx:if="{{!loading && !analysisResult && !analysisError}}" class="analysis-controls">
     <!-- 自定义分析需求输入 -->

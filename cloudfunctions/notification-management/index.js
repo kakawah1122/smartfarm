@@ -1,6 +1,7 @@
 // cloudfunctions/notification-management/index.js
 // 通知管理云函数 - 统一处理所有通知逻辑
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -76,14 +77,14 @@ async function createNotification(event, wxContext) {
     let recipients = []
     if (targetUsers === 'all') {
       // 发送给所有用户
-      const allUsers = await db.collection('wx_users')
+      const allUsers = await db.collection(COLLECTIONS.WX_USERS)
         .where({ isActive: true })
         .field({ _openid: true })
         .get()
       recipients = allUsers.data.map(user => user._openid)
     } else if (targetUsers === 'admins') {
       // 发送给管理员
-      const adminUsers = await db.collection('wx_users')
+      const adminUsers = await db.collection(COLLECTIONS.WX_USERS)
         .where({ 
           isActive: true,
           role: _.in(['admin', 'manager', 'operator'])
@@ -122,7 +123,7 @@ async function createNotification(event, wxContext) {
     }
     
     // 保存通知
-    await db.collection('sys_notifications').add({
+    await db.collection(COLLECTIONS.SYS_NOTIFICATIONS).add({
       data: notification
     })
     
@@ -141,7 +142,7 @@ async function createNotification(event, wxContext) {
       const batch = userNotifications.slice(i, i + batchSize)
       await Promise.all(
         batch.map(userNotif => 
-          db.collection('user_notifications').add({ data: userNotif })
+          db.collection(COLLECTIONS.USER_NOTIFICATIONS).add({ data: userNotif })
         )
       )
     }
@@ -177,7 +178,7 @@ async function getUserNotifications(event, wxContext) {
   
   try {
     // 构建查询条件
-    let query = db.collection('user_notifications')
+    let query = db.collection(COLLECTIONS.USER_NOTIFICATIONS)
       .where({ userOpenid: wxContext.OPENID })
     
     if (isRead !== null) {
@@ -204,7 +205,7 @@ async function getUserNotifications(event, wxContext) {
     }
     
     // 获取通知详情
-    let notificationsQuery = db.collection('sys_notifications')
+    let notificationsQuery = db.collection(COLLECTIONS.SYS_NOTIFICATIONS)
       .where({ 
         _id: _.in(notificationIds),
         isActive: true,
@@ -274,7 +275,7 @@ async function markAsRead(event, wxContext) {
     const now = new Date()
     
     // 更新用户通知状态
-    await db.collection('user_notifications')
+    await db.collection(COLLECTIONS.USER_NOTIFICATIONS)
       .where({
         notificationId,
         userOpenid: wxContext.OPENID
@@ -287,7 +288,7 @@ async function markAsRead(event, wxContext) {
       })
     
     // 同时更新通知表的已读用户列表
-    await db.collection('sys_notifications')
+    await db.collection(COLLECTIONS.SYS_NOTIFICATIONS)
       .doc(notificationId)
       .update({
         data: {
@@ -310,7 +311,7 @@ async function markAllRead(event, wxContext) {
     const now = new Date()
     
     // 更新用户所有未读通知
-    await db.collection('user_notifications')
+    await db.collection(COLLECTIONS.USER_NOTIFICATIONS)
       .where({
         userOpenid: wxContext.OPENID,
         isRead: false
@@ -336,7 +337,7 @@ async function getNotificationStats(event, wxContext) {
   try {
     const [unreadCount, totalCount, recentCount] = await Promise.all([
       // 未读数量
-      db.collection('user_notifications')
+      db.collection(COLLECTIONS.USER_NOTIFICATIONS)
         .where({
           userOpenid: wxContext.OPENID,
           isRead: false
@@ -344,14 +345,14 @@ async function getNotificationStats(event, wxContext) {
         .count(),
       
       // 总通知数
-      db.collection('user_notifications')
+      db.collection(COLLECTIONS.USER_NOTIFICATIONS)
         .where({
           userOpenid: wxContext.OPENID
         })
         .count(),
       
       // 最近7天新通知
-      db.collection('user_notifications')
+      db.collection(COLLECTIONS.USER_NOTIFICATIONS)
         .where({
           userOpenid: wxContext.OPENID,
           createTime: _.gte(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
@@ -382,7 +383,7 @@ async function deleteNotification(event, wxContext) {
     }
     
     // 删除用户通知关联
-    await db.collection('user_notifications')
+    await db.collection(COLLECTIONS.USER_NOTIFICATIONS)
       .where({
         notificationId,
         userOpenid: wxContext.OPENID
@@ -427,14 +428,14 @@ async function cleanOldNotifications(event, wxContext) {
     const now = new Date()
     
     // 删除过期通知
-    await db.collection('sys_notifications')
+    await db.collection(COLLECTIONS.SYS_NOTIFICATIONS)
       .where({
         expireTime: _.lt(now)
       })
       .remove()
     
     // 删除对应的用户通知关联
-    const expiredNotifications = await db.collection('sys_notifications')
+    const expiredNotifications = await db.collection(COLLECTIONS.SYS_NOTIFICATIONS)
       .where({
         expireTime: _.lt(now)
       })
@@ -443,7 +444,7 @@ async function cleanOldNotifications(event, wxContext) {
     
     const expiredIds = expiredNotifications.data.map(n => n._id)
     if (expiredIds.length > 0) {
-      await db.collection('user_notifications')
+      await db.collection(COLLECTIONS.USER_NOTIFICATIONS)
         .where({
           notificationId: _.in(expiredIds)
         })
@@ -474,7 +475,7 @@ async function batchMarkRead(event, wxContext) {
     const now = new Date()
     
     // 批量更新
-    await db.collection('user_notifications')
+    await db.collection(COLLECTIONS.USER_NOTIFICATIONS)
       .where({
         notificationId: _.in(notificationIds),
         userOpenid: wxContext.OPENID,
@@ -499,7 +500,7 @@ async function batchMarkRead(event, wxContext) {
 // 获取用户通知设置
 async function getNotificationSettings(event, wxContext) {
   try {
-    const settings = await db.collection('user_notification_settings')
+    const settings = await db.collection(COLLECTIONS.USER_NOTIFICATION_SETTINGS)
       .where({ userOpenid: wxContext.OPENID })
       .get()
     
@@ -553,19 +554,19 @@ async function updateNotificationSettings(event, wxContext) {
     }
     
     // 尝试更新，如果不存在则创建
-    const existingSettings = await db.collection('user_notification_settings')
+    const existingSettings = await db.collection(COLLECTIONS.USER_NOTIFICATION_SETTINGS)
       .where({ userOpenid: wxContext.OPENID })
       .get()
     
     if (existingSettings.data.length === 0) {
       // 创建新设置
       settingsData.createTime = now
-      await db.collection('user_notification_settings').add({
+      await db.collection(COLLECTIONS.USER_NOTIFICATION_SETTINGS).add({
         data: settingsData
       })
     } else {
       // 更新现有设置
-      await db.collection('user_notification_settings')
+      await db.collection(COLLECTIONS.USER_NOTIFICATION_SETTINGS)
         .doc(existingSettings.data[0]._id)
         .update({
           data: settingsData

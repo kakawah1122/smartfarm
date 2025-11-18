@@ -8,6 +8,7 @@ import { clearAllHealthCache, clearBatchCache } from './modules/health-data-load
 import { isVaccineTask, isMedicationTask, isNutritionTask, groupTasksByBatch, calculateCurrentAge } from '../../utils/health-utils'
 import { processImageUrls } from '../../utils/image-utils'
 import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisRecord } from '../../utils/diagnosis-data-utils'
+import { safeCloudCall, safeBatchCall } from '../../utils/safe-cloud-call'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -882,7 +883,7 @@ Page<PageData, any>({
         : 0
 
       // ✅ 获取原始入栏数（全部批次模式）
-      const originalQuantity = (healthData as any).originalTotalQuantity || healthData.totalAnimals || 0
+      const originalQuantity = (healthData as any).originalTotalQuantity || 0
       
       this.setData({
         healthStats: {
@@ -890,9 +891,9 @@ Page<PageData, any>({
           healthyCount: healthData.actualHealthyCount,
           sickCount: healthData.sickCount,
           deadCount: healthData.deadCount,
-          // ✅ 优化：使用原始入栏数判断，避免显示"-"
-          healthyRate: originalQuantity > 0 ? (healthData.healthyRate + '%') : (healthData.totalAnimals > 0 ? (healthData.healthyRate + '%') : '计算中...'),
-          mortalityRate: originalQuantity > 0 ? (healthData.mortalityRate + '%') : (healthData.totalAnimals > 0 ? (healthData.mortalityRate + '%') : '计算中...'),
+          // ✅ 统一判断逻辑：基于原始入栏数
+          healthyRate: originalQuantity > 0 ? (healthData.healthyRate + '%') : '-',
+          mortalityRate: originalQuantity > 0 ? (healthData.mortalityRate + '%') : '-',
           abnormalCount: healthData.abnormalRecordCount,
           treatingCount: healthData.totalOngoingRecords,
           originalQuantity: originalQuantity  // ✅ 保存原始入栏数
@@ -997,7 +998,7 @@ Page<PageData, any>({
       }
       
       // ✅ 获取原始入栏数（全部批次模式）
-      const originalQuantity = (healthData as any).originalTotalQuantity || healthData.totalAnimals || 0
+      const originalQuantity = (healthData as any).originalTotalQuantity || 0
       
       // 静默更新数据（不影响用户操作）
       this.setData({
@@ -1005,9 +1006,9 @@ Page<PageData, any>({
         'healthStats.healthyCount': healthData.actualHealthyCount,
         'healthStats.sickCount': healthData.sickCount,
         'healthStats.deadCount': healthData.deadCount,
-        // 没有入栏数据时显示 "-"
-        'healthStats.healthyRate': healthData.totalAnimals > 0 ? (healthData.healthyRate + '%') : '-',
-        'healthStats.mortalityRate': healthData.totalAnimals > 0 ? (healthData.mortalityRate + '%') : '-',
+        // ✅ 统一判断逻辑：基于原始入栏数
+        'healthStats.healthyRate': originalQuantity > 0 ? (healthData.healthyRate + '%') : '-',
+        'healthStats.mortalityRate': originalQuantity > 0 ? (healthData.mortalityRate + '%') : '-',
         'healthStats.abnormalCount': healthData.abnormalRecordCount,
         'healthStats.treatingCount': healthData.totalOngoingRecords,
         'healthStats.originalQuantity': originalQuantity,  // ✅ 保存原始入栏数
@@ -1117,8 +1118,9 @@ Page<PageData, any>({
         'healthStats.healthyCount': healthStats.healthyCount || 0,
         'healthStats.sickCount': healthStats.sickCount || 0,
         'healthStats.deadCount': healthStats.deadCount || 0,
-        'healthStats.healthyRate': (healthStats.totalChecks > 0) ? ((healthStats.healthyRate || 0) + '%') : '-',
-        'healthStats.mortalityRate': (healthStats.totalChecks > 0) ? ((healthStats.mortalityRate || 0) + '%') : '-',
+        // ✅ 统一判断逻辑：基于原始入栏数
+        'healthStats.healthyRate': originalQuantity > 0 ? ((healthStats.healthyRate || 0) + '%') : '-',
+        'healthStats.mortalityRate': originalQuantity > 0 ? ((healthStats.mortalityRate || 0) + '%') : '-',
         'healthStats.abnormalCount': abnormalCount,
         'healthStats.treatingCount': treatmentStats.ongoingCount || 0,
         'healthStats.originalQuantity': originalQuantity,  // ✅ 保存原始入栏数
@@ -1543,12 +1545,12 @@ Page<PageData, any>({
           cureRate: aggregatedStats.cureRate
         }
       } else {
-        // ✅ 并行执行所有4个API调用
-        [pendingDiagnosisResult, costResult, abnormalResult, diagnosisResult] = await Promise.all([
-          wx.cloud.callFunction({ name: 'ai-diagnosis', data: pendingDiagnosisParams }),
-          wx.cloud.callFunction({ name: 'health-management', data: costParams }),
-          wx.cloud.callFunction({ name: 'health-management', data: abnormalParams }),
-          wx.cloud.callFunction({ name: 'ai-diagnosis', data: diagnosisParams })
+        // ✅ 并行执行所有4个API调用（使用批量优化）
+        [pendingDiagnosisResult, costResult, abnormalResult, diagnosisResult] = await safeBatchCall([
+          { name: 'ai-diagnosis', data: pendingDiagnosisParams },
+          { name: 'health-management', data: costParams },
+          { name: 'health-management', data: abnormalParams },
+          { name: 'ai-diagnosis', data: diagnosisParams }
         ])
         
         costData = costResult.result?.success
@@ -2115,10 +2117,11 @@ Page<PageData, any>({
    */
   async loadAllBatchesTodayTasks() {
     try {
-      // 获取活跃批次
-      const batchResult = await wx.cloud.callFunction({
+      // 获取活跃批次（使用缓存优化）
+      const batchResult = await safeCloudCall({
         name: 'production-entry',
-        data: { action: 'getActiveBatches' }
+        data: { action: 'getActiveBatches' },
+        useCache: true  // 自动缓存10分钟
       })
 
       const activeBatches = batchResult.result?.data || []
@@ -2231,10 +2234,11 @@ Page<PageData, any>({
     }
 
     try {
-      // 获取批次信息以计算当前日龄
-      const batchResult = await wx.cloud.callFunction({
+      // 获取批次信息以计算当前日龄（使用缓存优化）
+      const batchResult = await safeCloudCall({
         name: 'production-entry',
-        data: { action: 'getActiveBatches' }
+        data: { action: 'getActiveBatches' },
+        useCache: true  // 自动缓存10分钟
       })
 
       const activeBatches = batchResult.result?.data || []
@@ -2290,10 +2294,11 @@ Page<PageData, any>({
    */
   async loadAllUpcomingTasks() {
     try {
-      // 获取活跃批次
-      const batchResult = await wx.cloud.callFunction({
+      // 获取活跃批次（使用缓存优化）
+      const batchResult = await safeCloudCall({
         name: 'production-entry',
-        data: { action: 'getActiveBatches' }
+        data: { action: 'getActiveBatches' },
+        useCache: true  // 自动缓存10分钟
       })
 
       const activeBatches = batchResult.result?.data || []
@@ -2410,9 +2415,10 @@ Page<PageData, any>({
       let validBatchIds: string[] = []
       if (this.data.currentBatchId === 'all') {
         try {
-          const batchResult = await wx.cloud.callFunction({
+          const batchResult = await safeCloudCall({
             name: 'production-entry',
-            data: { action: 'getActiveBatches' }
+            data: { action: 'getActiveBatches' },
+            useCache: true  // 自动缓存10分钟
           })
           if (batchResult.result?.success) {
             validBatchIds = (batchResult.result.data || []).map((b: any) => b._id)
@@ -2959,11 +2965,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async loadAvailableBatches() {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'production-entry',
         data: {
           action: 'getActiveBatches'
-        }
+        },
+        useCache: true  // 自动缓存10分钟
       })
 
       if (result.result && result.result.success) {
@@ -3599,9 +3606,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     const batchId = task.batchId || this.data.currentBatchId
     if (batchId && batchId !== 'all') {
       try {
-        const batchResult = await wx.cloud.callFunction({
+        const batchResult = await safeCloudCall({
           name: 'production-entry',
-          data: { action: 'getActiveBatches' }
+          data: { action: 'getActiveBatches' },
+          useCache: true  // 自动缓存10分钟
         })
         
         if (batchResult.result?.success) {
@@ -3914,9 +3922,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     const batchId = task.batchId || this.data.currentBatchId
     if (batchId && batchId !== 'all') {
       try {
-        const batchResult = await wx.cloud.callFunction({
+        const batchResult = await safeCloudCall({
           name: 'production-entry',
-          data: { action: 'getActiveBatches' }
+          data: { action: 'getActiveBatches' },
+          useCache: true  // 自动缓存10分钟
         })
         
         if (batchResult.result?.success) {

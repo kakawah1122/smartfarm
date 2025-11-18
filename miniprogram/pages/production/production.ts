@@ -139,7 +139,7 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
     // AI智能盘点相关
     aiCount: {
       active: false,        // 是否激活AI盘点功能
-      loading: false,       // AI分析中
+      loading: false,       // AI盘点中
       imageUrl: '',         // 拍摄的图片URL
       result: null as any,  // 识别结果
       error: null as string | null,
@@ -941,18 +941,13 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
           title: `识别完成：${processedResult.totalCount}只`,
           content: detailInfo,
           confirmText: '修正',
-          cancelText: '准确',
+          cancelText: '关闭',
           success: (res) => {
             if (res.confirm) {
               // 用户选择修正
               this.correctRecognitionResult(processedResult, uploadResult.fileID)
-            } else {
-              // 用户确认准确，显示成功提示
-        wx.showToast({
-                title: '识别准确',
-                icon: 'success'
-              })
             }
+            // 点击关闭按钮直接关闭弹窗，无需额外操作
           }
         })
         

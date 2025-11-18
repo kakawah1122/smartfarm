@@ -18,7 +18,12 @@
     </view>
 
     <!-- 自定义内容区域 -->
-    <scroll-view class="popup-content" scroll-y enhanced show-scrollbar="{{false}}">
+    <scroll-view 
+      class="popup-content" 
+      scroll-y 
+      enhanced 
+      show-scrollbar="{{false}}"
+    >
       <slot></slot>
     </scroll-view>
 

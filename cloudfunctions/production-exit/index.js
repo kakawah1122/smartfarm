@@ -123,7 +123,7 @@ async function listExitRecords(event, wxContext) {
     customer = null 
   } = event
   
-  let query = db.collection('prod_batch_exits')
+  let query = db.collection(COLLECTIONS.PROD_BATCH_EXITS)
   
   // 构建查询条件
   const where = {}
@@ -162,7 +162,7 @@ async function listExitRecords(event, wxContext) {
     records.data.map(async (record) => {
       try {
         // 通过批次号获取对应的入栏记录信息
-        const entryRecord = await db.collection('prod_batch_entries')
+        const entryRecord = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
           .where({ batchNumber: record.batchNumber })
           .limit(1)
           .get()
@@ -173,7 +173,7 @@ async function listExitRecords(event, wxContext) {
           let operator = record.operator
           if (!operator || operator === '未知') {
             try {
-              const user = await db.collection('wx_users').where({ _openid: record.userId }).get()
+              const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: record.userId }).get()
               if (user.data && user.data.length > 0) {
                 const u = user.data[0]
                 operator = u.name || u.nickname || u.nickName || operator || '未知'
@@ -235,7 +235,7 @@ async function createExitRecord(event, wxContext) {
   }
   
   // 验证批次号是否存在且有足够数量
-  const entryRecord = await db.collection('prod_batch_entries')
+  const entryRecord = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
     .where({ batchNumber: recordData.batchNumber })
     .get()
   
@@ -244,7 +244,7 @@ async function createExitRecord(event, wxContext) {
   }
   
   // 检查已出栏数量
-  const existingExits = await db.collection('prod_batch_exits')
+  const existingExits = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
     .where({ batchNumber: recordData.batchNumber })
     .get()
   
@@ -265,7 +265,7 @@ async function createExitRecord(event, wxContext) {
   // 获取当前用户姓名作为操作员
   let operatorName = '未知'
   try {
-    const userInfo = await db.collection('wx_users').where({ _openid: wxContext.OPENID }).get()
+    const userInfo = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: wxContext.OPENID }).get()
     if (userInfo.data && userInfo.data.length > 0) {
       const u = userInfo.data[0]
       operatorName = u.name || u.nickname || u.nickName || '未知'
@@ -326,7 +326,7 @@ async function createExitRecord(event, wxContext) {
     updateTime: now
   }
   
-  const result = await db.collection('prod_batch_exits').add({
+  const result = await db.collection(COLLECTIONS.PROD_BATCH_EXITS).add({
     data: newRecord
   })
   
@@ -350,7 +350,7 @@ async function updateExitRecord(event, wxContext) {
   }
   
   // 检查记录是否存在
-  const existingRecord = await db.collection('prod_batch_exits').doc(recordId).get()
+  const existingRecord = await db.collection(COLLECTIONS.PROD_BATCH_EXITS).doc(recordId).get()
   
   if (!existingRecord.data.length) {
     throw new Error('记录不存在')
@@ -359,7 +359,7 @@ async function updateExitRecord(event, wxContext) {
   // 若更新operator，自动替换为当前用户名
   if (updateData.operator !== undefined) {
     try {
-      const userInfo = await db.collection('wx_users').where({ _openid: wxContext.OPENID }).get()
+      const userInfo = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: wxContext.OPENID }).get()
       if (userInfo.data && userInfo.data.length > 0) {
         const u = userInfo.data[0]
         updateData.operator = u.name || u.nickname || u.nickName || '未知'
@@ -391,11 +391,11 @@ async function updateExitRecord(event, wxContext) {
     const record = existingRecord.data[0]
     
     // 验证批次可用数量
-    const entryRecord = await db.collection('prod_batch_entries')
+    const entryRecord = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where({ batchNumber: record.batchNumber })
       .get()
     
-    const existingExits = await db.collection('prod_batch_exits')
+    const existingExits = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({ 
         batchNumber: record.batchNumber,
         _id: _.neq(recordId)  // 排除当前记录
@@ -448,7 +448,7 @@ async function updateExitRecord(event, wxContext) {
     updateFields.totalRevenue = totalRevenue
   }
   
-  await db.collection('prod_batch_exits').doc(recordId).update({
+  await db.collection(COLLECTIONS.PROD_BATCH_EXITS).doc(recordId).update({
     data: updateFields
   })
   
@@ -466,13 +466,13 @@ async function deleteExitRecord(event, wxContext) {
     throw new Error('缺少记录ID')
   }
   
-  const record = await db.collection('prod_batch_exits').doc(recordId).get()
+  const record = await db.collection(COLLECTIONS.PROD_BATCH_EXITS).doc(recordId).get()
   
   if (!record.data.length) {
     throw new Error('记录不存在')
   }
   
-  await db.collection('prod_batch_exits').doc(recordId).remove()
+  await db.collection(COLLECTIONS.PROD_BATCH_EXITS).doc(recordId).remove()
   
   return {
     success: true,
@@ -484,7 +484,7 @@ async function deleteExitRecord(event, wxContext) {
 async function getExitStats(event, wxContext) {
   const { dateRange } = event
   
-  let query = db.collection('prod_batch_exits')
+  let query = db.collection(COLLECTIONS.PROD_BATCH_EXITS)
   
   // 日期范围过滤
   if (dateRange && dateRange.start && dateRange.end) {
@@ -549,7 +549,7 @@ async function getRecentExitTrend(dateRange) {
   const endDate = new Date()
   const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000)
   
-  const records = await db.collection('prod_batch_exits')
+  const records = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
     .where({
       exitDate: _.gte(formatBeijingTime(startDate, 'date'))
                .and(_.lte(formatBeijingTime(endDate, 'date')))
@@ -577,14 +577,14 @@ async function getExitDetail(event, wxContext) {
     throw new Error('缺少记录ID')
   }
   
-  const record = await db.collection('prod_batch_exits').doc(recordId).get()
+  const record = await db.collection(COLLECTIONS.PROD_BATCH_EXITS).doc(recordId).get()
   
   if (!record.data.length) {
     throw new Error('记录不存在')
   }
   
   // 获取关联的入栏信息
-  const entryRecord = await db.collection('prod_batch_entries')
+  const entryRecord = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
     .where({ batchNumber: record.data[0].batchNumber })
     .get()
   
@@ -592,13 +592,13 @@ async function getExitDetail(event, wxContext) {
   let resolvedOperator = data.operator
   if (!resolvedOperator || resolvedOperator === '未知') {
     try {
-      const user = await db.collection('wx_users').where({ _openid: data.userId }).get()
+      const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: data.userId }).get()
       if (user.data && user.data.length > 0) {
         const u = user.data[0]
         resolvedOperator = u.name || u.nickname || u.nickName || '未知'
       }
       if (resolvedOperator && resolvedOperator !== '未知') {
-        await db.collection('prod_batch_exits').doc(data._id).update({
+        await db.collection(COLLECTIONS.PROD_BATCH_EXITS).doc(data._id).update({
           data: {
             operator: resolvedOperator,
             updateTime: new Date()
@@ -623,12 +623,12 @@ async function getExitDetail(event, wxContext) {
 // 获取可用的批次列表
 async function getAvailableBatches(event, wxContext) {
   // 获取所有入栏记录
-  const entryRecords = await db.collection('prod_batch_entries')
+  const entryRecords = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
     .where({ status: '已完成' })
     .get()
   
   // 获取所有出栏记录
-  const exitRecords = await db.collection('prod_batch_exits').get()
+  const exitRecords = await db.collection(COLLECTIONS.PROD_BATCH_EXITS).get()
   
   // 计算每个批次的可用数量
   const exitByBatch = {}

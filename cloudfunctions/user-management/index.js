@@ -1,6 +1,6 @@
 // user-management/index.js - 用户管理和权限控制云函数
 const cloud = require('wx-server-sdk')
-const { COLLECTIONS } = require('../../shared-config/collections.js')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -119,7 +119,6 @@ async function validateAdminPermission(openid) {
     const userRole = user.data[0].role || 'employee'
     return ['super_admin', 'manager'].includes(userRole)
   } catch (error) {
-    // 已移除调试日志
     return false
   }
 }
@@ -1164,16 +1163,16 @@ async function getInviteStats(event, wxContext) {
       revokedInvites,
       expiredInvites
     ] = await Promise.all([
-      db.collection('wx_user_invites').count(),
-      db.collection('wx_user_invites').where({ status: 'pending' }).count(),
-      db.collection('wx_user_invites').where({ status: 'used' }).count(),
-      db.collection('wx_user_invites').where({ status: 'revoked' }).count(),
-      db.collection('wx_user_invites').where({ status: 'expired' }).count()
+      db.collection(COLLECTIONS.WX_USER_INVITES).count(),
+      db.collection(COLLECTIONS.WX_USER_INVITES).where({ status: 'pending' }).count(),
+      db.collection(COLLECTIONS.WX_USER_INVITES).where({ status: 'used' }).count(),
+      db.collection(COLLECTIONS.WX_USER_INVITES).where({ status: 'revoked' }).count(),
+      db.collection(COLLECTIONS.WX_USER_INVITES).where({ status: 'expired' }).count()
     ])
 
     // 获取最近7天的邀请统计
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const recentInvites = await db.collection('wx_user_invites')
+    const recentInvites = await db.collection(COLLECTIONS.WX_USER_INVITES)
       .where({
         createTime: _.gte(sevenDaysAgo)
       })

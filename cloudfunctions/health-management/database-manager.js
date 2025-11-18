@@ -86,7 +86,7 @@ class DatabaseManager {
     if (batchId && batchId !== 'all') {
       // 🔥 关键修复：先尝试查询批次信息，获取批次编号
       try {
-        const batchResult = await this.db.collection('prod_batch_entries')
+        const batchResult = await this.db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
           .doc(batchId)
           .field({ batchNumber: true })
           .get()

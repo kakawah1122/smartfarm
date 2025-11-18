@@ -1,5 +1,6 @@
 // cloudfunctions/register/index.js
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -28,7 +29,7 @@ exports.main = async (event, context) => {
     let user = null
     
     try {
-      userQuery = await db.collection('wx_users').where({
+      userQuery = await db.collection(COLLECTIONS.WX_USERS).where({
         _openid: OPENID
       }).get()
       
@@ -129,13 +130,13 @@ exports.main = async (event, context) => {
     }
     
     // 更新用户信息
-    const updateResult = await db.collection('wx_users').doc(user._id).update({
+    const updateResult = await db.collection(COLLECTIONS.WX_USERS).doc(user._id).update({
       data: updateData
     })
     
     if (updateResult.stats.updated === 1) {
       // 获取更新后的用户信息
-      const updatedUser = await db.collection('wx_users').doc(user._id).get()
+      const updatedUser = await db.collection(COLLECTIONS.WX_USERS).doc(user._id).get()
       
       return {
         success: true,
@@ -183,7 +184,7 @@ async function validateInviteCode(inviteCode, openid) {
     }
 
     // 查找邀请记录
-    const inviteResult = await db.collection('wx_user_invites')
+    const inviteResult = await db.collection(COLLECTIONS.WX_USER_INVITES)
       .where({ inviteCode: inviteCode.toUpperCase() })
       .get()
 
@@ -225,7 +226,7 @@ async function validateInviteCode(inviteCode, openid) {
     // 检查是否过期
     if (new Date() > new Date(invite.expiryTime)) {
       // 自动标记为过期
-      await db.collection('wx_user_invites').doc(invite._id).update({
+      await db.collection(COLLECTIONS.WX_USER_INVITES).doc(invite._id).update({
         data: { status: 'expired' }
       })
 
@@ -264,7 +265,7 @@ async function useInviteCode(inviteCode, openid) {
     const invite = validateResult.data.invite
 
     // 标记邀请码为已使用
-    await db.collection('wx_user_invites').doc(invite._id).update({
+    await db.collection(COLLECTIONS.WX_USER_INVITES).doc(invite._id).update({
       data: {
         status: 'used',
         usedTime: new Date(),

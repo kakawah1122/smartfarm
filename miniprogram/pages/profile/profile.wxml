@@ -186,18 +186,17 @@
       
           <!-- 报销说明 -->
           <view class="form-section">
-            <view class="section-header">
-              <text class="section-title">报销说明</text>
-            </view>
+            <view class="section-title">报销说明</view>
             <view class="form-card">
               <view class="form-item-textarea">
-                <text class="form-label required">报销说明</text>
         <textarea 
           class="form-textarea" 
           placeholder="请填写报销说明" 
           value="{{reimbursementForm.description}}" 
           bind:input="onDescriptionInput"
           maxlength="200"
+          auto-height
+          show-confirm-bar="{{false}}"
         />
       </view>
             </view>
@@ -205,12 +204,9 @@
       
           <!-- 上传凭证 -->
           <view class="form-section">
-            <view class="section-header">
-              <text class="section-title">上传凭证</text>
-            </view>
+            <view class="section-title">上传凭证（最多5张）</view>
             <view class="form-card">
               <view class="form-item-textarea">
-        <text class="form-label">上传凭证（最多5张）</text>
         <view class="voucher-upload">
           <view 
             wx:for="{{reimbursementForm.vouchers}}" 

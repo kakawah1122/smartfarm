@@ -87,6 +87,7 @@
     {
       "root": "packageAI",
       "name": "ai",
+      "independent": true,
       "pages": [
         "ai-diagnosis/ai-diagnosis",
         "diagnosis-history/diagnosis-history",
@@ -142,5 +143,29 @@
   ],
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
-  "cloud": true
+  "cloud": true,
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["packageHealth", "packageProduction"]
+    },
+    "pages/health/health": {
+      "network": "all",
+      "packages": ["packageHealth"]
+    },
+    "pages/production/production": {
+      "network": "all",
+      "packages": ["packageProduction"]
+    }
+  },
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-toast": "tdesign-miniprogram/toast/toast",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group"
+  }
 }

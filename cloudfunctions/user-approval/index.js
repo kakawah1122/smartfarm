@@ -6,6 +6,10 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
+// 引入集合配置
+const { COLLECTIONS } = require('./collections.js')
+
+
 const db = cloud.database()
 const _ = db.command
 
@@ -60,7 +64,7 @@ async function verifyAdminPermission(openid) {
       return false
     }
 
-    const userResult = await db.collection('wx_users').where({
+    const userResult = await db.collection(COLLECTIONS.WX_USERS).where({
       _openid: openid
     }).get()
 
@@ -87,7 +91,7 @@ async function listPendingUsers(event, wxContext) {
   } = event
 
   try {
-    let query = db.collection('wx_users')
+    let query = db.collection(COLLECTIONS.WX_USERS)
     const where = {}
 
     // 审批状态筛选
@@ -126,7 +130,7 @@ async function listPendingUsers(event, wxContext) {
       // 获取邀请信息
       let inviteInfo = null
       if (user.inviteCode) {
-        const inviteResult = await db.collection('wx_user_invites')
+        const inviteResult = await db.collection(COLLECTIONS.WX_USER_INVITES)
           .where({ inviteCode: user.inviteCode })
           .get()
         
@@ -179,7 +183,7 @@ async function getUserDetail(event, wxContext) {
     }
 
     // 获取用户信息
-    const user = await db.collection('wx_users').doc(userId).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).doc(userId).get()
     if (!user.data) {
       throw new Error('用户不存在')
     }
@@ -189,7 +193,7 @@ async function getUserDetail(event, wxContext) {
     // 获取邀请信息
     let inviteInfo = null
     if (userData.inviteCode) {
-      const inviteResult = await db.collection('wx_user_invites')
+      const inviteResult = await db.collection(COLLECTIONS.WX_USER_INVITES)
         .where({ inviteCode: userData.inviteCode })
         .get()
       
@@ -200,9 +204,9 @@ async function getUserDetail(event, wxContext) {
 
     // 获取用户的业务数据统计
     const [healthRecords, entryRecords, exitRecords] = await Promise.all([
-      db.collection('health_records').where({ userId: userData._openid }).count(),
-      db.collection('prod_batch_entries').where({ userId: userData._openid }).count(),
-      db.collection('prod_batch_exits').where({ userId: userData._openid }).count()
+      db.collection(COLLECTIONS.HEALTH_RECORDS).where({ userId: userData._openid }).count(),
+      db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).where({ userId: userData._openid }).count(),
+      db.collection(COLLECTIONS.PROD_BATCH_EXITS).where({ userId: userData._openid }).count()
     ])
 
     return {
@@ -238,7 +242,7 @@ async function approveUser(event, wxContext) {
     }
 
     // 检查用户是否存在
-    const user = await db.collection('wx_users').doc(userId).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).doc(userId).get()
     if (!user.data) {
       throw new Error('用户不存在')
     }
@@ -248,7 +252,7 @@ async function approveUser(event, wxContext) {
     }
 
     // 获取审批人信息
-    const approverResult = await db.collection('wx_users')
+    const approverResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({ _openid: wxContext.OPENID })
       .get()
 
@@ -268,12 +272,12 @@ async function approveUser(event, wxContext) {
       updateData.role = assignedRole
     }
 
-    await db.collection('wx_users').doc(userId).update({
+    await db.collection(COLLECTIONS.WX_USERS).doc(userId).update({
       data: updateData
     })
 
     // 记录审批日志
-    await db.collection('sys_approval_logs').add({
+    await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
       data: {
         action: 'approve',
         targetUserId: userId,
@@ -312,7 +316,7 @@ async function rejectUser(event, wxContext) {
     }
 
     // 检查用户是否存在
-    const user = await db.collection('wx_users').doc(userId).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).doc(userId).get()
     if (!user.data) {
       throw new Error('用户不存在')
     }
@@ -322,14 +326,14 @@ async function rejectUser(event, wxContext) {
     }
 
     // 获取审批人信息
-    const approverResult = await db.collection('wx_users')
+    const approverResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({ _openid: wxContext.OPENID })
       .get()
 
     const approver = approverResult.data[0]
 
     // 更新用户状态
-    await db.collection('wx_users').doc(userId).update({
+    await db.collection(COLLECTIONS.WX_USERS).doc(userId).update({
       data: {
         approvalStatus: 'rejected',
         rejectedBy: wxContext.OPENID,
@@ -340,7 +344,7 @@ async function rejectUser(event, wxContext) {
     })
 
     // 记录审批日志
-    await db.collection('sys_approval_logs').add({
+    await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS).add({
       data: {
         action: 'reject',
         targetUserId: userId,
@@ -373,22 +377,22 @@ async function getApprovalStats(event, wxContext) {
       approvedUsers,
       rejectedUsers
     ] = await Promise.all([
-      db.collection('wx_users').count(),
-      db.collection('wx_users').where({ approvalStatus: 'pending' }).count(),
-      db.collection('wx_users').where({ approvalStatus: 'approved' }).count(),
-      db.collection('wx_users').where({ approvalStatus: 'rejected' }).count()
+      db.collection(COLLECTIONS.WX_USERS).count(),
+      db.collection(COLLECTIONS.WX_USERS).where({ approvalStatus: 'pending' }).count(),
+      db.collection(COLLECTIONS.WX_USERS).where({ approvalStatus: 'approved' }).count(),
+      db.collection(COLLECTIONS.WX_USERS).where({ approvalStatus: 'rejected' }).count()
     ])
 
     // 获取最近7天的注册统计
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const recentRegistrations = await db.collection('wx_users')
+    const recentRegistrations = await db.collection(COLLECTIONS.WX_USERS)
       .where({
         createTime: _.gte(sevenDaysAgo)
       })
       .get()
 
     // 获取最近7天的审批统计
-    const recentApprovals = await db.collection('sys_approval_logs')
+    const recentApprovals = await db.collection(COLLECTIONS.SYS_APPROVAL_LOGS)
       .where({
         createTime: _.gte(sevenDaysAgo)
       })
@@ -433,7 +437,7 @@ async function batchApprove(event, wxContext) {
     const errors = []
 
     // 获取审批人信息
-    const approverResult = await db.collection('wx_users')
+    const approverResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({ _openid: wxContext.OPENID })
       .get()
 
@@ -478,7 +482,7 @@ async function getApprovalHistory(event, wxContext) {
   } = event
 
   try {
-    let query = db.collection('sys_approval_logs')
+    let query = db.collection(COLLECTIONS.SYS_APPROVAL_LOGS)
     const where = {}
 
     if (action) {

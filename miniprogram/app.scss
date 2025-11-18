@@ -410,82 +410,8 @@ page {
   padding: 0;
 }
 
-/* 自定义导航栏 - 参照BOSS直聘设计 */
-.custom-navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: var(--z-index-fixed);
-  background: var(--header-gradient) !important;
-  color: white !important;
-  box-shadow: 0 2rpx 20rpx rgba(0, 82, 217, 0.15);
-  padding-top: var(--safe-area-inset-top, 0);
-  padding-left: var(--safe-area-inset-left, 0);
-  padding-right: var(--safe-area-inset-right, 0);
-  border-radius: 0 0 32rpx 32rpx;
-  overflow: hidden;
-}
-
-.custom-navbar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-  pointer-events: none;
-}
-
-.navbar-content {
-  height: 88rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 var(--spacing-xl);
-  position: relative;
-  z-index: 1;
-}
-
-.navbar-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: white;
-  flex: 1;
-  text-align: center;
-  letter-spacing: 1rpx;
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
-}
-
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-base);
-}
-
-.navbar-action-btn {
-  width: 56rpx;
-  height: 56rpx;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10rpx);
-  border: var(--td-border-level-1-color, 2rpx solid rgba(255, 255, 255, 0.2));
-  transition: all 0.3s ease;
-}
-
-.navbar-action-btn:active {
-  transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.navbar-action-icon {
-  font-size: var(--font-size-base);
-  color: white;
-  filter: drop-shadow(0 1rpx 2rpx rgba(0, 0, 0, 0.1));
-}
+/* 自定义导航栏样式已移至 navigation-bar 组件，此处不再定义全局样式以避免冲突 */
+/* 如需修改导航栏样式，请在 /components/navigation-bar/navigation-bar.scss 中修改 */
 
 /* 页面容器 - 刘海屏适配 */
 .page-container {

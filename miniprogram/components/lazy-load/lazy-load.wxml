@@ -1,0 +1,28 @@
+<!-- 懒加载容器 -->
+<view class="lazy-load-container {{customClass}}" style="min-height: {{minHeight}}">
+  <!-- 加载前占位 -->
+  <view wx:if="{{!isInView}}" class="lazy-load-placeholder">
+    <view wx:if="{{showLoading}}" class="lazy-load-skeleton">
+      <view class="skeleton-item skeleton-title"></view>
+      <view class="skeleton-item skeleton-text"></view>
+      <view class="skeleton-item skeleton-text"></view>
+    </view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view wx:elif="{{isInView && !isLoaded && showLoading}}" class="lazy-load-loading">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+  
+  <!-- 加载错误 -->
+  <view wx:elif="{{hasError}}" class="lazy-load-error" bind:tap="retry">
+    <t-icon name="error-circle" size="48rpx" color="#EF4444" />
+    <text class="error-text">加载失败，点击重试</text>
+  </view>
+  
+  <!-- 内容插槽 -->
+  <view wx:else class="lazy-load-content">
+    <slot></slot>
+  </view>
+</view>

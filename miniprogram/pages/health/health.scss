@@ -435,7 +435,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 /* 内容包装器（符合规范8） */
 .content-wrapper {
   flex: 1;
-  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx);
   display: flex;
   flex-direction: column;
   overflow: hidden;

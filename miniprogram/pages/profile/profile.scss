@@ -12,7 +12,7 @@
 /* ========== 内容包装器 ========== */
 .content-wrapper {
   flex: 1;
-  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -311,35 +311,30 @@
 
 /* ========== 报销表单样式 ========== */
 .reimbursement-form {
-  padding: 0 24rpx; /* 左右24rpx边距，与入栏记录一致 */
+  padding: 0; /* 移除 padding，由 bottom-popup 的 popup-content 统一控制 */
   box-sizing: border-box;
 }
 
 /* 表单分区 */
 .form-section {
-  margin-bottom: 16rpx;
-}
-
-.section-header {
-  margin-bottom: 8rpx;
-  padding: 0;
+  margin-bottom: 12rpx; /* 优化：缩小间距 */
 }
 
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #0052d9; /* 蓝色文字 */
+  color: var(--td-brand-color, #0052d9); /* 蓝色文字 */
   padding: 12rpx 16rpx;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%); /* 蓝色渐变背景 */
+  background: linear-gradient(135deg, var(--td-brand-color-1, #f0f7ff) 0%, var(--td-brand-color-2, #e6f0ff) 100%); /* 蓝色渐变背景 */
   border-radius: 8rpx;
-  margin: 0 8rpx; /* 保持与入栏记录一致 */
+  margin-bottom: 12rpx; /* 与卡片的间距 */
 }
 
 /* 表单卡片 */
 .form-card {
   width: 100%;
   background: var(--td-bg-color-container, #ffffff);
-  border-radius: 16rpx;
+  border-radius: 12rpx; /* 优化：缩小圆角 */
   border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
   overflow: hidden;
   box-sizing: border-box;
@@ -360,9 +355,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 72rpx;
-  padding: 16rpx 24rpx;
-  border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7);
+  min-height: 60rpx; /* 优化：缩小高度 */
+  padding: 12rpx 20rpx; /* 优化：缩小内边距 */
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0); /* 优化：实线边框 */
   
   &:last-child {
     border-bottom: none;
@@ -375,75 +370,76 @@
 }
 
 .form-label {
-  font-size: 30rpx; /* 与入栏记录一致 */
-  color: var(--td-text-color-primary, #000000);
-  font-weight: 500;
-  min-width: 160rpx;
+  font-size: 26rpx; /* 优化：缩小字体 */
+  color: var(--td-text-color-primary, #333);
+  margin-right: 16rpx; /* 优化：缩小间距 */
   flex-shrink: 0;
+  line-height: 44rpx;
   
   /* 必填标识 */
-  &.required::before {
-    content: '*';
-    color: var(--td-error-color, #d54941);
-    margin-right: 8rpx;
-    font-weight: bold;
+  &.required::after {
+    content: ' *';
+    color: var(--td-error-color, #e34d59);
+    margin-left: 4rpx;
+    line-height: 44rpx;
   }
 }
 
 .form-input {
   flex: 1;
   padding: 0;
-  margin-left: 24rpx;
   background: transparent;
   border: none;
-  font-size: 30rpx;
-  color: var(--td-text-color-primary, #000000);
+  font-size: 26rpx; /* 优化：缩小字体 */
+  color: var(--td-text-color-primary, #333);
   text-align: right;
   min-width: 0; /* 确保输入框不会超出flex容器 */
   box-sizing: border-box;
   
   &::placeholder {
-    color: var(--td-text-color-placeholder, #bbbbbb);
+    color: var(--td-text-color-placeholder, #999);
   }
 }
 
 .form-textarea {
   width: 100%;
-  padding: 0;
-  background: transparent;
-  border: none;
-  font-size: 30rpx;
-  color: var(--td-text-color-primary, #000000);
-  min-height: 200rpx;
+  padding: 12rpx; /* 优化：添加内边距 */
+  background: var(--td-bg-color-container, #fafafa); /* 优化：浅色背景 */
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  border-radius: 8rpx;
+  font-size: 26rpx; /* 优化：缩小字体 */
+  color: var(--td-text-color-primary, #333);
+  min-height: 80rpx; /* 优化：减小最小高度，配合 auto-height */
   line-height: 1.6;
+  box-sizing: border-box;
   
   &::placeholder {
-    color: var(--td-text-color-placeholder, #bbbbbb);
+    color: var(--td-text-color-placeholder, #999);
   }
 }
 
 .picker-value {
   flex: 1;
   padding: 0;
-  margin-left: 24rpx;
-  font-size: 30rpx;
-  color: var(--td-text-color-primary, #000000);
+  font-size: 26rpx; /* 优化：缩小字体 */
+  color: var(--td-text-color-primary, #333);
   text-align: right;
   min-width: 0; /* 确保文本不会超出flex容器 */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 44rpx;
 }
 
 /* 文本域表单项 */
 .form-item-textarea {
   display: block;
-  padding: 24rpx;
+  padding: 16rpx; /* 优化：缩小内边距 */
   border-bottom: none;
   
   .form-label {
     display: block;
-    margin-bottom: 16rpx;
+    margin-bottom: 12rpx; /* 优化：缩小间距 */
     min-width: auto;
   }
   
@@ -456,8 +452,8 @@
 .voucher-upload {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
-  margin-top: 16rpx;
+  gap: 12rpx; /* 优化：缩小间距 */
+  margin-top: 0; /* 优化：移除上边距 */
 }
 
 .voucher-item {

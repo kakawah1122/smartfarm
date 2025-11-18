@@ -33,7 +33,7 @@ Component({
       try {
         // 使用新的API获取窗口信息
         // 使用类型断言绕过TypeScript类型检查（类型定义文件还未更新）
-        const windowInfo = (wx as any).getWindowInfo ? (wx as any).getWindowInfo() : wx.getSystemInfoSync()
+        const windowInfo = (wx as any).getWindowInfo ? (wx as any).getWindowInfo() : {}
         const statusBarHeight = windowInfo.statusBarHeight || 44
         
         // 获取胶囊按钮信息
@@ -62,7 +62,6 @@ Component({
     goBack() {
       // 防止重复点击
       if (this.data.isNavigating) {
-        console.log('正在处理返回操作，请勿重复点击')
         return
       }
       

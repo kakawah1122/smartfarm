@@ -11,6 +11,36 @@
   padding-bottom: 120rpx;
 }
 
+/* ==================== 免责声明样式 ==================== */
+
+.disclaimer-banner {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3d6 100%);
+  border-left: 4rpx solid #ff9800;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(255, 152, 0, 0.1);
+}
+
+.disclaimer-icon {
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+
+.disclaimer-content {
+  flex: 1;
+}
+
+.disclaimer-text {
+  font-size: 28rpx;
+  color: #e65100;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
 /* ==================== 诊断结果展示样式 - 全新设计 ==================== */
 
 .diagnosis-result {

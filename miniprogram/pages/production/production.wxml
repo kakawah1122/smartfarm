@@ -173,7 +173,7 @@
               <!-- 识别按钮区域 -->
               <view wx:if="{{aiCount.imageUrl && !aiCount.result}}" class="analyze-button-section">
                 <t-button size="large" theme="primary" bind:tap="analyzeImage" loading="{{aiCount.loading}}" disabled="{{aiCount.loading}}" class="analyze-button" block>
-                  {{aiCount.loading ? 'AI分析中...' : '开始识别'}}
+                  {{aiCount.loading ? 'AI盘点中...' : '开始识别'}}
                 </t-button>
               </view>
               

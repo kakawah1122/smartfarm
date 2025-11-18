@@ -277,7 +277,10 @@ Page({
     })
     
     // 显示错误提示
-    const errorMessage = error?.message || error?.errMsg || `${context}失败，请稍后重试`
+    let errorMessage = `${context}失败，请稍后重试`
+    if (error && typeof error === 'object') {
+      errorMessage = (error as any).message || (error as any).errMsg || errorMessage
+    }
     wx.showToast({
       title: errorMessage,
       icon: 'none',
@@ -454,7 +457,7 @@ Page({
   updateCompleteWeatherData(weatherData: CompleteWeatherData | { data?: CompleteWeatherData }) {
     // 处理云函数返回的嵌套数据结构
     // 云函数返回格式: { success: true, data: { current: {...}, hourly: [...] } }
-    const actualData = weatherData.data || weatherData
+    const actualData = ('data' in weatherData && weatherData.data) ? weatherData.data : weatherData as CompleteWeatherData
     
     // 优先更新位置信息 - 彻底清除"实时定位获取中"状态
     const locationInfo = actualData.locationInfo
@@ -538,6 +541,32 @@ Page({
     }
   },
 
+  // 格式化预警时间为iOS兼容的24小时制
+  formatWarningTime(isoTime: string): string {
+    if (!isoTime) return ''
+    
+    try {
+      // 处理ISO 8601格式：2025-11-17T17:57+08:00
+      // 转换为：2025-11-17 17:57
+      const date = new Date(isoTime)
+      
+      // 验证日期有效性
+      if (isNaN(date.getTime())) {
+        return isoTime
+      }
+      
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      
+      return `${year}-${month}-${day} ${hours}:${minutes}`
+    } catch (error) {
+      return isoTime
+    }
+  },
+
   // 处理逐小时预报数据
   processHourlyForecast(hourlyData: CompleteWeatherData['hourly']) {
     // 确保 hourlyData 是数组
@@ -558,7 +587,7 @@ Page({
       return {
         time: item.fxTime,
         timeLabel,
-        temp: parseInt(item.temp) || 0,
+        temp: parseInt(String(item.temp)) || 0,
         icon: this.getWeatherEmoji(item.text),
         text: item.text,
         windSpeed: item.windSpeed || 0,
@@ -573,7 +602,7 @@ Page({
       time: `${new Date(nextHour.fxTime).getHours().toString().padStart(2, '0')}:00`,
       desc: `预计${nextHour.text}`,
       wind: `风速${nextHour.windSpeed || 0}公里/小时`,
-      temp: `${parseInt(nextHour.temp) || 0}°C`,
+      temp: `${parseInt(String(nextHour.temp)) || 0}°C`,
       pop: nextHour.pop ? `降水概率${nextHour.pop}%` : ''
     } : null
     
@@ -595,8 +624,8 @@ Page({
     if (today) {
       this.setData({
         todayForecast: {
-          tempMax: parseInt(today.tempMax) || 0,
-          tempMin: parseInt(today.tempMin) || 0
+          tempMax: parseInt(String(today.tempMax)) || 0,
+          tempMin: parseInt(String(today.tempMin)) || 0
         }
       })
     }
@@ -619,15 +648,15 @@ Page({
       // 计算温度进度条（基于7天内的温度范围）
       const allTemps = dailyData.slice(0, 7)
         .filter(d => d && d.tempMax != null && d.tempMin != null)
-        .map(d => [parseInt(d.tempMax), parseInt(d.tempMin)])
+        .map(d => [parseInt(String(d.tempMax)), parseInt(String(d.tempMin))])
         .flat()
         .filter(temp => !isNaN(temp))
       
       const maxTemp = allTemps.length > 0 ? Math.max(...allTemps) : 30
       const minTemp = allTemps.length > 0 ? Math.min(...allTemps) : 0
       const tempRange = maxTemp - minTemp
-      const itemTempMax = parseInt(item.tempMax) || 0
-      const itemTempMin = parseInt(item.tempMin) || 0
+      const itemTempMax = parseInt(String(item.tempMax)) || 0
+      const itemTempMin = parseInt(String(item.tempMin)) || 0
       const tempProgress = tempRange > 0 ? ((itemTempMax - minTemp) / tempRange) * 100 : 50
       
       return {
@@ -672,7 +701,7 @@ Page({
       return
     }
     
-    const aqi = parseInt(airData.aqi) || 0
+    const aqi = parseInt(String(airData.aqi)) || 0
     let category = ''
     let color = ''
     let progress = 0
@@ -709,12 +738,12 @@ Page({
         category,
         color,
         progress,
-        pm2p5: parseInt(airData.pm2p5) || 0,
-        pm10: parseInt(airData.pm10) || 0,
-        no2: parseInt(airData.no2) || 0,
-        so2: parseInt(airData.so2) || 0,
-        co: parseFloat(airData.co) || 0,
-        o3: parseInt(airData.o3) || 0,
+        pm2p5: parseInt(String(airData.pm2p5 || 0)) || 0,
+        pm10: parseInt(String(airData.pm10 || 0)) || 0,
+        no2: parseInt(String(airData.no2 || 0)) || 0,
+        so2: parseInt(String(airData.so2 || 0)) || 0,
+        co: parseFloat(String(airData.co || 0)) || 0,
+        o3: parseInt(String(airData.o3 || 0)) || 0,
         updateTime: airData.updateTime || new Date().toISOString()
       }
     })
@@ -728,23 +757,38 @@ Page({
       return
     }
     
+    // 英文严重程度映射
+    const severityMap: Record<string, string> = {
+      'Severe': '严重',
+      'Moderate': '中等',
+      'Minor': '较轻',
+      'Extreme': '极端',
+      'Unknown': '未知'
+    }
+    
     // 过滤并处理预警数据
     const warningList = warningData.filter(item => item && item.title).map((item) => {
       let theme = 'primary'
       let severityLevel = 0 // 用于排序：4=红色(最高), 3=橙色, 2=黄色, 1=蓝色
+      let severityText = item.severity || '预警'
+      
+      // 转换英文严重程度为中文
+      if (severityMap[severityText]) {
+        severityText = severityMap[severityText]
+      }
       
       // 根据严重等级确定主题和级别
       const severity = item.severity || item.severityColor || ''
-      if (severity.includes('红') || severity.toLowerCase().includes('red')) {
+      if (severity.includes('红') || severity.toLowerCase().includes('red') || severity.toLowerCase().includes('severe') || severity.toLowerCase().includes('extreme')) {
         theme = 'danger'
         severityLevel = 4
       } else if (severity.includes('橙') || severity.toLowerCase().includes('orange')) {
         theme = 'warning'
         severityLevel = 3
-      } else if (severity.includes('黄') || severity.toLowerCase().includes('yellow')) {
+      } else if (severity.includes('黄') || severity.toLowerCase().includes('yellow') || severity.toLowerCase().includes('moderate')) {
         theme = 'warning'
         severityLevel = 2
-      } else if (severity.includes('蓝') || severity.toLowerCase().includes('blue')) {
+      } else if (severity.includes('蓝') || severity.toLowerCase().includes('blue') || severity.toLowerCase().includes('minor')) {
         theme = 'primary'
         severityLevel = 1
       }
@@ -752,7 +796,7 @@ Page({
       return {
         id: item.id || `warning_${Date.now()}_${Math.random()}`,
         title: item.title,
-        severity: item.severity || '预警',
+        severity: severityText,
         severityLevel,
         theme,
         text: item.text || '',
@@ -760,7 +804,7 @@ Page({
         typeName: item.typeName || '',
         startTime: item.startTime || '',
         endTime: item.endTime || '',
-        pubTime: item.pubTime || '',
+        pubTime: this.formatWarningTime(item.pubTime || ''),
         status: item.status || '',
         level: item.level || '',
         urgency: item.urgency || '',

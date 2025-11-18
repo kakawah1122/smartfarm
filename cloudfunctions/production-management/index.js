@@ -1,5 +1,6 @@
 // production-management/index.js - 生产管理核心云函数
 const cloud = require('wx-server-sdk')
+const { COLLECTIONS } = require('./collections.js')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -30,7 +31,7 @@ function generateRecordId(prefix) {
 // 验证用户权限
 async function validateUserPermission(openid, action) {
   try {
-    const user = await db.collection('wx_users').where({ _openid: openid }).get()
+    const user = await db.collection(COLLECTIONS.WX_USERS).where({ _openid: openid }).get()
     if (user.data.length === 0) return false
     
     const userRole = user.data[0].role || 'employee'
@@ -54,21 +55,21 @@ async function validateUserPermission(openid, action) {
 async function calculateInventoryStats() {
   try {
     // 获取入栏总数
-    const entryResult = await db.collection('prod_batch_entries')
+    const entryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .where({ isDeleted: false })
       .get()
     
     const totalEntry = entryResult.data.reduce((sum, record) => sum + (record.quantity || 0), 0)
     
     // 获取出栏总数
-    const exitResult = await db.collection('prod_batch_exits')
+    const exitResult = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
       .where({ isDeleted: false })
       .get()
     
     const totalExit = exitResult.data.reduce((sum, record) => sum + (record.quantity || 0), 0)
     
     // 获取死亡总数
-    const deathResult = await db.collection('health_death_records')
+    const deathResult = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
       .where({ isDeleted: false })
       .get()
     
@@ -228,10 +229,10 @@ async function createEntryRecord(event, wxContext) {
     isDeleted: false
   }
 
-  await db.collection('prod_batch_entries').add({ data: record })
+  await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).add({ data: record })
 
   // 更新库存日志
-  await db.collection('prod_inventory_logs').add({
+  await db.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
     data: {
       recordId,
       type: 'entry',
@@ -253,7 +254,7 @@ async function createEntryRecord(event, wxContext) {
 async function listEntryRecords(event, wxContext) {
   const { page = 1, pageSize = 10, batchNumber, dateRange } = event
 
-  let query = db.collection('prod_batch_entries').where({ isDeleted: false })
+  let query = db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).where({ isDeleted: false })
 
   if (batchNumber) {
     query = query.where({ batchNumber })
@@ -323,10 +324,10 @@ async function createExitRecord(event, wxContext) {
     isDeleted: false
   }
 
-  await db.collection('prod_batch_exits').add({ data: record })
+  await db.collection(COLLECTIONS.PROD_BATCH_EXITS).add({ data: record })
 
   // 更新库存日志
-  await db.collection('prod_inventory_logs').add({
+  await db.collection(COLLECTIONS.PROD_INVENTORY_LOGS).add({
     data: {
       recordId,
       type: 'exit',
@@ -398,7 +399,7 @@ async function createProductionBatch(event, wxContext) {
     isDeleted: false
   }
 
-  await db.collection('production_batches').add({ data: batch })
+  await db.collection(COLLECTIONS.PRODUCTION_BATCHES).add({ data: batch })
 
   return {
     success: true,
@@ -411,7 +412,7 @@ async function createProductionBatch(event, wxContext) {
 async function getMaterialConsumption(event, wxContext) {
   const { dateRange, materialType } = event
 
-  let query = db.collection('prod_material_records').where({ isDeleted: false })
+  let query = db.collection(COLLECTIONS.PROD_MATERIAL_RECORDS).where({ isDeleted: false })
 
   if (dateRange && dateRange.start && dateRange.end) {
     query = query.where({
@@ -450,8 +451,8 @@ async function getMaterialConsumption(event, wxContext) {
 // 其他CRUD操作的简化实现
 async function listExitRecords(event, wxContext) {
   const { page = 1, pageSize = 10 } = event
-  const total = await db.collection('prod_batch_exits').where({ isDeleted: false }).count()
-  const records = await db.collection('prod_batch_exits')
+  const total = await db.collection(COLLECTIONS.PROD_BATCH_EXITS).where({ isDeleted: false }).count()
+  const records = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
     .where({ isDeleted: false })
     .orderBy('createTime', 'desc')
     .skip((page - 1) * pageSize)
@@ -469,7 +470,7 @@ async function listExitRecords(event, wxContext) {
 
 async function listProductionBatches(event, wxContext) {
   const { page = 1, pageSize = 10, status } = event
-  let query = db.collection('production_batches').where({ isDeleted: false })
+  let query = db.collection(COLLECTIONS.PRODUCTION_BATCHES).where({ isDeleted: false })
   if (status) query = query.where({ status })
 
   const total = await query.count()
@@ -513,7 +514,7 @@ async function updateBatchStatus(event, wxContext) {
     updateData.actualEndDate = new Date().toISOString()
   }
 
-  await db.collection('production_batches').doc(batchId).update({ data: updateData })
+  await db.collection(COLLECTIONS.PRODUCTION_BATCHES).doc(batchId).update({ data: updateData })
 
   return {
     success: true,

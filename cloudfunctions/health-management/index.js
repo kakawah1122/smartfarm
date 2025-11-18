@@ -2151,7 +2151,8 @@ async function getHealthStatisticsOptimized(batchId) {
       healthyRate: 0,
       mortalityRate: 0,
       abnormalCount: 0,
-      treatingCount: 0
+      treatingCount: 0,
+      originalQuantity: 0  // ✅ 添加原始入栏数，确保前端能正确判断
     }
   }
 }

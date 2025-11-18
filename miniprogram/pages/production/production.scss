@@ -10,7 +10,7 @@
 
 /* 主内容区域 - 避免被导航栏遮挡 */
 .main-content {
-  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx)); /* 状态栏 + 导航栏 */
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 额外间距 */
   flex: 1;
   display: flex;
   flex-direction: column;
