@@ -626,3 +626,89 @@
   height: 40rpx;
 }
 
+// 成本分解卡片
+.cost-breakdown-card {
+  .cost-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+  }
+
+  .breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12rpx 0;
+    
+    .item-label {
+      display: flex;
+      align-items: center;
+      gap: 12rpx;
+      
+      .label-dot {
+        width: 12rpx;
+        height: 12rpx;
+        border-radius: 50%;
+      }
+      
+      .label-text {
+        font-size: 26rpx;
+        color: #666;
+      }
+    }
+    
+    .item-value {
+      font-size: 28rpx;
+      color: #333;
+      font-weight: 500;
+    }
+  }
+
+  .breakdown-divider {
+    height: 1rpx;
+    background: #e6e6e6;
+    margin: 12rpx 0;
+  }
+
+  .total-item {
+    padding: 16rpx 0;
+    background: linear-gradient(90deg, #f5f7fa 0%, transparent 100%);
+    padding-left: 16rpx;
+    padding-right: 16rpx;
+    border-radius: 8rpx;
+    margin-top: 8rpx;
+
+    .item-label-total {
+      font-size: 28rpx;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .item-value-total {
+      font-size: 32rpx;
+      color: #0052d9;
+      font-weight: bold;
+    }
+  }
+
+  .total-loss-item {
+    padding: 16rpx 0;
+    background: linear-gradient(90deg, #fff3f3 0%, transparent 100%);
+    padding-left: 16rpx;
+    padding-right: 16rpx;
+    border-radius: 8rpx;
+
+    .item-label-total {
+      font-size: 28rpx;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .item-value-loss {
+      font-size: 32rpx;
+      color: #e34d59;
+      font-weight: bold;
+    }
+  }
+}
+

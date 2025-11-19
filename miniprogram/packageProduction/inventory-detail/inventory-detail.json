@@ -1,11 +1,6 @@
 {
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "bottom-popup": "/components/bottom-popup/bottom-popup",
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-input": "tdesign-miniprogram/input/input", 
-    "t-button": "tdesign-miniprogram/button/button",
-    "t-popup": "tdesign-miniprogram/popup/popup",
-    "t-empty": "tdesign-miniprogram/empty/empty"
+    "bottom-popup": "/components/bottom-popup/bottom-popup"
   }
 }

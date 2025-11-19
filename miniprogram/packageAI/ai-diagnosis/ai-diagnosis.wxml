@@ -10,14 +10,6 @@
   <!-- 页面内容 -->
   <view class="page-content">
     
-    <!-- 免责声明 -->
-    <view class="disclaimer-banner">
-      <view class="disclaimer-icon">⚠️</view>
-      <view class="disclaimer-content">
-        <text class="disclaimer-text">AI诊断仅供参考，不替代专业兽医诊断</text>
-      </view>
-    </view>
-    
     <!-- 诊断结果展示 - 全新设计 -->
     <view class="diagnosis-result" wx:if="{{diagnosisResult && diagnosisStatus === 'completed'}}">
       
@@ -194,18 +186,29 @@
 
     <!-- 症状输入表单 -->
     <view class="diagnosis-form" wx:else>
-      
-      <!-- 重要提醒 -->
-      <view class="notice-section">
-        <t-notice-bar 
-          theme="warning" 
-          content="⚠️ AI诊断仅供参考，请结合专业兽医建议进行最终诊断和治疗"
-        />
-      </view>
 
       <!-- 基本信息 -->
       <view class="form-section">
-        <text class="section-title">基本信息</text>
+        <view class="section-title-wrapper">
+          <text class="section-title">基本信息</text>
+          <text class="section-subtitle">AI诊断仅供参考，不替代专业兽医诊断</text>
+        </view>
+        
+        <!-- 批次选择 -->
+        <view class="form-row">
+          <text class="form-label">选择批次</text>
+          <picker 
+            class="form-picker"
+            mode="selector"
+            range="{{batchPickerRange}}"
+            value="{{batchPickerIndex}}"
+            bindchange="onBatchPickerChange"
+          >
+            <view class="picker-value {{selectedBatchNumber ? '' : 'placeholder'}}">
+              {{selectedBatchNumber ? selectedBatchNumber : '请选择批次'}}
+            </view>
+          </picker>
+        </view>
         
         <!-- 诊断类型选择 -->
         <view class="form-row diagnosis-type-row">
@@ -225,25 +228,9 @@
             </label>
           </radio-group>
         </view>
-        
-        <!-- 批次选择 -->
-        <view class="form-row">
-          <text class="form-label">选择批次</text>
-          <picker 
-            class="form-picker"
-            mode="selector"
-            range="{{batchPickerRange}}"
-            value="{{batchPickerIndex}}"
-            bindchange="onBatchPickerChange"
-          >
-            <view class="picker-value {{selectedBatchNumber ? '' : 'placeholder'}}">
-              {{selectedBatchNumber ? selectedBatchNumber : '请选择批次'}}
-            </view>
-          </picker>
-        </view>
 
         <!-- 日龄（自动显示） -->
-        <view class="form-row" wx:if="{{selectedBatchId}}">
+        <view class="form-row day-age-row" wx:if="{{selectedBatchId}}">
           <text class="form-label">鹅只日龄</text>
           <view class="form-value">
             <text class="value-text">{{dayAge}}</text>
@@ -252,7 +239,7 @@
         </view>
         
         <!-- 病鹅诊断：受影响数量 -->
-        <view class="form-row" wx:if="{{diagnosisType === 'live_diagnosis'}}">
+        <view class="form-row affected-count-row" wx:if="{{diagnosisType === 'live_diagnosis'}}">
           <view class="form-label">
             <text class="label-text">受影响数量</text>
             <text class="required-mark">*</text>
@@ -268,7 +255,7 @@
         </view>
         
         <!-- 死因剖析：死亡数量 -->
-        <view class="form-row" wx:if="{{diagnosisType === 'autopsy_analysis'}}">
+        <view class="form-row affected-count-row" wx:if="{{diagnosisType === 'autopsy_analysis'}}">
           <view class="form-label">
             <text class="label-text">死亡数量</text>
             <text class="required-mark">*</text>
@@ -396,11 +383,9 @@
           <!-- 上传框 1 -->
           <view class="upload-box-item">
             <view wx:if="{{images[0]}}" class="uploaded-image-wrapper">
-              <t-image 
+              <image 
                 src="{{images[0]}}"
                 mode="aspectFill"
-                width="100%"
-                height="100%"
                 bind:tap="onPreviewImage"
                 data-src="{{images[0]}}"
                 class="uploaded-image"
@@ -430,11 +415,9 @@
           <!-- 上传框 2 -->
           <view class="upload-box-item">
             <view wx:if="{{images[1]}}" class="uploaded-image-wrapper">
-              <t-image 
+              <image 
                 src="{{images[1]}}"
                 mode="aspectFill"
-                width="100%"
-                height="100%"
                 bind:tap="onPreviewImage"
                 data-src="{{images[1]}}"
                 class="uploaded-image"
@@ -464,11 +447,9 @@
           <!-- 上传框 3 -->
           <view class="upload-box-item">
             <view wx:if="{{images[2]}}" class="uploaded-image-wrapper">
-              <t-image 
+              <image 
                 src="{{images[2]}}"
                 mode="aspectFill"
-                width="100%"
-                height="100%"
                 bind:tap="onPreviewImage"
                 data-src="{{images[2]}}"
                 class="uploaded-image"
@@ -510,16 +491,30 @@
           size="large" 
           block
           disabled="{{!formValid || submitting}}"
-          loading="{{submitting}}"
           bind:tap="startDiagnosis"
           class="submit-btn"
         >
-          {{submitting ? (diagnosisType === 'autopsy_analysis' ? 'AI分析中...' : 'AI诊断中...') : (diagnosisType === 'autopsy_analysis' ? '开始AI死因分析' : '开始AI智能诊断')}}
+          <view class="btn-content">
+            <!-- 自定义loading图标 -->
+            <view class="custom-loading" wx:if="{{submitting}}"></view>
+            <text class="btn-text">{{submitting ? (diagnosisType === 'autopsy_analysis' ? 'AI分析中...' : 'AI诊断中...') : (diagnosisType === 'autopsy_analysis' ? '开始AI死因分析' : '开始AI智能诊断')}}</text>
+          </view>
         </t-button>
         
-        <!-- 预计等待时间提示 -->
-        <view class="submit-hint" wx:if="{{submitting}}">
-          <text class="hint-text">⏱️ 预计需要 30-50 秒，AI正在深度分析中...</text>
+        <!-- AI诊断进行中的动画提示 -->
+        <view class="diagnosis-loading-hint" wx:if="{{submitting}}">
+          <view class="loading-animation">
+            <t-loading 
+              theme="circular" 
+              size="48rpx" 
+              loading="{{submitting}}"
+              text=""
+            />
+          </view>
+          <view class="loading-text-wrapper">
+            <text class="loading-title">AI正在深度分析中</text>
+            <text class="loading-subtitle">⏱️ 预计需要 30-50 秒，请耐心等待...</text>
+          </view>
         </view>
         
         <!-- 必填项提示（未完成表单时显示） -->

@@ -46,13 +46,68 @@
           <text class="info-label">死亡数量</text>
           <text class="info-value highlight">{{record.deathCount}} 只</text>
         </view>
+      </view>
+    </view>
+
+    <!-- 成本分解卡片 -->
+    <view class="info-card cost-breakdown-card">
+      <view class="card-title">
+        <t-icon name="chart-pie" size="32rpx" color="#0052d9" />
+        <text class="title-text">成本分解</text>
+        <t-tag theme="primary" size="small" wx:if="{{record.costBreakdown}}">综合平均成本</t-tag>
+      </view>
+      
+      <!-- 成本明细 -->
+      <view class="cost-breakdown-list" wx:if="{{record.costBreakdown}}">
+        <view class="breakdown-item">
+          <view class="item-label">
+            <view class="label-dot" style="background: #0052d9;"></view>
+            <text class="label-text">鹅苗成本</text>
+          </view>
+          <text class="item-value">¥{{record.costBreakdown.entryUnitCost || '0.00'}}</text>
+        </view>
+        <view class="breakdown-item" wx:if="{{record.costBreakdown.breedingCost && record.costBreakdown.breedingCost !== '0.00'}}">
+          <view class="item-label">
+            <view class="label-dot" style="background: #00a870;"></view>
+            <text class="label-text">饲养成本</text>
+          </view>
+          <text class="item-value">¥{{record.costBreakdown.breedingCost}}</text>
+        </view>
+        <view class="breakdown-item" wx:if="{{record.costBreakdown.preventionCost && record.costBreakdown.preventionCost !== '0.00'}}">
+          <view class="item-label">
+            <view class="label-dot" style="background: #ed7b2f;"></view>
+            <text class="label-text">预防成本</text>
+          </view>
+          <text class="item-value">¥{{record.costBreakdown.preventionCost}}</text>
+        </view>
+        <view class="breakdown-item" wx:if="{{record.costBreakdown.treatmentCost && record.costBreakdown.treatmentCost !== '0.00'}}">
+          <view class="item-label">
+            <view class="label-dot" style="background: #e34d59;"></view>
+            <text class="label-text">治疗成本</text>
+          </view>
+          <text class="item-value">¥{{record.costBreakdown.treatmentCost}}</text>
+        </view>
+        
+        <view class="breakdown-divider"></view>
+        
+        <!-- 单只成本合计 -->
+        <view class="breakdown-item total-item">
+          <text class="item-label-total">单只综合成本</text>
+          <text class="item-value-total">¥{{record.unitCostDisplay || '0.00'}}</text>
+        </view>
+        
+        <!-- 总损失 -->
+        <view class="breakdown-item total-loss-item">
+          <text class="item-label-total">总损失（×{{record.deathCount}}只）</text>
+          <text class="item-value-loss">¥{{record.financeLossDisplay || '0.00'}}</text>
+        </view>
+      </view>
+      
+      <!-- 兼容旧数据：没有成本分解时显示原有样式 -->
+      <view class="info-rows" wx:else>
         <view class="info-row">
           <text class="info-label">单位成本</text>
           <text class="info-value">¥{{record.unitCostDisplay || '0.00'}}/只</text>
-        </view>
-        <view class="info-row" wx:if="{{record.breedingCost && record.breedingCost > 0}}">
-          <text class="info-label">饲养成本</text>
-          <text class="info-value">¥{{record.breedingCostDisplay || '0.00'}}</text>
         </view>
         <view class="info-row" wx:if="{{record.treatmentCost && record.treatmentCost > 0}}">
           <text class="info-label">治疗成本</text>

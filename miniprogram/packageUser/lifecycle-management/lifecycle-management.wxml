@@ -40,7 +40,6 @@
           </view>
           <view class="template-meta">
             <text class="task-total">共{{item.taskCount || 0}}个任务</text>
-            <t-icon name="chevron-right" size="40rpx" color="#999" />
           </view>
         </view>
       </view>

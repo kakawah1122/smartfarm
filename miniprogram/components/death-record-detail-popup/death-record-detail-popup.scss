@@ -6,6 +6,8 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 0 !important;
+  min-height: 400rpx !important; /* 添加最小高度 */
+  /* 移除滚动相关样式，由父组件的 scroll-view 处理 */
 }
 
 /* 详情区块 */
@@ -264,6 +266,109 @@
     color: #3b82f6 !important;
     font-weight: bold !important;
     margin: 4rpx 0 !important;
+  }
+}
+
+/* 成本分解容器 */
+.cost-breakdown-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12rpx !important;
+  background: white !important;
+  border-radius: 12rpx !important;
+  padding: 20rpx !important;
+  border: 2rpx solid #0052d9 !important;
+}
+
+.breakdown-item {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 10rpx 0 !important;
+  
+  .breakdown-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10rpx !important;
+    
+    .label-dot {
+      width: 10rpx !important;
+      height: 10rpx !important;
+      border-radius: 50% !important;
+      flex-shrink: 0 !important;
+    }
+    
+    .label-text {
+      font-size: 26rpx !important;
+      color: #666 !important;
+    }
+  }
+  
+  .breakdown-value {
+    font-size: 28rpx !important;
+    color: #333 !important;
+    font-weight: 500 !important;
+  }
+}
+
+.breakdown-divider {
+  height: 1rpx !important;
+  background: #e6e6e6 !important;
+  margin: 8rpx 0 !important;
+}
+
+.breakdown-total {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 14rpx 16rpx !important;
+  background: linear-gradient(90deg, #f0f7ff 0%, transparent 100%) !important;
+  border-radius: 8rpx !important;
+  margin-top: 8rpx !important;
+  
+  .total-label {
+    font-size: 28rpx !important;
+    color: #333 !important;
+    font-weight: 600 !important;
+  }
+  
+  .total-value {
+    font-size: 32rpx !important;
+    color: #0052d9 !important;
+    font-weight: bold !important;
+  }
+}
+
+.breakdown-loss {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 14rpx 16rpx !important;
+  background: linear-gradient(90deg, #fff3f3 0%, transparent 100%) !important;
+  border-radius: 8rpx !important;
+  
+  .loss-label {
+    font-size: 28rpx !important;
+    color: #333 !important;
+    font-weight: 600 !important;
+  }
+  
+  .loss-value {
+    font-size: 32rpx !important;
+    color: #e34d59 !important;
+    font-weight: bold !important;
+  }
+}
+
+/* section-title 增强 */
+.detail-section .section-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12rpx !important;
+  
+  .title-text {
+    flex: 1 !important;
   }
 }
 

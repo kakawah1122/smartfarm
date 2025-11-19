@@ -121,8 +121,7 @@ async function getOverviewStats(event, wxContext) {
     getMaterialOverview(),
     getRecentTrends()
   ])
-  
-  
+
   return {
     success: true,
     data: {

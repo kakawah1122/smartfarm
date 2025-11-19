@@ -9,6 +9,7 @@ import { isVaccineTask, isMedicationTask, isNutritionTask, groupTasksByBatch, ca
 import { processImageUrls } from '../../utils/image-utils'
 import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisRecord } from '../../utils/diagnosis-data-utils'
 import { safeCloudCall, safeBatchCall } from '../../utils/safe-cloud-call'
+import { optimizeSetData, restoreSetData } from '../../utils/setdata-optimizer'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -429,14 +430,14 @@ Page<PageData, any>({
    */
   async fixTreatmentRecordsOpenId() {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'fix_treatment_records_openid'
         }
       })
       
-      if (result.result?.success && result.result?.fixedCount > 0) {
+      if (result?.success && result?.fixedCount > 0) {
         // 修复后刷新数据
         this.invalidateAllBatchesCache()
       }
@@ -450,6 +451,12 @@ Page<PageData, any>({
    * 页面加载
    */
   async onLoad(options: any) {
+    // ✅ 启用setData批量优化器，减少渲染次数
+    optimizeSetData(this, {
+      delay: 16,    // 一帧的时间（16ms）
+      maxWait: 100  // 最大等待100ms，保证响应性
+    })
+    
     // ✅ 修复已有数据的 _openid 问题（一次性修复）
     this.fixTreatmentRecordsOpenId()
     
@@ -550,6 +557,9 @@ Page<PageData, any>({
   onUnload() {
     // ✅ 立即停止监听器，不延迟
     this.stopDataWatcher()
+    
+    // ✅ 恢复原始的setData方法，避免内存泄漏
+    restoreSetData(this)
   },
   
   /**
@@ -655,6 +665,13 @@ Page<PageData, any>({
    * 加载选项卡数据
    */
   async loadTabData(tab: string) {
+    // 如果healthStats.originalQuantity未设置，先加载健康数据
+    if (tab === 'analysis' && !this.data.healthStats.originalQuantity) {
+      await this.loadHealthData(true)  // 静默加载健康数据
+      // 等待setData完成
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+    
     switch (tab) {
       case 'overview':
         await this.loadHealthOverview()
@@ -761,7 +778,7 @@ Page<PageData, any>({
     }
 
     const fetchPromise = (async () => {
-      const snapshotResult = await wx.cloud.callFunction({
+      const snapshotResult = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_dashboard_snapshot',
@@ -773,11 +790,11 @@ Page<PageData, any>({
         }
       })
 
-      if (!snapshotResult.result || !snapshotResult.result.success) {
+      if (!snapshotResult || !snapshotResult.success) {
         throw new Error('获取健康面板数据失败')
       }
 
-      const rawData = snapshotResult.result.data || {}
+      const rawData = snapshotResult.data || {}
 
       const normalized = {
         batches: rawData.batches || [],
@@ -833,15 +850,16 @@ Page<PageData, any>({
       const healthData = await this._fetchAllBatchesHealthData()
       
       // ✅ 获取预防统计数据
-      const preventionResult = await wx.cloud.callFunction({
+      const preventionResult = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'getPreventionDashboard',
-          batchId: 'all'
+          batchIds: [],  // 空数组表示查询全部批次
+          today: formatTime(new Date(), 'date')
         }
       })
-      
-      const preventionResponse = preventionResult.result as any
+
+      const preventionResponse = preventionResult as any
       let preventionStats = {
         totalPreventions: 0,
         vaccineCount: 0,
@@ -883,7 +901,7 @@ Page<PageData, any>({
         : 0
 
       // ✅ 获取原始入栏数（全部批次模式）
-      const originalQuantity = (healthData as any).originalTotalQuantity || 0
+      const originalQuantity = healthData.originalTotalQuantity || 0
       
       this.setData({
         healthStats: {
@@ -998,7 +1016,7 @@ Page<PageData, any>({
       }
       
       // ✅ 获取原始入栏数（全部批次模式）
-      const originalQuantity = (healthData as any).originalTotalQuantity || 0
+      const originalQuantity = healthData.originalTotalQuantity || 0
       
       // 静默更新数据（不影响用户操作）
       this.setData({
@@ -1038,7 +1056,7 @@ Page<PageData, any>({
    */
   async loadSingleBatchDataOptimized() {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_batch_complete_data',
@@ -1049,11 +1067,11 @@ Page<PageData, any>({
         }
       })
       
-      if (!result.result || !result.result.success) {
+      if (!result || !result.success) {
         throw new Error('获取批次数据失败')
       }
       
-      const data = result.result.data
+      const data = result.data
       
       // 处理健康统计
       const healthStats = data.healthStats || {}
@@ -1216,7 +1234,7 @@ Page<PageData, any>({
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
           // 调用新的预防管理仪表盘云函数
-          const result = await wx.cloud.callFunction({
+          const result = await safeCloudCall({
             name: 'health-management',
             data: {
               action: 'getPreventionDashboard',
@@ -1224,7 +1242,7 @@ Page<PageData, any>({
             }
           })
 
-      const response = result.result as any
+      const response = result as any
 
         // 🔍 详细错误日志
         if (!response.success) {
@@ -1404,13 +1422,13 @@ Page<PageData, any>({
    * 在后台清理孤儿任务（不阻塞UI）
    */
   cleanOrphanTasksInBackground() {
-    wx.cloud.callFunction({
+    safeCloudCall({
       name: 'breeding-todo',
       data: {
         action: 'cleanOrphanTasks'
       }
     }).then((result: any) => {
-      const response = result.result as any
+      const response = result as any
       // 后台清理孤儿任务，不显示日志
       if (response.success && response.data && response.data.deletedCount > 0) {
         // 静默清理完成
@@ -1532,9 +1550,9 @@ Page<PageData, any>({
       if (aggregatedStats) {
         // 如果已有聚合数据，只并行执行必要的调用
         [pendingDiagnosisResult, abnormalResult, diagnosisResult] = await Promise.all([
-          wx.cloud.callFunction({ name: 'ai-diagnosis', data: pendingDiagnosisParams }),
-          wx.cloud.callFunction({ name: 'health-management', data: abnormalParams }),
-          wx.cloud.callFunction({ name: 'ai-diagnosis', data: diagnosisParams })
+          safeCloudCall({ name: 'ai-diagnosis', data: pendingDiagnosisParams }),
+          safeCloudCall({ name: 'health-management', data: abnormalParams }),
+          safeCloudCall({ name: 'ai-diagnosis', data: diagnosisParams })
         ])
         costData = {
           totalCost: aggregatedStats.totalCost,
@@ -1553,24 +1571,24 @@ Page<PageData, any>({
           { name: 'ai-diagnosis', data: diagnosisParams }
         ])
         
-        costData = costResult.result?.success
-          ? costResult.result.data
+        costData = costResult?.success
+          ? costResult.data
           : {}
       }
       
       // ✅ 从统计API获取待处理数量（优化：直接获取数量，无需过滤）
-      const pendingDiagnosisCount = pendingDiagnosisResult.result?.success
-        ? (pendingDiagnosisResult.result.data?.pendingCount || 0)
+      const pendingDiagnosisCount = pendingDiagnosisResult?.success
+        ? (pendingDiagnosisResult.data?.pendingCount || 0)
         : 0
       
       // 处理异常记录数据
-      const abnormalRecords = abnormalResult.result?.success 
-        ? (abnormalResult.result.data || [])
+      const abnormalRecords = abnormalResult?.success 
+        ? (abnormalResult.data || [])
         : []
       
       // ✅ 处理诊断历史记录：使用公共工具函数标准化数据
-      const diagnosisHistory = diagnosisResult.result?.success 
-        ? normalizeDiagnosisRecords(diagnosisResult.result.data?.records || [])
+      const diagnosisHistory = diagnosisResult?.success 
+        ? normalizeDiagnosisRecords(diagnosisResult.data?.records || [])
         : []
       
       // ✅ 统一更新治疗相关数据（优化：统一数据源到treatmentData.stats）
@@ -1769,13 +1787,27 @@ Page<PageData, any>({
       const totalAnimals = this.data.healthStats?.totalChecks || 0
       const hasData = totalAnimals > 0
       
-      // ✅ 存活率计算逻辑
+      // ✅ 存活率计算逻辑（增强容错）
       let survivalRate: string | number = '-'
       let trend = 'stable'
       
       if (hasData) {
-        const originalQuantity = this.data.healthStats.originalQuantity || totalAnimals
+        // ✅ 获取原始入栏数，优先使用 originalQuantity，避免回退到 totalAnimals（当前存活数）
+        let originalQuantity = this.data.healthStats.originalQuantity || 0
         const deadCount = this.data.healthStats.deadCount || 0
+        
+        // ✅ 容错：如果 originalQuantity 为 0，尝试从totalChecks + deadCount估算
+        if (originalQuantity === 0) {
+          // 如果有总数和死亡数，可以尝试计算
+          if (totalAnimals > 0 || deadCount > 0) {
+            originalQuantity = totalAnimals + deadCount
+            logger.info('存活率计算：使用totalChecks + deadCount估算', {
+              totalAnimals,
+              deadCount,
+              estimated: originalQuantity
+            })
+          }
+        }
         
         if (originalQuantity > 0) {
           const survivalCount = originalQuantity - deadCount
@@ -1785,6 +1817,14 @@ Page<PageData, any>({
           trend = mortalityRate < 1 ? 'improving' : mortalityRate < 3 ? 'stable' : 'declining'
         } else {
           survivalRate = '-'
+          // ✅ 调试日志：记录为什么显示 "-"
+          logger.info('存活率显示"-"，原因：无法计算originalQuantity', {
+            healthStats: this.data.healthStats,
+            totalAnimals,
+            deadCount,
+            hasData,
+            currentBatchId: this.data.currentBatchId
+          })
         }
       }
       
@@ -1797,7 +1837,7 @@ Page<PageData, any>({
       
       if (isAllBatches) {
         // 全部批次模式：使用 getPreventionDashboard
-        preventionPromise = wx.cloud.callFunction({
+        preventionPromise = safeCloudCall({
           name: 'health-management',
           data: {
             action: 'getPreventionDashboard',
@@ -1806,7 +1846,7 @@ Page<PageData, any>({
         })
       } else {
         // 单批次模式：使用 get_batch_complete_data
-        preventionPromise = wx.cloud.callFunction({
+        preventionPromise = safeCloudCall({
           name: 'health-management',
           data: {
             action: 'get_batch_complete_data',
@@ -1819,7 +1859,7 @@ Page<PageData, any>({
       const [preventionResult, feedCostResult] = await Promise.all([
         preventionPromise,
         // 获取饲养成本
-        wx.cloud.callFunction({
+        safeCloudCall({
           name: 'finance-management',
           data: {
             action: 'get_cost_stats',
@@ -1834,20 +1874,20 @@ Page<PageData, any>({
       let preventionCost = 0
       if (isAllBatches) {
         // 全部批次模式的响应结构
-        if (preventionResult.result?.success && preventionResult.result.data?.stats) {
-          preventionCost = preventionResult.result.data.stats.preventionCost || 0
+        if (preventionResult?.success && preventionResult.data?.stats) {
+          preventionCost = preventionResult.data.stats.preventionCost || 0
         }
       } else {
         // 单批次模式的响应结构
-        if (preventionResult.result?.success && preventionResult.result.data?.preventionStats) {
-          preventionCost = preventionResult.result.data.preventionStats.totalCost || 0
+        if (preventionResult?.success && preventionResult.data?.preventionStats) {
+          preventionCost = preventionResult.data.preventionStats.totalCost || 0
         }
       }
       
       // ✅ 修复：获取治疗成本（不依赖页面数据，直接从云函数获取）
       let treatmentCost = 0
       try {
-        const treatmentCostResult = await wx.cloud.callFunction({
+        const treatmentCostResult = await safeCloudCall({
           name: 'health-management',
           data: {
             action: 'calculate_treatment_cost',
@@ -1856,8 +1896,8 @@ Page<PageData, any>({
           }
         })
         
-        if (treatmentCostResult.result?.success) {
-          treatmentCost = treatmentCostResult.result.data?.totalCost || 0
+        if (treatmentCostResult?.success) {
+          treatmentCost = treatmentCostResult.data?.totalCost || 0
         }
       } catch (error) {
         console.error('获取治疗成本失败:', error)
@@ -1867,8 +1907,8 @@ Page<PageData, any>({
       
       // 提取饲养成本
       let feedingCost = 0
-      if (feedCostResult.result?.success) {
-        feedingCost = feedCostResult.result.data.feedCost || 0
+      if (feedCostResult?.success) {
+        feedingCost = feedCostResult.data.feedCost || 0
       }
       
       // 计算总成本
@@ -2051,7 +2091,7 @@ Page<PageData, any>({
 
     try {
       // 获取批次信息以获取云函数计算的日龄
-      const batchResult = await wx.cloud.callFunction({
+      const batchResult = await safeCloudCall({
         name: 'production-entry',
         data: {
           action: 'getBatchDetail',
@@ -2068,7 +2108,7 @@ Page<PageData, any>({
       const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
 
       // 调用 breeding-todo 云函数获取任务（只查询当日日龄的任务）
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'breeding-todo',
         data: {
           action: 'getTodos',
@@ -2077,7 +2117,7 @@ Page<PageData, any>({
         }
       })
 
-      const response = result.result as any
+      const response = result as any
       
       if (response.success && response.data && response.data.length > 0) {
         const tasks = Array.isArray(response.data) ? response.data : []
@@ -2141,7 +2181,7 @@ Page<PageData, any>({
           const dayAge = batch.dayAge
           
           // 只查询当日日龄的任务
-          const result = await wx.cloud.callFunction({
+          const result = await safeCloudCall({
             name: 'breeding-todo',
             data: {
               action: 'getTodos',
@@ -2150,7 +2190,7 @@ Page<PageData, any>({
             }
           })
           
-          const response = result.result as any
+          const response = result as any
           
           if (response.success && response.data && response.data.length > 0) {
             const tasks = Array.isArray(response.data) ? response.data : []
@@ -2420,8 +2460,9 @@ Page<PageData, any>({
             data: { action: 'getActiveBatches' },
             useCache: true  // 自动缓存10分钟
           })
-          if (batchResult.result?.success) {
-            validBatchIds = (batchResult.result.data || []).map((b: any) => b._id)
+          if (batchResult?.success) {
+            const activeBatches = batchResult.data || []
+            validBatchIds = activeBatches.map((b: any) => b._id)
           }
         } catch (error) {
           logger.error('[历史任务] 获取批次列表失败:', error)
@@ -2630,7 +2671,7 @@ Page<PageData, any>({
     wx.showLoading({ title: '加载中...' })
     
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'getPreventionTimeline',
@@ -2638,7 +2679,7 @@ Page<PageData, any>({
         }
       })
       
-      const response = result.result as any
+      const response = result as any
       if (response.success && response.data) {
         this.setData({
           timelineData: response.data
@@ -2664,14 +2705,14 @@ Page<PageData, any>({
     wx.showLoading({ title: '加载中...' })
     
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'getBatchPreventionComparison'
         }
       })
       
-      const response = result.result as any
+      const response = result as any
       if (response.success && response.data) {
         this.setData({
           comparisonData: response.data
@@ -2973,8 +3014,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         useCache: true  // 自动缓存10分钟
       })
 
-      if (result.result && result.result.success) {
-        const batches = result.result.data || []
+      if (result && result.success) {
+        const batches = result.data || []
         
         // 使用云函数返回的dayAge
         const batchesWithDayAge = batches.map((batch: any) => {
@@ -3138,10 +3179,14 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 1. 清除缓存
       this.invalidateAllBatchesCache()
       
-      // 2. 加载基础健康数据
+      // 2. 加载基础健康数据 - 这会设置healthStats.originalQuantity
       await this.loadHealthData(true)  // silent模式
       
-      // 3. 根据当前激活的tab加载对应数据
+      // 3. 确保数据加载完成后再加载分析数据
+      // 使用setTimeout确保setData已完成
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // 4. 根据当前激活的tab加载对应数据
       switch (this.data.activeTab) {
         case 'overview':
           await this.loadHealthOverview()
@@ -3407,7 +3452,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       }
       
       // 缓存中没有，通过云函数查询用户信息
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'user-management',
         data: {
           action: 'get_user_by_openid',
@@ -3415,8 +3460,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
       
-      if (result.result?.success && result.result?.data?.nickName) {
-        const userName = result.result.data.nickName
+      if (result?.success && result?.data?.nickName) {
+        const userName = result.data.nickName
         
         // 更新弹窗中的用户名
         this.setData({
@@ -3555,7 +3600,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async completeNormalTask(task: any) {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'breeding-todo',
         data: {
           action: 'completeTask',
@@ -3565,7 +3610,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
       
-      const response = result.result as any
+      const response = result as any
       if (response.success) {
         this.closeTaskDetailPopup()
         // 📝 优化：统一使用 loadPreventionData 刷新任务列表
@@ -3876,7 +3921,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     try {
       wx.showLoading({ title: '提交中...' })
 
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'completePreventionTask',
@@ -3886,7 +3931,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
 
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         wx.hideLoading()
         wx.showToast({
           title: '疫苗接种记录已创建',
@@ -3899,7 +3944,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           this.loadPreventionData()
         }
       } else {
-        throw new Error(result.result?.message || '提交失败')
+        throw new Error(result?.message || '提交失败')
       }
     } catch (error: any) {
       wx.hideLoading()
@@ -3971,7 +4016,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async loadAvailableMedicines() {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'production-material',
         data: {
           action: 'list_materials',
@@ -3979,8 +4024,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
       
-      if (result.result && result.result.success) {
-        const materials = result.result.data.materials || []
+      if (result && result.success) {
+        const materials = result.data.materials || []
         const availableMedicines = materials
           .filter((material: any) => (material.currentStock || 0) > 0)
           .map((material: any) => ({
@@ -4211,7 +4256,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         createTime: new Date().toISOString()
       }
 
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'production-material',
         data: {
           action: 'create_record',
@@ -4228,14 +4273,14 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
 
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         // 计算成本：数量 × 单价
         const unitPrice = this.data.selectedMedicine?.unitPrice || 0
         const quantity = Number(medicationRecord.quantity) || 0
         const totalCost = unitPrice * quantity
         
         // ✅ 创建健康预防记录
-        await wx.cloud.callFunction({
+        await safeCloudCall({
           name: 'health-management',
           data: {
             action: 'complete_prevention_task',
@@ -4280,7 +4325,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
 
       } else {
-        throw new Error(result.result?.message || '提交失败')
+        throw new Error(result?.message || '提交失败')
       }
 
     } catch (error: any) {
@@ -4297,7 +4342,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async completeMedicationTask(taskId: string, batchId: string) {
     try {
-      await wx.cloud.callFunction({
+      await safeCloudCall({
         name: 'breeding-todo',
         data: {
           action: 'completeTask',
@@ -4345,7 +4390,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async loadAvailableNutrition() {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'production-material',
         data: {
           action: 'list_materials',
@@ -4353,8 +4398,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
 
-      if (result.result && result.result.success) {
-        const materials = result.result.data?.materials || []
+      if (result && result.success) {
+        const materials = result.data?.materials || []
         const availableNutrition = materials
           .filter((material: any) => (material.currentStock || 0) > 0)
           .map((material: any) => ({
@@ -4560,7 +4605,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         recordDate: getCurrentBeijingDate()
       }
 
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'production-material',
         data: {
           action: 'create_record',
@@ -4568,7 +4613,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
 
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         await this.completeNutritionTask(selectedTask._id, batchId)
         
         wx.hideLoading()
@@ -4584,7 +4629,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
 
       } else {
-        throw new Error(result.result?.message || '提交失败')
+        throw new Error(result?.message || '提交失败')
       }
 
     } catch (error: any) {
@@ -4601,7 +4646,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async completeNutritionTask(taskId: string, batchId: string) {
     try {
-      await wx.cloud.callFunction({
+      await safeCloudCall({
         name: 'breeding-todo',
         data: {
           action: 'completeTask',
@@ -4714,7 +4759,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       }
 
       // 调用云函数记录异常反应
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'recordAdverseReaction',
@@ -4722,7 +4767,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
 
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         wx.hideLoading()
         wx.showToast({
           title: '异常反应已记录',
@@ -4735,7 +4780,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           this.loadPreventionData()
         }
       } else {
-        throw new Error(result.result?.message || '提交失败')
+        throw new Error(result?.message || '提交失败')
       }
     } catch (error: any) {
       wx.hideLoading()

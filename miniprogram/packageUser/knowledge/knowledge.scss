@@ -108,6 +108,7 @@ page {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
 }
 
@@ -169,41 +170,62 @@ page {
   box-shadow: 0 6rpx 14rpx rgba(0, 82, 217, 0.08);
 }
 
-.article-item-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
+.article-item-header {
+  margin-bottom: 12rpx;
 }
 
 .article-title {
-  flex: 1;
   font-size: 30rpx;
   font-weight: 600;
-  color: #333;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  color: #1a1a1a;
+  line-height: 1.4;
   overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.article-desc {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-
+/* 文章底部 - 标签和日期 */
 .article-item-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
-  margin-top: 4rpx;
+  font-size: 24rpx;
+}
+
+.article-category {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+/* 分类主题颜色 */
+.category-success {
+  color: #00a870;
+}
+
+.category-danger {
+  color: #e34d59;
+}
+
+.category-primary {
+  color: #0052d9;
+}
+
+.category-warning {
+  color: #ed7b2f;
+}
+
+.category-default {
+  color: #8a8a8a;
+}
+
+.article-date {
+  color: #999;
+  white-space: nowrap;
+  margin-left: auto;
 }
 
 .article-stats {
@@ -356,6 +378,7 @@ page {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
 }
 
@@ -366,6 +389,7 @@ page {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
 }
 

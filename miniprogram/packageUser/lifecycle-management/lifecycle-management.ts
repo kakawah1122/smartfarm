@@ -1,6 +1,6 @@
 // lifecycle-management.ts - 任务管理页面
 
-import { getTasksByDayAge, getAllTasks } from '../../utils/breeding-schedule-data'
+import { getTasksByDayAge, getAllTasks } from '../utils/breeding-schedule-data'
 
 // 定义全局变量存储定时器
 let scrollTimer: number | null = null

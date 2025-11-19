@@ -3,13 +3,7 @@
     "pages/index/index",
     "pages/production/production",
     "pages/health/health",
-    "pages/profile/profile",
-    "pages/knowledge/knowledge",
-    "pages/knowledge/article-detail/article-detail",
-    "pages/privacy-settings/privacy-settings",
-    "pages/notification-settings/notification-settings",
-    "pages/about/about",
-    "pages/help/help"
+    "pages/profile/profile"
   ],
   "subpackages": [
     {
@@ -67,7 +61,13 @@
         "lifecycle-management/lifecycle-management",
         "lifecycle-task-edit/lifecycle-task-edit",
         "batch-template-config/batch-template-config",
-        "lifecycle-task-detail/lifecycle-task-detail"
+        "lifecycle-task-detail/lifecycle-task-detail",
+        "knowledge/knowledge",
+        "knowledge/article-detail/article-detail",
+        "privacy-settings/privacy-settings",
+        "notification-settings/notification-settings",
+        "about/about",
+        "help/help"
       ]
     },
     {
@@ -163,6 +163,17 @@
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-loading": "tdesign-miniprogram/loading/loading",
     "t-input": "tdesign-miniprogram/input/input",
-    "t-toast": "tdesign-miniprogram/toast/toast"
+    "t-toast": "tdesign-miniprogram/toast/toast",
+    "t-popup": "tdesign-miniprogram/popup/popup",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-image": "tdesign-miniprogram/image/image",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group"
   }
 }

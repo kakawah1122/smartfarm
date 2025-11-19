@@ -1,8 +1,6 @@
 {
   "component": true,
   "usingComponents": {
-    "bottom-popup": "/components/bottom-popup/bottom-popup",
-    "t-button": "tdesign-miniprogram/button/button"
+    "bottom-popup": "/components/bottom-popup/bottom-popup"
   }
 }
-

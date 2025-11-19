@@ -1,14 +1,7 @@
 {
   "usingComponents": {
-    "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "t-empty": "tdesign-miniprogram/empty/empty",
-    "t-tag": "tdesign-miniprogram/tag/tag",
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-loading": "tdesign-miniprogram/loading/loading",
-    "t-button": "tdesign-miniprogram/button/button",
-    "t-picker": "tdesign-miniprogram/picker/picker"
+    "navigation-bar": "/components/navigation-bar/navigation-bar"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true
 }
-

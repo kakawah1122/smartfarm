@@ -34,28 +34,15 @@
     <!-- 文章列表 -->
       <view wx:if="{{filteredArticles.length > 0}}" class="article-list">
         <view wx:for="{{filteredArticles}}" 
-                wx:key="id"
+              wx:key="id"
               class="article-item"
               bindtap="viewArticle"
-                data-item="{{item}}">
-          <view class="article-item-top">
-            <view class="article-item-content">
-              <text class="article-title">{{item.title}}</text>
-              <text class="article-desc" wx:if="{{item.description}}">{{item.description}}</text>
-            </view>
-            <view class="article-meta">
-            <t-tag theme="{{item.categoryTheme ? item.categoryTheme : 'default'}}" size="small">{{item.categoryName || '未分类'}}</t-tag>
-            </view>
+              data-item="{{item}}">
+          <view class="article-item-header">
+            <text class="article-title">{{item.title}}</text>
           </view>
           <view class="article-item-footer">
-            <view class="article-stats">
-              <view class="stat-item">
-                <text class="stat-text">👁️ {{item.views || 0}}</text>
-              </view>
-              <view class="stat-item">
-                <text class="stat-text">⏱️ {{item.readTime || 0}}分钟</text>
-    </view>
-      </view>
+            <text class="article-category category-{{item.categoryTheme || 'default'}}">{{item.categoryName || '未分类'}}</text>
             <text class="article-date">{{item.date}}</text>
           </view>
         </view>

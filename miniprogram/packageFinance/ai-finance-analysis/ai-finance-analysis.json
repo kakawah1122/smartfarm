@@ -1,10 +1,3 @@
 {
-  "component": true,
-  "usingComponents": {
-    "t-loading": "tdesign-miniprogram/loading/loading",
-    "t-button": "tdesign-miniprogram/button/button",
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-textarea": "tdesign-miniprogram/textarea/textarea"
-  }
+  "component": true
 }
-

@@ -27,7 +27,7 @@ function initManager() {
  * 安全的云函数调用
  * 自动处理缓存和优化，失败时回退到原始调用
  * @param config 调用配置
- * @returns Promise<any>
+ * @returns Promise<any> 返回云函数的result字段内容
  */
 export async function safeCloudCall(config: {
   name: string
@@ -65,10 +65,11 @@ export async function safeCloudCall(config: {
   
   // 回退到原始调用方式
   logger.log('[SafeCloudCall] 使用原始调用:', config.name, config.data.action)
-  return wx.cloud.callFunction({
+  const res = await wx.cloud.callFunction({
     name: config.name,
     data: config.data
   })
+  return res.result
 }
 
 /**
@@ -104,12 +105,13 @@ export async function safeBatchCall(configs: Array<{
   
   // 回退到并行原始调用
   logger.log('[SafeBatchCall] 使用并行原始调用')
-  return Promise.all(configs.map(config => 
+  const results = await Promise.all(configs.map(config => 
     wx.cloud.callFunction({
       name: config.name,
       data: config.data
     })
   ))
+  return results.map(res => res.result)
 }
 
 /**

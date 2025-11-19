@@ -1,8 +1,9 @@
 // finance-record-list.ts - 财务记录列表页面
+/// <reference path="../../../typings/index.d.ts" />
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 
-const pageConfig = {
+const pageConfig: any = {
   data: {
     records: [],
     displayRecords: [],
@@ -13,9 +14,6 @@ const pageConfig = {
       { label: '支出', value: 'expense' }
     ],
     loading: false,
-    page: 1,
-    pageSize: 50,
-    hasMore: true,
     
     // 交易详情弹窗
     showDetailPopup: false,
@@ -90,14 +88,13 @@ const pageConfig = {
         name: 'finance-management',
         data: {
           action: 'get_all_finance_records',
-          page: this.data.page,
-          pageSize: this.data.pageSize,
           dateRange: { start: startDate, end: endDate }
         }
       })
 
-      if (result.result?.success) {
-        const allRecords = result.result.data?.records || []
+      const resultData = result.result as any
+      if (resultData?.success) {
+        const allRecords = resultData.data?.records || []
         const records: any[] = []
 
         // 处理所有记录
@@ -170,11 +167,9 @@ const pageConfig = {
           })
         })
 
-        // 合并记录
-        const newRecords = [...this.data.records, ...records]
+        // 设置所有记录
         this.setData({
-          records: newRecords,
-          hasMore: allRecords.length === this.data.pageSize,
+          records: records,
           loading: false
         })
         
@@ -182,7 +177,7 @@ const pageConfig = {
       } else {
         this.setData({ loading: false })
         wx.showToast({
-          title: result.result?.error || '加载失败',
+          title: resultData?.error || '加载失败',
           icon: 'none'
         })
       }

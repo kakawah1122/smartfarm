@@ -1243,22 +1243,12 @@ async function getAllFinanceRecords(event, wxContext) {
       return dateB - dateA
     })
 
-    // 分页
-    const total = records.length
-    const startIndex = (page - 1) * pageSize
-    const endIndex = startIndex + pageSize
-    const paginatedRecords = records.slice(startIndex, endIndex)
-
+    // 返回所有记录，不分页
     return {
       success: true,
       data: {
-        records: paginatedRecords,
-        pagination: {
-          page,
-          pageSize,
-          total,
-          totalPages: Math.ceil(total / pageSize)
-        }
+        records: records,
+        total: records.length
       }
     }
   } catch (error) {

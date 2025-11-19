@@ -392,7 +392,7 @@ Page({
     switch (action) {
       case 'privacy':
         wx.navigateTo({
-          url: '/pages/privacy-settings/privacy-settings',
+          url: '/packageUser/privacy-settings/privacy-settings',
           fail: () => {
             wx.showToast({ title: '页面跳转失败', icon: 'none' })
           }
@@ -400,7 +400,7 @@ Page({
         break
       case 'notification-settings':
         wx.navigateTo({
-          url: '/pages/notification-settings/notification-settings',
+          url: '/packageUser/notification-settings/notification-settings',
           fail: () => {
             wx.showToast({ title: '页面跳转失败', icon: 'none' })
           }
@@ -408,7 +408,7 @@ Page({
         break
       case 'about':
         wx.navigateTo({
-          url: '/pages/about/about',
+          url: '/packageUser/about/about',
           fail: () => {
             wx.showToast({ title: '页面跳转失败', icon: 'none' })
           }
@@ -416,7 +416,7 @@ Page({
         break
       case 'help':
         wx.navigateTo({
-          url: '/pages/help/help',
+          url: '/packageUser/help/help',
           fail: () => {
             wx.showToast({ title: '页面跳转失败', icon: 'none' })
           }

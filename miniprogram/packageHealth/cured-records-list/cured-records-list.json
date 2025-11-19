@@ -1,12 +1,7 @@
 {
   "navigationStyle": "custom",
   "usingComponents": {
-    "t-empty": "tdesign-miniprogram/empty/empty",
-    "t-loading": "tdesign-miniprogram/loading/loading",
-    "t-tag": "tdesign-miniprogram/tag/tag",
-    "t-icon": "tdesign-miniprogram/icon/icon",
     "navigation-bar": "/components/navigation-bar/navigation-bar",
     "cured-record-detail": "/components/cured-record-detail-popup/cured-record-detail-popup"
   }
 }
-

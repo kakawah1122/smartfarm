@@ -1430,8 +1430,7 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
         selectedMaterialRecord: null
       })
     }, 300)
-  },
-
+  }
 
 }
 

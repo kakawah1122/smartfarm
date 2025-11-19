@@ -30,8 +30,7 @@ MC4CAQAwBQYDK2VwBCIEIPjx83mg0QC795KAds+Wavn5S9Br7fw/7c4XVF9AferQ
 function generateJWT() {
   try {
     const now = Math.floor(Date.now() / 1000)
-    
-    
+
     const header = {
       alg: 'EdDSA',
       kid: QWEATHER_CONFIG.JWT.CREDENTIAL_ID
@@ -42,8 +41,7 @@ function generateJWT() {
       iat: now - 30,
       exp: now + 3600
     }
-    
-    
+
     const base64UrlEncode = (obj) => {
       return Buffer.from(JSON.stringify(obj))
         .toString('base64')
@@ -121,8 +119,7 @@ async function qweatherRequest(apiPath, params = {}) {
   const jwt = generateJWT()
   const queryString = new URLSearchParams(params).toString()
   const url = `https://${QWEATHER_CONFIG.API_HOST}${apiPath}${queryString ? '?' + queryString : ''}`
-  
-  
+
   return new Promise((resolve, reject) => {
     const options = {
       method: 'GET',
@@ -300,8 +297,7 @@ async function getCompleteWeatherData(lat, lon) {
     // 1. 首先通过坐标获取城市信息
     const cityInfo = await getCityByCoordinates(lat, lon)
     const locationId = cityInfo.id
-    
-    
+
     // 2. 并行获取各种天气数据
     const [
       currentWeather,

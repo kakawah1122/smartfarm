@@ -1,11 +1,4 @@
 {
   "navigationBarTitleText": "角色管理",
-  "navigationStyle": "custom",
-  "usingComponents": {
-    "t-input": "tdesign-miniprogram/input/input",
-    "t-button": "tdesign-miniprogram/button/button",
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-popup": "tdesign-miniprogram/popup/popup",
-    "t-loading": "tdesign-miniprogram/loading/loading"
-  }
+  "navigationStyle": "custom"
 }

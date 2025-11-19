@@ -61,14 +61,14 @@ const pageConfig = {
           content: article.content
         }))
         
-        // 第一篇文章作为热门文章
+        // 第一篇文章作为热门文章（仅用于首页展示）
         const hotArticle = formattedArticles.length > 0 ? formattedArticles[0] : null
-        const otherArticles = formattedArticles.slice(1)
         
+        // 列表显示所有文章（包括热门文章）
         this.setData({
           hotArticle,
-          articles: otherArticles,
-          filteredArticles: otherArticles
+          articles: formattedArticles,
+          filteredArticles: formattedArticles
         })
       } else {
         // 如果数据库没有数据，使用空数组
@@ -182,9 +182,10 @@ const pageConfig = {
     try {
       const payload = encodeURIComponent(JSON.stringify(article))
       wx.navigateTo({
-        url: `/pages/knowledge/article-detail/article-detail?article=${payload}`
+        url: `/packageUser/knowledge/article-detail/article-detail?article=${payload}`
       })
     } catch (error) {
+      console.error('文章跳转失败:', error)
       wx.showToast({ title: '文章打开失败', icon: 'none' })
     }
   },

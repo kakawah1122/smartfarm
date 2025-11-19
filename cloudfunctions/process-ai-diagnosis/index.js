@@ -211,8 +211,7 @@ function selectOptimalTaskType(task) {
   const hasImages = task.images && task.images.length > 0
   const complexity = evaluateDiagnosisComplexity(task)
   const urgency = evaluateUrgency(task)
-  
-  
+
   // 1. 有图片 → 优先使用视觉模型
   if (hasImages) {
     return 'health_diagnosis_vision'  // ERNIE 4.5 VL（2分/次）
@@ -259,8 +258,7 @@ async function processTask(diagnosisId) {
     
     // 3. ✨ 智能选择任务类型（基于复杂度、图片、紧急度）
     const optimalTaskType = selectOptimalTaskType(task)
-    
-    
+
     // 调用AI多模型服务进行诊断
     const aiResult = await cloud.callFunction({
       name: 'ai-multi-model',
@@ -273,8 +271,7 @@ async function processTask(diagnosisId) {
       },
       timeout: 60000  // ✅ 设置60秒超时（ai-multi-model需要调用通义千问API，15-25秒）
     })
-    
-    
+
     if (!aiResult.result || !aiResult.result.success) {
       const errorMsg = aiResult.result?.error || aiResult.result?.fallback || 'AI诊断调用失败'
       // ✅ 检查是否是图片相关错误
@@ -334,8 +331,7 @@ async function processTask(diagnosisId) {
           completedAt: new Date()
         }
       })
-    
-    
+
     return {
       success: true,
       data: {

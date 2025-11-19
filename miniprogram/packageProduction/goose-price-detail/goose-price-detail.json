@@ -1,11 +1,8 @@
 {
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "t-tabs": "tdesign-miniprogram/tabs/tabs",
-    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
     "price-trend-chart": "/components/price-trend-chart/price-trend-chart"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": false
 }
-

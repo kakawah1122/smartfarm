@@ -367,8 +367,7 @@ class DailyCostController {
         usage.byModel[record.modelId].calls++
         usage.byModel[record.modelId].cost += (record.cost || 0)
       })
-      
-      
+
       return usage
     } catch (error) {
       console.error('获取今日使用量失败:', error)
@@ -385,8 +384,7 @@ class DailyCostController {
   // 智能选择最优模型（基于成本和预算）
   async selectOptimalModel(taskType, hasImages, isComplex, isUrgent) {
     const usage = await this.getTodayUsage()
-    
-    
+
     // 1️⃣ 预算充足 (0-70%)：优先使用最佳模型
     if (usage.percentage < this.warningThreshold) {
       if (hasImages) {
@@ -648,7 +646,6 @@ class AIModelManager {
       throw new Error(`图片处理失败: ${error.message}`)
     }
 
-
     // 修改用户消息，添加图片
     const processedMessages = messages.map((msg, index) => {
       if (msg.role === 'user' && index === messages.length - 1) {
@@ -726,7 +723,6 @@ class AIModelManager {
     }
   }
 
-
   // ========== 调用AI模型（通义千问OpenAI兼容格式）==========
   async callModel(modelId, messages, options = {}) {
     const config = MODEL_CONFIGS[modelId]
@@ -759,7 +755,6 @@ class AIModelManager {
           timeout: options.timeout || 60000  // ✅ 增加默认超时到60秒
         }
       )
-
 
       const result = {
         content: response.data.choices[0].message.content,
@@ -1465,8 +1460,7 @@ async function handleChatCompletion(event, manager) {
         console.error(`模型配置不存在: ${modelId}`)
         continue
       }
-      
-      
+
       try {
         // 合并options，优先使用taskType配置的timeout
         const modelOptions = {
@@ -1476,8 +1470,7 @@ async function handleChatCompletion(event, manager) {
         
         // 调用模型
         const result = await manager.callModel(modelId, processedMessages, modelOptions)
-        
-        
+
         // 设置缓存（图片诊断不缓存或缓存时间更短）
         const cacheDuration = images.length > 0 ? 600 : 3600
         await manager.setCache(cacheKey, result, cacheDuration)

@@ -2,14 +2,7 @@
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
     "bottom-popup": "/components/bottom-popup/bottom-popup",
-    "material-record-detail-popup": "/components/material-record-detail-popup/material-record-detail-popup",
-    "t-loading": "tdesign-miniprogram/loading/loading",
-    "t-empty": "tdesign-miniprogram/empty/empty",
-    "t-button": "tdesign-miniprogram/button/button",
-    "t-tag": "tdesign-miniprogram/tag/tag",
-    "t-search": "tdesign-miniprogram/search/search",
-    "t-tabs": "tdesign-miniprogram/tabs/tabs",
-    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel"
+    "material-record-detail-popup": "/components/material-record-detail-popup/material-record-detail-popup"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

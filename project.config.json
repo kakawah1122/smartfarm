@@ -37,7 +37,10 @@
     "condition": false,
     "swc": false,
     "disableSWC": true,
-    "disableUseStrict": false
+    "disableUseStrict": false,
+    "disableAIPerformanceAnalysis": true,
+    "disablePerformanceMonitor": true,
+    "checkSiteMap": false
   },
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
@@ -50,32 +53,7 @@
   },
   "libVersion": "3.5.7",
   "packOptions": {
-    "ignore": [
-      {
-        "value": "*.md",
-        "type": "file"
-      },
-      {
-        "value": "test-gemini-config.js",
-        "type": "file"
-      },
-      {
-        "value": "查看诊断失败原因.js",
-        "type": "file"
-      },
-      {
-        "value": "cloudfunctions",
-        "type": "folder"
-      },
-      {
-        "value": "node_modules",
-        "type": "folder"
-      },
-      {
-        "value": ".git",
-        "type": "folder"
-      }
-    ],
+    "ignore": [],
     "include": []
   },
   "appid": "wx68a4d75dd80665ec",

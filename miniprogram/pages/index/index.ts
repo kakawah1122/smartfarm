@@ -2443,7 +2443,7 @@ Page({
   navigateToKnowledge() {
     // 使用 catchtap 已自动阻止事件冒泡，无需手动调用 stopPropagation
     wx.navigateTo({
-      url: '/pages/knowledge/knowledge'
+      url: '/packageUser/knowledge/knowledge'
     })
   },
 
@@ -2459,7 +2459,7 @@ Page({
     try {
       const payload = encodeURIComponent(JSON.stringify(article))
       wx.navigateTo({
-        url: `/pages/knowledge/article-detail/article-detail?article=${payload}`
+        url: `/packageUser/knowledge/article-detail/article-detail?article=${payload}`
       })
     } catch (error) {
       wx.showToast({ title: '文章打开失败', icon: 'none' })

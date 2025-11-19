@@ -11,6 +11,15 @@ export interface NavbarSizes {
 }
 
 /**
+ * 扩展Page的类型定义，添加setData等方法
+ */
+export interface PageInstance<D = any> {
+  data: D;
+  setData: (data: any, callback?: () => void) => void;
+  [key: string]: any;
+}
+
+/**
  * 获取系统状态栏高度并转换为rpx
  */
 export function getSystemNavBarSizes(): NavbarSizes {
@@ -36,59 +45,46 @@ export function getSystemNavBarSizes(): NavbarSizes {
 }
 
 /**
- * 页面Mixin，为页面添加状态栏适配功能
+ * 创建带有自适应导航栏的页面
+ * 会自动计算状态栏高度并设置
  */
-export function createPageWithNavbar(pageConfig: any) {
-  const originalOnLoad = pageConfig.onLoad || function() {};
+export function createPageWithNavbar<D extends AnyObject = any>(
+  pageConfig: Partial<PageInstance<D>> & { data: D }
+): Partial<PageInstance<D & { statusBarHeight: number; navBarHeight: number; totalNavHeight: number }>> {
+  const originalOnLoad = (pageConfig as any).onLoad || function() {};
   
-  return {
-    ...pageConfig,
-    data: {
-      ...pageConfig.data,
-      // 状态栏相关数据
-      statusBarHeight: 88,
-      navBarHeight: 88,
-      totalNavHeight: 176,
-    },
+  // 扩展data，添加导航栏高度
+  pageConfig.data = {
+    ...pageConfig.data,
+    statusBarHeight: 88,
+    navBarHeight: 88,
+    totalNavHeight: 176,
+  } as any;
+  
+  // 替换onLoad方法
+  (pageConfig as any).onLoad = function(this: any, options: any) {
+    // 检查登录状态
+    if (!checkPageAuth()) {
+      return // 如果未登录，停止页面加载
+    }
     
-    onLoad(options: any) {
-      // 检查登录状态
-      if (!checkPageAuth()) {
-        return // 如果未登录，停止页面加载
-      }
-      
-      // 设置状态栏高度
-      this.setStatusBarHeight();
-      
-      // 调用原始onLoad
+    // 设置状态栏高度
+    const sizes = getSystemNavBarSizes();
+    this.setData({
+      statusBarHeight: sizes.statusBarHeight,
+      navBarHeight: sizes.navBarHeight,
+      totalNavHeight: sizes.totalNavHeight
+    });
+    
+    // 调用原始onLoad
+    if (originalOnLoad) {
       originalOnLoad.call(this, options);
-    },
-    
-    /**
-     * 设置状态栏高度
-     */
-    setStatusBarHeight() {
-      const sizes = getSystemNavBarSizes();
-      
-      this.setData({
-        statusBarHeight: sizes.statusBarHeight,
-        navBarHeight: sizes.navBarHeight,
-        totalNavHeight: sizes.totalNavHeight
-      });
-      
-      // 同步到全局数据
-      const app = getApp<IAppOption>();
-      if (app.globalData) {
-        app.globalData.statusBarHeight = sizes.statusBarHeight / 2; // 转回px
-        app.globalData.navBarHeight = sizes.navBarHeight;
-      }
-
-    },
-    
-    /**
-     * 返回上一页
-     */
-    goBack() {
+    }
+  };
+  
+  // 添加goBack方法
+  if (!(pageConfig as any).goBack) {
+    (pageConfig as any).goBack = function(this: any) {
       if (getCurrentPages().length > 1) {
         wx.navigateBack();
       } else {
@@ -96,8 +92,10 @@ export function createPageWithNavbar(pageConfig: any) {
           url: '/pages/index/index'
         });
       }
-    }
-  };
+    };
+  }
+  
+  return pageConfig as any;
 }
 
 /**

@@ -5,18 +5,8 @@
     "entry-record-detail-popup": "../../components/entry-record-detail-popup/entry-record-detail-popup",
     "exit-record-detail-popup": "../../components/exit-record-detail-popup/exit-record-detail-popup",
     "material-record-detail-popup": "../../components/material-record-detail-popup/material-record-detail-popup",
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-tabs": "tdesign-miniprogram/tabs/tabs",
-    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
-    "t-button": "tdesign-miniprogram/button/button",
-    "t-tag": "tdesign-miniprogram/tag/tag",
-    "t-grid": "tdesign-miniprogram/grid/grid",
-    "t-grid-item": "tdesign-miniprogram/grid-item/grid-item",
-    "t-cell": "tdesign-miniprogram/cell/cell",
-    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
     "t-row": "tdesign-miniprogram/row/row",
-    "t-col": "tdesign-miniprogram/col/col",
-    "t-empty": "tdesign-miniprogram/empty/empty"
+    "t-col": "tdesign-miniprogram/col/col"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

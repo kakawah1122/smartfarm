@@ -3,10 +3,6 @@
   "enablePullDownRefresh": true,
   "usingComponents": {
     "navigation-bar": "../../components/navigation-bar/navigation-bar",
-    "t-empty": "tdesign-miniprogram/empty/empty",
-    "t-loading": "tdesign-miniprogram/loading/loading",
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-tag": "tdesign-miniprogram/tag/tag",
     "analysis-history-detail-popup": "../../components/analysis-history-detail-popup/analysis-history-detail-popup"
   }
 }

@@ -8,7 +8,6 @@ cloud.init({
 // 引入集合配置
 const { COLLECTIONS } = require('./collections.js')
 
-
 const db = cloud.database()
 
 // 云函数入口函数

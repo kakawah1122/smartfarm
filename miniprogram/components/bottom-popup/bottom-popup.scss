@@ -61,10 +61,11 @@
 .popup-content {
   flex: 1;
   min-height: 200rpx; /* 修复真机问题：确保有最小高度 */
-  max-height: calc(85vh - 200rpx); /* 限制最大高度，预留头部和按钮空间 */
+  height: calc(85vh - 240rpx); /* 固定高度：85vh - 头部(120rpx) - 按钮(120rpx) */
+  max-height: calc(85vh - 240rpx); /* 限制最大高度 */
   padding: 16rpx 24rpx; /* 优化：缩小 padding，减少空白 */
   box-sizing: border-box;
-  /* 移除 overflow-y，由 scroll-view 组件自己控制滚动 */
+  /* scroll-view 组件自己控制滚动 */
 }
 
 /* 操作按钮 */

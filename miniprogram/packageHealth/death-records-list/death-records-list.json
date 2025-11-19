@@ -1,13 +1,8 @@
 {
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "t-empty": "tdesign-miniprogram/empty/empty",
-    "t-tag": "tdesign-miniprogram/tag/tag",
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-loading": "tdesign-miniprogram/loading/loading",
     "death-record-detail": "/components/death-record-detail-popup/death-record-detail-popup"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true
 }
-

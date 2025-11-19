@@ -20,8 +20,10 @@
     <!-- 自定义内容区域 -->
     <scroll-view 
       class="popup-content" 
-      scroll-y 
-      show-scrollbar="{{false}}"
+      scroll-y="{{true}}"
+      show-scrollbar="{{true}}"
+      enhanced="{{true}}"
+      bounces="{{false}}"
     >
       <slot></slot>
     </scroll-view>
