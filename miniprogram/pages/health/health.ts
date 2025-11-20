@@ -888,7 +888,7 @@ Page<PageData, any>({
       
       // 获取预防统计数据
       const preventionResult = await safeCloudCall({
-        name: 'health-management',
+        name: 'health-prevention',  // 使用拆分后的云函数
         data: {
           action: 'getPreventionDashboard',
           batchId: 'all',
@@ -1263,7 +1263,7 @@ Page<PageData, any>({
         try {
           // 调用预防管理仪表盘云函数
           const result = await safeCloudCall({
-            name: 'health-management',
+            name: 'health-prevention',  // 使用拆分后的云函数
             data: {
               action: 'getPreventionDashboard',
               batchId: this.data.currentBatchId || 'all'
@@ -1717,7 +1717,7 @@ Page<PageData, any>({
       let treatmentCost = 0
       try {
         const treatmentCostResult = await safeCloudCall({
-          name: 'health-management',
+          name: 'health-cost',  // 使用拆分后的云函数
           data: {
             action: 'calculate_treatment_cost',
             dateRange: this.data.dateRange,
@@ -3737,7 +3737,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     await withErrorHandler(
       async () => {
         const res = await safeCloudCall({
-          name: 'health-management',
+          name: 'health-prevention',  // 使用拆分后的云函数
           data: {
             action: 'completePreventionTask',
             taskId: selectedTask._id,
@@ -4091,7 +4091,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         
         // ✅ 创建健康预防记录
         await safeCloudCall({
-          name: 'health-management',
+          name: 'health-prevention',  // 使用拆分后的云函数
           data: {
             action: 'complete_prevention_task',
             taskId: selectedTask._id,
@@ -4564,9 +4564,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
 
       // 调用云函数记录异常反应
       const result = await safeCloudCall({
-        name: 'health-management',
+        name: 'health-abnormal',  // 使用拆分后的云函数
         data: {
-          action: 'recordAdverseReaction',
+          action: 'create_abnormal_record',  // 使用新的action名称
           recordData: recordData
         }
       })
