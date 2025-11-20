@@ -4,17 +4,9 @@ import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
 
 // 导入模块化管理器
-import { ProductionNavigationManager, setupNavigationHandlers } from './modules/production-navigation-module'
+import { setupNavigationHandlers } from './modules/production-navigation-module'
 import { ProductionDataLoader } from './modules/production-data-loader'
 import { ProductionAIManager } from './modules/production-ai-module'
-
-// 页面使用的类型定义
-type ExtendedBatchEntry = any
-type ExtendedBatchExit = any  
-type MaterialRecordItem = any
-type BatchEntryListResponse = { records: ExtendedBatchEntry[] }
-type BatchExitListResponse = { records: ExtendedBatchExit[] }
-type MaterialRecordListResponse = { records: MaterialRecordItem[] }
 
 type ProductionPageData = WechatMiniprogram.Page.DataOption & {
   aiCount: {
@@ -233,190 +225,46 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
     })
   },
 
-  // 加载入栏数据
+  // 加载入栏数据（使用模块化数据加载器）
   async loadEntryData() {
     try {
-      const result = await CloudApi.callFunction<BatchEntryListResponse>(
-        'production-entry',
-        {
-          action: 'list',
-          page: 1,
-          pageSize: 10
-        },
-        {
-          showError: false
-        }
-      )
-      
-      if (result.success && result.data) {
-        const records = (result.data.records ?? []) as ExtendedBatchEntry[]
-        
-        // 获取当前用户信息
-        const app = getApp()
-        const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
-        
-        // 格式化入栏记录数据，确保显示字段完整
-        const formattedRecords = records.map((record) => ({
-          ...record,
-          id: record._id || record.batchNumber,
-          batchNumber: record.batchNumber || record._id,
-          breed: record.breed || '未知品种',
-          supplier: record.supplier || '',
-          quantity: record.quantity || 0,
-          avgWeight: record.avgWeight || 0,
-          operator: (!record.operator || record.operator === '未知') ? currentUser : record.operator,
-          status: record.status || '已完成',
-          date: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          entryDate: record.entryDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          // 生成显示标题：仅显示品种
-          displayTitle: record.breed || '未知品种'
-        }))
-        
-        this.setData({
-          entryRecords: formattedRecords,
-          isEmpty: formattedRecords.length === 0
-        })
-      } else {
-        this.setData({ entryRecords: [], isEmpty: true })
-      }
+      const records = await ProductionDataLoader.loadEntryRecords()
+      this.setData({
+        entryRecords: records,
+        isEmpty: records.length === 0
+      })
     } catch (error: any) {
+      logger.error('加载入栏数据失败:', error)
       this.setData({ entryRecords: [], isEmpty: true })
     }
   },
 
-  // 加载出栏数据
+  // 加载出栏数据（使用模块化数据加载器）
   async loadExitData() {
     try {
-      const result = await CloudApi.callFunction<BatchExitListResponse>(
-        'production-exit',
-        {
-          action: 'list',
-          page: 1,
-          pageSize: 10
-        },
-        {
-          showError: false
-        }
-      )
-      
-      if (result.success && result.data) {
-        const records = (result.data.records ?? []) as ExtendedBatchExit[]
-        
-        // 获取当前用户信息
-        const app = getApp()
-        const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
-        
-        // 格式化出栏记录数据，确保显示字段完整
-        const formattedRecords = records.map((record) => ({
-          ...record,
-          id: record._id || record.exitNumber,
-          exitNumber: record.exitNumber || record._id,
-          batchNumber: record.batchNumber || '',
-          breed: record.breed || '未知品种',
-          customer: record.customer || '未知客户',
-          quantity: record.quantity || 0,
-          avgWeight: record.avgWeight || 0,
-          totalWeight: record.totalWeight || 0,
-          operator: record.operator || currentUser,
-          status: record.status || '已交付',
-          date: record.exitDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          exitDate: record.exitDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          // 生成显示标题：显示品种名（与入栏记录逻辑一致）
-          displayTitle: record.breed || '未知品种'
-        }))
-        
-        this.setData({
-          exitRecords: formattedRecords
-        })
-      } else {
-        this.setData({ exitRecords: [] })
-      }
+      const records = await ProductionDataLoader.loadExitRecords()
+      this.setData({
+        exitRecords: records,
+        isEmpty: records.length === 0
+      })
     } catch (error: any) {
-      this.setData({ exitRecords: [] })
+      logger.error('加载出栏数据失败:', error)
+      this.setData({ exitRecords: [], isEmpty: true })
     }
   },
 
-  // 加载物料数据
+  // 加载物料数据（使用模块化数据加载器）
   async loadMaterialData() {
     try {
-      const result = await CloudApi.callFunction<MaterialRecordListResponse>(
-        'production-material',
-        {
-          action: 'list_records',
-          page: 1,
-          pageSize: 10,
-          includeFeedRecords: true // 包含饲料投喂记录
-        },
-        {
-          showError: false
-        }
-      )
-      
-      if (result.success && result.data) {
-        const records = (result.data.records ?? []) as MaterialRecordItem[]
-        
-        // 获取当前用户信息
-        const app = getApp()
-        const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
-        
-        // 转换数据格式以匹配优化后的界面显示
-        const formattedRecords = records.map((record) => {
-          // 判断记录类型
-          let displayType = '领用'
-          let displayDescription = ''
-          
-          if (record.type === 'purchase') {
-            displayType = '采购'
-            displayDescription = `${record.material?.category || '未分类'} • ${record.supplier || ''}`
-          } else if (record.type === 'feed') {
-            displayType = '投喂'
-            displayDescription = `${record.material?.category || '饲料'} • 批次${record.batchNumber || '未知'}`
-          } else {
-            displayType = '领用'
-            displayDescription = `${record.material?.category || '未分类'} • ${record.targetLocation || ''}`
-          }
-          
-          return {
-            id: record.recordNumber || record._id, // 优先使用短单据号
-            recordNumber: record.recordNumber || record._id,
-            name: record.material?.name || '未知物料',
-            category: record.material?.category || '未分类',
-            type: displayType,
-            recordType: record.recordType || 'material', // 'material' 或 'feed'
-            quantity: `${record.quantity}${record.material?.unit || '件'}`,
-            supplier: record.supplier || '',
-            targetLocation: record.targetLocation || '',
-            batchNumber: record.batchNumber || '',
-            operator: (!record.operator || record.operator === '未知' || record.operator === '系统用户') ? currentUser : record.operator,
-            date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-            status: record.status || '已完成',
-            description: displayDescription,
-            // 饲料投喂相关额外信息
-            currentStock: record.currentStock || null,
-            costPerBird: record.costPerBird || null,
-            dayAge: record.dayAge || null
-          }
-        })
-        
-        const sortedRecords = formattedRecords.sort((a: any, b: any) => {
-          const parseTime = (value: any) => {
-            if (!value) return 0
-            const timeValue = value instanceof Date ? value : new Date(value)
-            const timestamp = timeValue.getTime()
-            return Number.isNaN(timestamp) ? 0 : timestamp
-          }
-          return parseTime(b.createTime || b.date || b.recordDate) - parseTime(a.createTime || a.date || a.recordDate)
-        })
-
-        this.setData({
-          materialRecords: sortedRecords.slice(0, 5),
-          isEmpty: sortedRecords.length === 0
-        })
-      } else {
-        this.setData({ materialRecords: [] })
-      }
+      const records = await ProductionDataLoader.loadMaterialRecords()
+      // 只显示前5条记录
+      this.setData({
+        materialRecords: records.slice(0, 5),
+        isEmpty: records.length === 0
+      })
     } catch (error: any) {
-      this.setData({ materialRecords: [] })
+      logger.error('加载物料数据失败:', error)
+      this.setData({ materialRecords: [], isEmpty: true })
     }
   },
 
