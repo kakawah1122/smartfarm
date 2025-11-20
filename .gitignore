@@ -10,3 +10,7 @@ dist
 •idea
 •Vscode
 •wxmL
+# 临时文件和备份
+*.backup
+*-example.ts
+
