@@ -14,6 +14,72 @@ import {
   markHomepageNeedSync
 } from '../../utils/global-sync'
 
+type WeatherLocationInfo = {
+  province?: string
+  city?: string
+  district?: string
+}
+
+type WeatherCurrentInfo = {
+  temperature?: number
+  humidity?: number
+  feelsLike?: number
+  windDirection?: string
+  windScale?: string
+  updateTime?: string
+}
+
+type WeatherConditionInfo = {
+  text?: string
+  emoji?: string
+}
+
+type WeatherApiPayload = {
+  locationInfo?: WeatherLocationInfo
+  current?: WeatherCurrentInfo
+  condition?: WeatherConditionInfo
+}
+
+type WeatherApiResponse = WeatherApiPayload & { data?: WeatherApiPayload }
+
+type MaterialItem = {
+  _id: string
+  name: string
+  unit?: string
+  currentStock?: number
+  category?: string
+  description?: string
+}
+
+type MaterialListResponse = {
+  materials: MaterialItem[]
+}
+
+type CreateMaterialRecordResponse = {
+  recordId?: string
+}
+
+type CompleteTaskResponse = {
+  completed?: boolean
+}
+
+type KnowledgeArticle = {
+  _id: string
+  title: string
+  description?: string
+  category?: string
+  categoryName?: string
+  categoryTheme?: string
+  views?: number
+  readTime?: string
+  date?: string
+  content?: string
+}
+
+type KnowledgeListResponse = {
+  list: KnowledgeArticle[]
+}
+
 interface VaccineFormData {
   // 兽医信息
   veterinarianName: string
@@ -50,7 +116,7 @@ Page({
     statusBarText: '9:41 AM • 中国移动 • 100%',
     
     // 知识库预览
-    knowledgeList: [],
+    knowledgeList: [] as KnowledgeArticle[],
     
     // 天气数据
     weather: {
@@ -370,7 +436,7 @@ Page({
                 }
               })
 
-              CloudApi.callFunction<any>(
+              CloudApi.callFunction<WeatherApiResponse>(
                 'weather',
                 {
                   action: 'getCompleteWeather',
@@ -469,7 +535,7 @@ Page({
   },
 
   // 更新天气 UI
-  updateWeatherUI(weatherData: any) {
+  updateWeatherUI(weatherData: WeatherApiResponse) {
     
     // 适配新的云函数数据格式
     let actualWeatherData = weatherData
@@ -1642,7 +1708,7 @@ Page({
    */
   async loadAvailableMedicines() {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<MaterialListResponse>(
         'production-material',
         {
           action: 'list_materials',
@@ -1658,8 +1724,8 @@ Page({
         
         // 只显示有库存的药品
         const availableMedicines = materials
-          .filter((material: any) => (material.currentStock || 0) > 0)
-          .map((material: any) => ({
+          .filter((material) => (material.currentStock || 0) > 0)
+          .map((material) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -1695,7 +1761,7 @@ Page({
   async loadAvailableNutrition() {
     try {
       // 首页加载营养品库存
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<MaterialListResponse>(
         'production-material',
         {
           action: 'list_materials',
@@ -1714,8 +1780,8 @@ Page({
         
         // 只显示有库存的营养品
         const availableNutrition = materials
-          .filter((material: any) => (material.currentStock || 0) > 0)
-          .map((material: any) => ({
+          .filter((material) => (material.currentStock || 0) > 0)
+          .map((material) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -2089,7 +2155,7 @@ Page({
       // 首页构建的记录数据
 
       // 调用临时修复版云函数创建用药记录
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<CreateMaterialRecordResponse>(
         'production-material',
         {
           action: 'create_record',
@@ -2156,7 +2222,7 @@ Page({
    */
   async completeMedicationTask(taskId: string, batchId: string) {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<CompleteTaskResponse>(
         'breeding-todo',
         {
           action: 'completeTask',
@@ -2324,7 +2390,7 @@ Page({
     // 首页完成营养管理任务
     
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<CompleteTaskResponse>(
         'breeding-todo', 
         {
           action: 'completeTask',
@@ -2392,7 +2458,7 @@ Page({
   async loadKnowledgePreview() {
     try {
       // 从数据库获取最近5篇文章
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<KnowledgeListResponse>(
         'knowledge-management',
         {
           action: 'list',
@@ -2408,7 +2474,7 @@ Page({
         const articles = result.data.list || []
         // 转换为前端需要的格式
         const formattedArticles = articles.map((article: any) => ({
-          id: article._id,
+          _id: article._id,
           title: article.title,
           description: article.description,
           category: article.category,

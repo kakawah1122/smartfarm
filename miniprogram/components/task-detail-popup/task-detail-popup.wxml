@@ -5,10 +5,8 @@
   show-close="{{true}}"
   show-actions="{{task && !task.completed && !task.isUpcoming}}"
   confirm-text="{{confirmText}}"
-  cancel-text="关闭"
   bind:close="onClose"
   bind:confirm="onConfirm"
-  bind:cancel="onClose"
   bind:visiblechange="onVisibleChange"
 >
   <view wx:if="{{task}}" class="record-detail-content">

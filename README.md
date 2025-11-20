@@ -91,9 +91,18 @@ npm install
 - 在 `project.config.json` 中配置云开发环境
 - 部署云函数
 
-5. **运行项目**
-- 在微信开发者工具中打开项目
-- 点击"编译"
+5. **运行项目 & 自检**
+  1. 在微信开发者工具中打开项目，点击“编译”
+  2. 提交代码前运行体积与字段校验脚本：
+     ```bash
+     # 检查主包/分包体积是否符合微信规范
+     node scripts/check-package-size.js
+
+     # 校验导出的数据（示例：财务成本记录）
+     node scripts/verify-schema-fields.js finance-cost data/finance-cost-sample.json
+     ```
+     - `check-package-size` 将在发现超限时退出码为 1，需先瘦身再提交
+     - `verify-schema-fields` 可按模块指定 schema，确保 `_openid`、`shouldSyncToFinance` 等关键字段完整
 
 ---
 

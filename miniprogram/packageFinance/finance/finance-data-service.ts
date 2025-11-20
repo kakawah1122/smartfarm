@@ -5,16 +5,16 @@
 
 /// <reference path="../../../typings/index.d.ts" />
 
-/**
- * 财务概览数据接口
- */
-export interface FinanceOverview {
-  totalRevenue: number
-  totalCost: number
-  netProfit: number
-  profitMargin: number
-  cashFlow: number
-  pendingAmount: number
+import { safeCloudCall } from '../../utils/safe-cloud-call'
+
+type FinanceOverview = FinanceSchema.FinanceOverview
+
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  total?: number
+  hasMore?: boolean
 }
 
 /**
@@ -66,30 +66,29 @@ export class FinanceDataService {
     if (cached) return cached
     
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'finance-management',
         data: {
           action: 'getFinanceOverview',
           dateRange: dateRange
         }
-      })
+      }) as CloudCallResult<FinanceOverview>
       
-      if (result.result?.success) {
-        const data = result.result.data as FinanceOverview
-        this.setCache(cacheKey, data)
-        return data
+      if (result?.success && result.data) {
+        this.setCache(cacheKey, result.data)
+        return result.data
       }
       
-      throw new Error(result.result?.error || '获取财务概览失败')
+      throw new Error(result?.error || '获取财务概览失败')
     } catch (error) {
       console.error('获取财务概览失败:', error)
       return {
-        totalRevenue: 0,
-        totalCost: 0,
+        totalIncome: 0,
+        totalExpense: 0,
         netProfit: 0,
-        profitMargin: 0,
-        cashFlow: 0,
-        pendingAmount: 0
+        costByType: [],
+        incomeByType: [],
+        costTrend: []
       }
     }
   }
@@ -105,19 +104,20 @@ export class FinanceDataService {
     dateRange?: any
   }): Promise<{list: TransactionRecord[]; total: number; hasMore: boolean}> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'finance-management',
         data: {
           action: 'getTransactionRecords',
           ...params
         }
-      })
+      }) as CloudCallResult<{ records: TransactionRecord[]; total: number; hasMore: boolean }>
       
-      if (result.result?.success) {
+      if (result?.success) {
+        const payload = result.data || { records: [], total: 0, hasMore: false }
         return {
-          list: result.result.data || [],
-          total: result.result.total || 0,
-          hasMore: result.result.hasMore || false
+          list: payload.records || [],
+          total: payload.total ?? result.total ?? 0,
+          hasMore: payload.hasMore ?? result.hasMore ?? false
         }
       }
       
@@ -137,16 +137,16 @@ export class FinanceDataService {
     if (cached) return cached
     
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'finance-management',
         data: {
           action: 'getCostBreakdown',
           dateRange: dateRange
         }
-      })
+      }) as CloudCallResult<any>
       
-      if (result.result?.success) {
-        const data = result.result.data
+      if (result?.success) {
+        const data = result.data
         this.setCache(cacheKey, data)
         return data
       }
@@ -167,16 +167,16 @@ export class FinanceDataService {
     if (cached) return cached
     
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'finance-management',
         data: {
           action: 'getRevenueAnalysis',
           dateRange: dateRange
         }
-      })
+      }) as CloudCallResult<any>
       
-      if (result.result?.success) {
-        const data = result.result.data
+      if (result?.success) {
+        const data = result.data
         this.setCache(cacheKey, data)
         return data
       }
@@ -193,23 +193,23 @@ export class FinanceDataService {
    */
   static async submitFinanceRecord(record: Partial<TransactionRecord>): Promise<any> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'finance-management',
         data: {
           action: 'createFinanceRecord',
           record: record
         }
-      })
+      }) as CloudCallResult
       
-      if (result.result?.success) {
+      if (result?.success) {
         // 清除相关缓存
         this.clearRelatedCache('finance_overview')
         this.clearRelatedCache('cost_analysis')
         this.clearRelatedCache('revenue_analysis')
-        return result.result
+        return result
       }
       
-      throw new Error(result.result?.error || '提交失败')
+      throw new Error(result?.error || '提交失败')
     } catch (error) {
       console.error('提交财务记录失败:', error)
       throw error
@@ -225,19 +225,19 @@ export class FinanceDataService {
     query?: string
   }): Promise<FinanceAnalysis> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'ai-multi-model',
         data: {
           action: 'financeAnalysis',
           ...params
         }
-      })
+      }) as CloudCallResult<FinanceAnalysis>
       
-      if (result.result?.success) {
-        return result.result.data as FinanceAnalysis
+      if (result?.success && result.data) {
+        return result.data
       }
       
-      throw new Error(result.result?.error || 'AI分析失败')
+      throw new Error(result?.error || 'AI分析失败')
     } catch (error) {
       console.error('AI财务分析失败:', error)
       throw error

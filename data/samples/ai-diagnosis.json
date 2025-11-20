@@ -1,0 +1,12 @@
+[
+  {
+    "_id": "ai_diag_001",
+    "batchId": "batch_001",
+    "imageUrl": "https://example.com/diagnosis-img.jpg",
+    "diagnosisResult": "疑似营养不良",
+    "confidence": 0.87,
+    "suggestions": "增加维生素补充并观察72小时",
+    "createdAt": "2025-10-06T10:30:00+08:00",
+    "createdBy": "ai-doctor"
+  }
+]

@@ -1,5 +1,6 @@
 // manual-record-form.ts - 手动记账表单页面逻辑
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 
 // 表单数据接口
 interface ManualRecordFormData {
@@ -17,7 +18,47 @@ interface UploadedFile {
   tempFilePath?: string;
 }
 
-const pageConfig = {
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+type CreateCostPayload = {
+  costType: string
+  amount: number
+  description: string
+  invoiceNumber: string
+  notes: string
+  receiptFileIDs: string[]
+  costDate?: string
+}
+
+interface CreateRevenuePayload {
+  revenueType: string
+  amount: number
+  description: string
+  invoiceNumber: string
+  notes: string
+  receiptFileIDs: string[]
+  revenueDate?: string
+}
+
+type ManualRecordPageData = {
+  recordType: 'expense' | 'income'
+  formData: ManualRecordFormData
+  maxDate: string
+  typeOptions: { label: string, value: string }[]
+  typeIndex: number
+  uploadedFiles: UploadedFile[]
+  uploading: boolean
+  submitting: boolean
+  validationErrors: string[]
+}
+
+type ManualRecordPageInstance = PageInstance<ManualRecordPageData>
+
+const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRecordPageData } = {
   data: {
     // 记账类型：expense（支出）或 income（收入）
     recordType: 'expense' as 'expense' | 'income',
@@ -51,13 +92,13 @@ const pageConfig = {
     validationErrors: [] as string[]
   },
 
-  onLoad() {
+  onLoad(this: ManualRecordPageInstance) {
     // 初始化表单
     this.initializeForm()
   },
 
   // 初始化表单
-  initializeForm() {
+  initializeForm(this: ManualRecordPageInstance) {
     const today = new Date()
     const dateString = this.formatDate(today)
     
@@ -80,7 +121,7 @@ const pageConfig = {
   },
 
   // 更新类型选项（根据记账类型）
-  updateTypeOptions() {
+  updateTypeOptions(this: ManualRecordPageInstance) {
     const { recordType } = this.data
     
     if (recordType === 'expense') {
@@ -114,14 +155,14 @@ const pageConfig = {
   },
 
   // 记账类型变化
-  onRecordTypeChange(e: any) {
-    const recordType = e.detail.value as 'expense' | 'income'
+  onRecordTypeChange(this: ManualRecordPageInstance, e: WechatMiniprogram.CustomEvent<{ value: 'expense' | 'income' }>) {
+    const recordType = e.detail.value
     this.setData({ recordType })
     this.updateTypeOptions()
   },
 
   // 日期选择变化
-  onDateChange(e: any) {
+  onDateChange(this: ManualRecordPageInstance, e: WechatMiniprogram.CustomEvent<{ value: string }>) {
     const dateString = e.detail.value
     this.setData({
       'formData.recordDate': dateString
@@ -129,7 +170,7 @@ const pageConfig = {
   },
 
   // 类型选择变化
-  onTypeChange(e: any) {
+  onTypeChange(this: ManualRecordPageInstance, e: WechatMiniprogram.CustomEvent<{ value: number }>) {
     const index = e.detail.value
     const option = this.data.typeOptions[index]
     
@@ -143,7 +184,7 @@ const pageConfig = {
   },
 
   // 字段变化
-  onFieldChange(e: any) {
+  onFieldChange(this: ManualRecordPageInstance, e: WechatMiniprogram.CustomEvent<{ value: string }> & { currentTarget: { dataset: { field: string } } }) {
     const { field } = e.currentTarget.dataset
     const value = e.detail.value
     
@@ -153,7 +194,7 @@ const pageConfig = {
   },
 
   // 选择图片
-  chooseImage() {
+  chooseImage(this: ManualRecordPageInstance) {
     const { uploadedFiles } = this.data
     const remainingCount = 5 - uploadedFiles.length
     
@@ -169,12 +210,12 @@ const pageConfig = {
       count: remainingCount,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
-      success: async (res) => {
+      success: async (res: WechatMiniprogram.ChooseMediaSuccessCallbackResult) => {
         this.setData({ uploading: true })
         wx.showLoading({ title: '上传中...' })
 
         try {
-          const uploadPromises = res.tempFiles.map(async (file) => {
+          const uploadPromises = res.tempFiles.map(async (file: WechatMiniprogram.ChooseMediaSuccessCallbackResult['tempFiles'][number]) => {
             // 压缩图片
             let finalPath = file.tempFilePath
             try {
@@ -229,7 +270,7 @@ const pageConfig = {
           this.setData({ uploading: false })
         }
       },
-      fail: (error) => {
+      fail: () => {
         wx.showToast({
           title: '选择图片失败',
           icon: 'none'
@@ -252,7 +293,7 @@ const pageConfig = {
   },
 
   // 删除图片
-  deleteImage(e: any) {
+  deleteImage(this: ManualRecordPageInstance, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { index: number } } }) {
     const { index } = e.currentTarget.dataset
     const { uploadedFiles } = this.data
 
@@ -261,7 +302,7 @@ const pageConfig = {
       content: '确定要删除这张单据吗？',
       success: (res) => {
         if (res.confirm) {
-          const newFiles = uploadedFiles.filter((_, i) => i !== index)
+          const newFiles = uploadedFiles.filter((_: UploadedFile, i: number) => i !== index)
           this.setData({
             uploadedFiles: newFiles
           })
@@ -298,7 +339,7 @@ const pageConfig = {
   },
 
   // 提交表单
-  async onSubmit() {
+  async onSubmit(this: ManualRecordPageInstance) {
     // 验证表单
     const validation = this.validateForm()
     if (!validation.isValid) {
@@ -318,24 +359,28 @@ const pageConfig = {
     try {
       const { formData, recordType, uploadedFiles } = this.data
       const amount = parseFloat(formData.amount)
-      const receiptFileIDs = uploadedFiles.map(file => file.fileID)
+      const receiptFileIDs = uploadedFiles.map((file: UploadedFile) => file.fileID)
 
       if (recordType === 'expense') {
-        // 创建支出记录
-        const result = await wx.cloud.callFunction({
+        const payload: CreateCostPayload = {
+          costType: formData.type,
+          amount,
+          description: formData.description.trim(),
+          invoiceNumber: formData.invoiceNumber.trim() || '',
+          notes: formData.notes.trim() || '',
+          receiptFileIDs,
+          costDate: formData.recordDate
+        }
+
+        const result = await safeCloudCall({
           name: 'finance-management',
           data: {
             action: 'create_cost_record',
-            costType: formData.type,
-            amount: amount,
-            description: formData.description.trim(),
-            invoiceNumber: formData.invoiceNumber.trim() || '',
-            notes: formData.notes.trim() || '',
-            receiptFileIDs: receiptFileIDs
+            payload
           }
-        })
+        }) as CloudCallResult
 
-        if (result.result && result.result.success) {
+        if (result?.success) {
           wx.showToast({
             title: '支出记录创建成功',
             icon: 'success',
@@ -348,24 +393,29 @@ const pageConfig = {
             })
           }, 800)
         } else {
-          throw new Error(result.result?.error || '创建失败')
+          throw new Error(result?.error || '创建失败')
         }
       } else {
         // 创建收入记录
-        const result = await wx.cloud.callFunction({
+        const payload: CreateRevenuePayload = {
+          revenueType: formData.type,
+          amount,
+          description: formData.description.trim(),
+          invoiceNumber: formData.invoiceNumber.trim() || '',
+          notes: formData.notes.trim() || '',
+          receiptFileIDs,
+          revenueDate: formData.recordDate
+        }
+
+        const result = await safeCloudCall({
           name: 'finance-management',
           data: {
             action: 'create_revenue_record',
-            revenueType: formData.type,
-            amount: amount,
-            description: formData.description.trim(),
-            invoiceNumber: formData.invoiceNumber.trim() || '',
-            notes: formData.notes.trim() || '',
-            receiptFileIDs: receiptFileIDs
+            payload
           }
-        })
+        }) as CloudCallResult
 
-        if (result.result && result.result.success) {
+        if (result?.success) {
           wx.showToast({
             title: '收入记录创建成功',
             icon: 'success',
@@ -378,7 +428,7 @@ const pageConfig = {
             })
           }, 800)
         } else {
-          throw new Error(result.result?.error || '创建失败')
+          throw new Error(result?.error || '创建失败')
         }
       }
 
@@ -396,7 +446,7 @@ const pageConfig = {
   },
 
   // 重置表单
-  onReset() {
+  onReset(this: ManualRecordPageInstance) {
     wx.showModal({
       title: '确认重置',
       content: '确定要重置表单吗？所有已填写的内容将被清空。',

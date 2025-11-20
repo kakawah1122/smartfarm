@@ -94,10 +94,29 @@ const pageConfig = {
     this.loadMoreData()
   },
 
-  // 返回首页
+  // 返回上一页
   goBack() {
-    wx.switchTab({
-      url: '/pages/index/index'
+    // 防止重复触发
+    if ((this as any).__isNavigatingBack) {
+      return
+    }
+    
+    (this as any).__isNavigatingBack = true
+    
+    wx.navigateBack({
+      delta: 1,
+      complete: () => {
+        // 500ms后清除标志
+        setTimeout(() => {
+          (this as any).__isNavigatingBack = false
+        }, 500)
+      },
+      fail: () => {
+        // 返回失败，跳转到健康管理页
+        wx.switchTab({
+          url: '/pages/health/health'
+        })
+      }
     })
   },
 

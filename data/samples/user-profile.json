@@ -1,0 +1,11 @@
+[
+  {
+    "_id": "user001",
+    "userId": "wx_user_001",
+    "nickName": "养鹅达人",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "role": "admin",
+    "phoneNumber": "13800000000",
+    "_openid": "openid_user_001"
+  }
+]

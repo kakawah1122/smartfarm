@@ -34,6 +34,7 @@ export async function safeCloudCall(config: {
   data: any
   useCache?: boolean // 是否使用缓存
   cacheTime?: number // 缓存时间（毫秒）
+  timeout?: number // 超时时间（毫秒）
 }): Promise<any> {
   // 尝试初始化管理器
   initManager()
@@ -53,7 +54,8 @@ export async function safeCloudCall(config: {
         cache: true,
         cacheTime: config.cacheTime || (shouldCache ? 10 * 60 * 1000 : 5 * 60 * 1000),
         priority: 5,
-        retry: 1
+        retry: 1,
+        timeout: config.timeout
       })
       
       // 返回格式保持一致
@@ -67,7 +69,8 @@ export async function safeCloudCall(config: {
   logger.log('[SafeCloudCall] 使用原始调用:', config.name, config.data.action)
   const res = await wx.cloud.callFunction({
     name: config.name,
-    data: config.data
+    data: config.data,
+    timeout: config.timeout
   })
   return res.result
 }
@@ -82,6 +85,7 @@ export async function safeBatchCall(configs: Array<{
   data: any
   useCache?: boolean
   cacheTime?: number
+  timeout?: number
 }>): Promise<any[]> {
   // 尝试初始化管理器
   initManager()
@@ -96,7 +100,8 @@ export async function safeBatchCall(configs: Array<{
         cache: config.useCache !== false,
         cacheTime: config.cacheTime,
         priority: 5,
-        retry: 1
+        retry: 1,
+        timeout: config.timeout
       })))
     }
   } catch (error) {
@@ -108,10 +113,11 @@ export async function safeBatchCall(configs: Array<{
   const results = await Promise.all(configs.map(config => 
     wx.cloud.callFunction({
       name: config.name,
-      data: config.data
+      data: config.data,
+      timeout: config.timeout
     })
   ))
-  return results.map(res => res.result)
+  return results.map((res: { result: any }) => res.result)
 }
 
 /**

@@ -199,6 +199,13 @@
   </view>
 
   <t-message id="t-message" />
+
+  <view wx:if="{{loadingVisible}}" class="global-loading-mask">
+    <view class="global-loading-content">
+      <t-loading theme="spinner" size="56rpx" />
+      <text class="loading-text">{{loadingText}}</text>
+    </view>
+  </view>
 </view>
 
 

@@ -1,7 +1,9 @@
+import { safeCloudCall } from './safe-cloud-call'
+
 // 统一的云函数API调用封装
 // 支持TypeScript类型检查和错误处理
 
-interface CloudApiResponse<T = any> {
+export interface CloudApiResponse<T = any> {
   success: boolean
   data?: T
   error?: string
@@ -15,6 +17,9 @@ interface CloudApiOptions {
   showError?: boolean
   showSuccess?: boolean
   successText?: string
+  useCache?: boolean
+  cacheTime?: number
+  timeout?: number
 }
 
 class CloudApi {
@@ -31,7 +36,10 @@ class CloudApi {
       loadingText = '处理中...',
       showError = true,
       showSuccess = false,
-      successText = '操作成功'
+      successText = '操作成功',
+      useCache,
+      cacheTime,
+      timeout
     } = options
 
     if (loading) {
@@ -39,31 +47,35 @@ class CloudApi {
     }
 
     try {
-      const result = await wx.cloud.callFunction({
+      const derivedUseCache = typeof useCache === 'boolean' ? useCache : (loading === false ? false : undefined)
+      const result = await safeCloudCall({
         name,
-        data
-      }) as any
+        data,
+        useCache: derivedUseCache,
+        cacheTime,
+        timeout
+      }) as CloudApiResponse<T>
 
       if (loading) {
         wx.hideLoading()
       }
 
-      if (result.result.success) {
+      if (result?.success) {
         if (showSuccess) {
           wx.showToast({
             title: successText,
             icon: 'success'
           })
         }
-        return result.result
+        return result
       } else {
         if (showError) {
           wx.showToast({
-            title: result.result.error || '操作失败',
+            title: result?.error || '操作失败',
             icon: 'error'
           })
         }
-        return result.result
+        return result || { success: false, error: '操作失败' }
       }
 
     } catch (error: any) {
@@ -589,9 +601,3 @@ class CloudApi {
 }
 
 export default CloudApi
-
-// 类型定义导出
-export type {
-  CloudApiResponse,
-  CloudApiOptions
-}

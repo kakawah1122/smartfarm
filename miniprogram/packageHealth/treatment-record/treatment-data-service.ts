@@ -4,6 +4,14 @@
  */
 
 /// <reference path="../../../typings/index.d.ts" />
+import { safeCloudCall } from '../../utils/safe-cloud-call'
+
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
 
 /**
  * 治疗记录接口
@@ -67,16 +75,16 @@ export class TreatmentDataService {
     if (cached) return cached
 
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_treatment_record_detail',
-          treatmentId: treatmentId
+          treatmentId
         }
-      })
+      }) as CloudCallResult<TreatmentRecord>
 
-      if (result.result?.success) {
-        const data = result.result.data as TreatmentRecord
+      if (result?.success && result.data) {
+        const data = result.data
         this.setCache(cacheKey, data)
         return data
       }
@@ -97,16 +105,16 @@ export class TreatmentDataService {
     if (cached) return cached
 
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_ongoing_treatments',
-          batchId: batchId
+          batchId
         }
-      })
+      }) as CloudCallResult<TreatmentRecord[]>
 
-      if (result.result?.success) {
-        const data = result.result.data || []
+      if (result?.success) {
+        const data = result.data || []
         this.setCache(cacheKey, data)
         return data
       }
@@ -123,22 +131,22 @@ export class TreatmentDataService {
    */
   static async createTreatmentRecord(data: Partial<TreatmentRecord>): Promise<any> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'create_treatment_record',
           ...data
         }
-      })
+      }) as CloudCallResult
 
-      if (result.result?.success) {
+      if (result?.success) {
         // 清除相关缓存
         this.clearRelatedCache('treatment_')
         this.clearRelatedCache('ongoing_treatments_')
-        return result.result
+        return result
       }
 
-      throw new Error(result.result?.error || '创建失败')
+      throw new Error(result?.error || '创建失败')
     } catch (error) {
       console.error('创建治疗记录失败:', error)
       throw error
@@ -150,23 +158,23 @@ export class TreatmentDataService {
    */
   static async updateTreatmentRecord(treatmentId: string, updates: Partial<TreatmentRecord>): Promise<any> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall<CloudCallResult>({
         name: 'health-management',
         data: {
           action: 'update_treatment_record',
-          treatmentId: treatmentId,
+          treatmentId,
           ...updates
         }
-      })
+      }) as CloudCallResult
 
-      if (result.result?.success) {
+      if (result?.success) {
         // 清除缓存
         this.clearCache(`treatment_${treatmentId}`)
         this.clearRelatedCache('ongoing_treatments_')
-        return result.result
+        return result
       }
 
-      throw new Error(result.result?.error || '更新失败')
+      throw new Error(result?.error || '更新失败')
     } catch (error) {
       console.error('更新治疗记录失败:', error)
       throw error
@@ -178,22 +186,22 @@ export class TreatmentDataService {
    */
   static async addTreatmentProgress(treatmentId: string, progress: TreatmentProgress): Promise<any> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'update_treatment_progress',
-          treatmentId: treatmentId,
-          progress: progress
+          treatmentId,
+          progress
         }
-      })
+      }) as CloudCallResult
 
-      if (result.result?.success) {
+      if (result?.success) {
         // 清除缓存
         this.clearCache(`treatment_${treatmentId}`)
-        return result.result
+        return result
       }
 
-      throw new Error(result.result?.error || '添加进度失败')
+      throw new Error(result?.error || '添加进度失败')
     } catch (error) {
       console.error('添加治疗进度失败:', error)
       throw error
@@ -205,22 +213,22 @@ export class TreatmentDataService {
    */
   static async addTreatmentNote(treatmentId: string, note: string): Promise<any> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'add_treatment_note',
-          treatmentId: treatmentId,
-          note: note
+          treatmentId,
+          note
         }
-      })
+      }) as CloudCallResult
 
-      if (result.result?.success) {
+      if (result?.success) {
         // 清除缓存
         this.clearCache(`treatment_${treatmentId}`)
-        return result.result
+        return result
       }
 
-      throw new Error(result.result?.error || '添加笔记失败')
+      throw new Error(result?.error || '添加笔记失败')
     } catch (error) {
       console.error('添加治疗笔记失败:', error)
       throw error
@@ -232,22 +240,22 @@ export class TreatmentDataService {
    */
   static async addMedicationRecord(treatmentId: string, medication: MedicationRecord): Promise<any> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'add_treatment_medication',
-          treatmentId: treatmentId,
-          medication: medication
+          treatmentId,
+          medication
         }
-      })
+      }) as CloudCallResult
 
-      if (result.result?.success) {
+      if (result?.success) {
         // 清除缓存
         this.clearCache(`treatment_${treatmentId}`)
-        return result.result
+        return result
       }
 
-      throw new Error(result.result?.error || '添加用药记录失败')
+      throw new Error(result?.error || '添加用药记录失败')
     } catch (error) {
       console.error('添加用药记录失败:', error)
       throw error
@@ -259,23 +267,23 @@ export class TreatmentDataService {
    */
   static async completeTreatmentAsCured(treatmentId: string, finalNote?: string): Promise<any> {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'complete_treatment_as_cured',
-          treatmentId: treatmentId,
-          finalNote: finalNote
+          treatmentId,
+          finalNote
         }
-      })
+      }) as CloudCallResult
 
-      if (result.result?.success) {
+      if (result?.success) {
         // 清除所有相关缓存
         this.clearCache(`treatment_${treatmentId}`)
         this.clearRelatedCache('ongoing_treatments_')
-        return result.result
+        return result
       }
 
-      throw new Error(result.result?.error || '完成治疗失败')
+      throw new Error(result?.error || '完成治疗失败')
     } catch (error) {
       console.error('完成治疗失败:', error)
       throw error
@@ -291,16 +299,16 @@ export class TreatmentDataService {
     if (cached) return cached
 
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'production-material',
         data: {
           action: 'list_materials',
           type: 'medicine'
         }
-      })
+      }) as CloudCallResult<any[]>
 
-      if (result.result?.success) {
-        const data = result.result.data || []
+      if (result?.success) {
+        const data = result.data || []
         this.setCache(cacheKey, data, 30 * 60 * 1000) // 30分钟缓存
         return data
       }

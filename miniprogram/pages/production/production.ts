@@ -1,5 +1,5 @@
 // production.ts
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
 
@@ -8,6 +8,93 @@ const OVERVIEW_CACHE_KEY = 'production_overview_cache'
 const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存，与健康模块保持一致
 const MAX_RETRY_COUNT = 3 // 最大重试次数
 const RETRY_DELAY = 1000 // 重试延迟（毫秒）
+
+type ProductionDashboardResponse = {
+  entry?: {
+    total?: string
+    stockQuantity?: string
+    batches?: string
+  }
+  exit?: {
+    total?: string
+    batches?: string
+    avgWeight?: string
+  }
+  material?: {
+    feedStock?: string
+    medicineStatus?: string
+    categoryDetails?: {
+      feed?: MaterialStatusDetail
+      medicine?: MaterialStatusDetail
+      equipment?: MaterialStatusDetail
+    }
+  }
+}
+
+type MaterialStatusDetail = {
+  statusText?: string
+  status?: 'empty' | 'warning' | 'normal' | string
+  totalCount?: number
+  description?: string
+}
+
+type ExtendedBatchEntry = ProductionSchema.BatchEntry & {
+  avgWeight?: number
+  operator?: string
+  status?: string
+  createTime?: string
+  entryDate?: string
+  displayTitle?: string
+}
+
+type ExtendedBatchExit = ProductionSchema.BatchExit & {
+  exitNumber?: string
+  breed?: string
+  customer?: string
+  avgWeight?: number
+  totalWeight?: number
+  operator?: string
+  status?: string
+  createTime?: string
+  exitDate?: string
+  displayTitle?: string
+}
+
+type BatchEntryListResponse = {
+  records: ExtendedBatchEntry[]
+}
+
+type BatchExitListResponse = {
+  records: ExtendedBatchExit[]
+}
+
+type MaterialRecordItem = ProductionSchema.MaterialRecord & {
+  material?: {
+    name?: string
+    category?: string
+    unit?: string
+  }
+  recordNumber?: string
+  recordType?: string
+  supplier?: string
+  targetLocation?: string
+  batchNumber?: string
+  costPerBird?: number
+  dayAge?: number
+  status?: string
+  type?: 'purchase' | 'feed' | 'use' | string
+  operator?: string
+  createTime?: string
+  recordDate?: string
+  currentStock?: number
+  totalWeight?: number
+  displayDescription?: string
+  displayType?: string
+}
+
+type MaterialRecordListResponse = {
+  records: MaterialRecordItem[]
+}
 
 interface CachedOverviewData {
   data: {
@@ -71,7 +158,21 @@ function clearOverviewCache() {
   }
 }
 
-const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOption, WechatMiniprogram.Page.CustomOption> = {
+type ProductionPageData = WechatMiniprogram.Page.DataOption & {
+  aiCount: {
+    active: boolean
+    loading: boolean
+    imageUrl: string
+    result: any
+    error: string | null
+    history: any[]
+    rounds: any[]
+    currentRound: number
+    cumulativeTotal: number
+  }
+}
+
+const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: ProductionPageData } = {
   data: {
     activeTab: 'entry',
     
@@ -217,7 +318,7 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
         this.setData({ loading: true })
       }
       
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<ProductionDashboardResponse>(
         'production-dashboard',
         {
           action: 'overview'
@@ -352,7 +453,7 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
   // 加载入栏数据
   async loadEntryData() {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<BatchEntryListResponse>(
         'production-entry',
         {
           action: 'list',
@@ -365,14 +466,14 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
       )
       
       if (result.success && result.data) {
-        const records = result.data.records || []
+        const records = (result.data.records ?? []) as ExtendedBatchEntry[]
         
         // 获取当前用户信息
         const app = getApp()
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 格式化入栏记录数据，确保显示字段完整
-        const formattedRecords = records.map((record: any) => ({
+        const formattedRecords = records.map((record) => ({
           ...record,
           id: record._id || record.batchNumber,
           batchNumber: record.batchNumber || record._id,
@@ -403,7 +504,7 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
   // 加载出栏数据
   async loadExitData() {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<BatchExitListResponse>(
         'production-exit',
         {
           action: 'list',
@@ -416,14 +517,14 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
       )
       
       if (result.success && result.data) {
-        const records = result.data.records || []
+        const records = (result.data.records ?? []) as ExtendedBatchExit[]
         
         // 获取当前用户信息
         const app = getApp()
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 格式化出栏记录数据，确保显示字段完整
-        const formattedRecords = records.map((record: any) => ({
+        const formattedRecords = records.map((record) => ({
           ...record,
           id: record._id || record.exitNumber,
           exitNumber: record.exitNumber || record._id,
@@ -455,7 +556,7 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
   // 加载物料数据
   async loadMaterialData() {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<MaterialRecordListResponse>(
         'production-material',
         {
           action: 'list_records',
@@ -469,14 +570,14 @@ const pageConfig: WechatMiniprogram.Page.Options<WechatMiniprogram.Page.DataOpti
       )
       
       if (result.success && result.data) {
-        const records = result.data.records || []
+        const records = (result.data.records ?? []) as MaterialRecordItem[]
         
         // 获取当前用户信息
         const app = getApp()
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 转换数据格式以匹配优化后的界面显示
-        const formattedRecords = records.map((record: any) => {
+        const formattedRecords = records.map((record) => {
           // 判断记录类型
           let displayType = '领用'
           let displayDescription = ''

@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "entry001",
+    "batchNumber": "BATCH-20251001",
+    "quantity": 1200,
+    "unitPrice": 18.5,
+    "totalAmount": 22200,
+    "entryDate": "2025-10-01",
+    "supplier": "华农合作社",
+    "breed": "狮头鹅",
+    "_openid": "user_abc"
+  }
+]

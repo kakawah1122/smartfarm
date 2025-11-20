@@ -1,5 +1,13 @@
 // miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts
 import { buildNotDeletedCondition } from '../utils/db-query'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
+
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
 
 interface VaccineRecord {
   _id: string
@@ -91,7 +99,7 @@ Page({
     this.setData({ loading: true })
 
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'list_prevention_records',
@@ -99,10 +107,10 @@ Page({
           page: 1,
           pageSize: 100  // 获取更多记录
         }
-      })
+      }) as CloudCallResult<{ records: VaccineRecord[] }>
 
-      if (result.result && result.result.success) {
-        const preventionRecords = result.result.data?.records || []
+      if (result && result.success) {
+        const preventionRecords = result.data?.records || []
         
         // 过滤出疫苗记录
         const vaccineRecords = preventionRecords.filter((record: VaccineRecord) => 
@@ -276,7 +284,7 @@ Page({
         
         // 按批次分组
         const batchMap = new Map<string, VaccineRecord[]>()
-        records.forEach(record => {
+        records.forEach((record: VaccineRecord) => {
           const batchKey = record.batchNumber || record.batchId || '未知批次'
           if (!batchMap.has(batchKey)) {
             batchMap.set(batchKey, [])
@@ -312,7 +320,7 @@ Page({
           loading: false
         })
       } else {
-        throw new Error(result.result?.error || '加载失败')
+        throw new Error(result?.error || '加载失败')
       }
     } catch (error: any) {
       wx.showToast({
@@ -456,24 +464,23 @@ Page({
       wx.showLoading({ title: '创建治疗记录...' })
 
       // 调用云函数创建治疗记录
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'create_treatment_from_vaccine',
           vaccineRecordId: vaccineRecord._id,
           batchId: vaccineRecord.batchId,
           batchNumber: vaccineRecord.batchNumber || vaccineRecord.batchId,  // ✅ 传递批次编号
-          affectedCount: affectedCount,
+          affectedCount,
           diagnosis: '疫苗接种后异常反应',
           vaccineName: vaccineRecord.vaccineInfo?.name || '',
           preventionDate: vaccineRecord.preventionDate
         }
-      })
+      }) as CloudCallResult<{ treatmentId?: string }>
 
       wx.hideLoading()
 
-      if (result.result && result.result.success) {
-        const treatmentId = result.result.data?.treatmentId
+      if (result && result.success) {
         
         wx.showToast({
           title: '治疗记录已创建',
@@ -498,7 +505,7 @@ Page({
           })
         }, 2000)
       } else {
-        throw new Error(result.result?.error || result.result?.message || '创建失败')
+        throw new Error(result?.error || result?.message || '创建失败')
       }
     } catch (error: any) {
       wx.hideLoading()
@@ -518,23 +525,23 @@ Page({
       wx.showLoading({ title: '创建死亡记录...' })
 
       // 调用云函数创建死亡记录
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'create_death_from_vaccine',
           vaccineRecordId: vaccineRecord._id,
           batchId: vaccineRecord.batchId,
           batchNumber: vaccineRecord.batchNumber || vaccineRecord.batchId,
-          deathCount: deathCount,
+          deathCount,
           deathCause: '疫苗接种后死亡',
           vaccineName: vaccineRecord.vaccineInfo?.name || '',
           preventionDate: vaccineRecord.preventionDate
         }
-      })
+      }) as CloudCallResult
 
       wx.hideLoading()
 
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         wx.showToast({
           title: '死亡记录已创建',
           icon: 'success',
@@ -558,7 +565,7 @@ Page({
           })
         }, 2000)
       } else {
-        throw new Error(result.result?.error || result.result?.message || '创建失败')
+        throw new Error(result?.error || result?.message || '创建失败')
       }
     } catch (error: any) {
       wx.hideLoading()

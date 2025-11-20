@@ -1,9 +1,30 @@
 // finance-record-list.ts - 财务记录列表页面
 /// <reference path="../../../typings/index.d.ts" />
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 
-const pageConfig: any = {
+interface AllFinanceRecordsResponse {
+  records: any[]
+}
+
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+type PageData = {
+  records: any[]
+  displayRecords: any[]
+  currentType: 'all' | 'income' | 'expense'
+  typeTabs: { label: string; value: 'all' | 'income' | 'expense' }[]
+  loading: boolean
+  showDetailPopup: boolean
+  selectedRecord: any
+}
+
+const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   data: {
     records: [],
     displayRecords: [],
@@ -20,7 +41,7 @@ const pageConfig: any = {
     selectedRecord: null as any
   },
 
-  onLoad() {
+  onLoad(this: PageInstance<PageData>) {
     this.loadRecords()
   },
 
@@ -65,7 +86,7 @@ const pageConfig: any = {
   },
 
   // 切换类型
-  onTypeChange(e: any) {
+  onTypeChange(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { type: 'all' | 'income' | 'expense' } } }) {
     const type = e.currentTarget.dataset.type
     this.setData({
       currentType: type
@@ -74,7 +95,7 @@ const pageConfig: any = {
   },
 
   // 加载记录
-  async loadRecords() {
+  async loadRecords(this: PageInstance<PageData>) {
     if (this.data.loading) return
     
     this.setData({ loading: true })
@@ -84,17 +105,16 @@ const pageConfig: any = {
       const startDate = new Date(now.getFullYear(), 0, 1).toISOString() // 今年开始
       const endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59).toISOString() // 今年结束
 
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'finance-management',
         data: {
           action: 'get_all_finance_records',
           dateRange: { start: startDate, end: endDate }
         }
-      })
+      }) as CloudCallResult<AllFinanceRecordsResponse>
 
-      const resultData = result.result as any
-      if (resultData?.success) {
-        const allRecords = resultData.data?.records || []
+      if (result?.success) {
+        const allRecords = result.data?.records || []
         const records: any[] = []
 
         // 处理所有记录
@@ -177,7 +197,7 @@ const pageConfig: any = {
       } else {
         this.setData({ loading: false })
         wx.showToast({
-          title: resultData?.error || '加载失败',
+          title: result?.error || '加载失败',
           icon: 'none'
         })
       }
@@ -192,7 +212,7 @@ const pageConfig: any = {
   },
 
   // 筛选记录
-  filterRecords() {
+  filterRecords(this: PageInstance<PageData>) {
     const { records, currentType } = this.data
     let filtered = records
 
@@ -206,7 +226,7 @@ const pageConfig: any = {
   },
 
   // 查看记录详情
-  viewRecordDetail(e: any) {
+  viewRecordDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { item: any } } }) {
     const item = e.currentTarget.dataset.item
     this.setData({
       selectedRecord: item,
@@ -215,7 +235,7 @@ const pageConfig: any = {
   },
   
   // 关闭详情弹窗
-  closeDetailPopup() {
+  closeDetailPopup(this: PageInstance<PageData>) {
     this.setData({
       showDetailPopup: false
     })

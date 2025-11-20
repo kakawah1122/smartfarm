@@ -13,34 +13,60 @@ export interface NavbarSizes {
 /**
  * 扩展Page的类型定义，添加setData等方法
  */
-export interface PageInstance<D = any> {
-  data: D;
-  setData: (data: any, callback?: () => void) => void;
-  [key: string]: any;
-}
+export type PageInstance<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption> = WechatMiniprogram.Page.Instance<D, any>
 
 /**
  * 获取系统状态栏高度并转换为rpx
  */
+type WxExtended = typeof wx & {
+  getWindowInfo?: () => { statusBarHeight?: number }
+  getAppBaseInfo?: () => { statusBarHeight?: number }
+}
+
+function getStatusBarHeightPx(): number {
+  try {
+    const wxAny = wx as WxExtended
+
+    if (typeof wxAny.getWindowInfo === 'function') {
+      const windowInfo = wxAny.getWindowInfo()
+      if (windowInfo && typeof windowInfo.statusBarHeight === 'number') {
+        return windowInfo.statusBarHeight
+      }
+    }
+
+    if (typeof wxAny.getAppBaseInfo === 'function') {
+      const appInfo = wxAny.getAppBaseInfo()
+      if (appInfo && typeof appInfo.statusBarHeight === 'number') {
+        return appInfo.statusBarHeight
+      }
+    }
+
+    // 兼容旧版本基础库
+    const systemInfo = wx.getSystemInfoSync()
+    return systemInfo.statusBarHeight || 44
+  } catch (error) {
+    return 44
+  }
+}
+
 export function getSystemNavBarSizes(): NavbarSizes {
   try {
-    const windowInfo = wx.getWindowInfo();
-    const statusBarHeight = windowInfo.statusBarHeight || 44; // px
-    const navBarHeight = 88; // rpx，固定导航栏高度
-    const statusBarHeightRpx = statusBarHeight * 2; // px转rpx
-    
+    const statusBarHeightPx = getStatusBarHeightPx()
+    const navBarHeight = 88 // rpx，固定导航栏高度
+    const statusBarHeightRpx = statusBarHeightPx * 2 // px转rpx
+
     return {
       statusBarHeight: statusBarHeightRpx,
-      navBarHeight: navBarHeight,
+      navBarHeight,
       totalNavHeight: statusBarHeightRpx + navBarHeight
-    };
+    }
   } catch (error) {
     // 返回默认值
     return {
       statusBarHeight: 88,
       navBarHeight: 88,
       totalNavHeight: 176
-    };
+    }
   }
 }
 
@@ -48,7 +74,7 @@ export function getSystemNavBarSizes(): NavbarSizes {
  * 创建带有自适应导航栏的页面
  * 会自动计算状态栏高度并设置
  */
-export function createPageWithNavbar<D extends AnyObject = any>(
+export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption>(
   pageConfig: Partial<PageInstance<D>> & { data: D }
 ): Partial<PageInstance<D & { statusBarHeight: number; navBarHeight: number; totalNavHeight: number }>> {
   const originalOnLoad = (pageConfig as any).onLoad || function() {};

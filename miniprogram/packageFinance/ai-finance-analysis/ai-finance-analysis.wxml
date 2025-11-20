@@ -1,13 +1,5 @@
 <!--ai-finance-analysis.wxml - AI财务分析组件-->
 <view class="ai-finance-analysis">
-  <!-- 免责声明 -->
-  <view class="disclaimer-banner">
-    <view class="disclaimer-icon">ℹ️</view>
-    <view class="disclaimer-content">
-      <text class="disclaimer-text">AI分析基于历史数据，仅供决策参考</text>
-    </view>
-  </view>
-  
   <!-- 分析操作区域 -->
   <view wx:if="{{!loading && !analysisResult && !analysisError}}" class="analysis-controls">
     <!-- 自定义分析需求输入 -->
@@ -15,7 +7,7 @@
       <view class="query-input-wrapper">
         <t-textarea
           value="{{customQuery}}"
-          placeholder="输入您关注的问题（选填）"
+          placeholder="如有输入将按您的要求分析，否则进行全面的多维度分析"
           maxlength="200"
           bind:change="onQueryInput"
           autosize="{{autosize}}"
@@ -29,7 +21,7 @@
       <t-button theme="primary" size="large" bind:tap="triggerAnalysis" block class="quick-analyze-btn">
         开始AI分析
       </t-button>
-      <text class="quick-desc">如有输入将按您的要求分析，否则进行全面的多维度分析</text>
+      <text class="analysis-note">AI分析基于历史数据，仅供决策参考</text>
     </view>
   </view>
 

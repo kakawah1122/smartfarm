@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "finance_cost_001",
+    "costType": "feed",
+    "title": "玉米粒采购",
+    "amount": 3200.5,
+    "costDate": "2025-09-18",
+    "batchId": "batch_001",
+    "costBreakdown": {
+      "shouldSyncToFinance": true,
+      "currency": "CNY"
+    },
+    "_openid": "user_xxx"
+  }
+]

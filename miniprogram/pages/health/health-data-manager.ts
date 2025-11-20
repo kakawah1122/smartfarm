@@ -4,6 +4,15 @@
  */
 
 /// <reference path="../../../typings/index.d.ts" />
+import { safeCloudCall } from '../../utils/safe-cloud-call'
+
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  total?: number
+  hasMore?: boolean
+}
 
 /**
  * 健康数据管理器
@@ -14,20 +23,20 @@ export class HealthDataManager {
    */
   static async getDashboardSnapshot(batchId: string = 'all') {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_dashboard_snapshot',
-          batchId: batchId,
+          batchId,
           dateRange: 'all'
         }
-      })
+      }) as CloudCallResult
       
-      if (result.result?.success) {
-        return result.result.data
+      if (result?.success) {
+        return result.data
       }
       
-      throw new Error(result.result?.error || '获取仪表盘数据失败')
+      throw new Error(result?.error || '获取仪表盘数据失败')
     } catch (error) {
       console.error('获取仪表盘快照失败:', error)
       throw error
@@ -39,19 +48,19 @@ export class HealthDataManager {
    */
   static async getPreventionDashboard(batchId: string = 'all') {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'getPreventionDashboard',
-          batchId: batchId
+          batchId
         }
-      })
+      }) as CloudCallResult
       
-      if (result.result?.success) {
-        return result.result.data
+      if (result?.success) {
+        return result.data
       }
       
-      throw new Error(result.result?.error || '获取预防数据失败')
+      throw new Error(result?.error || '获取预防数据失败')
     } catch (error) {
       console.error('获取预防数据失败:', error)
       throw error
@@ -63,20 +72,20 @@ export class HealthDataManager {
    */
   static async getBatchCompleteData(batchId: string, dateRange: any) {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_batch_complete_data',
-          batchId: batchId,
-          dateRange: dateRange
+          batchId,
+          dateRange
         }
-      })
+      }) as CloudCallResult
       
-      if (result.result?.success) {
-        return result.result.data
+      if (result?.success) {
+        return result.data
       }
       
-      throw new Error(result.result?.error || '获取批次数据失败')
+      throw new Error(result?.error || '获取批次数据失败')
     } catch (error) {
       console.error('获取批次完整数据失败:', error)
       throw error
@@ -88,17 +97,17 @@ export class HealthDataManager {
    */
   static async getTreatmentCost(batchId: string | null, dateRange: any) {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'calculate_treatment_cost',
-          dateRange: dateRange,
-          batchId: batchId
+          dateRange,
+          batchId
         }
-      })
+      }) as CloudCallResult<{ totalCost?: number }>
       
-      if (result.result?.success) {
-        return result.result.data?.totalCost || 0
+      if (result?.success) {
+        return result.data?.totalCost || 0
       }
       
       return 0
@@ -113,21 +122,21 @@ export class HealthDataManager {
    */
   static async getAbnormalRecords(batchId: string | null, page: number = 1, pageSize: number = 20) {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_abnormal_list',
-          batchId: batchId,
-          page: page,
-          pageSize: pageSize
+          batchId,
+          page,
+          pageSize
         }
-      })
+      }) as CloudCallResult<any[]>
       
-      if (result.result?.success) {
+      if (result?.success) {
         return {
-          list: result.result.data || [],
-          total: result.result.total || 0,
-          hasMore: result.result.hasMore || false
+          list: result.data || [],
+          total: result.total || 0,
+          hasMore: result.hasMore || false
         }
       }
       
@@ -143,21 +152,21 @@ export class HealthDataManager {
    */
   static async getDiagnosisRecords(batchId: string | null, page: number = 1, pageSize: number = 20) {
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'ai-diagnosis',
         data: {
           action: 'get_diagnosis_history',
-          batchId: batchId,
-          page: page,
-          pageSize: pageSize
+          batchId,
+          page,
+          pageSize
         }
-      })
+      }) as CloudCallResult<any[]>
       
-      if (result.result?.success) {
+      if (result?.success) {
         return {
-          list: result.result.data || [],
-          total: result.result.total || 0,
-          hasMore: result.result.hasMore || false
+          list: result.data || [],
+          total: result.total || 0,
+          hasMore: result.hasMore || false
         }
       }
       

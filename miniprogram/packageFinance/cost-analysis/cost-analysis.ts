@@ -1,7 +1,39 @@
 // cost-analysis.ts - 成本分析页面
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 
-const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+type CostOverview = {
+  totalCost: number
+  preventionCost: number
+  treatmentCost: number
+  monthlyChange: number
+  trend: string
+}
+
+type CostComparison = {
+  lastMonth: number
+  lastYear: number
+  industryAverage: number
+  bestPractice: number
+}
+
+type PageData = {
+  loading: boolean
+  dateRange: 'week' | 'month' | 'quarter' | 'year'
+  overview: CostOverview
+  costBreakdown: any[]
+  monthlyTrend: any[]
+  comparison: CostComparison
+  suggestions: any[]
+}
+
+const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   data: {
     loading: false,
     dateRange: 'month', // week|month|quarter|year
@@ -34,25 +66,25 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     suggestions: []
   },
 
-  onLoad() {
+  onLoad(this: PageInstance<PageData>) {
     this.loadCostAnalysisData()
   },
 
   // 加载成本分析数据
-  async loadCostAnalysisData() {
+  async loadCostAnalysisData(this: PageInstance<PageData>) {
     this.setData({ loading: true })
     
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'get_cost_analysis',
           dateRange: this.data.dateRange
         }
-      })
+      }) as CloudCallResult<any>
 
-      if (result.result && result.result.success) {
-        const data = result.result.data
+      if (result?.success && result.data) {
+        const data = result.data
         this.setData({
           overview: data.overview || {
             totalCost: 0,
@@ -84,14 +116,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 日期范围切换
-  onDateRangeChange(e: any) {
+  onDateRangeChange(this: PageInstance<PageData>, e: WechatMiniprogram.PickerChange) {
     const { value } = e.detail
     this.setData({ dateRange: value })
     this.loadCostAnalysisData()
   },
 
   // 查看成本分类详情
-  onCategoryDetail(e: any) {
+  onCategoryDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { category: { category: string; amount: number; percentage: number; items: Array<{ name: string; cost: number }> } } } }) {
     const { category } = e.currentTarget.dataset
     const items = category.items.map((item: any) => `${item.name}: ¥${item.cost}`).join('\n')
     
@@ -103,7 +135,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 查看优化建议详情
-  onSuggestionDetail(e: any) {
+  onSuggestionDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { suggestion: { category: string; suggestion: string; potentialSaving: number } } } }) {
     const { suggestion } = e.currentTarget.dataset
     wx.showModal({
       title: '优化建议详情',
@@ -113,11 +145,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 导出成本分析报告
-  async exportReport() {
+  async exportReport(this: PageInstance<PageData>) {
     wx.showLoading({ title: '生成报告中...' })
     
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'export_cost_report',
@@ -129,9 +161,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             suggestions: this.data.suggestions
           }
         }
-      })
+      }) as CloudCallResult
 
-      if (result.result && result.result.success) {
+      if (result?.success) {
         wx.hideLoading()
         wx.showToast({
           title: '报告已生成',

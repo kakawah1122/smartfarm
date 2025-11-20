@@ -1,6 +1,25 @@
 // reimbursement-list.ts - 报销列表页面
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
+
+type ReimbursementRecord = FinanceSchema.ReimbursementRecord
+type ExtendedReimbursementRecord = ReimbursementRecord & { approvalTime?: string }
+
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+interface ReimbursementListResponse {
+  records: Array<{
+    _id: string
+    reimbursement: ExtendedReimbursementRecord
+    createTime?: string
+    [key: string]: any
+  }>
+}
 
 /**
  * 格式化时间为 24 小时制，不带秒
@@ -38,7 +57,16 @@ const STATUS_CONFIG = {
   }
 }
 
-const pageConfig = {
+type PageData = {
+  list: any[]
+  currentStatus: 'all' | 'pending' | 'approved' | 'rejected'
+  statusTabs: { label: string; value: 'all' | 'pending' | 'approved' | 'rejected' }[]
+  loading: boolean
+  showDetailDialog: boolean
+  selectedRecord: any
+}
+
+const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   data: {
     list: [],
     currentStatus: 'all', // all, pending, approved, rejected
@@ -53,7 +81,7 @@ const pageConfig = {
     selectedRecord: null as any
   },
 
-  onLoad() {
+  onLoad(this: PageInstance<PageData>) {
     this.loadList()
   },
 
@@ -102,28 +130,27 @@ const pageConfig = {
   /**
    * 加载报销列表
    */
-  async loadList() {
+  async loadList(this: PageInstance<PageData>) {
     try {
       this.setData({ loading: true })
       wx.showLoading({ title: '加载中...' })
       
-      const result = await wx.cloud.callFunction({
+      const result = await safeCloudCall({
         name: 'finance-management',
         data: {
           action: 'get_my_reimbursements',
           status: this.data.currentStatus === 'all' ? undefined : this.data.currentStatus
         }
-      })
+      }) as CloudCallResult<ReimbursementListResponse>
       
-      if (result.result && result.result.success) {
-        const list = result.result.data.records.map((item: any) => ({
+      if (result?.success && result.data?.records) {
+        const list = result.data.records.map((item) => ({
           ...item,
           statusConfig: STATUS_CONFIG[item.reimbursement.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending,
-          // 格式化时间显示（24小时制，不带秒）
           createTime: formatDateTime(item.createTime),
           reimbursement: {
             ...item.reimbursement,
-            approvalTime: formatDateTime(item.reimbursement.approvalTime)
+            approvalTime: formatDateTime(item.reimbursement?.approvalTime)
           }
         }))
         
@@ -143,7 +170,7 @@ const pageConfig = {
   /**
    * 切换状态筛选
    */
-  onStatusChange(e: any) {
+  onStatusChange(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { status: 'all' | 'pending' | 'approved' | 'rejected' } } }) {
     const { status } = e.currentTarget.dataset
     this.setData({ currentStatus: status })
     this.loadList()
@@ -152,7 +179,7 @@ const pageConfig = {
   /**
    * 点击报销项 - 显示详情弹窗
    */
-  onItemTap(e: any) {
+  onItemTap(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { id: string } } }) {
     const { id } = e.currentTarget.dataset
     const item = this.data.list.find((item: any) => item._id === id)
     
@@ -167,7 +194,7 @@ const pageConfig = {
   /**
    * 关闭详情弹窗
    */
-  closeDetailDialog() {
+  closeDetailDialog(this: PageInstance<PageData>) {
     this.setData({
       showDetailDialog: false
     })

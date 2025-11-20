@@ -442,10 +442,15 @@ exports.main = async (event, context) => {
         return await fixAllBatchTasks(event, wxContext)
       case 'fix_batch_template_info':
         return await fixBatchTemplateInfo(event, wxContext)
-      case 'update_batch_templates':
+      case 'updateBatchTemplates':
         return await updateBatchTemplates(event, wxContext)
+      case 'fixBatchUserId':
+        return await fixBatchUserId(event, wxContext)
       default:
-        throw new Error('无效的操作类型')
+        return {
+          success: false,
+          error: '未知操作'
+        }
     }
   } catch (error) {
     return {
@@ -835,19 +840,21 @@ async function getEntryDetail(event, wxContext) {
 async function getActiveBatches(event, wxContext) {
   // 已移除调试日志
   try {
-    // 查询该用户的所有入栏记录
+    // 查询该用户的所有入栏记录 - 兼容 userId 和 _openid 字段
     const allResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
-      .where({
-        userId: wxContext.OPENID
-      })
+      .where(db.command.or([
+        { userId: wxContext.OPENID },
+        { _openid: wxContext.OPENID }
+      ]))
       .orderBy('createTime', 'desc')
       .get()
 
-    // 获取所有出栏记录
+    // 获取所有出栏记录 - 兼容 userId 和 _openid 字段
     const exitRecordsResult = await db.collection(COLLECTIONS.PROD_BATCH_EXITS)
-      .where({
-        userId: wxContext.OPENID
-      })
+      .where(db.command.or([
+        { userId: wxContext.OPENID },
+        { _openid: wxContext.OPENID }
+      ]))
       .get()
     
     // 获取所有死亡记录（不过滤 userId，因为死亡记录可能没有这个字段）
@@ -1196,6 +1203,65 @@ async function updateBatchTemplates(event, wxContext) {
     return {
       success: false,
       error: error.message || '更新失败'
+    }
+  }
+}
+
+// 修复批次数据，确保都有 userId 字段
+async function fixBatchUserId(event, wxContext) {
+  try {
+    // 查询只有 _openid 没有 userId 的批次
+    const needFixResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+      .where({
+        _openid: wxContext.OPENID,
+        userId: db.command.exists(false)
+      })
+      .get()
+    
+    if (needFixResult.data.length === 0) {
+      return {
+        success: true,
+        data: {
+          fixedCount: 0,
+          message: '没有需要修复的批次'
+        }
+      }
+    }
+    
+    // 为每个批次添加 userId 字段
+    const updatePromises = needFixResult.data.map(async (batch) => {
+      try {
+        await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+          .doc(batch._id)
+          .update({
+            data: {
+              userId: batch._openid,
+              updateTime: new Date()
+            }
+          })
+        return { success: true, id: batch._id }
+      } catch (error) {
+        console.error(`修复批次 ${batch._id} 失败:`, error)
+        return { success: false, id: batch._id, error: error.message }
+      }
+    })
+    
+    const results = await Promise.all(updatePromises)
+    const successCount = results.filter(r => r.success).length
+    
+    return {
+      success: true,
+      data: {
+        fixedCount: successCount,
+        totalCount: needFixResult.data.length,
+        message: `成功修复 ${successCount}/${needFixResult.data.length} 个批次`
+      }
+    }
+  } catch (error) {
+    console.error('修复批次 userId 失败:', error)
+    return {
+      success: false,
+      error: error.message || '修复失败'
     }
   }
 }

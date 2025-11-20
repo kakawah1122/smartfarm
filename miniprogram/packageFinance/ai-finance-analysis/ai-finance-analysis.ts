@@ -1,10 +1,17 @@
 import { logger } from '../../utils/logger'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 // ai-finance-analysis.ts - AI财务分析组件
 
 // 定义集合名称常量（小程序端不支持require共享配置）
 const COLLECTIONS = {
   FINANCE_ANALYSIS_HISTORY: 'finance_analysis_history'
 }
+interface CloudCallResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
 Component({
   properties: {
     // 财务数据（从父组件传入）
@@ -52,7 +59,7 @@ Component({
     // 输入框动态高度配置
     autosize: {
       minHeight: 80,
-      maxHeight: 200
+      maxHeight: 320
     },
     
     // 分析维度
@@ -148,14 +155,14 @@ Component({
     async collectProductionData() {
       try {
         // 只获取overview数据，快速超时
-        const result = await wx.cloud.callFunction({
+        const result = await safeCloudCall({
           name: 'production-dashboard',
           data: { action: 'overview' },
-          timeout: 4000  // 4秒快速超时
-        })
+          timeout: 4000
+        }) as CloudCallResult
         
-        if (result.result && result.result.success) {
-          return result.result.data
+        if (result?.success) {
+          return result.data
         }
       } catch (error) {
         logger.warn('获取生产数据失败:', error)
@@ -241,7 +248,7 @@ Component({
         const prompt = this.buildFinanceAnalysisPrompt(financeData, userQuery, moduleData)
         
         // 调用AI多模型服务
-        const result = await wx.cloud.callFunction({
+        const result = await safeCloudCall({
           name: 'ai-multi-model',
           data: {
             action: 'chat_completion',
@@ -255,18 +262,18 @@ Component({
                 content: prompt
               }
             ],
-            taskType: 'financial_analysis',  // 使用财务分析专用任务类型（自动选择Qwen-Plus）
-            priority: 'premium',  // 使用高级模型（Qwen-Plus）获得专家级财务分析
+            taskType: 'financial_analysis',
+            priority: 'premium',
             options: {
               temperature: 0.7,
-              max_tokens: 1500  // 减少token数，确保在60秒内完成
+              max_tokens: 1500
             }
           },
-          timeout: 55000  // 设置为55秒，留5秒余量（微信云函数最大60秒）
-        })
+          timeout: 55000
+        }) as CloudCallResult<{ content: string }>
 
-        if (result.result && result.result.success) {
-          const aiResponse = result.result.data.content
+        if (result?.success && result.data?.content) {
+          const aiResponse = result.data.content
           
           // 解析AI返回的结果
           const analysisResult = this.parseAnalysisResult(aiResponse)
@@ -280,7 +287,7 @@ Component({
           // 触发分析完成事件
           this.triggerEvent('analysisComplete', { result: analysisResult })
         } else {
-          throw new Error(result.result?.error || 'AI分析失败')
+          throw new Error(result?.error || 'AI分析失败')
         }
       } catch (error: any) {
         logger.error('AI财务分析失败:', error)

@@ -39,6 +39,35 @@
             <text class="action-icon {{showBatchDropdown ? 'rotate' : ''}}">▾</text>
           </view>
         </view>
+        
+        <!-- 批次下拉列表 -->
+        <view wx:if="{{showBatchDropdown}}" class="batch-dropdown">
+          <!-- 全部批次选项 -->
+          <view class="batch-option {{currentBatchId === 'all' ? 'active' : ''}}" 
+                bind:tap="selectBatchFromDropdown" 
+                data-index="{{-1}}">
+            <text class="batch-name">全部批次</text>
+            <text wx:if="{{currentBatchId === 'all'}}" class="check-icon">✓</text>
+          </view>
+          
+          <!-- 具体批次列表 -->
+          <view wx:for="{{availableBatches}}" 
+                wx:key="_id" 
+                class="batch-option {{currentBatchId === item._id ? 'active' : ''}}"
+                bind:tap="selectBatchFromDropdown" 
+                data-index="{{index}}">
+            <view class="batch-info">
+              <text class="batch-name">{{item.batchNumber}}</text>
+              <text class="batch-meta">{{item.entryCount}}只 · 日龄{{item.dayAge}}</text>
+            </view>
+            <text wx:if="{{currentBatchId === item._id}}" class="check-icon">✓</text>
+          </view>
+          
+          <!-- 空状态 -->
+          <view wx:if="{{availableBatches.length === 0}}" class="empty-dropdown">
+            <text>暂无存栏批次</text>
+          </view>
+        </view>
       </view>
       
       <!-- 主要Tab切换 -->

@@ -54,12 +54,15 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   margin: 0 16rpx $spacing-base;
   border-radius: $radius-md;
   box-shadow: $shadow-base;
-  overflow: hidden;  /* ✅ 恢复hidden，保持卡片裁剪 */
+  overflow: visible;  /* ✅ 改为visible，确保下拉菜单能显示 */
+  position: relative;  /* 为下拉菜单提供定位上下文 */
 }
 /* 批次筛选区域 */
 .batch-filter-section {
   padding: $spacing-lg;
   border-bottom: 1rpx solid #f0f0f0;
+  position: relative; // 为下拉列表定位
+  
   .filter-header {
     display: flex;
     align-items: center;
@@ -104,6 +107,74 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         color: white;
         font-weight: 600;
       }
+    }
+  }
+  
+  // 批次下拉列表样式
+  .batch-dropdown {
+    position: absolute;
+    top: 100%;
+    left: $spacing-lg;
+    right: $spacing-lg;
+    background: white;
+    border: 1rpx solid #e5e7eb;
+    border-radius: $radius-md;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+    max-height: 400rpx;
+    overflow-y: auto;
+    z-index: 999;
+    margin-top: $spacing-sm;
+    
+    .batch-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-lg;
+      border-bottom: 1rpx solid #f0f0f0;
+      transition: background-color 0.2s;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:active {
+        background-color: #f5f5f5;
+      }
+      
+      &.active {
+        background-color: #f0f7ff;
+      }
+      
+      .batch-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4rpx;
+      }
+      
+      .batch-name {
+        font-size: 28rpx;
+        color: #1f2937;
+        font-weight: 500;
+      }
+      
+      .batch-meta {
+        font-size: 24rpx;
+        color: #6b7280;
+      }
+      
+      .check-icon {
+        font-size: 28rpx;
+        color: #0052d9;
+        font-weight: bold;
+      }
+    }
+    
+    .empty-dropdown {
+      padding: 40rpx;
+      text-align: center;
+      font-size: 26rpx;
+      color: #9ca3af;
     }
   }
 }

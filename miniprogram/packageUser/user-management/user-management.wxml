@@ -66,6 +66,7 @@
         class="user-card"
         bind:tap="onUserClick"
         data-user="{{item}}"
+        data-index="{{index}}"
       >
         <!-- 左侧：头像 -->
         <view class="user-avatar-container">

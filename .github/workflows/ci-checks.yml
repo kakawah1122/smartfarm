@@ -1,0 +1,32 @@
+name: Project Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  validations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install deps
+        run: npm install
+        working-directory: miniprogram
+      - name: Check package size
+        run: node scripts/check-package-size.js
+      - name: Verify finance cost schema sample
+        run: node scripts/verify-schema-fields.js finance-cost data/samples/finance-cost.json
+      - name: Verify production batch entry schema sample
+        run: node scripts/verify-schema-fields.js production-batch-entry data/samples/production-batch-entry.json
+      - name: Verify user profile schema sample
+        run: node scripts/verify-schema-fields.js user-profile data/samples/user-profile.json
+      - name: Verify task todo schema sample
+        run: node scripts/verify-schema-fields.js task-todo data/samples/task-todo.json
+      - name: Verify ai diagnosis schema sample
+        run: node scripts/verify-schema-fields.js ai-diagnosis data/samples/ai-diagnosis.json
