@@ -227,6 +227,9 @@ Page({
       return // 如果未登录，停止页面加载
     }
     
+    // 初始化导航处理器
+    setupIndexNavigation(this)
+    
     this.initStatusBar()
     this.loadData()
   },

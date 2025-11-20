@@ -60,6 +60,50 @@ class IndexNavigationModule {
   }
   
   /**
+   * 跳转到天气详情页
+   */
+  static navigateToWeatherDetail() {
+    wx.navigateTo({
+      url: '/packageAI/weather-detail/weather-detail'
+    })
+  }
+  
+  /**
+   * 跳转到鹅价详情页
+   */
+  static navigateToGosePriceDetail(breed: string, tab: string) {
+    wx.navigateTo({
+      url: `/packageProduction/goose-price-detail/goose-price-detail?breed=${breed}&tab=${tab}`
+    })
+  }
+  
+  /**
+   * 跳转到知识库页面
+   */
+  static navigateToKnowledge() {
+    wx.navigateTo({
+      url: '/packageUser/knowledge/knowledge'
+    })
+  }
+  
+  /**
+   * 跳转到文章详情页
+   */
+  static navigateToArticleDetail(article: any) {
+    try {
+      const payload = encodeURIComponent(JSON.stringify(article))
+      wx.navigateTo({
+        url: `/packageUser/knowledge/article-detail/article-detail?article=${payload}`
+      })
+    } catch (error) {
+      wx.showToast({
+        title: '跳转失败',
+        icon: 'none'
+      })
+    }
+  }
+  
+  /**
    * 批量创建页面导航方法
    */
   static createNavigationMethods() {
@@ -68,7 +112,11 @@ class IndexNavigationModule {
       navigateToProduction: this.navigateToProduction.bind(this),
       navigateToFinance: this.navigateToFinance.bind(this),
       navigateToKnowledgeDetail: this.navigateToKnowledgeDetail.bind(this),
-      navigateToTaskList: this.navigateToTaskList.bind(this)
+      navigateToTaskList: this.navigateToTaskList.bind(this),
+      navigateToWeatherDetail: this.navigateToWeatherDetail.bind(this),
+      navigateToGosePriceDetail: this.navigateToGosePriceDetail.bind(this),
+      navigateToKnowledge: this.navigateToKnowledge.bind(this),
+      navigateToArticleDetail: this.navigateToArticleDetail.bind(this)
     }
   }
 }
