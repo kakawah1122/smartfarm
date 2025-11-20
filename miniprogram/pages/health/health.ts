@@ -4148,9 +4148,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 完成用药管理任务
+   * 通用的任务完成方法
    */
-  async completeMedicationTask(taskId: string, batchId: string) {
+  async completeTask(taskId: string, batchId: string) {
     try {
       await safeCloudCall({
         name: 'breeding-todo',
@@ -4165,6 +4165,13 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     } catch (error: any) {
       logger.error('完成任务失败:', error)
     }
+  },
+  
+  /**
+   * 完成用药管理任务（兼容旧代码）
+   */
+  async completeMedicationTask(taskId: string, batchId: string) {
+    return this.completeTask(taskId, batchId)
   },
 
   /**
@@ -4452,23 +4459,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 完成营养管理任务
+   * 完成营养管理任务（兼容旧代码）
    */
   async completeNutritionTask(taskId: string, batchId: string) {
-    try {
-      await safeCloudCall({
-        name: 'breeding-todo',
-        data: {
-          action: 'completeTask',
-          taskId: taskId,
-          batchId: batchId,
-          completedAt: new Date().toISOString(),
-          completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
-        }
-      })
-    } catch (error: any) {
-      logger.error('完成任务失败:', error)
-    }
+    return this.completeTask(taskId, batchId)
   },
 
   /**
