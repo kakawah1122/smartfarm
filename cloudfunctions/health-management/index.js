@@ -2440,9 +2440,6 @@ async function getAllBatchesHealthSummary(event, wxContext) {
       ]))
       .get()
 
-    if (allBatchesResult.data.length > 0) {
-      console.log('[getAllBatchesHealthSummary] 第一个批次示例:', JSON.stringify(allBatchesResult.data[0]))
-    }
     
     // ✅ 在内存中排序（_.or 查询不支持 orderBy）
     allBatchesResult.data.sort((a, b) => {
@@ -4080,6 +4077,108 @@ exports.main = async (event, context) => {
   const { action } = event
 
   try {
+    // ========== 路由到新的模块化云函数 ==========
+    // 🔧 临时禁用路由机制，直接使用原有逻辑
+    // 原因：云函数间调用超时问题需要进一步优化
+    const ENABLE_ROUTING = false;  // 设置为 true 启用路由
+    
+    if (ENABLE_ROUTING) {
+      // 成本计算相关的action路由到health-cost云函数
+      const costActions = [
+      'calculate_batch_cost',
+      'calculateBatchCost',
+      'calculate_treatment_cost',
+      'calculate_batch_treatment_costs',
+      'recalculate_death_cost',
+      'recalculate_all_death_costs',
+      'calculate_health_rate'
+    ]
+    
+    // 综合数据相关的action路由到health-overview云函数
+    const overviewActions = [
+      'get_health_overview',
+      'get_all_batches_health_summary',
+      'get_dashboard_snapshot',
+      'get_homepage_health_overview'
+    ]
+    
+    // 异常管理相关的action路由到health-abnormal云函数
+    const abnormalActions = [
+      'create_abnormal_record',
+      'list_abnormal_records',
+      'get_abnormal_record_detail',
+      'update_abnormal_status',
+      'get_abnormal_stats',
+      'correct_abnormal_diagnosis',
+      'delete_abnormal_records'
+    ]
+    
+    // 预防管理相关的action路由到health-prevention云函数
+    const preventionActions = [
+      'create_prevention_record',
+      'list_prevention_records',
+      'get_prevention_dashboard',
+      'getPreventionDashboard'
+    ]
+    
+    if (costActions.includes(action)) {
+      try {
+        // 调用新的health-cost云函数
+        const result = await cloud.callFunction({
+          name: 'health-cost',
+          data: event
+        })
+        return result.result
+      } catch (error) {
+        console.error(`[health-management] 调用health-cost失败:`, error)
+        // 如果新云函数调用失败，继续使用原有逻辑（降级处理）
+      }
+    }
+    
+    if (overviewActions.includes(action)) {
+      try {
+        // 调用新的health-overview云函数
+        const result = await cloud.callFunction({
+          name: 'health-overview',
+          data: event
+        })
+        return result.result
+      } catch (error) {
+        console.error(`[health-management] 调用health-overview失败:`, error)
+        // 如果新云函数调用失败，继续使用原有逻辑（降级处理）
+      }
+    }
+    
+    if (abnormalActions.includes(action)) {
+      try {
+        // 调用新的health-abnormal云函数
+        const result = await cloud.callFunction({
+          name: 'health-abnormal',
+          data: event
+        })
+        return result.result
+      } catch (error) {
+        console.error(`[health-management] 调用health-abnormal失败:`, error)
+        // 如果新云函数调用失败，继续使用原有逻辑（降级处理）
+      }
+    }
+    
+      if (preventionActions.includes(action)) {
+        try {
+          // 调用新的health-prevention云函数
+          const result = await cloud.callFunction({
+            name: 'health-prevention',
+            data: event
+          })
+          return result.result
+        } catch (error) {
+          console.error(`[health-management] 调用health-prevention失败:`, error)
+          // 如果新云函数调用失败，继续使用原有逻辑（降级处理）
+        }
+      }
+    }
+    
+    // ========== 原有的action处理逻辑 ==========
     switch (action) {
       case 'create_prevention_record':
         return await createPreventionRecord(event, wxContext)

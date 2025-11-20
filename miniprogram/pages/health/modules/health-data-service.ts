@@ -1,4 +1,5 @@
 import { safeCloudCall } from '../../../utils/safe-cloud-call'
+import { callHealthFunction } from '../../../utils/health-cloud-router'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -65,16 +66,14 @@ export async function getAllBatchesSnapshot(options: { useCache?: boolean; force
   }
 
   const fetchPromise = (async () => {
-    const snapshotResult = await safeCloudCall({
-      name: 'health-management',
-      data: {
-        action: 'get_dashboard_snapshot',
-        batchId: 'all',
-        includeDiagnosis: true,
-        diagnosisLimit: 10,
-        includeAbnormalRecords: true,
-        abnormalLimit: 50
-      }
+    const snapshotResult = await callHealthFunction({
+      action: 'get_dashboard_snapshot',
+      batchId: 'all',
+      dateRange: 'all',
+      includeDiagnosis: true,
+      diagnosisLimit: 10,
+      includeAbnormalRecords: true,
+      abnormalLimit: 50
     })
 
     if (!snapshotResult || !snapshotResult.success) {

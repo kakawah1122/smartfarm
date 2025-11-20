@@ -5,6 +5,7 @@
 
 /// <reference path="../../../typings/index.d.ts" />
 import { safeCloudCall } from '../../utils/safe-cloud-call'
+import { callHealthFunction } from '../../utils/health-cloud-router'
 
 interface CloudCallResult<T = any> {
   success: boolean
@@ -23,13 +24,10 @@ export class HealthDataManager {
    */
   static async getDashboardSnapshot(batchId: string = 'all') {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'get_dashboard_snapshot',
-          batchId,
-          dateRange: 'all'
-        }
+      const result = await callHealthFunction({
+        action: 'get_dashboard_snapshot',
+        batchId,
+        dateRange: 'all'
       }) as CloudCallResult
       
       if (result?.success) {
@@ -48,12 +46,9 @@ export class HealthDataManager {
    */
   static async getPreventionDashboard(batchId: string = 'all') {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'getPreventionDashboard',
-          batchId
-        }
+      const result = await callHealthFunction({
+        action: 'getPreventionDashboard',
+        batchId
       }) as CloudCallResult
       
       if (result?.success) {
@@ -97,13 +92,10 @@ export class HealthDataManager {
    */
   static async getTreatmentCost(batchId: string | null, dateRange: any) {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'calculate_treatment_cost',
-          dateRange,
-          batchId
-        }
+      const result = await callHealthFunction({
+        action: 'calculate_treatment_cost',
+        dateRange,
+        batchId
       }) as CloudCallResult<{ totalCost?: number }>
       
       if (result?.success) {
