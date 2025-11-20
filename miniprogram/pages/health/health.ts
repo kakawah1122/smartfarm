@@ -11,6 +11,7 @@ import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisReco
 import { safeCloudCall } from '../../utils/safe-cloud-call'
 import { createDataUpdater } from './helpers/data-updater'
 import { HealthCloudHelper, normalizeHealthData } from './helpers/cloud-helper'
+import { withErrorHandler } from './helpers/error-handler'
 
 // 导入新的模块化管理器
 import { HealthNavigationManager } from './modules/health-navigation-module'
@@ -3733,41 +3734,35 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       notes: vaccineFormData.notes
     }
 
-    try {
-      wx.showLoading({ title: '提交中...' })
-
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'completePreventionTask',
-          taskId: selectedTask._id,
-          batchId: batchId,
-          preventionData
-        }
-      })
-
-      if (result && result.success) {
-        wx.hideLoading()
-        wx.showToast({
-          title: '疫苗接种记录已创建',
-          icon: 'success'
+    const result = await withErrorHandler(
+      async () => {
+        const res = await safeCloudCall({
+          name: 'health-management',
+          data: {
+            action: 'completePreventionTask',
+            taskId: selectedTask._id,
+            batchId: batchId,
+            preventionData
+          }
         })
-
-        this.closeVaccineFormPopup()
-        // 📝 优化：统一使用 loadPreventionData 刷新任务列表
-        if (this.data.preventionSubTab === 'today') {
-          this.loadPreventionData()
+        
+        if (res && res.success) {
+          this.closeVaccineFormPopup()
+          // 📝 优化：统一使用 loadPreventionData 刷新任务列表
+          if (this.data.preventionSubTab === 'today') {
+            this.loadPreventionData()
+          }
+          return res
+        } else {
+          throw new Error(res?.message || '提交失败')
         }
-      } else {
-        throw new Error(result?.message || '提交失败')
+      },
+      {
+        loadingText: '提交中...',
+        successText: '疫苗接种记录已创建',
+        errorText: '提交失败，请重试'
       }
-    } catch (error: any) {
-      wx.hideLoading()
-      wx.showToast({
-        title: error.message || '提交失败，请重试',
-        icon: 'error'
-      })
-    }
+    )
   },
 
   /**
