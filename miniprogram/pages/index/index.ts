@@ -14,6 +14,10 @@ import {
   markHomepageNeedSync
 } from '../../utils/global-sync'
 
+// 导入首页模块
+import { IndexNavigationModule, setupIndexNavigation } from './modules/index-navigation-module'
+import { IndexDataLoader } from './modules/index-data-loader'
+
 type WeatherLocationInfo = {
   province?: string
   city?: string
