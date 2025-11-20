@@ -1,7 +1,7 @@
 <!-- 物料记录详情弹窗组件 -->
 <bottom-popup
   visible="{{visible}}"
-  title="{{record.type}}记录详情"
+  title="{{record.category || '物料'}}记录详情"
   show-close="{{true}}"
   show-actions="{{true}}"
   confirm-text="确定"

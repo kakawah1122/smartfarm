@@ -1307,13 +1307,14 @@ Page<PageData, any>({
           if (response.success && response.data) {
             const dashboardData = response.data
             
-            // 修复：云函数只返回基础统计
+            // 修复：云函数只返回基础统计，先初始化统计数据
             const stats = {
               vaccinationRate: 0,
-              vaccineCount: dashboardData.vaccineCount || 0,
+              vaccineCount: dashboardData.vaccineCount || dashboardData.totalCount || 0,
               preventionCost: 0,
               vaccineCoverage: dashboardData.vaccineCount || 0,
-              medicationCount: 0  // 需要单独获取
+              medicationCount: 0,  // 需要单独获取
+              disinfectionCount: dashboardData.disinfectionCount || 0
             }
             
             // 更新页面数据
@@ -1337,15 +1338,16 @@ Page<PageData, any>({
               }
             })
             
-            // 单独获取用药统计（修复：并行获取所有预防类型的统计）
+            // 单独获取用药和疫苗统计（确保数据正确显示）
             try {
-              // 并行获取用药和疫苗的实际记录数
-              const [medicationResult, vaccineRecordsResult] = await Promise.all([
+              // 并行获取用药、疫苗和消毒的实际记录数
+              const [medicationResult, vaccineRecordsResult, allPreventionResult] = await Promise.all([
                 safeCloudCall({
                   name: 'health-prevention',
                   data: {
                     action: 'list_prevention_records',
                     preventionType: 'medication',
+                    batchId: this.data.currentBatchId || 'all',
                     page: 1,
                     pageSize: 1
                   }
@@ -1355,33 +1357,64 @@ Page<PageData, any>({
                   data: {
                     action: 'list_prevention_records',
                     preventionType: 'vaccine',
+                    batchId: this.data.currentBatchId || 'all',
                     page: 1,
-                    pageSize: 10  // 获取一些记录用于显示
+                    pageSize: 1
+                  }
+                }),
+                safeCloudCall({
+                  name: 'health-prevention',
+                  data: {
+                    action: 'list_prevention_records',
+                    batchId: this.data.currentBatchId || 'all',
+                    page: 1,
+                    pageSize: 1
                   }
                 })
               ])
               
-              const updateData: any = {}
+              // 强制更新所有统计数据
+              const finalStats = {
+                vaccinationRate: 0,
+                vaccineCount: 0,
+                medicationCount: 0,
+                disinfectionCount: stats.disinfectionCount || 0,
+                preventionCost: 0,
+                vaccineCoverage: 0
+              }
               
-              // 更新用药统计
+              // 从查询结果中获取实际数量
               if (medicationResult?.success && medicationResult.data) {
-                updateData['preventionData.stats.medicationCount'] = medicationResult.data.total || 0
-                updateData['preventionStats.medicationCount'] = medicationResult.data.total || 0
+                finalStats.medicationCount = medicationResult.data.total || 0
               }
               
-              // 更新疫苗统计（如果云函数返回0，从记录列表获取）
               if (vaccineRecordsResult?.success && vaccineRecordsResult.data) {
-                const vaccineCount = vaccineRecordsResult.data.total || stats.vaccineCount || 0
-                if (vaccineCount > 0) {
-                  updateData['preventionData.stats.vaccineCount'] = vaccineCount
-                  updateData['preventionStats.vaccineCount'] = vaccineCount
-                }
+                finalStats.vaccineCount = vaccineRecordsResult.data.total || 0
+                finalStats.vaccineCoverage = vaccineRecordsResult.data.total || 0
               }
               
-              // 批量更新
-              if (Object.keys(updateData).length > 0) {
-                this.setData(updateData)
+              // 使用全部预防记录计算接种率
+              if (allPreventionResult?.success && allPreventionResult.data) {
+                const totalAnimals = this.data.healthStats.totalChecks || 1
+                const vaccinatedAnimals = finalStats.vaccineCount || 0
+                finalStats.vaccinationRate = totalAnimals > 0 ? 
+                  Math.min(100, (vaccinatedAnimals / totalAnimals * 100)) : 0
               }
+              
+              // 一次性更新所有数据
+              this.setData({
+                'preventionData.stats': finalStats,
+                preventionStats: {
+                  vaccineCount: finalStats.vaccineCount,
+                  medicationCount: finalStats.medicationCount,
+                  vaccineCoverage: finalStats.vaccineCoverage,
+                  totalCost: finalStats.preventionCost,
+                  disinfectionCount: finalStats.disinfectionCount
+                }
+              })
+              
+              logger.info('预防统计更新:', finalStats)
+              
             } catch (e) {
               logger.error('获取预防统计失败:', e)
             }

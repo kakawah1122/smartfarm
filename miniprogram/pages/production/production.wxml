@@ -470,7 +470,7 @@
                           size="small" 
                           class="record-type-tag {{item.category === '饲料' || item.category === '营养品' ? 'feed-tag' : item.category === '药品' ? 'medicine-tag' : item.category === '设备' ? 'equipment-tag' : 'default-tag'}}"
                         >
-                          {{item.type}}
+                          {{item.category || '物料'}}
                         </t-tag>
                       </view>
                     </view>
