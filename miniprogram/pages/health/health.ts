@@ -4,7 +4,7 @@ import { formatTime, getCurrentBeijingDate } from '../../utils/util'
 import { logger } from '../../utils/logger'
 import * as HealthStatsCalculator from './modules/health-stats-calculator'
 import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopDataWatcher as stopHealthDataWatcher } from './modules/health-watchers'
-import { clearAllHealthCache, clearBatchCache } from './modules/health-data-loader'
+import { CacheManager } from './modules/health-data-loader-v2'
 import { isVaccineTask, isMedicationTask, isNutritionTask, groupTasksByBatch, calculateCurrentAge } from '../../utils/health-utils'
 import { processImageUrls } from '../../utils/image-utils'
 import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisRecord } from '../../utils/diagnosis-data-utils'
@@ -441,7 +441,7 @@ Page<PageData, any>({
     this.latestAllBatchesSnapshot = null
     this.latestAllBatchesFetchedAt = 0
     // ✅ 清除所有相关缓存
-    clearAllHealthCache()
+    CacheManager.clearAllHealthCache()
   },
   
   /**
@@ -612,16 +612,16 @@ Page<PageData, any>({
     this.dataWatchers = startHealthDataWatcher(this.dataWatchers, {
       includeTreatmentWatcher: true,
       onBeforeChange: () => {
-        // ✅ 优化：只清除当前批次的缓存，而不是全部缓存
+        // 优化：只清除当前批次的缓存，而不是全部缓存
         if (this.data.currentBatchId === 'all') {
           this.invalidateAllBatchesCache()
-          clearBatchCache('all')
+          CacheManager.clearBatchCache('all')
         } else {
-          clearBatchCache(this.data.currentBatchId)
+          CacheManager.clearBatchCache(this.data.currentBatchId)
         }
       },
       onDataChange: () => {
-        // ✅ 优化：使用静默刷新，不阻塞UI
+        // 优化：使用静默刷新，不阻塞UI
         this.loadHealthData(true, true)
       }
     })
@@ -641,7 +641,7 @@ Page<PageData, any>({
    */
   onPullDownRefresh() {
     // ✅ 清除缓存，强制重新加载
-    clearAllHealthCache()
+    CacheManager.clearAllHealthCache()
     this.invalidateAllBatchesCache()
     
     this.setData({ refreshing: true })
@@ -872,19 +872,19 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载所有批次的汇总数据（✅优化：使用公共方法 + 批量API）
+   * 加载所有批次的汇总数据（恢复原有实现，确保数据正确）
    */
   async loadAllBatchesData() {
     try {
-      // ✅ 明确传递 batchId: 'all' 参数
+      // 使用原有的_fetchAllBatchesHealthData方法获取健康数据
       const healthData = await this._fetchAllBatchesHealthData({ batchId: 'all' })
       
-      // ✅ 获取预防统计数据
+      // 获取预防统计数据
       const preventionResult = await safeCloudCall({
         name: 'health-management',
         data: {
           action: 'getPreventionDashboard',
-          batchId: 'all',  // ✅ 明确传递'all'表示查询全部批次
+          batchId: 'all',
           today: formatTime(new Date(), 'date')
         }
       })
@@ -992,7 +992,7 @@ Page<PageData, any>({
    */
   backgroundRefreshData() {
     // ✅ 先清理缓存
-    clearAllHealthCache()
+    CacheManager.clearAllHealthCache()
     this.invalidateAllBatchesCache()
     
     // ✅ 使用 wx.nextTick 确保在下一个渲染周期执行，完全不阻塞当前交互
@@ -1240,24 +1240,21 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载预防管理数据（使用新的仪表盘API）
-   * 📝 优化：统一数据源，添加重试机制（使用循环而非递归）
+   * 加载预防管理数据
    */
   async loadPreventionData() {
     const MAX_RETRIES = 2
-    let lastError: any = null
     
-    // ✅ 性能优化：添加加载状态，避免重复请求
+    // 性能优化：添加加载状态，避免重复请求
     if (this.isLoadingPrevention) {
       return
     }
     this.isLoadingPrevention = true
     
     try {
-      // ✅ 使用循环实现重试，避免递归调用导致的作用域问题
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          // 调用新的预防管理仪表盘云函数
+          // 调用预防管理仪表盘云函数
           const result = await safeCloudCall({
             name: 'health-management',
             data: {
@@ -1265,132 +1262,87 @@ Page<PageData, any>({
               batchId: this.data.currentBatchId || 'all'
             }
           })
-
-      const response = result as any
-
-        // 🔍 详细错误日志
-        if (!response.success) {
-          lastError = response
-          logger.error('[loadPreventionData] 云函数返回失败:', {
-            errorCode: response?.errorCode,
-            message: response?.message,
-            error: response?.error
-          })
           
-          // ✅ 重试机制：非权限错误时自动重试（最多2次）
-          if (attempt < MAX_RETRIES && response?.errorCode !== 'PERMISSION_DENIED') {
-            const delay = (attempt + 1) * 1000 // 递增延迟：1s, 2s
-            await new Promise(resolve => setTimeout(resolve, delay))
-            continue // 继续下一次循环
-          } else {
-            // 达到最大重试次数或权限错误，跳出循环
+          const response = result as any
+          
+          if (!response.success) {
+            // 非权限错误时重试
+            if (attempt < MAX_RETRIES && response?.errorCode !== 'PERMISSION_DENIED') {
+              const delay = (attempt + 1) * 1000
+              await new Promise(resolve => setTimeout(resolve, delay))
+              continue
+            }
             break
           }
-        }
-        
-        // ✅ 成功获取数据，处理并返回
-      if (response.success && response.data) {
-        const dashboardData = response.data
-        const todayTasks = dashboardData.todayTasks || []
-        const todayTasksByBatch = groupTasksByBatch(todayTasks)
-        
-        // 更新页面数据（合并两次setData为一次）
-        this.setData({
-          'preventionData.todayTasks': todayTasks,
-          'preventionData.upcomingTasks': dashboardData.upcomingTasks || [],
-          'preventionData.stats': dashboardData.stats || {
-            vaccinationRate: 0,
-            vaccineCount: 0,
-            preventionCost: 0,
-            vaccineCoverage: 0,
-            medicationCount: 0
-          },
-          'preventionData.recentRecords': dashboardData.recentRecords || [],
-          'preventionData.taskCompletion': dashboardData.taskCompletion || {
-            total: 0,
-            completed: 0,
-            pending: 0,
-            overdue: 0
-          },
-          todayTasksByBatch,
-          preventionStats: {
-            vaccineCount: dashboardData.stats?.vaccineCount || 0,
-            vaccineCoverage: dashboardData.stats?.vaccineCoverage || 0,
-            totalCost: dashboardData.stats?.preventionCost || 0,
-            medicationCount: dashboardData.stats?.medicationCount || 0
-          }
-        })
-      
-      // 后台清理孤儿任务
-      if (this.data.preventionSubTab === 'today') {
-        this.cleanOrphanTasksInBackground()
-      }
           
-          // ✅ 成功处理，退出循环
-          return
-        }
-        
-        // 如果执行到这里，说明响应失败或没有数据
-        // 会继续循环进行重试，或者跳出循环设置默认值
-        
-    } catch (error: any) {
-        // 捕获网络错误或其他异常
-        lastError = error
-      logger.error('[loadPreventionData] 加载预防管理数据失败:', error)
-        
-        // 如果不是最后一次尝试，继续重试
-        if (attempt < MAX_RETRIES) {
-          const delay = (attempt + 1) * 1000
-          await new Promise(resolve => setTimeout(resolve, delay))
-          continue
+          if (response.success && response.data) {
+            const dashboardData = response.data
+            const todayTasks = dashboardData.todayTasks || []
+            const todayTasksByBatch = groupTasksByBatch(todayTasks)
+            
+            // 更新页面数据
+            this.setData({
+              'preventionData.todayTasks': todayTasks,
+              'preventionData.upcomingTasks': dashboardData.upcomingTasks || [],
+              'preventionData.stats': dashboardData.stats || {
+                vaccinationRate: 0,
+                vaccineCount: 0,
+                preventionCost: 0,
+                vaccineCoverage: 0,
+                medicationCount: 0
+              },
+              'preventionData.recentRecords': dashboardData.recentRecords || [],
+              'preventionData.taskCompletion': dashboardData.taskCompletion || {
+                total: 0,
+                completed: 0,
+                pending: 0,
+                overdue: 0
+              },
+              todayTasksByBatch,
+              preventionStats: {
+                vaccineCount: dashboardData.stats?.vaccineCount || 0,
+                vaccineCoverage: dashboardData.stats?.vaccineCoverage || 0,
+                totalCost: dashboardData.stats?.preventionCost || 0,
+                medicationCount: dashboardData.stats?.medicationCount || 0
+              }
+            })
+            
+            // 后台清理孤儿任务
+            if (this.data.preventionSubTab === 'today') {
+              this.cleanOrphanTasksInBackground()
+            }
+            
+            return // 成功处理，退出
+          }
+        } catch (error) {
+          logger.error('[loadPreventionData] 错误:', error)
+          if (attempt < MAX_RETRIES) {
+            const delay = (attempt + 1) * 1000
+            await new Promise(resolve => setTimeout(resolve, delay))
+            continue
+          }
+          break
         }
       }
-    }
-    
-    // ✅ 所有重试都失败，设置默认值并显示详细错误
-    // 显示详细错误信息
-    const errorMsg = lastError?.message || lastError?.error || '未知错误'
-    const errorCode = lastError?.errorCode || 'UNKNOWN'
-    logger.error('[loadPreventionData] 最终失败', { errorCode, errorMsg })
-    wx.showToast({
-      title: `加载失败: ${errorCode}`,
-      icon: 'none',
-      duration: 3000
-    })
-    
-    // 如果是权限错误，给出明确提示
-    if (errorCode === 'PERMISSION_DENIED') {
-      setTimeout(() => {
-        wx.showModal({
-          title: '权限不足',
-          content: '您没有查看健康管理数据的权限，请联系管理员',
-          showCancel: false
-        })
-      }, 500)
-    }
-    
+      
+      // 所有重试失败，设置默认值
       this.setData({
         'preventionData.todayTasks': [],
         'preventionData.upcomingTasks': [],
-      'preventionData.stats': {
-        vaccinationRate: 0,
-        vaccineCount: 0,
-        preventionCost: 0,
-        vaccineCoverage: 0
-      },
-      'preventionData.recentRecords': [],
-      'preventionData.taskCompletion': {
-        total: 0,
-        completed: 0,
-        pending: 0,
-        overdue: 0
-      },
-      todayTasksByBatch: [],
-      preventionStats: {
-        vaccineCount: 0,
-        vaccineCoverage: 0,
-        totalCost: 0
-      }
+        'preventionData.stats': {
+          vaccinationRate: 0,
+          vaccineCount: 0,
+          preventionCost: 0,
+          vaccineCoverage: 0
+        },
+        'preventionData.recentRecords': [],
+        'preventionData.taskCompletion': {
+          total: 0,
+          completed: 0,
+          pending: 0,
+          overdue: 0
+        },
+        todayTasksByBatch: []
       })
     } finally {
       this.isLoadingPrevention = false
@@ -1493,6 +1445,9 @@ Page<PageData, any>({
   // ✅ 添加治疗数据加载标志，防止重复加载
   isLoadingTreatmentData: false,
   
+  /**
+   * 加载治疗数据
+   */
   async loadTreatmentData(options: {
     aggregated?: {
       totalCost: number
@@ -1507,7 +1462,7 @@ Page<PageData, any>({
     const aggregatedStats = options.aggregated
     const forceRefresh = options.forceRefresh || false
     
-    // ✅ 防止重复加载
+    // 防止重复加载
     if (this.isLoadingTreatmentData && !forceRefresh) {
       return
     }
@@ -1515,7 +1470,7 @@ Page<PageData, any>({
     this.isLoadingTreatmentData = true
     
     try {
-      // ✅ 统一数据源：全部批次和单批次都使用_fetchAllBatchesHealthData
+      // 统一数据源：全部批次和单批次都使用_fetchAllBatchesHealthData
       const batchId = this.data.currentBatchId
       const aggregatedData = aggregatedStats || await this._fetchAllBatchesHealthData({ 
         batchId: batchId,
@@ -1548,28 +1503,7 @@ Page<PageData, any>({
         title: '治疗数据加载失败',
         icon: 'error'
       })
-      // 出错时重置为默认值
-      this.setData({
-        'treatmentData.stats': {
-          pendingDiagnosis: 0,
-          ongoingTreatment: 0,
-          recoveredCount: 0,  // ✅ 统一数据源
-          deadCount: 0,  // ✅ 统一数据源
-          totalTreatmentCost: 0,
-          cureRate: 0,
-          ongoingAnimalsCount: 0
-        },
-        'treatmentStats.totalTreatments': 0,
-        'treatmentStats.totalCost': 0,
-        'treatmentStats.recoveredCount': 0,
-        'treatmentStats.ongoingCount': 0,
-        'treatmentStats.recoveryRate': '0%',
-        'treatmentData.diagnosisHistory': [],
-        'monitoringData.realTimeStatus.abnormalCount': 0,
-        'monitoringData.abnormalList': []
-      })
     } finally {
-      // ✅ 无论成功或失败，都要释放loading标志
       this.isLoadingTreatmentData = false
     }
   },
@@ -1698,11 +1632,11 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载分析数据（✅优化：修复存活率计算逻辑，确保数据加载顺序）
+   * 加载分析数据
    */
   async loadAnalysisData() {
     try {
-      // ✅ 确保有健康统计数据
+      // 确保有健康统计数据
       if (!this.data.healthStats || this.data.healthStats.totalChecks === 0) {
         await this.loadHealthData()
       }
@@ -1711,25 +1645,18 @@ Page<PageData, any>({
       const totalAnimals = this.data.healthStats?.totalChecks || 0
       const hasData = totalAnimals > 0
       
-      // ✅ 存活率计算逻辑（增强容错）
+      // 存活率计算逻辑
       let survivalRate: string | number = '-'
       let trend = 'stable'
       
       if (hasData) {
-        // ✅ 获取原始入栏数，优先使用 originalQuantity，避免回退到 totalAnimals（当前存活数）
         let originalQuantity = this.data.healthStats.originalQuantity || 0
         const deadCount = this.data.healthStats.deadCount || 0
         
-        // ✅ 容错：如果 originalQuantity 为 0，尝试从totalChecks + deadCount估算
+        // 容错：如果 originalQuantity 为 0，尝试从totalChecks + deadCount估算
         if (originalQuantity === 0) {
-          // 如果有总数和死亡数，可以尝试计算
           if (totalAnimals > 0 || deadCount > 0) {
             originalQuantity = totalAnimals + deadCount
-            logger.info('存活率计算：使用totalChecks + deadCount估算', {
-              totalAnimals,
-              deadCount,
-              estimated: originalQuantity
-            })
           }
         }
         
@@ -1739,20 +1666,10 @@ Page<PageData, any>({
           
           const mortalityRate = (deadCount / originalQuantity) * 100
           trend = mortalityRate < 1 ? 'improving' : mortalityRate < 3 ? 'stable' : 'declining'
-        } else {
-          survivalRate = '-'
-          // ✅ 调试日志：记录为什么显示 "-"
-          logger.info('存活率显示"-"，原因：无法计算originalQuantity', {
-            healthStats: this.data.healthStats,
-            totalAnimals,
-            deadCount,
-            hasData,
-            currentBatchId: this.data.currentBatchId
-          })
         }
       }
       
-      // ✅ 优化：根据批次模式使用不同的 API 获取最新成本数据
+      // 获取成本数据
       const batchId = this.data.currentBatchId || 'all'
       const isAllBatches = batchId === 'all'
       
@@ -1760,16 +1677,14 @@ Page<PageData, any>({
       let preventionPromise: Promise<any>
       
       if (isAllBatches) {
-        // 全部批次模式：使用 getPreventionDashboard
         preventionPromise = safeCloudCall({
           name: 'health-management',
           data: {
             action: 'getPreventionDashboard',
-            batchId: batchId  // ✅ 使用动态的batchId而不是硬编码'all'
+            batchId: batchId
           }
         })
       } else {
-        // 单批次模式：使用 get_batch_complete_data
         preventionPromise = safeCloudCall({
           name: 'health-management',
           data: {
@@ -1780,35 +1695,45 @@ Page<PageData, any>({
         })
       }
       
+      // 获取饲养成本的参数
+      const feedCostParams: any = {
+        action: 'get_cost_stats',
+        dateRange: this.data.dateRange
+      }
+      
+      // 根据批次模式设置不同的参数
+      if (isAllBatches) {
+        feedCostParams.batchId = 'all'
+      } else {
+        feedCostParams.batchId = batchId
+        // 单批次模式需要批次编号
+        if (this.data.currentBatchNumber && this.data.currentBatchNumber !== '全部批次') {
+          feedCostParams.batchNumber = this.data.currentBatchNumber
+        }
+      }
+      
       const [preventionResult, feedCostResult] = await Promise.all([
         preventionPromise,
         // 获取饲养成本
         safeCloudCall({
           name: 'finance-management',
-          data: {
-            action: 'get_cost_stats',
-            dateRange: this.data.dateRange,
-            batchId: batchId,
-            batchNumber: (this.data.currentBatchNumber && this.data.currentBatchNumber !== '全部批次') ? this.data.currentBatchNumber : undefined
-          }
+          data: feedCostParams
         })
       ])
       
-      // 提取预防成本（根据不同的响应结构）
+      // 提取预防成本
       let preventionCost = 0
       if (isAllBatches) {
-        // 全部批次模式的响应结构
         if (preventionResult?.success && preventionResult.data?.stats) {
           preventionCost = preventionResult.data.stats.preventionCost || 0
         }
       } else {
-        // 单批次模式的响应结构
         if (preventionResult?.success && preventionResult.data?.preventionStats) {
           preventionCost = preventionResult.data.preventionStats.totalCost || 0
         }
       }
       
-      // ✅ 修复：获取治疗成本（不依赖页面数据，直接从云函数获取）
+      // 获取治疗成本
       let treatmentCost = 0
       try {
         const treatmentCostResult = await safeCloudCall({
@@ -1825,14 +1750,17 @@ Page<PageData, any>({
         }
       } catch (error) {
         console.error('获取治疗成本失败:', error)
-        // 降级方案：从页面已有数据获取
         treatmentCost = this.data.treatmentData?.stats?.totalTreatmentCost || 0
       }
       
       // 提取饲养成本
       let feedingCost = 0
       if (feedCostResult?.success) {
-        feedingCost = feedCostResult.data.feedCost || 0
+        // 优先从feedCost字段获取
+        feedingCost = feedCostResult.data?.feedCost || 
+                     feedCostResult.data?.feedingCost || 
+                     feedCostResult.data?.totalFeedCost ||
+                     feedCostResult.data?.materialCost || 0
       }
       
       // 计算总成本
@@ -3118,7 +3046,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       
       // 2. 清除缓存
       this.invalidateAllBatchesCache()
-      clearAllHealthCache()
+      CacheManager.clearAllHealthCache()
       
       // 3. 加载基础健康数据 - 这会设置healthStats.originalQuantity
       await this.loadHealthData(true)  // silent模式
