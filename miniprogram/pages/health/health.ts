@@ -1358,13 +1358,104 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载今日待办任务（统一入口）
+   * 加载今日待办任务（合并后的通用方法）
    */
   async loadTodayTasks() {
-    if (this.data.currentBatchId === 'all') {
-      await this.loadAllBatchesTodayTasks()
-    } else {
-      await this.loadSingleBatchTodayTasks()
+    const isAllBatches = this.data.currentBatchId === 'all'
+    
+    try {
+      // 获取批次信息
+      let batches: any[] = []
+      
+      if (isAllBatches) {
+        // 获取所有活跃批次
+        const result = await safeCloudCall({
+          name: 'production-entry',
+          data: { action: 'getActiveBatches' },
+          useCache: true
+        })
+        batches = result.result?.data || []
+      } else if (this.data.currentBatchId) {
+        // 获取单个批次
+        const result = await safeCloudCall({
+          name: 'production-entry',
+          data: {
+            action: 'getBatchDetail',
+            batchId: this.data.currentBatchId
+          }
+        })
+        const batch = result.result?.data
+        if (batch) {
+          batches = [batch]
+        }
+      }
+      
+      if (batches.length === 0) {
+        this.setData({
+          todayTasksByBatch: [],
+          'preventionData.todayTasks': []
+        })
+        return
+      }
+      
+      // 并行加载所有批次的任务
+      const batchTasksPromises = batches.map(async (batch: any) => {
+        try {
+          const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
+          const result = await safeCloudCall({
+            name: 'breeding-todo',
+            data: {
+              action: 'getTodos',
+              batchId: batch._id || this.data.currentBatchId,
+              dayAge: dayAge
+            }
+          })
+          
+          const response = result as any
+          if (response.success && response.data && response.data.length > 0) {
+            const tasks = Array.isArray(response.data) ? response.data : []
+            const normalizedTasks = tasks.map((task: any) =>
+              this.normalizeTask(task, {
+                batchNumber: batch.batchNumber || batch._id,
+                dayAge: task.dayAge || dayAge
+              })
+            )
+            
+            return {
+              id: `${batch._id}_${dayAge}`,
+              batchId: batch._id || this.data.currentBatchId,
+              batchNumber: batch.batchNumber || batch._id,
+              dayAge: dayAge,
+              tasks: normalizedTasks
+            }
+          }
+          return null
+        } catch (error) {
+          logger.error(`批次任务加载失败:`, error)
+          return null
+        }
+      })
+      
+      const results = await Promise.all(batchTasksPromises)
+      const validBatchTasks = results.filter((item: any) => item !== null && item.tasks.length > 0)
+      
+      // 收集所有任务
+      let allTasks: any[] = []
+      validBatchTasks.forEach((batchData: any) => {
+        allTasks = allTasks.concat(batchData.tasks)
+      })
+      
+      this.setData({
+        todayTasksByBatch: validBatchTasks,
+        'preventionData.todayTasks': allTasks
+      })
+      
+    } catch (error: any) {
+      logger.error('加载今日任务失败:', error)
+      this.setData({
+        todayTasksByBatch: [],
+        'preventionData.todayTasks': []
+      })
     }
   },
 
@@ -1899,184 +1990,83 @@ Page<PageData, any>({
     }
   },
 
-  /**
-   * 加载单批次今日待办任务
-   */
-  async loadSingleBatchTodayTasks() {
-    if (!this.data.currentBatchId || this.data.currentBatchId === 'all') {
-      this.setData({ 
-        'preventionData.todayTasks': [],
-        todayTasksByBatch: []
-      })
-      return
-    }
 
-    try {
-      // 获取批次信息以获取云函数计算的日龄
-      const batchResult = await safeCloudCall({
-        name: 'production-entry',
-        data: {
-          action: 'getBatchDetail',
-          batchId: this.data.currentBatchId
-        }
-      })
-
-      const batch = batchResult.result?.data
-      if (!batch) {
-        throw new Error('批次不存在')
-      }
-
-      // 使用云函数返回的日龄，如果没有则本地计算
-      const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
-
-      // 调用 breeding-todo 云函数获取任务（只查询当日日龄的任务）
-      const result = await safeCloudCall({
-        name: 'breeding-todo',
-        data: {
-          action: 'getTodos',
-          batchId: this.data.currentBatchId,
-          dayAge: dayAge  // 只查询当日日龄的任务
-        }
-      })
-
-      const response = result as any
-      
-      if (response.success && response.data && response.data.length > 0) {
-        const tasks = Array.isArray(response.data) ? response.data : []
-        
-        const normalizedTasks = tasks.map((task: any) => this.normalizeTask(task, {
-          batchNumber: batch.batchNumber || this.data.currentBatchId,
-          dayAge: task.dayAge || dayAge
-        }))
-        
-        this.setData({
-          todayTasksByBatch: [{
-            batchId: this.data.currentBatchId,
-            batchNumber: batch.batchNumber || this.data.currentBatchId,
-            dayAge: dayAge,
-            tasks: normalizedTasks
-          }],
-          'preventionData.todayTasks': normalizedTasks
-        })
-      } else {
-        // 当日没有任务，显示空列表
-        this.setData({
-          todayTasksByBatch: [],
-          'preventionData.todayTasks': []
-        })
-      }
-    } catch (error: any) {
-      logger.error('加载单批次今日任务失败:', error)
-      this.setData({
-        todayTasksByBatch: [],
-        'preventionData.todayTasks': []
-      })
-    }
-  },
 
   /**
-   * 加载所有批次今日待办任务
-   */
-  async loadAllBatchesTodayTasks() {
-    try {
-      // 获取活跃批次（使用缓存优化）
-      const batchResult = await safeCloudCall({
-        name: 'production-entry',
-        data: { action: 'getActiveBatches' },
-        useCache: true  // 自动缓存10分钟
-      })
-
-      const activeBatches = batchResult.result?.data || []
-      
-      if (activeBatches.length === 0) {
-        this.setData({
-          todayTasksByBatch: [],
-          'preventionData.todayTasks': []
-        })
-        return
-      }
-
-      // 为每个活跃批次获取今日任务
-      const batchTasksPromises = activeBatches.map(async (batch: any) => {
-        try {
-          // 使用云函数返回的日龄
-          const dayAge = batch.dayAge
-          
-          // 只查询当日日龄的任务
-          const result = await safeCloudCall({
-            name: 'breeding-todo',
-            data: {
-              action: 'getTodos',
-              batchId: batch._id,
-              dayAge: dayAge  // 只查询当日日龄的任务
-            }
-          })
-          
-          const response = result as any
-          
-          if (response.success && response.data && response.data.length > 0) {
-            const tasks = Array.isArray(response.data) ? response.data : []
-            
-            const normalizedTasks = tasks.map((task: any) =>
-              this.normalizeTask(task, {
-                batchNumber: batch.batchNumber || batch._id,
-                dayAge: task.dayAge || dayAge
-              })
-            )
-            
-            return {
-              id: `${batch._id}_${dayAge}`, // 添加唯一ID
-              batchId: batch._id,
-              batchNumber: batch.batchNumber || batch._id,
-              dayAge: dayAge,
-              tasks: normalizedTasks
-            }
-          } else {
-            return null
-          }
-        } catch (error) {
-          logger.error(`批次 ${batch._id} 任务加载失败:`, error)
-          return null
-        }
-      })
-
-      const batchTasksResults = await Promise.all(batchTasksPromises)
-      
-      // 过滤掉空结果（当日没有任务的批次）
-      const validBatchTasks = batchTasksResults.filter((item: any) => item !== null && item.tasks.length > 0)
-      
-      // 收集所有任务
-      let allTasks: any[] = []
-      validBatchTasks.forEach((batchData: any) => {
-        allTasks = allTasks.concat(batchData.tasks)
-      })
-
-      this.setData({
-        todayTasksByBatch: validBatchTasks,
-        'preventionData.todayTasks': allTasks
-      })
-    } catch (error: any) {
-      logger.error('[loadAllBatchesTodayTasks] 加载所有批次今日任务失败:', error)
-      this.setData({
-        todayTasksByBatch: [],
-        'preventionData.todayTasks': []
-      })
-    }
-  },
-
-  /**
-   * 加载即将到来的任务（从breeding-todo迁移）
+   * 加载即将到来的任务（合并后的通用方法）
    */
   async loadUpcomingTasks() {
+    const isAllBatches = this.data.currentBatchId === 'all'
+    
     try {
       this.setData({ loading: true })
       
-      if (this.data.currentBatchId === 'all') {
-        await this.loadAllUpcomingTasks()
-      } else {
-        await this.loadSingleBatchUpcomingTasks()
+      // 获取批次信息
+      let batches: any[] = []
+      
+      if (isAllBatches) {
+        // 获取所有活跃批次
+        const result = await CloudApi.callFunction(
+          'production-entry',
+          { action: 'getActiveBatches' }
+        )
+        batches = result.data || []
+      } else if (this.data.currentBatchId) {
+        // 获取单个批次
+        const result = await CloudApi.callFunction(
+          'production-entry',
+          {
+            action: 'getBatchDetail',
+            batchId: this.data.currentBatchId
+          }
+        )
+        const batch = result.data
+        if (batch) {
+          batches = [batch]
+        }
       }
-    } catch (error) {
+      
+      if (batches.length === 0) {
+        this.setData({ upcomingTasksByBatch: [] })
+        return
+      }
+      
+      // 并行加载所有批次的即将到来任务
+      const promises = batches.map(async (batch: any) => {
+        try {
+          const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
+          const result = await CloudApi.callFunction(
+            'breeding-todo',
+            {
+              action: 'getUpcomingTasks',
+              batchId: batch._id || this.data.currentBatchId,
+              currentDayAge: dayAge
+            }
+          )
+          
+          const tasks = result.data || []
+          if (tasks.length > 0) {
+            return {
+              batchId: batch._id || this.data.currentBatchId,
+              batchNumber: batch.batchNumber || batch._id,
+              currentDayAge: dayAge,
+              tasks: tasks
+            }
+          }
+          return null
+        } catch (error) {
+          logger.error(`批次即将到来任务加载失败:`, error)
+          return null
+        }
+      })
+      
+      const results = await Promise.all(promises)
+      const validResults = results.filter(item => item !== null)
+      
+      this.setData({ upcomingTasksByBatch: validResults })
+      
+    } catch (error: any) {
+      logger.error('加载即将到来任务失败:', error)
       wx.showToast({
         title: '加载失败',
         icon: 'error'
@@ -2086,185 +2076,7 @@ Page<PageData, any>({
     }
   },
 
-  /**
-   * 加载单批次即将到来的任务
-   */
-  async loadSingleBatchUpcomingTasks() {
-    
-    if (!this.data.currentBatchId || this.data.currentBatchId === 'all') {
-      this.setData({ upcomingTasksByBatch: [] })
-      return
-    }
 
-    try {
-      // 获取批次信息以计算当前日龄
-      const batchResult = await CloudApi.callFunction(
-        'production-entry',
-        { action: 'getActiveBatches' },
-        { showError: false, useCache: false }
-      )
-
-      // 修复数据读取路径
-      const activeBatches = Array.isArray(batchResult.data) ? batchResult.data : (batchResult.data?.batches || [])
-      const currentBatch = activeBatches.find((b: any) => b._id === this.data.currentBatchId)
-      
-      if (!currentBatch) {
-        this.setData({ upcomingTasks: [] })
-        return
-      }
-
-      const currentDayAge = calculateCurrentAge(currentBatch.entryDate)
-      const nextDayAge = currentDayAge + 1
-      
-      const result = await CloudApi.getWeeklyTodos(this.data.currentBatchId, nextDayAge)
-      
-      if (result.success && result.data) {
-        // 将按日龄分组的数据转换为数组格式，过滤掉当前日龄及之前的任务
-        const upcomingTasksArray = Object.keys(result.data)
-          .map(dayAge => parseInt(dayAge))
-          .filter(dayAge => dayAge > currentDayAge)
-          .map(dayAge => ({
-            dayAge: dayAge,
-            tasks: (result.data[dayAge.toString()] || []).map((task: any) =>
-              this.normalizeTask(task, {
-              isVaccineTask: isVaccineTask(task),
-                batchNumber: currentBatch.batchNumber || this.data.currentBatchId,
-                dayAge
-              })
-            )
-          }))
-          .sort((a, b) => a.dayAge - b.dayAge)
-
-        // 转换为批次分组格式
-        const upcomingTasksByBatch = upcomingTasksArray.map(group => ({
-          id: `${this.data.currentBatchId}_${group.dayAge}`, // 添加唯一ID
-          batchId: this.data.currentBatchId,
-          batchNumber: currentBatch.batchNumber || this.data.currentBatchId,
-          dayAge: group.dayAge,
-          tasks: group.tasks
-        }))
-        
-        this.setData({ upcomingTasksByBatch })
-      } else {
-        this.setData({ upcomingTasksByBatch: [] })
-      }
-    } catch (error) {
-      this.setData({ upcomingTasksByBatch: [] })
-    }
-  },
-
-  /**
-   * 加载所有批次的即将到来任务
-   */
-  async loadAllUpcomingTasks() {
-    try {
-      // 获取活跃批次
-      const batchResult = await CloudApi.callFunction(
-        'production-entry',
-        { action: 'getActiveBatches' },
-        { showError: false, useCache: false }
-      )
-
-      // 修复数据读取路径
-      const activeBatches = Array.isArray(batchResult.data) ? batchResult.data : (batchResult.data?.batches || [])
-      
-      if (activeBatches.length === 0) {
-        this.setData({ upcomingTasksByBatch: [] })
-        return
-      }
-
-      // 为每个活跃批次加载未来一周的任务
-      const upcomingTasksPromises = activeBatches.map(async (batch: any): Promise<any[]> => {
-        try {
-          const currentDayAge = calculateCurrentAge(batch.entryDate)
-          const result = await CloudApi.getWeeklyTodos(batch._id, currentDayAge + 1)
-          
-          if (result.success && result.data) {
-            return Object.keys(result.data)
-              .map(taskDayAge => parseInt(taskDayAge))
-              .filter(dayAge => dayAge > currentDayAge)
-              .map(dayAge => ({
-                dayAge: dayAge,
-                tasks: (result.data[dayAge.toString()] || []).map((task: any) =>
-                  this.normalizeTask(task, {
-                    batchNumber: batch.batchNumber || batch._id,
-                    isVaccineTask: isVaccineTask(task),
-                    // 使用任务本身的dayAge字段，如果没有则使用分组日龄
-                    dayAge: task.dayAge || dayAge
-                  })
-                )
-              }))
-          }
-          return []
-        } catch (error) {
-          return []
-        }
-      })
-
-      const upcomingTasksResults = await Promise.all(upcomingTasksPromises)
-      
-      // 合并所有批次的任务并按日龄分组
-      const mergedTasks: {[key: number]: any[]} = {}
-      
-      upcomingTasksResults.forEach((batchTasks: any[]) => {
-        batchTasks.forEach((dayGroup: any) => {
-          const dayAge = dayGroup.dayAge
-          if (!mergedTasks[dayAge]) {
-            mergedTasks[dayAge] = []
-          }
-          mergedTasks[dayAge] = mergedTasks[dayAge].concat(dayGroup.tasks)
-        })
-      })
-
-      // 转换为数组格式并排序
-      const sortedUpcomingTasks = Object.keys(mergedTasks).map(dayAge => ({
-        dayAge: parseInt(dayAge),
-        tasks: mergedTasks[parseInt(dayAge)]
-      })).sort((a, b) => a.dayAge - b.dayAge)
-
-      // 转换为批次分组格式，按批次和日龄分组
-      const upcomingTasksByBatch: any[] = []
-      
-      sortedUpcomingTasks.forEach(dayGroup => {
-        dayGroup.tasks.forEach((task: any) => {
-          const batchId = task.batchId || task.batchNumber
-          // 使用任务本身的dayAge字段，如果没有则使用分组日龄
-          const taskDayAge = task.dayAge || dayGroup.dayAge
-          
-          // 按批次和日龄组合查找分组
-          let batchGroup = upcomingTasksByBatch.find(g => 
-            g.batchId === batchId && g.dayAge === taskDayAge
-          )
-          
-          if (!batchGroup) {
-            batchGroup = {
-              id: `${batchId}_${taskDayAge}`, // 添加唯一ID
-              batchId: batchId,
-              batchNumber: task.batchNumber || batchId,
-              dayAge: taskDayAge,
-              tasks: []
-            }
-            upcomingTasksByBatch.push(batchGroup)
-          }
-          
-          batchGroup.tasks.push(task)
-        })
-      })
-      
-      // 按批次号和日龄排序
-      upcomingTasksByBatch.sort((a, b) => {
-        if (a.batchNumber !== b.batchNumber) {
-          return (a.batchNumber || '').localeCompare(b.batchNumber || '')
-        }
-        return a.dayAge - b.dayAge
-      })
-      
-      this.setData({ upcomingTasksByBatch })
-
-    } catch (error) {
-      this.setData({ upcomingTasksByBatch: [] })
-    }
-  },
 
   /**
    * 加载历史任务（从breeding-todo迁移）- ✅ 修复：直接查询数据库获取所有已完成任务
