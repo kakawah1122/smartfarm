@@ -12,6 +12,10 @@ import { safeCloudCall } from '../../utils/safe-cloud-call'
 import { createDataUpdater } from './helpers/data-updater'
 import { HealthCloudHelper, normalizeHealthData } from './helpers/cloud-helper'
 
+// 导入新的模块化管理器
+import { HealthNavigationManager } from './modules/health-navigation-module'
+import { HealthEventManager, setupEventManagement } from './modules/health-event-module'
+
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
 
@@ -493,6 +497,9 @@ Page<PageData, any>({
    * 页面加载
    */
   async onLoad(options: any) {
+    // 🎯 初始化事件管理（新增模块化功能）
+    setupEventManagement(this)
+    
     // 修复治疗记录中缺少 _openid 字段的数据
     this.fixTreatmentRecordsOpenId()
     
@@ -741,20 +748,20 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载健康数据（主入口 - 带防抖和防重复机制）
+   * 加载健康数据（主入口 - 使用模块化防抖）
    * @param silent 静默刷新（不显示loading，避免阻塞UI交互）
    * @param debounce 是否使用防抖（默认true）
    */
   async loadHealthData(silent: boolean = false, debounce: boolean = true) {
-    // ✅ 防抖机制：避免短时间内多次触发（非递归版本）
     if (debounce) {
-      if (this.loadDataDebounceTimer) {
-        clearTimeout(this.loadDataDebounceTimer)
+      // 使用事件管理器的防抖（延迟初始化）
+      if (!this.debouncedLoadHealthData) {
+        this.debouncedLoadHealthData = HealthEventManager.debounce(
+          this._executeLoadHealthData.bind(this),
+          { delay: 100 }
+        )
       }
-      
-      this.loadDataDebounceTimer = setTimeout(async () => {
-        await this._executeLoadHealthData(silent)  // 调用实际执行函数
-      }, 100) as any
+      this.debouncedLoadHealthData(silent)
       return
     }
     
@@ -1572,18 +1579,14 @@ Page<PageData, any>({
   },
 
   /**
-   * 查看全部诊断记录
+   * 查看全部诊断记录（使用模块化导航）
    */
   onViewAllDiagnosis() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    // 使用事件管理器的防重复点击
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    // ✅ 进入诊断历史页面，显示所有批次的诊断记录
-    wx.navigateTo({
-      url: `/packageAI/diagnosis-history/diagnosis-history`
-    })
+    // 使用导航管理器
+    HealthNavigationManager.navigateToDiagnosisHistory()
   },
 
   /**
@@ -1804,10 +1807,8 @@ Page<PageData, any>({
    */
   viewPreventionRecord(e: any) {
     const { recordId } = e.currentTarget.dataset
-    // 已移除调试日志
-    wx.navigateTo({
-      url: `/packageHealth/vaccine-record/vaccine-record?id=${recordId}`
-    })
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    HealthNavigationManager.navigateToPreventionRecord(recordId)
   },
 
   /**
@@ -1815,28 +1816,27 @@ Page<PageData, any>({
    */
   viewHealthAlert(e: any) {
     const { alertId } = e.currentTarget.dataset
-    // 已移除调试日志
-    wx.navigateTo({
-      url: `/packageHealth/health-care/health-care?alertId=${alertId}`
-    })
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    HealthNavigationManager.navigateToHealthAlert(alertId)
   },
 
   /**
-   * 创建新的健康记录
+   * 创建新的健康记录（使用模块化导航）
    */
   createHealthRecord() {
-    wx.navigateTo({
-      url: `/packageHealth/health-inspection/health-inspection?batchId=${this.data.currentBatchId}`
-    })
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    HealthNavigationManager.createHealthInspection(this.data.currentBatchId)
   },
 
   /**
-   * 创建新的预防记录
+   * 创建新的预防记录（使用模块化导航）
    */
   createPreventionRecord() {
-    wx.navigateTo({
-      url: `/packageHealth/vaccine-record/vaccine-record?batchId=${this.data.currentBatchId}&mode=create`
-    })
+    // 使用事件管理器的防重复点击
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    
+    // 使用导航管理器
+    HealthNavigationManager.createPreventionRecord(this.data.currentBatchId)
   },
 
   /**
@@ -2602,21 +2602,25 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 创建新的治疗记录
+   * 创建新的治疗记录（使用模块化导航）
    */
   createTreatmentRecord() {
-    wx.navigateTo({
-      url: `/packageHealth/treatment-record/treatment-record?batchId=${this.data.currentBatchId}&mode=create`
-    })
+    // 使用事件管理器的防重复点击
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    
+    // 使用导航管理器
+    HealthNavigationManager.createTreatmentRecord(this.data.currentBatchId)
   },
 
   /**
-   * AI健康诊断
+   * AI健康诊断（使用模块化导航）
    */
   openAiDiagnosis() {
-    wx.navigateTo({
-      url: `/packageAI/ai-diagnosis/ai-diagnosis?batchId=${this.data.currentBatchId}`
-    })
+    // 使用事件管理器的防重复点击
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    
+    // 使用导航管理器
+    HealthNavigationManager.navigateToAiDiagnosis(this.data.currentBatchId)
   },
 
   /**
@@ -2683,30 +2687,22 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 待诊断卡片点击 - 跳转到AI诊断页面
+   * 待诊断卡片点击 - 跳转到AI诊断页面（使用模块化导航）
    */
   onPendingDiagnosisClick() {
-    wx.navigateTo({
-      url: '/packageAI/ai-diagnosis/ai-diagnosis'
-    })
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    HealthNavigationManager.navigateToAiDiagnosis()
   },
 
   /**
-   * 治疗中卡片点击 - 跳转到治疗记录列表
+   * 治疗中卡片点击 - 跳转到治疗记录列表（使用模块化导航）
    */
   onOngoingTreatmentClick() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/treatment-records-list/treatment-records-list',
-      // ✅ 使用EventChannel监听列表页的更新
-      events: {
-        treatmentListUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToTreatmentList({
+      treatmentListUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
@@ -3097,118 +3093,79 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 点击治愈率卡片，跳转到治愈记录列表
+   * 跳转到治愈记录列表（使用模块化导航）
    */
   navigateToCuredRecords() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/cured-records-list/cured-records-list',
-      // ✅ 使用EventChannel监听治愈记录更新
-      events: {
-        curedRecordsUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToCuredList({
+      curedRecordsUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
 
   /**
-   * 点击死亡率卡片，跳转到死亡记录列表
+   * 跳转到死亡记录列表（使用模块化导航）
    */
   navigateToDeathRecords() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/death-records-list/death-records-list',
-      // ✅ 使用EventChannel监听死亡记录更新
-      events: {
-        deathRecordsUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToDeathList({
+      deathRecordsUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
 
   /**
-   * 点击死亡数卡片，跳转到死亡记录列表
+   * 点击死亡数卡片，跳转到死亡记录列表（使用模块化导航）
    */
   onDeathCountTap() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/death-records-list/death-records-list',
-      // ✅ 使用EventChannel监听死亡记录更新
-      events: {
-        deathRecordsUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToDeathList({
+      deathRecordsUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
 
   /**
-   * 异常数量卡片点击 - 跳转到异常记录列表
+   * 点击异常数量，跳转到异常记录列表（使用模块化导航）
    */
   onAbnormalCountTap() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/abnormal-records-list/abnormal-records-list',
-      events: {
-        abnormalRecordsUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToAbnormalList({
+      abnormalRecordsUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
 
   /**
-   * 疫苗追踪卡片点击 - 跳转到疫苗记录列表
+   * 点击疫苗数量，跳转到疫苗记录列表（使用模块化导航）
    */
   onVaccineCountTap() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/vaccine-records-list/vaccine-records-list',
-      events: {
-        vaccineRecordsUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToVaccineList({
+      vaccineRecordsUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
 
   /**
-   * 点击防疫用药卡片，跳转到用药记录列表页面
+   * 点击用药数量，跳转到用药记录列表（使用模块化导航）
    */
   onMedicationCountTap() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/medication-records-list/medication-records-list',
-      events: {
-        medicationRecordsUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToMedicationList({
+      medicationRecordsUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
