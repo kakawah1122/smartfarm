@@ -12,6 +12,7 @@ import { safeCloudCall } from '../../utils/safe-cloud-call'
 import { createDataUpdater } from './helpers/data-updater'
 import { HealthCloudHelper, normalizeHealthData } from './helpers/cloud-helper'
 import { withErrorHandler } from './helpers/error-handler'
+import { FormValidator, vaccineFormRules, medicationFormRules, nutritionFormRules } from './helpers/form-validator'
 
 // 导入新的模块化管理器
 import { HealthNavigationManager } from './modules/health-navigation-module'
@@ -3439,12 +3440,37 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 关闭疫苗表单
+   * 通用关闭表单方法
+   */
+  closeFormPopup(formType: 'vaccine' | 'medication' | 'nutrition') {
+    const updateData: any = {}
+    
+    switch (formType) {
+      case 'vaccine':
+        updateData.showVaccineFormPopup = false
+        break
+      case 'medication':
+        updateData.showMedicationFormPopup = false
+        updateData.selectedMedicine = null
+        updateData.medicationFormErrors = {}
+        updateData.medicationFormErrorList = []
+        break
+      case 'nutrition':
+        updateData.showNutritionFormPopup = false
+        updateData.selectedNutrition = null
+        updateData.nutritionFormErrors = {}
+        updateData.nutritionFormErrorList = []
+        break
+    }
+    
+    this.setData(updateData)
+  },
+  
+  /**
+   * 关闭疫苗表单（兼容旧代码）
    */
   closeVaccineFormPopup() {
-    this.setData({
-      showVaccineFormPopup: false
-    })
+    this.closeFormPopup('vaccine')
   },
 
   /**
@@ -3551,44 +3577,21 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 验证疫苗表单
+   * 验证疫苗表单（使用通用验证器）
    */
   validateVaccineForm(): boolean {
     const { vaccineFormData } = this.data
-    const errors: { [key: string]: string } = {}
-
-    // 必填字段验证
-    if (!vaccineFormData.veterinarianName || vaccineFormData.veterinarianName === '') {
-      errors.veterinarianName = '请填写兽医姓名'
-    }
-    if (!vaccineFormData.vaccineName || vaccineFormData.vaccineName === '') {
-      errors.vaccineName = '请填写疫苗名称'
-    }
-    if (!vaccineFormData.vaccinationCount || vaccineFormData.vaccinationCount <= 0) {
-      errors.vaccinationCount = '请填写接种数量'
-    }
-
-    // 数值验证
-    if (vaccineFormData.vaccinationCount <= 0) {
-      errors.vaccinationCount = '接种数量必须大于0'
-    }
-
-    // 联系方式验证（如果填写了）
-    if (vaccineFormData.veterinarianContact && 
-        !/^1[3-9]\d{9}$/.test(vaccineFormData.veterinarianContact)) {
-      errors.veterinarianContact = '请填写正确的手机号码'
-    }
-
+    const validation = FormValidator.validateForm(vaccineFormData, vaccineFormRules)
+    
     // 更新错误对象和错误列表
-    const errorList = Object.values(errors)
     this.setData({ 
-      vaccineFormErrors: errors,
-      vaccineFormErrorList: errorList
+      vaccineFormErrors: validation.errors,
+      vaccineFormErrorList: validation.errorList
     })
 
-    if (errorList.length > 0) {
+    if (!validation.isValid) {
       wx.showToast({
-        title: errorList[0],
+        title: validation.errorList[0],
         icon: 'error'
       })
       return false
@@ -3886,53 +3889,35 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 关闭用药表单
+   * 关闭用药表单（兼容旧代码）
    */
   closeMedicationFormPopup() {
-    this.setData({
-      showMedicationFormPopup: false,
-      selectedMedicine: null,
-      medicationFormData: {
-        medicineId: '',
-        medicineName: '',
-        quantity: 0,
-        unit: '',
-        dosage: '',
-        animalCount: 0,
-        notes: '',
-        operator: ''
-      },
-      medicationFormErrors: {},
-      medicationFormErrorList: []
-    })
+    this.closeFormPopup('medication')
   },
 
   /**
-   * 验证用药表单
+   * 验证用药表单（使用通用验证器）
    */
   validateMedicationForm(): boolean {
     const { medicationFormData, selectedMedicine } = this.data
-    const errors: { [key: string]: string } = {}
-
-    if (!medicationFormData.medicineId || !selectedMedicine) {
-      errors.medicineId = '请选择药品'
+    
+    // 先进行基本验证
+    const formData = {
+      ...medicationFormData,
+      medicineId: selectedMedicine ? medicationFormData.medicineId : ''
     }
-
-    if (!medicationFormData.quantity || medicationFormData.quantity <= 0) {
-      errors.quantity = '请输入正确的用药数量'
-    }
-
+    
+    const validation = FormValidator.validateForm(formData, medicationFormRules)
+    const errors = { ...validation.errors }
+    
+    // 添加库存验证（自定义验证）
     if (selectedMedicine && medicationFormData.quantity > selectedMedicine.stock) {
       errors.quantity = `超出库存量（库存：${selectedMedicine.stock}${selectedMedicine.unit}）`
     }
-
-    if (!medicationFormData.animalCount || medicationFormData.animalCount <= 0) {
-      errors.animalCount = '请输入鹅只数量'
-    }
-
-    // ✅ 用药用途不需要用户填写，任务本身已经明确定义
-
+    
     const errorList = Object.values(errors)
+    
+    // 更新错误对象和错误列表
     this.setData({ 
       medicationFormErrors: errors,
       medicationFormErrorList: errorList
@@ -4241,48 +4226,37 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       })
     }
   },
-
+  
   /**
-   * 关闭营养管理表单
+   * 关闭营养管理表单（兼容旧代码）
    */
   closeNutritionFormPopup() {
-    this.setData({
-      showNutritionFormPopup: false,
-      selectedNutrition: null,
-      nutritionFormData: {
-        nutritionId: '',
-        nutritionName: '',
-        quantity: 0,
-        unit: '',
-        dosage: '',
-        notes: '',
-        operator: ''
-      },
-      nutritionFormErrors: {},
-      nutritionFormErrorList: []
-    })
+    this.closeFormPopup('nutrition')
   },
 
   /**
-   * 验证营养表单
+   * 验证营养表单（使用通用验证器）
    */
   validateNutritionForm(): boolean {
     const { nutritionFormData, selectedNutrition } = this.data
-    const errors: { [key: string]: string } = {}
-
-    // 必填字段验证
-    if (!nutritionFormData.nutritionId || !selectedNutrition) {
-      errors.nutritionId = '请选择营养品'
+    
+    // 先进行基本验证
+    const formData = {
+      ...nutritionFormData,
+      nutritionId: selectedNutrition ? nutritionFormData.nutritionId : ''
     }
-
-    if (!nutritionFormData.quantity || nutritionFormData.quantity <= 0) {
-      errors.quantity = '请输入正确的使用数量'
-    } else if (selectedNutrition && nutritionFormData.quantity > selectedNutrition.stock) {
+    
+    const validation = FormValidator.validateForm(formData, nutritionFormRules)
+    const errors = { ...validation.errors }
+    
+    // 添加库存验证（自定义验证）
+    if (selectedNutrition && nutritionFormData.quantity > selectedNutrition.stock) {
       errors.quantity = `库存不足，当前库存${selectedNutrition.stock}${selectedNutrition.unit}`
     }
-
-    // 更新错误对象和错误列表
+    
     const errorList = Object.values(errors)
+    
+    // 更新错误对象和错误列表
     this.setData({ 
       nutritionFormErrors: errors,
       nutritionFormErrorList: errorList
