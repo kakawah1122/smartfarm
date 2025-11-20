@@ -126,7 +126,7 @@ export class ProductionDataLoader {
     try {
       const result = await CloudApi.callFunction<any>(
         'production-dashboard',
-        { action: 'getOverview' },
+        { action: 'overview' },  // 修复：使用正确的action名称
         { showError: false }
       )
       
@@ -317,27 +317,37 @@ export class ProductionDataLoader {
         const app = getApp()
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
-        // 格式化记录
+        // 格式化记录（修复：正确处理材料名称和类型）
         return records.map((record: any) => ({
           ...record,
           id: record._id || record.recordNumber,
           recordNumber: record.recordNumber || record._id,
+          // 修复：正确获取材料名称
+          name: record.material?.name || record.materialName || '未知物料',
           material: record.material || { name: '未知物料', category: '其他', unit: '个' },
-          recordType: record.recordType || record.type || 'unknown',
+          // 修复：统一使用中文类型
+          type: this.getDisplayType(record.recordType || record.type || 'use'),
+          typeOriginal: record.recordType || record.type || 'use',
+          recordType: record.recordType || record.type || 'use',
+          // 修复：正确获取分类
+          category: record.material?.category || record.category || '未分类',
+          description: `${record.material?.category || '未分类'} • ${record.supplier || record.targetLocation || ''}`,
           supplier: record.supplier || '',
           targetLocation: record.targetLocation || '',
           batchNumber: record.batchNumber || '',
           quantity: record.quantity || 0,
+          unit: record.material?.unit || record.unit || '件',
+          displayQuantity: `${record.quantity || 0}${record.material?.unit || record.unit || '件'}`,
           costPerBird: record.costPerBird || 0,
           dayAge: record.dayAge || 0,
           currentStock: record.currentStock || 0,
           totalWeight: record.totalWeight || 0,
           operator: (!record.operator || record.operator === '未知') ? currentUser : record.operator,
           status: record.status || '已完成',
+          notes: record.notes || '',
           date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
           recordDate: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
-          displayType: this.getDisplayType(record.recordType || record.type),
-          displayDescription: this.getDisplayDescription(record)
+          createTime: record.createTime
         }))
       }
       
