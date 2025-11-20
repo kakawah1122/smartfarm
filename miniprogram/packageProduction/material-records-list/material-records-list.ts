@@ -79,7 +79,7 @@ const pageConfig = {
         const currentUser = app.globalData?.userInfo?.nickname || app.globalData?.userInfo?.nickName || '系统用户'
         
         // 转换数据格式
-        const formattedRecords = records.map(record => ({
+        const formattedRecords = records.map((record: any) => ({
           id: record._id || record.recordNumber,
           recordNumber: record.recordNumber || record._id,
           name: record.material?.name || '未知物料',
@@ -92,7 +92,9 @@ const pageConfig = {
           unit: record.material?.unit || '件',
           operator: (!record.operator || record.operator === '未知' || record.operator === '系统用户') ? currentUser : record.operator,
           status: record.status || '已完成',
-          notes: record.notes || '',
+          notes: typeof record.notes === 'string' ? record.notes : 
+                 (record.notes && typeof record.notes === 'object' ? 
+                   JSON.stringify(record.notes) : ''),
           date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
           createTime: record.createTime,
           description: `${record.material?.category || '未分类'} • ${record.supplier || record.targetLocation || ''}`,

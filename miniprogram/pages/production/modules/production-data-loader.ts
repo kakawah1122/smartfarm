@@ -344,7 +344,9 @@ export class ProductionDataLoader {
           totalWeight: record.totalWeight || 0,
           operator: (!record.operator || record.operator === '未知') ? currentUser : record.operator,
           status: record.status || '已完成',
-          notes: record.notes || '',
+          notes: typeof record.notes === 'string' ? record.notes : 
+                 (record.notes && typeof record.notes === 'object' ? 
+                   JSON.stringify(record.notes) : ''),
           date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
           recordDate: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
           createTime: record.createTime
