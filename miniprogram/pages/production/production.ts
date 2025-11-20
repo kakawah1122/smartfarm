@@ -3,160 +3,18 @@ import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
 
-// ✅ 优化：概览数据缓存配置（参考健康模块，使用5分钟缓存）
-const OVERVIEW_CACHE_KEY = 'production_overview_cache'
-const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存，与健康模块保持一致
-const MAX_RETRY_COUNT = 3 // 最大重试次数
-const RETRY_DELAY = 1000 // 重试延迟（毫秒）
+// 导入模块化管理器
+import { ProductionNavigationManager, setupNavigationHandlers } from './modules/production-navigation-module'
+import { ProductionDataLoader } from './modules/production-data-loader'
+import { ProductionAIManager } from './modules/production-ai-module'
 
-type ProductionDashboardResponse = {
-  entry?: {
-    total?: string
-    stockQuantity?: string
-    batches?: string
-  }
-  exit?: {
-    total?: string
-    batches?: string
-    avgWeight?: string
-  }
-  material?: {
-    feedStock?: string
-    medicineStatus?: string
-    categoryDetails?: {
-      feed?: MaterialStatusDetail
-      medicine?: MaterialStatusDetail
-      equipment?: MaterialStatusDetail
-    }
-  }
-}
-
-type MaterialStatusDetail = {
-  statusText?: string
-  status?: 'empty' | 'warning' | 'normal' | string
-  totalCount?: number
-  description?: string
-}
-
-type ExtendedBatchEntry = ProductionSchema.BatchEntry & {
-  avgWeight?: number
-  operator?: string
-  status?: string
-  createTime?: string
-  entryDate?: string
-  displayTitle?: string
-}
-
-type ExtendedBatchExit = ProductionSchema.BatchExit & {
-  exitNumber?: string
-  breed?: string
-  customer?: string
-  avgWeight?: number
-  totalWeight?: number
-  operator?: string
-  status?: string
-  createTime?: string
-  exitDate?: string
-  displayTitle?: string
-}
-
-type BatchEntryListResponse = {
-  records: ExtendedBatchEntry[]
-}
-
-type BatchExitListResponse = {
-  records: ExtendedBatchExit[]
-}
-
-type MaterialRecordItem = ProductionSchema.MaterialRecord & {
-  material?: {
-    name?: string
-    category?: string
-    unit?: string
-  }
-  recordNumber?: string
-  recordType?: string
-  supplier?: string
-  targetLocation?: string
-  batchNumber?: string
-  costPerBird?: number
-  dayAge?: number
-  status?: string
-  type?: 'purchase' | 'feed' | 'use' | string
-  operator?: string
-  createTime?: string
-  recordDate?: string
-  currentStock?: number
-  totalWeight?: number
-  displayDescription?: string
-  displayType?: string
-}
-
-type MaterialRecordListResponse = {
-  records: MaterialRecordItem[]
-}
-
-interface CachedOverviewData {
-  data: {
-    entryStats: any
-    exitStats: any
-    materialStats: any
-  }
-  timestamp: number
-}
-
-/**
- * 检查概览缓存是否有效
- */
-function isOverviewCacheValid(): boolean {
-  try {
-    const cached = wx.getStorageSync(OVERVIEW_CACHE_KEY) as CachedOverviewData
-    if (!cached) return false
-    
-    const now = Date.now()
-    return (now - cached.timestamp) < CACHE_DURATION
-  } catch (error) {
-    return false
-  }
-}
-
-/**
- * 获取缓存的概览数据
- */
-function getCachedOverviewData(): CachedOverviewData['data'] | null {
-  try {
-    const cached = wx.getStorageSync(OVERVIEW_CACHE_KEY) as CachedOverviewData
-    return cached ? cached.data : null
-  } catch (error) {
-    return null
-  }
-}
-
-/**
- * 设置概览数据缓存
- */
-function setCachedOverviewData(data: CachedOverviewData['data']) {
-  try {
-    wx.setStorageSync(OVERVIEW_CACHE_KEY, {
-      data,
-      timestamp: Date.now()
-    })
-  } catch (error) {
-    // 缓存失败不影响主流程
-    logger.warn('设置概览缓存失败:', error)
-  }
-}
-
-/**
- * 清除概览数据缓存
- */
-function clearOverviewCache() {
-  try {
-    wx.removeStorageSync(OVERVIEW_CACHE_KEY)
-  } catch (error) {
-    // 缓存清理失败时静默处理
-  }
-}
+// 页面使用的类型定义
+type ExtendedBatchEntry = any
+type ExtendedBatchExit = any  
+type MaterialRecordItem = any
+type BatchEntryListResponse = { records: ExtendedBatchEntry[] }
+type BatchExitListResponse = { records: ExtendedBatchExit[] }
+type MaterialRecordListResponse = { records: MaterialRecordItem[] }
 
 type ProductionPageData = WechatMiniprogram.Page.DataOption & {
   aiCount: {
@@ -254,6 +112,9 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   onLoad() {
+    // 初始化导航处理器
+    setupNavigationHandlers(this)
+    
     // 确保 aiCount 数据结构完整
     this.setData({
       'aiCount.history': [],
@@ -295,101 +156,25 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
     }
   },
 
-  // 加载仪表盘数据（✅优化：添加缓存机制和错误重试）
-  async loadDashboardData(forceRefresh: boolean = false, retryCount: number = 0): Promise<void> {
+  // 加载仪表盘数据（使用模块化数据加载器）
+  async loadDashboardData(forceRefresh: boolean = false): Promise<void> {
     try {
-      // ✅ 优化：如果不是强制刷新，先检查缓存
-      if (!forceRefresh && isOverviewCacheValid()) {
-        const cachedData = getCachedOverviewData()
-        if (cachedData) {
-          // 使用缓存数据，不显示loading
-          this.setData({
-            entryStats: cachedData.entryStats,
-            exitStats: cachedData.exitStats,
-            materialStats: cachedData.materialStats
-          })
-          logger.log('使用缓存的概览数据')
-          return
-        }
-      }
+      this.setData({ loading: true })
       
-      // 需要加载数据时显示loading
-      if (retryCount === 0) {
-        this.setData({ loading: true })
-      }
-      
-      const result = await CloudApi.callFunction<ProductionDashboardResponse>(
-        'production-dashboard',
-        {
-          action: 'overview'
-          // 暂时移除日期过滤，获取所有数据的统计
-        },
-        {
-          showError: false
-        }
-      )
-      
-      if (result.success && result.data) {
-        const data = result.data
-        
-        // 使用新的详细物料状态信息
-        const newMaterialStats = {
-          feed: data.material?.feedStock || '0',
-          medicineStatus: data.material?.medicineStatus || '未知',
-          // 新增详细状态信息
-          feedDetails: data.material?.categoryDetails?.feed || {
-            statusText: '无数据',
-            status: 'empty',
-            totalCount: 0,
-            description: '暂无数据'
-          },
-          medicineDetails: data.material?.categoryDetails?.medicine || {
-            statusText: '无数据', 
-            status: 'empty',
-            totalCount: 0,
-            description: '暂无数据'
-          },
-          equipmentDetails: data.material?.categoryDetails?.equipment || {
-            statusText: '无数据',
-            status: 'empty', 
-            totalCount: 0,
-            description: '暂无数据'
-          }
-        }
-        
-        const overviewData = {
-          entryStats: {
-            total: data.entry?.total || '0',
-            stockQuantity: data.entry?.stockQuantity || '0', // 直接使用云函数计算的存栏数量
-            batches: data.entry?.batches || '0'
-          },
-          exitStats: {
-            total: data.exit?.total || '0',
-            batches: data.exit?.batches || '0',
-            avgWeight: data.exit?.avgWeight || '0.0'
-          },
-          materialStats: newMaterialStats
-        }
-        
-        // ✅ 优化：保存到缓存
-        setCachedOverviewData(overviewData)
-        
-        this.setData(overviewData)
+      // 使用模块化的数据加载器
+      const data = await ProductionDataLoader.loadOverviewData(forceRefresh)
+      if (data) {
+        this.setData(data)
       } else {
         // 设置默认数据
-        this.setDefaultStats()
+        const defaultStats = ProductionDataLoader.getDefaultStats()
+        this.setData(defaultStats)
       }
     } catch (error: any) {
-      // ✅ 优化：添加错误重试机制
-      if (retryCount < MAX_RETRY_COUNT) {
-        logger.warn(`概览数据加载失败，${RETRY_DELAY}ms后重试 (${retryCount + 1}/${MAX_RETRY_COUNT}):`, error)
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
-        return this.loadDashboardData(forceRefresh, retryCount + 1)
-      }
-      
-      // 重试次数用尽，设置默认数据
-      logger.error('概览数据加载失败，已重试' + MAX_RETRY_COUNT + '次:', error)
-      this.setDefaultStats()
+      logger.error('概览数据加载失败:', error)
+      // 设置默认数据
+      const defaultStats = ProductionDataLoader.getDefaultStats()
+      this.setData(defaultStats)
       
       // 如果是云函数不存在的错误，给出友好提示
       if (error.errMsg && error.errMsg.includes('function not found')) {
@@ -398,17 +183,15 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
           content: '生产管理云函数尚未部署，请先部署云函数后再使用。当前显示为空数据。',
           showCancel: false
         })
-      } else if (retryCount === 0) {
-        // 只在第一次失败时提示，避免重复提示
+      } else {
+        // 提示加载失败
         wx.showToast({
           title: '数据加载失败，显示默认值',
           icon: 'none'
         })
       }
     } finally {
-      if (retryCount === 0) {
-        this.setData({ loading: false })
-      }
+      this.setData({ loading: false })
     }
   },
 
@@ -652,8 +435,8 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   // 刷新数据（✅优化：下拉刷新时清除缓存，强制刷新）
   async refreshData() {
     try {
-      // ✅ 优化：下拉刷新时清除缓存，确保获取最新数据
-      clearOverviewCache()
+      // 清除缓存，确保获取最新数据
+      ProductionDataLoader.clearCache()
       
       this.setData({ loading: true })
       
@@ -800,10 +583,10 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
     })
   },
 
-  // 下拉刷新（✅优化：清除缓存，确保获取最新数据）
+  // 下拉刷新（优化：清除缓存，确保获取最新数据）
   onPullDownRefresh() {
-    // ✅ 优化：下拉刷新时清除缓存
-    clearOverviewCache()
+    // 下拉刷新时清除缓存
+    ProductionDataLoader.clearCache()
     this.refreshData()
     setTimeout(() => {
       wx.stopPullDownRefresh()
@@ -812,20 +595,9 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
 
   // ========== AI智能盘点功能 ==========
   
-  // 启动AI盘点功能
+  // 启动AI盘点功能（使用模块化AI管理器）
   startAICount() {
-    if (this.data.aiCount?.active) {
-      this.closeAICount()
-      return
-    }
-
-    // 已移除调试日志
-    this.setData({
-      'aiCount.active': true,
-      'aiCount.imageUrl': '',
-      'aiCount.result': null,
-      'aiCount.error': null
-    })
+    ProductionAIManager.startAICount()
   },
   
   // 关闭AI盘点功能
