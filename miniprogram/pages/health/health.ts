@@ -1793,19 +1793,19 @@ Page<PageData, any>({
         })
       ])
       
-      // 提取预防成本
+      // 提取预防成本（确保是数字类型）
       let preventionCost = 0
       if (isAllBatches) {
         if (preventionResult?.success && preventionResult.data?.stats) {
-          preventionCost = preventionResult.data.stats.preventionCost || 0
+          preventionCost = Number(preventionResult.data.stats.preventionCost) || 0
         }
       } else {
         if (preventionResult?.success && preventionResult.data?.preventionStats) {
-          preventionCost = preventionResult.data.preventionStats.totalCost || 0
+          preventionCost = Number(preventionResult.data.preventionStats.totalCost) || 0
         }
       }
       
-      // 获取治疗成本
+      // 获取治疗成本（确保是数字类型）
       let treatmentCost = 0
       try {
         const treatmentCostResult = await safeCloudCall({
@@ -1818,24 +1818,25 @@ Page<PageData, any>({
         })
         
         if (treatmentCostResult?.success) {
-          treatmentCost = treatmentCostResult.data?.totalCost || 0
+          treatmentCost = Number(treatmentCostResult.data?.totalCost) || 0
         }
       } catch (error) {
         console.error('获取治疗成本失败:', error)
-        treatmentCost = this.data.treatmentData?.stats?.totalTreatmentCost || 0
+        treatmentCost = Number(this.data.treatmentData?.stats?.totalTreatmentCost) || 0
       }
       
-      // 提取饲养成本
+      // 提取饲养成本（确保是数字类型）
       let feedingCost = 0
       if (feedCostResult?.success) {
-        // 优先从feedCost字段获取
-        feedingCost = feedCostResult.data?.feedCost || 
-                     feedCostResult.data?.feedingCost || 
-                     feedCostResult.data?.totalFeedCost ||
-                     feedCostResult.data?.materialCost || 0
+        // 优先从feedCost字段获取，确保转换为数字
+        const feedData = feedCostResult.data
+        feedingCost = Number(feedData?.feedCost) || 
+                     Number(feedData?.feedingCost) || 
+                     Number(feedData?.totalFeedCost) ||
+                     Number(feedData?.materialCost) || 0
       }
       
-      // 计算总成本（修复精度问题）
+      // 计算总成本（已确保都是数字类型）
       const totalCost = Number((preventionCost + treatmentCost + feedingCost).toFixed(2))
       
       // 更新分析数据
