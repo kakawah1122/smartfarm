@@ -435,7 +435,6 @@ Page<PageData, any>({
   dataWatchers: null as ReturnType<typeof createWatcherManager> | null,
   loadDataDebounceTimer: null as any,  // ✅ 防抖定时器
   isLoadingData: false,  // ✅ 数据加载标志，防止重复加载
-  lastClickTime: 0,  // ✅ 上次点击时间，防止重复点击
   pendingAllBatchesPromise: null as Promise<any> | null,
   latestAllBatchesSnapshot: null as any,
   latestAllBatchesFetchedAt: 0,
@@ -1519,12 +1518,7 @@ Page<PageData, any>({
    * 诊断记录点击事件 - ✅ 使用公共工具函数处理
    */
   async onDiagnosisRecordTap(e: any) {
-    // ✅ 防重复点击：500ms内只允许点击一次
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) {
-      return
-    }
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     const { record } = e.currentTarget.dataset
     
@@ -1593,23 +1587,12 @@ Page<PageData, any>({
    * 点击治疗记录，跳转到详情页
    */
   onTreatmentRecordTap(e: any) {
-    // ✅ 防重复点击：500ms内只允许点击一次
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) {
-      return
-    }
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     const { id } = e.currentTarget.dataset
-    wx.navigateTo({
-      url: `/packageHealth/treatment-record/treatment-record?id=${id}&mode=view`,
-      // ✅ 使用EventChannel监听治疗进展更新
-      events: {
-        // 监听治疗进展更新事件（治愈、死亡等）
-        treatmentProgressUpdated: () => {
-          // ✅ 完全后台刷新，不阻塞任何操作
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToTreatmentDetail(id, {
+      treatmentProgressUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
@@ -1618,18 +1601,11 @@ Page<PageData, any>({
    * 查看全部治疗记录
    */
   onViewAllTreatments() {
-    // ✅ 防重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 500) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
-    wx.navigateTo({
-      url: '/packageHealth/treatment-records-list/treatment-records-list',
-      // ✅ 使用EventChannel监听列表页的更新
-      events: {
-        treatmentListUpdated: () => {
-          this.backgroundRefreshData()
-        }
+    HealthNavigationManager.navigateToTreatmentList({
+      treatmentListUpdated: () => {
+        this.backgroundRefreshData()
       }
     })
   },
@@ -3204,10 +3180,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 查看任务详情（✅ 优化：立即显示弹窗，异步加载用户信息）
    */
   async viewTaskDetail(e: any) {
-    // ✅ 防抖：避免重复点击
-    const now = Date.now()
-    if (now - this.lastClickTime < 300) return
-    this.lastClickTime = now
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     const task = e.currentTarget.dataset.task
     if (!task) return
