@@ -1340,7 +1340,8 @@ Page<PageData, any>({
           vaccinationRate: 0,
           vaccineCount: 0,
           preventionCost: 0,
-          vaccineCoverage: 0
+          vaccineCoverage: 0,
+          medicationCount: 0  // 修复：添加缺失的字段
         },
         'preventionData.recentRecords': [],
         'preventionData.taskCompletion': {
@@ -1834,8 +1835,8 @@ Page<PageData, any>({
                      feedCostResult.data?.materialCost || 0
       }
       
-      // 计算总成本
-      const totalCost = preventionCost + treatmentCost + feedingCost
+      // 计算总成本（修复精度问题）
+      const totalCost = Number((preventionCost + treatmentCost + feedingCost).toFixed(2))
       
       // 更新分析数据
       this.setData({
@@ -1845,10 +1846,10 @@ Page<PageData, any>({
           byStage: []
         },
         'analysisData.costAnalysis': {
-          preventionCost: preventionCost,
-          treatmentCost: treatmentCost,
+          preventionCost: Number(preventionCost.toFixed(2)),
+          treatmentCost: Number(treatmentCost.toFixed(2)),
           totalCost: totalCost,
-          feedingCost: feedingCost
+          feedingCost: Number(feedingCost.toFixed(2))
         }
       })
     } catch (error: any) {
@@ -2033,23 +2034,38 @@ Page<PageData, any>({
       // 并行加载所有批次的即将到来任务
       const promises = batches.map(async (batch: any) => {
         try {
-          const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
-          const result = await CloudApi.callFunction(
-            'breeding-todo',
-            {
-              action: 'getUpcomingTasks',
-              batchId: batch._id || this.data.currentBatchId,
-              currentDayAge: dayAge
-            }
+          const currentDayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
+          const result = await CloudApi.getWeeklyTodos(
+            batch._id || this.data.currentBatchId, 
+            currentDayAge + 1
           )
           
-          const tasks = result.data || []
-          if (tasks.length > 0) {
-            return {
-              batchId: batch._id || this.data.currentBatchId,
-              batchNumber: batch.batchNumber || batch._id,
-              currentDayAge: dayAge,
-              tasks: tasks
+          if (result.success && result.data) {
+            // 将按日龄分组的数据转换为数组格式，过滤掉当前日龄及之前的任务
+            const upcomingTasksArray = Object.keys(result.data)
+              .map(dayAge => parseInt(dayAge))
+              .filter(dayAge => dayAge > currentDayAge)
+              .map(dayAge => ({
+                dayAge: dayAge,
+                tasks: (result.data[dayAge.toString()] || []).map((task: any) =>
+                  this.normalizeTask(task, {
+                    batchNumber: batch.batchNumber || batch._id,
+                    isVaccineTask: isVaccineTask(task),
+                    dayAge: task.dayAge || dayAge
+                  })
+                )
+              }))
+              .filter(group => group.tasks.length > 0)
+            
+            // 返回批次的所有即将到来任务
+            if (upcomingTasksArray.length > 0) {
+              return upcomingTasksArray.map(group => ({
+                id: `${batch._id}_${group.dayAge}`,
+                batchId: batch._id || this.data.currentBatchId,
+                batchNumber: batch.batchNumber || batch._id,
+                dayAge: group.dayAge,
+                tasks: group.tasks
+              }))
             }
           }
           return null
@@ -2060,9 +2076,28 @@ Page<PageData, any>({
       })
       
       const results = await Promise.all(promises)
-      const validResults = results.filter(item => item !== null)
       
-      this.setData({ upcomingTasksByBatch: validResults })
+      // 展平嵌套数组并过滤null值
+      const upcomingTasksByBatch: any[] = []
+      results.forEach(result => {
+        if (result !== null) {
+          if (Array.isArray(result)) {
+            upcomingTasksByBatch.push(...result)
+          } else {
+            upcomingTasksByBatch.push(result)
+          }
+        }
+      })
+      
+      // 按批次号和日龄排序
+      upcomingTasksByBatch.sort((a, b) => {
+        if (a.batchNumber !== b.batchNumber) {
+          return (a.batchNumber || '').localeCompare(b.batchNumber || '')
+        }
+        return a.dayAge - b.dayAge
+      })
+      
+      this.setData({ upcomingTasksByBatch })
       
     } catch (error: any) {
       logger.error('加载即将到来任务失败:', error)

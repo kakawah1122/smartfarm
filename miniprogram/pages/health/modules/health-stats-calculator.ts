@@ -10,6 +10,7 @@ interface PreventionRecord {
 interface PreventionStats {
   totalPreventions: number
   vaccineCount: number
+  medicationCount: number  // 添加用药统计字段
   vaccineCoverage: number
   vaccineStats: { [key: string]: number }
   disinfectionCount: number
@@ -55,11 +56,13 @@ export function calculatePreventionStats(records: PreventionRecord[]): Preventio
   }
   
   const disinfectionCount = records.filter(r => r.preventionType === 'disinfection').length
+  const medicationCount = records.filter(r => r.preventionType === 'medication' || r.preventionType === 'medicine').length
   const totalCost = records.reduce((sum, r) => sum + (r.costInfo?.totalCost || 0), 0)
 
   return {
     totalPreventions,
     vaccineCount: totalVaccinatedCount,
+    medicationCount,  // 添加用药统计
     vaccineCoverage,
     vaccineStats,
     disinfectionCount,
