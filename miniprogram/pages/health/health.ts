@@ -5,7 +5,7 @@ import { logger } from '../../utils/logger'
 import * as HealthStatsCalculator from './modules/health-stats-calculator'
 import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopDataWatcher as stopHealthDataWatcher } from './modules/health-watchers'
 import { CacheManager } from './modules/health-data-loader-v2'
-import { isVaccineTask, isMedicationTask, isNutritionTask, groupTasksByBatch, calculateCurrentAge } from '../../utils/health-utils'
+import { isVaccineTask, isMedicationTask, isNutritionTask, calculateCurrentAge } from '../../utils/health-utils'
 import { processImageUrls } from '../../utils/image-utils'
 import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisRecord } from '../../utils/diagnosis-data-utils'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
@@ -907,15 +907,37 @@ Page<PageData, any>({
         totalCost: 0
       }
       
-      if (preventionResponse?.success && preventionResponse.data?.stats) {
+      // 修复：云函数直接返回数据，不包含stats对象
+      if (preventionResponse?.success && preventionResponse.data) {
+        const data = preventionResponse.data
         preventionStats = {
-          totalPreventions: 0,
-          vaccineCount: preventionResponse.data.stats.vaccineCount || 0,
-          vaccineCoverage: preventionResponse.data.stats.vaccineCoverage || 0,
-          medicationCount: preventionResponse.data.stats.medicationCount || 0,
+          totalPreventions: data.totalCount || 0,
+          vaccineCount: data.vaccineCount || 0,
+          vaccineCoverage: data.vaccineCount || 0,  // 使用疫苗数作为覆盖数
+          medicationCount: 0,  // 云函数不返回，需要单独计算
           vaccineStats: {},
-          disinfectionCount: 0,
-          totalCost: preventionResponse.data.stats.preventionCost || 0
+          disinfectionCount: data.disinfectionCount || 0,
+          totalCost: 0  // 需要从其他地方获取
+        }
+        
+        // 单独获取用药统计
+        try {
+          const medicationResult = await safeCloudCall({
+            name: 'health-prevention',
+            data: {
+              action: 'list_prevention_records',
+              batchId: 'all',
+              preventionType: 'medication',
+              page: 1,
+              pageSize: 1  // 只需要统计数量
+            }
+          })
+          
+          if (medicationResult?.success && medicationResult.data) {
+            preventionStats.medicationCount = medicationResult.data.total || 0
+          }
+        } catch (error) {
+          logger.error('获取用药统计失败:', error)
         }
       }
 
@@ -1284,39 +1306,64 @@ Page<PageData, any>({
           
           if (response.success && response.data) {
             const dashboardData = response.data
-            const todayTasks = dashboardData.todayTasks || []
-            const todayTasksByBatch = groupTasksByBatch(todayTasks)
+            
+            // 修复：云函数只返回基础统计
+            const stats = {
+              vaccinationRate: 0,
+              vaccineCount: dashboardData.vaccineCount || 0,
+              preventionCost: 0,
+              vaccineCoverage: dashboardData.vaccineCount || 0,
+              medicationCount: 0  // 需要单独获取
+            }
             
             // 更新页面数据
             this.setData({
-              'preventionData.todayTasks': todayTasks,
-              'preventionData.upcomingTasks': dashboardData.upcomingTasks || [],
-              'preventionData.stats': dashboardData.stats || {
-                vaccinationRate: 0,
-                vaccineCount: 0,
-                preventionCost: 0,
-                vaccineCoverage: 0,
-                medicationCount: 0
-              },
-              'preventionData.recentRecords': dashboardData.recentRecords || [],
-              'preventionData.taskCompletion': dashboardData.taskCompletion || {
+              'preventionData.todayTasks': [],  // 任务将由loadTodayTasks单独加载
+              'preventionData.upcomingTasks': [],  // 任务将由loadUpcomingTasks单独加载
+              'preventionData.stats': stats,
+              'preventionData.recentRecords': [],
+              'preventionData.taskCompletion': {
                 total: 0,
                 completed: 0,
                 pending: 0,
                 overdue: 0
               },
-              todayTasksByBatch,
+              todayTasksByBatch: [],  // 初始化为空数组
               preventionStats: {
-                vaccineCount: dashboardData.stats?.vaccineCount || 0,
-                vaccineCoverage: dashboardData.stats?.vaccineCoverage || 0,
-                totalCost: dashboardData.stats?.preventionCost || 0,
-                medicationCount: dashboardData.stats?.medicationCount || 0
+                vaccineCount: stats.vaccineCount,
+                vaccineCoverage: stats.vaccineCoverage,
+                totalCost: 0,
+                medicationCount: 0
               }
             })
             
-            // 后台清理孤儿任务
+            // 单独获取用药统计
+            try {
+              const medicationResult = await safeCloudCall({
+                name: 'health-prevention',
+                data: {
+                  action: 'list_prevention_records',
+                  preventionType: 'medication',
+                  page: 1,
+                  pageSize: 1
+                }
+              })
+              if (medicationResult?.success && medicationResult.data) {
+                this.setData({
+                  'preventionData.stats.medicationCount': medicationResult.data.total || 0,
+                  'preventionStats.medicationCount': medicationResult.data.total || 0
+                })
+              }
+            } catch (e) {
+              logger.error('获取用药统计失败:', e)
+            }
+            
+            // 加载任务数据
             if (this.data.preventionSubTab === 'today') {
+              await this.loadTodayTasks()  // 加载今日任务
               this.cleanOrphanTasksInBackground()
+            } else if (this.data.preventionSubTab === 'upcoming') {
+              await this.loadUpcomingTasks()  // 加载即将到来任务
             }
             
             return // 成功处理，退出
@@ -1797,15 +1844,17 @@ Page<PageData, any>({
       let preventionCost = 0
       if (isAllBatches) {
         if (preventionResult?.success && preventionResult.data?.stats) {
-          preventionCost = Number(preventionResult.data.stats.preventionCost) || 0
+          const costValue = preventionResult.data.stats.preventionCost
+          preventionCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
         }
       } else {
         if (preventionResult?.success && preventionResult.data?.preventionStats) {
-          preventionCost = Number(preventionResult.data.preventionStats.totalCost) || 0
+          const costValue = preventionResult.data.preventionStats.totalCost
+          preventionCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
         }
       }
       
-      // 获取治疗成本（确保是数字类型）
+      // 获取治疗成本（确保是数字类型，处理字符串"0.00"）
       let treatmentCost = 0
       try {
         const treatmentCostResult = await safeCloudCall({
@@ -1818,7 +1867,9 @@ Page<PageData, any>({
         })
         
         if (treatmentCostResult?.success) {
-          treatmentCost = Number(treatmentCostResult.data?.totalCost) || 0
+          const costValue = treatmentCostResult.data?.totalCost
+          // 处理字符串类型的成本（如"0.00"）
+          treatmentCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
         }
       } catch (error) {
         console.error('获取治疗成本失败:', error)
@@ -1830,14 +1881,18 @@ Page<PageData, any>({
       if (feedCostResult?.success) {
         // 优先从feedCost字段获取，确保转换为数字
         const feedData = feedCostResult.data
-        feedingCost = Number(feedData?.feedCost) || 
-                     Number(feedData?.feedingCost) || 
-                     Number(feedData?.totalFeedCost) ||
-                     Number(feedData?.materialCost) || 0
+        // 处理可能的字符串数字
+        const feedCostValue = feedData?.feedCost || feedData?.feedingCost || feedData?.totalFeedCost || feedData?.materialCost || 0
+        feedingCost = typeof feedCostValue === 'string' ? parseFloat(feedCostValue) || 0 : Number(feedCostValue) || 0
       }
       
+      // 确保所有成本都是有效数字
+      preventionCost = isNaN(preventionCost) ? 0 : preventionCost
+      treatmentCost = isNaN(treatmentCost) ? 0 : treatmentCost
+      feedingCost = isNaN(feedingCost) ? 0 : feedingCost
+      
       // 计算总成本（已确保都是数字类型）
-      const totalCost = Number((preventionCost + treatmentCost + feedingCost).toFixed(2))
+      const totalCost = parseFloat((preventionCost + treatmentCost + feedingCost).toFixed(2))
       
       // 更新分析数据
       this.setData({

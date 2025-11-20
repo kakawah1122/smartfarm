@@ -303,7 +303,7 @@ export class ProductionDataLoader {
       const result = await CloudApi.callFunction<any>(
         'production-material',
         {
-          action: 'list',
+          action: 'list_records',  // 修复：使用正确的action名称
           page,
           pageSize
         },
