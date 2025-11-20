@@ -344,11 +344,11 @@ class CloudApi {
   }
 
   /**
-   * 获取健康概览
+   * 获取健康概览（使用新的独立云函数）
    */
   static async getHealthOverview(batchId: string, dateRange?: any, options?: CloudApiOptions): Promise<CloudApiResponse> {
     return this.callFunction(
-      'health-management',
+      'health-overview',  // 使用拆分后的独立云函数
       {
         action: 'get_health_overview',
         batchId,

@@ -3734,7 +3734,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       notes: vaccineFormData.notes
     }
 
-    const result = await withErrorHandler(
+    await withErrorHandler(
       async () => {
         const res = await safeCloudCall({
           name: 'health-management',
