@@ -514,7 +514,7 @@ Page<PageData, any>({
   },
   
   /**
-   * ✅ 初始化页面
+   * ✅ 初始化页面（优化：合并setData）
    */
   async initializePage(options: any) {
     const batchId = options.batchId
@@ -524,28 +524,27 @@ Page<PageData, any>({
     
     this.initDateRange()
     
+    // 合并初始化的setData调用
+    const initData: any = { loading: true }
+    
     // 处理从首页跳转过来的情况
     if (tab === 'prevention') {
-      this.setData({
-        activeTab: 'prevention'
-      })
+      initData.activeTab = 'prevention'
     }
     
     // 如果传入了批次ID，使用传入的；否则默认显示全部批次
     if (batchId) {
-      this.setData({
-        currentBatchId: batchId
-      })
+      initData.currentBatchId = batchId
     }
+    
+    // 一次性更新初始数据
+    this.setData(initData)
     
     // ✅ 后台清理孤儿任务（不阻塞页面加载）
     this.cleanOrphanTasksInBackground()
     
     // ✅ 性能优化：并行加载基础数据，提升加载速度
     try {
-      // 显示加载状态
-      this.setData({ loading: true })
-      
       // 并行加载批次列表和健康数据
       await Promise.all([
         this.loadAvailableBatches(),
