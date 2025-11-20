@@ -1337,25 +1337,53 @@ Page<PageData, any>({
               }
             })
             
-            // 单独获取用药统计
+            // 单独获取用药统计（修复：并行获取所有预防类型的统计）
             try {
-              const medicationResult = await safeCloudCall({
-                name: 'health-prevention',
-                data: {
-                  action: 'list_prevention_records',
-                  preventionType: 'medication',
-                  page: 1,
-                  pageSize: 1
-                }
-              })
-              if (medicationResult?.success && medicationResult.data) {
-                this.setData({
-                  'preventionData.stats.medicationCount': medicationResult.data.total || 0,
-                  'preventionStats.medicationCount': medicationResult.data.total || 0
+              // 并行获取用药和疫苗的实际记录数
+              const [medicationResult, vaccineRecordsResult] = await Promise.all([
+                safeCloudCall({
+                  name: 'health-prevention',
+                  data: {
+                    action: 'list_prevention_records',
+                    preventionType: 'medication',
+                    page: 1,
+                    pageSize: 1
+                  }
+                }),
+                safeCloudCall({
+                  name: 'health-prevention',
+                  data: {
+                    action: 'list_prevention_records',
+                    preventionType: 'vaccine',
+                    page: 1,
+                    pageSize: 10  // 获取一些记录用于显示
+                  }
                 })
+              ])
+              
+              const updateData: any = {}
+              
+              // 更新用药统计
+              if (medicationResult?.success && medicationResult.data) {
+                updateData['preventionData.stats.medicationCount'] = medicationResult.data.total || 0
+                updateData['preventionStats.medicationCount'] = medicationResult.data.total || 0
+              }
+              
+              // 更新疫苗统计（如果云函数返回0，从记录列表获取）
+              if (vaccineRecordsResult?.success && vaccineRecordsResult.data) {
+                const vaccineCount = vaccineRecordsResult.data.total || stats.vaccineCount || 0
+                if (vaccineCount > 0) {
+                  updateData['preventionData.stats.vaccineCount'] = vaccineCount
+                  updateData['preventionStats.vaccineCount'] = vaccineCount
+                }
+              }
+              
+              // 批量更新
+              if (Object.keys(updateData).length > 0) {
+                this.setData(updateData)
               }
             } catch (e) {
-              logger.error('获取用药统计失败:', e)
+              logger.error('获取预防统计失败:', e)
             }
             
             // 加载任务数据
