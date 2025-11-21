@@ -29,8 +29,7 @@
     },
     "skipLibCheck": true,
     "strictFunctionTypes": false,
-    "strictBindCallApply": false,
-    "suppressImplicitAnyIndexErrors": true
+    "strictBindCallApply": false
   },
   "include": [
     "./miniprogram/pages/**/*.ts",
