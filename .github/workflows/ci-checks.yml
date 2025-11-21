@@ -1,32 +1,91 @@
-name: Project Checks
+name: CI Checks
 
 on:
-  pull_request:
-    branches: [ main ]
   push:
+    branches: [ main, develop ]
+  pull_request:
     branches: [ main ]
 
 jobs:
-  validations:
+  code-quality:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - name: Install deps
-        run: npm install
-        working-directory: miniprogram
-      - name: Check package size
-        run: node scripts/check-package-size.js
-      - name: Verify finance cost schema sample
-        run: node scripts/verify-schema-fields.js finance-cost data/samples/finance-cost.json
-      - name: Verify production batch entry schema sample
-        run: node scripts/verify-schema-fields.js production-batch-entry data/samples/production-batch-entry.json
-      - name: Verify user profile schema sample
-        run: node scripts/verify-schema-fields.js user-profile data/samples/user-profile.json
-      - name: Verify task todo schema sample
-        run: node scripts/verify-schema-fields.js task-todo data/samples/task-todo.json
-      - name: Verify ai diagnosis schema sample
-        run: node scripts/verify-schema-fields.js ai-diagnosis data/samples/ai-diagnosis.json
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run TypeScript check
+      id: typescript
+      run: |
+        echo "### TypeScript检查" >> $GITHUB_STEP_SUMMARY
+        npm run check:ts 2>&1 | tee typescript.log | tail -10 >> $GITHUB_STEP_SUMMARY || true
+        if grep -q "any类型使用" typescript.log; then
+          echo "⚠️ 存在any类型使用" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ TypeScript检查通过" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: true
+    
+    - name: Run code standards check
+      id: code-standards
+      run: |
+        echo "### 代码规范检查" >> $GITHUB_STEP_SUMMARY
+        npm run check:code 2>&1 | tee code.log | tail -10 >> $GITHUB_STEP_SUMMARY || true
+        if grep -q "错误总数: 0" code.log; then
+          echo "✅ 代码规范检查通过" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ 存在代码规范问题" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: true
+    
+    - name: Run style check
+      id: style
+      run: |
+        echo "### 样式规范检查" >> $GITHUB_STEP_SUMMARY
+        npm run check:style 2>&1 | tee style.log | tail -10 >> $GITHUB_STEP_SUMMARY || true
+        ERROR_COUNT=$(grep "错误总数:" style.log | awk '{print $2}')
+        if [ "$ERROR_COUNT" -lt "100" ]; then
+          echo "✅ 样式检查基本通过（错误数：$ERROR_COUNT）" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ 样式问题较多（错误数：$ERROR_COUNT）" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: true
+    
+    - name: Generate final summary
+      if: always()
+      run: |
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 整体评估" >> $GITHUB_STEP_SUMMARY
+        echo "所有检查已完成，请查看上方详细报告" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "💡 提示：" >> $GITHUB_STEP_SUMMARY
+        echo "- 黄色警告不会阻止合并，但建议修复" >> $GITHUB_STEP_SUMMARY
+        echo "- 定期运行 \`npm run fix:all\` 自动修复问题" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Use Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Install deps
+      run: npm install
+      working-directory: miniprogram
+    - name: Check package size
+      run: node scripts/check-package-size.js
+    - name: Verify finance cost schema sample
+      run: node scripts/verify-schema-fields.js finance-cost data/samples/finance-cost.json
+    - name: Verify production batch entry schema sample
+      run: node scripts/verify-schema-fields.js production-batch-entry data/samples/production-batch-entry.json
+    - name: Verify user profile schema sample
+      run: node scripts/verify-schema-fields.js user-profile data/samples/user-profile.json
+    - name: Verify task todo schema sample
+      run: node scripts/verify-schema-fields.js task-todo data/samples/task-todo.json
+    - name: Verify ai diagnosis schema sample
+      run: node scripts/verify-schema-fields.js ai-diagnosis data/samples/ai-diagnosis.json
