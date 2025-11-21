@@ -16,6 +16,7 @@ import { FormValidator, vaccineFormRules, medicationFormRules, nutritionFormRule
 import { HealthNavigationManager } from './modules/health-navigation-module'
 import { HealthEventManager, setupEventManagement } from './modules/health-event-module'
 import { SetDataBatcher, createSetDataBatcher } from './helpers/setdata-batcher'
+import { ListPaginator, createPaginator } from './helpers/list-pagination'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -441,6 +442,8 @@ Page<PageData, any>({
   latestAllBatchesSnapshot: null as any,
   latestAllBatchesFetchedAt: 0,
   setDataBatcher: null as SetDataBatcher | null,  // setData批量更新器
+  diagnosisHistoryPaginator: null as ListPaginator<any> | null,  // 诊断历史分页器
+  abnormalListPaginator: null as ListPaginator<any> | null,  // 异常列表分页器
   
   invalidateAllBatchesCache() {
     this.pendingAllBatchesPromise = null
@@ -529,6 +532,19 @@ Page<PageData, any>({
     // ✅ 性能优化：初始化setData批量更新器
     this.setDataBatcher = createSetDataBatcher(this, 16) // 16ms = 一帧时间
     
+    // ✅ 性能优化：初始化列表分页器
+    this.diagnosisHistoryPaginator = createPaginator({
+      initialPageSize: 10,  // 初始加载10条
+      pageSize: 10,         // 每次加载10条
+      maxItems: 100         // 最多保留100条，避免内存问题
+    })
+    
+    this.abnormalListPaginator = createPaginator({
+      initialPageSize: 10,  // 初始加载10条
+      pageSize: 10,         // 每次加载10条
+      maxItems: 50          // 异常列表最多50条
+    })
+    
     this.initDateRange()
     
     // 合并初始化的setData调用
@@ -605,6 +621,42 @@ Page<PageData, any>({
   },
   
   /**
+   * 加载更多诊断历史（用于滚动加载）
+   */
+  loadMoreDiagnosisHistory() {
+    if (!this.diagnosisHistoryPaginator) {
+      return
+    }
+    
+    const nextPage = this.diagnosisHistoryPaginator.getNextPage()
+    if (nextPage && nextPage.items.length > 0) {
+      // 追加新数据到现有列表
+      const currentList = this.data.treatmentData.diagnosisHistory || []
+      this.setData({
+        'treatmentData.diagnosisHistory': currentList.concat(nextPage.items)
+      })
+    }
+  },
+  
+  /**
+   * 加载更多异常列表（用于滚动加载）
+   */
+  loadMoreAbnormalList() {
+    if (!this.abnormalListPaginator) {
+      return
+    }
+    
+    const nextPage = this.abnormalListPaginator.getNextPage()
+    if (nextPage && nextPage.items.length > 0) {
+      // 追加新数据到现有列表
+      const currentList = this.data.monitoringData.abnormalList || []
+      this.setData({
+        'monitoringData.abnormalList': currentList.concat(nextPage.items)
+      })
+    }
+  },
+  
+  /**
    * 页面卸载时停止监听（优化：立即停止）
    */
   onUnload() {
@@ -615,6 +667,16 @@ Page<PageData, any>({
     if (this.setDataBatcher) {
       this.setDataBatcher.destroy()
       this.setDataBatcher = null
+    }
+    
+    // ✅ 性能优化：清理列表分页器
+    if (this.diagnosisHistoryPaginator) {
+      this.diagnosisHistoryPaginator.reset()
+      this.diagnosisHistoryPaginator = null
+    }
+    if (this.abnormalListPaginator) {
+      this.abnormalListPaginator.reset()
+      this.abnormalListPaginator = null
     }
     
     // 注释掉：restoreSetData已不再需要，直接停止监听器即可避免内存泄漏
@@ -1020,9 +1082,26 @@ Page<PageData, any>({
         .set('treatmentStats.recoveredCount', healthData.totalCured)
         .set('treatmentStats.ongoingCount', healthData.totalOngoingRecords)
         .set('treatmentStats.recoveryRate', healthData.cureRate + '%')
-        .set('treatmentData.diagnosisHistory', normalizeDiagnosisRecords(healthData.latestDiagnosisRecords))
         .set('monitoringData.realTimeStatus.abnormalCount', healthData.abnormalRecordCount)
-        .set('monitoringData.abnormalList', healthData.abnormalRecords || [])
+      
+      // ✅ 性能优化：使用分页加载诊断历史
+      if (this.diagnosisHistoryPaginator && healthData.latestDiagnosisRecords) {
+        const normalizedRecords = normalizeDiagnosisRecords(healthData.latestDiagnosisRecords)
+        this.diagnosisHistoryPaginator.setItems(normalizedRecords)
+        const initialPage = this.diagnosisHistoryPaginator.getInitialPage()
+        updater.set('treatmentData.diagnosisHistory', initialPage.items)
+      } else {
+        updater.set('treatmentData.diagnosisHistory', normalizeDiagnosisRecords(healthData.latestDiagnosisRecords))
+      }
+      
+      // ✅ 性能优化：使用分页加载异常列表
+      if (this.abnormalListPaginator && healthData.abnormalRecords) {
+        this.abnormalListPaginator.setItems(healthData.abnormalRecords)
+        const initialPage = this.abnormalListPaginator.getInitialPage()
+        updater.set('monitoringData.abnormalList', initialPage.items)
+      } else {
+        updater.set('monitoringData.abnormalList', healthData.abnormalRecords || [])
+      }
       
       this.setData(updater.build())
     } catch (error: any) {
