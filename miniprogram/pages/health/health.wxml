@@ -34,38 +34,9 @@
             <text class="label">当前批次</text>
             <text class="value">{{currentBatchNumber || '请选择批次'}}</text>
           </view>
-          <view class="filter-action" bind:tap="toggleBatchDropdown">
+          <view class="filter-action" bind:tap="toggleBatchDropdown" id="batch-filter-btn">
             <text class="action-text">筛选</text>
             <text class="action-icon {{showBatchDropdown ? 'rotate' : ''}}">▾</text>
-          </view>
-        </view>
-        
-        <!-- 批次下拉列表 -->
-        <view wx:if="{{showBatchDropdown}}" class="batch-dropdown">
-          <!-- 全部批次选项 -->
-          <view class="batch-option {{currentBatchId === 'all' ? 'active' : ''}}" 
-                bind:tap="selectBatchFromDropdown" 
-                data-index="{{-1}}">
-            <text class="batch-name">全部批次</text>
-            <text wx:if="{{currentBatchId === 'all'}}" class="check-icon">✓</text>
-          </view>
-          
-          <!-- 具体批次列表 -->
-          <view wx:for="{{availableBatches}}" 
-                wx:key="_id" 
-                class="batch-option {{currentBatchId === item._id ? 'active' : ''}}"
-                bind:tap="selectBatchFromDropdown" 
-                data-index="{{index}}">
-            <view class="batch-info">
-              <text class="batch-name">{{item.batchNumber}}</text>
-              <text class="batch-meta">{{item.entryCount}}只 · 日龄{{item.dayAge}}</text>
-            </view>
-            <text wx:if="{{currentBatchId === item._id}}" class="check-icon">✓</text>
-          </view>
-          
-          <!-- 空状态 -->
-          <view wx:if="{{availableBatches.length === 0}}" class="empty-dropdown">
-            <text>暂无存栏批次</text>
           </view>
         </view>
       </view>
@@ -125,8 +96,8 @@
         <!-- 按批次分组的任务列表 -->
         <view wx:if="{{todayTasksByBatch.length > 0}}" class="batch-task-groups">
           <view wx:for="{{todayTasksByBatch}}" wx:key="id" class="batch-group">
-            <!-- 批次组头部 -->
-            <view class="batch-group-header">
+            <!-- 批次组头部（只在全部批次模式下显示） -->
+            <view class="batch-group-header" wx:if="{{currentBatchId === 'all'}}">
               <view class="batch-group-info">
                 <text class="batch-group-title">{{item.batchNumber}}</text>
                 <text class="batch-group-separator">·</text>
@@ -186,8 +157,8 @@
         <!-- 按批次分组的即将到来任务列表 -->
         <view wx:if="{{upcomingTasksByBatch.length > 0}}" class="batch-task-groups">
           <view wx:for="{{upcomingTasksByBatch}}" wx:key="id" class="batch-group">
-            <!-- 批次组头部 -->
-            <view class="batch-group-header">
+            <!-- 批次组头部（只在全部批次模式下显示） -->
+            <view class="batch-group-header" wx:if="{{currentBatchId === 'all'}}">
               <view class="batch-group-info">
                 <text class="batch-group-title">{{item.batchNumber}}</text>
                 <text class="batch-group-separator">·</text>
@@ -516,43 +487,6 @@
     bind:close="onCloseDiagnosisDetail"
   />
 
-  <!-- 批次筛选下拉菜单（放在最后，确保显示在最上层） -->
-  <view class="batch-dropdown {{showBatchDropdown ? 'show' : ''}}" style="--dropdown-top: {{dropdownTopRpx}}rpx;" wx:if="{{showBatchDropdown}}">
-    <!-- 全部批次选项 -->
-    <view 
-      class="dropdown-item {{'all' === currentBatchId ? 'active' : ''}}"
-      bind:tap="selectAllBatches"
-    >
-      <view class="item-content">
-        <text class="item-title">全部批次</text>
-        <text class="item-subtitle">查看所有批次的健康数据汇总</text>
-      </view>
-      <text class="check-mark" wx:if="{{'all' === currentBatchId}}">✓</text>
-    </view>
-    
-    <!-- 分隔线 -->
-    <view class="dropdown-divider" wx:if="{{availableBatches.length > 0}}"></view>
-    
-    <!-- 具体批次列表 -->
-    <view 
-      class="dropdown-item {{item._id === currentBatchId ? 'active' : ''}}"
-      wx:for="{{availableBatches}}"
-      wx:key="_id"
-      bind:tap="selectBatchFromDropdown"
-      data-index="{{index}}"
-    >
-      <view class="item-content">
-        <text class="item-title">{{item.batchNumber}}</text>
-        <text class="item-subtitle">{{item.breed}} · {{item.dayAge}}日龄 · {{item.quantity}}只</text>
-      </view>
-      <text class="check-mark" wx:if="{{item._id === currentBatchId}}">✓</text>
-    </view>
-    
-    <view class="dropdown-empty" wx:if="{{availableBatches.length === 0}}">
-      <text>暂无存栏批次</text>
-    </view>
-  </view>
-
   <!-- 遮罩层（放在最后，确保显示在最上层） -->
   <view 
     class="dropdown-mask {{showBatchDropdown ? 'show' : ''}}" 
@@ -628,7 +562,43 @@
     bind:submit="submitNutritionForm"
   />
 
-  </view>
-  <!-- content-wrapper 结束 -->
+  <!-- 遮罩层 -->
+  <view 
+    class="dropdown-mask {{showBatchDropdown ? 'show' : ''}}" 
+    wx:if="{{showBatchDropdown}}"
+    bind:tap="closeBatchDropdown"
+    catchtouchmove="preventTouchMove"
+  ></view>
 
-</view>
+  </view>  <!-- content-wrapper end -->
+
+  <!-- 批次下拉列表（使用fixed定位） -->
+  <view wx:if="{{showBatchDropdown}}" class="batch-dropdown-fixed" style="top: {{dropdownTop}}px; right: {{dropdownRight}}px;">
+    <!-- 全部批次选项 -->
+    <view class="batch-option {{currentBatchId === 'all' ? 'active' : ''}}" 
+          bind:tap="selectBatchFromDropdown" 
+          data-index="{{-1}}">
+      <text class="batch-name">全部批次</text>
+      <text wx:if="{{currentBatchId === 'all'}}" class="check-icon">✓</text>
+    </view>
+    
+    <!-- 具体批次列表 -->
+    <view wx:for="{{availableBatches}}" 
+          wx:key="_id" 
+          class="batch-option {{currentBatchId === item._id ? 'active' : ''}}"
+          bind:tap="selectBatchFromDropdown" 
+          data-index="{{index}}">
+      <view class="batch-info">
+        <text class="batch-name">{{item.batchNumber}}</text>
+        <text class="batch-meta">{{item.entryCount}}只 · 日龄{{item.dayAge}}</text>
+      </view>
+      <text wx:if="{{currentBatchId === item._id}}" class="check-icon">✓</text>
+    </view>
+    
+    <!-- 空状态 -->
+    <view wx:if="{{availableBatches.length === 0}}" class="empty-dropdown">
+      <text>暂无存栏批次</text>
+    </view>
+  </view>
+
+</view>  <!-- page end -->

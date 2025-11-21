@@ -343,6 +343,7 @@ Page<PageData, any>({
     showBatchDropdown: false,
     availableBatches: [],
     dropdownTop: 0,  // 下拉菜单的top位置（px）
+    dropdownRight: 12,  // 下拉菜单的right位置（px）
     
     // 弹窗相关
     showDetailPopup: false,
@@ -2769,21 +2770,44 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     
     if (willShow) {
       // 打开下拉菜单时，动态计算位置
-      const query = wx.createSelectorQuery()
-      query.select('.batch-filter-section').boundingClientRect()
+      const query = wx.createSelectorQuery().in(this)
+      
+      // 同时查询筛选按钮和页面滚动位置
+      query.select('#batch-filter-btn').boundingClientRect()
+      query.selectViewport().scrollOffset()
+      
       query.exec((res) => {
-        if (res && res[0]) {
+        console.log('查询结果:', res)
+        if (res && res[0] && res[1]) {
           const rect = res[0]
-          // 下拉菜单显示在筛选区域下方，加一点间距
-          const dropdownTop = rect.bottom + 8
+          const scroll = res[1]
+          
+          console.log('筛选按钮位置:', rect)
+          console.log('滚动位置:', scroll)
+          
+          // 获取系统信息
+          const systemInfo = wx.getSystemInfoSync()
+          console.log('系统信息:', systemInfo)
+          
+          // 计算实际位置（考虑滚动）
+          // 使用fixed定位，所以需要减去滚动距离
+          const dropdownTop = rect.top + rect.height + 8
+          // 右对齐，计算从右边的距离
+          const dropdownRight = systemInfo.windowWidth - rect.right
+          
+          console.log('计算的位置:', { top: dropdownTop, right: dropdownRight })
           
           this.setData({
             dropdownTop: dropdownTop,
+            dropdownRight: dropdownRight,
             showBatchDropdown: true
           })
         } else {
+          console.warn('未找到筛选按钮元素或滚动信息')
           // 如果查询失败，使用默认位置
           this.setData({
+            dropdownTop: 120, // 默认位置
+            dropdownRight: 12, // 默认右边距
             showBatchDropdown: true
           })
         }
