@@ -77,7 +77,47 @@ interface BaseResponse<T> {
   data?: T
   message?: string
   error?: string
+  errMsg?: string
 }
+
+interface CloudFunctionResponse<T = any> {
+  success: boolean
+  data?: T
+  message?: string
+  error?: string
+  errMsg?: string
+}
+
+interface WeatherData {
+  location?: {
+    province?: string
+    city?: string
+    district?: string
+  }
+  locationInfo?: {
+    province?: string
+    city?: string
+    district?: string
+  }
+  weather?: {
+    temperature?: number
+    humidity?: number
+    description?: string
+    icon?: string
+  }
+  current?: {
+    temperature?: number
+    humidity?: number
+    description?: string
+    icon?: string
+  }
+  condition?: {
+    text?: string
+    icon?: string
+  }
+}
+
+interface WeatherApiResponse extends WeatherData {}
 
 type WeatherLocationInfo = {
   province?: string
@@ -104,8 +144,6 @@ type WeatherApiPayload = {
   current?: WeatherCurrentInfo
   condition?: WeatherConditionInfo
 }
-
-type WeatherApiResponse = WeatherApiPayload & { data?: WeatherApiPayload }
 
 type MaterialItem = {
   _id: string
@@ -441,8 +479,9 @@ Page({
       
       // 获取位置和天气
       this.getLocationAndWeather().then((res: unknown) => {
-        if (res.success && res.data) {
-          const weatherData = res.data
+        const response = res as CloudFunctionResponse<WeatherData>
+        if (response.success && response.data) {
+          const weatherData = response.data
           
           // 缓存天气数据
           this.cacheWeatherData(weatherData)
@@ -452,7 +491,7 @@ Page({
           
           resolve(true)
         } else {
-          const errorMsg = res.message || res.error || '天气数据获取失败'
+          const errorMsg = response.message || response.error || '天气数据获取失败'
           
           wx.showModal({
             title: '天气数据获取失败',
@@ -481,7 +520,7 @@ Page({
   },
 
   // 获取位置和天气 - 修复Promise返回问题
-  getLocationAndWeather() {
+  getLocationAndWeather(): Promise<CloudFunctionResponse<WeatherData>> {
     return new Promise((resolve, reject) => {
       
       // 先检查位置权限
@@ -561,9 +600,9 @@ Page({
   },
   
   // 处理位置获取错误
-  handleLocationError(error: unknown) {
+  handleLocationError(error: any) {
     
-    if (error.errMsg) {
+    if (error?.errMsg) {
       if (error.errMsg.includes('auth')) {
         // 权限问题
         this.showLocationPermissionModal()
@@ -615,21 +654,24 @@ Page({
   },
 
   // 更新天气 UI
-  updateWeatherUI(weatherData: WeatherApiResponse) {
+  updateWeatherUI(weatherData: any) {
+    if (!weatherData) {
+      return
+    }
     
-    // 适配新的云函数数据格式
-    let actualWeatherData = weatherData
+    // 打印原始数据结构
     
-    // 如果是新格式的数据结构（带有data字段）
-    if (weatherData.data) {
-      actualWeatherData = weatherData.data
+    // 处理新的数据结构
+    let actualWeatherData = weatherData as WeatherData
+    if (weatherData.location) {
+      actualWeatherData = weatherData
     }
     
     // ✅ 优化：合并setData调用，避免重复设置location
-    const updateData: unknown = {}
+    const updateData: any = {}
     
     // 详细检查位置信息
-    const locationInfo = actualWeatherData.locationInfo
+    const locationInfo = actualWeatherData.location || actualWeatherData.locationInfo
     
     if (locationInfo) {
       updateData.location = {
@@ -768,7 +810,7 @@ Page({
         
         // 处理鹅苗价格
         if (latestPrice.goslingBreeds && latestPrice.goslingBreeds.length > 0) {
-          latestPrice.goslingBreeds.forEach((breed: unknown) => {
+          latestPrice.goslingBreeds.forEach((breed: any) => {
             const min = typeof breed.min === 'number' ? breed.min : null
             const max = typeof breed.max === 'number' ? breed.max : null
             const range = breed.range || '--'
@@ -799,8 +841,8 @@ Page({
         // 处理肉鹅价格（映射到adult字段）
         if (latestPrice.meatBreeds && latestPrice.meatBreeds.length > 0) {
           // 使用肉鹅130日龄的价格作为成鹅价格
-          const meat130 = latestPrice.meatBreeds.find((m: unknown) => m.key === 'meat130')
-          const meat120 = latestPrice.meatBreeds.find((m: unknown) => m.key === 'meat120')
+          const meat130 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat130')
+          const meat120 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat120')
           
           // 格式化价格范围的辅助函数
           const formatRange = (min: number | null, max: number | null, range: string) => {
@@ -979,7 +1021,7 @@ Page({
     }
     
     // 格式化价格显示：如果最低价和最高价一致，只显示一个数字
-    const formatPriceRange = (priceData: unknown) => {
+    const formatPriceRange = (priceData: any) => {
       if (!priceData) {
         return '--'
       }
