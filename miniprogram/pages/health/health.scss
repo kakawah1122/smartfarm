@@ -1,8 +1,7 @@
-/* health.scss - 健康管理中心完整重构版本 - 基于TDesign设计规范 */
-/* ✅ 导入诊断记录公共样式 */
+/* health.scss - 健康管理中心样式 */
 @import '../../styles/diagnosis-record.scss';
 
-/* ✅ SCSS变量定义 - 统一管理尺寸和颜色 */
+/* SCSS变量定义 */
 $spacing-xs: 8rpx;     // 极小间距
 $spacing-sm: 12rpx;    // 小间距
 $spacing-base: 16rpx;  // 基础间距
@@ -42,11 +41,11 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   --td-brand-color-active: #003cab;
 }
 .health-center-page {
-  height: 100vh;  /* ✅ 使用 height: 100vh 而非 min-height: 100vh */
+  height: 100vh;
   background-color: var(--td-bg-color-page);
   display: flex;
   flex-direction: column;
-  overflow: hidden;  /* ✅ 防止页面整体滚动 */
+  overflow: hidden;
 }
 /* 批次筛选和Tab导航卡片组 */
 .filter-tabs-card {
@@ -54,8 +53,8 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   margin: 0 16rpx $spacing-base;
   border-radius: $radius-md;
   box-shadow: $shadow-base;
-  overflow: visible;  /* ✅ 改为visible，确保下拉菜单能显示 */
-  position: relative;  /* 为下拉菜单提供定位上下文 */
+  overflow: visible;
+  position: relative;
 }
 /* 批次筛选区域 */
 .batch-filter-section {
@@ -92,7 +91,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       border-radius: $radius-lg;
       transition: all 0.3s;
       box-shadow: $shadow-brand-base;
-      cursor: pointer;  /* ✅ 添加指针光标 */
+      cursor: pointer;
       &:active {
         transform: scale(0.95);
         box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.3);
@@ -441,7 +440,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   flex: 1;
   padding-bottom: 120rpx;
   background: var(--td-bg-color-page, #f5f5f5);
-  overflow-y: auto;  /* ✅ 允许内容区域滚动 */
+  overflow-y: auto;
 }
 .tab-content {
   padding: 0 24rpx 24rpx;
@@ -1182,7 +1181,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       color: var(--td-text-color-placeholder);
     }
   }
-  // ✅ 诊断历史入口按钮
+  // 诊断历史入口按钮
   .diagnosis-history-entry {
     background: white;
     border-radius: $radius-md;
@@ -1582,7 +1581,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
-/* ✅ 诊断记录详情弹窗样式（复用 diagnosis-history 的样式） */
+/* 诊断记录详情弹窗样式 */
 .diagnosis-detail-content {
   padding: 0; // 底部边距由 bottom-popup 组件管理
 }
@@ -3320,7 +3319,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
-/* ✅ 任务详情弹窗样式已提取到组件 task-detail-popup */
+/* 任务详情弹窗样式已提取到组件 */
 /* ========== 疫苗接种表单样式（无边框样式，参考饲料投喂记录表单） ========== */
 .vaccine-form-content {
   padding: 0;

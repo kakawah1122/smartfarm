@@ -1,4 +1,4 @@
-<!--health.wxml - 健康管理中心完整重构版本-->
+<!--health.wxml - 健康管理中心-->
 <wxs module="healthUtils" src="./health-utils.wxs"></wxs>
 
 <view class="page health-center-page">
@@ -8,7 +8,7 @@
     show-back="{{false}}"
   />
 
-  <!-- 内容包装器（符合规范8） -->
+  <!-- 内容包装器 -->
   <view class="content-wrapper">
 
     <!-- 健康数据概览 -->
@@ -325,7 +325,6 @@
               <view class="css-icon-heart"></view>
             </view>
             <view class="stat-content">
-              <!-- ✅ 优化：统一使用treatmentData.stats作为数据源 -->
               <text class="stat-value">{{treatmentData.stats.recoveredCount || treatmentStats.recoveredCount || 0}}</text>
               <text class="stat-label">治愈数</text>
             </view>
@@ -337,7 +336,6 @@
               <view class="css-icon-cross"></view>
             </view>
             <view class="stat-content">
-              <!-- ✅ 优化：统一使用treatmentData.stats作为数据源，保持向后兼容 -->
               <text class="stat-value">{{treatmentData.stats.deadCount || healthStats.deadCount || 0}}</text>
               <text class="stat-label">死亡数</text>
             </view>
@@ -480,7 +478,7 @@
     </view>
   </bottom-popup>
 
-  <!-- ✅ 诊断记录详情弹窗（使用共用组件） -->
+  <!-- 诊断记录详情弹窗 -->
   <diagnosis-detail-popup
     visible="{{showDiagnosisDetailPopup}}"
     record="{{selectedDiagnosisRecord}}"
@@ -497,7 +495,7 @@
 
   <!-- ========== 从 breeding-todo 完整复制的表单弹窗 ========== -->
   
-  <!-- ✅ 任务详情弹窗（使用组件） -->
+  <!-- 任务详情弹窗 -->
   <task-detail-popup
     visible="{{showTaskDetailPopup}}"
     task="{{selectedTask}}"
@@ -506,7 +504,7 @@
     bind:confirm="onTaskConfirm"
   />
 
-  <!-- ✅ 疫苗接种表单弹窗（使用组件） -->
+  <!-- 疫苗接种表单弹窗 -->
   <vaccine-form-popup
     visible="{{showVaccineFormPopup}}"
     form-data="{{vaccineFormData}}"
@@ -519,7 +517,7 @@
     bind:submit="submitVaccineForm"
   />
 
-  <!-- ✅ 异常反应处理弹窗（使用组件） -->
+  <!-- 异常反应处理弹窗 -->
   <adverse-reaction-popup
     visible="{{showAdverseReactionPopup}}"
     reaction-data="{{adverseReactionData}}"
@@ -530,7 +528,7 @@
     bind:submit="submitAdverseReactionRecord"
   />
 
-  <!-- ✅ 用药管理表单弹窗（使用组件） -->
+  <!-- 用药管理表单弹窗 -->
   <medication-form-popup
     visible="{{showMedicationFormPopup}}"
     form-data="{{medicationFormData}}"
@@ -547,7 +545,7 @@
     bind:submit="submitMedicationForm"
   />
 
-  <!-- ✅ 营养管理表单弹窗（使用组件） -->
+  <!-- 营养管理表单弹窗 -->
   <nutrition-form-popup
     visible="{{showNutritionFormPopup}}"
     form-data="{{nutritionFormData}}"

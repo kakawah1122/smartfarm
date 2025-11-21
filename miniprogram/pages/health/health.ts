@@ -1,4 +1,4 @@
-// health/health.ts - 健康管理页面（模块化优化版）
+// health.ts - 健康管理页面
 import CloudApi from '../../utils/cloud-api'
 import { formatTime, getCurrentBeijingDate } from '../../utils/util'
 import { logger } from '../../utils/logger'
@@ -13,8 +13,6 @@ import { createDataUpdater } from './helpers/data-updater'
 import { HealthCloudHelper, normalizeHealthData } from './helpers/cloud-helper'
 import { withErrorHandler } from './helpers/error-handler'
 import { FormValidator, vaccineFormRules, medicationFormRules, nutritionFormRules } from './helpers/form-validator'
-
-// 导入新的模块化管理器
 import { HealthNavigationManager } from './modules/health-navigation-module'
 import { HealthEventManager, setupEventManagement } from './modules/health-event-module'
 
@@ -94,7 +92,7 @@ interface HealthStats {
   mortalityRate: string
   abnormalCount: number
   treatingCount: number
-  originalQuantity?: number  // ✅ 原始入栏数（用于计算存活率）
+  originalQuantity?: number  // 原始入栏数（用于计算存活率）
 }
 
 interface PreventionStats {
@@ -202,7 +200,7 @@ Page<PageData, any>({
       mortalityRate: '-',
       abnormalCount: 0,
       treatingCount: 0,
-      originalQuantity: 0  // ✅ 原始入栏数
+      originalQuantity: 0  // 原始入栏数
     },
     
     // 预防统计数据
@@ -436,8 +434,8 @@ Page<PageData, any>({
   
   // Page 实例属性（不在 data 中）
   dataWatchers: null as ReturnType<typeof createWatcherManager> | null,
-  loadDataDebounceTimer: null as any,  // ✅ 防抖定时器
-  isLoadingData: false,  // ✅ 数据加载标志，防止重复加载
+  loadDataDebounceTimer: null as any,  // 防抖定时器
+  isLoadingData: false,  // 数据加载标志，防止重复加载
   pendingAllBatchesPromise: null as Promise<any> | null,
   latestAllBatchesSnapshot: null as any,
   latestAllBatchesFetchedAt: 0,
@@ -446,12 +444,12 @@ Page<PageData, any>({
     this.pendingAllBatchesPromise = null
     this.latestAllBatchesSnapshot = null
     this.latestAllBatchesFetchedAt = 0
-    // ✅ 清除所有相关缓存
+    // 清除所有相关缓存
     CacheManager.clearAllHealthCache()
   },
   
   /**
-   * ✅ 修复治疗记录缺少 _openid 的问题
+   * 修复治疗记录缺少 _openid 的问题
    * 一次性修复，为已有记录添加 _openid 字段
    */
   async fixTreatmentRecordsOpenId() {
@@ -473,7 +471,7 @@ Page<PageData, any>({
   },
 
   /**
-   * ✅ 修复批次死亡数据不一致问题
+   * 修复批次死亡数据不一致问题
    * 确保死亡记录集合和批次集合的数据同步
    */
   async fixBatchDeathCount() {
@@ -505,17 +503,17 @@ Page<PageData, any>({
     // 修复治疗记录中缺少 _openid 字段的数据
     this.fixTreatmentRecordsOpenId()
     
-    // ✅ 修复死亡数据不一致问题
+    // 修复死亡数据不一致问题
     this.fixBatchDeathCount()
     
-    // ✅ 修复：恢复页面初始化
+    // 修复：恢复页面初始化
     wx.nextTick(() => {
       this.initializePage(options)
     })
   },
   
   /**
-   * ✅ 初始化页面（优化：合并setData）
+   * 初始化页面（优化：合并setData）
    */
   async initializePage(options: any) {
     const batchId = options.batchId
@@ -541,10 +539,10 @@ Page<PageData, any>({
     // 一次性更新初始数据
     this.setData(initData)
     
-    // ✅ 后台清理孤儿任务（不阻塞页面加载）
+    // 后台清理孤儿任务（不阻塞页面加载）
     this.cleanOrphanTasksInBackground()
     
-    // ✅ 性能优化：并行加载基础数据，提升加载速度
+    // 性能优化：并行加载基础数据，提升加载速度
     try {
       // 并行加载批次列表和健康数据
       await Promise.all([
@@ -567,10 +565,10 @@ Page<PageData, any>({
   },
 
   /**
-   * 页面显示时刷新数据并启动实时监听（✅ 优化：增加EventChannel监听）
+   * 页面显示时刷新数据并启动实时监听（优化：增加EventChannel监听）
    */
   onShow() {
-    // ✅ 延迟启动监听器，避免快速切换页面时的竞态条件
+    // 延迟启动监听器，避免快速切换页面时的竞态条件
     // 使用 wx.nextTick 确保页面完全渲染后再启动
     wx.nextTick(() => {
       // 再延迟一点，确保页面稳定
@@ -580,29 +578,29 @@ Page<PageData, any>({
       }, 100)
     })
     
-    // ✅ 检查是否需要刷新（包括EventChannel事件和Storage标志）
+    // 检查是否需要刷新（包括EventChannel事件和Storage标志）
     const needRefresh = wx.getStorageSync('health_page_need_refresh')
     if (needRefresh) {
       wx.removeStorageSync('health_page_need_refresh')
-      // ✅ 使用后台刷新，完全不阻塞UI（异步执行）
+      // 使用后台刷新，完全不阻塞UI（异步执行）
       this.backgroundRefreshData()
     }
-    // ✅ 移除else分支，避免每次onShow都刷新
+    // 移除else分支，避免每次onShow都刷新
   },
   
   /**
-   * 页面隐藏时停止监听（✅ 优化：立即停止）
+   * 页面隐藏时停止监听（优化：立即停止）
    */
   onHide() {
-    // ✅ 立即停止监听器，不延迟
+    // 立即停止监听器，不延迟
     this.stopDataWatcher()
   },
   
   /**
-   * 页面卸载时停止监听（✅ 优化：立即停止）
+   * 页面卸载时停止监听（优化：立即停止）
    */
   onUnload() {
-    // ✅ 立即停止监听器，不延迟
+    // 立即停止监听器，不延迟
     this.stopDataWatcher()
     
     // 注释掉：restoreSetData已不再需要，直接停止监听器即可避免内存泄漏
@@ -610,7 +608,7 @@ Page<PageData, any>({
   },
   
   /**
-   * 启动数据监听（✅ 优化：智能缓存清除 + 静默刷新）
+   * 启动数据监听（优化：智能缓存清除 + 静默刷新）
    */
   startDataWatcher() {
     if (!this.dataWatchers) {
@@ -648,7 +646,7 @@ Page<PageData, any>({
    * 下拉刷新
    */
   onPullDownRefresh() {
-    // ✅ 清除缓存，强制重新加载
+    // 清除缓存，强制重新加载
     CacheManager.clearAllHealthCache()
     this.invalidateAllBatchesCache()
     
@@ -774,21 +772,21 @@ Page<PageData, any>({
    * 实际执行健康数据加载（内部方法）
    */
   async _executeLoadHealthData(silent: boolean = false) {
-    // ✅ 防重复加载：如果正在加载中，直接返回
+    // 防重复加载：如果正在加载中，直接返回
     if (this.isLoadingData) {
       return
     }
     
     this.isLoadingData = true
     
-    // ✅ 如果是静默刷新，不设置loading状态，避免阻塞UI
+    // 如果是静默刷新，不设置loading状态，避免阻塞UI
     if (!silent) {
       this.setData({ loading: true })
     }
 
     try {
       // 如果是全部批次模式，加载汇总数据
-      // ✅ 统一使用 loadAllBatchesData，无论全部批次还是单批次
+      // 统一使用 loadAllBatchesData，无论全部批次还是单批次
       // 这样可以确保数据计算逻辑完全一致
       await this.loadAllBatchesData()
     } catch (error: any) {
@@ -803,7 +801,7 @@ Page<PageData, any>({
       if (!silent) {
         this.setData({ loading: false })
       }
-      this.isLoadingData = false  // ✅ 重置加载标志
+      this.isLoadingData = false  // 重置加载标志
     }
   },
 
@@ -817,7 +815,7 @@ Page<PageData, any>({
       : (options || {})
     const useCache = normalizedOptions.useCache !== undefined ? normalizedOptions.useCache : true
     const forceRefresh = normalizedOptions.forceRefresh ?? false
-    // ✅ 使用传入的batchId，如果没有则使用当前选择的批次
+    // 使用传入的batchId，如果没有则使用当前选择的批次
     const batchId = normalizedOptions.batchId || this.data.currentBatchId || 'all'
 
     const now = Date.now()
@@ -844,7 +842,7 @@ Page<PageData, any>({
     }
 
     const fetchPromise = (async () => {
-      // ✅ 使用辅助工具简化云函数调用
+      // 使用辅助工具简化云函数调用
       const rawData = await HealthCloudHelper.getDashboardSnapshot(batchId, {
         includeDiagnosis: true,
         includeAbnormalRecords: true,
@@ -852,10 +850,10 @@ Page<PageData, any>({
         abnormalLimit: 50
       })
 
-      // ✅ 使用统一的数据标准化函数
+      // 使用统一的数据标准化函数
       const normalized = normalizeHealthData(rawData)
 
-      // ✅ 只缓存全部批次的数据
+      // 只缓存全部批次的数据
       if (batchId === 'all') {
         setCachedAllBatchesData(normalized)
         this.latestAllBatchesSnapshot = normalized
@@ -865,7 +863,7 @@ Page<PageData, any>({
       return normalized
     })()
 
-    // ✅ 只在全部批次模式下管理promise缓存
+    // 只在全部批次模式下管理promise缓存
     if (batchId === 'all' && !forceRefresh) {
       this.pendingAllBatchesPromise = fetchPromise
     }
@@ -960,10 +958,10 @@ Page<PageData, any>({
         ? ((preventionStats.vaccineCoverage / healthData.totalAnimals) * 100).toFixed(1)
         : 0
 
-      // ✅ 获取原始入栏数（全部批次模式）
+      // 获取原始入栏数（全部批次模式）
       const originalQuantity = healthData.originalTotalQuantity || 0
       
-      // ✅ 使用数据更新器简化setData调用
+      // 使用数据更新器简化setData调用
       const updater = createDataUpdater()
       
       updater
@@ -1021,11 +1019,11 @@ Page<PageData, any>({
    * 完全后台刷新数据（不使用加载锁，不阻塞任何操作）
    */
   backgroundRefreshData() {
-    // ✅ 先清理缓存
+    // 先清理缓存
     CacheManager.clearAllHealthCache()
     this.invalidateAllBatchesCache()
     
-    // ✅ 使用 wx.nextTick 确保在下一个渲染周期执行，完全不阻塞当前交互
+    // 使用 wx.nextTick 确保在下一个渲染周期执行，完全不阻塞当前交互
     wx.nextTick(() => {
       // 再延迟一点，确保页面完全渲染完成，用户可以立即交互
       setTimeout(() => {
@@ -1039,7 +1037,7 @@ Page<PageData, any>({
    */
   async _performBackgroundRefresh() {
     try {
-      // ✅ 显示顶部加载提示，不阻塞UI
+      // 显示顶部加载提示，不阻塞UI
       wx.showNavigationBarLoading()
       
       if (this.data.currentBatchId === 'all') {
@@ -1054,7 +1052,7 @@ Page<PageData, any>({
         ])
       }
       
-      // ✅ 隐藏加载提示
+      // 隐藏加载提示
       wx.hideNavigationBarLoading()
     } catch (error: any) {
       // 后台刷新失败，静默处理
@@ -1067,14 +1065,14 @@ Page<PageData, any>({
    */
   async _backgroundRefreshAllBatches() {
     try {
-      // ✅ 使用公共方法获取最新数据，传递当前批次ID
+      // 使用公共方法获取最新数据，传递当前批次ID
       const healthData = await this._fetchAllBatchesHealthData({ 
         useCache: false, 
         forceRefresh: true,
-        batchId: this.data.currentBatchId || 'all'  // ✅ 使用当前批次ID
+        batchId: this.data.currentBatchId || 'all'  // 使用当前批次ID
       })
       
-      // ✅ 差异对比：只在数据有显著变化时更新（避免不必要的重绘）
+      // 差异对比：只在数据有显著变化时更新（避免不必要的重绘）
       const currentHealthyRateStr = this.data.healthStats.healthyRate
       const currentHealthyRate = currentHealthyRateStr === '-' ? 0 : parseFloat(currentHealthyRateStr)
       const newHealthyRate = parseFloat(healthData.healthyRate)
@@ -1084,10 +1082,10 @@ Page<PageData, any>({
         return
       }
       
-      // ✅ 获取原始入栏数（全部批次模式）
+      // 获取原始入栏数（全部批次模式）
       const originalQuantity = healthData.originalTotalQuantity || 0
       
-      // ✅ 静默更新基础健康数据（不更新治疗数据，避免与loadTreatmentData冲突）
+      // 静默更新基础健康数据（不更新治疗数据，避免与loadTreatmentData冲突）
       this.setData({
         'healthStats.totalChecks': healthData.totalAnimals,
         'healthStats.healthyCount': healthData.actualHealthyCount,
@@ -1098,14 +1096,14 @@ Page<PageData, any>({
         'healthStats.abnormalCount': healthData.abnormalRecordCount,
         'healthStats.treatingCount': healthData.totalOngoingRecords,
         'healthStats.originalQuantity': originalQuantity
-        // ✅ 移除治疗数据更新，由loadTreatmentData统一管理，避免数据闪烁
+        // 移除治疗数据更新，由loadTreatmentData统一管理，避免数据闪烁
       })
     } catch (error: any) {
       // 后台刷新失败时静默处理
     }
   },
   /**
-   * ✅ 优化：加载单个批次数据（使用批量API）
+   * 优化：加载单个批次数据（使用批量API）
    * 从原来的6次云函数调用减少到1次
    */
   async loadSingleBatchDataOptimized() {
@@ -1166,7 +1164,7 @@ Page<PageData, any>({
         HealthStatsCalculator.formatPreventionRecord(record)
       )
       
-      // ✅ 处理诊断历史：使用公共工具函数标准化数据
+      // 处理诊断历史：使用公共工具函数标准化数据
       const diagnosisHistory = sortDiagnosisByRecency(normalizeDiagnosisRecords(data.diagnosisHistory || []))
       
       // 处理异常记录
@@ -1176,13 +1174,13 @@ Page<PageData, any>({
       // 待诊断数量
       const pendingDiagnosisCount = data.pendingDiagnosisCount || 0
       
-      // ✅ 获取原始入栏数（单批次模式）
+      // 获取原始入栏数（单批次模式）
       // 单批次模式下，originalQuantity 可能来自批次数据或 healthStats
       const originalQuantity = (healthStats as any).originalQuantity || 
                                 (data.batchInfo?.quantity) || 
                                 healthStats.totalChecks || 0
       
-      // ✅ 使用数据更新器简化setData调用
+      // 使用数据更新器简化setData调用
       const updater = createDataUpdater()
       
       updater
@@ -1251,14 +1249,14 @@ Page<PageData, any>({
       if (result.success && result.data) {
         const { healthStats, recentPrevention, activeAlerts, treatmentStats } = result.data
         
-        // ✅ 优化：使用数据路径形式更新对象属性，符合微信小程序最佳实践
+        // 优化：使用数据路径形式更新对象属性，符合微信小程序最佳实践
         // 避免使用展开运算符替换整个对象，减少不必要的渲染
         this.setData({
           'healthStats.healthyRate': (healthStats.totalChecks > 0) ? formatPercentage(healthStats.healthyRate) : '-',
           'healthStats.mortalityRate': (healthStats.totalChecks > 0) ? formatPercentage(healthStats.mortalityRate) : '-',
           'healthStats.abnormalCount': healthStats.abnormalCount || 0,
           'healthStats.treatingCount': healthStats.treatingCount || 0,
-          'healthStats.originalQuantity': healthStats.originalQuantity || 0,  // ✅ 确保原始入栏数也被更新
+          'healthStats.originalQuantity': healthStats.originalQuantity || 0,  // 确保原始入栏数也被更新
           recentPreventionRecords: recentPrevention || [],
           activeHealthAlerts: activeAlerts || [],
           'treatmentStats.recoveryRate': treatmentStats.recoveryRate + '%'
@@ -1653,7 +1651,7 @@ Page<PageData, any>({
   /**
    * 加载治疗数据
    */
-  // ✅ 添加治疗数据加载标志，防止重复加载
+  // 添加治疗数据加载标志，防止重复加载
   isLoadingTreatmentData: false,
   
   /**
@@ -1720,23 +1718,23 @@ Page<PageData, any>({
   },
 
   /**
-   * 诊断记录点击事件 - ✅ 使用公共工具函数处理
+   * 诊断记录点击事件 - 使用公共工具函数处理
    */
   async onDiagnosisRecordTap(e: any) {
     if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     const { record } = e.currentTarget.dataset
     
-    // ✅ 使用公共工具函数标准化数据
+    // 使用公共工具函数标准化数据
     const normalizedRecord = normalizeDiagnosisRecord(record)
     
-    // ✅ 使用公共工具函数处理图片URL（只处理 cloud:// 开头的URL）
+    // 使用公共工具函数处理图片URL（只处理 cloud:// 开头的URL）
     const processedImages = await processImageUrls(normalizedRecord.images || [], {
       onlyCloudFiles: true,
       showErrorToast: true
     })
     
-    // ✅ 显示详情弹窗
+    // 显示详情弹窗
     this.setData({
       showDiagnosisDetailPopup: true,
       selectedDiagnosisRecord: {
@@ -1753,7 +1751,7 @@ Page<PageData, any>({
     this.setData({
       showDiagnosisDetailPopup: false
     })
-    // ✅ 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
+    // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
     setTimeout(() => {
       this.setData({
         selectedDiagnosisRecord: null
@@ -1975,7 +1973,7 @@ Page<PageData, any>({
       })
     } catch (error: any) {
       logger.error('加载分析数据失败:', error)
-      // ✅ 错误时设置默认值，避免显示错误数据
+      // 错误时设置默认值，避免显示错误数据
       this.setData({
         'analysisData.survivalAnalysis': {
           rate: '-',
@@ -2234,7 +2232,7 @@ Page<PageData, any>({
 
 
   /**
-   * 加载历史任务（从breeding-todo迁移）- ✅ 修复：直接查询数据库获取所有已完成任务
+   * 加载历史任务（从breeding-todo迁移）- 修复：直接查询数据库获取所有已完成任务
    */
   async loadHistoryTasks() {
     try {
@@ -2243,7 +2241,7 @@ Page<PageData, any>({
       const db = wx.cloud.database()
       const _ = db.command
       
-      // ✅ 先获取存在的批次列表，避免显示孤儿任务
+      // 先获取存在的批次列表，避免显示孤儿任务
       let validBatchIds: string[] = []
       if (this.data.currentBatchId === 'all') {
         try {
@@ -2270,18 +2268,18 @@ Page<PageData, any>({
         return
       }
       
-      // ✅ 修复：构建正确的查询条件（不限制 category，或使用中文值）
+      // 修复：构建正确的查询条件（不限制 category，或使用中文值）
       const whereCondition: any = {
         completed: true,
-        // ✅ 查询所有健康相关的任务类别
+        // 查询所有健康相关的任务类别
         category: _.in(['健康管理', '营养管理', '疫苗接种', '用药管理']),
-        // ✅ 只查询存在的批次的任务
+        // 只查询存在的批次的任务
         batchId: _.in(validBatchIds)
       }
       
       const result = await db.collection('task_batch_schedules')
         .where(whereCondition)
-        .orderBy('dayAge', 'desc')  // ✅ 使用索引中的字段排序
+        .orderBy('dayAge', 'desc')  // 使用索引中的字段排序
         .limit(100)  // 限制返回100条
         .get()
       
@@ -2424,7 +2422,7 @@ Page<PageData, any>({
           }
         })
 
-        // ✅ 按完成时间重新排序（在内存中排序）
+        // 按完成时间重新排序（在内存中排序）
         completedTasks.sort((a: CompletedTaskItem, b: CompletedTaskItem) => b.completedTimestamp - a.completedTimestamp)
 
         // 按批次分组
@@ -2665,7 +2663,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     this.setData({
       showDetailPopup: false
     })
-    // ✅ 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
+    // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
     setTimeout(() => {
       this.setData({
         selectedRecord: null
@@ -2682,7 +2680,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       this.setData({
         showDetailPopup: false
       })
-      // ✅ 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
+      // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
       setTimeout(() => {
         this.setData({
           selectedRecord: null
@@ -2769,33 +2767,17 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     const willShow = !this.data.showBatchDropdown
     
     if (willShow) {
-      // 打开下拉菜单时，动态计算位置
       const query = wx.createSelectorQuery().in(this)
-      
-      // 同时查询筛选按钮和页面滚动位置
       query.select('#batch-filter-btn').boundingClientRect()
       query.selectViewport().scrollOffset()
       
       query.exec((res) => {
-        console.log('查询结果:', res)
         if (res && res[0] && res[1]) {
           const rect = res[0]
-          const scroll = res[1]
-          
-          console.log('筛选按钮位置:', rect)
-          console.log('滚动位置:', scroll)
-          
-          // 获取系统信息
           const systemInfo = wx.getSystemInfoSync()
-          console.log('系统信息:', systemInfo)
           
-          // 计算实际位置（考虑滚动）
-          // 使用fixed定位，所以需要减去滚动距离
           const dropdownTop = rect.top + rect.height + 8
-          // 右对齐，计算从右边的距离
           const dropdownRight = systemInfo.windowWidth - rect.right
-          
-          console.log('计算的位置:', { top: dropdownTop, right: dropdownRight })
           
           this.setData({
             dropdownTop: dropdownTop,
@@ -2803,17 +2785,14 @@ ${record.taskId ? '\n来源：待办任务' : ''}
             showBatchDropdown: true
           })
         } else {
-          console.warn('未找到筛选按钮元素或滚动信息')
-          // 如果查询失败，使用默认位置
           this.setData({
-            dropdownTop: 120, // 默认位置
-            dropdownRight: 12, // 默认右边距
+            dropdownTop: 120,
+            dropdownRight: 12,
             showBatchDropdown: true
           })
         }
       })
     } else {
-      // 关闭下拉菜单
       this.setData({
         showBatchDropdown: false
       })
@@ -2833,7 +2812,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 选择全部批次
    */
   async selectAllBatches() {
-    // ✅ 显示加载提示
+    // 显示加载提示
     wx.showLoading({
       title: '切换批次中...',
       mask: true
@@ -2849,7 +2828,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 保存选择
       try { wx.setStorageSync('currentBatchId', 'all') } catch (_) {}
       
-      // ✅ 全面刷新数据
+      // 全面刷新数据
       await this.refreshAllDataForBatchChange()
       
     } catch (error) {
@@ -2870,7 +2849,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     const index = parseInt(e.currentTarget.dataset.index)
     const batches = this.data.availableBatches
     
-    // ✅ 显示加载提示
+    // 显示加载提示
     wx.showLoading({
       title: '切换批次中...',
       mask: true
@@ -2895,12 +2874,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         return
       }
       
-      // ✅ 一次性设置：批次信息 + 清空旧数据 + 关闭下拉框
+      // 一次性设置：批次信息 + 清空旧数据 + 关闭下拉框
       this.setData({
         currentBatchId: newBatchId,
         currentBatchNumber: newBatchNumber,
         showBatchDropdown: false,
-        // ✅ 清空治疗卡片数据，避免显示旧数据
+        // 清空治疗卡片数据，避免显示旧数据
         'treatmentData.stats.pendingDiagnosis': 0,
         'treatmentData.stats.ongoingTreatment': 0,
         'treatmentData.stats.recoveredCount': 0,
@@ -2910,7 +2889,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 保存选择
       try { wx.setStorageSync('currentBatchId', newBatchId) } catch (_) {}
       
-      // ✅ 全面刷新数据
+      // 全面刷新数据
       await this.refreshAllDataForBatchChange()
     } catch (error) {
       console.error('[批次选择] 切换失败:', error)
@@ -2924,12 +2903,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
   
   /**
-   * ✅ 批次切换时全面刷新数据
+   * 批次切换时全面刷新数据
    * 确保所有卡片和tab的数据都正确更新
    */
   async refreshAllDataForBatchChange() {
     try {
-      // ✅ 1. 停止数据监听器，防止死循环
+      // 1. 停止数据监听器，防止死循环
       this.stopDataWatcher()
       
       // 2. 清除缓存
@@ -2939,7 +2918,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 3. 加载基础健康数据 - 这会设置healthStats.originalQuantity
       await this.loadHealthData(true)  // silent模式
       
-      // ✅ 4. 移除setTimeout延迟，直接加载标签数据
+      // 4. 移除setTimeout延迟，直接加载标签数据
       // 根据当前激活的tab加载对应数据
       switch (this.data.activeTab) {
         case 'overview':
@@ -2961,7 +2940,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           }
           break
         case 'treatment':
-          // ✅ 强制刷新治疗数据，不使用缓存
+          // 强制刷新治疗数据，不使用缓存
           await this.loadTreatmentData({ forceRefresh: true })
           break
         case 'analysis':
@@ -2969,7 +2948,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           break
       }
       
-      // ✅ 5. 数据加载完成后，重新启动监听器
+      // 5. 数据加载完成后，重新启动监听器
       wx.nextTick(() => {
         this.startDataWatcher()
       })
@@ -3093,7 +3072,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 查看任务详情（✅ 优化：立即显示弹窗，异步加载用户信息）
+   * 查看任务详情（优化：立即显示弹窗，异步加载用户信息）
    */
   async viewTaskDetail(e: any) {
     if (this.checkDoubleClick && this.checkDoubleClick()) return
@@ -3101,10 +3080,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     const task = e.currentTarget.dataset.task
     if (!task) return
     
-    // ✅ 判断任务是否为即将到来的任务（来自 upcoming 标签）
+    // 判断任务是否为即将到来的任务（来自 upcoming 标签）
     const isUpcomingTask = this.data.preventionSubTab === 'upcoming'
     
-    // ✅ 立即构建基础任务数据并显示弹窗（不等待异步操作）
+    // 立即构建基础任务数据并显示弹窗（不等待异步操作）
     const enhancedTask = {
       ...task,
       
@@ -3120,7 +3099,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       isMedicationTask: isMedicationTask(task),
       isNutritionTask: isNutritionTask(task),
       
-      // ✅ 标记是否为即将到来的任务（禁止操作）
+      // 标记是否为即将到来的任务（禁止操作）
       isUpcoming: isUpcomingTask,
       
       // 确保其他字段存在
@@ -3137,21 +3116,21 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 确保completed状态正确
       completed: task.completed || false,
       completedDate: task.completedDate || '',
-      completedBy: task.completedBy || '加载中...'  // ✅ 先显示加载中
+      completedBy: task.completedBy || '加载中...'  // 先显示加载中
     }
 
-    // ✅ 关键优化：立即显示弹窗，提供即时反馈
+    // 关键优化：立即显示弹窗，提供即时反馈
     this.setData({
       selectedTask: enhancedTask,
       showTaskDetailPopup: true
     })
     
-    // ✅ 异步加载用户信息（不阻塞弹窗显示）
+    // 异步加载用户信息（不阻塞弹窗显示）
     this.loadCompletedByUserName(task.completedBy)
   },
 
   /**
-   * ✅ 新增：异步加载任务完成人员信息（不阻塞UI）
+   * 新增：异步加载任务完成人员信息（不阻塞UI）
    */
   async loadCompletedByUserName(completedBy: string) {
     if (!completedBy) {
@@ -3229,7 +3208,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     this.setData({
       showTaskDetailPopup: false
     })
-    // ✅ 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
+    // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
     setTimeout(() => {
       this.setData({
         selectedTask: null
@@ -3246,7 +3225,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       this.setData({
         showTaskDetailPopup: false
       })
-      // ✅ 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
+      // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
       setTimeout(() => {
         this.setData({
           selectedTask: null
@@ -3365,7 +3344,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 打开疫苗表单
    */
   async openVaccineForm(task: any) {
-    // ✅ 获取当前批次的存栏数量
+    // 获取当前批次的存栏数量
     await this.initVaccineFormData(task)
     this.setData({
       showVaccineFormPopup: true,
@@ -3377,7 +3356,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 初始化疫苗表单数据
    */
   async initVaccineFormData(task: any) {
-    // ✅ 获取当前批次的存栏数量
+    // 获取当前批次的存栏数量
     let currentBatchStockQuantity = 0
     const batchId = task.batchId || this.data.currentBatchId
     if (batchId && batchId !== 'all') {
@@ -3423,7 +3402,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
 
     this.setData({
       selectedTask: task,
-      currentBatchStockQuantity: Number(currentBatchStockQuantity) || 0,  // ✅ 设置存栏数量，确保为数字
+      currentBatchStockQuantity: Number(currentBatchStockQuantity) || 0,  // 设置存栏数量，确保为数字
       vaccineFormData,
       vaccineFormErrors: {}
     })
@@ -3625,7 +3604,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     // 构建预防数据（符合云函数期望的格式）
     const preventionData = {
       preventionType: 'vaccine',
-      preventionDate: getCurrentBeijingDate(), // ✅ 使用北京时间
+      preventionDate: getCurrentBeijingDate(), // 使用北京时间
       vaccineInfo: {
         name: vaccineFormData.vaccineName,
         manufacturer: vaccineFormData.manufacturer,
@@ -3644,7 +3623,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         veterinaryCost: parseFloat(vaccineFormData.veterinaryCost || '0'),
         otherCost: parseFloat(vaccineFormData.otherCost || '0'),
         totalCost: vaccineFormData.totalCost,
-        // ✅ 重要：标记疫苗接种费用需要同步到财务系统
+        // 重要：标记疫苗接种费用需要同步到财务系统
         // 疫苗接种是养殖场的重要成本项，应当记入财务管理
         shouldSyncToFinance: true
       },
@@ -3689,7 +3668,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     // 先加载可用的药品库存
     await this.loadAvailableMedicines()
     
-    // ✅ 获取当前批次的存栏数量
+    // 获取当前批次的存栏数量
     let currentBatchStockQuantity = 0
     const batchId = task.batchId || this.data.currentBatchId
     if (batchId && batchId !== 'all') {
@@ -3719,7 +3698,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     const userInfo = wx.getStorageSync('userInfo')
     this.setData({
       selectedTask: task,
-      currentBatchStockQuantity: Number(currentBatchStockQuantity) || 0,  // ✅ 设置存栏数量，确保为数字
+      currentBatchStockQuantity: Number(currentBatchStockQuantity) || 0,  // 设置存栏数量，确保为数字
       medicationFormData: {
         medicineId: '',
         medicineName: '',
@@ -3947,7 +3926,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     try {
       wx.showLoading({ title: '提交中...' })
 
-      // ✅ 用途字段使用任务标题，不需要用户重复填写
+      // 用途字段使用任务标题，不需要用户重复填写
       const purpose = selectedTask.title || '用药任务'
 
       const medicationRecord = {
@@ -3988,7 +3967,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         const quantity = Number(medicationRecord.quantity) || 0
         const totalCost = unitPrice * quantity
         
-        // ✅ 创建健康预防记录
+        // 创建健康预防记录
         await safeCloudCall({
           name: 'health-prevention',  // 使用拆分后的云函数
           data: {
