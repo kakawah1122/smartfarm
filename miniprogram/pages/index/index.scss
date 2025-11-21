@@ -214,7 +214,7 @@ page {
 @media screen and (max-width: 480px) {
   .card {
     margin: 12rpx 16rpx;   }
-  
+
   .card-content {
     padding: var(--spacing-lg);
   }
@@ -256,17 +256,17 @@ page {
   .status-bar {
     padding-top: max(var(--safe-area-inset-top, 0), 8rpx);
   }
-  
+
   .card {
     margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0)));
     margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0)));
   }
-  
+
   .weather-card {
     margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0))) !important;
     margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0))) !important;
   }
-  
+
   .current-weather-card {
     margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0))) !important;
     margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0))) !important;
@@ -307,7 +307,7 @@ page {
   .card {
     border: 2rpx solid var(--color-border-dark);
   }
-  
+
   .price-item {
     border: 2rpx solid var(--color-border-base);
   }
@@ -396,10 +396,10 @@ page {
   max-height: 75vh;
   overflow-y: auto;
   background: #ffffff;
-  
+
   .form-section {
     margin-bottom: 32rpx;
-    
+
     .section-title {
       font-size: 30rpx;
       font-weight: 600;
@@ -415,7 +415,7 @@ page {
       -webkit-backdrop-filter: blur(10rpx);
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
     }
-    
+
     .form-row {
       display: flex;
       align-items: center;
@@ -423,11 +423,11 @@ page {
       padding: 20rpx 32rpx;
       min-height: 88rpx;
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .form-label {
         flex-shrink: 0;
         font-size: 28rpx;
@@ -435,14 +435,14 @@ page {
         line-height: 1.4;
         margin-right: 24rpx;
         width: 180rpx;
-        
+
         &.required::after {
           content: " *";
           color: var(--td-error-color, #e34d59);
           font-weight: 600;
         }
       }
-      
+
       .form-input, .form-textarea {
         flex: 1;
         padding: 12rpx 16rpx;
@@ -453,31 +453,31 @@ page {
         background: #ffffff;
         text-align: right;
         min-height: 52rpx;
-        
+
         &:focus {
           border-color: var(--td-brand-color, #0052d9);
           box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1);
           outline: none;
         }
-        
+
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 28rpx;
         }
       }
-      
+
       .form-textarea {
         min-height: 120rpx;
         resize: none;
         text-align: left;
         line-height: 1.6;
-        
+
         &::placeholder {
           text-align: left;
         }
       }
-      
+
       .picker-input {
         flex: 1;
         display: flex;
@@ -491,7 +491,7 @@ page {
         font-size: 30rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-        
+
         &::after {
           content: '';
           width: 12rpx;
@@ -503,15 +503,15 @@ page {
           flex-shrink: 0;
         }
       }
-      
+
       &.total-cost {
         background: rgba(0, 82, 217, 0.03);
-        
+
         .form-label {
           font-weight: 600;
           color: var(--td-brand-color, #0052d9);
         }
-        
+
         .cost-value {
           flex: 1;
           text-align: right;
@@ -532,10 +532,10 @@ page {
   /* GPU加速优化 */
   transform: translateZ(0);
   will-change: scroll-position;
-  
+
   .form-section {
     margin-bottom: 32rpx;
-    
+
     .section-title {
       font-size: 30rpx;
       font-weight: 600;
@@ -551,7 +551,7 @@ page {
       -webkit-backdrop-filter: blur(10rpx);
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
     }
-    
+
     .form-row {
       display: flex;
       align-items: center;
@@ -559,11 +559,11 @@ page {
       padding: 20rpx 32rpx;
       min-height: 88rpx;
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .form-label {
         flex-shrink: 0;
         font-size: 28rpx;
@@ -571,14 +571,14 @@ page {
         line-height: 1.4;
         margin-right: 24rpx;
         width: 180rpx;
-        
+
         &.required::after {
           content: " *";
           color: var(--td-error-color, #e34d59);
           font-weight: 600;
         }
       }
-      
+
       .form-input, .form-textarea {
         flex: 1;
         padding: 12rpx 16rpx;
@@ -589,31 +589,31 @@ page {
         background: #ffffff;
         text-align: right;
         min-height: 52rpx;
-        
+
         &:focus {
           border-color: #16a34a;
           box-shadow: 0 0 0 2rpx rgba(22, 163, 74, 0.1);
           outline: none;
         }
-        
+
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 28rpx;
         }
       }
-      
+
       .form-textarea {
         min-height: 120rpx;
         resize: none;
         text-align: left;
         line-height: 1.6;
-        
+
         &::placeholder {
           text-align: left;
         }
       }
-      
+
       .picker-input {
         flex: 1;
         display: flex;
@@ -627,7 +627,7 @@ page {
         font-size: 30rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-        
+
         &::after {
           content: '';
           width: 12rpx;
@@ -639,7 +639,7 @@ page {
           flex-shrink: 0;
         }
       }
-      
+
       .unit-text {
         position: absolute;
         right: 24rpx;
@@ -649,7 +649,7 @@ page {
         color: var(--color-text-tertiary);
         pointer-events: none;
       }
-      
+
       .error-text {
         display: block;
         font-size: 24rpx;
@@ -657,40 +657,40 @@ page {
         margin-top: 8rpx;
         line-height: 1.4;
       }
-      
+
       &.textarea-row {
         align-items: flex-start;
-        
+
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-  
+
   .medicine-info {
     margin: 24rpx 32rpx;
     padding: 20rpx;
     background: rgba(22, 163, 74, 0.08);
     border-radius: 12rpx;
     border-left: 4rpx solid #16a34a;
-    
+
     .info-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8rpx 0;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .info-label {
         font-size: 26rpx;
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
       }
-      
+
       .info-value {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
@@ -699,28 +699,28 @@ page {
       }
     }
   }
-  
+
   .form-errors {
     margin: 24rpx 32rpx;
     padding: 20rpx;
     background: rgba(227, 77, 89, 0.08);
     border-radius: 12rpx;
     border-left: 4rpx solid var(--td-error-color, #e34d59);
-    
+
     .error-item {
       margin-bottom: 8rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .error-text {
         display: block;
         color: var(--td-error-color, #e34d59);
         font-size: 26rpx;
         line-height: 1.5;
         margin: 0;
-        
+
         &::before {
           content: "• ";
           color: var(--td-error-color, #e34d59);
@@ -740,10 +740,10 @@ page {
   /* GPU加速优化 */
   transform: translateZ(0);
   will-change: scroll-position;
-  
+
   .form-section {
     margin-bottom: 32rpx;
-    
+
     .section-title {
       font-size: 30rpx;
       font-weight: 600;
@@ -759,7 +759,7 @@ page {
       -webkit-backdrop-filter: blur(10rpx);
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
     }
-    
+
     .form-row {
       display: flex;
       align-items: center;
@@ -767,11 +767,11 @@ page {
       padding: 20rpx 32rpx;
       min-height: 88rpx;
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .form-label {
         flex-shrink: 0;
         font-size: 28rpx;
@@ -779,14 +779,14 @@ page {
         line-height: 1.4;
         margin-right: 24rpx;
         width: 180rpx;
-        
+
         &.required::after {
           content: " *";
           color: var(--td-error-color, #e34d59);
           font-weight: 600;
         }
       }
-      
+
       .form-input, .form-textarea {
         flex: 1;
         padding: 12rpx 16rpx;
@@ -797,31 +797,31 @@ page {
         background: #ffffff;
         text-align: right;
         min-height: 52rpx;
-        
+
         &:focus {
           border-color: #10b981;
           box-shadow: 0 0 0 2rpx rgba(16, 185, 129, 0.1);
           outline: none;
         }
-        
+
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 28rpx;
         }
       }
-      
+
       .form-textarea {
         min-height: 120rpx;
         resize: none;
         text-align: left;
         line-height: 1.6;
-        
+
         &::placeholder {
           text-align: left;
         }
       }
-      
+
       .picker-input {
         flex: 1;
         display: flex;
@@ -835,7 +835,7 @@ page {
         font-size: 30rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-        
+
         &::after {
           content: '';
           width: 12rpx;
@@ -847,7 +847,7 @@ page {
           flex-shrink: 0;
         }
       }
-      
+
       .unit-text {
         position: absolute;
         right: 24rpx;
@@ -857,7 +857,7 @@ page {
         color: var(--color-text-tertiary);
         pointer-events: none;
       }
-      
+
       .error-text {
         display: block;
         font-size: 24rpx;
@@ -865,40 +865,40 @@ page {
         margin-top: 8rpx;
         line-height: 1.4;
       }
-      
+
       &.textarea-row {
         align-items: flex-start;
-        
+
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-  
+
   .nutrition-info {
     margin: 24rpx 32rpx;
     padding: 20rpx;
     background: rgba(16, 185, 129, 0.08);
     border-radius: 12rpx;
     border-left: 4rpx solid #10b981;
-    
+
     .info-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8rpx 0;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .info-label {
         font-size: 26rpx;
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
       }
-      
+
       .info-value {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
@@ -907,28 +907,28 @@ page {
       }
     }
   }
-  
+
   .form-errors {
     margin: 24rpx 32rpx;
     padding: 20rpx;
     background: rgba(227, 77, 89, 0.08);
     border-radius: 12rpx;
     border-left: 4rpx solid var(--td-error-color, #e34d59);
-    
+
     .error-item {
       margin-bottom: 8rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .error-text {
         display: block;
         color: var(--td-error-color, #e34d59);
         font-size: 26rpx;
         line-height: 1.5;
         margin: 0;
-        
+
         &::before {
           content: "• ";
           color: var(--td-error-color, #e34d59);
@@ -946,7 +946,7 @@ page {
   color: #666 !important;
   cursor: not-allowed;
   position: relative;
-  
+
   &::after {
     content: "";
     position: absolute;
@@ -965,7 +965,7 @@ page {
   --knowledge-theme-primary: #2563eb;      /* 主要主题：深蓝色 */
   --knowledge-theme-success: #0891b2;      /* 成功主题：天青色 */
   --knowledge-theme-danger: #dc2626;        /* 危险主题：深红色 */
-  --knowledge-theme-warning: #d97706;       
+  --knowledge-theme-warning: #d97706;
   .card-header {
     display: flex;
     justify-content: space-between;
@@ -974,7 +974,7 @@ page {
     padding-bottom: var(--spacing-md, 20rpx);
     border-bottom: 2rpx solid var(--color-border-dark, #d1d5db);
   }
-  
+
   .view-all-link {
     font-size: var(--font-size-sm, 26rpx);
     color: var(--td-brand-color, #0052d9);
@@ -996,12 +996,12 @@ page {
   gap: var(--spacing-base, 16rpx);
   padding: var(--spacing-md, 20rpx) 0;
   transition: background 0.2s;
-  
+
   &:not(:last-child) {
     border-bottom: 2rpx solid var(--color-border-dark, #d1d5db);
     margin-bottom: 0;
   }
-  
+
   &:active {
     background: var(--color-bg-secondary, #f9fafb);
   }
@@ -1013,23 +1013,23 @@ page {
   border-radius: var(--radius-full, 50%);
   flex-shrink: 0;
   background: var(--color-info, #3b82f6);
-  
+
   &-default {
     background: var(--knowledge-theme-default, #6366f1);
   }
-  
+
   &-primary {
     background: var(--color-info, #3b82f6);
   }
-  
+
   &-success {
     background: var(--color-success, #10b981);
   }
-  
+
   &-danger {
     background: var(--color-danger, #ef4444);
   }
-  
+
   &-warning {
     background: var(--color-warning, #f59e0b);
   }
@@ -1042,23 +1042,23 @@ page {
   flex: 1;
   letter-spacing: 0.2rpx;
   color: var(--color-info, #3b82f6);
-  
+
   &-default {
     color: var(--knowledge-theme-default, #6366f1);
   }
-  
+
   &-primary {
     color: var(--knowledge-theme-primary, #2563eb);
   }
-  
+
   &-success {
     color: var(--knowledge-theme-success, #0891b2);
   }
-  
+
   &-danger {
     color: var(--knowledge-theme-danger, #dc2626);
   }
-  
+
   &-warning {
     color: var(--knowledge-theme-warning, #d97706);
   }
@@ -1067,7 +1067,7 @@ page {
 .knowledge-empty {
   text-align: center;
   padding: var(--spacing-2xl, 40rpx) 0;
-  
+
   .empty-hint {
     font-size: var(--font-size-sm, 26rpx);
     color: var(--color-text-tertiary, #6b7280);
@@ -1081,23 +1081,23 @@ page {
         flex-direction: column;
         align-items: stretch;
         padding: 16rpx 24rpx;
-        
+
         .form-label {
           width: auto;
           margin-right: 0;
           margin-bottom: 12rpx;
           font-size: 26rpx;
         }
-        
+
         .form-input, .form-textarea, .picker-input {
           width: 100%;
           text-align: left;
-          
+
           &::placeholder {
             text-align: left;
           }
         }
-        
+
         .form-textarea {
           &::placeholder {
             text-align: left;
@@ -1114,23 +1114,23 @@ page {
         align-items: stretch;
         padding: 16rpx 24rpx;
         min-height: auto;
-        
+
         .form-label {
           width: auto;
           margin-right: 0;
           margin-bottom: 12rpx;
           font-size: 26rpx;
         }
-        
+
         .form-input, .form-textarea, .picker-input {
           width: 100%;
           text-align: left;
-          
+
           &::placeholder {
             text-align: left;
           }
         }
-        
+
         .unit-text {
           position: static;
           transform: none;
@@ -1138,13 +1138,13 @@ page {
           align-self: flex-end;
         }
       }
-      
+
       .section-title {
         font-size: 28rpx;
         padding: 20rpx 24rpx 12rpx 24rpx;
       }
     }
-    
+
     .medicine-info, .nutrition-info, .form-errors {
       margin: 20rpx 24rpx;
       padding: 16rpx;

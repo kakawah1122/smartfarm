@@ -147,7 +147,7 @@ page {
   transition: all 0.3s ease;
 
   &
-  
+
   &.unauthorized {
     color: #c41d3a;
     background: rgba(231, 76, 94, 0.14);
@@ -201,7 +201,7 @@ page {
   gap: 8rpx;
   padding-bottom: 20rpx;
   border-bottom: 1rpx solid #f5f5f5;
-  
+
   &:last-child {
     border-bottom: none;
     padding-bottom: 0;

@@ -6,10 +6,10 @@
   background: #ffffff;
   transform: translateZ(0);
   will-change: scroll-position;
-  
+
   .form-section {
     margin-bottom: 20rpx;
-    
+
     .section-title {
       font-size: 28rpx;
       font-weight: 600;
@@ -20,7 +20,7 @@
       border-radius: 8rpx;
       word-break: break-all;
     }
-    
+
     .form-row {
       display: flex;
       align-items: center;
@@ -28,11 +28,11 @@
       padding: 16rpx 20rpx;
       min-height: 80rpx;
       border-bottom: 1rpx solid #f0f0f0;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .form-label {
         flex-shrink: 0;
         font-size: 26rpx;
@@ -40,28 +40,28 @@
         line-height: 1.4;
         margin-right: 16rpx;
         width: 160rpx;
-        
+
         &.required::after {
           content: " *";
           color: #e34d59;
           font-weight: 600;
         }
       }
-      
+
       .form-input, .form-textarea {
         flex: 1;
         font-size: 28rpx !important;
         color: #333;
         text-align: right;
         line-height: 44rpx;
-        
+
         &::placeholder {
           color: #999;
           text-align: right;
           font-size: 28rpx !important;
         }
       }
-      
+
       .form-textarea {
         min-height: 80rpx !important;
         max-height: 200rpx !important;
@@ -70,12 +70,12 @@
         text-align: left;
         line-height: 1.6;
         padding: 0 !important;
-        
+
         &::placeholder {
           text-align: left;
         }
       }
-      
+
       .picker-input {
         flex: 1;
         display: flex;
@@ -84,7 +84,7 @@
         font-size: 28rpx !important;
         color: #333;
         line-height: 44rpx;
-        
+
         &::after {
           content: '';
           width: 12rpx;
@@ -96,11 +96,11 @@
           flex-shrink: 0;
         }
       }
-      
+
       .readonly-input {
         color: #999;
       }
-      
+
       .error-text {
         display: block;
         font-size: 24rpx;
@@ -108,39 +108,39 @@
         margin-top: 8rpx;
         line-height: 1.4;
       }
-      
+
       &.textarea-row {
         align-items: flex-start;
-        
+
         .form-label {
           margin-top: 12rpx;
         }
       }
     }
   }
-  
+
   .medicine-info {
     margin: 16rpx 20rpx;
     padding: 16rpx;
     background: #fafafa;
     border-radius: 12rpx;
-    
+
     .info-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8rpx 0;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .info-label {
         font-size: 26rpx;
         color: #666666;
         line-height: 1.4;
       }
-      
+
       .info-value {
         font-size: 28rpx;
         color: #000000;
@@ -149,28 +149,28 @@
       }
     }
   }
-  
+
   .form-errors {
     margin: 24rpx 32rpx;
     padding: 20rpx;
     background: rgba(227, 77, 89, 0.08);
     border-radius: 12rpx;
     border-left: 4rpx solid #e34d59;
-    
+
     .error-item {
       margin-bottom: 8rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .error-text {
         display: block;
         color: #e34d59;
         font-size: 26rpx;
         line-height: 1.5;
         margin: 0;
-        
+
         &::before {
           content: "• ";
           color: #e34d59;
@@ -180,7 +180,7 @@
       }
     }
   }
-  
+
   .form-actions {
     display: flex;
     gap: 24rpx;

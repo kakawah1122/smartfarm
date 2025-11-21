@@ -148,7 +148,7 @@
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
-  
+
   &:active {
     transform: scale(0.98);
     border-color: #0052d9;
@@ -211,7 +211,7 @@
   font-weight: 600;
   border-radius: 16rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.25);
-  
+
   &:active {
     transform: scale(0.98);
   }

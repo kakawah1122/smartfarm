@@ -113,11 +113,11 @@ $spacing-xl: 40rpx;
   border-bottom: 1rpx solid $border-color-light;
   background: $bg-color-container;
   transition: background-color 0.2s ease;
-  
+
   &:last-child {
     border-bottom: none;
   }
-  
+
   &:active {
     background: rgba(0, 82, 217, 0.04);
   }
@@ -188,7 +188,7 @@ $spacing-xl: 40rpx;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 200rpx;
-  
+
   &::before {
     content: '·';
     margin-right: $spacing-xs;
@@ -418,27 +418,27 @@ $spacing-xl: 40rpx;
   border-radius: 8rpx !important;
   font-size: 22rpx !important;
   padding: 4rpx 12rpx !important;
-  
+
   &--default {
     background: rgba(0, 0, 0, 0.06) !important;
     color: $text-secondary !important;
   }
-  
+
   &--primary {
     background: rgba(0, 82, 217, 0.1) !important;
     color: $primary-color !important;
   }
-  
+
   &--success {
     background: rgba(0, 168, 112, 0.1) !important;
     color: $success-color !important;
   }
-  
+
   &--warning {
     background: rgba(237, 123, 47, 0.1) !important;
     color: $warning-color !important;
   }
-  
+
   &--danger {
     background: rgba(213, 73, 65, 0.1) !important;
     color: $error-color !important;
@@ -450,11 +450,11 @@ $spacing-xl: 40rpx;
     background: $bg-color-container !important;
     border-bottom: 1rpx solid $border-color-light !important;
   }
-  
+
   &__item {
     font-size: 28rpx !important;
     padding: $spacing-l !important;
-    
+
     &--active {
       color: $primary-color !important;
       font-weight: 500 !important;
@@ -468,11 +468,11 @@ $spacing-xl: 40rpx;
     background: $bg-color-page !important;
     border: 1rpx solid $border-color-light !important;
   }
-  
+
   &__input {
     font-size: 28rpx !important;
     color: $text-primary !important;
-    
+
     &::placeholder {
       color: $text-placeholder !important;
     }
@@ -494,10 +494,10 @@ $spacing-xl: 40rpx;
     grid-template-columns: repeat(2, 1fr);
     gap: $spacing-s;
   }
-  
+
   .management-actions {
     flex-direction: column;
-    
+
     .action-btn {
       width: 100%;
     }

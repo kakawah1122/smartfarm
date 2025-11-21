@@ -74,7 +74,7 @@
   border: 1rpx solid #e7e7e7;
   transition: all 0.2s;
   box-sizing: border-box;
-  
+
   &:active {
     transform: scale(0.98);
     opacity: 0.9;
@@ -98,17 +98,17 @@
   padding: 4rpx 16rpx;
   border-radius: 8rpx;
   font-size: 24rpx;
-  
+
   &.warning {
     background: #fff3e0;
     color: #ff9800;
   }
-  
+
   &.success {
     background: #e8f5e9;
     color: #4caf50;
   }
-  
+
   &.danger {
     background: #ffebee;
     color: #f44336;
@@ -159,7 +159,7 @@
   align-items: center;
   justify-content: center;
   padding: 200rpx 0;
-  
+
   .empty-text {
     font-size: 28rpx;
     color: var(--td-text-color-placeholder, #999);

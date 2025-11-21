@@ -1,10 +1,10 @@
 /**
  * health-vars.scss - 健康管理模块样式变量
- * 
+ *
  * 用途：统一健康管理模块的样式规范
  * 范围：字体、颜色、间距等基础变量
  * 原则：只定义变量，不包含布局结构
- * 
+ *
  * 使用方式：
  * @import "../../styles/health-vars.scss";
  */
@@ -133,7 +133,7 @@ $health-breakpoint-tiny: 320px !default;
   box-shadow: $health-card-shadow;
   border: $health-border-width $health-border-style $health-border-light;
   transition: all $health-transition-normal ease;
-  
+
   &:active {
     transform: scale(0.98);
     box-shadow: $health-card-shadow-hover;

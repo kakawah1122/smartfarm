@@ -196,79 +196,73 @@
   display: flex;
   flex-direction: column;
   gap: 24rpx;
-  border: none !important; 
+  border: none !important;
   outline: none !important;
   box-shadow: none !important;
   background: transparent !important;
 }
 
-.primary-button {
-  }
-
-.secondary-button {
-  }
-
 @media screen and (max-width: 480px) {
   .form-content {
     padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx);   }
-  
+
   .form-section {
     margin-bottom: 12rpx;   }
-  
+
   .entry-form {
     padding: 0 16rpx;
   }
-  
+
   .form-actions {
     padding: 32rpx 16rpx 24rpx 16rpx;
   }
-  
+
   .action-button {
     height: 72rpx !important;
     font-size: 28rpx !important;
     line-height: 72rpx !important;
   }
-  
+
   .form-item {
     padding: 14rpx 20rpx; /* 小屏幕上更紧凑 */
     min-height: 64rpx;   }
-  
+
   .item-label {
     font-size: 28rpx;
     min-width: 140rpx;
   }
-  
+
   .item-input ::deep .t-input__control {
     font-size: 28rpx;
   }
-  
+
   .item-textarea ::deep .t-textarea__control {
     font-size: 28rpx;
   }
-  
+
   .amount-value {
     font-size: 30rpx;
   }
-  
+
   .batch-id-text {
     font-size: 28rpx;
   }
-  
+
   .date-text {
     font-size: 28rpx;
   }
-  
+
   .section-title {
     font-size: 26rpx;
     padding: 10rpx 14rpx;
     margin: 0 4rpx;
   }
-  
+
   .textarea-item {
     padding: 20rpx;
     min-height: 100rpx;
   }
-  
+
   .item-textarea-input ::deep .t-textarea__control {
     font-size: 28rpx;
     min-height: 100rpx;

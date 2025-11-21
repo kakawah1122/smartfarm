@@ -8,11 +8,11 @@
 
 .detail-section {
   margin-bottom: 32rpx !important;
-  
+
   &:last-child {
     margin-bottom: 0 !important;
   }
-  
+
   .section-title {
     font-size: 28rpx !important;
     font-weight: 600 !important;
@@ -113,22 +113,22 @@
   background: #fafafa !important;
   border-radius: 12rpx !important;
   border: 2rpx solid #e8e8e8 !important;
-  
+
   &.danger {
     background: linear-gradient(135deg, #fff0f0 0%, #ffe6e6 100%) !important;
     border-color: #e34d59 !important;
-    
+
     .stat-value {
       color: #e34d59 !important;
     }
   }
-  
+
   .stat-label {
     font-size: 24rpx !important;
     color: #666 !important;
     text-align: center !important;
   }
-  
+
   .stat-value {
     font-size: 36rpx !important;
     font-weight: 600 !important;
@@ -151,20 +151,20 @@
   background: #fafafa !important;
   border-radius: 12rpx !important;
   gap: 16rpx !important;
-  
+
   .cost-label {
     font-size: 26rpx !important;
     color: #666 !important;
     flex-shrink: 0 !important;
   }
-  
+
   .cost-value {
     font-size: 30rpx !important;
     font-weight: 600 !important;
     color: #333 !important;
     text-align: right !important;
     word-break: break-all !important;
-    
+
     &.danger {
       color: #e34d59 !important;
       font-size: 32rpx !important;
@@ -178,7 +178,7 @@
   padding: 24rpx !important;
   border: 1rpx solid #e8e8e8 !important;
   box-sizing: border-box !important;
-  
+
   .description-text {
     font-size: 26rpx !important;
     color: #333 !important;
@@ -268,25 +268,25 @@
   justify-content: space-between !important;
   align-items: center !important;
   padding: 10rpx 0 !important;
-  
+
   .breakdown-label {
     display: flex !important;
     align-items: center !important;
     gap: 10rpx !important;
-    
+
     .label-dot {
       width: 10rpx !important;
       height: 10rpx !important;
       border-radius: 50% !important;
       flex-shrink: 0 !important;
     }
-    
+
     .label-text {
       font-size: 26rpx !important;
       color: #666 !important;
     }
   }
-  
+
   .breakdown-value {
     font-size: 28rpx !important;
     color: #333 !important;
@@ -308,13 +308,13 @@
   background: linear-gradient(90deg, #f0f7ff 0%, transparent 100%) !important;
   border-radius: 8rpx !important;
   margin-top: 8rpx !important;
-  
+
   .total-label {
     font-size: 28rpx !important;
     color: #333 !important;
     font-weight: 600 !important;
   }
-  
+
   .total-value {
     font-size: 32rpx !important;
     color: #0052d9 !important;
@@ -329,13 +329,13 @@
   padding: 14rpx 16rpx !important;
   background: linear-gradient(90deg, #fff3f3 0%, transparent 100%) !important;
   border-radius: 8rpx !important;
-  
+
   .loss-label {
     font-size: 28rpx !important;
     color: #333 !important;
     font-weight: 600 !important;
   }
-  
+
   .loss-value {
     font-size: 32rpx !important;
     color: #e34d59 !important;
@@ -348,7 +348,7 @@
   align-items: center !important;
   justify-content: space-between !important;
   gap: 12rpx !important;
-  
+
   .title-text {
     flex: 1 !important;
   }

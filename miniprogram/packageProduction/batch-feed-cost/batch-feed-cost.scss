@@ -119,7 +119,7 @@
   font-size: 32rpx;
   font-weight: 600;
   color: #333;
-  
+
   &.primary {
     color: #0052d9;
   }
@@ -151,7 +151,7 @@
   font-size: 36rpx;
   font-weight: 600;
   color: #fff;
-  
+
   &.highlight {
     font-size: 40rpx;
     color: #ffd700;
@@ -337,11 +337,11 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
-  
+
   &.primary {
     background-color: #0052d9;
   }
-  
+
   &:active {
     transform: scale(0.95);
   }

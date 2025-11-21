@@ -2,9 +2,9 @@
 /* 字体定义覆盖 - 移除!important，WXSS可能不完全支持 */
 @font-face {
   font-family: t;
-  src: local('PingFang SC'), 
-       local('Helvetica Neue'), 
-       local('Arial'), 
+  src: local('PingFang SC'),
+       local('Helvetica Neue'),
+       local('Arial'),
        local('sans-serif');
   font-weight: normal;
   font-style: normal;
@@ -13,9 +13,9 @@
 /* 覆盖带引号的字体族名称 */
 @font-face {
   font-family: "t";
-  src: local('PingFang SC'), 
-       local('Helvetica Neue'), 
-       local('Arial'), 
+  src: local('PingFang SC'),
+       local('Helvetica Neue'),
+       local('Arial'),
        local('sans-serif');
   font-weight: normal;
   font-style: normal;

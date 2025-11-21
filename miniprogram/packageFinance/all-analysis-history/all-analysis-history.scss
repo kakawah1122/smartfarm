@@ -21,7 +21,7 @@
   flex: 1;
   padding: 24rpx;
   overflow-y: auto;
-  
+
   // 空状态
   .empty-container {
     display: flex;
@@ -29,7 +29,7 @@
     justify-content: center;
     padding: 120rpx 0;
   }
-  
+
   // 记录列表
   .history-items {
     .history-card {
@@ -39,29 +39,29 @@
       padding: 24rpx;
       box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
       transition: all 0.3s ease;
-      
+
       &:active {
         transform: scale(0.98);
         box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
       }
-      
+
       // 卡片内容
       .card-content {
         margin-bottom: 16rpx;
-        
+
         // 自定义查询
         .custom-query {
           margin-bottom: 16rpx;
           padding: 12rpx 16rpx;
           background: #f8fafb;
           border-radius: 12rpx;
-          
+
           .query-label {
             font-size: 26rpx;
             color: #86909c;
             margin-right: 8rpx;
           }
-          
+
           .query-text {
             font-size: 28rpx;
             color: #1d2129;
@@ -69,7 +69,7 @@
             line-height: 1.6;
           }
         }
-        
+
         // 分析摘要
         .summary-section {
           .summary-text {
@@ -85,7 +85,7 @@
           }
         }
       }
-      
+
       // 卡片底部
       .card-footer {
         display: flex;
@@ -93,12 +93,12 @@
         justify-content: space-between;
         padding-top: 16rpx;
         border-top: 1rpx solid #f0f1f3;
-        
+
         .analysis-date {
           font-size: 24rpx;
           color: #86909c;
         }
-        
+
         .analysis-type-tag {
           background: rgba(0, 82, 217, 0.08) !important;
           color: #0052d9 !important;
@@ -109,30 +109,30 @@
       }
     }
   }
-  
+
   // 加载更多
   .load-more {
     padding: 40rpx 0;
-    
+
     .loading-more {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 16rpx;
-      
+
       .loading-text {
         font-size: 26rpx;
         color: #86909c;
       }
     }
-    
+
     .load-more-tip {
       text-align: center;
       font-size: 26rpx;
       color: #86909c;
     }
   }
-  
+
   // 没有更多
   .no-more {
     padding: 40rpx 0;
@@ -150,7 +150,7 @@
   justify-content: center;
   min-height: 60vh;
   gap: 24rpx;
-  
+
   .loading-text {
     font-size: 28rpx;
     color: #86909c;

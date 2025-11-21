@@ -31,19 +31,19 @@
   border-radius: 12rpx;
   text-align: center;
   color: white;
-  
+
   &.primary {
     background: linear-gradient(135deg, #0d4d2d 0%, #1a5c3a 100%);
   }
-  
+
   &.success {
     background: linear-gradient(135deg, #5c1a3d 0%, #6b2a4d 100%);
   }
-  
+
   &.warning {
     background: linear-gradient(135deg, #5c3d1a 0%, #6b4a1f 100%);
   }
-  
+
   &.info {
     background: linear-gradient(135deg, #1a4d5e 0%, #2c5f6f 100%);
   }
@@ -106,7 +106,7 @@
     --td-button-height-medium: 64rpx !important;
     --td-button-medium-font-size: 26rpx !important;
   }
-  
+
   .t-button--medium,
   .t-button {
     height: 64rpx !important;
@@ -115,7 +115,7 @@
     padding: 0 12rpx !important;
     min-height: 64rpx !important;
   }
-  
+
   .t-button__text {
     font-size: 26rpx !important;
     line-height: 64rpx !important;
@@ -129,7 +129,7 @@
   color: #0052d9 !important;
   font-weight: 600 !important;
   box-shadow: none !important;
-  
+
   &:active {
     transform: scale(0.98);
     background: rgba(0, 82, 217, 0.1) !important;
@@ -139,7 +139,7 @@
 .ai-button {
   /* AI按钮特殊样式 - 继承light主题 */
   border-width: 2rpx !important;
-  
+
   &:active {
     transform: scale(0.98);
   }
@@ -148,7 +148,7 @@
 .warning-button {
   /* 警告按钮特殊样式 - 继承danger主题 */
   box-shadow: 0 4rpx 16rpx rgba(237, 123, 47, 0.2) !important;
-  
+
   &:active {
     transform: scale(0.98);
     box-shadow: 0 2rpx 8rpx rgba(237, 123, 47, 0.3) !important;
@@ -161,7 +161,7 @@
   border: 2rpx solid #5a1a7a !important;
   color: #5a1a7a !important;
   font-weight: 600 !important;
-  
+
   &:active {
     transform: scale(0.98);
     background: rgba(90, 26, 122, 0.1) !important;
@@ -200,7 +200,7 @@
   border: 2rpx solid #2d5016 !important;
   color: #2d5016 !important;
   font-weight: 600 !important;
-  
+
   &:active {
     transform: scale(0.98);
     background: rgba(45, 80, 22, 0.1) !important;
@@ -230,7 +230,7 @@
   margin-bottom: 8rpx;
   line-height: 1.4;
   flex: 1;
-  
+
   .list-card & {
     text-align: left;
   }
@@ -260,7 +260,7 @@
   justify-content: center;
   align-items: center;
   padding: 80rpx 0;
-  
+
   // 移除 t-empty 默认的图标占位
   t-empty {
     --td-empty-icon-size: 0;
@@ -319,7 +319,7 @@
   justify-content: space-between;
   gap: 32rpx;
   margin-bottom: 12rpx;
-  
+
   &:last-child {
     margin-bottom: 0;
   }
@@ -329,11 +329,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  
+
   &.left-column {
     align-items: flex-start;
   }
-  
+
   &.right-column {
     align-items: flex-end;
   }
@@ -349,7 +349,7 @@
   display: flex;
   align-items: center;
   padding: 6rpx 0;
-  
+
   &:last-child {
     padding-bottom: 0;
   }
@@ -370,7 +370,7 @@
   font-weight: 500;
   line-height: 1.6;
   word-wrap: break-word;
-  
+
   &.quantity-value {
     color: #0052d9;
     font-weight: 600;
@@ -457,22 +457,22 @@
     padding: 16rpx;
     margin-bottom: 12rpx;
   }
-  
+
   .overview-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12rpx;
   }
-  
+
   .overview-card {
     padding: 20rpx 12rpx;
     border-radius: 8rpx;
   }
-  
+
   .overview-value {
     font-size: 32rpx;
     margin-bottom: 6rpx;
   }
-  
+
   .overview-label {
     font-size: 22rpx;
   }
@@ -481,18 +481,18 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 12rpx;
   }
-  
+
   .material-overview-card {
     padding: 20rpx 12rpx;
     border-radius: 8rpx;
     min-height: 90rpx;
   }
-  
+
   .material-overview-label {
     font-size: 24rpx;
     margin-bottom: 6rpx;
   }
-  
+
   .material-overview-status {
     font-size: 20rpx;
   }
@@ -500,7 +500,7 @@
   .list-section {
     margin: 12rpx 0;
   }
-  
+
   .card,
   .list-card {
     margin: 12rpx 16rpx;
@@ -509,29 +509,29 @@
   .record-item {
     padding: 16rpx;
   }
-  
+
   .record-name {
     font-size: 28rpx;
   }
-  
+
   .info-row {
     gap: 16rpx;
   }
-  
+
   .info-group {
     min-width: 140rpx;
     flex: 0 1 auto;
     max-width: 50%;
   }
-  
+
   .info-label {
     font-size: 22rpx;
   }
-  
+
   .info-value {
     font-size: 24rpx;
   }
-  
+
   .operator-text,
   .date-text,
   .health-text {
@@ -541,7 +541,7 @@
   .record-location {
     font-size: 28rpx;
   }
-  
+
   .record-symptoms {
     font-size: 26rpx;
   }
@@ -553,28 +553,28 @@
     align-items: flex-start;
     gap: 8rpx;
   }
-  
+
   .info-group {
     width: 100%;
     min-width: auto;
     max-width: none;
   }
-  
+
   .info-grid {
     gap: 16rpx;
   }
-  
+
   .info-column {
     font-size: 24rpx;
-    
+
     &.right-column {
       align-items: flex-start;     }
   }
-  
+
   .record-name {
     font-size: 26rpx;
   }
-  
+
   .record-footer {
     flex-direction: column;
     align-items: flex-start;
@@ -584,20 +584,20 @@
   .production-overview {
     padding: 12rpx;
   }
-  
+
   .overview-grid {
     grid-template-columns: 1fr;
     gap: 8rpx;
   }
-  
+
   .overview-card {
     padding: 16rpx 10rpx;
   }
-  
+
   .overview-value {
     font-size: 28rpx;
   }
-  
+
   .overview-label {
     font-size: 20rpx;
   }
@@ -606,17 +606,17 @@
     grid-template-columns: 1fr;
     gap: 8rpx;
   }
-  
+
   .material-overview-card {
     padding: 16rpx 10rpx;
     min-height: 80rpx;
   }
-  
+
   .material-overview-label {
     font-size: 22rpx;
     margin-bottom: 6rpx;
   }
-  
+
   .material-overview-status {
     font-size: 18rpx;
   }
@@ -643,33 +643,33 @@
   align-items: center;
   min-height: 100rpx;
   transition: all 0.3s ease;
-  
+
   &:active {
     transform: scale(0.98);
     opacity: 0.9;
   }
-  
+
   &.feed-card {
     background: linear-gradient(135deg, #8b6f47 0%, #9b7f57 100%);
     color: #ffffff;
     border: 1rpx solid #7b5f37;
     box-shadow: 0 2rpx 8rpx rgba(139, 111, 71, 0.25);
   }
-  
+
   &.medicine-card {
     background: linear-gradient(135deg, #8b3d4d 0%, #9b4d5d 100%);
     color: #ffffff;
     border: 1rpx solid #7b2d3d;
     box-shadow: 0 2rpx 8rpx rgba(139, 61, 77, 0.25);
   }
-  
+
   &.equipment-card {
     background: linear-gradient(135deg, #3d5a8b 0%, #4d6a9b 100%);
     color: #ffffff;
     border: 1rpx solid #2d4a7b;
     box-shadow: 0 2rpx 8rpx rgba(61, 90, 139, 0.25);
   }
-  
+
   &.summary-card {
     background: linear-gradient(135deg, #4d3d6b 0%, #5d4d7b 100%);
     color: #ffffff;
@@ -696,14 +696,14 @@
 // AI盘点功能区域
 .ai-count-section {
   margin: 30rpx 0;
-  
+
   .ai-count-card {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border: 2rpx solid #b3e5fc;
     border-radius: 16rpx;
     overflow: hidden;
     position: relative;
-    
+
   }
 }
 
@@ -715,7 +715,7 @@
 // 相机拍照区域
 .camera-section {
   margin-bottom: 30rpx;
-  
+
   .camera-placeholder {
     background: #ffffff;
     border: 3rpx dashed #0052D9;
@@ -728,26 +728,26 @@
     gap: 16rpx;
     position: relative;
     transition: all 0.3s ease;
-    
+
     &:active {
       background: #f8faff;
       border-color: #1976D2;
       transform: scale(0.98);
     }
-    
+
     .placeholder-text {
       font-size: 32rpx;
       font-weight: 600;
       color: #0052D9;
     }
-    
+
     .placeholder-desc {
       font-size: 24rpx;
       color: #666;
       text-align: center;
     }
   }
-  
+
   .photo-preview {
     background: #ffffff;
     border-radius: 16rpx;
@@ -755,13 +755,13 @@
     box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.1);
     position: relative;
     margin-bottom: 24rpx;
-    
+
     .preview-image {
       width: 100%;
       max-height: 400rpx;
       display: block;
     }
-    
+
     .photo-close-btn {
       position: absolute;
       top: 12rpx;
@@ -775,7 +775,7 @@
       background: rgba(0, 0, 0, 0.5);
       border-radius: 50%;
       transition: all 0.3s ease;
-      
+
       // 用CSS绘制X图标
       &::before,
       &::after {
@@ -785,25 +785,25 @@
         height: 2rpx;
         background-color: #fff;
       }
-      
+
       &::before {
         transform: rotate(45deg);
       }
-      
+
       &::after {
         transform: rotate(-45deg);
       }
-      
+
       &:active {
         background: rgba(0, 0, 0, 0.7);
         transform: scale(0.92);
       }
     }
   }
-  
+
   .analyze-button-section {
     margin-bottom: 24rpx;
-    
+
     .analyze-button {
       height: 88rpx;
       font-size: 30rpx;
@@ -820,7 +820,7 @@
   padding: 24rpx;
   border: 2rpx dashed #e34d59;
   margin-top: 32rpx;
-  
+
   .tips-title {
     font-size: 26rpx;
     font-weight: 600;
@@ -828,12 +828,12 @@
     margin-bottom: 16rpx;
     display: block;
   }
-  
+
   .tips-list {
     display: flex;
     flex-direction: column;
     gap: 8rpx;
-    
+
     .tip-item {
       font-size: 24rpx;
       color: #666;
@@ -845,20 +845,20 @@
 // 识别结果区域
 .count-result {
   padding: 20rpx 30rpx 30rpx;
-  
+
   .result-header {
     display: flex;
     align-items: center;
     gap: 12rpx;
     margin-bottom: 30rpx;
-    
+
     .result-title {
       font-size: 30rpx;
       font-weight: 600;
       color: #333;
       flex: 1;
     }
-    
+
     .confidence-badge {
       background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
       color: white;
@@ -868,11 +868,11 @@
       font-weight: 500;
     }
   }
-  
+
   .result-content {
     margin-bottom: 30rpx;
   }
-  
+
   .main-result {
     background: #ffffff;
     border-radius: 16rpx;
@@ -881,82 +881,82 @@
     margin-bottom: 24rpx;
     box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
     border: 2rpx solid #e6f7ff;
-    
+
     .count-display {
       display: flex;
       justify-content: center;
       align-items: baseline;
       gap: 8rpx;
       margin-bottom: 12rpx;
-      
+
       .count-number {
         font-size: 64rpx;
         font-weight: 700;
         color: #0052D9;
         line-height: 1;
       }
-      
+
       .count-unit {
         font-size: 32rpx;
         font-weight: 500;
         color: #666;
       }
     }
-    
+
     .count-label {
       font-size: 26rpx;
       color: #666;
       font-weight: 500;
     }
   }
-  
+
   .result-details {
     background: #ffffff;
     border-radius: 12rpx;
     padding: 20rpx;
     margin-bottom: 20rpx;
     border-left: 4rpx solid #1890ff;
-    
+
     .detail-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 24rpx;
-      
+
       .detail-label {
         color: #333;
         font-weight: 500;
       }
-      
+
       .detail-value {
         color: #666;
       }
     }
   }
-  
+
   .abnormal-alert {
     background: linear-gradient(135deg, #fff2f0 0%, #ffebe8 100%);
     border: 2rpx solid #ffccc7;
     border-radius: 12rpx;
     padding: 20rpx;
     margin-bottom: 20rpx;
-    
+
     .alert-content {
       display: flex;
       align-items: center;
       gap: 8rpx;
       margin-bottom: 12rpx;
-      
+
       .alert-text {
         font-size: 26rpx;
         font-weight: 600;
         color: #ff4d4f;
       }
     }
-    
+
     .health-concerns {
       padding-left: 32rpx;
-      
+
       .concern-item {
         display: block;
         font-size: 24rpx;
@@ -966,13 +966,13 @@
       }
     }
   }
-  
+
   .suggestions {
     background: #ffffff;
     border-radius: 12rpx;
     padding: 20rpx;
     border-left: 4rpx solid #faad14;
-    
+
     .suggestions-title {
       font-size: 26rpx;
       font-weight: 600;
@@ -980,7 +980,7 @@
       margin-bottom: 12rpx;
       display: block;
     }
-    
+
     .suggestion-item {
       font-size: 24rpx;
       color: #666;
@@ -989,13 +989,13 @@
       display: block;
     }
   }
-  
+
   .result-actions {
     display: flex;
     flex-direction: column;
     gap: 20rpx;
     margin-top: 30rpx;
-    
+
     .primary-action-btn {
       height: 80rpx !important;
       border-radius: 12rpx !important;
@@ -1011,17 +1011,17 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      
+
       &:active {
         transform: scale(0.98);
         box-shadow: 0 2rpx 8rpx rgba(0, 168, 112, 0.3) !important;
       }
     }
-    
+
     .secondary-actions {
       display: flex;
       gap: 16rpx;
-      
+
       .secondary-action-btn {
         flex: 1;
         height: 64rpx !important;
@@ -1037,7 +1037,7 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        
+
         &:active {
           transform: scale(0.98);
           background: var(--td-bg-color-component-hover, #f8f8f8) !important;
@@ -1046,61 +1046,61 @@
       }
     }
   }
-  
+
 }
 
 // 响应式适配
 @media (max-width: 375px) {
-  
+
   .count-operation, .count-result {
     padding: 24rpx;
   }
-  
+
   .camera-placeholder {
     height: 320rpx;
-    
+
     .placeholder-text {
       font-size: 28rpx;
     }
-    
+
     .placeholder-desc {
       font-size: 22rpx;
     }
   }
-  
+
   .main-result {
     padding: 24rpx;
-    
+
     .count-display {
       .count-number {
         font-size: 56rpx !important;
       }
-      
+
       .count-unit {
         font-size: 28rpx !important;
       }
     }
-    
+
     .count-label {
       font-size: 24rpx !important;
     }
   }
-  
+
   .result-actions {
     gap: 16rpx;
     margin-top: 24rpx;
-    
+
     .primary-action-btn {
       height: 72rpx !important;
       font-size: 28rpx !important;
       border-radius: 10rpx !important;
       line-height: 72rpx;
     }
-    
+
     .secondary-actions {
       flex-direction: column;
       gap: 12rpx;
-      
+
       .secondary-action-btn {
         height: 60rpx !important;
         font-size: 24rpx !important;

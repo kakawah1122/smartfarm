@@ -1,7 +1,7 @@
 // ai-finance-analysis.scss - AI财务分析组件样式
 .ai-finance-analysis {
   width: 100%;
-  
+
   // 免责声明样式
   .disclaimer-banner {
     background: linear-gradient(135deg, #e3f2fd 0%, #e1f5fe 100%);
@@ -30,11 +30,11 @@
     line-height: 1.6;
     font-weight: 500;
   }
-  
+
   // 分析操作区域
   .analysis-controls {
     padding: 32rpx;
-    
+
     // 自定义查询区域
     .custom-query-section {
       margin-bottom: 32rpx;
@@ -42,7 +42,7 @@
       border-radius: 16rpx;
       padding: 24rpx;
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-      
+
       .query-input-wrapper {
         .query-textarea {
           margin-bottom: 0;
@@ -53,38 +53,38 @@
           font-size: 26rpx;
         }
       }
-      
+
       .history-tips {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-top: 16rpx;
         padding: 0 4rpx;
-        
+
         .history-count {
           font-size: 24rpx;
           color: #86909c;
         }
-        
+
         .history-link {
           font-size: 24rpx;
           color: #0052d9;
           text-decoration: underline;
           cursor: pointer;
-          
+
           &:active {
             opacity: 0.7;
           }
         }
       }
     }
-    
+
     // 快速操作区域
     .quick-actions {
       .quick-analyze-btn {
         margin-bottom: 16rpx;
       }
-      
+
       .analysis-note {
         display: block;
         font-size: 24rpx;
@@ -95,16 +95,16 @@
       }
     }
   }
-  
+
   // 结果操作栏
   .result-actions {
     margin-bottom: 24rpx;
     display: flex;
     justify-content: flex-end;
-    
-    
+
+
   }
-  
+
   // 修正分析区域
   .refinement-section {
     margin-top: 32rpx;
@@ -113,10 +113,10 @@
     border-radius: 20rpx;
     box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
     border: 2rpx solid rgba(0, 82, 217, 0.1);
-    
+
     .refinement-header {
       margin-bottom: 20rpx;
-      
+
       .refinement-title {
         display: block;
         font-size: 30rpx;
@@ -124,7 +124,7 @@
         color: #111827;
         margin-bottom: 8rpx;
       }
-      
+
       .refinement-desc {
         display: block;
         font-size: 24rpx;
@@ -132,21 +132,21 @@
         line-height: 1.5;
       }
     }
-    
+
     .refinement-input {
       margin-bottom: 20rpx;
-      
+
       .refinement-textarea {
         background: rgba(248, 250, 252, 0.6);
         border-radius: 12rpx;
       }
     }
-    
+
     .refinement-actions {
       display: flex;
       gap: 24rpx;
       width: 100%;
-      
+
       .restart-btn,
       .refine-btn {
         flex: 1;
@@ -155,19 +155,19 @@
         font-weight: 500;
         border-radius: 12rpx;
       }
-      
+
       .restart-btn {
         border: 2rpx solid #0052d9;
         color: #0052d9;
       }
-      
+
       .refine-btn {
         background: linear-gradient(135deg, #0052d9 0%, #0041a8 100%);
         box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.25);
       }
     }
   }
-  
+
   // 加载状态
   .analysis-loading {
     display: flex;
@@ -175,7 +175,7 @@
     align-items: center;
     justify-content: center;
     padding: 80rpx 40rpx;
-    
+
     .loading-text {
       margin-top: 24rpx;
       font-size: 28rpx;
@@ -186,7 +186,7 @@
   // 错误状态
   .analysis-error {
     padding: 40rpx;
-    
+
     .error-content {
       display: flex;
       flex-direction: column;
@@ -195,7 +195,7 @@
       background: #fff7e6;
       border-radius: 16rpx;
       border: 2rpx solid #ffd591;
-      
+
       .error-text {
         margin-top: 24rpx;
         margin-bottom: 32rpx;
@@ -204,13 +204,13 @@
         text-align: center;
         line-height: 1.6;
       }
-      
+
       .error-actions {
         display: flex;
         gap: 16rpx;
         width: 100%;
         justify-content: center;
-        
+
         .clear-btn,
         .retry-btn {
           min-width: 120rpx;
@@ -228,75 +228,75 @@
         padding: 24rpx;
         box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
         transition: all 0.3s ease;
-        
+
         // 盈利能力分析 - 绿色系（柔和）
         &.profitability-section {
           background: linear-gradient(135deg, #f5fbf9 0%, #ffffff 100%);
           border: 2rpx solid rgba(0, 168, 112, 0.12);
-          
+
           .section-indicator.profitability-indicator {
             background: linear-gradient(135deg, #51cf66 0%, #2ba471 100%);
           }
         }
-        
+
         // 成本结构分析 - 橙色系（柔和）
         &.cost-section {
           background: linear-gradient(135deg, #fffbf0 0%, #ffffff 100%);
           border: 2rpx solid rgba(255, 152, 0, 0.12);
-          
+
           .section-indicator.cost-indicator {
             background: linear-gradient(135deg, #ffd666 0%, #f2a20c 100%);
           }
         }
-        
+
         // 现金流分析 - 蓝色系（柔和）
         &.cashflow-section {
           background: linear-gradient(135deg, #f5fbff 0%, #ffffff 100%);
           border: 2rpx solid rgba(0, 82, 217, 0.12);
-          
+
           .section-indicator.cashflow-indicator {
             background: linear-gradient(135deg, #6bb6ff 0%, #0052d9 100%);
           }
         }
-        
+
         // 趋势分析 - 紫色系（柔和）
         &.trend-section {
           background: linear-gradient(135deg, #faf8ff 0%, #ffffff 100%);
           border: 2rpx solid rgba(123, 44, 191, 0.12);
-          
+
           .section-indicator.trend-indicator {
             background: linear-gradient(135deg, #b197fc 0%, #7b2cbf 100%);
           }
         }
-        
+
         // 风险评估 - 红色系（柔和）
         &.risk-section {
           background: linear-gradient(135deg, #fef5f5 0%, #ffffff 100%);
           border: 2rpx solid rgba(237, 55, 55, 0.12);
-          
+
           .section-indicator.risk-indicator {
             background: linear-gradient(135deg, #ff8787 0%, #e34d59 100%);
           }
         }
-        
+
         // 优化建议 - 青色系（柔和）
         &.suggestions-section {
           background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%);
           border: 2rpx solid rgba(0, 188, 212, 0.12);
-          
+
           .section-indicator.suggestions-indicator {
             background: linear-gradient(135deg, #4dd4ac 0%, #00bcd4 100%);
           }
         }
-        
+
         .section-header {
           margin-bottom: 16rpx;
           padding-bottom: 0;
-          
+
           .section-title-wrapper {
             display: flex;
             align-items: center;
-            
+
             .section-indicator {
               width: 6rpx;
               height: 28rpx;
@@ -305,7 +305,7 @@
               flex-shrink: 0;
               opacity: 0.9;
             }
-            
+
             .section-title {
               font-size: 30rpx;
               font-weight: 600;
@@ -314,7 +314,7 @@
             }
           }
         }
-        
+
         .section-content {
           .summary-text {
             font-size: 28rpx;
@@ -326,13 +326,13 @@
             border-radius: 14rpx;
             box-shadow: inset 0 1rpx 3rpx rgba(0, 0, 0, 0.04);
           }
-          
+
           .detail-item {
             margin-bottom: 12rpx;
             padding: 14rpx 18rpx;
             background: rgba(248, 250, 252, 0.4);
             border-radius: 12rpx;
-            
+
             .detail-label {
               font-size: 26rpx;
               color: #9ca3af;
@@ -340,26 +340,26 @@
               margin-bottom: 6rpx;
               display: block;
             }
-            
+
             .detail-value {
               font-size: 26rpx;
               color: #374151;
               line-height: 1.7;
               display: block;
             }
-            
+
             // 最后一个detail-item不需要下边距
             &:last-child {
               margin-bottom: 0;
             }
           }
         }
-        
+
         // 优化建议特殊样式
         &.suggestions-section {
           .suggestions-group {
             margin-top: 20rpx;
-            
+
             .suggestions-group-title {
               display: block;
               font-size: 28rpx;
@@ -368,7 +368,7 @@
               margin-bottom: 12rpx;
               padding-left: 12rpx;
               position: relative;
-              
+
               &::before {
                 content: '';
                 position: absolute;
@@ -381,7 +381,7 @@
                 border-radius: 2rpx;
               }
             }
-            
+
             .suggestions-list {
               .suggestion-item {
                 display: flex;
@@ -391,11 +391,11 @@
                 border-radius: 12rpx;
                 background: rgba(248, 250, 252, 0.4);
                 transition: background 0.2s ease;
-                
+
                 &:active {
                   background: rgba(248, 250, 252, 0.6);
                 }
-                
+
                 .suggestion-index {
                   flex-shrink: 0;
                   width: 40rpx;
@@ -404,14 +404,14 @@
                   color: #9ca3af;
                   margin-right: 12rpx;
                 }
-                
+
                 .suggestion-text {
                   flex: 1;
                   font-size: 26rpx;
                   color: #374151;
                   line-height: 1.7;
                 }
-                
+
                 // 最后一个suggestion-item不需要下边距
                 &:last-child {
                   margin-bottom: 0;
@@ -419,7 +419,7 @@
               }
             }
           }
-          
+
           // 最后一个建议section不需要下边距
           &:last-child {
             margin-bottom: 0;
@@ -427,13 +427,13 @@
         }
       }
     }
-    
+
     // 文本格式结果
     .text-result {
       padding: 32rpx;
       background: #ffffff;
       border-radius: 16rpx;
-      
+
       .text-content {
         font-size: 28rpx;
         color: #1d2129;
@@ -453,55 +453,55 @@
   height: 80vh;
   display: flex;
   flex-direction: column;
-  
+
   .history-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 32rpx;
     border-bottom: 1rpx solid #e5e8eb;
-    
+
     .history-title {
       font-size: 34rpx;
       font-weight: 600;
       color: #1d2129;
     }
-    
+
     .history-close {
       font-size: 28rpx;
       color: #0052d9;
       padding: 8rpx 16rpx;
-      
+
       &:active {
         opacity: 0.7;
       }
     }
-    
+
     .history-view-all {
       font-size: 28rpx;
       color: #0052d9;
       padding: 8rpx 16rpx;
-      
+
       &:active {
         opacity: 0.7;
       }
     }
   }
-  
+
   .history-list {
     flex: 1;
     overflow-y: auto;
-    
+
     .history-empty {
       display: flex;
       align-items: center;
       justify-content: center;
       height: 400rpx;
     }
-    
+
     .history-items {
       padding: 20rpx;
-      
+
       .history-item {
         background: #f8fafb;
         border-radius: 16rpx;
@@ -509,23 +509,23 @@
         margin-bottom: 16rpx;
         border: 1rpx solid #e5e8eb;
         transition: all 0.2s ease;
-        
+
         &:active {
           background: #f2f4f7;
           transform: scale(0.98);
         }
-        
+
         .history-item-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
           margin-bottom: 12rpx;
-          
+
           .history-item-date {
             font-size: 24rpx;
             color: #86909c;
           }
-          
+
           .history-item-type {
             font-size: 22rpx;
             color: #0052d9;
@@ -534,10 +534,10 @@
             border-radius: 8rpx;
           }
         }
-        
+
         .history-item-content {
           margin-bottom: 12rpx;
-          
+
           .history-item-query {
             display: block;
             font-size: 28rpx;
@@ -546,7 +546,7 @@
             margin-bottom: 8rpx;
             line-height: 1.5;
           }
-          
+
           .history-item-summary {
             display: block;
             font-size: 26rpx;
@@ -560,12 +560,12 @@
             -webkit-box-orient: vertical;
           }
         }
-        
+
         .history-item-footer {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          
+
           .history-item-range {
             font-size: 24rpx;
             color: #86909c;
@@ -577,11 +577,11 @@
       }
     }
   }
-  
+
   .history-actions {
     padding: 20rpx 32rpx 32rpx;
     border-top: 1rpx solid #e5e8eb;
-    
+
     .history-clear-btn {
       width: 100%;
     }

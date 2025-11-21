@@ -58,20 +58,20 @@
   padding: 20rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
   border: 1rpx solid var(--td-component-stroke, #e7e7e7);
-  
+
   .item-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12rpx;
-    
+
     .material-name {
       font-size: 32rpx;
       font-weight: 600;
       color: var(--td-text-color-primary, #000000);
       flex: 1;
     }
-    
+
     .warning-badge {
       padding: 4rpx 12rpx;
       background: var(--td-error-color-1, #ffeee6);
@@ -81,34 +81,34 @@
       white-space: nowrap;
     }
   }
-  
+
   .item-content {
     display: flex;
     flex-direction: column;
     gap: 12rpx;
-    
+
     .stock-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      
+
       .current-stock {
         display: flex;
         align-items: baseline;
         gap: 8rpx;
-        
+
         .number {
           font-size: 36rpx;
           font-weight: 700;
           color: var(--td-brand-color, #0052d9);
         }
-        
+
         .unit {
           font-size: 24rpx;
           color: var(--td-text-color-secondary, #555555);
         }
       }
-      
+
       .safety-stock {
         .label {
           font-size: 24rpx;
@@ -116,19 +116,19 @@
         }
       }
     }
-    
+
     .material-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding-top: 8rpx;
       border-top: 1rpx solid var(--td-component-stroke, #e7e7e7);
-      
+
       .supplier {
         font-size: 24rpx;
         color: var(--td-text-color-secondary, #555555);
       }
-      
+
       .purchase-date {
         font-size: 24rpx;
         color: var(--td-text-color-placeholder, #999999);

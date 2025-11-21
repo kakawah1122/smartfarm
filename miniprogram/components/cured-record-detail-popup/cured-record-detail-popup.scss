@@ -8,11 +8,11 @@
 
 .detail-section {
   margin-bottom: 32rpx !important;
-  
+
   &:last-child {
     margin-bottom: 0 !important;
   }
-  
+
   .section-title {
     font-size: 28rpx !important;
     font-weight: 600 !important;
@@ -96,22 +96,22 @@
   background: #fafafa !important;
   border-radius: 12rpx !important;
   border: 2rpx solid #e8e8e8 !important;
-  
+
   &.primary {
     background: linear-gradient(135deg, #f0faf5 0%, #e6f7f0 100%) !important;
     border-color: #00a870 !important;
-    
+
     .stat-value {
       color: #00a870 !important;
     }
   }
-  
+
   .stat-label {
     font-size: 24rpx !important;
     color: #666 !important;
     text-align: center !important;
   }
-  
+
   .stat-value {
     font-size: 36rpx !important;
     font-weight: 600 !important;
@@ -134,20 +134,20 @@
   background: #fafafa !important;
   border-radius: 12rpx !important;
   gap: 16rpx !important;
-  
+
   .cost-label {
     font-size: 26rpx !important;
     color: #666 !important;
     flex-shrink: 0 !important;
   }
-  
+
   .cost-value {
     font-size: 30rpx !important;
     font-weight: 600 !important;
     color: #333 !important;
     text-align: right !important;
     word-break: break-all !important;
-    
+
     &.primary {
       color: #0052d9 !important;
       font-size: 32rpx !important;
@@ -161,7 +161,7 @@
   padding: 24rpx !important;
   border: 1rpx solid #e8e8e8 !important;
   box-sizing: border-box !important;
-  
+
   .plan-text {
     font-size: 26rpx !important;
     color: #333 !important;
@@ -187,7 +187,7 @@
   border-radius: 12rpx !important;
   box-sizing: border-box !important;
   gap: 16rpx !important;
-  
+
   .med-name {
     font-size: 28rpx !important;
     font-weight: 600 !important;
@@ -196,7 +196,7 @@
     word-break: break-all !important;
     overflow-wrap: break-word !important;
   }
-  
+
   .med-dosage {
     font-size: 26rpx !important;
     color: #666 !important;
@@ -206,7 +206,7 @@
     overflow-wrap: break-word !important;
     justify-self: center !important;
   }
-  
+
   .med-spec {
     font-size: 26rpx !important;
     color: #0052d9 !important;

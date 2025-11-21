@@ -297,7 +297,7 @@
   top: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to right, 
+  background: linear-gradient(to right,
     #00e400 0%,         #84cc16 16.67%,     #ffff00 33.33%,     #ff7e00 50%,        #ff0000 66.67%,     #99004c 83.33%,     #7e0023 100%    /* 严重污染 深红色 */
   );
   border-radius: 4rpx;
@@ -536,29 +536,29 @@
   .card {
     margin: 12rpx 24rpx;
   }
-  
+
   .current-weather-card {
     margin-left: 24rpx !important;
     margin-right: 24rpx !important;
   }
-  
+
   .card-header {
     padding: 16rpx 20rpx;
   }
-  
+
   .card-content {
     padding: 20rpx;
   }
-  
+
   .hourly-item {
     min-width: 80rpx;
     padding: 16rpx 12rpx;
   }
-  
+
   .metrics-grid-custom {
     gap: 12rpx;
   }
-  
+
   .daily-item {
     padding: 16rpx 20rpx;
   }

@@ -49,7 +49,7 @@
   padding: 0;
   border: none;
   overflow: hidden;
-  
+
   &::after {
     border: none;
   }
@@ -84,7 +84,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
-  
+
   &:active {
     opacity: 0.7;
   }
@@ -131,7 +131,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20rpx;
-  
+
   .card-title {
     margin-bottom: 0;
   }
@@ -144,7 +144,7 @@
   padding: 8rpx 16rpx;
   border-radius: 8rpx;
   transition: all 0.3s;
-  
+
   &:active {
     background: rgba(0, 82, 217, 0.1);
   }
@@ -166,13 +166,13 @@
   text-align: left;
   display: block;
   padding: 0 32rpx;
-  
+
   /* 移除所有可能的伪元素图标 */
   &::before,
   &::after {
     content: none !important;
   }
-  
+
   /* 确保文本左对齐，移除任何默认缩进 */
   text {
     display: inline;
@@ -200,11 +200,11 @@
   padding: 20rpx 0;
   border-bottom: 1rpx solid #f5f5f5;
   transition: background 0.2s;
-  
+
   &:last-child {
     border-bottom: none;
   }
-  
+
   &:active {
     background: #f8f9fa;
     margin: 0 -32rpx;
@@ -268,7 +268,7 @@
   font-weight: 500;
   margin-bottom: 32rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2);
-  
+
   &::after {
     border: none;
   }
@@ -285,7 +285,7 @@
   font-size: 28rpx;
   font-weight: 500;
   box-shadow: 0 4rpx 12rpx rgba(227, 77, 89, 0.2);
-  
+
   &::after {
     border: none;
   }
@@ -320,7 +320,7 @@
 .picker-wrapper {
   display: block;
   border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7);
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -332,7 +332,7 @@
   justify-content: space-between;
   min-height: 60rpx; /* 优化：缩小高度 */
   padding: 12rpx 20rpx; /* 优化：缩小内边距 */
-  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0); 
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
   &:last-child {
     border-bottom: none;
   }
@@ -348,7 +348,7 @@
   margin-right: 16rpx; /* 优化：缩小间距 */
   flex-shrink: 0;
   line-height: 44rpx;
-  
+
   /* 必填标识 */
   &.required::after {
     content: ' *';
@@ -368,7 +368,7 @@
   text-align: right;
   min-width: 0; /* 确保输入框不会超出flex容器 */
   box-sizing: border-box;
-  
+
   &::placeholder {
     color: var(--td-text-color-placeholder, #999);
   }
@@ -385,7 +385,7 @@
   min-height: 80rpx; /* 优化：减小最小高度，配合 auto-height */
   line-height: 1.6;
   box-sizing: border-box;
-  
+
   &::placeholder {
     color: var(--td-text-color-placeholder, #999);
   }
@@ -408,13 +408,13 @@
   display: block;
   padding: 16rpx; /* 优化：缩小内边距 */
   border-bottom: none;
-  
+
   .form-label {
     display: block;
     margin-bottom: 12rpx; /* 优化：缩小间距 */
     min-width: auto;
   }
-  
+
   .form-textarea {
     width: 100%;
   }

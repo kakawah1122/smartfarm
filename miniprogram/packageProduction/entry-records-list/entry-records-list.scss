@@ -162,33 +162,33 @@ page {
     padding: 0 12rpx;
     padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx);
   }
-  
+
   .search-section,
   .stats-section {
     margin-left: 0;
     margin-right: 0;
   }
-  
+
   .record-item {
     padding: 16rpx;
   }
-  
+
   .record-name {
     font-size: 28rpx;
   }
-  
+
   .info-grid {
     gap: 24rpx;
   }
-  
+
   .info-label {
     font-size: 24rpx;
   }
-  
+
   .info-value {
     font-size: 26rpx;
   }
-  
+
   .operator-text,
   .date-text {
     font-size: 24rpx;
@@ -200,19 +200,19 @@ page {
     flex-direction: column;
     gap: 8rpx;
   }
-  
+
   .info-column {
     width: 100%;
-    
+
     &.right-column {
       align-items: flex-start;
     }
   }
-  
+
   .record-name {
     font-size: 26rpx;
   }
-  
+
   .record-footer {
     flex-direction: column;
     align-items: flex-start;

@@ -22,12 +22,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   .day-label {
     font-size: 28rpx;
     color: #666;
   }
-  
+
   .day-value {
     font-size: 32rpx;
     font-weight: 600;
@@ -38,24 +38,24 @@
 // 表单区域
 .form-section {
   margin: 24rpx;
-  
+
   .form-item {
     margin-bottom: 32rpx;
-    
+
     .form-label {
       font-size: 28rpx;
       color: #333;
       margin-bottom: 16rpx;
       display: flex;
       align-items: center;
-      
+
       &.required::before {
         content: '*';
         color: #fa5151;
         margin-right: 8rpx;
       }
     }
-    
+
     .picker-value {
       display: flex;
       justify-content: space-between;
@@ -66,30 +66,30 @@
       border: 2rpx solid #f0f0f0;
       font-size: 28rpx;
       color: #333;
-      
+
       text {
         flex: 1;
       }
     }
-    
+
     .input-group {
       display: flex;
       align-items: center;
       background: #fff;
       border-radius: 12rpx;
       padding-right: 24rpx;
-      
+
       t-input {
         flex: 1;
       }
-      
+
       .input-suffix {
         font-size: 28rpx;
         color: #999;
         margin-left: 16rpx;
       }
     }
-    
+
     t-input, t-textarea {
       background: #fff;
       border-radius: 12rpx;

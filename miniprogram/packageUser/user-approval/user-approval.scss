@@ -148,7 +148,7 @@ $spacing-xl: 40rpx;
 
 .invite-info {
   margin-top: $spacing-xs;
-  
+
   .invite-text {
     font-size: 22rpx;
     color: $text-secondary;
@@ -182,7 +182,7 @@ $spacing-xl: 40rpx;
   align-items: flex-start;
   padding: $spacing-s 0;
   border-bottom: 1rpx solid $border-color-light;
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -207,15 +207,15 @@ $spacing-xl: 40rpx;
   display: flex;
   justify-content: space-around;
   padding: $spacing-l 0;
-  
+
   .stat-item {
     text-align: center;
-    
+
     .stat-number {
       font-size: 36rpx;
       color: $success-color;
     }
-    
+
     .stat-label {
       font-size: 22rpx;
     }
@@ -226,7 +226,7 @@ $spacing-xl: 40rpx;
   display: flex;
   gap: $spacing-s;
   margin-top: $spacing-l;
-  
+
   .action-btn {
     flex: 1;
     height: 72rpx !important;
@@ -243,7 +243,7 @@ $spacing-xl: 40rpx;
 
 .form-item {
   margin-bottom: $spacing-l;
-  
+
   .form-label {
     display: block;
     font-size: 28rpx;
@@ -251,7 +251,7 @@ $spacing-xl: 40rpx;
     margin-bottom: $spacing-s;
     font-weight: 500;
   }
-  
+
   .form-label-required::after {
     content: ' *';
     color: $error-color;
@@ -263,7 +263,7 @@ $spacing-xl: 40rpx;
   background: rgba($warning-color, 0.1);
   border-radius: 12rpx;
   margin-bottom: $spacing-l;
-  
+
   text {
     font-size: 28rpx;
     color: $warning-color;
@@ -276,7 +276,7 @@ $spacing-xl: 40rpx;
   background: rgba($primary-color, 0.1);
   border-radius: 12rpx;
   margin-bottom: $spacing-l;
-  
+
   text {
     font-size: 28rpx;
     color: $primary-color;
@@ -286,25 +286,25 @@ $spacing-xl: 40rpx;
 
 .t-cell {
   padding: $spacing-l !important;
-  
+
   &__title {
     font-size: 30rpx !important;
     font-weight: 500 !important;
     color: $text-primary !important;
   }
-  
+
   &__note {
     font-size: 26rpx !important;
     color: $text-secondary !important;
     margin-top: $spacing-xs !important;
   }
-  
+
   &__description {
     font-size: 24rpx !important;
     color: $text-placeholder !important;
     margin-top: $spacing-xs !important;
   }
-  
+
   &__image {
     width: 80rpx !important;
     height: 80rpx !important;
@@ -316,27 +316,27 @@ $spacing-xl: 40rpx;
   border-radius: 8rpx !important;
   font-size: 22rpx !important;
   padding: 4rpx 12rpx !important;
-  
+
   &--default {
     background: rgba(0, 0, 0, 0.06) !important;
     color: $text-secondary !important;
   }
-  
+
   &--primary {
     background: rgba(0, 82, 217, 0.1) !important;
     color: $primary-color !important;
   }
-  
+
   &--success {
     background: rgba(0, 168, 112, 0.1) !important;
     color: $success-color !important;
   }
-  
+
   &--warning {
     background: rgba(237, 123, 47, 0.1) !important;
     color: $warning-color !important;
   }
-  
+
   &--danger {
     background: rgba(213, 73, 65, 0.1) !important;
     color: $error-color !important;
@@ -348,11 +348,11 @@ $spacing-xl: 40rpx;
     background: $bg-color-container !important;
     border-bottom: 1rpx solid $border-color-light !important;
   }
-  
+
   &__item {
     font-size: 28rpx !important;
     padding: $spacing-l !important;
-    
+
     &--active {
       color: $primary-color !important;
       font-weight: 500 !important;
@@ -366,11 +366,11 @@ $spacing-xl: 40rpx;
     background: $bg-color-page !important;
     border: 1rpx solid $border-color-light !important;
   }
-  
+
   &__input {
     font-size: 28rpx !important;
     color: $text-primary !important;
-    
+
     &::placeholder {
       color: $text-placeholder !important;
     }
@@ -383,7 +383,7 @@ $spacing-xl: 40rpx;
     border-radius: 12rpx !important;
     background: $bg-color-page !important;
     font-size: 28rpx !important;
-    
+
     &::placeholder {
       color: $text-placeholder !important;
     }
@@ -397,7 +397,7 @@ $spacing-xl: 40rpx;
     background: $bg-color-page !important;
     font-size: 28rpx !important;
     min-height: 120rpx !important;
-    
+
     &::placeholder {
       color: $text-placeholder !important;
     }
@@ -432,7 +432,7 @@ checkbox {
 
 .t-cell {
   transition: background-color 0.2s ease;
-  
+
   &:active {
     background: rgba(0, 0, 0, 0.02) !important;
   }

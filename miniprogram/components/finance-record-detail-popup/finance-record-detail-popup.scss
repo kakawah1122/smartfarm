@@ -74,11 +74,11 @@
   margin: 0 !important;
   padding: 0 !important;
   vertical-align: baseline !important;
-  
+
   &.income {
     color: #FF6B6B !important; // 收入显示红色
   }
-  
+
   &.expense {
     color: #52C41A !important; // 支出显示绿色
   }
@@ -93,7 +93,7 @@
 
 .record-detail-content .info-row:has(.note-text) {
   align-items: flex-start !important;
-  
+
   .info-label {
     padding-top: 2rpx !important;
   }

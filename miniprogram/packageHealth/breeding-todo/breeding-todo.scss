@@ -236,7 +236,7 @@ page {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-xl, 32rpx);
-  
+
   .header-actions {
     display: flex;
     align-items: center;
@@ -1512,12 +1512,12 @@ page {
   .overview-stats {
     flex-direction: column;
   }
-  
+
   .batch-status-info {
     flex-direction: column;
     gap: var(--spacing-sm, 8rpx);
   }
-  
+
 }
 
 @media (orientation: landscape) {
@@ -1534,36 +1534,36 @@ page {
   --color-warning: #ed7b2f;
   --color-error: #d54941;
   --color-info: #0075ff;
-  
+
   --color-text-primary: #1f2937;
   --color-text-secondary: #6b7280;
   --color-text-tertiary: #9ca3af;
-  
+
   --color-bg-primary: #ffffff;
   --color-border-level-1: #e5e7eb;
-  
+
   --font-size-xs: 20rpx;
   --font-size-sm: 24rpx;
   --font-size-base: 28rpx;
   --font-size-lg: 32rpx;
   --font-size-xl: 40rpx;
-  
+
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   --spacing-xs: 4rpx;
   --spacing-sm: 8rpx;
   --spacing-base: 16rpx;
   --spacing-lg: 24rpx;
   --spacing-xl: 32rpx;
-  
+
   --radius-sm: 6rpx;
   --radius-base: 12rpx;
   --radius-lg: 16rpx;
   --radius-xl: 24rpx;
-  
+
   --shadow-base: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
 }
@@ -1573,10 +1573,10 @@ page {
   max-height: 75vh;
   overflow-y: auto;
   background: #ffffff;
-  
+
   .form-section {
     margin-bottom: 32rpx;
-    
+
     .section-title {
       font-size: 30rpx;
       font-weight: 600;
@@ -1593,7 +1593,7 @@ page {
       -webkit-backdrop-filter: blur(10rpx);
       box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.08);
     }
-    
+
     // 表单行 - 类似任务详情的 info-row 样式
     .form-row {
       display: flex;
@@ -1602,11 +1602,11 @@ page {
       padding: 20rpx 32rpx;
       min-height: 88rpx;
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       // 标签样式 - 类似 info-label
       .form-label {
         flex-shrink: 0;
@@ -1614,7 +1614,7 @@ page {
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
         margin-right: 24rpx;
-        
+
         // 处理必填星号（通过JavaScript动态添加）
         &.required::after {
           content: " *";
@@ -1622,7 +1622,7 @@ page {
           font-weight: 600;
         }
       }
-      
+
       // 输入框样式 - 类似 info-value
       .form-input, .form-textarea {
         flex: 1;
@@ -1634,20 +1634,20 @@ page {
         background: #ffffff;
         text-align: right;
         min-height: 44rpx !important;
-        
+
         &:focus {
           border-color: var(--td-brand-color, #0052d9);
           box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1);
           outline: none;
         }
-        
+
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 26rpx;
         }
       }
-      
+
       // 文本域特殊处理
       .form-textarea {
         min-height: 60rpx;
@@ -1656,12 +1656,12 @@ page {
         resize: none;
         text-align: left;
         line-height: 1.6;
-        
+
         &::placeholder {
           text-align: left;
         }
       }
-      
+
       // 选择器样式 - 类似 info-value
       .picker-input {
         flex: 1;
@@ -1676,7 +1676,7 @@ page {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-        
+
         &::after {
           content: '';
           width: 12rpx;
@@ -1688,7 +1688,7 @@ page {
           flex-shrink: 0;
         }
       }
-      
+
       // 只读字段样式 - 突出显示金额等重要信息
       .readonly-input {
         flex: 1;
@@ -1703,18 +1703,18 @@ page {
         border: 1rpx solid rgba(0, 82, 217, 0.2);
         min-height: 44rpx;
       }
-      
+
       // 描述和备注行特殊处理
       &.textarea-row {
         align-items: flex-start;
-        
+
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-  
+
   // 错误提示样式
   .form-errors {
     margin: 24rpx 32rpx;
@@ -1723,18 +1723,18 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(227, 77, 89, 0.3);
     box-shadow: 0 2rpx 8rpx rgba(227, 77, 89, 0.1);
-    
+
     .error-text {
       display: block;
       color: var(--td-error-color, #e34d59);
       font-size: 26rpx;
       line-height: 1.5;
       margin-bottom: 8rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       &::before {
         content: "• ";
         color: var(--td-error-color, #e34d59);
@@ -1749,31 +1749,31 @@ page {
   padding: 0;
   max-height: 70vh;
   overflow-y: auto;
-  
+
   .info-card {
     margin: 0 var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
     background: #f0f9ff;
     border: 1rpx solid #b3d8ff;
     border-radius: var(--radius-lg);
-    
+
     .card-content {
       padding: var(--spacing-lg);
-      
+
       .info-row {
         display: flex;
         align-items: center;
         margin-bottom: var(--spacing-base);
-        
+
         &:last-child {
           margin-bottom: 0;
         }
-        
+
         .info-label {
           font-size: var(--font-size-base);
           color: var(--color-text-secondary);
           margin-right: var(--spacing-lg);
         }
-        
+
         .info-value {
           font-size: var(--font-size-base);
           color: var(--color-text-primary);
@@ -1792,10 +1792,10 @@ page {
   /* GPU加速优化 */
   transform: translateZ(0);
   will-change: scroll-position;
-  
+
   .form-section {
     margin-bottom: 20rpx; // 优化：从32rpx减小到20rpx
-    
+
     .section-title {
       font-size: 28rpx; // 优化：从30rpx减小到28rpx
       font-weight: 600;
@@ -1806,7 +1806,7 @@ page {
       border-radius: 8rpx; // 优化：移除顶部圆角限制
       word-break: break-all;
     }
-    
+
     .form-row {
       display: flex;
       align-items: center;
@@ -1814,11 +1814,11 @@ page {
       padding: 16rpx 20rpx; // 优化：减小内边距
       min-height: 80rpx; // 优化：从88rpx减小
       border-bottom: 1rpx solid #f0f0f0; // 优化：统一边框颜色
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .form-label {
         flex-shrink: 0;
         font-size: 26rpx; // 优化：从28rpx减小
@@ -1826,14 +1826,14 @@ page {
         line-height: 1.4;
         margin-right: 16rpx; // 优化：从24rpx减小
         width: 160rpx; // 优化：从180rpx减小
-        
+
         &.required::after {
           content: " *";
           color: #e34d59;
           font-weight: 600;
         }
       }
-      
+
       .form-input, .form-textarea {
         flex: 1;
         padding: 10rpx 12rpx !important; // 优化：增加内边距
@@ -1844,21 +1844,21 @@ page {
         background: #fafafa; // 优化：浅灰背景
         text-align: right;
         min-height: 44rpx !important;
-        
+
         &:focus {
           border-color: #0052d9; // 蓝色边框
           box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1); // 蓝色阴影
           outline: none;
           background: #ffffff; // 聚焦时白色背景
         }
-        
+
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 26rpx;
         }
       }
-      
+
       .form-textarea {
         min-height: 60rpx;
         max-height: 200rpx;
@@ -1866,12 +1866,12 @@ page {
         resize: none;
         text-align: left;
         line-height: 1.6;
-        
+
         &::placeholder {
           text-align: left;
         }
       }
-      
+
       .picker-input {
         flex: 1;
         display: flex;
@@ -1885,7 +1885,7 @@ page {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-        
+
         &::after {
           content: '';
           width: 12rpx;
@@ -1897,7 +1897,7 @@ page {
           flex-shrink: 0;
         }
       }
-      
+
       .unit-text {
         position: absolute;
         right: 24rpx;
@@ -1907,7 +1907,7 @@ page {
         color: var(--color-text-tertiary);
         pointer-events: none;
       }
-      
+
       .error-text {
         display: block;
         font-size: 24rpx;
@@ -1915,40 +1915,40 @@ page {
         margin-top: 8rpx;
         line-height: 1.4;
       }
-      
+
       &.textarea-row {
         align-items: flex-start;
-        
+
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-  
+
   .medicine-info {
     margin: 16rpx 20rpx; // 优化：减小外边距
     padding: 16rpx; // 优化：从20rpx减小
     background: #fafafa; // 优化：简洁的浅灰背景
     border-radius: 12rpx;
     border: 1rpx solid #f0f0f0; // 优化：统一边框颜色
-    
+
     .info-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8rpx 0;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .info-label {
         font-size: 26rpx;
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
       }
-      
+
       .info-value {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
@@ -1957,7 +1957,7 @@ page {
       }
     }
   }
-  
+
   .form-errors {
     margin: 24rpx 32rpx;
     padding: 20rpx;
@@ -1965,21 +1965,21 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(227, 77, 89, 0.3);
     box-shadow: 0 2rpx 8rpx rgba(227, 77, 89, 0.1);
-    
+
     .error-item {
       margin-bottom: 8rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .error-text {
         display: block;
         color: var(--td-error-color, #e34d59);
         font-size: 26rpx;
         line-height: 1.5;
         margin: 0;
-        
+
         &::before {
           content: "• ";
           color: var(--td-error-color, #e34d59);
@@ -1999,10 +1999,10 @@ page {
   /* GPU加速优化 */
   transform: translateZ(0);
   will-change: scroll-position;
-  
+
   .form-section {
     margin-bottom: 32rpx;
-    
+
     .section-title {
       font-size: 30rpx;
       font-weight: 600;
@@ -2019,7 +2019,7 @@ page {
       -webkit-backdrop-filter: blur(10rpx);
       box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.08);
     }
-    
+
     .form-row {
       display: flex;
       align-items: center;
@@ -2027,11 +2027,11 @@ page {
       padding: 20rpx 32rpx;
       min-height: 88rpx;
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .form-label {
         flex-shrink: 0;
         font-size: 28rpx;
@@ -2039,14 +2039,14 @@ page {
         line-height: 1.4;
         margin-right: 24rpx;
         width: 180rpx;
-        
+
         &.required::after {
           content: " *";
           color: var(--td-error-color, #e34d59);
           font-weight: 600;
         }
       }
-      
+
       .form-input, .form-textarea {
         flex: 1;
         padding: 8rpx 12rpx !important;
@@ -2057,20 +2057,20 @@ page {
         background: #ffffff;
         text-align: right;
         min-height: 44rpx !important;
-        
+
         &:focus {
           border-color: #10b981;
           box-shadow: 0 0 0 2rpx rgba(16, 185, 129, 0.1);
           outline: none;
         }
-        
+
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 26rpx;
         }
       }
-      
+
       .form-textarea {
         min-height: 60rpx;
         max-height: 200rpx;
@@ -2078,12 +2078,12 @@ page {
         resize: none;
         text-align: left;
         line-height: 1.6;
-        
+
         &::placeholder {
           text-align: left;
         }
       }
-      
+
       .picker-input {
         flex: 1;
         display: flex;
@@ -2097,7 +2097,7 @@ page {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-        
+
         &::after {
           content: '';
           width: 12rpx;
@@ -2109,7 +2109,7 @@ page {
           flex-shrink: 0;
         }
       }
-      
+
       .unit-text {
         position: absolute;
         right: 24rpx;
@@ -2119,7 +2119,7 @@ page {
         color: var(--color-text-tertiary);
         pointer-events: none;
       }
-      
+
       .error-text {
         display: block;
         font-size: 24rpx;
@@ -2127,17 +2127,17 @@ page {
         margin-top: 8rpx;
         line-height: 1.4;
       }
-      
+
       &.textarea-row {
         align-items: flex-start;
-        
+
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-  
+
   .nutrition-info {
     margin: 24rpx 32rpx;
     padding: 20rpx;
@@ -2145,23 +2145,23 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(16, 185, 129, 0.2);
     box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.1);
-    
+
     .info-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8rpx 0;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .info-label {
         font-size: 26rpx;
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
       }
-      
+
       .info-value {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
@@ -2170,7 +2170,7 @@ page {
       }
     }
   }
-  
+
   .form-errors {
     margin: 24rpx 32rpx;
     padding: 20rpx;
@@ -2178,21 +2178,21 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(227, 77, 89, 0.3);
     box-shadow: 0 2rpx 8rpx rgba(227, 77, 89, 0.1);
-    
+
     .error-item {
       margin-bottom: 8rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .error-text {
         display: block;
         color: var(--td-error-color, #e34d59);
         font-size: 26rpx;
         line-height: 1.5;
         margin: 0;
-        
+
         &::before {
           content: "• ";
           color: var(--td-error-color, #e34d59);
@@ -2232,29 +2232,29 @@ page {
         align-items: stretch;
         padding: 16rpx 24rpx;
         min-height: auto;
-        
+
         .form-label {
           width: auto;
           margin-right: 0;
           margin-bottom: 12rpx;
           font-size: 26rpx;
         }
-        
+
         .form-input, .form-textarea, .readonly-input, .picker-input {
           width: 100%;
           text-align: left;
-          
+
           &::placeholder {
             text-align: left;
           }
         }
-        
+
         .form-textarea {
           &::placeholder {
             text-align: left;
           }
         }
-        
+
         .unit-text {
           position: static;
           transform: none;
@@ -2262,29 +2262,29 @@ page {
           align-self: flex-end;
         }
       }
-      
+
       .section-title {
         font-size: 28rpx;
         padding: 20rpx 24rpx 12rpx 24rpx;
       }
     }
-    
+
     .medicine-info, .nutrition-info, .form-errors {
       margin: 20rpx 24rpx;
       padding: 16rpx;
     }
   }
-  
+
   .input-with-unit {
     flex-direction: row;
     align-items: center;
-    
+
     .form-input {
       flex: 1;
       padding-right: 60rpx;
       text-align: left;
     }
-    
+
     .unit-text {
       position: absolute;
       right: 16rpx;
@@ -2299,13 +2299,13 @@ page {
   display: flex;
   align-items: center;
   flex: 1;
-  
+
   .form-input {
     flex: 1;
     padding-right: 80rpx; // 为单位文本留出空间
     text-align: left; // 覆盖右对齐，避免与单位重叠
   }
-  
+
   .unit-text {
     position: absolute;
     right: 24rpx;
@@ -2325,7 +2325,7 @@ page {
   color: #666 !important;
   cursor: not-allowed;
   position: relative;
-  
+
   &::after {
     content: "";
     position: absolute;

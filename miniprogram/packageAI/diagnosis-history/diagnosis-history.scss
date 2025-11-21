@@ -261,24 +261,24 @@
     padding: 12rpx;
     background: rgba(255, 255, 255, 0.8);
     border-radius: 8rpx;
-    
+
     .medication-icon {
       font-size: 32rpx;
       flex-shrink: 0;
     }
-    
+
     .medication-info {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4rpx;
-      
+
       .medication-name {
         font-size: 26rpx;
         color: #333;
         font-weight: 500;
       }
-      
+
       .medication-detail {
         font-size: 24rpx;
         color: #999;
@@ -296,7 +296,7 @@
 .star-display {
   font-size: 32rpx;
   color: #e0e0e0;
-  
+
   &.active {
     color: #ffa726;
   }
@@ -322,7 +322,7 @@
   border-radius: 12rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
-  
+
   &:active {
     opacity: 0.8;
     transform: scale(0.98);
@@ -346,11 +346,11 @@
   .records-container {
     padding: 16rpx;
   }
-  
+
   .record-item {
     padding: 20rpx;
   }
-  
+
   .record-name {
     font-size: 30rpx;
   }

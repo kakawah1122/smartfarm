@@ -2,7 +2,7 @@
 .health-care-page {
   background-color: #f5f5f5;
   min-height: 100vh;
-  
+
   .page-container {
     padding: 32rpx 32rpx 0;
     padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
@@ -165,16 +165,16 @@
   display: flex;
   gap: 24rpx;
   padding: 32rpx 0;
-  
+
   .t-button {
     flex: 1;
-    
+
     &.t-button--light {
       --td-button-light-color: #666;
       --td-button-light-border-color: #d0d0d0;
       --td-button-light-bg-color: #fff;
     }
-    
+
     &.t-button--primary {
       --td-button-primary-bg-color: #0052d9;
       --td-button-primary-border-color: #0052d9;
@@ -212,17 +212,17 @@
 @media (prefers-color-scheme: dark) {
   .health-care-page {
     background-color: #1a1a1a;
-    
+
     .form-container {
       background: #2a2a2a;
       color: #fff;
     }
-    
+
     .section-title {
       background: #333;
       color: #fff;
     }
-    
+
     .form-item .form-label {
       color: #fff;
     }
