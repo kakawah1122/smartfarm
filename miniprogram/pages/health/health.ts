@@ -23,6 +23,7 @@ import { createVaccineModule, VaccineModuleManager } from './modules/health-vacc
 import { createMonitoringModule, MonitoringModuleManager } from './modules/health-monitoring-module'
 import { createPreventionModule, PreventionModuleManager } from './modules/health-prevention-module'
 import { createSetDataWrapper, SetDataWrapper } from './helpers/setdata-wrapper'
+import { performanceAnalyzer } from '../../utils/performance-analyzer'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -613,6 +614,9 @@ Page<PageData, any>({
    * 页面显示时刷新数据并启动实时监听（优化：增加EventChannel监听）
    */
   onShow() {
+    // ✅ 性能分析：开始监控
+    performanceAnalyzer.startAnalysis('health')
+    
     // 延迟启动监听器，避免快速切换页面时的竞态条件
     // 使用 wx.nextTick 确保页面完全渲染后再启动
     wx.nextTick(() => {
@@ -620,6 +624,13 @@ Page<PageData, any>({
       setTimeout(() => {
         // 启动实时数据监听（只在页面可见时监听，节省资源）
         this.startDataWatcher()
+        
+        // ✅ 性能分析：生成报告
+        const report = performanceAnalyzer.generateReport()
+        if (report.score < 70) {
+          console.warn('⚠️ 健康页面性能需要优化')
+          performanceAnalyzer.printReport(report)
+        }
       }, 100)
     })
     
