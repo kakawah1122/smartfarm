@@ -213,7 +213,19 @@
             wx:key="index"
             class="voucher-item"
           >
-            <image class="voucher-image" src="{{item.tempPath}}" mode="aspectFill" />
+            <lazy-load 
+  threshold="200"
+  minHeight="200rpx"
+  showLoading="true"
+  customClass="voucher-image"
+>
+  <image 
+    src="{{item.tempPath}}"
+    mode="aspectFill"
+    class="voucher-image"
+    slot="content"
+  />
+</lazy-load>
             <view class="voucher-remove" bind:tap="removeVoucher" data-index="{{index}}">×</view>
           </view>
           <view 

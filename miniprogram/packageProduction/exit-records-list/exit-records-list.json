@@ -2,7 +2,8 @@
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
     "bottom-popup": "/components/bottom-popup/bottom-popup",
-    "exit-record-detail-popup": "/components/exit-record-detail-popup/exit-record-detail-popup"
+    "exit-record-detail-popup": "/components/exit-record-detail-popup/exit-record-detail-popup",
+    "lazy-load": "../../../../../../../../../components/lazy-load/lazy-load"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

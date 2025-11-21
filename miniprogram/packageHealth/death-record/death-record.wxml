@@ -133,13 +133,19 @@
           wx:for="{{autopsyImages}}" 
           wx:key="index"
         >
-          <image 
-            src="{{item}}"
-            mode="aspectFill"
-            class="autopsy-image"
-            bindtap="onPreviewAutopsyImage"
-            data-src="{{item}}"
-          />
+          <lazy-load 
+  threshold="200"
+  minHeight="200rpx"
+  showLoading="true"
+  customClass="autopsy-image"
+>
+  <image 
+    src="{{item}}"
+    mode="aspectFill"
+    class="autopsy-image"
+    slot="content"
+  />
+</lazy-load>
           <view 
             class="image-delete"
             bindtap="onDeleteAutopsyImage"

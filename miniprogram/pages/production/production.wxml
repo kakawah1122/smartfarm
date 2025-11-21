@@ -165,7 +165,19 @@
                 </view>
                 
                 <view wx:else class="photo-preview">
-                  <image src="{{aiCount.imageUrl}}" mode="aspectFit" class="preview-image" bind:tap="retakePhoto" />
+                  <lazy-load 
+  threshold="200"
+  minHeight="200rpx"
+  showLoading="true"
+  customClass="preview-image"
+>
+  <image 
+    src="{{aiCount.imageUrl}}"
+    mode="aspectFit"
+    class="preview-image"
+    slot="content"
+  />
+</lazy-load>
                   <view class="photo-close-btn" catchtap="deletePhoto"></view>
                 </view>
               </view>
