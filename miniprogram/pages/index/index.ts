@@ -6,6 +6,7 @@ import {
 } from '../../utils/breeding-schedule'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
+import { createSetDataWrapper, SetDataWrapper } from '../health/helpers/setdata-wrapper'
 
 // 导入辅助函数
 const checkPageAuth = () => {
@@ -193,6 +194,9 @@ interface VaccineFormData {
 type PriceBreed = { key: string; label: string }
 
 Page({
+  // 优化器实例
+  setDataWrapper: null as SetDataWrapper | null,
+  
   data: {
     // 状态栏信息
     statusBarHeight: 44,
@@ -305,6 +309,9 @@ Page({
     if (!checkPageAuth()) {
       return // 如果未登录，停止页面加载
     }
+    
+    // ✅ 性能优化：初始化setData包装器
+    this.setDataWrapper = createSetDataWrapper(this)
     
     // 设置自定义导航栏高度
     const app = getApp()
@@ -2672,6 +2679,17 @@ Page({
       })
     } catch (error) {
       wx.showToast({ title: '文章打开失败', icon: 'none' })
+    }
+  },
+  
+  /**
+   * 页面卸载时清理资源
+   * ✅ 性能优化：清理setData包装器
+   */
+  onUnload() {
+    if (this.setDataWrapper) {
+      this.setDataWrapper.destroy()
+      this.setDataWrapper = null
     }
   }
 })

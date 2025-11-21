@@ -13,6 +13,7 @@ import type {
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
+import { createSetDataWrapper, SetDataWrapper } from '../health/helpers/setdata-wrapper'
 
 // 导入模块化管理器
 import { setupNavigationHandlers } from './modules/production-navigation-module'
@@ -52,6 +53,9 @@ type ProductionPageData = WechatMiniprogram.Page.DataOption & {
 }
 
 const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: ProductionPageData } = {
+  // 优化器实例
+  setDataWrapper: null as SetDataWrapper | null,
+  
   data: {
     activeTab: 'entry',
     
@@ -151,6 +155,9 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
     // 🎯 性能优化：分步加载
     const startTime = Date.now()
     logger.info('生产页面开始加载')
+    
+    // ✅ 性能优化：初始化setData包装器
+    this.setDataWrapper = createSetDataWrapper(this)
     
     // 初始化导航处理器
     setupNavigationHandlers(this)
@@ -1281,6 +1288,17 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         selectedMaterialRecord: null
       })
     }, 300)
+  },
+  
+  /**
+   * 页面卸载时清理资源
+   * ✅ 性能优化：清理setData包装器
+   */
+  onUnload() {
+    if (this.setDataWrapper) {
+      this.setDataWrapper.destroy()
+      this.setDataWrapper = null
+    }
   }
 
 }
