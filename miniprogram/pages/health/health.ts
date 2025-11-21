@@ -22,6 +22,7 @@ import { ListPaginator, createPaginator } from './helpers/list-pagination'
 import { createVaccineModule, VaccineModuleManager } from './modules/health-vaccine-module'
 import { createMonitoringModule, MonitoringModuleManager } from './modules/health-monitoring-module'
 import { createPreventionModule, PreventionModuleManager } from './modules/health-prevention-module'
+import { createSetDataWrapper, SetDataWrapper } from './helpers/setdata-wrapper'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -456,6 +457,7 @@ Page<PageData, any>({
   vaccineModule: null as VaccineModuleManager | null,
   monitoringModule: null as MonitoringModuleManager | null,
   preventionModule: null as PreventionModuleManager | null,
+  setDataWrapper: null as SetDataWrapper | null,
   invalidateAllBatchesCache() {
     this.pendingAllBatchesPromise = null
     this.latestAllBatchesSnapshot = null
@@ -520,6 +522,9 @@ Page<PageData, any>({
     this.vaccineModule = createVaccineModule(this)
     this.monitoringModule = createMonitoringModule(this)
     this.preventionModule = createPreventionModule(this)
+    
+    // ✅ 性能优化：初始化setData包装器
+    this.setDataWrapper = createSetDataWrapper(this)
     
     // ✅ 优化：立即初始化页面，不等待数据修复
     wx.nextTick(() => {
@@ -685,6 +690,12 @@ Page<PageData, any>({
       this.setDataBatcher = null
     }
     
+    // ✅ 性能优化：清理setData包装器
+    if (this.setDataWrapper) {
+      this.setDataWrapper.destroy()
+      this.setDataWrapper = null
+    }
+    
     // ✅ 性能优化：清理列表分页器
     if (this.diagnosisHistoryPaginator) {
       this.diagnosisHistoryPaginator.reset()
@@ -736,15 +747,18 @@ Page<PageData, any>({
   
   /**
    * 下拉刷新
+   * ✅ 优化：减少setData调用
    */
   onPullDownRefresh() {
-    // 清除缓存，强制重新加载
+    // 清理所有缓存
     CacheManager.clearAllHealthCache()
     this.invalidateAllBatchesCache()
     
+    // 设置刷新状态
     this.setData({ refreshing: true })
     
     this.loadHealthData().finally(() => {
+      // 一次性更新状态
       this.setData({ refreshing: false })
       wx.stopPullDownRefresh()
     })
@@ -776,10 +790,15 @@ Page<PageData, any>({
 
   /**
    * 切换选项卡
+   * ✅ 优化：减少重复渲染
    */
   switchTab(e: InputEvent) {
     const { tab } = e.currentTarget.dataset
-    // 已移除调试日志
+    // 如果选项卡未变化，避免重复渲染
+    if (tab === this.data.activeTab) {
+      return
+    }
+    
     this.setData({ activeTab: tab })
     
     // 根据选项卡加载对应数据
@@ -788,10 +807,15 @@ Page<PageData, any>({
 
   /**
    * Tab组件变化事件处理
+   * ✅ 优化：减少重复渲染
    */
   onTabChange(e: WechatMiniprogram.CustomEvent) {
     const { value } = e.detail
-    // 已移除调试日志
+    // 如果选项卡未变化，避免重复渲染
+    if (value === this.data.activeTab) {
+      return
+    }
+    
     this.setData({ activeTab: value })
     
     // 根据选项卡加载对应数据
@@ -849,19 +873,18 @@ Page<PageData, any>({
       if (!this.debouncedLoadHealthData) {
         this.debouncedLoadHealthData = HealthEventManager.debounce(
           this._executeLoadHealthData.bind(this),
-          { delay: 100 }
+          300
         )
       }
       this.debouncedLoadHealthData(silent)
-      return
+    } else {
+      await this._executeLoadHealthData(silent)
     }
-    
-    // 直接执行
-    await this._executeLoadHealthData(silent)
   },
   
   /**
    * 实际执行健康数据加载（内部方法）
+   * 优化：合并setData调用
    */
   async _executeLoadHealthData(silent: boolean = false) {
     // 防重复加载：如果正在加载中，直接返回
@@ -869,11 +892,15 @@ Page<PageData, any>({
       return
     }
     
-    this.isLoadingData = true
+    this.isLoadingData = true  // 设置加载标志
+    
+    // 优化：使用批量更新器
+    const updates: any = {}
     
     // 如果是静默刷新，不设置loading状态，避免阻塞UI
     if (!silent) {
-      this.setData({ loading: true })
+      updates.loading = true
+      this.setData(updates)
     }
 
     try {
@@ -881,16 +908,17 @@ Page<PageData, any>({
       // 统一使用 loadAllBatchesData，无论全部批次还是单批次
       // 这样可以确保数据计算逻辑完全一致
       await this.loadAllBatchesData()
-    } catch (error: unknown) {
-      // 已移除调试日志
-      if (!silent) {
-        wx.showToast({
-          title: '加载数据失败',
-          icon: 'error'
-        })
+      
+      // 如果当前选中的是其他tab，也加载对应数据
+      const { activeTab } = this.data
+      if (activeTab && activeTab !== 'overview') {
+        await this.loadTabData(activeTab)
       }
+    } catch (error: unknown) {
+      logger.error('[loadHealthData] 加载失败:', error)
     } finally {
       if (!silent) {
+        // 优化：单次setData完成loading状态更新
         this.setData({ loading: false })
       }
       this.isLoadingData = false  // 重置加载标志
