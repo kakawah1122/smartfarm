@@ -500,16 +500,19 @@ Page<PageData, any>({
     // 🎯 初始化事件管理（新增模块化功能）
     setupEventManagement(this)
     
-    // 修复治疗记录中缺少 _openid 字段的数据
-    this.fixTreatmentRecordsOpenId()
-    
-    // 修复死亡数据不一致问题
-    this.fixBatchDeathCount()
-    
-    // 修复：恢复页面初始化
+    // ✅ 优化：立即初始化页面，不等待数据修复
     wx.nextTick(() => {
       this.initializePage(options)
     })
+    
+    // ✅ 性能优化：数据修复移至后台执行（延迟1秒，不阻塞首屏）
+    setTimeout(() => {
+      // 修复治疗记录中缺少 _openid 字段的数据
+      this.fixTreatmentRecordsOpenId()
+      
+      // 修复死亡数据不一致问题
+      this.fixBatchDeathCount()
+    }, 1000)
   },
   
   /**
@@ -882,19 +885,38 @@ Page<PageData, any>({
    */
   async loadAllBatchesData() {
     try {
-      // 使用原有的_fetchAllBatchesHealthData方法获取健康数据
-      const healthData = await this._fetchAllBatchesHealthData({ batchId: 'all' })
-      
-      // 获取预防统计数据
-      const preventionResult = await safeCloudCall({
-        name: 'health-prevention',  // 使用拆分后的云函数
-        data: {
-          action: 'getPreventionDashboard',
-          batchId: 'all',
-          today: formatTime(new Date(), 'date')
-        }
-      })
+      // ✅ 性能优化：并行执行所有云函数调用，减少等待时间
+      const [healthData, preventionResult, medicationResult] = await Promise.all([
+        // 获取健康数据
+        this._fetchAllBatchesHealthData({ batchId: 'all' }),
+        
+        // 获取预防统计数据
+        safeCloudCall({
+          name: 'health-prevention',
+          data: {
+            action: 'getPreventionDashboard',
+            batchId: 'all',
+            today: formatTime(new Date(), 'date')
+          }
+        }),
+        
+        // 获取用药统计（移至并行执行）
+        safeCloudCall({
+          name: 'health-prevention',
+          data: {
+            action: 'list_prevention_records',
+            batchId: 'all',
+            preventionType: 'medication',
+            page: 1,
+            pageSize: 1  // 只需要统计数量
+          }
+        }).catch(error => {
+          logger.error('获取用药统计失败:', error)
+          return null  // 失败时返回null，不影响其他数据
+        })
+      ])
 
+      // 处理预防统计数据
       const preventionResponse = preventionResult as any
       let preventionStats = {
         totalPreventions: 0,
@@ -913,31 +935,16 @@ Page<PageData, any>({
           totalPreventions: data.totalCount || 0,
           vaccineCount: data.vaccineCount || 0,
           vaccineCoverage: data.vaccineCount || 0,  // 使用疫苗数作为覆盖数
-          medicationCount: 0,  // 云函数不返回，需要单独计算
+          medicationCount: 0,  // 初始值，后面会更新
           vaccineStats: {},
           disinfectionCount: data.disinfectionCount || 0,
           totalCost: 0  // 需要从其他地方获取
         }
-        
-        // 单独获取用药统计
-        try {
-          const medicationResult = await safeCloudCall({
-            name: 'health-prevention',
-            data: {
-              action: 'list_prevention_records',
-              batchId: 'all',
-              preventionType: 'medication',
-              page: 1,
-              pageSize: 1  // 只需要统计数量
-            }
-          })
-          
-          if (medicationResult?.success && medicationResult.data) {
-            preventionStats.medicationCount = medicationResult.data.total || 0
-          }
-        } catch (error) {
-          logger.error('获取用药统计失败:', error)
-        }
+      }
+      
+      // 更新用药统计（从并行结果中获取）
+      if (medicationResult?.success && medicationResult.data) {
+        preventionStats.medicationCount = medicationResult.data.total || 0
       }
 
       const batchesWithPrevention = healthData.batches.map((batch: any) => ({
