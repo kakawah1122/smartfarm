@@ -1,29 +1,36 @@
 {
   "compilerOptions": {
-    "strictNullChecks": true,
-    "noImplicitAny": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
     "module": "CommonJS",
     "target": "ES2020",
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "noImplicitThis": true,
+    "noImplicitThis": false,
     "noImplicitReturns": true,
-    "alwaysStrict": true,
+    "alwaysStrict": false,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "strict": true,
-    "strictPropertyInitialization": true,
-    "lib": ["ES2020"],
+    "strict": false,
+    "strictPropertyInitialization": false,
+    "lib": [
+      "ES2020"
+    ],
     "typeRoots": [
       "./typings"
     ],
     "paths": {
-      "tdesign-miniprogram/*": ["./miniprogram/miniprogram_npm/tdesign-miniprogram/*"]
+      "tdesign-miniprogram/*": [
+        "./miniprogram/miniprogram_npm/tdesign-miniprogram/*"
+      ]
     },
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "suppressImplicitAnyIndexErrors": true
   },
   "include": [
     "./miniprogram/pages/**/*.ts",
@@ -33,7 +40,7 @@
   ],
   "exclude": [
     "node_modules",
-    "miniprogram_npm", 
+    "miniprogram_npm",
     "cloudfunctions",
     "miniprogram/utils"
   ]

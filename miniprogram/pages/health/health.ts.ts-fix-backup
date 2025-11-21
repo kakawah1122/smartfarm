@@ -1,5 +1,14 @@
-// @ts-nocheck
-import type { BaseResponse, Batch, InputEvent } from '../../../typings/core';
+import type { 
+  BaseResponse, 
+  CloudFunctionResponse,
+  Batch, 
+  HealthRecord, 
+  FinanceRecord,
+  InputEvent, 
+  TapEvent, 
+  PickerEvent, 
+  ScrollEvent 
+} from '../../../typings/core';
 // health.ts - 健康管理页面
 import CloudApi from '../../utils/cloud-api'
 import { formatTime, getCurrentBeijingDate } from '../../utils/util'
@@ -3476,8 +3485,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           useCache: true  // 自动缓存10分钟
         })
         
-        if ((batchResult as any).result?.success) {
-          const activeBatches = (batchResult as any).result.data || []
+        if (batchResult.result?.success) {
+          const activeBatches = batchResult.result.data || []
           const currentBatch = activeBatches.find((b: unknown) => b._id === batchId)
           if (currentBatch) {
             currentBatchStockQuantity = currentBatch.currentStock || 
@@ -3788,8 +3797,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           useCache: true  // 自动缓存10分钟
         })
         
-        if ((batchResult as any).result?.success) {
-          const activeBatches = (batchResult as any).result.data || []
+        if (batchResult.result?.success) {
+          const activeBatches = batchResult.result.data || []
           const currentBatch = activeBatches.find((b: unknown) => b._id === batchId)
           if (currentBatch) {
             currentBatchStockQuantity = currentBatch.currentStock || 
