@@ -184,9 +184,13 @@ async function calculateTreatmentCost(event, wxContext) {
   try {
     const { dateRange, batchId } = event
     
-    // 构建查询条件
+    // 构建查询条件 - 放宽限制以兼容更多数据
     let conditions = {
-      isDeleted: false
+      // 移除isDeleted限制，或使用更宽松的条件
+      $or: [
+        { isDeleted: false },
+        { isDeleted: { $exists: false } }  // 兼容没有isDeleted字段的记录
+      ]
     }
     
     if (batchId && batchId !== 'all') {
@@ -201,10 +205,19 @@ async function calculateTreatmentCost(event, wxContext) {
       conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
     }
     
+    // 添加调试日志
+    console.log('[calculateTreatmentCost] 查询条件:', JSON.stringify(conditions))
+    console.log('[calculateTreatmentCost] 集合名:', COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+    
     // 查询治疗记录
     const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where(conditions)
       .get()
+    
+    console.log('[calculateTreatmentCost] 查询结果数量:', result.data.length)
+    if (result.data.length > 0) {
+      console.log('[calculateTreatmentCost] 第一条记录:', JSON.stringify(result.data[0]))
+    }
     
     let totalCost = 0
     let treatmentCount = 0
