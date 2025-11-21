@@ -165,12 +165,21 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       isFirstLoad: true
     })
     
-    // 🎯 优化：只加载概览数据，延迟加载详细数据
+    // 🎯 优化：先加载概览数据，然后加载必要的列表数据
     this.loadDashboardData().then(() => {
       logger.info(`概览数据加载完成，耗时：${Date.now() - startTime}ms`)
-      // 延迟100ms后加载当前tab数据
+      
+      // 延迟100ms后加载必要数据（入栏和出栏都需要在首页显示）
       setTimeout(() => {
-        this.loadCurrentTabData()
+        // 加载入栏数据（当前tab）
+        this.loadEntryData()
+        // 加载出栏数据（首页需要显示最近出栏记录）
+        this.loadExitData()
+        // 标记已加载
+        this.setData({
+          'tabLoadStatus.entry': true,
+          'tabLoadStatus.exit': true
+        })
       }, 100)
     })
   },
