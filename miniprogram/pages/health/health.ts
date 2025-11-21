@@ -4148,7 +4148,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async completeTask(taskId: string, batchId: string) {
     try {
-      await safeCloudCall({
+      const result = await safeCloudCall({
         name: 'breeding-todo',
         data: {
           action: 'completeTask',
@@ -4158,8 +4158,27 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
         }
       })
+      
+      if (result?.success) {
+        wx.showToast({
+          title: '任务已完成',
+          icon: 'success'
+        })
+        
+        // 刷新任务列表，确保任务流转到已完成
+        setTimeout(() => {
+          this.loadPreventionData()  // 刷新当前任务
+          this.loadHistoryTasks()     // 刷新已完成任务
+        }, 500)
+      } else {
+        throw new Error(result?.message || '完成任务失败')
+      }
     } catch (error: unknown) {
       logger.error('完成任务失败:', error)
+      wx.showToast({
+        title: '操作失败',
+        icon: 'error'
+      })
     }
   },
   

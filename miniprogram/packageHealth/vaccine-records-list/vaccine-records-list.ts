@@ -588,8 +588,15 @@ Page({
    * 返回
    */
   goBack() {
+    // 优先使用 navigateBack，如果失败则跳转到健康页面
     wx.navigateBack({
-      delta: 1
+      delta: 1,
+      fail: () => {
+        // 如果返回失败（比如是通过分享进入的），则跳转到健康页面
+        wx.switchTab({
+          url: '/pages/health/health'
+        })
+      }
     })
   }
 })
