@@ -103,11 +103,7 @@ interface WeatherData {
 
 interface WeatherApiResponse extends WeatherData {}
 
-type WeatherLocationInfo = {
-  province?: string
-  city?: string
-  district?: string
-}
+// WeatherLocationInfo类型已集成到WeatherData接口中
 
 type WeatherCurrentInfo = {
   temperature?: number
