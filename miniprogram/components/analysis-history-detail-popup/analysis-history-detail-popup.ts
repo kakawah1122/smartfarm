@@ -1,10 +1,8 @@
 import type {
   InputEvent,
   TapEvent,
-  ScrollEvent,
-  CustomEvent,
-  PropType
-} from '../../../../../../../../typings/core';
+  CustomEvent
+} from '../../../typings/core';
 
 // 分析历史详情弹窗组件
 Component({
@@ -12,12 +10,12 @@ Component({
     styleIsolation: 'apply-shared'
   },
 
-  properties: {properties: {
+  properties: {
     // 是否显示弹窗
     visible: {
-      type: Boolean as PropType<boolean>,
+      type: Boolean,
       value: false
-    }},
+    },
     // 分析记录数据
     record: {
       type: Object,
@@ -25,10 +23,10 @@ Component({
     }
   },
 
-  data: {data: {
+  data: {
     // 内部处理的记录数据
-    processedRecord: null as unknown
-  }},
+    processedRecord: null as any
+  },
 
   observers: {
     'record': function(record: unknown) {
@@ -40,7 +38,7 @@ Component({
 
   methods: {
     // 格式化日期时间
-    formatDateTime(dateValue: CustomEvent): string {
+    formatDateTime(dateValue: unknown): string {
       if (!dateValue) return '未知时间'
       
       try {
@@ -274,7 +272,7 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: unknown) {
+    onVisibleChange(e: InputEvent) {
       if (!e.detail.visible) {
         this.onClose()
       }

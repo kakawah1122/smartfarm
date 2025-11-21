@@ -1,10 +1,8 @@
 import type {
   InputEvent,
   TapEvent,
-  ScrollEvent,
-  CustomEvent,
-  PropType
-} from '../../../../../../../../typings/core';
+  CustomEvent
+} from '../../../typings/core';
 
 // components/finance-record-detail-popup/finance-record-detail-popup.ts
 Component({
@@ -12,12 +10,12 @@ Component({
     styleIsolation: 'apply-shared'
   },
 
-  properties: {properties: {
+  properties: {
     // 是否显示弹窗
     visible: {
-      type: Boolean as PropType<boolean>,
+      type: Boolean,
       value: false
-    }},
+    },
     // 记录数据
     record: {
       type: Object,
@@ -26,9 +24,9 @@ Component({
     }
   },
 
-  data: {data: {
-    detailInfo: null as unknown
-  }},
+  data: {
+    detailInfo: null as any
+  },
 
   methods: {
     // 记录数据变化时解析详情
@@ -112,7 +110,7 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: unknown) {
+    onVisibleChange(e: InputEvent) {
       if (!e.detail.visible) {
         this.onClose()
       }

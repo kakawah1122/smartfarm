@@ -1,28 +1,26 @@
 import type {
   InputEvent,
   TapEvent,
-  ScrollEvent,
-  CustomEvent,
-  PropType
-} from '../../../../../../../../typings/core';
+  CustomEvent
+} from '../../../typings/core';
 
 // components/death-record-detail-popup/death-record-detail-popup.ts
 Component<{
   isClosing: boolean
 }, {}, {
   onClose(): void
-  onVisibleChange(e: unknown): void
+  onVisibleChange(e: InputEvent): void
 }>({
   options: {
     styleIsolation: 'apply-shared'
   },
 
-  properties: {properties: {
+  properties: {
     // 是否显示弹窗
     visible: {
-      type: Boolean as PropType<boolean>,
+      type: Boolean,
       value: false
-    }},
+    },
     // 记录数据
     record: {
       type: Object,
@@ -30,9 +28,9 @@ Component<{
     }
   },
 
-  data: {data: {
+  data: {
     isClosing: false  // 添加关闭状态标志
-  }},
+  },
 
   methods: {
     // 关闭弹窗
@@ -54,7 +52,7 @@ Component<{
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: unknown) {
+    onVisibleChange(e: InputEvent) {
       // 只在弹窗关闭时处理，防止重复触发
       if (!e.detail.visible && !this.data.isClosing) {
         this.onClose()

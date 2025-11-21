@@ -1,10 +1,8 @@
 import type {
   InputEvent,
   TapEvent,
-  ScrollEvent,
-  CustomEvent,
-  PropType
-} from '../../../../../../../../typings/core';
+  CustomEvent
+} from '../../../typings/core';
 
 // 鹅价记录详情弹窗组件
 Component({
@@ -12,12 +10,12 @@ Component({
     styleIsolation: 'apply-shared'
   },
 
-  properties: {properties: {
+  properties: {
     // 是否显示弹窗
     visible: {
-      type: Boolean as PropType<boolean>,
+      type: Boolean,
       value: false
-    }},
+    },
     // 日期
     date: {
       type: String,
@@ -37,7 +35,7 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: unknown) {
+    onVisibleChange(e: InputEvent) {
       if (!e.detail.visible) {
         this.onClose()
       }

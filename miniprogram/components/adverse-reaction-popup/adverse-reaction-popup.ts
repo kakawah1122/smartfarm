@@ -1,10 +1,8 @@
 import type {
   InputEvent,
   TapEvent,
-  ScrollEvent,
-  CustomEvent,
-  PropType
-} from '../../../../../../../../typings/core';
+  CustomEvent
+} from '../../../typings/core';
 
 // components/adverse-reaction-popup/adverse-reaction-popup.ts
 Component({
@@ -12,12 +10,12 @@ Component({
     styleIsolation: 'apply-shared'
   },
 
-  properties: {properties: {
+  properties: {
     // 是否显示弹窗
     visible: {
-      type: Boolean as PropType<boolean>,
+      type: Boolean,
       value: false
-    }},
+    },
     // 异常反应数据
     reactionData: {
       type: Object,
@@ -49,15 +47,15 @@ Component({
       this.triggerEvent('input', {
         field,
         value
-      } as { value: string })
+      })
     },
 
     // 症状等级选择
-    onSeverityChange(e: unknown) {
+    onSeverityChange(e: InputEvent) {
       const index = e.detail.value
       this.triggerEvent('severitychange', {
         index
-      } as Record<string, unknown>)
+      })
     },
 
     // 关闭弹窗
@@ -69,7 +67,7 @@ Component({
     onSubmit() {
       this.triggerEvent('submit', {
         reactionData: this.properties.reactionData
-      } as Record<string, unknown>)
+      })
     }
   }
 })
