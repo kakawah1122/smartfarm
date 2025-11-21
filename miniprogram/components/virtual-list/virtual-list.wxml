@@ -1,0 +1,41 @@
+<!-- 虚拟列表组件 -->
+<scroll-view
+  class="virtual-list-container"
+  scroll-y="{{true}}"
+  style="height: {{height}}px;"
+  bindscroll="onScroll"
+  bindscrolltolower="onScrollToLower"
+  bindrefresherrefresh="onPullRefresh"
+  scroll-top="{{scrollTop}}"
+  refresher-enabled="{{enablePullRefresh}}"
+  refresher-triggered="{{isRefreshing}}"
+  enhanced="{{true}}"
+  show-scrollbar="{{false}}"
+>
+  <!-- 上部占位元素 -->
+  <view class="virtual-placeholder-top" style="height: {{topHeight}}px;"></view>
+  
+  <!-- 可视区域列表 -->
+  <view class="virtual-list-content">
+    <view
+      wx:for="{{visibleList}}"
+      wx:key="_virtualIndex"
+      class="virtual-list-item"
+      style="height: {{itemHeight}}px;"
+      data-index="{{item._virtualIndex}}"
+      data-item="{{item}}"
+      bindtap="onItemTap"
+    >
+      <!-- 插槽：自定义列表项内容 -->
+      <slot name="item" item="{{item}}" index="{{item._virtualIndex}}"></slot>
+    </view>
+  </view>
+  
+  <!-- 下部占位元素 -->
+  <view class="virtual-placeholder-bottom" style="height: {{bottomHeight}}px;"></view>
+  
+  <!-- 加载更多提示 -->
+  <view wx:if="{{isLoadingMore}}" class="virtual-loading-more">
+    <text>加载中...</text>
+  </view>
+</scroll-view>
