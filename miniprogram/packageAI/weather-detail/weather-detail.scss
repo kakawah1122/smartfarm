@@ -1,13 +1,10 @@
-/* weather-detail.scss - 重新设计的天气详情页样式 */
 
-/* ==================== 页面容器 ==================== */
 .weather-detail-page {
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   min-height: 100vh;
   position: relative;
 }
 
-/* ==================== 滚动容器 ==================== */
 .scroll-container {
   flex: 1;
   background: transparent;
@@ -22,7 +19,6 @@
   box-sizing: border-box;
 }
 
-/* ==================== 卡片通用样式 - iOS风格 ==================== */
 .card {
   background: rgba(248, 250, 252, 0.78);
   border-radius: 20rpx;
@@ -45,7 +41,6 @@
   transform: scale(0.98);
 }
 
-/* ==================== 卡片头部统一样式 - iOS风格 ==================== */
 .card-header {
   padding: 20rpx 24rpx 16rpx 24rpx;
   border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
@@ -67,8 +62,6 @@
   padding: 20rpx 24rpx 24rpx 24rpx;
 }
 
-/* ==================== 当前天气卡片 ==================== */
-/* 确保天气卡片与下方卡片宽度完全一致 */
 .current-weather-card {
   margin-left: 24rpx !important;
   margin-right: 24rpx !important;
@@ -80,7 +73,6 @@
   box-sizing: border-box !important;
 }
 
-/* ==================== 天气预警卡片 - iOS风格 ==================== */
 .warning-card {
   background: rgba(255, 255, 255, 0.85);
   border: none;
@@ -110,7 +102,6 @@
   transform: scale(0.98);
 }
 
-/* 使用淡色背景区分预警级别，而不是边框 */
 .warning-level-4 {
   background: rgba(239, 68, 68, 0.06);
 }
@@ -187,7 +178,6 @@
   font-weight: 400;
 }
 
-/* ==================== 24小时预报卡片 - iOS风格 ==================== */
 .hourly-forecast-card {
   background: rgba(255, 255, 255, 0.85);
 }
@@ -254,12 +244,10 @@
   font-weight: 400;
 }
 
-/* ==================== 空气质量卡片 - iOS风格 ==================== */
 .air-quality-card {
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* iOS风格的AQI显示 */
 .aqi-main-display-ios {
   display: flex;
   flex-direction: column;
@@ -295,7 +283,6 @@
   line-height: 1;
 }
 
-/* 彩色渐变进度条 - 参照iOS */
 .aqi-gradient-bar {
   position: relative;
   height: 8rpx;
@@ -311,13 +298,7 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(to right, 
-    #00e400 0%,     /* 优 绿色 */
-    #84cc16 16.67%, /* 良 黄绿色 */
-    #ffff00 33.33%, /* 轻度污染 黄色 */
-    #ff7e00 50%,    /* 中度污染 橙色 */
-    #ff0000 66.67%, /* 重度污染 红色 */
-    #99004c 83.33%, /* 严重污染 紫红色 */
-    #7e0023 100%    /* 严重污染 深红色 */
+    #00e400 0%,         #84cc16 16.67%,     #ffff00 33.33%,     #ff7e00 50%,        #ff0000 66.67%,     #99004c 83.33%,     #7e0023 100%    /* 严重污染 深红色 */
   );
   border-radius: 4rpx;
 }
@@ -334,7 +315,6 @@
   z-index: 2;
 }
 
-/* 污染物指标 - iOS风格 */
 .pollutants-summary-ios {
   display: flex;
   justify-content: space-between;
@@ -382,7 +362,6 @@
   letter-spacing: -1rpx;
 }
 
-/* ==================== 详细指标卡片 - iOS风格 ==================== */
 .weather-metrics-card {
   background: rgba(255, 255, 255, 0.85);
 }
@@ -440,7 +419,6 @@
   letter-spacing: 0.5rpx;
 }
 
-/* ==================== 7天预报卡片 - iOS风格 ==================== */
 .weekly-forecast-card {
   background: rgba(255, 255, 255, 0.85);
 }
@@ -554,7 +532,6 @@
   transition: width 0.3s ease;
 }
 
-/* ==================== 响应式设计 ==================== */
 @media screen and (max-width: 480px) {
   .card {
     margin: 12rpx 24rpx;

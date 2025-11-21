@@ -1,10 +1,8 @@
-/* survival-analysis.scss - 存活率分析页面样式 */
 
 .survival-analysis-page {
   background-color: #f5f5f5;
   min-height: 100vh;
-  padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏总高度 + 适当间距 */
-}
+  padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); }
 
 .loading-container {
   display: flex;
@@ -24,7 +22,6 @@
   padding: 20rpx;
 }
 
-/* 日期范围选择器 */
 .date-range-selector {
   background: white;
   border-radius: 16rpx;
@@ -33,7 +30,6 @@
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
 }
 
-/* 总览卡片 */
 .overview-card {
   background: white;
   border-radius: 16rpx;
@@ -150,7 +146,6 @@
   }
 }
 
-/* 分阶段分析卡片 */
 .stage-analysis-card {
   background: white;
   border-radius: 16rpx;
@@ -224,7 +219,6 @@
   }
 }
 
-/* 时间趋势卡片 */
 .trend-analysis-card {
   background: white;
   border-radius: 16rpx;
@@ -304,7 +298,6 @@
   }
 }
 
-/* 影响因素卡片 */
 .factors-analysis-card {
   background: white;
   border-radius: 16rpx;
@@ -383,11 +376,8 @@
   }
 }
 
-/* 操作区域 */
 .actions-section {
   margin-top: 30rpx;
 }
 
-
-/* 底部安全区域 */
 .safe-area { height: 120rpx; }

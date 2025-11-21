@@ -1,4 +1,3 @@
-/* production.scss - TDesign原生设计规范 */
 
 .page-container {
   min-height: 100vh;
@@ -8,7 +7,6 @@
   padding-bottom: var(--safe-area-inset-bottom, 0);
 }
 
-/* 主内容区域 - 避免被导航栏遮挡 */
 .main-content {
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 额外间距 */
   flex: 1;
@@ -17,12 +15,10 @@
   padding-top: 0;
 }
 
-/* 生产概览卡片 */
 .production-overview {
   padding: 24rpx;
   background: white;
-  margin: 32rpx 16rpx 16rpx 16rpx; /* 增加顶部安全间距，左右边距16rpx */
-}
+  margin: 32rpx 16rpx 16rpx 16rpx; }
 
 .overview-grid {
   display: grid;
@@ -65,7 +61,6 @@
   opacity: 0.9;
 }
 
-/* TDesign原生Tab样式 - 优化与导航栏的间距 */
 .main-tabs {
   background: var(--td-bg-color-container, #ffffff);
   --td-tab-track-color: var(--td-brand-color, #0052d9);
@@ -79,29 +74,24 @@
   margin-top: 0;
 }
 
-/* Tab 内容容器 */
 .tab-container {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* TDesign原生Tab内容 */
 .tab-content {
   padding: 8rpx 0 calc(32rpx + var(--safe-area-inset-bottom, 0));
 }
 
-/* TDesign物料管理区域 */
 .material-section {
   margin: 16rpx 16rpx;
 }
 
-/* TDesign原生列表区域 */
 .quick-action {
   margin: 8rpx 16rpx 16rpx 16rpx;
 }
 
-/* 按钮内容居中 - 简化版本 */
 .quick-action t-button,
 .ai-count-section t-button,
 .result-actions t-button {
@@ -111,7 +101,6 @@
   text-align: center;
 }
 
-/* 物料管理按钮样式优化 */
 .quick-action {
   t-button {
     --td-button-height-medium: 64rpx !important;
@@ -132,9 +121,6 @@
     line-height: 64rpx !important;
   }
 }
-
-/* === TDesign规范按钮样式 - 使用全局变量 === */
-/* 所有按钮样式已在app.scss中全局定义，此处仅保留特殊定制 */
 
 .primary-button {
   /* 蓝色按钮样式 - 提高文字可读性 */
@@ -182,7 +168,6 @@
   }
 }
 
-/* 物料类型标签样式 - 对应四宫格配色 */
 .orange-tag,
 .feed-tag {
   background: rgba(250, 140, 22, 0.15) !important;
@@ -226,7 +211,6 @@
   margin: 24rpx 0;
 }
 
-/* TDesign原生卡片 */
 .card {
   margin: 24rpx 16rpx;
 }
@@ -247,13 +231,11 @@
   line-height: 1.4;
   flex: 1;
   
-  /* 列表卡片中的标题左对齐 */
   .list-card & {
     text-align: left;
   }
 }
 
-/* 查看全部按钮样式 */
 .view-all-btn {
   display: inline-block;
   font-size: 24rpx;
@@ -263,12 +245,10 @@
   cursor: pointer;
 }
 
-/* TDesign原生列表卡片 */
 .list-card {
   margin: 24rpx 16rpx;
 }
 
-/* TDesign原生记录样式 */
 .records-container {
   display: flex;
   flex-direction: column;
@@ -305,7 +285,6 @@
   flex: 1;
 }
 
-/* 优化后的记录头部样式 */
 .record-header {
   margin-bottom: 12rpx;
 }
@@ -329,14 +308,12 @@
   flex-shrink: 0;
 }
 
-/* 优化后的记录内容样式 */
 .record-content {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
 }
 
-/* 双列布局容器 */
 .info-grid {
   display: flex;
   justify-content: space-between;
@@ -368,7 +345,6 @@
   white-space: nowrap;
 }
 
-/* 信息行 - 分行显示 */
 .info-row {
   display: flex;
   align-items: center;
@@ -402,7 +378,6 @@
   }
 }
 
-/* 记录底部 */
 .record-footer {
   display: flex;
   align-items: center;
@@ -435,7 +410,6 @@
   flex-shrink: 0;
 }
 
-/* 兼容旧版样式 */
 .record-location {
   font-size: 32rpx;
   font-weight: 500;
@@ -470,7 +444,6 @@
   color: var(--td-text-color-placeholder, #bbbbbb);
 }
 
-/* TDesign原生响应式设计 */
 @media screen and (max-width: 480px) {
   .tab-content {
     padding: 8rpx 8rpx;
@@ -480,7 +453,6 @@
     margin: 12rpx 0;
   }
 
-  /* 概览区域响应式 */
   .production-overview {
     padding: 16rpx;
     margin-bottom: 12rpx;
@@ -505,7 +477,6 @@
     font-size: 22rpx;
   }
 
-  /* 物料卡片响应式 */
   .material-overview-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12rpx;
@@ -526,7 +497,6 @@
     font-size: 20rpx;
   }
 
-  /* 记录列表响应式 */
   .list-section {
     margin: 12rpx 0;
   }
@@ -568,7 +538,6 @@
     font-size: 22rpx;
   }
 
-  /* 兼容旧版样式 */
   .record-location {
     font-size: 28rpx;
   }
@@ -578,7 +547,6 @@
   }
 }
 
-/* 针对极小屏幕的特殊处理 */
 @media screen and (max-width: 320px) {
   .info-row {
     flex-direction: column;
@@ -592,7 +560,6 @@
     max-width: none;
   }
   
-  /* 双列布局在小屏幕上的适配 */
   .info-grid {
     gap: 16rpx;
   }
@@ -601,8 +568,7 @@
     font-size: 24rpx;
     
     &.right-column {
-      align-items: flex-start; /* 小屏幕上改为左对齐 */
-    }
+      align-items: flex-start;     }
   }
   
   .record-name {
@@ -615,7 +581,6 @@
     gap: 4rpx;
   }
 
-  /* 概览区域极小屏幕适配 */
   .production-overview {
     padding: 12rpx;
   }
@@ -637,7 +602,6 @@
     font-size: 20rpx;
   }
 
-  /* 物料卡片极小屏幕适配 */
   .material-overview-grid {
     grid-template-columns: 1fr;
     gap: 8rpx;
@@ -658,14 +622,11 @@
   }
 }
 
-/* TDesign原生无障碍支持 */
-
 .record-item:focus {
   outline: 2rpx solid var(--td-brand-color, #0052d9);
   outline-offset: 4rpx;
 }
 
-/* 物料概览卡片 */
 .material-overview-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -731,10 +692,6 @@
   opacity: 0.95;
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
 }
-
-/* 物料卡片响应式设计 - 合并到主响应式查询中 */
-
-/* ========== AI智能盘点功能样式 ========== */
 
 // AI盘点功能区域
 .ai-count-section {
@@ -1039,7 +996,6 @@
     gap: 20rpx;
     margin-top: 30rpx;
     
-    /* 主要操作按钮 - 符合TDesign Medium规范 */
     .primary-action-btn {
       height: 80rpx !important;
       border-radius: 12rpx !important;
@@ -1062,7 +1018,6 @@
       }
     }
     
-    /* 次要操作按钮容器 - 符合TDesign Small规范 */
     .secondary-actions {
       display: flex;
       gap: 16rpx;

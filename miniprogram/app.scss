@@ -14,7 +14,6 @@
   font-style: normal;
 }
 
-/* 强制覆盖所有可能的t字体族引用 */
 .t-icon,
 .t-icon-base,
 [class*="t-icon-"]::before,
@@ -49,8 +48,7 @@ page {
   --navbar-height: 88rpx;
   --total-header-height: 132rpx;
   
-  /* === TDesign 主题色系统 - 现代化蓝色设计 === */
-  /* 核心品牌色 - 现代蓝色渐变系统 */
+    /* 核心品牌色 - 现代蓝色渐变系统 */
   --td-brand-color: #0052d9;
   --td-brand-color-1: #f2f3ff;
   --td-brand-color-2: #d9e1ff;
@@ -73,8 +71,7 @@ page {
   --td-success-color: #00a870;
   --td-info-color: #0052d9;
   
-  /* === TDesign 按钮全局样式变量 === */
-  /* 按钮主要颜色 - 现代蓝色渐变 */
+    /* 按钮主要颜色 - 现代蓝色渐变 */
   --td-button-primary-bg-color: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   --td-button-primary-border-color: transparent;
   --td-button-primary-color: #ffffff;
@@ -93,8 +90,7 @@ page {
   --td-button-medium-font-size: 28rpx;
   --td-button-medium-padding-horizontal: 24rpx;
   
-  /* === 统一现代蓝色主色调系统 === */
-  /* 与TDesign按钮保持一致的现代蓝色风格 */
+    /* 与TDesign按钮保持一致的现代蓝色风格 */
   --primary-blue: #0052d9;
   --primary-blue-light: #4582e8;
   --primary-blue-lighter: #f2f3ff;
@@ -200,9 +196,6 @@ page {
   line-height: var(--line-height-base);
 }
 
-/* 工具类系统 */
-
-/* 布局类 */
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .flex-row { flex-direction: row; }
@@ -220,7 +213,6 @@ page {
 .flex-1 { flex: 1; }
 .flex-shrink-0 { flex-shrink: 0; }
 
-/* 文本类 */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
@@ -233,7 +225,6 @@ page {
 .text-danger { color: var(--color-danger); }
 .text-info { color: var(--color-info); }
 
-/* 字体大小 */
 .text-xs { font-size: var(--font-size-xs); }
 .text-sm { font-size: var(--font-size-sm); }
 .text-base { font-size: var(--font-size-base); }
@@ -244,15 +235,11 @@ page {
 .text-3xl { font-size: var(--font-size-3xl); }
 .text-4xl { font-size: var(--font-size-4xl); }
 
-/* 字重 */
 .font-normal { font-weight: var(--font-weight-normal); }
 .font-medium { font-weight: var(--font-weight-medium); }
 .font-semibold { font-weight: var(--font-weight-semibold); }
 .font-bold { font-weight: var(--font-weight-bold); }
 
-/* 背景色 */
-
-/* 圆角 */
 .rounded-xs { border-radius: var(--radius-xs); }
 .rounded-sm { border-radius: var(--radius-sm); }
 .rounded-base { border-radius: var(--radius-base); }
@@ -261,14 +248,12 @@ page {
 .rounded-xl { border-radius: var(--radius-xl); }
 .rounded-full { border-radius: var(--radius-full); }
 
-/* 阴影 */
 .shadow-sm { box-shadow: var(--shadow-sm); }
 .shadow-base { box-shadow: var(--shadow-base); }
 .shadow-md { box-shadow: var(--shadow-md); }
 .shadow-lg { box-shadow: var(--shadow-lg); }
 .shadow-colored { box-shadow: var(--shadow-colored); }
 
-/* 间距 - Margin */
 .m-0 { margin: 0; }
 .m-xs { margin: var(--spacing-xs); }
 .m-sm { margin: var(--spacing-sm); }
@@ -315,7 +300,6 @@ page {
 .mr-lg { margin-right: var(--spacing-lg); }
 .mr-xl { margin-right: var(--spacing-xl); }
 
-/* 间距 - Padding */
 .p-0 { padding: 0; }
 .p-xs { padding: var(--spacing-xs); }
 .p-sm { padding: var(--spacing-sm); }
@@ -362,7 +346,6 @@ page {
 .pr-lg { padding-right: var(--spacing-lg); }
 .pr-xl { padding-right: var(--spacing-xl); }
 
-/* 组件基础样式 */
 .card {
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
@@ -401,10 +384,6 @@ page {
   padding: 0;
 }
 
-/* 自定义导航栏样式已移至 navigation-bar 组件，此处不再定义全局样式以避免冲突 */
-/* 如需修改导航栏样式，请在 /components/navigation-bar/navigation-bar.scss 中修改 */
-
-/* 页面容器 - 刘海屏适配 */
 .page-container {
   min-height: 100vh;
   background-color: var(--color-bg-page);
@@ -412,7 +391,6 @@ page {
   padding-bottom: var(--safe-area-inset-bottom, 0);
 }
 
-/* TDesign 组件全局样式覆盖 - 简化版本 */
 .app .t-navbar,
 .page .t-navbar {
 background: var(--primary-gradient) ;
@@ -431,7 +409,6 @@ background: var(--primary-gradient) ;
   box-shadow: var(--shadow-sm);
 }
 
-/* === TDesign 按钮全局样式优化 === */
 .app .t-button,
 .page .t-button {
 border-radius: var(--td-button-border-radius) ;
@@ -444,7 +421,6 @@ border-radius: var(--td-button-border-radius) ;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) ;
 }
 
-/* 主要按钮 - 现代蓝色渐变 */
 .app .t-button--primary,
 .page .t-button--primary {
 background: var(--td-button-primary-bg-color) ;
@@ -466,7 +442,6 @@ background: var(--td-button-primary-bg-color) ;
   opacity: 0.6 !important;
 }
 
-/* 语义化按钮样式 */
 .app .t-button--success,
 .page .t-button--success {
 background: linear-gradient(135deg, var(--td-success-color), #059669) ;
@@ -490,7 +465,6 @@ background: linear-gradient(135deg, var(--td-error-color), #dc2626) ;
   box-shadow: 0 4rpx 16rpx rgba(213, 73, 65, 0.2) ;
 }
 
-/* 轻量按钮样式 */
 .app .t-button--light,
 .page .t-button--light {
 background: var(--td-brand-color-light) ;
@@ -576,7 +550,6 @@ border-radius: 8rpx ;
   font-size: 30rpx ;
 }
 
-/* TDesign Button 全局样式 - 极致紧凑 */
 .app .t-button,
 .page .t-button {
 border-radius: 12rpx ;
@@ -614,7 +587,6 @@ border: none ;
   white-space: normal ;
 }
 
-/* 下拉菜单选项内容 */
 .t-dropdown-item__content {
   flex: 1 !important;
   min-width: 0 !important;
@@ -622,19 +594,16 @@ border: none ;
   white-space: normal !important;
 }
 
-/* 下拉菜单弹出层 */
 .t-dropdown-menu__content {
   max-height: 60vh !important;
   overflow-y: auto !important;
   z-index: 99999 !important;
 }
 
-/* 下拉菜单遮罩层 */
 .t-dropdown-menu__mask {
   z-index: 99998 !important;
 }
 
-/* TDesign Input 全局样式 - 极致紧凑 */
 .t-input {
   --td-input-height: 44rpx;
   --td-input-font-size: 30rpx;
@@ -652,7 +621,6 @@ border: none ;
   align-items: center !important;
 }
 
-/* TDesign Cell 全局样式 - 极致紧凑 */
 .t-cell {
   --td-cell-height: 44rpx;
   --td-cell-font-size: 30rpx;
@@ -687,9 +655,6 @@ border-radius: var(--radius-base) ;
   --td-swipe-cell-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
 }
 
-/* 设备适配媒体查询 */
-
-/* iPhone SE (1st gen) 及类似小屏设备 */
 @media screen and (max-width: 320px) {
   :root {
     --spacing-xs: 6rpx;
@@ -708,7 +673,6 @@ border-radius: var(--radius-base) ;
   }
 }
 
-/* iPhone 6/7/8 及类似设备 */
 @media screen and (min-width: 375px) and (max-width: 414px) {
   :root {
     --font-size-xs: 22rpx;
@@ -720,14 +684,12 @@ border-radius: var(--radius-base) ;
   }
 }
 
-/* iPhone X/11/12/13 系列及类似刘海屏设备 */
 @media screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2),
        screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
   
-  /* 刘海屏特殊适配 */
   .gradient-header,
   .custom-navbar {
     padding-top: 44rpx;
@@ -739,11 +701,9 @@ border-radius: var(--radius-base) ;
   }
 }
 
-/* iPhone 14 Pro/15 Pro 系列动态岛设备 */
 @media screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
   
-  /* 动态岛适配 */
   .gradient-header,
   .custom-navbar {
     padding-top: 54rpx;
@@ -755,7 +715,6 @@ border-radius: var(--radius-base) ;
   }
 }
 
-/* iPad 及大屏设备 */
 @media screen and (min-width: 768px) {
   .page-container {
     max-width: 768rpx;
@@ -774,7 +733,6 @@ border-radius: var(--radius-base) ;
   }
 }
 
-/* 横屏适配 */
 @media screen and (orientation: landscape) and (max-height: 500px) {
   .gradient-header {
     padding: var(--spacing-base) var(--spacing-xl);

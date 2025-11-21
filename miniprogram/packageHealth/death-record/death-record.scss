@@ -5,8 +5,7 @@
 
   .page-content {
     padding: 32rpx;
-    padding-top: calc(var(--navbar-height, 132rpx) + 32rpx); /* 导航栏总高度 + 适当间距 */
-  }
+    padding-top: calc(var(--navbar-height, 132rpx) + 32rpx);   }
 
   // 来源提示
   .source-tip {

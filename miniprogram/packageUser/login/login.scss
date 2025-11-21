@@ -1,4 +1,3 @@
-/* 登录页面基础样式 */
 .login-page {
   min-height: 100vh;
   background-color: #f8f9fa;
@@ -73,7 +72,6 @@
   box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.15) !important;
 }
 
-/* === 登录按钮现代化蓝色样式 === */
 .wechat-login-btn {
   background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
   color: white !important;
@@ -86,7 +84,6 @@
   box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.3) !important;
 }
 
-/* 邀请注册按钮 */
 .invite-register-btn {
   background: var(--td-brand-color-light, #f2f3ff) !important;
   color: var(--td-brand-color, #0052d9) !important;
@@ -110,7 +107,6 @@
   text-decoration: none;
 }
 
-/* 邀请码注册弹窗样式 */
 .invite-dialog-overlay {
   position: fixed;
   top: 0;
@@ -262,7 +258,6 @@
   box-shadow: 0 1rpx 4rpx rgba(0, 82, 217, 0.3);
 }
 
-/* 登录页面样式增强 */
 .login-actions 
 
 .login-actions .invite-register-btn {

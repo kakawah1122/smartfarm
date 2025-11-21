@@ -3,7 +3,6 @@
 
 @import "../../styles/health-vars.scss";
 
-/* 页面容器 */
 .page-container {
   height: 100vh;
   background-color: #f5f5f5;
@@ -12,7 +11,6 @@
   overflow: hidden;
 }
 
-/* 内容包装器 */
 .content-wrapper {
   flex: 1;
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
@@ -21,7 +19,6 @@
   overflow: hidden;
 }
 
-/* 滚动容器 */
 .list-container {
   flex: 1;
   padding: 16rpx 24rpx;

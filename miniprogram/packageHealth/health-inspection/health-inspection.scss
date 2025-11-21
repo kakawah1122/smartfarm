@@ -1,4 +1,3 @@
-/* health-inspection.scss - 健康巡检页面样式 */
 
 .health-inspection-page {
   background-color: #f5f5f5;
@@ -6,11 +5,9 @@
   
   .page-container {
     padding: 32rpx 32rpx 0;
-    padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
-  }
+    padding-top: 160rpx;   }
 }
 
-/* 表单基础样式 */
 .form-section {
   background: #fff;
   border-radius: 16rpx;
@@ -77,7 +74,6 @@
   }
 }
 
-/* 巡检项目区域 */
 .inspection-section {
   background: #fff;
   border-radius: 16rpx;
@@ -107,7 +103,6 @@
   }
 }
 
-/* 类别选择器 */
 .category-tabs {
   padding: 24rpx 0 0;
   
@@ -155,7 +150,6 @@
   }
 }
 
-/* 巡检项目列表 */
 .inspection-items {
   padding: 24rpx 32rpx 32rpx;
 }
@@ -243,7 +237,6 @@
   }
 }
 
-/* 异常情况汇总 */
 .abnormal-summary {
   background: #fff;
   border-radius: 16rpx;
@@ -373,7 +366,6 @@
   }
 }
 
-/* 异常记录对话框 */
 .abnormal-dialog-content {
   .dialog-item {
     margin-bottom: 32rpx;
@@ -432,7 +424,6 @@
   }
 }
 
-/* 操作按钮 */
 .action-buttons {
   display: flex;
   gap: 24rpx;
@@ -454,7 +445,6 @@
   }
 }
 
-/* 响应式适配 */
 @media (max-width: 375px) {
   .health-inspection-page {
     .page-container {
@@ -494,7 +484,6 @@
   }
 }
 
-/* 暗色模式适配 */
 @media (prefers-color-scheme: dark) {
   .health-inspection-page {
     background-color: #1a1a1a;
@@ -574,5 +563,4 @@
   }
 }
 
-/* 底部安全区域 */
 .safe-area { height: 120rpx; }

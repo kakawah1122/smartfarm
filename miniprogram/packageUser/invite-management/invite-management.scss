@@ -29,7 +29,6 @@ $spacing-xl: 40rpx;
   padding-bottom: 120rpx;
 }
 
-/* 按钮间距 */
 .btn-spacing {
   margin-top: 16rpx;
 }
@@ -38,7 +37,6 @@ $spacing-xl: 40rpx;
   padding-bottom: 140rpx;
 }
 
-/* 统计卡片 */
 .stats-section {
   margin: $spacing-s;
   padding: $spacing-l;
@@ -74,7 +72,6 @@ $spacing-xl: 40rpx;
   line-height: 1.4;
 }
 
-/* 筛选选项卡 */
 .filter-section {
   margin: 0 $spacing-s $spacing-s;
   background: $bg-color-container;
@@ -83,7 +80,6 @@ $spacing-xl: 40rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
-/* 加载状态 */
 .loading-container {
   display: flex;
   justify-content: center;
@@ -93,7 +89,6 @@ $spacing-xl: 40rpx;
   gap: $spacing-s;
 }
 
-/* 空状态 */
 .empty-container {
   display: flex;
   flex-direction: column;
@@ -103,7 +98,6 @@ $spacing-xl: 40rpx;
   padding: 120rpx $spacing-l;
 }
 
-/* 邀请列表 */
 .invite-list {
   margin: 0 $spacing-s $spacing-s;
   border-radius: 16rpx;
@@ -137,12 +131,10 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 加载更多 */
 .load-more {
   margin: $spacing-l $spacing-s;
 }
 
-/* 创建邀请按钮 */
 .create-button-container {
   position: fixed;
   bottom: 120rpx;
@@ -164,7 +156,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 邀请详情弹窗 */
 .invite-detail {
   padding: $spacing-l 0;
 }
@@ -200,7 +191,6 @@ $spacing-xl: 40rpx;
   word-break: break-word;
 }
 
-/* 邀请操作按钮 */
 .invite-actions-section {
   display: flex;
   gap: $spacing-s;
@@ -213,8 +203,6 @@ $spacing-xl: 40rpx;
     font-size: 28rpx !important;
   }
 }
-
-/* 创建邀请表单 */
 
 .form-description {
   padding: $spacing-l;
@@ -247,7 +235,6 @@ $spacing-xl: 40rpx;
     color: $error-color;
   }
   
-  /* 确保输入框在表单中的样式 */
   .t-input {
     margin-top: $spacing-xs;
     
@@ -284,7 +271,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 撤销确认弹窗 */
 .revoke-form {
   padding: 0;
 }
@@ -303,7 +289,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* Cell组件样式覆盖 */
 .t-cell {
   padding: $spacing-l !important;
   border-bottom: 1rpx solid $border-color-light !important;
@@ -331,7 +316,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 标签样式 */
 .t-tag {
   border-radius: 8rpx !important;
   font-size: 22rpx !important;
@@ -363,7 +347,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 选项卡样式覆盖 */
 .t-tabs {
   &__nav {
     background: $bg-color-container !important;
@@ -381,7 +364,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 输入框样式覆盖 */
 .t-input {
   &__control {
     border: 1rpx solid $border-color-light !important;
@@ -395,7 +377,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 文本域样式覆盖 */
 .t-textarea {
   &__control {
     border: 1rpx solid $border-color-light !important;
@@ -410,7 +391,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 对话框样式覆盖 */
 .t-dialog {
   &__container {
     border-radius: 24rpx !important;
@@ -464,9 +444,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 暗色模式适配已移除，如需要可通过程序控制 */
-
-/* 动画效果 */
 .stats-section,
 .invite-list,
 .filter-section {
@@ -485,7 +462,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-/* 创建邀请码弹窗样式 */
 .create-dialog-overlay {
   position: fixed;
   top: 0;
@@ -665,7 +641,6 @@ $spacing-xl: 40rpx;
 
 }
 
-/* 邀请码生成成功内容样式 */
 .invite-success-content {
   padding: 16rpx 0;
 }
@@ -751,4 +726,3 @@ $spacing-xl: 40rpx;
   display: block;
 }
 
-/* 响应式布局 - 使用更简单的实现 */

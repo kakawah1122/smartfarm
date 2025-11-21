@@ -1,4 +1,3 @@
-/* ai-diagnosis.scss - AI智能诊断页面样式 - 基于TDesign设计规范 */
 
 .ai-diagnosis-page {
   background-color: var(--td-bg-color-page, #f5f5f5);
@@ -10,8 +9,6 @@
   padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx); /* 状态栏 + 导航栏 + 安全间距（增加到40rpx） */
   padding-bottom: 120rpx;
 }
-
-/* ==================== 免责声明样式 ==================== */
 
 .disclaimer-banner {
   background: linear-gradient(135deg, #fff9e6 0%, #fff3d6 100%);
@@ -41,8 +38,6 @@
   font-weight: 500;
 }
 
-/* ==================== 诊断结果展示样式 - 全新设计 ==================== */
-
 .diagnosis-result {
   display: flex;
   flex-direction: column;
@@ -51,7 +46,6 @@
   padding-bottom: 32rpx;
 }
 
-/* 诊断头部卡片 */
 .result-header-card {
   background: linear-gradient(135deg, #0d5a4a 0%, #1a7a5a 100%);
   border-radius: 20rpx;
@@ -85,7 +79,6 @@
   text-align: center;
 }
 
-/* 诊断卡片通用样式 */
 .diagnosis-card {
   background: #ffffff;
   border-radius: 20rpx;
@@ -112,11 +105,6 @@
   font-size: 24rpx;
   color: #999999;
 }
-
-/* 卡片内容区域 */
-
-/* 主要诊断卡片 */
-/* 主要诊断卡片：移除边框，保持简洁 */
 
 .confidence-badge {
   display: flex;
@@ -153,10 +141,8 @@
   padding: 16rpx 20rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
-  /* 移除左边框 */
-}
+  }
 
-/* 鉴别诊断 */
 .differential-list {
   display: flex;
   flex-direction: column;
@@ -170,8 +156,7 @@
   padding: 16rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
-  /* 移除左边框 */
-}
+  }
 
 .diff-name {
   font-size: 30rpx;
@@ -189,7 +174,6 @@
   border-radius: 20rpx;
 }
 
-/* 立即措施卡片 */
 .action-card {
   /* 移除左边框 */
   background: #ffffff;
@@ -208,8 +192,7 @@
   padding: 20rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
-  /* 移除边框 */
-}
+  }
 
 .action-number {
   flex-shrink: 0;
@@ -232,9 +215,6 @@
   line-height: 1.8;
   padding-top: 6rpx;
 }
-
-/* 药物治疗卡片 */
-/* 药物治疗卡片：已移除左边框，保持简洁 */
 
 .medication-box {
   background: #f8f9fa;
@@ -286,7 +266,6 @@
   color: #333333;
 }
 
-/* 简单列表样式 */
 .simple-list {
   display: flex;
   flex-direction: column;
@@ -324,7 +303,6 @@
   line-height: 1.6;
 }
 
-/* 操作按钮 */
 .result-actions {
   display: flex;
   flex-direction: column;
@@ -391,7 +369,6 @@
   }
 }
 
-/* 诊断表单样式 */
 .diagnosis-form {
   display: flex;
   flex-direction: column;
@@ -680,8 +657,6 @@
   color: var(--td-text-color-placeholder);
   margin-top: 8rpx;
 }
-
-/* ✨ 图片上传样式 - 增强版 */
 
 // 标题区域
 .section-header-with-tip {
@@ -1085,7 +1060,6 @@
   line-height: 1.6;
 }
 
-/* ✨ 必填项提示样式 */
 .required-hint {
   margin-top: 20rpx;
   padding: 20rpx 24rpx;
@@ -1176,12 +1150,10 @@
   }
 }
 
-/* 加载状态样式 */
 .t-loading {
   --td-loading-color: var(--td-brand-color);
 }
 
-/* 标签选中状态优化 */
 .t-tag--theme-primary {
   --td-tag-primary-color: white;
   --td-tag-primary-bg-color: var(--td-brand-color);
@@ -1209,8 +1181,6 @@
 .diagnosis-result {
   animation: fadeInUp 0.6s ease-out;
 }
-
-/* 轮询进度样式已移除，使用按钮加载状态替代 */
 
 /* ==================== 全局TDesign按钮覆盖 ==================== */
 // 确保页面中所有block按钮都占满宽度

@@ -12,12 +12,10 @@
 }
 
 .detail-content {
-  padding: 0 16rpx 32rpx 16rpx; /* 缩小左右间距，让卡片更靠近屏幕边缘 */
-}
+  padding: 0 16rpx 32rpx 16rpx; }
 
 .tabs-wrapper {
-  padding-top: 24rpx; /* 增加导航栏与tab栏之间的间距 */
-}
+  padding-top: 24rpx; }
 
 .panel-content {
   padding: 20rpx 0 0 0;
@@ -26,7 +24,6 @@
   gap: 28rpx;
 }
 
-/* 品种卡片网格 */
 .breed-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -150,7 +147,6 @@
   font-size: 26rpx;
 }
 
-/* 走势图区域 */
 .chart-section {
   background: #ffffff;
   border-radius: 20rpx;
@@ -204,8 +200,7 @@
 
 @media screen and (max-width: 750rpx) {
   .detail-content {
-    padding: 0 12rpx 28rpx 12rpx; /* 小屏幕也缩小左右间距 */
-  }
+    padding: 0 12rpx 28rpx 12rpx;   }
 
   .panel-content {
     padding: 16rpx 0 0 0;

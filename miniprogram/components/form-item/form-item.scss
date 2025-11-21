@@ -1,4 +1,3 @@
-/* form-item.scss - 通用表单项组件样式 */
 
 .form-item {
   display: flex;
@@ -96,7 +95,6 @@
   }
 }
 
-/* 特殊布局样式 */
 .form-item--vertical {
   flex-direction: column;
   align-items: flex-start;
@@ -119,7 +117,6 @@
   padding: 40rpx 30rpx;
 }
 
-/* 内容类型特殊样式 */
 .form-item__content--placeholder {
   color: #c8c9cc;
 }

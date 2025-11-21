@@ -1,11 +1,9 @@
-/* 角色管理页面样式 */
 .container {
   min-height: 100vh;
   background-color: #f8f9fa;
   padding-bottom: 120rpx;
 }
 
-/* 导航栏 */
 .navbar {
   position: fixed;
   top: 0;
@@ -30,7 +28,6 @@
   }
 }
 
-/* 角色概览 */
 .role-overview {
   margin-top: calc(var(--navbar-height, 132rpx) + 24rpx); /* 导航栏高度 + 安全间距 */
   padding: 32rpx;
@@ -91,7 +88,6 @@
   }
 }
 
-/* 权限矩阵 */
 .permission-matrix {
   margin: 32rpx;
   background-color: #fff;
@@ -193,7 +189,6 @@
   }
 }
 
-/* 用户角色分配 */
 .user-role-assignment {
   margin: 32rpx;
 
@@ -283,7 +278,6 @@
   }
 }
 
-/* 角色选择弹窗 */
 .role-dialog {
   background-color: #fff;
   border-radius: 24rpx 24rpx 0 0;
@@ -356,7 +350,6 @@
   }
 }
 
-/* 响应式适配 */
 @media (max-width: 750rpx) {
   .role-overview .role-cards {
     grid-template-columns: 1fr;

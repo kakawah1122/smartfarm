@@ -1,6 +1,4 @@
-/* 任务详情弹窗组件样式 */
 
-/* 详情内容容器 */
 .record-detail-content {
   padding: 0 !important;
   display: flex !important;
@@ -8,7 +6,6 @@
   gap: 0 !important;
 }
 
-/* 信息卡片 */
 .record-detail-content .info-card {
   margin: 0;
   background: #ffffff !important;
@@ -48,13 +45,11 @@
   flex-shrink: 0;
 }
 
-/* 物料文本样式 */
 .materials-text {
   color: var(--primary-blue, #0052d9) !important;
   font-weight: var(--font-weight-medium, 500) !important;
 }
 
-/* 任务描述行样式 */
 .info-row-description {
   align-items: flex-start;
   padding-top: var(--spacing-sm, 8rpx);
@@ -70,7 +65,6 @@
   text-align: left;
 }
 
-/* 注意事项行样式 */
 .info-row-notes {
   align-items: flex-start;
   padding: var(--spacing-base, 16rpx) 0;
@@ -91,7 +85,6 @@
   text-align: left;
 }
 
-/* 重要文本样式 */
 .important-text {
   color: var(--color-warning, #ed7b2f) !important;
   font-weight: var(--font-weight-medium, 500) !important;
@@ -107,7 +100,6 @@
   align-self: flex-start;
 }
 
-/* 疫苗接种信息卡片 */
 .record-detail-content .vaccine-info-card {
   margin: 20rpx 8rpx;
   padding: 24rpx;
@@ -145,7 +137,6 @@
   }
 }
 
-/* 用药信息卡片 */
 .record-detail-content .medication-info-card {
   margin: 20rpx 8rpx;
   padding: 24rpx;
@@ -183,7 +174,6 @@
   }
 }
 
-/* 标签样式 */
 .record-detail-content .info-label {
   font-size: 26rpx !important;
   color: #6c757d !important;
@@ -193,7 +183,6 @@
   flex-shrink: 0;
 }
 
-/* 数值样式 */
 .record-detail-content .info-value {
   font-size: 28rpx !important;
   color: #1a1a1a !important;
@@ -206,7 +195,6 @@
   line-height: 1.5;
 }
 
-/* 自动对齐样式 - 默认右对齐，多行时左对齐 */
 .record-detail-content .info-value.auto-align {
   text-align: right !important;
 }
@@ -222,21 +210,18 @@
   overflow-wrap: break-word;
 }
 
-/* 状态标签居右对齐优化 */
 .record-detail-content .status-value {
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 
-/* 注释文本样式 */
 .record-detail-content .note-text {
   word-break: break-all;
   white-space: pre-wrap;
   line-height: 1.5;
 }
 
-/* 任务描述和注意事项保持顶部对齐 */
 .info-row-description,
 .info-row-notes {
   align-items: flex-start !important;

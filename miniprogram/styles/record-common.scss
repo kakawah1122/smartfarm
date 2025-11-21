@@ -4,9 +4,6 @@
  * 遵循项目UI规范和TDesign设计系统
  */
 
-/* ==================== 记录卡片基础样式 ==================== */
-
-/* 记录项容器 */
 .record-item-base {
   background: var(--td-bg-color-container, #ffffff);
   border-radius: 16rpx;
@@ -21,7 +18,6 @@
   }
 }
 
-/* 记录头部 */
 .record-header-base {
   margin-bottom: 12rpx;
 }
@@ -41,16 +37,12 @@
   flex: 1;
 }
 
-/* ==================== 记录内容样式 ==================== */
-
-/* 内容容器 */
 .record-content-base {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
 }
 
-/* 双列布局容器 */
 .info-grid-base {
   display: flex;
   justify-content: space-between;
@@ -82,7 +74,6 @@
   white-space: nowrap;
 }
 
-/* 单行布局容器 */
 .info-row-base {
   display: flex;
   align-items: center;
@@ -92,7 +83,6 @@
     padding-bottom: 0;
   }
   
-  /* 双字段布局时的group */
   .info-group {
     display: flex;
     align-items: center;
@@ -103,7 +93,6 @@
   }
 }
 
-/* 信息标签 */
 .info-label-base {
   font-size: 26rpx;
   color: var(--td-text-color-secondary, #999);
@@ -113,7 +102,6 @@
   white-space: nowrap;
 }
 
-/* 信息值 */
 .info-value-base {
   font-size: 28rpx;
   color: var(--td-text-color-primary, #333);
@@ -128,8 +116,6 @@
     font-size: 30rpx;
   }
 }
-
-/* ==================== 记录底部样式 ==================== */
 
 .record-footer-base {
   display: flex;
@@ -151,8 +137,6 @@
   color: var(--td-text-color-secondary, #666);
   font-weight: 500;
 }
-
-/* ==================== 响应式设计 ==================== */
 
 @media screen and (max-width: 480px) {
   .record-item-base {

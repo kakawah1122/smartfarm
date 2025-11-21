@@ -9,8 +9,6 @@
  * @import "../../styles/health-vars.scss";
  */
 
-/* ==================== 字体大小 ==================== */
-
 // 标题和名称
 $health-title-size: 32rpx !default;
 $health-title-weight: 600 !default;
@@ -34,8 +32,6 @@ $health-small-size: 22rpx !default;
 // 特殊文本
 $health-number-size: 30rpx !default;  // 编号、数量等
 $health-number-weight: 600 !default;
-
-/* ==================== 颜色定义 ==================== */
 
 // 基础文本颜色
 $health-text-primary: #333 !default;
@@ -67,8 +63,6 @@ $health-border-normal: #e7e7e7 !default;
 $health-border-dark: #d0d0d0 !default;
 $health-border-primary: rgba(0, 82, 217, 0.15) !default;
 
-/* ==================== 间距定义 ==================== */
-
 // 卡片间距
 $health-card-padding: 24rpx !default;
 $health-card-margin: 16rpx !default;
@@ -88,8 +82,6 @@ $health-footer-margin-top: 16rpx !default;
 $health-footer-padding-top: 16rpx !default;
 $health-footer-gap: 16rpx !default;
 
-/* ==================== 圆角和阴影 ==================== */
-
 // 圆角
 $health-card-radius: 16rpx !default;
 $health-tag-radius: 8rpx !default;
@@ -100,18 +92,12 @@ $health-batch-radius: 16rpx !default;
 $health-card-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) !default;
 $health-card-shadow-hover: 0 4rpx 12rpx rgba(0, 0, 0, 0.08) !default;
 
-/* ==================== 边框 ==================== */
-
 $health-border-width: 1rpx !default;
 $health-border-style: solid !default;
-
-/* ==================== 过渡动画 ==================== */
 
 $health-transition-fast: 0.2s !default;
 $health-transition-normal: 0.3s !default;
 $health-transition-slow: 0.5s !default;
-
-/* ==================== 特定样式类的变量 ==================== */
 
 // 成本显示
 $health-cost-color: $health-danger-color !default;
@@ -136,47 +122,8 @@ $health-batch-color: $health-primary-color !default;
 $health-batch-count-bg: $health-primary-color !default;
 $health-batch-count-color: #ffffff !default;
 
-/* ==================== 响应式断点 ==================== */
-
 $health-breakpoint-small: 480px !default;
 $health-breakpoint-tiny: 320px !default;
-
-/* ==================== 使用示例 ==================== */
-
-/*
-// 在 SCSS 文件中引入
-@import "../../styles/health-vars.scss";
-
-// 使用变量
-.record-card {
-  padding: $health-card-padding;
-  border-radius: $health-card-radius;
-  box-shadow: $health-card-shadow;
-}
-
-.info-label {
-  font-size: $health-label-size;
-  color: $health-label-color;
-  line-height: $health-label-line-height;
-}
-
-.info-value {
-  font-size: $health-value-size;
-  color: $health-value-color;
-  font-weight: $health-value-weight;
-}
-
-.success-text {
-  color: $health-success-color;
-}
-
-.cost-value {
-  color: $health-cost-color;
-  font-weight: $health-cost-weight;
-}
-*/
-
-/* ==================== Mixin 工具（可选） ==================== */
 
 // 卡片基础样式 mixin
 @mixin health-card-base {
@@ -230,26 +177,3 @@ $health-breakpoint-tiny: 320px !default;
   font-weight: $health-value-weight;
 }
 
-/* ==================== 使用 Mixin 示例 ==================== */
-
-/*
-.record-card {
-  @include health-card-base;
-}
-
-.info-label {
-  @include health-info-label;
-}
-
-.info-value {
-  @include health-info-value;
-  
-  &.success-text {
-    @include health-success-text;
-  }
-  
-  &.danger-text {
-    @include health-danger-text;
-  }
-}
-*/

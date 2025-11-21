@@ -1,6 +1,4 @@
-/* 交易详情弹窗组件样式 */
 
-/* 详情内容容器 */
 .record-detail-content {
   padding: 0 !important;
   display: flex !important;
@@ -8,7 +6,6 @@
   gap: 0 !important;
 }
 
-/* 信息卡片 */
 .record-detail-content .info-card {
   background: white !important;
   border-radius: 0 !important;
@@ -17,7 +14,6 @@
   padding: 0 !important;
 }
 
-/* 卡片内容 */
 .record-detail-content .card-content {
   padding: 24rpx 32rpx !important;
   display: flex !important;
@@ -25,7 +21,6 @@
   gap: 0 !important;
 }
 
-/* 信息行 */
 .record-detail-content .info-row {
   display: flex !important;
   justify-content: space-between !important;
@@ -35,7 +30,6 @@
   min-height: 44rpx !important;
 }
 
-/* 虚线分隔符 */
 .record-detail-content .divider-line {
   height: 2rpx !important;
   min-height: 2rpx !important;
@@ -47,7 +41,6 @@
   display: block !important;
 }
 
-/* 标签样式 */
 .record-detail-content .info-label {
   font-size: 26rpx !important;
   color: #666 !important;
@@ -60,7 +53,6 @@
   vertical-align: baseline !important;
 }
 
-/* 值样式 */
 .record-detail-content .info-value {
   font-size: 28rpx !important;
   color: #333 !important;
@@ -75,7 +67,6 @@
   vertical-align: baseline !important;
 }
 
-/* 金额文本 */
 .record-detail-content .amount-text {
   font-size: 32rpx !important;
   font-weight: 600 !important;
@@ -93,7 +84,6 @@
   }
 }
 
-/* 备注文本 - 允许多行显示 */
 .record-detail-content .note-text {
   text-align: right !important;
   word-break: break-all !important;
@@ -101,7 +91,6 @@
   line-height: 1.5 !important;
 }
 
-/* 当note-text在说明行时，其父容器info-row允许多行，并使用flex-start对齐 */
 .record-detail-content .info-row:has(.note-text) {
   align-items: flex-start !important;
   

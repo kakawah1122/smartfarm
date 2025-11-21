@@ -1,4 +1,3 @@
-/* exit-form.scss - 出栏记录表单样式 - 与TDesign主题保持一致 */
 
 .page-container {
   min-height: 100vh;
@@ -7,7 +6,6 @@
   flex-direction: column;
 }
 
-/* 表单内容区域 - 优化顶部安全间距 */
 .form-content {
   flex: 1;
   padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 48rpx); /* 状态栏 + 导航栏 + 安全间距（增加间距） */
@@ -16,10 +14,8 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* AI盘点信息卡片样式 - 紧凑间距 */
 .ai-info-section {
-  margin: 24rpx 24rpx 16rpx 24rpx; /* 与其他卡片保持一致的紧凑间距 */
-}
+  margin: 24rpx 24rpx 16rpx 24rpx; }
 
 .ai-info-card {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
@@ -165,15 +161,11 @@
   margin-bottom: 0;
 }
 
-/* 主表单样式 - 减少左右内边距 */
 .entry-form {
-  padding: 0 24rpx; /* 减少左右内边距，让内容更贴近屏幕边缘 */
-}
+  padding: 0 24rpx; }
 
-/* 表单分组样式 - 减少间距 */
 .form-section {
-  margin-bottom: 16rpx; /* 减少分组间距 */
-}
+  margin-bottom: 16rpx; }
 
 .section-header {
   margin-bottom: 8rpx; /* 减少标题与内容间距 */
@@ -190,7 +182,6 @@
   margin: 0 8rpx;
 }
 
-/* 表单卡片样式 */
 .form-card {
   background: var(--td-bg-color-container, #ffffff);
   border-radius: 16rpx;
@@ -198,23 +189,18 @@
   overflow: hidden;
 }
 
-/* Picker包裹器样式 */
 .picker-wrapper {
   display: block;
-  border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7); /* 虚线分隔 */
-}
+  border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7); }
 
-/* 表单项样式 */
 .form-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 72rpx; /* 减少高度，更紧凑 */
   padding: 16rpx 24rpx; /* 减少内边距，更紧凑 */
-  border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7); /* 虚线分隔 */
-}
+  border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7); }
 
-/* picker内的form-item不需要底部边框 */
 .picker-wrapper .form-item {
   border-bottom: none;
 }
@@ -223,7 +209,6 @@
   border-bottom: none;
 }
 
-/* 表单项标签 */
 .item-label {
   font-size: 30rpx;
   color: var(--td-text-color-primary, #000000);
@@ -232,7 +217,6 @@
   flex-shrink: 0;
 }
 
-/* 必填标识 */
 .item-label.required::after {
   content: ' *';
   color: var(--td-error-color, #d54941);
@@ -240,7 +224,6 @@
   font-weight: bold;
 }
 
-/* 输入框容器 */
 .item-input {
   flex: 1;
   margin-left: 24rpx;
@@ -262,11 +245,6 @@
   font-size: 28rpx;
 }
 
-/* 自动填充文本样式 */
-
-/* 右对齐的自动填充文本样式 */
-
-/* 批次选择器输入样式 */
 .batch-picker-input {
   display: flex;
   align-items: center;
@@ -285,7 +263,6 @@
   }
 }
 
-/* 日期输入特殊样式 */
 .date-input {
   display: flex;
   align-items: center;
@@ -298,7 +275,6 @@
   color: var(--td-text-color-primary, #000000);
 }
 
-/* 收入和重量显示 */
 .amount-item {
   background: var(--td-bg-color-page, #f5f5f5);
 }
@@ -319,7 +295,6 @@
   font-weight: 600;
 }
 
-/* 文本域特殊样式 */
 .textarea-item {
   display: flex;
   align-items: flex-start;
@@ -368,7 +343,6 @@
   margin-top: 16rpx;
 }
 
-/* 表单操作按钮 - 现代化样式 */
 .form-actions {
   padding: 48rpx 32rpx 32rpx 32rpx;
   display: flex;
@@ -380,34 +354,21 @@
   background: transparent !important;
 }
 
-/* === TDesign规范按钮样式 - 使用全局变量 === */
-/* 所有按钮样式已在app.scss中全局定义 */
-
 .primary-button {
-  /* 继承全局TDesign主要按钮样式 */
-}
+  }
 
 .secondary-button {
-  /* 继承全局TDesign默认按钮样式 */
-}
+  }
 
-/* 重复的旧样式已清理 */
-
-/* 按钮基础样式 - 彻底移除所有边框和轮廓线 */
-
-/* 响应式设计 - 优化顶部安全间距 */
 @media screen and (max-width: 480px) {
   .form-content {
-    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx); /* 状态栏 + 导航栏 + 安全间距（小屏幕稍小，但增加间距） */
-  }
+    padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx);   }
   
   .ai-info-section {
-    margin: 24rpx 16rpx 12rpx 16rpx; /* AI信息卡片也要调整 */
-  }
+    margin: 24rpx 16rpx 12rpx 16rpx;   }
   
   .form-section {
-    margin-bottom: 12rpx; /* 小屏幕上更紧凑的分组间距 */
-  }
+    margin-bottom: 12rpx;   }
   
   .entry-form {
     padding: 0 16rpx;
@@ -417,18 +378,15 @@
     padding: 32rpx 16rpx 24rpx 16rpx;
   }
   
-  /* 现代化按钮响应式样式 */
   .action-button {
     height: 72rpx !important;
     font-size: 28rpx !important;
     line-height: 72rpx !important;
   }
   
-  /* 表单项响应式 */
   .form-item {
     padding: 14rpx 20rpx; /* 小屏幕上更紧凑 */
-    min-height: 64rpx; /* 小屏幕上更紧凑 */
-  }
+    min-height: 64rpx;   }
   
   .item-label {
     font-size: 28rpx;
@@ -469,7 +427,6 @@
     margin: 0 4rpx;
   }
   
-  /* 响应式备注框 */
   .textarea-item {
     padding: 20rpx;
     min-height: 100rpx;
@@ -481,7 +438,6 @@
   }
 }
 
-/* 表单验证错误样式 */
 .form-item.error {
   border-left: 4rpx solid var(--td-error-color, #d54941);
   background: var(--td-error-color-1, #ffeae9);
@@ -499,27 +455,18 @@
   color: var(--td-error-color, #d54941);
 }
 
-/* 注意：组件WXSS不支持:focus伪类选择器，已移除无障碍支持样式 */
-
-/* 动画效果 */
 .form-card {
   transform: translateY(0);
   transition: all 0.3s ease;
 }
 
-/* 注意：组件WXSS不支持:hover伪类选择器，已移除卡片悬停效果 */
-
-/* 额外的样式重置 - 微信小程序兼容版本 */
 .form-actions {
   border: none !important;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* 特殊情况下的边框重置 - 简化选择器 */
 .form-actions .t-button {
   border: none !important;
 }
-
-/* 注意：组件WXSS不允许使用标签选择器，已移除 .form-actions button 相关样式 */
 

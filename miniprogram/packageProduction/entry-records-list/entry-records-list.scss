@@ -1,5 +1,4 @@
 /* pages/entry-records-list/entry-records-list.scss */
-/* TDesign入栏记录列表页面样式 */
 
 @import "../../styles/record-common.scss";
 
@@ -15,16 +14,13 @@ page {
   padding-bottom: var(--safe-area-inset-bottom, 0);
 }
 
-/* 主内容区域 */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   padding: 0 16rpx;
-  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 安全间距 */
-}
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); }
 
-/* 搜索栏区域 */
 .search-section {
   margin: 16rpx 0;
   background: var(--td-bg-color-container, #ffffff);
@@ -37,8 +33,6 @@ page {
   width: 100%;
 }
 
-
-/* 统计信息区域 */
 .stats-section {
   margin-bottom: 16rpx;
   padding: 16rpx 20rpx;
@@ -56,8 +50,6 @@ page {
   color: var(--td-text-color-primary, #000000);
 }
 
-
-/* 记录列表区域 */
 .records-section {
   flex: 1;
   margin-bottom: 16rpx;
@@ -69,9 +61,6 @@ page {
   gap: 16rpx;
 }
 
-/* ==================== 使用通用样式，减少代码重复 ==================== */
-
-/* 记录项样式 - 继承通用样式 */
 .record-item {
   @extend .record-item-base;
 }
@@ -124,12 +113,10 @@ page {
   @extend .operator-text-base;
 }
 
-/* 页面特定样式（如果有） */
 .record-type-tag {
   flex-shrink: 0;
 }
 
-/* 加载状态 */
 .loading-state {
   display: flex;
   justify-content: center;
@@ -148,7 +135,6 @@ page {
   margin-top: 16rpx;
 }
 
-/* 无更多数据 */
 .no-more {
   display: flex;
   justify-content: center;
@@ -163,7 +149,6 @@ page {
   font-weight: 400;
 }
 
-/* 空状态 */
 .empty-state {
   background: var(--td-bg-color-container, #ffffff);
   border-radius: 16rpx;
@@ -172,7 +157,6 @@ page {
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 }
 
-/* 响应式设计 */
 @media screen and (max-width: 480px) {
   .main-content {
     padding: 0 12rpx;
@@ -211,7 +195,6 @@ page {
   }
 }
 
-/* 针对极小屏幕的特殊处理 */
 @media screen and (max-width: 320px) {
   .info-grid {
     flex-direction: column;
@@ -237,7 +220,6 @@ page {
   }
 }
 
-/* 按钮居中显示 */
 .search-section t-search,
 .empty-state t-button,
 .loading-state t-loading,
@@ -248,7 +230,6 @@ page {
   text-align: center !important;
 }
 
-/* 记录详情弹窗样式 - 与健康管理任务详情保持一致 */
 .record-detail-content {
   padding: 0 !important;
 }

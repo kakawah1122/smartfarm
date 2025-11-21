@@ -1,4 +1,3 @@
-/* 诊断详情弹窗组件样式 */
 .diagnosis-detail-content {
   padding: 0;
 }
@@ -122,7 +121,6 @@
   flex: 1;
 }
 
-/* 修正记录卡片样式 */
 .correction-section {
   background: #fff;
   padding: 20rpx;
@@ -153,7 +151,6 @@
   }
 }
 
-/* 实际治疗记录卡片样式 */
 .treatment-section {
   background: #fff;
   padding: 20rpx;
@@ -210,7 +207,6 @@
   }
 }
 
-/* 评分显示 */
 .rating-display {
   display: flex;
   align-items: center;
@@ -233,7 +229,6 @@
   margin-left: 8rpx;
 }
 
-/* 诊断图片展示 */
 .diagnosis-images {
   display: flex;
   flex-wrap: wrap;

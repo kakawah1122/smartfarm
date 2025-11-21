@@ -1,4 +1,3 @@
-/* image-upload.scss - 图片上传组件样式 */
 
 .image-upload {
   .image-list {
@@ -91,7 +90,6 @@
   }
 }
 
-/* 适配不同屏幕宽度 */
 @media screen and (max-width: 400px) {
   .image-upload .image-list .image-item {
     width: 180rpx;
@@ -99,7 +97,6 @@
   }
 }
 
-/* 只读状态 */
 .image-upload--readonly {
   .image-list .image-item {
     &.add-button {
@@ -108,7 +105,6 @@
   }
 }
 
-/* 禁用状态 */
 .image-upload--disabled {
   opacity: 0.6;
   

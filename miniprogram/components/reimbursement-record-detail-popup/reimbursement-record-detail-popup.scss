@@ -1,6 +1,4 @@
-/* 报销记录详情弹窗组件样式 */
 
-/* 详情内容容器 */
 .record-detail-content {
   padding: 0 !important;
   display: flex !important;
@@ -8,7 +6,6 @@
   gap: 0 !important;
 }
 
-/* 信息卡片 */
 .record-detail-content .info-card {
   background: white !important;
   border-radius: 12rpx !important;
@@ -18,7 +15,6 @@
   border: 2rpx solid #0052d9 !important;
 }
 
-/* 卡片内容 */
 .record-detail-content .card-content {
   display: flex !important;
   flex-direction: column !important;
@@ -26,7 +22,6 @@
   overflow: visible !important;
 }
 
-/* 信息行 */
 .record-detail-content .info-row {
   display: flex !important;
   justify-content: space-between !important;
@@ -36,7 +31,6 @@
   margin-bottom: 0 !important;
 }
 
-/* 虚线分隔符 */
 .record-detail-content .divider-line {
   height: 2rpx !important;
   min-height: 2rpx !important;
@@ -48,7 +42,6 @@
   display: block !important;
 }
 
-/* 标签样式 */
 .record-detail-content .info-label {
   font-size: 26rpx !important;
   color: #666 !important;
@@ -58,7 +51,6 @@
   font-weight: 400 !important;
 }
 
-/* 值样式 */
 .record-detail-content .info-value {
   font-size: 28rpx !important;
   color: #333 !important;
@@ -80,7 +72,6 @@
   }
 }
 
-/* 状态标签容器 */
 .record-detail-content .status-value {
   display: flex !important;
   align-items: center !important;
@@ -88,7 +79,6 @@
   flex: 1 !important;
 }
 
-/* 备注文本 */
 .record-detail-content .note-text {
   text-align: left !important;
   word-break: break-all !important;
@@ -96,7 +86,6 @@
   line-height: 1.5 !important;
 }
 
-/* 凭证图片容器 */
 .record-detail-content .voucher-container {
   display: flex !important;
   flex-wrap: wrap !important;

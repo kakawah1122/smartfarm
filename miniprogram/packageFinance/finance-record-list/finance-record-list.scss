@@ -6,7 +6,6 @@
   overflow: hidden;
 }
 
-/* 内容区域 - 参照报销列表设置导航栏安全间距 */
 .content-wrapper {
   flex: 1;
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
@@ -15,7 +14,6 @@
   overflow: hidden;
 }
 
-/* 筛选标签 */
 .filter-tabs {
   display: flex;
   background: white;
@@ -39,14 +37,12 @@
   font-weight: 500;
 }
 
-/* 列表容器 */
 .list-container {
   flex: 1;
   padding: 16rpx 24rpx;
   box-sizing: border-box;
 }
 
-/* 记录列表 */
 .records-list {
   display: flex;
   flex-direction: column;
@@ -72,8 +68,7 @@
 }
 
 .record-item-card:last-child {
-  margin-bottom: 0; /* 最后一项不需要额外的底部间距 */
-}
+  margin-bottom: 0; }
 
 .record-left {
   display: flex;
@@ -134,32 +129,26 @@
 }
 
 .record-amount.income {
-  color: #dc2626; /* 收入显示红色 */
-}
+  color: #dc2626; }
 
 .record-amount.expense {
-  color: #059669; /* 支出显示绿色 */
-}
+  color: #059669; }
 
-/* 空状态 */
 .empty-state {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 120rpx 0 0 0; /* 只保留顶部padding，底部由safe-area处理 */
-}
+  padding: 120rpx 0 0 0; }
 
 .empty-text {
   font-size: 28rpx;
   color: #9ca3af;
 }
 
-/* 底部安全区域占位 - 最小化底部空白 */
 .safe-area {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
   min-height: 0;
   flex-shrink: 0;
 }
-
 

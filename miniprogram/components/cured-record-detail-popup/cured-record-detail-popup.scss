@@ -1,6 +1,4 @@
-/* 治愈记录详情弹窗组件样式 */
 
-/* 详情内容容器 */
 .record-detail-content {
   padding: 0 !important;
   display: flex !important;
@@ -8,7 +6,6 @@
   gap: 0 !important;
 }
 
-/* 详情区块 */
 .detail-section {
   margin-bottom: 32rpx !important;
   
@@ -28,7 +25,6 @@
   }
 }
 
-/* 信息卡片 */
 .record-detail-content .info-card {
   background: white !important;
   border-radius: 12rpx !important;
@@ -38,7 +34,6 @@
   border: 2rpx solid #0052d9 !important;
 }
 
-/* 卡片内容 */
 .record-detail-content .card-content {
   display: flex !important;
   flex-direction: column !important;
@@ -46,7 +41,6 @@
   overflow: visible !important;
 }
 
-/* 信息行 */
 .record-detail-content .info-row {
   display: flex !important;
   justify-content: space-between !important;
@@ -56,7 +50,6 @@
   margin-bottom: 0 !important;
 }
 
-/* 虚线分隔符 */
 .record-detail-content .divider-line {
   height: 2rpx !important;
   min-height: 2rpx !important;
@@ -68,7 +61,6 @@
   display: block !important;
 }
 
-/* 标签样式 */
 .record-detail-content .info-label {
   font-size: 26rpx !important;
   color: #666 !important;
@@ -78,7 +70,6 @@
   font-weight: 400 !important;
 }
 
-/* 值样式 */
 .record-detail-content .info-value {
   font-size: 28rpx !important;
   color: #333 !important;
@@ -90,7 +81,6 @@
   line-height: 1.5 !important;
 }
 
-/* 治愈结果统计 */
 .cure-summary {
   display: grid !important;
   grid-template-columns: repeat(2, 1fr) !important;
@@ -130,7 +120,6 @@
   }
 }
 
-/* 成本网格 */
 .cost-grid {
   display: flex !important;
   flex-direction: column !important;
@@ -166,7 +155,6 @@
   }
 }
 
-/* 治疗方案卡片 */
 .plan-card {
   background: #f8f9fa !important;
   border-radius: 12rpx !important;
@@ -184,7 +172,6 @@
   }
 }
 
-/* 用药列表 */
 .medication-list {
   display: flex !important;
   flex-direction: column !important;
