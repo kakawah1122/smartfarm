@@ -76,11 +76,13 @@ async function listPreventionRecords(event, wxContext) {
     } = event
     const openid = wxContext.OPENID
     
-    // 构建查询条件
+    // 构建查询条件 - 移除openid限制，查看所有记录
     let conditions = {
-      _openid: openid,
       isDeleted: false
     }
+    
+    // 可选：只查看当前用户的记录
+    // conditions._openid = openid
     
     if (batchId && batchId !== 'all') {
       conditions.batchId = batchId
@@ -132,11 +134,13 @@ async function getPreventionDashboard(event, wxContext) {
     const { batchId } = event
     const openid = wxContext.OPENID
     
-    // 构建查询条件
+    // 构建查询条件 - 移除openid限制，统计所有记录
     let conditions = {
-      _openid: openid,
       isDeleted: false
     }
+    
+    // 可选：只统计当前用户的记录
+    // conditions._openid = openid
     
     if (batchId && batchId !== 'all') {
       conditions.batchId = batchId

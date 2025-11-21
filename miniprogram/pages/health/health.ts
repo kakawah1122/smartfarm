@@ -1417,13 +1417,7 @@ Page<PageData, any>({
                   Math.min(100, (vaccinatedAnimals / totalAnimals * 100)) : 0
               }
               
-              // 🔧 临时测试：如果数据都是0，使用测试数据
-              if (finalStats.medicationCount === 0 && finalStats.vaccineCount === 0) {
-                console.warn('⚠️ 真实数据为0，使用测试数据展示')
-                finalStats.medicationCount = 25  // 测试数据
-                finalStats.vaccineCount = 120    // 测试数据
-                finalStats.vaccineCoverage = 80  // 测试数据
-              }
+              // 移除测试数据，使用真实数据
               
               // 一次性更新所有数据
               this.setData({
