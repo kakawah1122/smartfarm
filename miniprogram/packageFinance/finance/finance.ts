@@ -77,6 +77,9 @@ type FinanceApprovalRecord = {
   }
 }
 
+// 添加CustomEvent类型定义
+type CustomEvent = WechatMiniprogram.CustomEvent
+
 type FinancialSummaryResponse = {
   growth?: {
     revenueGrowth?: string
@@ -378,7 +381,7 @@ const pageConfig: unknown = {
   },
 
   // 时间筛选类型选择（第一级）
-  onFilterTypeChange(e: CustomEvent) {
+  onFilterTypeChange(e: WechatMiniprogram.CustomEvent) {
     const selectedIndex = e.detail.value || 0
     const selectedOption = this.data.filterTypeOptions[selectedIndex]
     
@@ -399,7 +402,7 @@ const pageConfig: unknown = {
   },
   
   // 月度选择变化（第二级）
-  onMonthChange(e: CustomEvent) {
+  onMonthChange(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value
     const selected = this.data.monthOptions[index]
     this.setData({
@@ -412,7 +415,7 @@ const pageConfig: unknown = {
   },
   
   // 季度选择变化（第二级）
-  onQuarterChange(e: CustomEvent) {
+  onQuarterChange(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value
     const selected = this.data.quarterOptions[index]
     this.setData({
@@ -425,7 +428,7 @@ const pageConfig: unknown = {
   },
   
   // 年度选择变化（第二级）
-  onYearChange(e: CustomEvent) {
+  onYearChange(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value
     const selected = this.data.yearOptions[index]
     this.setData({
@@ -437,8 +440,8 @@ const pageConfig: unknown = {
     this.loadFinancialReports()
   },
   
-  // 自定义开始日期选择
-  onCustomStartDateChange(e: CustomEvent) {
+  // 自定义开始日期变化
+  onStartDateChange(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       customStartDate: e.detail.value
     })
@@ -451,8 +454,8 @@ const pageConfig: unknown = {
     }
   },
   
-  // 自定义结束日期选择
-  onCustomEndDateChange(e: CustomEvent) {
+  // 自定义结束日期变化
+  onEndDateChange(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       customEndDate: e.detail.value
     })
@@ -531,8 +534,8 @@ const pageConfig: unknown = {
     return undefined
   },
 
-  // Tab切换 - TDesign 格式
-  onTabChange(e: CustomEvent) {
+  // Tab切换 - TDesign 
+  onTabChange(e: WechatMiniprogram.CustomEvent) {
     const { value } = e.detail
     this.setData({
       activeTab: value
@@ -540,7 +543,7 @@ const pageConfig: unknown = {
   },
 
   // 切换Tab的旧方法保持兼容
-  switchTab(e: CustomEvent) {
+  switchTab(e: WechatMiniprogram.CustomEvent) {
     const { tab } = e.currentTarget.dataset
     this.setData({
       activeTab: tab
@@ -548,7 +551,7 @@ const pageConfig: unknown = {
   },
 
   // 类型筛选
-  onTypeFilterChange(e: CustomEvent) {
+  onTypeFilterChange(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       'filters.type': e.detail.value
     })
@@ -556,7 +559,7 @@ const pageConfig: unknown = {
   },
 
   // 时间筛选
-  onPeriodFilterChange(e: CustomEvent) {
+  onPeriodFilterChange(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       'filters.period': e.detail.value
     })
@@ -912,23 +915,23 @@ const pageConfig: unknown = {
       })
 
       // 按时间戳排序（最新的在前）
-      records.sort((a, b) => {
-        const timestampA = (a.timestamp || 0)
-        const timestampB = (b.timestamp || 0)
+      const sortedRecords = records.sort((a: unknown, b: unknown) => {
+        const timestampA = (a as Record<string, unknown>).timestamp as number
+        const timestampB = (b as Record<string, unknown>).timestamp as number
         return timestampB - timestampA
       })
 
       // 更新记录列表
       this.setData({
-        records: records
+        records: sortedRecords
       })
       
       // 应用筛选条件
       this.filterRecords()
     } catch (error: unknown) {
-      logger.error('加载财务记录失败:', error)
+      logger.error('加载财务数据失败:', error)
       wx.showToast({
-        title: error.message || '加载记录失败',
+        title: (error as Error).message || '加载失败',
         icon: 'none'
       })
     }
