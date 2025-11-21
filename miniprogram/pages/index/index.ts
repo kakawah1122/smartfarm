@@ -128,15 +128,18 @@ type WeatherLocationInfo = {
 type WeatherCurrentInfo = {
   temperature?: number
   humidity?: number
+  description?: string
+  icon?: string
   feelsLike?: number
   windDirection?: string
   windScale?: string
-  updateTime?: string
+  updateTime?: string | Date
 }
 
 type WeatherConditionInfo = {
   text?: string
   emoji?: string
+  icon?: string
 }
 
 type WeatherApiPayload = {
@@ -730,7 +733,7 @@ Page({
   },
 
   // 格式化更新时间
-  formatUpdateTime(updateTime: unknown) {
+  formatUpdateTime(updateTime: string | number | Date | undefined) {
     if (!updateTime) return '刚刚更新'
     
     try {
@@ -1219,10 +1222,10 @@ Page({
       // 3. 尝试直接调用待办页面的同步方法（如果存在）
       try {
         const pages = getCurrentPages()
-        const breedingTodoPage = pages.find((page: unknown) => page.route === 'packageHealth/breeding-todo/breeding-todo')
-        if (breedingTodoPage && typeof (breedingTodoPage as unknown).syncTaskStatusFromHomepage === 'function') {
+        const breedingTodoPage = pages.find((page: any) => page.route === 'packageHealth/breeding-todo/breeding-todo')
+        if (breedingTodoPage && typeof breedingTodoPage.syncTaskStatusFromHomepage === 'function') {
           setTimeout(() => {
-            (breedingTodoPage as unknown).syncTaskStatusFromHomepage(taskId, completed)
+            breedingTodoPage.syncTaskStatusFromHomepage(taskId, completed)
           }, 100) // 延迟100ms确保状态保存完成
         }
       } catch (error: unknown) {
@@ -1236,7 +1239,7 @@ Page({
   /**
    * 判断是否为疫苗接种任务
    */
-  isVaccineTask(task: unknown): boolean {
+  isVaccineTask(task: any): boolean {
     // 首先排除用药管理任务
     if (task.type === 'medication' || task.type === 'medicine') {
       return false
@@ -1689,6 +1692,11 @@ Page({
   },
 
   // 获取缓存的天气数据
+  getEffectiveBatchId(): string {
+    const batchCache: any = wx.getStorageSync('taskBatchCache')
+    return batchCache?._id || batchCache?.id || batchCache?.batchNumber || batchCache?.batchId || ''
+  },
+
   getCachedWeatherData() {
     try {
       const cacheData = wx.getStorageSync('weather_cache')
@@ -1696,7 +1704,7 @@ Page({
         return cacheData.data
       }
       return null
-    } catch (error: unknown) {
+    } catch (error: any) {
       return null
     }
   },
@@ -1705,7 +1713,7 @@ Page({
   clearWeatherCache() {
     try {
       wx.removeStorageSync('weather_cache')
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('获取天气缓存失败:', error)
     }
   },
@@ -1736,7 +1744,7 @@ Page({
         setTimeout(() => {
           this.getWeatherData(true).then(() => {
             // 静默更新成功，不显示任何提示
-          }).catch((error: unknown) => {
+          }).catch((error: any) => {
             // 静默失败，不干扰用户体验，继续使用缓存数据
             logger.warn('静默刷新天气失败:', error)
           })
@@ -1747,7 +1755,7 @@ Page({
           this.updateWeatherUI(cacheData.data)
         }
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('检查并自动刷新天气失败:', error)
     }
   },
@@ -1800,7 +1808,7 @@ Page({
   /**
    * 打开用药管理表单
    */
-  async openMedicationForm(task: unknown) {
+  async openMedicationForm(task: any) {
     // 确保selectedTask数据正确设置
     this.setData({
       selectedTask: task
@@ -1832,7 +1840,7 @@ Page({
   /**
    * 打开营养管理表单
    */
-  async openNutritionForm(task: unknown) {
+  async openNutritionForm(task: any) {
     // 确保selectedTask数据正确设置
     this.setData({
       selectedTask: task
@@ -1882,8 +1890,8 @@ Page({
         
         // 只显示有库存的药品
         const availableMedicines = materials
-          .filter((material) => (material.currentStock || 0) > 0)
-          .map((material) => ({
+          .filter((material: any) => (material.currentStock || 0) > 0)
+          .map((material: any) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -1905,7 +1913,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       wx.showToast({
         title: '网络异常，请重试',
         icon: 'error'
@@ -1938,8 +1946,8 @@ Page({
         
         // 只显示有库存的营养品
         const availableNutrition = materials
-          .filter((material) => (material.currentStock || 0) > 0)
-          .map((material) => ({
+          .filter((material: any) => (material.currentStock || 0) > 0)
+          .map((material: any) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -1962,7 +1970,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('获取营养品库存失败:', error)
       wx.showToast({
         title: '网络异常，请重试',
@@ -2347,7 +2355,7 @@ Page({
         throw new Error(result.message || result.error || '提交失败')
       }
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       
@@ -2399,7 +2407,7 @@ Page({
       } else {
         // 已移除调试日志
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
     }
   },
@@ -2407,14 +2415,14 @@ Page({
   /**
    * 仅完成用药管理任务（不创建物料记录）
    */
-  async completeMedicationTaskOnly(selectedTask: unknown) {
+  async completeMedicationTaskOnly(task: any) {
     try {
       wx.showLoading({ title: '完成任务中...' })
       
       // 首页仅完成用药管理任务，跳过物料记录
       
       // 标记任务为完成
-      await this.completeMedicationTask(selectedTask._id || selectedTask.id, selectedTask.batchNumber || selectedTask.batchId)
+      await this.completeMedicationTask(task._id || task.id, task.batchNumber || task.batchId)
       
       wx.hideLoading()
       wx.showToast({
@@ -2425,7 +2433,7 @@ Page({
       this.closeMedicationFormPopup()
       this.loadTodayBreedingTasks() // 刷新任务列表
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({
@@ -2478,7 +2486,7 @@ Page({
       // 首页构建的营养记录数据
 
       // 调用云函数创建营养记录
-      const result = await CloudApi.callFunction<BaseResponse>(
+      const result = await CloudApi.callFunction<BaseResponse<any>>(
         'production-material',
         {
           action: 'create_record',
@@ -2513,7 +2521,7 @@ Page({
         throw new Error(result.message || result.error || '提交失败')
       }
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       
@@ -2544,7 +2552,7 @@ Page({
   /**
    * 完成营养管理任务
    */
-  async completeNutritionTask(task: unknown) {
+  async completeNutritionTask(task: any) {
     // 首页完成营养管理任务
     
     try {
@@ -2568,7 +2576,7 @@ Page({
         // 已移除调试日志
         return false
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       return false
     }
@@ -2577,7 +2585,7 @@ Page({
   /**
    * 仅完成营养管理任务（不创建物料记录）
    */
-  async completeNutritionTaskOnly(selectedTask: unknown) {
+  async completeNutritionTaskOnly(selectedTask: any) {
     try {
       wx.showLoading({ title: '完成任务中...' })
 
@@ -2600,7 +2608,7 @@ Page({
       this.closeNutritionFormPopup()
       this.loadTodayBreedingTasks() // 刷新任务列表
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({
