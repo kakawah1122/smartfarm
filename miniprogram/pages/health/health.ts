@@ -15,6 +15,7 @@ import { withErrorHandler } from './helpers/error-handler'
 import { FormValidator, vaccineFormRules, medicationFormRules, nutritionFormRules } from './helpers/form-validator'
 import { HealthNavigationManager } from './modules/health-navigation-module'
 import { HealthEventManager, setupEventManagement } from './modules/health-event-module'
+import { SetDataBatcher, createSetDataBatcher } from './helpers/setdata-batcher'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -439,7 +440,8 @@ Page<PageData, any>({
   pendingAllBatchesPromise: null as Promise<any> | null,
   latestAllBatchesSnapshot: null as any,
   latestAllBatchesFetchedAt: 0,
-
+  setDataBatcher: null as SetDataBatcher | null,  // setData批量更新器
+  
   invalidateAllBatchesCache() {
     this.pendingAllBatchesPromise = null
     this.latestAllBatchesSnapshot = null
@@ -524,6 +526,9 @@ Page<PageData, any>({
     
     this.dataWatchers = createWatcherManager()
     
+    // ✅ 性能优化：初始化setData批量更新器
+    this.setDataBatcher = createSetDataBatcher(this, 16) // 16ms = 一帧时间
+    
     this.initDateRange()
     
     // 合并初始化的setData调用
@@ -605,6 +610,12 @@ Page<PageData, any>({
   onUnload() {
     // 立即停止监听器，不延迟
     this.stopDataWatcher()
+    
+    // ✅ 性能优化：清理setData批量更新器
+    if (this.setDataBatcher) {
+      this.setDataBatcher.destroy()
+      this.setDataBatcher = null
+    }
     
     // 注释掉：restoreSetData已不再需要，直接停止监听器即可避免内存泄漏
     // restoreSetData(this)
@@ -1092,19 +1103,29 @@ Page<PageData, any>({
       // 获取原始入栏数（全部批次模式）
       const originalQuantity = healthData.originalTotalQuantity || 0
       
-      // 静默更新基础健康数据（不更新治疗数据，避免与loadTreatmentData冲突）
-      this.setData({
-        'healthStats.totalChecks': healthData.totalAnimals,
-        'healthStats.healthyCount': healthData.actualHealthyCount,
-        'healthStats.sickCount': healthData.sickCount,
-        'healthStats.deadCount': healthData.deadCount,
-        'healthStats.healthyRate': originalQuantity > 0 ? formatPercentage(healthData.healthyRate) : '-',
-        'healthStats.mortalityRate': originalQuantity > 0 ? formatPercentage(healthData.mortalityRate) : '-',
-        'healthStats.abnormalCount': healthData.abnormalRecordCount,
-        'healthStats.treatingCount': healthData.totalOngoingRecords,
-        'healthStats.originalQuantity': originalQuantity
-        // 移除治疗数据更新，由loadTreatmentData统一管理，避免数据闪烁
-      })
+      // ✅ 性能优化：使用批量更新器合并多个setData
+      if (this.setDataBatcher) {
+        this.setDataBatcher.addBatch({
+          'healthStats.totalChecks': healthData.totalAnimals,
+          'healthStats.healthyCount': healthData.actualHealthyCount,
+          'healthStats.sickCount': healthData.sickCount,
+          'healthStats.deadCount': healthData.deadCount,
+          'healthStats.originalQuantity': originalQuantity,
+          'healthStats.healthyRate': originalQuantity > 0 ? formatPercentage(healthData.healthyRate) : '-',
+          'healthStats.mortalityRate': originalQuantity > 0 ? formatPercentage(healthData.mortalityRate) : '-'
+        })
+      } else {
+        // 降级方案：如果批量更新器未初始化，使用原有方式
+        this.setData({
+          'healthStats.totalChecks': healthData.totalAnimals,
+          'healthStats.healthyCount': healthData.actualHealthyCount,
+          'healthStats.sickCount': healthData.sickCount,
+          'healthStats.deadCount': healthData.deadCount,
+          'healthStats.originalQuantity': originalQuantity,
+          'healthStats.healthyRate': originalQuantity > 0 ? formatPercentage(healthData.healthyRate) : '-',
+          'healthStats.mortalityRate': originalQuantity > 0 ? formatPercentage(healthData.mortalityRate) : '-'
+        })
+      }
     } catch (error: any) {
       // 后台刷新失败时静默处理
     }
