@@ -58,15 +58,6 @@ export class ProductionAIManager {
     currentPage.setData({
       'aiCount.active': !isActive
     })
-    
-    // 如果是展开状态，显示提示信息
-    if (!isActive) {
-      wx.showToast({
-        title: '请拍照进行AI盘点',
-        icon: 'none',
-        duration: 2000
-      })
-    }
   }
   
   /**
@@ -91,7 +82,7 @@ export class ProductionAIManager {
   /**
    * 分析图片
    */
-  private static async analyzeImage(imagePath: string): Promise<AICountResult | null> {
+  static async analyzeImage(imagePath: string): Promise<AICountResult | null> {
     try {
       // 上传图片到云存储
       const uploadResult = await this.uploadImage(imagePath)

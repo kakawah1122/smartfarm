@@ -391,7 +391,8 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // Tab切换 - TDesign 格式
-  onTabChange(e: CustomEvent) {
+  // Tab切换
+  switchTab(e: WechatMiniprogram.CustomEvent) {
     const { value } = e.detail
     this.setData({
       activeTab: value
@@ -536,26 +537,11 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   
   // 关闭AI盘点功能
   closeAICount() {
-    ProductionAIManager.closeAICount()
     this.setData({
       'aiCount.active': false,
       'aiCount.imageUrl': '',
       'aiCount.result': null,
       'aiCount.error': null
-    })
-  },
-  
-  // 拍照或选择图片
-  takePhoto() {
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['camera', 'album'],
-      success: (res) => {
-        this.setData({
-          'aiCount.imageUrl': res.tempFilePaths[0]
-        })
-      }
     })
   },
   
@@ -747,23 +733,8 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
     this.takePhoto()
   },
   
-  // 删除图片
-  deletePhoto() {
-    this.setData({
-      'aiCount.imageUrl': '',
-      'aiCount.result': null,
-      'aiCount.error': null
-    })
-    
-    wx.showToast({
-      title: '已删除图片',
-      icon: 'success',
-      duration: 1500
-    })
-  },
-  
-  // 分析图片
-  async analyzeImage() {
+  // 分析图片（AI模块）
+  async analyzeImageFromAI() {
     const { imageUrl } = this.data.aiCount
     if (!imageUrl) {
       wx.showToast({
@@ -1183,60 +1154,6 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // 继续识别
-  continueRecognition() {
-    wx.showModal({
-      title: '提示',
-      content: '请将已盘点的鹅群转移到其他区域，避免重复计数',
-      confirmText: '继续拍照',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          // 清空当前结果，准备下一轮
-          this.setData({
-            'aiCount.imageUrl': '',
-            'aiCount.result': null
-          })
-          // 直接调用拍照
-          this.takePhoto()
-        }
-      }
-    })
-  },
-
-  // 结束盘点
-  finishCounting() {
-    const { cumulativeTotal, rounds } = this.data.aiCount
-    
-    if (rounds.length === 0) {
-      wx.showToast({
-        title: '请先进行识别',
-        icon: 'none'
-      })
-      return
-    }
-    
-    const avgConfidence = this.calculateAvgConfidence(rounds)
-    
-    wx.showModal({
-      title: '完成盘点',
-      content: `共识别 ${rounds.length} 次，累计 ${cumulativeTotal} 只鹅\n平均置信度：${avgConfidence}%\n\n是否创建出栏记录？`,
-      confirmText: '创建记录',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          // 跳转到出栏表单，传递累计数据
-          this.navigateToExitForm({
-            totalCount: cumulativeTotal,
-            confidence: avgConfidence,
-            type: 'cumulative',
-            rounds: rounds
-          })
-          // 重置盘点数据
-          this.resetCountData()
-        }
-      }
-    })
-  },
 
   // 计算平均置信度
   calculateAvgConfidence(rounds: unknown[]) {
@@ -1261,7 +1178,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
 
 
   // 查看入栏记录详情
-  viewEntryRecordDetail(e: CustomEvent) {
+  viewEntryRecordDetail(e: WechatMiniprogram.CustomEvent) {
     const record = e.currentTarget.dataset.record
     // 格式化数据以匹配组件期望的字段
     const formattedRecord = {
@@ -1277,7 +1194,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // 查看出栏记录详情
-  viewExitRecordDetail(e: CustomEvent) {
+  viewExitRecordDetail(e: WechatMiniprogram.CustomEvent) {
     const record = e.currentTarget.dataset.record
     // 格式化数据以匹配组件期望的字段
     const formattedRecord = {
@@ -1322,7 +1239,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
 
 
   // 查看物料记录详情
-  viewMaterialRecordDetail(e: CustomEvent) {
+  viewMaterialRecordDetail(e: WechatMiniprogram.CustomEvent) {
     const record = e.currentTarget.dataset.record
     // 格式化数据以匹配组件期望的字段
     const formattedRecord = {
