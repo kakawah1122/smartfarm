@@ -68,7 +68,7 @@
           </view>
         </view>
         
-        <block wx:if="{{record.notes}}">
+        <block wx:if="{{record.notes && record.notes !== '无' && record.notes !== '[object Object]'}}">
           <view class="divider-line"></view>
           <view class="info-row">
             <text class="info-label">备注：</text>

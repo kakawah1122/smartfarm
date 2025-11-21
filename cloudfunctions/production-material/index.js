@@ -681,11 +681,24 @@ async function createMaterialRecord(event, wxContext) {
     
     // 确保 notes 字段是字符串类型
     let notesValue = recordData.notes || ''
-    if (typeof notesValue === 'object') {
+    if (typeof notesValue === 'object' && notesValue !== null) {
       debugLog('[创建物料记录] notes 字段是对象类型，尝试转换', notesValue)
-      notesValue = String(notesValue.value || notesValue.text || JSON.stringify(notesValue))
+      // 优先提取对象中的文本字段
+      if (notesValue.value || notesValue.text || notesValue.content || notesValue.remark) {
+        notesValue = notesValue.value || notesValue.text || notesValue.content || notesValue.remark
+      } else {
+        // 如果没有特定字段，使用JSON序列化
+        try {
+          notesValue = JSON.stringify(notesValue)
+          // 如果结果是空对象，返回空字符串
+          if (notesValue === '{}') notesValue = ''
+        } catch (e) {
+          notesValue = ''
+        }
+      }
     }
-    notesValue = String(notesValue)
+    // 确保是字符串，避免[object Object]
+    notesValue = typeof notesValue === 'string' ? notesValue : ''
     
     const newRecord = {
       userId: wxContext.OPENID,

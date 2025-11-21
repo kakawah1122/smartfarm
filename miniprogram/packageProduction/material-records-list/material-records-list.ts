@@ -93,10 +93,38 @@ const pageConfig = {
           unit: record.material?.unit || '件',
           operator: (!record.operator || record.operator === '未知' || record.operator === '系统用户') ? currentUser : record.operator,
           status: record.status || '已完成',
-          notes: typeof record.notes === 'string' ? record.notes : 
-                 (record.notes && typeof record.notes === 'object' ? 
-                   (record.notes.content || record.notes.text || record.notes.remark || 
-                    JSON.stringify(record.notes) === '[object Object]' ? '无' : JSON.stringify(record.notes)) : ''),
+          notes: (() => {
+            // 处理备注字段
+            const notes = record.notes
+            
+            // 如果是字符串
+            if (typeof notes === 'string') {
+              // 检查是否是[object Object]错误字符串
+              if (notes === '[object Object]' || notes === 'undefined' || notes === 'null') {
+                return '无'
+              }
+              return notes
+            }
+            
+            // 如果是对象
+            if (notes && typeof notes === 'object') {
+              // 尝试提取文本字段
+              const text = notes.content || notes.text || notes.remark || notes.value
+              if (text) return String(text)
+              
+              // 尝试JSON序列化
+              try {
+                const jsonStr = JSON.stringify(notes)
+                if (jsonStr === '{}') return '无'
+                return jsonStr
+              } catch (e) {
+                return '无'
+              }
+            }
+            
+            // 其他情况
+            return notes ? String(notes) : '无'
+          })(),
           date: record.recordDate || (record.createTime ? record.createTime.split('T')[0] : '未知日期'),
           createTime: record.createTime,
           description: `${record.material?.category || '未分类'} • ${record.supplier || record.targetLocation || ''}`,
