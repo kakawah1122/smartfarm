@@ -4,6 +4,10 @@
   "description": "",
   "scripts": {
     "check:ui": "bash scripts/check-ui-guidelines.sh",
+    "check:code": "node scripts/check-code-standards.js",
+    "check:style": "node scripts/check-style-standards.js",
+    "check:ts": "node scripts/check-typescript-standards.js",
+    "check:all": "npm run check:code && npm run check:style && npm run check:ts",
     "precommit": "npm run check:ui"
   },
   "keywords": [],
