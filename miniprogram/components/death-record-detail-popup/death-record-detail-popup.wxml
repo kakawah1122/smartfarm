@@ -64,7 +64,7 @@
       <view class="cost-breakdown-container" wx:if="{{record.costBreakdown}}">
         <view class="breakdown-item" wx:if="{{record.costBreakdown.entryUnitCost}}">
           <view class="breakdown-label">
-            <view class="label-dot" style="background: #0052d9;"></view>
+            <view class="label-dot death-record-detail-popup-style-1" ></view>
             <text class="label-text">鹅苗成本</text>
           </view>
           <text class="breakdown-value">¥{{record.costBreakdown.entryUnitCost}}</text>
@@ -72,7 +72,7 @@
         
         <view class="breakdown-item" wx:if="{{record.costBreakdown.breedingCost && record.costBreakdown.breedingCost !== '0.00'}}">
           <view class="breakdown-label">
-            <view class="label-dot" style="background: #00a870;"></view>
+            <view class="label-dot death-record-detail-popup-style-2" ></view>
             <text class="label-text">饲养成本</text>
           </view>
           <text class="breakdown-value">¥{{record.costBreakdown.breedingCost}}</text>
@@ -80,7 +80,7 @@
         
         <view class="breakdown-item" wx:if="{{record.costBreakdown.preventionCost && record.costBreakdown.preventionCost !== '0.00'}}">
           <view class="breakdown-label">
-            <view class="label-dot" style="background: #ed7b2f;"></view>
+            <view class="label-dot death-record-detail-popup-style-3" ></view>
             <text class="label-text">预防成本</text>
           </view>
           <text class="breakdown-value">¥{{record.costBreakdown.preventionCost}}</text>
@@ -88,7 +88,7 @@
         
         <view class="breakdown-item" wx:if="{{record.costBreakdown.treatmentCost}}">
           <view class="breakdown-label">
-            <view class="label-dot" style="background: #e34d59;"></view>
+            <view class="label-dot death-record-detail-popup-style-4" ></view>
             <text class="label-text">治疗成本</text>
           </view>
           <text class="breakdown-value">¥{{record.costBreakdown.treatmentCost || '0.00'}}</text>
