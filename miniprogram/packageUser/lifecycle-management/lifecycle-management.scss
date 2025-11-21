@@ -46,30 +46,7 @@
 }
 
 // 操作栏 - 优化布局和样式
-.action-bar {
-  padding: 0 24rpx;
-  
-  // 筛选区域
-  .filter-section {
-    display: flex;
-    gap: 16rpx;
-    margin-bottom: 20rpx;
-    
-    .filter-item {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      padding: 22rpx 24rpx;
-      background: #fff;
-      border-radius: 12rpx;
-      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-      transition: background 0.2s, transform 0.2s;
-      
-      .filter-label {
-        font-size: 26rpx;
-        color: #999;
-        margin-right: 8rpx;
-      }
+
       
       .filter-value {
         flex: 1;
@@ -497,10 +474,7 @@
 }
 
 // 任务项动画进入效果
-.animated-entry {
-  animation: fadeInUp 0.4s ease backwards;
-  
-  &:nth-child(1) { animation-delay: 0.05s; }
+
   &:nth-child(2) { animation-delay: 0.1s; }
   &:nth-child(3) { animation-delay: 0.15s; }
   &:nth-child(4) { animation-delay: 0.2s; }
@@ -521,20 +495,5 @@
 }
 
 // 返回栏样式
-.back-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx;
-  background: #fff;
-  margin-bottom: 20rpx;
-  border-radius: 16rpx;
-  margin: 0 24rpx 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-  
-  .current-template-name {
-    font-size: 30rpx;
-    color: #333;
-    font-weight: 500;
-  }
+
 }

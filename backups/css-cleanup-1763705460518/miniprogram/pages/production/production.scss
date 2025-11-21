@@ -1,0 +1,1174 @@
+/* production.scss - TDesign原生设计规范 */
+
+.page-container {
+  min-height: 100vh;
+  background-color: var(--td-bg-color-page, #f5f5f5);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--safe-area-inset-bottom, 0);
+}
+
+/* 主内容区域 - 避免被导航栏遮挡 */
+.main-content {
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 24rpx); /* 状态栏 + 导航栏 + 额外间距 */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+}
+
+/* 生产概览卡片 */
+.production-overview {
+  padding: 24rpx;
+  background: white;
+  margin: 32rpx 16rpx 16rpx 16rpx; /* 增加顶部安全间距，左右边距16rpx */
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.overview-card {
+  padding: 24rpx 16rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  color: white;
+  
+  &.primary {
+    background: linear-gradient(135deg, #0d4d2d 0%, #1a5c3a 100%);
+  }
+  
+  &.success {
+    background: linear-gradient(135deg, #5c1a3d 0%, #6b2a4d 100%);
+  }
+  
+  &.warning {
+    background: linear-gradient(135deg, #5c3d1a 0%, #6b4a1f 100%);
+  }
+  
+  &.info {
+    background: linear-gradient(135deg, #1a4d5e 0%, #2c5f6f 100%);
+  }
+}
+
+.overview-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 8rpx;
+}
+
+.overview-label {
+  font-size: 24rpx;
+  opacity: 0.9;
+}
+
+
+/* TDesign原生Tab样式 - 优化与导航栏的间距 */
+.main-tabs {
+  background: var(--td-bg-color-container, #ffffff);
+  --td-tab-track-color: var(--td-brand-color, #0052d9);
+  --td-tab-item-active-color: var(--td-brand-color, #0052d9);
+  --td-tab-item-color: var(--td-text-color-secondary, #555555);
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-index-sticky, 1010);
+  /* 移除负边距，确保与导航栏间距合理 */
+  margin-top: 0;
+}
+
+/* Tab 内容容器 */
+.tab-container {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* TDesign原生Tab内容 */
+.tab-content {
+  padding: 8rpx 0 calc(32rpx + var(--safe-area-inset-bottom, 0));
+}
+
+/* TDesign物料管理区域 */
+.material-section {
+  margin: 16rpx 16rpx;
+}
+
+
+/* TDesign原生列表区域 */
+.quick-action {
+  margin: 8rpx 16rpx 16rpx 16rpx;
+}
+
+/* 按钮内容居中 - 简化版本 */
+.quick-action t-button,
+.ai-count-section t-button,
+.result-actions t-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 物料管理按钮样式优化 */
+.quick-action {
+  t-button {
+    --td-button-height-medium: 64rpx !important;
+    --td-button-medium-font-size: 26rpx !important;
+  }
+  
+  .t-button--medium,
+  .t-button {
+    height: 64rpx !important;
+    font-size: 26rpx !important;
+    line-height: 64rpx !important;
+    padding: 0 12rpx !important;
+    min-height: 64rpx !important;
+  }
+  
+  .t-button__text {
+    font-size: 26rpx !important;
+    line-height: 64rpx !important;
+  }
+}
+
+/* === TDesign规范按钮样式 - 使用全局变量 === */
+/* 所有按钮样式已在app.scss中全局定义，此处仅保留特殊定制 */
+
+.primary-button {
+  /* 蓝色按钮样式 - 提高文字可读性 */
+  background: transparent !important;
+  border: 2rpx solid #0052d9 !important;
+  color: #0052d9 !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  
+  &:active {
+    transform: scale(0.98);
+    background: rgba(0, 82, 217, 0.1) !important;
+  }
+}
+
+.ai-button {
+  /* AI按钮特殊样式 - 继承light主题 */
+  border-width: 2rpx !important;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.warning-button {
+  /* 警告按钮特殊样式 - 继承danger主题 */
+  box-shadow: 0 4rpx 16rpx rgba(237, 123, 47, 0.2) !important;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2rpx 8rpx rgba(237, 123, 47, 0.3) !important;
+  }
+}
+
+.purple-button {
+  /* 紫色按钮样式 - 提高文字可读性 */
+  background: transparent !important;
+  border: 2rpx solid #5a1a7a !important;
+  color: #5a1a7a !important;
+  font-weight: 600 !important;
+  
+  &:active {
+    transform: scale(0.98);
+    background: rgba(90, 26, 122, 0.1) !important;
+  }
+}
+
+/* 物料类型标签样式 - 对应四宫格配色 */
+.orange-tag,
+.feed-tag {
+  background: rgba(250, 140, 22, 0.15) !important;
+  color: #fa8c16 !important;
+  border: 1rpx solid rgba(250, 140, 22, 0.3) !important;
+}
+
+.medicine-tag {
+  background: rgba(235, 47, 150, 0.15) !important;
+  color: #eb2f96 !important;
+  border: 1rpx solid rgba(235, 47, 150, 0.3) !important;
+}
+
+.purple-tag,
+.equipment-tag {
+  background: rgba(114, 46, 209, 0.15) !important;
+  color: #722ed1 !important;
+  border: 1rpx solid rgba(114, 46, 209, 0.3) !important;
+}
+
+.default-tag {
+  background: rgba(24, 144, 255, 0.15) !important;
+  color: #1890ff !important;
+  border: 1rpx solid rgba(24, 144, 255, 0.3) !important;
+}
+
+.success-button {
+  /* 藏绿色按钮样式 - 提高文字可读性 */
+  background: transparent !important;
+  border: 2rpx solid #2d5016 !important;
+  color: #2d5016 !important;
+  font-weight: 600 !important;
+  
+  &:active {
+    transform: scale(0.98);
+    background: rgba(45, 80, 22, 0.1) !important;
+  }
+}
+
+.list-section {
+  margin: 24rpx 0;
+}
+
+/* TDesign原生卡片 */
+.card {
+  margin: 24rpx 16rpx;
+}
+
+.card-header {
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary, #000000);
+  margin-bottom: 8rpx;
+  line-height: 1.4;
+  flex: 1;
+  
+  /* 列表卡片中的标题左对齐 */
+  .list-card & {
+    text-align: left;
+  }
+}
+
+/* 查看全部按钮样式 */
+.view-all-btn {
+  display: inline-block;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--td-brand-color, #0052d9) !important;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+
+/* TDesign原生列表卡片 */
+.list-card {
+  margin: 24rpx 16rpx;
+}
+
+/* TDesign原生记录样式 */
+.records-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80rpx 0;
+  
+  // 移除 t-empty 默认的图标占位
+  t-empty {
+    --td-empty-icon-size: 0;
+    --td-empty-image-height: 0;
+  }
+}
+
+.record-item {
+  padding: 24rpx;
+  background: var(--td-bg-color-container, #ffffff);
+  border-radius: 16rpx;
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  transition: all 0.3s ease;
+}
+
+.record-item:active {
+  transform: scale(0.98);
+  background: var(--td-bg-color-component-hover, #f8f8f8);
+}
+
+.record-main {
+  flex: 1;
+}
+
+/* 优化后的记录头部样式 */
+.record-header {
+  margin-bottom: 12rpx;
+}
+
+.record-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.record-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.record-type-tag {
+  flex-shrink: 0;
+}
+
+/* 优化后的记录内容样式 */
+.record-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+/* 双列布局容器 */
+.info-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 32rpx;
+  margin-bottom: 12rpx;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.info-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  
+  &.left-column {
+    align-items: flex-start;
+  }
+  
+  &.right-column {
+    align-items: flex-end;
+  }
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* 信息行 - 分行显示 */
+.info-row {
+  display: flex;
+  align-items: center;
+  padding: 6rpx 0;
+  
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary, #999);
+  margin-right: 8rpx;
+  flex-shrink: 0;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: var(--td-text-color-primary, #333);
+  font-weight: 500;
+  line-height: 1.6;
+  word-wrap: break-word;
+  
+  &.quantity-value {
+    color: #0052d9;
+    font-weight: 600;
+    font-size: 30rpx;
+  }
+}
+
+/* 记录底部 */
+.record-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
+}
+
+.date-text {
+  font-size: 26rpx;
+  color: var(--td-text-color-placeholder, #999);
+}
+
+.operator-text {
+  font-size: 26rpx;
+  color: var(--td-text-color-secondary, #666);
+  font-weight: 500;
+}
+
+.status-tag {
+  flex-shrink: 0;
+}
+
+.health-text {
+  font-size: 24rpx;
+  color: var(--td-success-color, #00a870);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* 兼容旧版样式 */
+.record-location {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: var(--td-text-color-primary, #000000);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.record-date-tag {
+  padding: 6rpx 12rpx;
+  background: var(--td-bg-color-component, #f3f3f3);
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: var(--td-text-color-secondary, #555555);
+  border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
+  white-space: nowrap;
+}
+
+.record-status-tag {
+  margin-top: 0;
+}
+
+.record-symptoms {
+  font-size: 28rpx;
+  color: var(--td-text-color-secondary, #555555);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.record-arrow {
+  margin-left: 16rpx;
+  color: var(--td-text-color-placeholder, #bbbbbb);
+}
+
+/* TDesign原生响应式设计 */
+@media screen and (max-width: 480px) {
+  .tab-content {
+    padding: 8rpx 8rpx;
+  }
+
+  .material-section {
+    margin: 12rpx 0;
+  }
+
+  /* 概览区域响应式 */
+  .production-overview {
+    padding: 16rpx;
+    margin-bottom: 12rpx;
+  }
+  
+  .overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12rpx;
+  }
+  
+  .overview-card {
+    padding: 20rpx 12rpx;
+    border-radius: 8rpx;
+  }
+  
+  .overview-value {
+    font-size: 32rpx;
+    margin-bottom: 6rpx;
+  }
+  
+  .overview-label {
+    font-size: 22rpx;
+  }
+
+  /* 物料卡片响应式 */
+  .material-overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12rpx;
+  }
+  
+  .material-overview-card {
+    padding: 20rpx 12rpx;
+    border-radius: 8rpx;
+    min-height: 90rpx;
+  }
+  
+  .material-overview-label {
+    font-size: 24rpx;
+    margin-bottom: 6rpx;
+  }
+  
+  .material-overview-status {
+    font-size: 20rpx;
+  }
+
+  /* 记录列表响应式 */
+  .list-section {
+    margin: 12rpx 0;
+  }
+  
+  .card,
+  .list-card {
+    margin: 12rpx 16rpx;
+  }
+
+  .record-item {
+    padding: 16rpx;
+  }
+  
+  .record-name {
+    font-size: 28rpx;
+  }
+  
+  .info-row {
+    gap: 16rpx;
+  }
+  
+  .info-group {
+    min-width: 140rpx;
+    flex: 0 1 auto;
+    max-width: 50%;
+  }
+  
+  .info-label {
+    font-size: 22rpx;
+  }
+  
+  .info-value {
+    font-size: 24rpx;
+  }
+  
+  .operator-text,
+  .date-text,
+  .health-text {
+    font-size: 22rpx;
+  }
+
+  /* 兼容旧版样式 */
+  .record-location {
+    font-size: 28rpx;
+  }
+  
+  .record-symptoms {
+    font-size: 26rpx;
+  }
+}
+
+
+
+/* 针对极小屏幕的特殊处理 */
+@media screen and (max-width: 320px) {
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8rpx;
+  }
+  
+  .info-group {
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+  }
+  
+  /* 双列布局在小屏幕上的适配 */
+  .info-grid {
+    gap: 16rpx;
+  }
+  
+  .info-column {
+    font-size: 24rpx;
+    
+    &.right-column {
+      align-items: flex-start; /* 小屏幕上改为左对齐 */
+    }
+  }
+  
+  .record-name {
+    font-size: 26rpx;
+  }
+  
+  .record-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4rpx;
+  }
+
+  /* 概览区域极小屏幕适配 */
+  .production-overview {
+    padding: 12rpx;
+  }
+  
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 8rpx;
+  }
+  
+  .overview-card {
+    padding: 16rpx 10rpx;
+  }
+  
+  .overview-value {
+    font-size: 28rpx;
+  }
+  
+  .overview-label {
+    font-size: 20rpx;
+  }
+
+  /* 物料卡片极小屏幕适配 */
+  .material-overview-grid {
+    grid-template-columns: 1fr;
+    gap: 8rpx;
+  }
+  
+  .material-overview-card {
+    padding: 16rpx 10rpx;
+    min-height: 80rpx;
+  }
+  
+  .material-overview-label {
+    font-size: 22rpx;
+    margin-bottom: 6rpx;
+  }
+  
+  .material-overview-status {
+    font-size: 18rpx;
+  }
+}
+
+/* TDesign原生无障碍支持 */
+
+.record-item:focus {
+  outline: 2rpx solid var(--td-brand-color, #0052d9);
+  outline-offset: 4rpx;
+}
+
+/* 物料概览卡片 */
+.material-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.material-overview-card {
+  padding: 24rpx 16rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100rpx;
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  
+  &.feed-card {
+    background: linear-gradient(135deg, #8b6f47 0%, #9b7f57 100%);
+    color: #ffffff;
+    border: 1rpx solid #7b5f37;
+    box-shadow: 0 2rpx 8rpx rgba(139, 111, 71, 0.25);
+  }
+  
+  &.medicine-card {
+    background: linear-gradient(135deg, #8b3d4d 0%, #9b4d5d 100%);
+    color: #ffffff;
+    border: 1rpx solid #7b2d3d;
+    box-shadow: 0 2rpx 8rpx rgba(139, 61, 77, 0.25);
+  }
+  
+  &.equipment-card {
+    background: linear-gradient(135deg, #3d5a8b 0%, #4d6a9b 100%);
+    color: #ffffff;
+    border: 1rpx solid #2d4a7b;
+    box-shadow: 0 2rpx 8rpx rgba(61, 90, 139, 0.25);
+  }
+  
+  &.summary-card {
+    background: linear-gradient(135deg, #4d3d6b 0%, #5d4d7b 100%);
+    color: #ffffff;
+    border: 1rpx solid #3d2d5b;
+    box-shadow: 0 2rpx 8rpx rgba(77, 61, 107, 0.25);
+  }
+}
+
+.material-overview-label {
+  font-size: 26rpx;
+  margin-bottom: 8rpx;
+  font-weight: 600;
+  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
+}
+
+.material-overview-status {
+  font-size: 22rpx;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0.95;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+}
+
+/* 物料卡片响应式设计 - 合并到主响应式查询中 */
+
+/* ========== AI智能盘点功能样式 ========== */
+
+// AI盘点功能区域
+.ai-count-section {
+  margin: 30rpx 0;
+  
+  .ai-count-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2rpx solid #b3e5fc;
+    border-radius: 16rpx;
+    overflow: hidden;
+    position: relative;
+    
+  }
+}
+
+// 盘点操作区域
+.count-operation {
+  padding: 30rpx 30rpx 20rpx;
+}
+
+// 相机拍照区域
+.camera-section {
+  margin-bottom: 30rpx;
+  
+  .camera-placeholder {
+    background: #ffffff;
+    border: 3rpx dashed #0052D9;
+    border-radius: 16rpx;
+    height: 400rpx;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16rpx;
+    position: relative;
+    transition: all 0.3s ease;
+    
+    &:active {
+      background: #f8faff;
+      border-color: #1976D2;
+      transform: scale(0.98);
+    }
+    
+    .placeholder-text {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #0052D9;
+    }
+    
+    .placeholder-desc {
+      font-size: 24rpx;
+      color: #666;
+      text-align: center;
+    }
+  }
+  
+  .photo-preview {
+    background: #ffffff;
+    border-radius: 16rpx;
+    overflow: hidden;
+    box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.1);
+    position: relative;
+    margin-bottom: 24rpx;
+    
+    .preview-image {
+      width: 100%;
+      max-height: 400rpx;
+      display: block;
+    }
+    
+    .photo-close-btn {
+      position: absolute;
+      top: 12rpx;
+      right: 12rpx;
+      width: 48rpx;
+      height: 48rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      
+      // 用CSS绘制X图标
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        width: 20rpx;
+        height: 2rpx;
+        background-color: #fff;
+      }
+      
+      &::before {
+        transform: rotate(45deg);
+      }
+      
+      &::after {
+        transform: rotate(-45deg);
+      }
+      
+      &:active {
+        background: rgba(0, 0, 0, 0.7);
+        transform: scale(0.92);
+      }
+    }
+  }
+  
+  .analyze-button-section {
+    margin-bottom: 24rpx;
+    
+    .analyze-button {
+      height: 88rpx;
+      font-size: 30rpx;
+      font-weight: 600;
+      border-radius: 12rpx;
+    }
+  }
+}
+
+// 拍摄建议
+.shooting-tips {
+  background: #ffffff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  border: 2rpx dashed #e34d59;
+  margin-top: 32rpx;
+  
+  .tips-title {
+    font-size: 26rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16rpx;
+    display: block;
+  }
+  
+  .tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+    
+    .tip-item {
+      font-size: 24rpx;
+      color: #666;
+      line-height: 1.5;
+    }
+  }
+}
+
+// 识别结果区域
+.count-result {
+  padding: 20rpx 30rpx 30rpx;
+  
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 30rpx;
+    
+    .result-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #333;
+      flex: 1;
+    }
+    
+    .confidence-badge {
+      background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+      color: white;
+      padding: 8rpx 16rpx;
+      border-radius: 20rpx;
+      font-size: 22rpx;
+      font-weight: 500;
+    }
+  }
+  
+  .result-content {
+    margin-bottom: 30rpx;
+  }
+  
+  .main-result {
+    background: #ffffff;
+    border-radius: 16rpx;
+    padding: 30rpx;
+    text-align: center;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+    border: 2rpx solid #e6f7ff;
+    
+    .count-display {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 8rpx;
+      margin-bottom: 12rpx;
+      
+      .count-number {
+        font-size: 64rpx;
+        font-weight: 700;
+        color: #0052D9;
+        line-height: 1;
+      }
+      
+      .count-unit {
+        font-size: 32rpx;
+        font-weight: 500;
+        color: #666;
+      }
+    }
+    
+    .count-label {
+      font-size: 26rpx;
+      color: #666;
+      font-weight: 500;
+    }
+  }
+  
+  .result-details {
+    background: #ffffff;
+    border-radius: 12rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    border-left: 4rpx solid #1890ff;
+    
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 24rpx;
+      
+      .detail-label {
+        color: #333;
+        font-weight: 500;
+      }
+      
+      .detail-value {
+        color: #666;
+      }
+    }
+  }
+  
+  .abnormal-alert {
+    background: linear-gradient(135deg, #fff2f0 0%, #ffebe8 100%);
+    border: 2rpx solid #ffccc7;
+    border-radius: 12rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    
+    .alert-content {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      margin-bottom: 12rpx;
+      
+      .alert-text {
+        font-size: 26rpx;
+        font-weight: 600;
+        color: #ff4d4f;
+      }
+    }
+    
+    .health-concerns {
+      padding-left: 32rpx;
+      
+      .concern-item {
+        display: block;
+        font-size: 24rpx;
+        color: #ff7875;
+        line-height: 1.5;
+        margin-bottom: 4rpx;
+      }
+    }
+  }
+  
+  .suggestions {
+    background: #ffffff;
+    border-radius: 12rpx;
+    padding: 20rpx;
+    border-left: 4rpx solid #faad14;
+    
+    .suggestions-title {
+      font-size: 26rpx;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12rpx;
+      display: block;
+    }
+    
+    .suggestion-item {
+      font-size: 24rpx;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 6rpx;
+      display: block;
+    }
+  }
+  
+  .result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+    margin-top: 30rpx;
+    
+    /* 主要操作按钮 - 符合TDesign Medium规范 */
+    .primary-action-btn {
+      height: 80rpx !important;
+      border-radius: 12rpx !important;
+      font-size: 30rpx !important;
+      font-weight: 600 !important;
+      background: linear-gradient(135deg, #00a870 0%, #52c41a 100%) !important;
+      border: none !important;
+      color: #ffffff !important;
+      box-shadow: 0 4rpx 16rpx rgba(0, 168, 112, 0.2) !important;
+      transition: all 0.3s ease;
+      line-height: 80rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 2rpx 8rpx rgba(0, 168, 112, 0.3) !important;
+      }
+    }
+    
+    /* 次要操作按钮容器 - 符合TDesign Small规范 */
+    .secondary-actions {
+      display: flex;
+      gap: 16rpx;
+      
+      .secondary-action-btn {
+        flex: 1;
+        height: 64rpx !important;
+        border-radius: 8rpx !important;
+        font-size: 26rpx !important;
+        font-weight: 500 !important;
+        background: #ffffff !important;
+        border: 1rpx solid var(--td-component-stroke, #e7e7e7) !important;
+        color: var(--td-brand-color, #0052d9) !important;
+        transition: all 0.3s ease;
+        line-height: 64rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        
+        &:active {
+          transform: scale(0.98);
+          background: var(--td-bg-color-component-hover, #f8f8f8) !important;
+          border-color: var(--td-brand-color, #0052d9) !important;
+        }
+      }
+    }
+  }
+  
+}
+
+
+// 响应式适配
+@media (max-width: 375px) {
+  
+  .count-operation, .count-result {
+    padding: 24rpx;
+  }
+  
+  .camera-placeholder {
+    height: 320rpx;
+    
+    .placeholder-text {
+      font-size: 28rpx;
+    }
+    
+    .placeholder-desc {
+      font-size: 22rpx;
+    }
+  }
+  
+  .main-result {
+    padding: 24rpx;
+    
+    .count-display {
+      .count-number {
+        font-size: 56rpx !important;
+      }
+      
+      .count-unit {
+        font-size: 28rpx !important;
+      }
+    }
+    
+    .count-label {
+      font-size: 24rpx !important;
+    }
+  }
+  
+  .result-actions {
+    gap: 16rpx;
+    margin-top: 24rpx;
+    
+    .primary-action-btn {
+      height: 72rpx !important;
+      font-size: 28rpx !important;
+      border-radius: 10rpx !important;
+      line-height: 72rpx;
+    }
+    
+    .secondary-actions {
+      flex-direction: column;
+      gap: 12rpx;
+      
+      .secondary-action-btn {
+        height: 60rpx !important;
+        font-size: 24rpx !important;
+        border-radius: 8rpx !important;
+        line-height: 60rpx;
+      }
+    }
+  }
+}
+
+// 加载动画
+@keyframes count-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.ai-count-loading {
+  animation: count-pulse 1.5s ease-in-out infinite;
+}

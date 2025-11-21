@@ -215,9 +215,6 @@ $spacing-xl: 40rpx;
 }
 
 /* 创建邀请表单 */
-.create-form {
-  padding: 0;
-}
 
 .form-description {
   padding: $spacing-l;
@@ -642,7 +639,6 @@ $spacing-xl: 40rpx;
   border-top: 1rpx solid $border-color-light;
 }
 
-.create-btn-cancel,
 .create-btn-confirm {
   flex: 1;
   height: 72rpx;
@@ -656,13 +652,6 @@ $spacing-xl: 40rpx;
   transition: all 0.2s ease;
 }
 
-.create-btn-cancel {
-  background-color: $bg-color-page;
-  color: $text-secondary;
-  
-  &:active {
-    background-color: $border-color;
-  }
 }
 
 .create-btn-confirm {
@@ -674,16 +663,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-.create-btn-copy {
-  background: linear-gradient(135deg, $success-color 0%, #00c576 100%);
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba(0, 168, 112, 0.3);
-  
-  &:active {
-    transform: translateY(2rpx);
-    box-shadow: 0 1rpx 4rpx rgba(0, 168, 112, 0.4);
-  }
 }
 
 /* 邀请码生成成功内容样式 */
@@ -747,12 +726,6 @@ $spacing-xl: 40rpx;
   font-family: 'Courier New', Monaco, monospace;
   display: block;
   margin-bottom: 8rpx;
-}
-
-.copy-hint {
-  font-size: 24rpx;
-  color: $text-placeholder;
-  opacity: 0.8;
 }
 
 .usage-instructions {

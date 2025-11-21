@@ -65,7 +65,6 @@
   opacity: 0.9;
 }
 
-
 /* TDesign原生Tab样式 - 优化与导航栏的间距 */
 .main-tabs {
   background: var(--td-bg-color-container, #ffffff);
@@ -96,7 +95,6 @@
 .material-section {
   margin: 16rpx 16rpx;
 }
-
 
 /* TDesign原生列表区域 */
 .quick-action {
@@ -264,7 +262,6 @@
   white-space: nowrap;
   cursor: pointer;
 }
-
 
 /* TDesign原生列表卡片 */
 .list-card {
@@ -580,8 +577,6 @@
     font-size: 26rpx;
   }
 }
-
-
 
 /* 针对极小屏幕的特殊处理 */
 @media screen and (max-width: 320px) {
@@ -1099,7 +1094,6 @@
   
 }
 
-
 // 响应式适配
 @media (max-width: 375px) {
   
@@ -1169,6 +1163,3 @@
   100% { opacity: 0.6; }
 }
 
-.ai-count-loading {
-  animation: count-pulse 1.5s ease-in-out infinite;
-}

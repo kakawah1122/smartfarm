@@ -6,7 +6,6 @@
   padding-bottom: 40rpx;
 }
 
-
 /* 搜索和筛选区域 */
 .search-section {
   background: #ffffff;
@@ -109,7 +108,6 @@
   letter-spacing: -0.5rpx;
 }
 
-
 .employee-role {
   display: flex;
   align-items: center;
@@ -139,8 +137,6 @@
     opacity: 0.1;
   }
 }
-
-
 
 /* 加载更多 */
 .load-more {
@@ -535,7 +531,6 @@
   &:nth-child(n+6) { animation-delay: 0.6s; }
 }
 
-
 /* 响应式适配 */
 @media (max-width: 750rpx) {
   .employee-card {
@@ -546,7 +541,6 @@
     font-size: 28rpx;
   }
 }
-
 
 // ==================== 邀请管理样式 ====================
 
@@ -797,25 +791,7 @@
 }
 
 // 创建邀请弹窗样式
-.create-dialog-popup {
-  .create-dialog-content {
-    background: #ffffff;
-    border-radius: 20rpx;
-    width: 640rpx;
-    max-height: 80vh;
-    
-    .create-dialog-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 40rpx 40rpx 20rpx;
-      border-bottom: 1rpx solid #f0f0f0;
-      
-      .create-dialog-title {
-        font-size: 36rpx;
-        font-weight: 600;
-        color: #333333;
-      }
+
       
       .create-dialog-close {
         font-size: 40rpx;
@@ -954,10 +930,7 @@
               letter-spacing: 2rpx;
             }
             
-            .copy-hint {
-              font-size: 22rpx;
-              opacity: 0.8;
-            }
+            
           }
         }
         
@@ -1018,10 +991,7 @@
           color: #ffffff;
         }
         
-        &.copy-btn {
-          background: linear-gradient(135deg, #00c851 0%, #00a652 100%);
-          color: #ffffff;
-        }
+        &
       }
     }
   }

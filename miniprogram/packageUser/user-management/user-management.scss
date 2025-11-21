@@ -225,11 +225,6 @@ $spacing-xl: 40rpx;
 }
 
 /* 操作按钮 */
-.action-section {
-  padding: $spacing-l $spacing-s;
-  background: $bg-color-container;
-  border-top: 1rpx solid $border-color-light;
-}
 
 .export-btn {
   height: 88rpx !important;
@@ -447,7 +442,6 @@ $spacing-xl: 40rpx;
   font-size: 32rpx !important;
 }
 
-
 /* 标签样式 */
 .t-tag {
   border-radius: 8rpx !important;
@@ -516,7 +510,6 @@ $spacing-xl: 40rpx;
   }
 }
 
-
 /* 动画效果 */
 .stats-section,
 .user-list,
@@ -527,7 +520,6 @@ $spacing-xl: 40rpx;
     box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
   }
 }
-
 
 /* 响应式布局 */
 @media screen and (max-width: 750rpx) {

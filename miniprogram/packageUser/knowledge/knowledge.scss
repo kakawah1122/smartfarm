@@ -55,12 +55,6 @@ page {
 }
 
 /* 文章列表 */
-.articles-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  padding-bottom: 0;
-}
 
 /* 热门文章 */
 .hot-article {
@@ -147,11 +141,6 @@ page {
 }
 
 /* 文章列表 */
-.article-items {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
 
 .article-item {
   display: flex;
@@ -202,39 +191,11 @@ page {
 }
 
 /* 分类主题颜色 */
-.category-success {
-  color: #00a870;
-}
-
-.category-danger {
-  color: #e34d59;
-}
-
-.category-primary {
-  color: #0052d9;
-}
-
-.category-warning {
-  color: #ed7b2f;
-}
-
-.category-default {
-  color: #8a8a8a;
-}
 
 .article-date {
   color: #999;
   white-space: nowrap;
   margin-left: auto;
-}
-
-.article-stats {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  font-size: 24rpx;
-  color: #888;
-  flex-wrap: wrap;
 }
 
 .stat-item {
@@ -319,9 +280,6 @@ page {
 }
 
 /* 文章列表卡片 */
-.article-list-card {
-  background: white;
-}
 
 .article-list-card::before {
   background: linear-gradient(90deg, #0052d9, #00a870);
@@ -354,38 +312,11 @@ page {
   box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
-.article-item-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
-  margin-bottom: 12rpx;
-}
-
-.article-item-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
 .article-title {
   font-size: 30rpx;
   font-weight: 600;
   color: #333;
   line-height: 1.5;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-.article-desc {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.6;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -400,14 +331,6 @@ page {
   margin-top: 0;
   padding-top: 12rpx;
   border-top: 1rpx solid #f0f0f0;
-}
-
-.article-stats {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  font-size: 24rpx;
-  color: #888;
 }
 
 .stat-item {
@@ -491,7 +414,6 @@ page {
   }
 }
 
-
 /* 加载状态 */
 .card.loading {
   opacity: 0.6;
@@ -524,10 +446,6 @@ page {
 }
 
 /* 文章分类样式 */
-.category-icon {
-  display: inline-block;
-  margin-right: 8rpx;
-}
 
 /* 阅读统计样式 */
 .read-stats {

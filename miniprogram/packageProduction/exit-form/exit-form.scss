@@ -263,22 +263,8 @@
 }
 
 /* 自动填充文本样式 */
-.auto-fill-text {
-  font-size: 30rpx;
-  color: var(--td-text-color-secondary, #666666);
-  font-weight: 500;
-  text-align: right;
-}
 
 /* 右对齐的自动填充文本样式 */
-.auto-fill-text-right {
-  font-size: 30rpx;
-  color: var(--td-text-color-primary, #000000);
-  font-weight: 500;
-  text-align: right;
-  width: 100%;
-  display: block;
-}
 
 /* 批次选择器输入样式 */
 .batch-picker-input {
@@ -409,8 +395,6 @@
 
 /* 按钮基础样式 - 彻底移除所有边框和轮廓线 */
 
-
-
 /* 响应式设计 - 优化顶部安全间距 */
 @media screen and (max-width: 480px) {
   .form-content {
@@ -524,7 +508,6 @@
 }
 
 /* 注意：组件WXSS不支持:hover伪类选择器，已移除卡片悬停效果 */
-
 
 /* 额外的样式重置 - 微信小程序兼容版本 */
 .form-actions {

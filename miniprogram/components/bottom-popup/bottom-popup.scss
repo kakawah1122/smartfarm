@@ -1,11 +1,5 @@
 /* 底部弹窗组件样式 */
 
-.bottom-popup-content {
-  border-radius: 32rpx 32rpx 0 0 !important;
-  max-height: 85vh !important; /* 优化：增加到 85vh，减少底部空白 */
-  padding: 0 !important;
-}
-
 .bottom-popup-container {
   padding: 0;
   max-height: 85vh; /* 优化：与上面保持一致 */

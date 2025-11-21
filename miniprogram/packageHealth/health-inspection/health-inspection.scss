@@ -171,10 +171,7 @@
     margin-bottom: 0;
   }
   
-  &.checked {
-    border-color: #0052d9;
-    background: rgba(0, 82, 217, 0.02);
-  }
+  &
   
   &.unchecked {
     opacity: 0.6;
@@ -536,9 +533,7 @@
     .inspection-item {
       border-color: #505050;
       
-      &.checked {
-        background: rgba(0, 82, 217, 0.1);
-      }
+      &
       
       &.result-normal {
         background: rgba(0, 168, 112, 0.1);
@@ -578,7 +573,6 @@
     }
   }
 }
-
 
 /* 底部安全区域 */
 .safe-area { height: 120rpx; }

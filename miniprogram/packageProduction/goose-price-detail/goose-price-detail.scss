@@ -134,16 +134,6 @@
   font-weight: 600;
 }
 
-.breed-card-trend {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6rpx;
-  font-size: 26rpx;
-  font-weight: 700;
-  width: 100%;
-}
-
 .breed-card-trend.trend-up {
   color: #dc2626;
 }
@@ -253,9 +243,7 @@
     font-size: 24rpx;
   }
 
-  .breed-card-trend {
-    font-size: 24rpx;
-  }
+  
 
   .breed-card-trend .trend-icon {
     font-size: 28rpx;

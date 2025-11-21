@@ -68,10 +68,7 @@ page {
   }
 
   .status-badge {
-    &.authorized {
-      color: #0f7a4a;
-      background: rgba(13, 181, 126, 0.16);
-    }
+    &
 
     &.unauthorized {
       color: #c41d3a;
@@ -153,11 +150,7 @@ page {
   border-radius: 20rpx;
   transition: all 0.3s ease;
 
-  &.authorized {
-    color: #1f8a5e;
-    background: rgba(13, 181, 126, 0.14);
-    box-shadow: 0 4rpx 12rpx rgba(13, 181, 126, 0.16);
-  }
+  &
   
   &.unauthorized {
     color: #c41d3a;

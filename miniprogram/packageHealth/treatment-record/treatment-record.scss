@@ -422,21 +422,13 @@
         font-size: 24rpx;
         color: #666;
         
-        &.appetite-excellent {
-          color: #00a870;
-        }
         
-        &.appetite-good {
-          color: #0052d9;
-        }
         
-        &.appetite-fair {
-          color: #ed7b2f;
-        }
         
-        &.appetite-poor {
-          color: #e34d59;
-        }
+        
+        
+        
+        
       }
     }
     
@@ -501,24 +493,7 @@
 }
 
 /* 食欲评估选项 */
-.appetite-options {
-  display: flex;
-  gap: 16rpx;
-  
-  .appetite-option {
-    flex: 1;
-    text-align: center;
-    padding: 16rpx 0;
-    border: 2rpx solid;
-    border-radius: 8rpx;
-    font-size: 24rpx;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:not(.active):hover {
-      opacity: 0.8;
-    }
-  }
+
 }
 
 /* 操作按钮 */
@@ -562,15 +537,7 @@
       gap: 8rpx;
     }
     
-    .appetite-options {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12rpx;
-      
-      .appetite-option {
-        padding: 12rpx 0;
-        font-size: 22rpx;
-      }
-    }
+    
   }
 }
 
@@ -1105,25 +1072,7 @@
 }
 
 // ========== 继续治疗选项 ==========
-.continue-treatment-options {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  padding: 16rpx 24rpx;
-  
-  .option-item {
-    display: flex;
-    align-items: center;
-    gap: 16rpx;
-    padding: 24rpx;
-    background: #f8f9fa;
-    border-radius: 12rpx;
-    transition: all 0.3s;
-    
-    &:active {
-      background: #e8e8e8;
-      transform: scale(0.98);
-    }
+
     
     .option-icon {
       font-size: 36rpx;
@@ -1394,14 +1343,8 @@
 }
 
 // 追加用药对话框
-.add-medication-content {
-  padding: 16rpx 0;
-}
 
 // 调整方案对话框
-.adjust-plan-content {
-  padding: 16rpx 0;
-}
 
 // ========== 进一步治疗选项底部弹窗样式 ==========
 .treatment-mask {
@@ -1601,9 +1544,7 @@
   
   // ========== 添加药品区域 ==========
   .add-medication-area {
-    .add-btn-wrapper {
-      margin-top: 16rpx;
-    }
+    
   }
   
   // ========== 治疗笔记 textarea 自定义样式 ==========

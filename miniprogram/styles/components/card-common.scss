@@ -4,17 +4,7 @@
  */
 
 // 基础卡片样式
-.base-card {
-  background: var(--td-bg-color-container);
-  border-radius: 24rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-  
-  &:active {
-    transform: scale(0.98);
-  }
+
   
   // 卡片头部
   .card-header {
@@ -37,15 +27,7 @@
       }
     }
     
-    .card-action {
-      display: flex;
-      align-items: center;
-      color: var(--td-text-color-secondary);
-      font-size: 26rpx;
-      
-      .action-text {
-        margin-right: 8rpx;
-      }
+    
       
       .action-icon {
         width: 24rpx;
@@ -56,29 +38,11 @@
   
   // 卡片内容
   .card-content {
-    .content-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12rpx 0;
+    
       
-      &:not(:last-child) {
-        border-bottom: 1rpx solid var(--td-component-stroke);
-      }
       
-      .content-label {
-        font-size: 28rpx;
-        color: var(--td-text-color-secondary);
-      }
       
-      .content-value {
-        font-size: 28rpx;
-        color: var(--td-text-color-primary);
-        font-weight: 500;
-        
-        &.highlight {
-          color: var(--td-brand-color);
-        }
+      
         
         &.success {
           color: var(--td-success-color);
@@ -308,39 +272,11 @@
   border-radius: 24rpx;
   margin-bottom: 20rpx;
   
-  .action-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24rpx 12rpx;
-    border-radius: 16rpx;
-    transition: all 0.3s ease;
+  
     
-    &:active {
-      transform: scale(0.95);
-      opacity: 0.8;
+    
     }
     
-    .action-icon-wrapper {
-      width: 80rpx;
-      height: 80rpx;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12rpx;
-      
-      .action-icon {
-        width: 40rpx;
-        height: 40rpx;
-      }
-    }
     
-    .action-label {
-      font-size: 26rpx;
-      color: var(--td-text-color-primary);
-      text-align: center;
-    }
   }
 }
