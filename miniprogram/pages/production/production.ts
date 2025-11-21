@@ -529,15 +529,128 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   // 启动AI盘点功能（使用模块化AI管理器）
   startAICount() {
     ProductionAIManager.startAICount()
+    this.setData({
+      'aiCount.active': true
+    })
   },
   
   // 关闭AI盘点功能
   closeAICount() {
+    ProductionAIManager.closeAICount()
     this.setData({
       'aiCount.active': false,
       'aiCount.imageUrl': '',
       'aiCount.result': null,
       'aiCount.error': null
+    })
+  },
+  
+  // 拍照或选择图片
+  takePhoto() {
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['camera', 'album'],
+      success: (res) => {
+        this.setData({
+          'aiCount.imageUrl': res.tempFilePaths[0]
+        })
+      }
+    })
+  },
+  
+  // 删除照片
+  deletePhoto() {
+    this.setData({
+      'aiCount.imageUrl': '',
+      'aiCount.result': null,
+      'aiCount.error': null
+    })
+  },
+  
+  // 分析图片
+  async analyzeImage() {
+    const imageUrl = this.data.aiCount.imageUrl
+    if (!imageUrl) {
+      wx.showToast({ title: '请先拍照', icon: 'none' })
+      return
+    }
+    
+    this.setData({ 'aiCount.loading': true })
+    
+    try {
+      const result = await ProductionAIManager.analyzeImage(imageUrl)
+      
+      // 更新当前结果
+      this.setData({
+        'aiCount.result': result,
+        'aiCount.loading': false
+      })
+      
+      // 如果是累积模式，添加到历史记录
+      if (this.data.aiCount.rounds.length > 0 || this.data.aiCount.cumulativeTotal > 0) {
+        this.addToRounds(result)
+      }
+    } catch (error) {
+      this.setData({
+        'aiCount.loading': false,
+        'aiCount.error': '识别失败，请重试'
+      })
+    }
+  },
+  
+  // 添加到累积记录
+  addToRounds(result: any) {
+    const rounds = this.data.aiCount.rounds || []
+    const newRound = {
+      roundId: rounds.length + 1,
+      count: result.totalCount || 0,
+      confidence: result.confidence || 0,
+      timestamp: new Date().toLocaleTimeString('zh-CN')
+    }
+    
+    rounds.push(newRound)
+    const cumulativeTotal = rounds.reduce((sum: number, r: any) => sum + r.count, 0)
+    
+    this.setData({
+      'aiCount.rounds': rounds,
+      'aiCount.cumulativeTotal': cumulativeTotal
+    })
+  },
+  
+  // 继续识别（累积模式）
+  continueRecognition() {
+    // 保留结果，清空图片，准备下一次拍照
+    this.setData({
+      'aiCount.imageUrl': '',
+      'aiCount.result': null
+    })
+    
+    wx.showToast({
+      title: '请继续拍照盘点',
+      icon: 'none'
+    })
+  },
+  
+  // 结束盘点
+  finishCounting() {
+    const total = this.data.aiCount.cumulativeTotal || this.data.aiCount.result?.totalCount || 0
+    
+    wx.showModal({
+      title: '盘点完成',
+      content: `本次共盘点出栏数量：${total}只`,
+      confirmText: '确定',
+      showCancel: false,
+      success: () => {
+        // 重置AI盘点状态
+        this.setData({
+          'aiCount.active': false,
+          'aiCount.imageUrl': '',
+          'aiCount.result': null,
+          'aiCount.rounds': [],
+          'aiCount.cumulativeTotal': 0
+        })
+      }
     })
   },
   
