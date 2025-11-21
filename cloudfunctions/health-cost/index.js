@@ -231,31 +231,33 @@ async function calculateTreatmentCost(event, wxContext) {
       // 兼容多种数据结构
       let cost = 0
       
-      // 1. 优先从 costInfo.totalCost 获取（标准结构）
+      // 1. 优先从 costInfo.totalCost 获取（标准治疗记录结构）
       if (record.costInfo && record.costInfo.totalCost) {
         cost = Number(record.costInfo.totalCost) || 0
         medicationCost += Number(record.costInfo.medicationCost) || 0
         veterinaryCost += Number(record.costInfo.veterinaryCost) || 0
         otherCost += Number(record.costInfo.otherCost) || 0
       } 
-      // 2. 从根级别的totalCost获取（您的数据结构）
-      else if (record.totalCost !== undefined) {
-        cost = Number(record.totalCost) || 0
-        // 也检查curedCost（治愈成本）
-        if (record.curedCost) {
-          cost += Number(record.curedCost) || 0
+      // 2. 从治疗统计记录获取（您的数据是汇总统计）
+      else if (record.treatmentType === 'medication') {
+        // 这是一个治疗统计记录，包含所有治疗成本
+        // curedMedicationCost 是所有用药成本（不管结果如何）
+        if (record.curedMedicationCost !== undefined) {
+          cost = Number(record.curedMedicationCost) || 0
+          medicationCost = cost
         }
-        // 分类成本
-        if (record.category === 'medication' || record.category === 'vaccine') {
-          medicationCost += cost
+        // 如果没有curedMedicationCost，使用其他字段
+        else if (record.totalCost !== undefined) {
+          cost = Number(record.totalCost) || 0
         }
       }
-      // 3. 从amount字段获取（另一种结构）
+      // 3. 从根级别的totalCost获取（其他数据结构）
+      else if (record.totalCost !== undefined) {
+        cost = Number(record.totalCost) || 0
+      }
+      // 4. 从amount字段获取（另一种结构）
       else if (record.amount) {
         cost = Number(record.amount) || 0
-        if (record.category === 'medication' || record.category === 'vaccine') {
-          medicationCost += cost
-        }
       }
       
       if (cost > 0) {
