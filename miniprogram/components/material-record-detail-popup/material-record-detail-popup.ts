@@ -20,14 +20,33 @@ Component({
   methods: {
     // 关闭弹窗
     onClose() {
-      this.triggerEvent('close')
+      console.log('material-record-detail-popup: onClose triggered')
+      this.setData({
+        visible: false
+      })
+      // 确保事件被触发
+      setTimeout(() => {
+        this.triggerEvent('close')
+      }, 100)
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: CustomEvent) {
-      if (!e.detail.visible) {
-        this.onClose()
+    onVisibleChange(e: any) {
+      console.log('material-record-detail-popup: onVisibleChange', e.detail)
+      if (!e.detail?.visible) {
+        this.triggerEvent('close')
       }
+    },
+    
+    // 点击确认按钮
+    onConfirm() {
+      console.log('material-record-detail-popup: onConfirm triggered')
+      this.onClose()
+    },
+    
+    // 防止触摸穿透
+    preventTouchMove() {
+      return false
     }
   }
 })

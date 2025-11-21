@@ -6,8 +6,9 @@
   show-actions="{{true}}"
   confirm-text="确定"
   bind:close="onClose"
-  bind:confirm="onClose"
+  bind:confirm="onConfirm"
   bind:visiblechange="onVisibleChange"
+  catchtouchmove="preventTouchMove"
 >
   <view wx:if="{{record}}" class="record-detail-content">
     <view class="info-card">
