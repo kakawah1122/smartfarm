@@ -184,19 +184,15 @@ async function calculateTreatmentCost(event, wxContext) {
   try {
     const { dateRange, batchId } = event
     
-    // 构建查询条件 - 最宽松的条件，确保能查到数据
+    // 先测试能否获取所有记录
+    console.log('[calculateTreatmentCost] 开始执行')
+    console.log('[calculateTreatmentCost] 环境:', cloud.DYNAMIC_CURRENT_ENV)
+    console.log('[calculateTreatmentCost] 传入参数:', { dateRange, batchId })
+    
+    // 先不加任何条件，直接查询
     let conditions = {}
     
-    // 如果指定了批次，只查询该批次
-    // if (batchId && batchId !== 'all') {
-    //   conditions.batchId = batchId
-    // }
-    
-    // 暂时不限制任何条件，查看是否能获取到数据
-    // 移除openid限制，统计所有用户的治疗记录
-    // else {
-    //   conditions._openid = wxContext.OPENID
-    // }
+    // 暂时不添加任何条件限制
     
     // 暂时移除日期范围限制，确保能查到数据
     // if (dateRange && dateRange.start && dateRange.end) {
@@ -207,7 +203,15 @@ async function calculateTreatmentCost(event, wxContext) {
     console.log('[calculateTreatmentCost] 查询条件:', JSON.stringify(conditions))
     console.log('[calculateTreatmentCost] 集合名:', COLLECTIONS.HEALTH_TREATMENT_RECORDS)
     
-    // 查询治疗记录
+    // 先测试直接查询集合，不加where条件
+    try {
+      const testResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS).get()
+      console.log('[calculateTreatmentCost] 测试查询（不加条件）结果:', testResult.data.length)
+    } catch (testErr) {
+      console.error('[calculateTreatmentCost] 测试查询失败:', testErr)
+    }
+    
+    // 使用统一的集合配置进行正式查询
     const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where(conditions)
       .get()
