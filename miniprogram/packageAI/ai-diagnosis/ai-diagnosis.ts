@@ -2,7 +2,7 @@
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 
-type AnyObject = Record<string, any>
+type AnyObject = Record<string, unknown>
 type SymptomOption = { id: string; name: string; checked: boolean }
 type AutopsyAbnormality = { id: string; name: string; checked: boolean }
 
@@ -23,8 +23,7 @@ type CloudResponseFailure = {
 type CloudResponse<T> = CloudResponseSuccess<T> | CloudResponseFailure
 
 function normalizeCloudResult<T = AnyObject>(
-  result: any
-): CloudResponse<T> | null {
+  result: unknown): CloudResponse<T> | null {
   const payload = result?.result
 
   if (!payload) {
@@ -74,7 +73,7 @@ const pageConfig: AnyObject = {
     // 批次相关
     selectedBatchId: '',
     selectedBatchNumber: '',
-    availableBatches: [] as any[],
+    availableBatches: [] as unknown[],
     batchPickerRange: [] as string[],
     batchPickerIndex: 0,
     
@@ -126,7 +125,7 @@ const pageConfig: AnyObject = {
     showPolling: false
   },
 
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     const { recordId } = options || {}
     if (recordId) {
       this.setData({ sourceRecordId: recordId })
@@ -176,7 +175,7 @@ const pageConfig: AnyObject = {
         }
 
         // 构建picker显示数组（显示批次号和日龄）
-        const pickerRange = activeBatches.map((batch: any) => 
+        const pickerRange = activeBatches.map((batch: unknown) => 
           `${batch.batchNumber} (${batch.dayAge || 0}日龄)`
         )
 
@@ -191,7 +190,7 @@ const pageConfig: AnyObject = {
         // 优先选择缓存的当前批次
         const cachedBatchId = wx.getStorageSync('currentBatchId')
         if (cachedBatchId) {
-          const index = activeBatches.findIndex((b: any) => b._id === cachedBatchId)
+          const index = activeBatches.findIndex((b: unknown) => b._id === cachedBatchId)
           if (index >= 0) {
             selectedIndex = index
           }
@@ -207,7 +206,7 @@ const pageConfig: AnyObject = {
       } else {
         throw new Error(result?.message || result?.error || '加载批次失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       logger.error('加载批次列表失败:', error)
       wx.showModal({
@@ -281,7 +280,7 @@ const pageConfig: AnyObject = {
   },
 
   // 症状描述输入
-  onSymptomsInput(e: any) {
+  onSymptomsInput(e: CustomEvent) {
     const symptomsText = e.detail.value || ''
     
     this.setData({ 
@@ -292,7 +291,7 @@ const pageConfig: AnyObject = {
   },
 
   // 受影响数量输入
-  onAffectedCountInput(e: any) {
+  onAffectedCountInput(e: CustomEvent) {
     const value = e.detail.value
     // 保持原始输入值，空字符串时不转为0
     this.setData({ 
@@ -303,7 +302,7 @@ const pageConfig: AnyObject = {
   },
 
   // 死亡数量输入（死因剖析专用）
-  onDeathCountInput(e: any) {
+  onDeathCountInput(e: CustomEvent) {
     const value = e.detail.value
     this.setData({ 
       deathCount: value 
@@ -313,7 +312,7 @@ const pageConfig: AnyObject = {
   },
 
   // 异常勾选（死因剖析专用）
-  onAbnormalityChange(e: any) {
+  onAbnormalityChange(e: CustomEvent) {
     const { index } = e.currentTarget.dataset
     const abnormalities = [...this.data.autopsyAbnormalities]
     abnormalities[index].checked = !abnormalities[index].checked
@@ -333,7 +332,7 @@ const pageConfig: AnyObject = {
   },
 
   // 剖检描述输入（死因剖析专用）
-  onAutopsyDescriptionInput(e: any) {
+  onAutopsyDescriptionInput(e: CustomEvent) {
     const value = e.detail.value
     this.setData({ 
       autopsyDescription: value 
@@ -437,7 +436,7 @@ const pageConfig: AnyObject = {
             icon: 'success',
             duration: 1500
           })
-        } catch (error: any) {
+        } catch (error: unknown) {
           wx.hideLoading()
           logger.error('图片上传失败:', error)
           wx.showToast({
@@ -540,7 +539,7 @@ const pageConfig: AnyObject = {
             icon: 'success',
             duration: 1500
           })
-        } catch (error: any) {
+        } catch (error: unknown) {
           wx.hideLoading()
           logger.error('图片上传失败:', error)
           wx.showToast({
@@ -733,7 +732,7 @@ const pageConfig: AnyObject = {
               batchId: this.data.selectedBatchId
             }
           })
-          const promptDataResult = normalizeCloudResult<any>(promptDataRawResult)
+          const promptDataResult = normalizeCloudResult<unknown>(promptDataRawResult)
           if (promptDataResult?.success) {
             batchPromptData = promptDataResult.data
           } else {
@@ -776,7 +775,7 @@ const pageConfig: AnyObject = {
         logger.error('错误信息:', errorMsg)
         throw new Error(errorMsg)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('====== 诊断提交失败 ======')
       logger.error('错误类型:', error.errCode)
       logger.error('错误信息:', error.errMsg || error.message)
@@ -912,7 +911,7 @@ const pageConfig: AnyObject = {
             wx.showToast({ title: '诊断超时，请重试', icon: 'error' })
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error(`轮询失败: ${error.message}`)
         
         // 继续轮询，直到超时
@@ -973,7 +972,7 @@ const pageConfig: AnyObject = {
   },
 
   // 开始治疗
-  async startTreatment(diagnosis: any) {
+  async startTreatment(diagnosis: unknown) {
     try {
       wx.showLoading({ title: '创建治疗记录...' })
       
@@ -1029,7 +1028,7 @@ const pageConfig: AnyObject = {
       } else {
         throw new Error(result?.error || result?.message || '创建治疗记录失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       logger.error('创建治疗记录失败:', error)
       
@@ -1045,7 +1044,7 @@ const pageConfig: AnyObject = {
   },
 
   // 创建死亡记录并关联财务（死因剖析专用）
-  async createDeathRecordWithFinance(diagnosis: any) {
+  async createDeathRecordWithFinance(diagnosis: unknown) {
     try {
       const deathCount = parseInt(this.data.deathCount) || 0
       const deathCause = diagnosis.primaryCause?.disease || diagnosis.primaryDiagnosis?.disease || '待确定'
@@ -1091,7 +1090,7 @@ const pageConfig: AnyObject = {
       } else {
         throw new Error(result?.message || result?.error || '创建死亡记录失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       wx.showToast({
         title: error.message || '创建失败',
@@ -1101,7 +1100,7 @@ const pageConfig: AnyObject = {
   },
 
   // 记录死亡（病鹅诊断用）
-  async recordDeath(diagnosis: any) {
+  async recordDeath(diagnosis: unknown) {
     const affectedCount = parseInt(this.data.affectedCount) || 0
     
     wx.showModal({
@@ -1250,7 +1249,7 @@ const pageConfig: AnyObject = {
       } else {
         throw new Error(result?.message || result?.error || '保存失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       // ✅ 保存失败时重置状态，允许重试
       this.setData({ isSaving: false })

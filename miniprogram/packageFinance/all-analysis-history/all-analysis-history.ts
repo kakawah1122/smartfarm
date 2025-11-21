@@ -2,7 +2,7 @@
 Page({
   data: {
     // 历史记录列表
-    analysisHistory: [] as any[],
+    analysisHistory: [] as unknown[],
     
     // 加载状态
     loading: false,
@@ -15,7 +15,7 @@ Page({
     
     // 弹窗
     showDetailPopup: false,
-    selectedAnalysisItem: null as any,
+    selectedAnalysisItem: null as unknown,
     
     // 空状态
     isEmpty: false
@@ -47,7 +47,7 @@ Page({
         .limit(this.data.pageSize)
         .get()
       
-      const records = (result.data || []).map((item: any) => ({
+      const records = (result.data || []).map((item: unknown) => ({
         ...item,
         formattedDate: new Date(item.createTime).toLocaleString('zh-CN', {
           year: 'numeric',
@@ -87,7 +87,7 @@ Page({
   },
   
   // 提取分析摘要
-  extractSummary(result: any): string {
+  extractSummary(result: unknown): string {
     if (!result) return '暂无摘要'
     
     if (result.format === 'text') {
@@ -115,7 +115,7 @@ Page({
   },
   
   // 点击历史记录项
-  onClickHistoryItem(e: any) {
+  onClickHistoryItem(e: CustomEvent) {
     const item = e.currentTarget.dataset.item
     this.setData({
       selectedAnalysisItem: item,

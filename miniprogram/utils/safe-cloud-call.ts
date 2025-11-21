@@ -27,7 +27,7 @@ function initManager() {
  * 安全的云函数调用
  * 自动处理缓存和优化，失败时回退到原始调用
  * @param config 调用配置
- * @returns Promise<any> 返回云函数的result字段内容
+ * @returns Promise<unknown> 返回云函数的result字段内容
  */
 export async function safeCloudCall(config: {
   name: string
@@ -35,7 +35,7 @@ export async function safeCloudCall(config: {
   useCache?: boolean // 是否使用缓存
   cacheTime?: number // 缓存时间（毫秒）
   timeout?: number // 超时时间（毫秒）
-}): Promise<any> {
+}): Promise<unknown> {
   // 尝试初始化管理器
   initManager()
   
@@ -117,7 +117,7 @@ export async function safeBatchCall(configs: Array<{
       timeout: config.timeout
     })
   ))
-  return results.map((res: { result: any }) => res.result)
+  return results.map((res: { result: unknown}) => res.result)
 }
 
 /**

@@ -4,11 +4,11 @@ import { createPageWithNavbar } from '../../utils/navigation'
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 用户信息
-    userInfo: null as any,
+    userInfo: null as unknown,
     fromEmployeeManagement: false,  // 标记是否从员工管理中间页进入
     
     // 邀请列表数据
-    inviteList: [] as any[],
+    inviteList: [] as unknown[],
     loading: true,
     loadingMore: false,
     hasMore: true,
@@ -32,7 +32,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 邀请详情弹窗
     showInviteDetail: false,
-    selectedInvite: null as any,
+    selectedInvite: null as unknown,
     
     // 创建邀请弹窗
     showCreateDialog: false,
@@ -67,7 +67,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     ]
   },
 
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     // 检查是否从员工管理中间页传递了权限信息
     if (options && options.from === 'employee-management' && options.hasPermission === 'true') {
       const userInfo = {
@@ -349,7 +349,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           }
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 已移除调试日志
       let errorMessage = '生成失败，请重试'
       
@@ -461,14 +461,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 事件处理
-  onTabChange(e: any) {
+  onTabChange(e: CustomEvent) {
     this.setData({
       activeTab: e.detail.value
     })
     this.loadInviteList()
   },
 
-  onInviteClick(e: any) {
+  onInviteClick(e: CustomEvent) {
     const invite = e.currentTarget.dataset.invite
     this.setData({
       selectedInvite: invite,
@@ -560,7 +560,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 表单事件
-  onRoleChange(e: any) {
+  onRoleChange(e: CustomEvent) {
     const selectedIndex = e.detail.value
     const selectedRole = this.data.roleOptions[selectedIndex]?.value || 'employee'
     this.setData({
@@ -569,7 +569,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  onExpiryDaysChange(e: any) {
+  onExpiryDaysChange(e: CustomEvent) {
     const selectedIndex = e.detail.value
     const selectedDays = this.data.expiryOptions[selectedIndex]?.value || 7
     this.setData({
@@ -578,20 +578,20 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  onRemarkInput(e: any) {
+  onRemarkInput(e: CustomEvent) {
     this.setData({
       'newInvite.remark': e.detail.value
     })
   },
 
-  onRevokeReasonChange(e: any) {
+  onRevokeReasonChange(e: CustomEvent) {
     this.setData({
       revokeReason: e.detail.value
     })
   },
 
   // 数据标准化函数
-  normalizeInviteData(invite: any) {
+  normalizeInviteData(invite: unknown) {
     // 确保所有必要字段都有默认值
     const normalized = {
       ...invite,

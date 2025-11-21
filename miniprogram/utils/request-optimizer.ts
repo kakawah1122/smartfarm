@@ -31,8 +31,8 @@ export interface RequestResult<T = any> {
  */
 interface QueueItem {
   config: RequestConfig
-  resolve: (value: any) => void
-  reject: (reason: any) => void
+  resolve: (value: unknown) => void
+  reject: (reason: unknown) => void
   retryCount: number
 }
 
@@ -44,7 +44,7 @@ export class RequestOptimizer {
   private queue: QueueItem[] = []
   private running = 0
   private maxConcurrent = 3 // 最大并发数
-  private cache = new Map<string, { data: any; timestamp: number }>()
+  private cache = new Map<string, { data: unknown; timestamp: number }>()
   private cacheTime = 5 * 60 * 1000 // 默认缓存5分钟
   
   /**
@@ -60,7 +60,7 @@ export class RequestOptimizer {
   /**
    * 获取缓存结果
    */
-  getCachedResult(key: string): any {
+  getCachedResult(key: string): unknown {
     const cached = this.cache.get(key)
     if (cached && Date.now() - cached.timestamp < this.cacheTime) {
       return cached.data
@@ -173,7 +173,7 @@ export class RequestOptimizer {
       
       // 解析Promise
       item.resolve(result)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 检查是否需要重试
       if (item.retryCount < (item.config.retry || 0)) {
         item.retryCount++
@@ -216,7 +216,7 @@ export class RequestOptimizer {
       wx.cloud.callFunction({
         name: config.name,
         data: config.data,
-        success: (res: any) => {
+        success: (res: unknown) => {
           clearTimeout(timeoutId)
           
           if (res.result?.success) {
@@ -228,7 +228,7 @@ export class RequestOptimizer {
             reject(new Error(res.result?.error || '请求失败'))
           }
         },
-        fail: (error: any) => {
+        fail: (error: unknown) => {
           clearTimeout(timeoutId)
           reject(error)
         }
@@ -264,7 +264,7 @@ export class RequestOptimizer {
   /**
    * 获取缓存
    */
-  private getCache(key: string): any {
+  private getCache(key: string): unknown {
     const cached = this.cache.get(key)
     if (cached && Date.now() - cached.timestamp < this.cacheTime) {
       return cached.data
@@ -277,7 +277,7 @@ export class RequestOptimizer {
   /**
    * 设置缓存
    */
-  private setCache(key: string, data: any): void {
+  private setCache(key: string, data: unknown): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now()

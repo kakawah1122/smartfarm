@@ -33,8 +33,7 @@ export interface EventListener {
   id: string
   callback: Function
   once?: boolean
-  context?: any
-}
+  context?: unknown}
 
 /**
  * 事件管理器
@@ -66,7 +65,7 @@ export class EventManager {
     
     let timer: any = null
     let lastCallTime: number | null = null
-    let lastArgs: any[] | null = null
+    let lastArgs: unknown[] | null = null
     let lastContext: any = null
     let result: any
     
@@ -98,7 +97,7 @@ export class EventManager {
       }
     }
     
-    const debounced = function(this: any, ...args: any[]) {
+    const debounced = function(this: unknown, ...args: unknown[]) {
       lastArgs = args
       lastContext = this
       
@@ -167,7 +166,7 @@ export class EventManager {
     
     let timer: any = null
     let lastCallTime = 0
-    let lastArgs: any[] | null = null
+    let lastArgs: unknown[] | null = null
     let lastContext: any = null
     
     const invokeFunc = () => {
@@ -180,7 +179,7 @@ export class EventManager {
       return fn.apply(context, args!)
     }
     
-    const throttled = function(this: any, ...args: any[]) {
+    const throttled = function(this: unknown, ...args: unknown[]) {
       const now = Date.now()
       
       if (!lastCallTime && !leading) {
@@ -247,7 +246,7 @@ export class EventManager {
    * @param event 事件名称
    * @param data 事件数据
    */
-  static emit(event: string, data?: any) {
+  static emit(event: string, data?: unknown) {
     const listeners = this.eventBus.get(event)
     
     if (!listeners || listeners.length === 0) {
@@ -277,7 +276,7 @@ export class EventManager {
    * @param callback 回调函数
    * @param context 上下文
    */
-  static on(event: string, callback: Function, context?: any): string {
+  static on(event: string, callback: Function, context?: unknown): string {
     const id = this.generateListenerId()
     
     const listener: EventListener = {
@@ -301,7 +300,7 @@ export class EventManager {
    * @param callback 回调函数
    * @param context 上下文
    */
-  static once(event: string, callback: Function, context?: any): string {
+  static once(event: string, callback: Function, context?: unknown): string {
     const id = this.generateListenerId()
     
     const listener: EventListener = {
@@ -375,7 +374,7 @@ export class EventManager {
     const eventBus = new Map<string, EventListener[]>()
     
     return {
-      emit(event: string, data?: any) {
+      emit(event: string, data?: unknown) {
         const listeners = eventBus.get(event)
         
         if (!listeners || listeners.length === 0) {
@@ -395,7 +394,7 @@ export class EventManager {
         })
       },
       
-      on(event: string, callback: Function, context?: any): string {
+      on(event: string, callback: Function, context?: unknown): string {
         const id = EventManager.generateListenerId()
         
         const listener: EventListener = {
@@ -413,7 +412,7 @@ export class EventManager {
         return id
       },
       
-      once(event: string, callback: Function, context?: any): string {
+      once(event: string, callback: Function, context?: unknown): string {
         const id = EventManager.generateListenerId()
         
         const listener: EventListener = {

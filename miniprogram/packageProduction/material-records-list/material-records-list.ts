@@ -79,7 +79,7 @@ const pageConfig = {
         const currentUser = app.globalData?.userInfo?.nickname || app.globalData?.userInfo?.nickName || '系统用户'
         
         // 转换数据格式
-        const formattedRecords = records.map((record: any) => ({
+        const formattedRecords = records.map((record: unknown) => ({
           id: record._id || record.recordNumber,
           recordNumber: record.recordNumber || record._id,
           name: record.material?.name || '未知物料',
@@ -145,7 +145,7 @@ const pageConfig = {
   },
 
   // 筛选切换
-  onFilterChange(e: any) {
+  onFilterChange(e: CustomEvent) {
     const { value } = e.detail
     this.setData({
       activeFilter: value,
@@ -155,7 +155,7 @@ const pageConfig = {
   },
 
   // 搜索功能
-  onSearch(e: any) {
+  onSearch(e: CustomEvent) {
     const keyword = e.detail.value
     this.setData({
       searchKeyword: keyword,
@@ -204,7 +204,7 @@ const pageConfig = {
   },
 
   // 查看记录详情
-  viewRecordDetail(e: any) {
+  viewRecordDetail(e: CustomEvent) {
     const { record } = e.currentTarget.dataset
     this.setData({
       selectedRecord: record,

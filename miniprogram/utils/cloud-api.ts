@@ -28,7 +28,7 @@ class CloudApi {
    */
   static async callFunction<T = any>(
     name: string, 
-    data: any, 
+    data: unknown, 
     options: CloudApiOptions = {}
   ): Promise<CloudApiResponse<T>> {
     const {
@@ -78,7 +78,7 @@ class CloudApi {
         return result || { success: false, error: '操作失败' }
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (loading) {
         wx.hideLoading()
       }
@@ -105,8 +105,7 @@ class CloudApi {
   static async completeVaccineTask(data: {
     taskId: string
     batchId: string
-    vaccineRecord: any
-  }): Promise<CloudApiResponse> {
+    vaccineRecord: unknown}): Promise<CloudApiResponse> {
     return this.callFunction(
       'breeding-todo',
       {
@@ -239,8 +238,7 @@ class CloudApi {
     pageSize?: number
     preventionType?: string
     batchId?: string
-    dateRange?: any
-  }): Promise<CloudApiResponse> {
+    dateRange?: unknown}): Promise<CloudApiResponse> {
     return this.callFunction(
       'health-management',
       {
@@ -293,7 +291,7 @@ class CloudApi {
     healthRecordId?: string
     treatmentType?: string
     diagnosis?: string
-    medications?: any[]
+    medications?: unknown[]
     treatmentPlan?: string
     veterinarian?: string
     affectedCount?: number
@@ -325,8 +323,7 @@ class CloudApi {
     symptoms?: string[]
     images?: string[]
     aiDiagnosis?: any
-    humanVerification?: any
-  }): Promise<CloudApiResponse> {
+    humanVerification?: unknown}): Promise<CloudApiResponse> {
     return this.callFunction(
       'health-management',
       {
@@ -346,7 +343,7 @@ class CloudApi {
   /**
    * 获取健康概览（使用新的独立云函数）
    */
-  static async getHealthOverview(batchId: string, dateRange?: any, options?: CloudApiOptions): Promise<CloudApiResponse> {
+  static async getHealthOverview(batchId: string, dateRange?: unknown, options?: CloudApiOptions): Promise<CloudApiResponse> {
     return this.callFunction(
       'health-overview',  // 使用拆分后的独立云函数
       {
@@ -408,7 +405,7 @@ class CloudApi {
     amount: number
     batchId?: string
     costBreakdown?: any
-    relatedRecords?: any[]
+    relatedRecords?: unknown[]
     costDate: string
   }): Promise<CloudApiResponse> {
     return this.callFunction(
@@ -435,8 +432,7 @@ class CloudApi {
     pageSize?: number
     costType?: string
     batchId?: string
-    dateRange?: any
-  }): Promise<CloudApiResponse> {
+    dateRange?: unknown}): Promise<CloudApiResponse> {
     return this.callFunction(
       'finance-management',
       {
@@ -495,7 +491,7 @@ class CloudApi {
   /**
    * 更新用户信息
    */
-  static async updateUserInfo(data: any): Promise<CloudApiResponse> {
+  static async updateUserInfo(data: unknown): Promise<CloudApiResponse> {
     return this.callFunction(
       'user-management',
       {
@@ -519,8 +515,7 @@ class CloudApi {
    */
   static async batchCall(calls: Array<{
     name: string
-    data: any
-  }>): Promise<CloudApiResponse[]> {
+    data: unknown}>): Promise<CloudApiResponse[]> {
     const promises = calls.map(call => 
       this.callFunction(call.name, call.data, { showError: false })
     )
@@ -528,7 +523,7 @@ class CloudApi {
     try {
       const results = await Promise.all(promises)
       return results
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: '批量操作失败',
         icon: 'error'
@@ -542,7 +537,7 @@ class CloudApi {
   /**
    * 创建死亡记录
    */
-  static async createDeathRecord(data: any): Promise<CloudApiResponse> {
+  static async createDeathRecord(data: unknown): Promise<CloudApiResponse> {
     return this.callFunction(
       'health-management', 
       { action: 'createDeathRecord', ...data },
@@ -558,7 +553,7 @@ class CloudApi {
   /**
    * 查询死亡记录列表
    */
-  static async listDeathRecords(params: any): Promise<CloudApiResponse> {
+  static async listDeathRecords(params: unknown): Promise<CloudApiResponse> {
     return this.callFunction(
       'health-management',
       { action: 'listDeathRecords', ...params },

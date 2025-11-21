@@ -13,11 +13,11 @@ Page({
     
     // 成鹅品种（日龄）
     meatBreeds: [] as Array<{ key: string; label: string }>,
-    meatData: {} as Record<string, any>,
+    meatData: {} as Record<string, unknown>,
     
     // 鹅苗品种
     goslingBreeds: [] as Array<{ key: string; label: string }>,
-    goslingData: {} as Record<string, any>,
+    goslingData: {} as Record<string, unknown>,
     
     currentBreed: 'meat130',
     currentBreedLabel: '130日龄',
@@ -48,7 +48,7 @@ Page({
     }
   },
 
-  onLoad(options: Record<string, any>) {
+  onLoad(options: Record<string, unknown>) {
     const defaultTab = options?.tab || 'adult'
     const defaultBreed = defaultTab === 'adult' ? 'meat130' : 'extraLarge'
     this.loadPriceDataFromDB(defaultBreed, defaultTab)
@@ -85,9 +85,9 @@ Page({
   },
 
   // 处理历史数据
-  processHistoricalData(records: any[], defaultBreed: string, defaultTab: string) {
+  processHistoricalData(records: unknown[], defaultBreed: string, defaultTab: string) {
     // 1. 构建肉鹅数据（成鹅价格）
-    const meatBreedsMap: Record<string, any> = {}
+    const meatBreedsMap: Record<string, unknown> = {}
     const meatKeys = ['meat120', 'meat130']
     const meatLabels: Record<string, string> = {
       'meat120': '120日龄',
@@ -98,7 +98,7 @@ Page({
       const history: Array<{ date: string; min: number; max: number; avg: number }> = []
       
       records.forEach(record => {
-        const breed = record.meatBreeds?.find((b: any) => b.key === key)
+        const breed = record.meatBreeds?.find((b: unknown) => b.key === key)
         if (breed && breed.range) {
           // 保存完整的价格区间数据
           history.push({
@@ -115,7 +115,7 @@ Page({
         const recentHistory = history.slice(-7)
         
         const latestRecord = records[records.length - 1]
-        const latestBreed = latestRecord.meatBreeds?.find((b: any) => b.key === key)
+        const latestBreed = latestRecord.meatBreeds?.find((b: unknown) => b.key === key)
         // 计算趋势（基于均价）
         const avgHistory = recentHistory.map(h => ({ date: h.date, value: h.avg }))
         const trendInfo = this.calculateTrendFromHistory(avgHistory)
@@ -148,7 +148,7 @@ Page({
     })
 
     // 2. 构建鹅苗数据
-    const goslingBreedsMap: Record<string, any> = {}
+    const goslingBreedsMap: Record<string, unknown> = {}
     const goslingKeys = ['middle', 'large', 'extraLarge']
     const goslingLabels: Record<string, string> = {
       'middle': '中种鹅',
@@ -160,7 +160,7 @@ Page({
       const history: Array<{ date: string; min: number; max: number; avg: number }> = []
       
       records.forEach(record => {
-        const breed = record.goslingBreeds?.find((b: any) => b.key === key)
+        const breed = record.goslingBreeds?.find((b: unknown) => b.key === key)
         if (breed && breed.range) {
           // 保存完整的价格区间数据
           history.push({
@@ -177,7 +177,7 @@ Page({
         const recentHistory = history.slice(-7)
         
         const latestRecord = records[records.length - 1]
-        const latestBreed = latestRecord.goslingBreeds?.find((b: any) => b.key === key)
+        const latestBreed = latestRecord.goslingBreeds?.find((b: unknown) => b.key === key)
         // 计算趋势（基于均价）
         const avgHistory = recentHistory.map(h => ({ date: h.date, value: h.avg }))
         const trendInfo = this.calculateTrendFromHistory(avgHistory)
@@ -288,7 +288,7 @@ Page({
     this.updateCurrentDisplay(breedKey, this.data.activeTab as 'adult' | 'gosling')
   },
 
-  onTabChange(event: any) {
+  onTabChange(event: unknown) {
     const tabValue = event.detail?.value || 'adult'
     
     // 切换 tab 时，选择该 tab 的第一个品种

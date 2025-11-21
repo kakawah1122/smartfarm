@@ -41,7 +41,7 @@ export class HealthFormHandler {
   /**
    * 提交疫苗接种表单
    */
-  static async submitVaccineForm(formData: VaccineFormData): Promise<any> {
+  static async submitVaccineForm(formData: VaccineFormData): Promise<unknown> {
     try {
       // 数据验证
       if (!formData.batchId) {
@@ -101,7 +101,7 @@ export class HealthFormHandler {
   /**
    * 提交消毒表单
    */
-  static async submitDisinfectionForm(formData: DisinfectionFormData): Promise<any> {
+  static async submitDisinfectionForm(formData: DisinfectionFormData): Promise<unknown> {
     try {
       // 数据验证
       if (!formData.batchId) {
@@ -151,7 +151,7 @@ export class HealthFormHandler {
   /**
    * 验证表单数据
    */
-  static validateFormData(formData: any, requiredFields: string[]): string[] {
+  static validateFormData(formData: unknown, requiredFields: string[]): string[] {
     const errors: string[] = []
     
     requiredFields.forEach(field => {

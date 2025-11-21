@@ -29,9 +29,9 @@ const pageConfig = {
     
     // 物料选择器相关
     showMaterialPicker: false,
-    availableMaterials: [] as any[],  // 可选择的已采购物料
+    availableMaterials: [] as unknown[],  // 可选择的已采购物料
     materialOptions: [] as string[],  // 物料选择器选项（显示用）
-    materialActionItems: [] as any[], // ActionSheet组件数据格式
+    materialActionItems: [] as unknown[], // ActionSheet组件数据格式
     
     // 提交状态
     submitting: false,
@@ -74,14 +74,14 @@ const pageConfig = {
       // 调用云函数获取真实库存物料数据
       const materials = await this.getRealInventoryMaterials()
       
-      const materialOptions = materials.map((material: any) => 
+      const materialOptions = materials.map((material: unknown) => 
         `${material.materialName} (库存: ${material.totalQuantity}${material.unit || ''})`
       )
       
       this.setData({
         availableMaterials: materials,
         materialOptions: materialOptions,
-        materialActionItems: materials.map((material: any, index: number) => ({
+        materialActionItems: materials.map((material: unknown, index: number) => ({
           label: `${material.materialName} (库存: ${material.totalQuantity}${material.unit || ''})`,
           value: index,
           disabled: material.totalQuantity <= 0
@@ -146,7 +146,7 @@ const pageConfig = {
   },
 
   // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
-  onDateConfirm(e: any) {
+  onDateConfirm(e: CustomEvent) {
     const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     
     this.setData({
@@ -155,7 +155,7 @@ const pageConfig = {
   },
 
   // 表单字段变化
-  onFieldChange(e: any) {
+  onFieldChange(e: CustomEvent) {
     // 兼容不同组件的事件格式
     let value = e.detail.value !== undefined ? e.detail.value : e.detail
     
@@ -301,7 +301,7 @@ const pageConfig = {
   },
 
   // 提交到云函数 - 使用正确的领用出库流程
-  async submitToCloudFunction(data: any): Promise<void> {
+  async submitToCloudFunction(data: unknown): Promise<void> {
     try {
       // 根据物料名称找到对应的物料ID
       const selectedMaterial = this.data.availableMaterials.find(material => 

@@ -60,7 +60,7 @@ export class FinanceDataService {
   /**
    * 获取财务概览
    */
-  static async getFinanceOverview(dateRange?: any): Promise<FinanceOverview> {
+  static async getFinanceOverview(dateRange?: unknown): Promise<FinanceOverview> {
     const cacheKey = `finance_overview_${JSON.stringify(dateRange)}`
     const cached = this.getCache(cacheKey)
     if (cached) return cached
@@ -101,8 +101,7 @@ export class FinanceDataService {
     pageSize: number
     type?: string
     category?: string
-    dateRange?: any
-  }): Promise<{list: TransactionRecord[]; total: number; hasMore: boolean}> {
+    dateRange?: unknown}): Promise<{list: TransactionRecord[]; total: number; hasMore: boolean}> {
     try {
       const result = await safeCloudCall({
         name: 'finance-management',
@@ -131,7 +130,7 @@ export class FinanceDataService {
   /**
    * 获取成本分析
    */
-  static async getCostAnalysis(dateRange?: any): Promise<any> {
+  static async getCostAnalysis(dateRange?: unknown): Promise<unknown> {
     const cacheKey = `cost_analysis_${JSON.stringify(dateRange)}`
     const cached = this.getCache(cacheKey)
     if (cached) return cached
@@ -143,7 +142,7 @@ export class FinanceDataService {
           action: 'getCostBreakdown',
           dateRange: dateRange
         }
-      }) as CloudCallResult<any>
+      }) as CloudCallResult<unknown>
       
       if (result?.success) {
         const data = result.data
@@ -161,7 +160,7 @@ export class FinanceDataService {
   /**
    * 获取收入分析
    */
-  static async getRevenueAnalysis(dateRange?: any): Promise<any> {
+  static async getRevenueAnalysis(dateRange?: unknown): Promise<unknown> {
     const cacheKey = `revenue_analysis_${JSON.stringify(dateRange)}`
     const cached = this.getCache(cacheKey)
     if (cached) return cached
@@ -173,7 +172,7 @@ export class FinanceDataService {
           action: 'getRevenueAnalysis',
           dateRange: dateRange
         }
-      }) as CloudCallResult<any>
+      }) as CloudCallResult<unknown>
       
       if (result?.success) {
         const data = result.data
@@ -191,7 +190,7 @@ export class FinanceDataService {
   /**
    * 提交财务记录
    */
-  static async submitFinanceRecord(record: Partial<TransactionRecord>): Promise<any> {
+  static async submitFinanceRecord(record: Partial<TransactionRecord>): Promise<unknown> {
     try {
       const result = await safeCloudCall({
         name: 'finance-management',
@@ -274,7 +273,7 @@ export class FinanceDataService {
   /**
    * 设置缓存
    */
-  private static setCache(key: string, data: any): void {
+  private static setCache(key: string, data: unknown): void {
     this.cache.set(key, {
       data: data,
       timestamp: Date.now()
@@ -284,7 +283,7 @@ export class FinanceDataService {
   /**
    * 获取缓存
    */
-  private static getCache(key: string): any {
+  private static getCache(key: string): unknown {
     const cached = this.cache.get(key)
     if (cached && cached.timestamp && cached.data) {
       if (Date.now() - cached.timestamp < this.cacheTime) {

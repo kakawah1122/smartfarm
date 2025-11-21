@@ -7,11 +7,10 @@
 type GlobalData = {
   needSyncHomepage?: boolean
   lastSyncTime?: number
-  [key: string]: any
-}
+  [key: string]: unknown}
 
 const ensureGlobalData = (): GlobalData => {
-  const app = getApp<any>()
+  const app = getApp<unknown>()
   app.globalData = app.globalData || {}
   return app.globalData
 }

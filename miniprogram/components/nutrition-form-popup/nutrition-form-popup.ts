@@ -47,7 +47,7 @@ Component({
 
   methods: {
     // 输入处理
-    onInput(e: any) {
+    onInput(e: CustomEvent) {
       const { field } = e.currentTarget.dataset
       const { value } = e.detail
       
@@ -58,7 +58,7 @@ Component({
     },
 
     // 数量输入处理
-    onQuantityInput(e: any) {
+    onQuantityInput(e: CustomEvent) {
       const { value } = e.detail
       const quantity = parseInt(value) || 0
       
@@ -68,7 +68,7 @@ Component({
     },
 
     // 选择营养品
-    onNutritionSelect(e: any) {
+    onNutritionSelect(e: CustomEvent) {
       const index = e.detail.value
       this.triggerEvent('nutritionselect', {
         index

@@ -74,41 +74,41 @@ const pageConfig = {
     hasLoaded: false
   },
 
-  onLoad(this: any) {
+  onLoad(this: unknown) {
     // ✅ 诊断历史始终显示所有批次的记录，不受批次筛选影响
     this.loadDiagnosisHistory()
   },
 
-  onShow(this: any) {
+  onShow(this: unknown) {
     // ✅ 修复：只在页面已经完成首次加载的情况下刷新数据，避免覆盖首次加载
     if (this.data.hasLoaded) {
       this.refreshData()
     }
   },
 
-  onPullDownRefresh(this: any) {
+  onPullDownRefresh(this: unknown) {
     this.refreshData()
   },
 
-  onReachBottom(this: any) {
+  onReachBottom(this: unknown) {
     this.loadMoreData()
   },
 
   // 返回上一页
   goBack() {
     // 防止重复触发
-    if ((this as any).__isNavigatingBack) {
+    if ((this as unknown).__isNavigatingBack) {
       return
     }
     
-    (this as any).__isNavigatingBack = true
+    (this as unknown).__isNavigatingBack = true
     
     wx.navigateBack({
       delta: 1,
       complete: () => {
         // 500ms后清除标志
         setTimeout(() => {
-          (this as any).__isNavigatingBack = false
+          (this as unknown).__isNavigatingBack = false
         }, 500)
       },
       fail: () => {
@@ -121,7 +121,7 @@ const pageConfig = {
   },
 
   // 刷新数据
-  async refreshData(this: any) {
+  async refreshData(this: unknown) {
     this.setData({
       refreshing: true,
       'pagination.page': 1,
@@ -136,7 +136,7 @@ const pageConfig = {
   },
 
   // 加载更多数据
-  async loadMoreData(this: any) {
+  async loadMoreData(this: unknown) {
     if (!this.data.pagination.hasMore || this.data.loadingMore) {
       return
     }
@@ -152,7 +152,7 @@ const pageConfig = {
   },
 
   // 加载诊断历史
-  async loadDiagnosisHistory(this: any, showLoading = true) {
+  async loadDiagnosisHistory(this: unknown, showLoading = true) {
     if (showLoading) {
       this.setData({ loading: true })
     }
@@ -190,7 +190,7 @@ const pageConfig = {
       } else {
         throw new Error(result.result?.message || '加载失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 已移除调试日志
       wx.showToast({
         title: error.message || '加载失败',
@@ -206,7 +206,7 @@ const pageConfig = {
   },
 
   // 状态筛选切换
-  onStatusChange(this: any, e: any) {
+  onStatusChange(this: unknown, e: unknown) {
     const { value } = e.detail
     if (value !== this.data.activeStatus) {
       this.setData({ 
@@ -220,7 +220,7 @@ const pageConfig = {
   },
 
   // 查看诊断详情
-  async onViewRecord(this: any, e: any) {
+  async onViewRecord(this: unknown, e: unknown) {
     const { record } = e.currentTarget.dataset
     
     // ✅ 使用公共工具函数处理图片URL
@@ -239,7 +239,7 @@ const pageConfig = {
   },
 
   // 关闭详情对话框
-  onCloseDetail(this: any) {
+  onCloseDetail(this: unknown) {
     this.setData({
       showDetailDialog: false,
       selectedRecord: null
@@ -247,7 +247,7 @@ const pageConfig = {
   },
 
   // 预览图片
-  onPreviewImage(this: any, e: any) {
+  onPreviewImage(this: unknown, e: unknown) {
     const { url } = e.currentTarget.dataset
     const images = this.data.selectedRecord?.images || []
     
@@ -260,7 +260,7 @@ const pageConfig = {
   },
 
   // 从详情弹窗创建治疗方案
-  onCreateTreatmentFromDetail(this: any) {
+  onCreateTreatmentFromDetail(this: unknown) {
     const record = this.data.selectedRecord
     if (!record) return
 
@@ -276,7 +276,7 @@ const pageConfig = {
   },
 
   // 创建治疗方案
-  onCreateTreatment(this: any, e: any) {
+  onCreateTreatment(this: unknown, e: unknown) {
     const { record } = e.currentTarget.dataset
     
     wx.navigateTo({
@@ -285,7 +285,7 @@ const pageConfig = {
   },
 
   // 更新诊断状态
-  async updateDiagnosisStatus(this: any, record: DiagnosisRecord, newStatus: string) {
+  async updateDiagnosisStatus(this: unknown, record: DiagnosisRecord, newStatus: string) {
     try {
       await wx.cloud.callFunction({
         name: 'ai-diagnosis',
@@ -320,7 +320,7 @@ const pageConfig = {
   },
 
   // 确认诊断
-  onConfirmDiagnosis(this: any, e: any) {
+  onConfirmDiagnosis(this: unknown, e: unknown) {
     const { record } = e.currentTarget.dataset
     
     wx.showModal({
@@ -335,7 +335,7 @@ const pageConfig = {
   },
 
   // 删除记录
-  onDeleteRecord(this: any, e: any) {
+  onDeleteRecord(this: unknown, e: unknown) {
     const { record } = e.currentTarget.dataset
     
     wx.showModal({
@@ -352,7 +352,7 @@ const pageConfig = {
   },
 
   // 删除记录
-  async deleteRecord(this: any, record: DiagnosisRecord) {
+  async deleteRecord(this: unknown, record: DiagnosisRecord) {
     try {
       await wx.cloud.callFunction({
         name: 'ai-diagnosis',

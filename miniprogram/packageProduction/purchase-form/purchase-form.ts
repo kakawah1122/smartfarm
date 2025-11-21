@@ -79,7 +79,7 @@ const pageConfig = {
   },
 
   // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
-  onDateConfirm(e: any) {
+  onDateConfirm(e: CustomEvent) {
     const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     const batchId = this.generateBatchId(dateString)
     
@@ -90,7 +90,7 @@ const pageConfig = {
   },
 
   // 分类选择变化
-  onCategoryChange(e: any) {
+  onCategoryChange(e: CustomEvent) {
     const index = e.detail.value
     const category = this.data.categoryLabels[index]
     this.setData({
@@ -101,7 +101,7 @@ const pageConfig = {
   },
 
   // 表单字段变化
-  onFieldChange(e: any) {
+  onFieldChange(e: CustomEvent) {
     const { value } = e.detail
     const { field } = e.currentTarget.dataset
     
@@ -260,7 +260,7 @@ const pageConfig = {
   },
 
   // 提交到云函数 - 使用新的采购入库接口
-  async submitToCloudFunction(data: any): Promise<void> {
+  async submitToCloudFunction(data: unknown): Promise<void> {
     
     try {
       // 使用新的采购入库接口，自动处理物料匹配和创建

@@ -214,14 +214,14 @@ const pageConfig: KnowledgePageInstance = {
       } else {
         throw new Error(result.result?.message || '加载失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.setData({ loading: false })
       this.showMessage('error', error.message || '加载文章列表失败')
     }
   },
 
   // 搜索输入
-  onSearchInput(e: any) {
+  onSearchInput(e: CustomEvent) {
     this.setData({
       searchKeyword: e.detail.value
     })
@@ -237,7 +237,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 选择分类
-  selectCategory(e: any) {
+  selectCategory(e: CustomEvent) {
     const category = e.currentTarget.dataset.category
     this.setData({
       activeCategory: category,
@@ -278,7 +278,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 编辑文章
-  async editArticle(e: any) {
+  async editArticle(e: CustomEvent) {
     const id = e.currentTarget.dataset.id
     if (!id) return
 
@@ -314,7 +314,7 @@ const pageConfig: KnowledgePageInstance = {
       } else {
         throw new Error(result.result?.message || '加载失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.showMessage('error', error.message || '加载文章失败')
     } finally {
       this.hideLoadingSafe()
@@ -322,7 +322,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 表单输入变化
-  onFormChange(e: any) {
+  onFormChange(e: CustomEvent) {
     const field = e.currentTarget.dataset.field
     const value = e.detail.value
     this.setData({
@@ -331,7 +331,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 分类选择变化
-  onCategoryChange(e: any) {
+  onCategoryChange(e: CustomEvent) {
     const index = e.detail.value
     const category = this.data.categories[index]
     if (category) {
@@ -345,14 +345,14 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 日期选择
-  onDateChange(e: any) {
+  onDateChange(e: CustomEvent) {
     this.setData({
       'formData.date': e.detail.value
     })
   },
 
   // 解析文本输入变化
-  onParseTextChange(e: any) {
+  onParseTextChange(e: CustomEvent) {
     this.setData({
       parseText: e.detail.value
     })
@@ -480,7 +480,7 @@ const pageConfig: KnowledgePageInstance = {
       }
 
       this.showMessage('success', '文本解析成功，标题已自动提取，请检查并完善信息')
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.showMessage('error', '解析失败：' + (error.message || '未知错误'))
     }
   },
@@ -551,7 +551,7 @@ const pageConfig: KnowledgePageInstance = {
           throw new Error(errorMsg)
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Save article error:', error)
       const errorMessage = error.message || error.errMsg || '保存失败，请重试'
       this.showMessage('error', errorMessage)
@@ -562,7 +562,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 删除文章
-  async deleteArticle(e: any) {
+  async deleteArticle(e: CustomEvent) {
     const id = e.currentTarget?.dataset?.id || e.detail?.id
     if (!id) return
 
@@ -593,7 +593,7 @@ const pageConfig: KnowledgePageInstance = {
             } else {
               throw new Error(result.result?.message || '删除失败')
             }
-          } catch (error: any) {
+          } catch (error: unknown) {
             this.showMessage('error', error.message || '删除失败')
           } finally {
             this.hideLoadingSafe()
@@ -604,7 +604,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 触摸开始
-  onTouchStart(e: any) {
+  onTouchStart(e: CustomEvent) {
     const touch = e.touches[0]
     const id = e.currentTarget.dataset.id
     
@@ -624,7 +624,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 触摸移动
-  onTouchMove(e: any) {
+  onTouchMove(e: CustomEvent) {
     const touch = e.touches[0]
     const deltaX = touch.clientX - this.data.touchStartX
     const deltaY = Math.abs(touch.clientY - this.data.touchStartY)
@@ -678,7 +678,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 卡片点击（编辑文章）
-  onItemTap(e: any) {
+  onItemTap(e: CustomEvent) {
     // 如果正在滑动，不触发点击
     if (this.data.isSwiping) {
       return
@@ -699,7 +699,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 滑动编辑按钮点击
-  onSwipeEdit(e: any) {
+  onSwipeEdit(e: CustomEvent) {
     const id = e.currentTarget.dataset.id
     this.setData({
       swipedId: '',
@@ -713,7 +713,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 滑动删除按钮点击
-  onSwipeDelete(e: any) {
+  onSwipeDelete(e: CustomEvent) {
     const id = e.currentTarget.dataset.id
     this.setData({
       swipedId: '',
@@ -753,7 +753,7 @@ const pageConfig: KnowledgePageInstance = {
   },
 
   // 返回上一页
-  goBack(e?: any) {
+  goBack(e?: unknown) {
     // 阻止事件冒泡，避免 navigation-bar 执行默认返回
     if (e) {
       e.stopPropagation && e.stopPropagation()

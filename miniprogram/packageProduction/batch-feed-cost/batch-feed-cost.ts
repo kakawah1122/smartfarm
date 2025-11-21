@@ -34,7 +34,7 @@ interface BatchFeedCostData {
   }>
   
   // 投喂记录列表
-  feedRecords: any[]
+  feedRecords: unknown[]
 }
 
 const pageConfig = {
@@ -42,7 +42,7 @@ const pageConfig = {
     // 批次选择
     selectedBatchId: '',
     selectedBatchNumber: '请选择批次',
-    availableBatches: [] as any[],
+    availableBatches: [] as unknown[],
     showBatchDropdown: false,
     
     // 成本数据
@@ -60,9 +60,9 @@ const pageConfig = {
     // 页面状态
     loading: false,
     hasData: false
-  } as any,
+  } as unknown,
 
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     // 从参数获取批次ID
     const batchId = options?.batchId || ''
     if (batchId) {
@@ -93,7 +93,7 @@ const pageConfig = {
         
         // 如果已有选择的批次ID，加载数据
         if (this.data.selectedBatchId) {
-          const batch = batches.find((b: any) => b._id === this.data.selectedBatchId)
+          const batch = batches.find((b: unknown) => b._id === this.data.selectedBatchId)
           if (batch) {
             this.setData({
               selectedBatchNumber: batch.batchNumber
@@ -127,7 +127,7 @@ const pageConfig = {
       return
     }
     
-    const batchOptions = this.data.availableBatches.map((batch: any) => 
+    const batchOptions = this.data.availableBatches.map((batch: unknown) => 
       `${batch.batchNumber} (${batch.breed})`
     )
     
@@ -186,7 +186,7 @@ const pageConfig = {
       } else {
         throw new Error(result.result?.error || '加载失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: error.message || '加载数据失败',
         icon: 'none'
@@ -202,7 +202,7 @@ const pageConfig = {
   },
 
   // 查看饲料详情
-  viewMaterialDetail(e: any) {
+  viewMaterialDetail(e: CustomEvent) {
     const { material } = e.currentTarget.dataset
     
     const detailText = `饲料名称：${material.materialName}\n` +
@@ -219,7 +219,7 @@ const pageConfig = {
   },
 
   // 查看投喂记录详情
-  viewRecordDetail(e: any) {
+  viewRecordDetail(e: CustomEvent) {
     const { record } = e.currentTarget.dataset
     
     const detailText = `投喂日期：${record.recordDate}\n` +

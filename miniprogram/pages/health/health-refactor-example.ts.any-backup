@@ -1,0 +1,209 @@
+/**
+ * health.ts 重构示例
+ * 展示如何使用新的数据加载模块
+ */
+
+import { HealthDataLoader, CacheManager } from './modules/health-data-loader-v2'
+
+// 创建数据加载器实例
+const dataLoader = new HealthDataLoader()
+
+Page({
+  data: {
+    // ... 现有的数据定义
+    currentBatchId: 'all',
+    loading: false,
+    activeTab: 'overview',
+    
+    // 健康数据
+    healthStats: {},
+    preventionData: {},
+    treatmentData: {},
+    analysisData: {},
+    monitoringData: {}
+  },
+
+  /**
+   * 重构后的数据加载方法
+   * 使用新的数据加载器模块
+   */
+  async loadHealthData(silent: boolean = false) {
+    if (this.isLoadingData) return
+    
+    this.isLoadingData = true
+    if (!silent) {
+      this.setData({ loading: true })
+    }
+    
+    try {
+      // 使用新的数据加载器
+      const healthData = await dataLoader.loadHealthOverview({
+        batchId: this.data.currentBatchId,
+        useCache: true
+      })
+      
+      // 更新页面数据
+      this.setData({
+        healthStats: {
+          totalChecks: healthData.totalAnimals,
+          healthyCount: healthData.actualHealthyCount,
+          sickCount: healthData.sickCount,
+          deadCount: healthData.deadCount,
+          healthyRate: healthData.healthyRate,
+          mortalityRate: healthData.mortalityRate,
+          originalQuantity: healthData.originalTotalQuantity
+        }
+      })
+    } catch (error) {
+      console.error('加载健康数据失败:', error)
+      if (!silent) {
+        wx.showToast({
+          title: '加载数据失败',
+          icon: 'error'
+        })
+      }
+    } finally {
+      if (!silent) {
+        this.setData({ loading: false })
+      }
+      this.isLoadingData = false
+    }
+  },
+
+  /**
+   * 加载预防数据
+   */
+  async loadPreventionData() {
+    try {
+      const preventionData = await dataLoader.loadPreventionData({
+        batchId: this.data.currentBatchId
+      })
+      
+      this.setData({
+        preventionData
+      })
+    } catch (error) {
+      console.error('加载预防数据失败:', error)
+    }
+  },
+
+  /**
+   * 加载治疗数据
+   */
+  async loadTreatmentData() {
+    try {
+      const treatmentData = await dataLoader.loadTreatmentData({
+        batchId: this.data.currentBatchId
+      })
+      
+      this.setData({
+        treatmentData
+      })
+    } catch (error) {
+      console.error('加载治疗数据失败:', error)
+    }
+  },
+
+  /**
+   * 加载分析数据
+   */
+  async loadAnalysisData() {
+    try {
+      const analysisData = await dataLoader.loadAnalysisData({
+        batchId: this.data.currentBatchId
+      })
+      
+      this.setData({
+        analysisData
+      })
+    } catch (error) {
+      console.error('加载分析数据失败:', error)
+    }
+  },
+
+  /**
+   * 加载监测数据
+   */
+  async loadMonitoringData() {
+    try {
+      const monitoringData = await dataLoader.loadMonitoringData({
+        batchId: this.data.currentBatchId
+      })
+      
+      this.setData({
+        monitoringData
+      })
+    } catch (error) {
+      console.error('加载监测数据失败:', error)
+    }
+  },
+
+  /**
+   * 根据标签页加载对应数据
+   */
+  async loadTabData(tab: string) {
+    switch (tab) {
+      case 'overview':
+        await this.loadHealthData(true)
+        break
+      case 'monitoring':
+        await this.loadMonitoringData()
+        break
+      case 'prevention':
+        await this.loadPreventionData()
+        break
+      case 'treatment':
+        await this.loadTreatmentData()
+        break
+      case 'analysis':
+        await this.loadAnalysisData()
+        break
+    }
+  },
+
+  /**
+   * 切换批次时刷新数据
+   */
+  async onBatchChange(e: any) {
+    const batchId = e.detail.value
+    this.setData({ currentBatchId: batchId })
+    
+    // 清除批次缓存
+    CacheManager.clearBatchCache(batchId)
+    
+    // 重新加载当前标签页数据
+    await this.loadTabData(this.data.activeTab)
+  },
+
+  /**
+   * 后台刷新所有数据
+   */
+  async backgroundRefreshData() {
+    // 清除所有缓存
+    CacheManager.clearAllHealthCache()
+    
+    // 重新加载数据
+    await this.loadTabData(this.data.activeTab)
+  },
+
+  /**
+   * 生命周期 - 页面加载
+   */
+  async onLoad() {
+    // 加载初始数据
+    await this.loadHealthData()
+  },
+
+  /**
+   * 生命周期 - 页面显示
+   */
+  async onShow() {
+    // 检查是否需要刷新数据
+    if (this.needRefresh) {
+      await this.backgroundRefreshData()
+      this.needRefresh = false
+    }
+  },
+
+  // ... 其他方法保持不变
+})

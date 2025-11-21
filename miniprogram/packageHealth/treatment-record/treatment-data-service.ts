@@ -129,7 +129,7 @@ export class TreatmentDataService {
   /**
    * 创建治疗记录
    */
-  static async createTreatmentRecord(data: Partial<TreatmentRecord>): Promise<any> {
+  static async createTreatmentRecord(data: Partial<TreatmentRecord>): Promise<unknown> {
     try {
       const result = await safeCloudCall({
         name: 'health-management',
@@ -156,7 +156,7 @@ export class TreatmentDataService {
   /**
    * 更新治疗记录
    */
-  static async updateTreatmentRecord(treatmentId: string, updates: Partial<TreatmentRecord>): Promise<any> {
+  static async updateTreatmentRecord(treatmentId: string, updates: Partial<TreatmentRecord>): Promise<unknown> {
     try {
       const result = await safeCloudCall<CloudCallResult>({
         name: 'health-management',
@@ -184,7 +184,7 @@ export class TreatmentDataService {
   /**
    * 添加治疗进度
    */
-  static async addTreatmentProgress(treatmentId: string, progress: TreatmentProgress): Promise<any> {
+  static async addTreatmentProgress(treatmentId: string, progress: TreatmentProgress): Promise<unknown> {
     try {
       const result = await safeCloudCall({
         name: 'health-management',
@@ -211,7 +211,7 @@ export class TreatmentDataService {
   /**
    * 添加治疗笔记
    */
-  static async addTreatmentNote(treatmentId: string, note: string): Promise<any> {
+  static async addTreatmentNote(treatmentId: string, note: string): Promise<unknown> {
     try {
       const result = await safeCloudCall({
         name: 'health-management',
@@ -238,7 +238,7 @@ export class TreatmentDataService {
   /**
    * 添加用药记录
    */
-  static async addMedicationRecord(treatmentId: string, medication: MedicationRecord): Promise<any> {
+  static async addMedicationRecord(treatmentId: string, medication: MedicationRecord): Promise<unknown> {
     try {
       const result = await safeCloudCall({
         name: 'health-management',
@@ -265,7 +265,7 @@ export class TreatmentDataService {
   /**
    * 完成治疗（标记为已治愈）
    */
-  static async completeTreatmentAsCured(treatmentId: string, finalNote?: string): Promise<any> {
+  static async completeTreatmentAsCured(treatmentId: string, finalNote?: string): Promise<unknown> {
     try {
       const result = await safeCloudCall({
         name: 'health-management',
@@ -323,7 +323,7 @@ export class TreatmentDataService {
   /**
    * 设置缓存
    */
-  private static setCache(key: string, data: any, expireTime?: number): void {
+  private static setCache(key: string, data: unknown, expireTime?: number): void {
     const expire = expireTime || this.cacheTime
     this.cache.set(key, {
       data: data,
@@ -335,7 +335,7 @@ export class TreatmentDataService {
   /**
    * 获取缓存
    */
-  private static getCache(key: string): any {
+  private static getCache(key: string): unknown {
     const cached = this.cache.get(key)
     if (cached && cached.timestamp && cached.data) {
       if (Date.now() - cached.timestamp < cached.expire) {

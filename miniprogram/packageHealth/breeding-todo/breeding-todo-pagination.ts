@@ -76,8 +76,8 @@ export class PaginationHelper {
    * 分批加载数据（避免一次性加载过多）
    */
   static async batchLoad<T>(
-    loadFunction: (batch: any) => Promise<T[]>,
-    batches: any[],
+    loadFunction: (batch: unknown) => Promise<T[]>,
+    batches: unknown[],
     batchSize: number = 5
   ): Promise<T[]> {
     const results: T[] = []
@@ -99,7 +99,7 @@ export class PaginationHelper {
     let timeoutId: number | null = null
     let lastExecTime = 0
     
-    return function (this: any, ...args: any[]) {
+    return function (this: unknown, ...args: unknown[]) {
       const currentTime = Date.now()
       
       if (currentTime - lastExecTime > delay) {
@@ -130,7 +130,7 @@ export class DataCache {
   /**
    * 设置缓存
    */
-  static set(key: string, data: any, expiryMinutes: number = 5) {
+  static set(key: string, data: unknown, expiryMinutes: number = 5) {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),

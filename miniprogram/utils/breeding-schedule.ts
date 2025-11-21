@@ -89,7 +89,7 @@ import { formatTime, getCurrentBeijingDate } from './util'
  * @param task 任务对象
  * @returns 格式化后的描述
  */
-export function formatTaskDescription(task: any): string {
+export function formatTaskDescription(task: unknown): string {
   let description = task.description || task.title || ''
   
   if (task.dosage) {
@@ -108,7 +108,7 @@ export function formatTaskDescription(task: any): string {
  * @param task 任务对象
  * @returns 是否为疫苗任务
  */
-export function isVaccineTask(task: any): boolean {
+export function isVaccineTask(task: unknown): boolean {
   // 首先排除用药管理任务
   if (task.type === 'medication' || task.type === 'medicine') {
     return false
@@ -129,7 +129,7 @@ export function isVaccineTask(task: any): boolean {
  * @param task 任务对象
  * @returns 是否为用药管理任务
  */
-export function isMedicationTask(task: any): boolean {
+export function isMedicationTask(task: unknown): boolean {
   // 直接根据任务类型判断，不需要根据标题内容判断
   if (task.type === 'medication' || task.type === 'medicine') {
     return true
@@ -145,7 +145,7 @@ export function isMedicationTask(task: any): boolean {
  * @param task 任务对象
  * @returns 是否为营养管理任务
  */
-export function isNutritionTask(task: any): boolean {
+export function isNutritionTask(task: unknown): boolean {
   // 直接根据任务类型判断
   if (task.type === 'nutrition') {
     return true

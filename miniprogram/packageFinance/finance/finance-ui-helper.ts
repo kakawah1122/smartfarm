@@ -161,7 +161,7 @@ export class FinanceUIHelper {
   /**
    * 生成统计卡片数据
    */
-  static generateStatCards(overview: any): Array<{
+  static generateStatCards(overview: unknown): Array<{
     title: string
     value: string
     unit?: string
@@ -229,7 +229,7 @@ export class FinanceUIHelper {
   /**
    * 生成导出数据
    */
-  static generateExportData(records: any[], format: 'csv' | 'excel'): string {
+  static generateExportData(records: unknown[], format: 'csv' | 'excel'): string {
     const headers = ['日期', '类型', '类别', '金额', '描述', '操作人', '状态']
     const rows = records.map(record => [
       this.formatDateDisplay(record.date),

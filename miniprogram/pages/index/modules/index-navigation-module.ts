@@ -7,8 +7,7 @@ interface NavigationOptions {
   batchId?: string
   id?: string
   recordId?: string
-  [key: string]: any
-}
+  [key: string]: unknown}
 
 class IndexNavigationModule {
   /**
@@ -41,7 +40,7 @@ class IndexNavigationModule {
   /**
    * 跳转到知识详情页
    */
-  static navigateToKnowledgeDetail(article: any) {
+  static navigateToKnowledgeDetail(article: unknown) {
     const category = article.category || 'basic'
     const encodedData = encodeURIComponent(JSON.stringify(article))
     wx.navigateTo({
@@ -89,7 +88,7 @@ class IndexNavigationModule {
   /**
    * 跳转到文章详情页
    */
-  static navigateToArticleDetail(article: any) {
+  static navigateToArticleDetail(article: unknown) {
     try {
       const payload = encodeURIComponent(JSON.stringify(article))
       wx.navigateTo({
@@ -126,7 +125,7 @@ export { IndexNavigationModule }
 /**
  * 快速设置导航处理器
  */
-export function setupIndexNavigation(pageInstance: any) {
+export function setupIndexNavigation(pageInstance: unknown) {
   const methods = IndexNavigationModule.createNavigationMethods()
   Object.assign(pageInstance, methods)
 }

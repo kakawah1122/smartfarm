@@ -13,10 +13,10 @@
  */
 export interface NavigationOptions {
   url: string
-  params?: Record<string, any>
+  params?: Record<string, unknown>
   events?: Record<string, Function>
   success?: () => void
-  fail?: (error: any) => void
+  fail?: (error: unknown) => void
   complete?: () => void
 }
 
@@ -149,7 +149,7 @@ export class NavigationManager {
   /**
    * 构建URL
    */
-  static buildUrl(routeName: string, params?: Record<string, any>): string | null {
+  static buildUrl(routeName: string, params?: Record<string, unknown>): string | null {
     const route = this.getRoute(routeName)
     if (!route) {
       console.error(`路由 ${routeName} 未找到`)
@@ -267,7 +267,7 @@ export class NavigationManager {
   /**
    * 重新加载当前页面
    */
-  static relaunch(routeName?: string, params?: Record<string, any>) {
+  static relaunch(routeName?: string, params?: Record<string, unknown>) {
     const url = routeName 
       ? this.buildUrl(routeName, params)
       : getCurrentPages()[getCurrentPages().length - 1].route
@@ -295,7 +295,7 @@ export class NavigationManager {
       wx.preloadSubpackage({
         package: packageName,
         success: () => console.log(`分包 ${packageName} 预加载成功`),
-        fail: (error: any) => console.error(`分包 ${packageName} 预加载失败:`, error)
+        fail: (error: unknown) => console.error(`分包 ${packageName} 预加载失败:`, error)
       })
     }
   }
@@ -314,11 +314,11 @@ export class NavigationManager {
   /**
    * 获取当前页面参数
    */
-  static getCurrentParams(): Record<string, any> {
+  static getCurrentParams(): Record<string, unknown> {
     const pages = getCurrentPages()
     if (pages.length === 0) return {}
     
-    const currentPage = pages[pages.length - 1] as any
+    const currentPage = pages[pages.length - 1] as unknown
     return currentPage.options || {}
   }
 }

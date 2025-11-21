@@ -42,7 +42,7 @@ export class HealthEventManager {
   static preventDoubleClick(fn: Function, interval: number = this.DEFAULT_CLICK_INTERVAL) {
     let lastClickTime = 0
     
-    return function(this: unknown, ...args: any[]) {
+    return function(this: unknown, ...args: unknown[]) {
       const now = Date.now()
       if (now - lastClickTime < interval) {
         console.log('防重复点击：操作太频繁')
@@ -67,7 +67,7 @@ export class HealthEventManager {
     let timer: unknown = null
     let result: unknown
     
-    const debounced = function(this: unknown, ...args: any[]) {
+    const debounced = function(this: unknown, ...args: unknown[]) {
       const context = this
       
       const later = () => {
@@ -116,10 +116,10 @@ export class HealthEventManager {
     
     let timer: unknown = null
     let lastTime = 0
-    let lastArgs: any[] | null = null
+    let lastArgs: unknown[] | null = null
     let lastContext: unknown = null
     
-    const throttled = function(this: unknown, ...args: any[]) {
+    const throttled = function(this: unknown, ...args: unknown[]) {
       const context = this
       const now = Date.now()
       

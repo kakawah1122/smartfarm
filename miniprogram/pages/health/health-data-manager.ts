@@ -65,7 +65,7 @@ export class HealthDataManager {
   /**
    * 获取批次完整数据
    */
-  static async getBatchCompleteData(batchId: string, dateRange: any) {
+  static async getBatchCompleteData(batchId: string, dateRange: unknown) {
     try {
       const result = await safeCloudCall({
         name: 'health-management',
@@ -90,7 +90,7 @@ export class HealthDataManager {
   /**
    * 获取治疗成本
    */
-  static async getTreatmentCost(batchId: string | null, dateRange: any) {
+  static async getTreatmentCost(batchId: string | null, dateRange: unknown) {
     try {
       const result = await callHealthFunction({
         action: 'calculate_treatment_cost',
@@ -172,11 +172,11 @@ export class HealthDataManager {
   /**
    * 批量加载数据（优化性能）
    */
-  static async batchLoadData(tasks: Array<() => Promise<any>>): Promise<any[]> {
+  static async batchLoadData(tasks: Array<() => Promise<unknown>>): Promise<any[]> {
     try {
       // 分批执行，避免并发过多
       const batchSize = 3
-      const results: any[] = []
+      const results: unknown[] = []
       
       for (let i = 0; i < tasks.length; i += batchSize) {
         const batch = tasks.slice(i, i + batchSize)
@@ -199,7 +199,7 @@ export class HealthDataManager {
   /**
    * 缓存数据到本地
    */
-  static cacheData(key: string, data: any, expireMinutes: number = 5): void {
+  static cacheData(key: string, data: unknown, expireMinutes: number = 5): void {
     try {
       const cacheData = {
         data: data,

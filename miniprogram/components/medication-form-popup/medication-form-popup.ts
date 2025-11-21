@@ -48,7 +48,7 @@ Component({
     stockQuantity: {
       type: Number,
       value: 0,
-      observer: function(newVal: any) {
+      observer: function(newVal: unknown) {
         // 确保值始终为数字，避免类型不匹配警告
         // 如果传入的不是数字，转换为数字
         if (newVal != null && typeof newVal !== 'number') {
@@ -69,7 +69,7 @@ Component({
 
   methods: {
     // 输入处理
-    onInput(e: any) {
+    onInput(e: CustomEvent) {
       const { field } = e.currentTarget.dataset
       const { value } = e.detail
       
@@ -80,7 +80,7 @@ Component({
     },
 
     // 数量输入处理
-    onQuantityInput(e: any) {
+    onQuantityInput(e: CustomEvent) {
       const { value } = e.detail
       const quantity = parseInt(value) || 0
       
@@ -90,7 +90,7 @@ Component({
     },
 
     // 鹅只数量输入处理
-    onAnimalCountInput(e: any) {
+    onAnimalCountInput(e: CustomEvent) {
       const { value } = e.detail
       const animalCount = parseInt(value) || 0
       
@@ -100,7 +100,7 @@ Component({
     },
 
     // 选择药品
-    onMedicineSelect(e: any) {
+    onMedicineSelect(e: CustomEvent) {
       const index = e.detail.value
       this.triggerEvent('medicineselect', {
         index

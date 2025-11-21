@@ -336,11 +336,11 @@ export const BREEDING_SCHEDULE_DATA = {
 
 // 获取所有任务的辅助函数
 export function getAllTasks() {
-  const tasks: any[] = []
+  const tasks: unknown[] = []
   
   Object.keys(BREEDING_SCHEDULE_DATA).forEach(dayAge => {
-    const dayTasks = (BREEDING_SCHEDULE_DATA as any)[dayAge]
-    dayTasks.forEach((task: any) => {
+    const dayTasks = (BREEDING_SCHEDULE_DATA as unknown)[dayAge]
+    dayTasks.forEach((task: unknown) => {
       tasks.push({
         ...task,
         dayAge: parseInt(dayAge)
@@ -353,14 +353,14 @@ export function getAllTasks() {
 
 // 按日龄分组任务
 export function getTasksByDayAge() {
-  const groups: any[] = []
+  const groups: unknown[] = []
   
   Object.keys(BREEDING_SCHEDULE_DATA)
     .sort((a, b) => parseInt(a) - parseInt(b))
     .forEach(dayAge => {
       groups.push({
         dayAge: parseInt(dayAge),
-        tasks: (BREEDING_SCHEDULE_DATA as any)[dayAge]
+        tasks: (BREEDING_SCHEDULE_DATA as unknown)[dayAge]
       })
     })
   

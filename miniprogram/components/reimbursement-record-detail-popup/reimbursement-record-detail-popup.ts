@@ -24,19 +24,19 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: any) {
+    onVisibleChange(e: CustomEvent) {
       if (!e.detail.visible) {
         this.onClose()
       }
     },
 
     // 预览图片
-    previewImage(e: any) {
+    previewImage(e: CustomEvent) {
       const { url } = e.currentTarget.dataset
       const vouchers = this.properties.record?.reimbursement?.vouchers || []
       
       // 提取所有图片的 fileId
-      const urls = vouchers.map((v: any) => v.fileId)
+      const urls = vouchers.map((v: unknown) => v.fileId)
       
       wx.previewImage({
         current: url,

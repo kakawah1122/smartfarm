@@ -11,9 +11,8 @@
 export interface ChartConfig {
   type: 'line' | 'bar' | 'pie' | 'ring'
   title?: string
-  data: any[]
-  options?: any
-}
+  data: unknown[]
+  options?: unknown}
 
 /**
  * 图表服务类
@@ -22,7 +21,7 @@ export class IndexChartService {
   /**
    * 生成收支趋势图配置
    */
-  static generateRevenueChart(data: any[]): ChartConfig {
+  static generateRevenueChart(data: unknown[]): ChartConfig {
     const categories = data.map(item => item.date)
     const revenueData = data.map(item => item.revenue || 0)
     const costData = data.map(item => item.cost || 0)
@@ -118,7 +117,7 @@ export class IndexChartService {
         ],
         tooltip: {
           trigger: 'axis',
-          formatter: (params: any[]) => {
+          formatter: (params: unknown[]) => {
             let result = params[0].name + '<br/>'
             params.forEach(item => {
               const value = item.value >= 10000 
@@ -147,7 +146,7 @@ export class IndexChartService {
   /**
    * 生成存栏分布图配置
    */
-  static generateInventoryChart(data: any[]): ChartConfig {
+  static generateInventoryChart(data: unknown[]): ChartConfig {
     const total = data.reduce((sum, item) => sum + item.value, 0)
     
     return {
@@ -167,7 +166,7 @@ export class IndexChartService {
           label: {
             show: true,
             position: 'outside',
-            formatter: (params: any) => {
+            formatter: (params: unknown) => {
               const percent = total > 0 
                 ? ((params.value / total) * 100).toFixed(1) 
                 : '0'
@@ -188,7 +187,7 @@ export class IndexChartService {
         }],
         tooltip: {
           trigger: 'item',
-          formatter: (params: any) => {
+          formatter: (params: unknown) => {
             const percent = total > 0 
               ? ((params.value / total) * 100).toFixed(1) 
               : '0'
@@ -207,7 +206,7 @@ export class IndexChartService {
   /**
    * 生成成本构成图配置
    */
-  static generateCostChart(data: any[]): ChartConfig {
+  static generateCostChart(data: unknown[]): ChartConfig {
     const total = data.reduce((sum, item) => sum + item.value, 0)
     
     return {
@@ -229,7 +228,7 @@ export class IndexChartService {
               show: true,
               fontSize: '16',
               fontWeight: 'bold',
-              formatter: (params: any) => {
+              formatter: (params: unknown) => {
                 const percent = total > 0 
                   ? ((params.value / total) * 100).toFixed(1) 
                   : '0'
@@ -249,7 +248,7 @@ export class IndexChartService {
         }],
         tooltip: {
           trigger: 'item',
-          formatter: (params: any) => {
+          formatter: (params: unknown) => {
             const percent = total > 0 
               ? ((params.value / total) * 100).toFixed(1) 
               : '0'

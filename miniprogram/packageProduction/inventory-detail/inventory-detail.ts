@@ -35,7 +35,7 @@ const pageConfig = {
     selectedMaterial: null as MaterialDetail | null
   },
 
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     // 获取分类参数
     const category = options?.category || ''
     
@@ -157,7 +157,7 @@ const pageConfig = {
 
 
   // 搜索变化
-  onSearchChange(e: any) {
+  onSearchChange(e: CustomEvent) {
     const { value } = e.detail
     this.setData({ searchKeyword: value })
     this.filterMaterialsList(value)
@@ -215,7 +215,7 @@ const pageConfig = {
   },
 
   // 显示物料详情
-  showMaterialDetail(e: any) {
+  showMaterialDetail(e: CustomEvent) {
     const material = e.currentTarget.dataset.material
     this.setData({
       selectedMaterial: material,
@@ -232,7 +232,7 @@ const pageConfig = {
   },
   
   // 弹窗可见性变化
-  onDetailPopupChange(e: any) {
+  onDetailPopupChange(e: CustomEvent) {
     const { visible } = e.detail
     if (!visible) {
       this.setData({

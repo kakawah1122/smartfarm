@@ -135,7 +135,7 @@ const pageConfig = {
 
 
   // 搜索功能
-  onSearch(e: any) {
+  onSearch(e: CustomEvent) {
     const keyword = e.detail.value
     this.setData({
       searchKeyword: keyword,
@@ -183,7 +183,7 @@ const pageConfig = {
   },
 
   // 查看记录详情
-  viewRecordDetail(e: any) {
+  viewRecordDetail(e: CustomEvent) {
     const { record } = e.currentTarget.dataset
     this.setData({
       selectedRecord: record,
@@ -205,7 +205,7 @@ const pageConfig = {
   },
   
   // 弹窗可见性变化
-  onDetailPopupChange(e: any) {
+  onDetailPopupChange(e: CustomEvent) {
     const { visible } = e.detail
     if (!visible) {
       this.setData({

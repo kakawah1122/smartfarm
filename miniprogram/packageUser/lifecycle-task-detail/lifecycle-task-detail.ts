@@ -1,14 +1,14 @@
 // 任务详情页面
 Page({
   data: {
-    taskData: {} as any,
+    taskData: {} as unknown,
     dayAge: 1,
     priorityTheme: 'default',
     priorityText: '中',
-    relatedTasks: [] as any[]
+    relatedTasks: [] as unknown[]
   },
   
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     if (options.task) {
       try {
         const task = JSON.parse(decodeURIComponent(options.task))
@@ -82,7 +82,7 @@ Page({
       
       if (result.result?.success && result.result.data) {
         // 过滤掉当前任务
-        const relatedTasks = result.result.data.filter((task: any) => task.id !== currentTaskId)
+        const relatedTasks = result.result.data.filter((task: unknown) => task.id !== currentTaskId)
         this.setData({ relatedTasks })
       }
     } catch (error) {
@@ -91,7 +91,7 @@ Page({
   },
   
   // 切换任务
-  switchTask(e: any) {
+  switchTask(e: CustomEvent) {
     const task = e.currentTarget.dataset.task
     if (!task) return
     

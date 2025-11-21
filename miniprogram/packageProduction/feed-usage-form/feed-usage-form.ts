@@ -35,16 +35,16 @@ const pageConfig: any = {
     maxDate: '',
     
     // 批次选择相关
-    availableBatches: [] as any[],
+    availableBatches: [] as unknown[],
     batchOptions: [] as string[],
     batchPickerIndex: 0,
     
     // 饲料选择相关
-    availableFeeds: [] as any[],
+    availableFeeds: [] as unknown[],
     
     // 存栏信息
     currentStock: 0,
-    stockInfo: null as any,
+    stockInfo: null as unknown,
     
     // 成本预估
     unitPrice: 0,
@@ -85,7 +85,7 @@ const pageConfig: any = {
   },
 
   // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
-  onDateConfirm(e: any) {
+  onDateConfirm(e: CustomEvent) {
     const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     
     this.setData({
@@ -114,7 +114,7 @@ const pageConfig: any = {
         const batches = result.result.data || []
         
         // 生成批次选项
-        const batchOptions = batches.map((batch: any) => {
+        const batchOptions = batches.map((batch: unknown) => {
           const info = batch.breed || `存栏${batch.currentStock || batch.currentCount || 0}只`
           return `${batch.batchNumber} (${info})`
         })
@@ -175,7 +175,7 @@ const pageConfig: any = {
   },
 
   // 批次选择改变（原生 picker）
-  onBatchChange(e: any) {
+  onBatchChange(e: CustomEvent) {
     const index = e.detail.value
     this.onBatchSelected(index)
   },
@@ -208,7 +208,7 @@ const pageConfig: any = {
   async updateStockInfo() {
     // 如果已经有批次，重新获取批次信息以更新存栏数
     if (this.data.formData.batchId) {
-      const batch = this.data.availableBatches.find((b: any) => b._id === this.data.formData.batchId)
+      const batch = this.data.availableBatches.find((b: unknown) => b._id === this.data.formData.batchId)
       if (batch) {
         const currentStock = batch.currentStock || batch.currentQuantity || 0
         this.setData({
@@ -229,7 +229,7 @@ const pageConfig: any = {
       return
     }
     
-    const feedOptions = this.data.availableFeeds.map((feed: any) => 
+    const feedOptions = this.data.availableFeeds.map((feed: unknown) => 
       `${feed.name} (库存: ${feed.currentStock}${feed.unit})`
     )
     
@@ -259,7 +259,7 @@ const pageConfig: any = {
   },
 
   // 表单字段变化
-  onFieldChange(e: any) {
+  onFieldChange(e: CustomEvent) {
     const { value } = e.detail
     const { field } = e.currentTarget.dataset
     
@@ -384,7 +384,7 @@ const pageConfig: any = {
         throw new Error(result.result?.error || '提交失败')
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: error.message || '提交失败，请重试',
         icon: 'none',

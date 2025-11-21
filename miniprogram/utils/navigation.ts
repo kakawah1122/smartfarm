@@ -77,7 +77,7 @@ export function getSystemNavBarSizes(): NavbarSizes {
 export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption>(
   pageConfig: Partial<PageInstance<D>> & { data: D }
 ): Partial<PageInstance<D & { statusBarHeight: number; navBarHeight: number; totalNavHeight: number }>> {
-  const originalOnLoad = (pageConfig as any).onLoad || function() {};
+  const originalOnLoad = (pageConfig as unknown).onLoad || function() {};
   
   // 扩展data，添加导航栏高度
   pageConfig.data = {
@@ -85,10 +85,10 @@ export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption
     statusBarHeight: 88,
     navBarHeight: 88,
     totalNavHeight: 176,
-  } as any;
+  } as unknown;
   
   // 替换onLoad方法
-  (pageConfig as any).onLoad = function(this: any, options: any) {
+  (pageConfig as unknown).onLoad = function(this: unknown, options: unknown) {
     // 检查登录状态
     if (!checkPageAuth()) {
       return // 如果未登录，停止页面加载
@@ -109,8 +109,8 @@ export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption
   };
   
   // 添加goBack方法
-  if (!(pageConfig as any).goBack) {
-    (pageConfig as any).goBack = function(this: any) {
+  if (!(pageConfig as unknown).goBack) {
+    (pageConfig as unknown).goBack = function(this: unknown) {
       if (getCurrentPages().length > 1) {
         wx.navigateBack();
       } else {
@@ -121,7 +121,7 @@ export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption
     };
   }
   
-  return pageConfig as any;
+  return pageConfig as unknown;
 }
 
 /**

@@ -93,15 +93,15 @@ Page({
     
     // Tab相关
     activeTab: 'today',
-    upcomingTasks: [] as any[],
-    historyTasks: [] as any[],
-    taskOverlaps: [] as any[],
+    upcomingTasks: [] as unknown[],
+    historyTasks: [] as unknown[],
+    taskOverlaps: [] as unknown[],
     
     // 分页配置
     upcomingPagination: PaginationHelper.createConfig(20),
     historyPagination: PaginationHelper.createConfig(20),
-    displayedUpcomingTasks: [] as any[],
-    displayedHistoryTasks: [] as any[],
+    displayedUpcomingTasks: [] as unknown[],
+    displayedHistoryTasks: [] as unknown[],
     
     // 疫苗表单数据
     showVaccineFormPopup: false,
@@ -128,8 +128,8 @@ Page({
     
     // 用药管理表单数据
     showMedicationFormPopup: false,
-    availableMedicines: [] as any[], // 可用的药品库存
-    selectedMedicine: null as any,
+    availableMedicines: [] as unknown[], // 可用的药品库存
+    selectedMedicine: null as unknown,
     medicationFormData: {
       medicineId: '',
       medicineName: '',
@@ -144,8 +144,8 @@ Page({
 
     // 营养管理表单数据
     showNutritionFormPopup: false,
-    availableNutrition: [] as any[], // 可用的营养品库存
-    selectedNutrition: null as any,
+    availableNutrition: [] as unknown[], // 可用的营养品库存
+    selectedNutrition: null as unknown,
     nutritionFormData: {
       nutritionId: '',
       nutritionName: '',
@@ -166,8 +166,8 @@ Page({
     
     // 批次相关
     showBatchDialog: false,
-    batchList: [] as any[],
-    selectedBatch: {} as any,
+    batchList: [] as unknown[],
+    selectedBatch: {} as unknown,
     
     // 统计信息
     completedCount: 0,
@@ -178,7 +178,7 @@ Page({
   /**
    * 页面加载
    */
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     const showAllBatches = options.showAllBatches === 'true'
     
     this.setData({
@@ -333,7 +333,7 @@ Page({
         const todos = Array.isArray(result.data) ? result.data : []
         
         // 检查任务完成状态
-        todos.forEach((task: any) => {
+        todos.forEach((task: unknown) => {
           if (task.completed) {
             // 加载到已完成任务
           }
@@ -353,7 +353,7 @@ Page({
         
         // 任务加载完成统计
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: '加载任务失败',
         icon: 'error'
@@ -390,7 +390,7 @@ Page({
       }
 
       // 为每个活跃批次获取今日任务
-      const batchTasksPromises = activeBatches.map(async (batch: any) => {
+      const batchTasksPromises = activeBatches.map(async (batch: unknown) => {
         try {
           const dayAge = this.calculateCurrentAge(batch.entryDate)
           
@@ -398,7 +398,7 @@ Page({
           
           if (result.success && result.data) {
             // 🔍 详细日志 - 检查任务完成状态
-            result.data.forEach((task: any) => {
+            result.data.forEach((task: unknown) => {
               if (task.completed) {
                 // 加载到已完成任务
               }
@@ -408,7 +408,7 @@ Page({
               batchId: batch._id,
               batchNumber: batch.batchNumber || batch._id,
               dayAge: dayAge,
-              tasks: result.data.map((task: any) => ({
+              tasks: result.data.map((task: unknown) => ({
                 ...task,
                 batchNumber: batch.batchNumber || batch._id,
                 dayAge: dayAge
@@ -438,9 +438,9 @@ Page({
       let allTasksCount = 0
       let allCompletedCount = 0
       
-      batchTasksResults.forEach((batchData: any) => {
+      batchTasksResults.forEach((batchData: unknown) => {
         allTasksCount += batchData.tasks.length
-        allCompletedCount += batchData.tasks.filter((task: any) => task.completed).length
+        allCompletedCount += batchData.tasks.filter((task: unknown) => task.completed).length
       })
       
       const allCompletionPercentage = allTasksCount > 0 ? 
@@ -454,7 +454,7 @@ Page({
         allCompletionPercentage: allCompletionPercentage
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: '加载任务失败',
         icon: 'error'
@@ -467,7 +467,7 @@ Page({
   /**
    * 查看任务详情 - 与首页弹窗保持一致
    */
-  viewTaskDetail(e: any) {
+  viewTaskDetail(e: CustomEvent) {
     const task = e.currentTarget.dataset.task as Task
     
     // 构建增强的任务数据，与首页保持一致
@@ -515,7 +515,7 @@ Page({
   /**
    * 判断是否为疫苗任务
    */
-  isVaccineTask(task: any): boolean {
+  isVaccineTask(task: unknown): boolean {
     // 首先排除用药管理任务
     if (task.type === 'medication' || task.type === 'medicine') {
       return false
@@ -534,14 +534,14 @@ Page({
   /**
    * 判断是否为用药管理任务
    */
-  isMedicationTask(task: any): boolean {
+  isMedicationTask(task: unknown): boolean {
     return isMedicationTask(task)
   },
 
   /**
    * 判断是否为营养管理任务
    */
-  isNutritionTask(task: any): boolean {
+  isNutritionTask(task: unknown): boolean {
     return isNutritionTask(task)
   },
 
@@ -585,7 +585,7 @@ Page({
         this.closeTaskDetail()
         this.loadTodos() // 刷新任务列表
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 完成任务失败处理
     }
   },
@@ -639,7 +639,7 @@ Page({
     // 如果todos中没找到，在todayTasksByBatch中查找
     if (!foundTask && this.data.todayTasksByBatch.length > 0) {
       for (const batch of this.data.todayTasksByBatch) {
-        foundTask = batch.tasks.find((t: any) => t._id === taskId || t.id === taskId || t.taskId === taskId)
+        foundTask = batch.tasks.find((t: unknown) => t._id === taskId || t.id === taskId || t.taskId === taskId)
         if (foundTask) {
           break
         }
@@ -674,7 +674,7 @@ Page({
         
         if (batchResult.result?.success) {
           const activeBatches = batchResult.result.data || []
-          const currentBatch = activeBatches.find((b: any) => b._id === batchId)
+          const currentBatch = activeBatches.find((b: unknown) => b._id === batchId)
           if (currentBatch) {
             currentBatchStockQuantity = currentBatch.currentStock || 
                                        currentBatch.currentQuantity || 
@@ -723,7 +723,7 @@ Page({
   /**
    * 疫苗表单输入处理
    */
-  onVaccineFormInput(e: any) {
+  onVaccineFormInput(e: CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -745,7 +745,7 @@ Page({
   /**
    * 数值输入处理（费用相关）
    */
-  onVaccineNumberInput(e: any) {
+  onVaccineNumberInput(e: CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -764,7 +764,7 @@ Page({
   /**
    * 路径选择处理
    */
-  onVaccineRouteChange(e: any) {
+  onVaccineRouteChange(e: CustomEvent) {
     const { value } = e.detail
     this.setData({
       'vaccineFormData.routeIndex': parseInt(value)
@@ -979,7 +979,7 @@ Page({
       } else {
         throw new Error(result.result?.message || '迁移失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: '修复失败: ' + error.message,
         icon: 'error'
@@ -1003,7 +1003,7 @@ Page({
   /**
    * Tab切换事件 - 根据切换的tab加载相应数据
    */
-  onTabChange(e: any) {
+  onTabChange(e: CustomEvent) {
     const newTab = e.detail.value
     this.setData({
       activeTab: newTab
@@ -1067,7 +1067,7 @@ Page({
           .filter(dayAge => dayAge > this.data.currentDayAge) // 只显示未来的任务
           .map(dayAge => ({
             dayAge: dayAge,
-            tasks: result.data[dayAge.toString()].map((task: any) => ({
+            tasks: result.data[dayAge.toString()].map((task: unknown) => ({
               ...task,
               isVaccineTask: this.isVaccineTask(task),
               batchNumber: this.data.currentBatchId
@@ -1118,7 +1118,7 @@ Page({
       }
 
       // 分批加载，避免一次性加载过多
-      const loadBatchTasks = async (batch: any): Promise<any[]> => {
+      const loadBatchTasks = async (batch: unknown): Promise<any[]> => {
         try {
           const currentDayAge = this.calculateCurrentAge(batch.entryDate)
           const result = await CloudApi.getWeeklyTodos(batch._id, currentDayAge + 1)
@@ -1129,7 +1129,7 @@ Page({
               .filter(dayAge => dayAge > currentDayAge)
               .map(dayAge => ({
                 dayAge: dayAge,
-                tasks: result.data[dayAge.toString()].map((task: any) => ({
+                tasks: result.data[dayAge.toString()].map((task: unknown) => ({
                   ...task,
                   batchNumber: batch.batchNumber || batch._id,
                   isVaccineTask: this.isVaccineTask(task)
@@ -1150,10 +1150,10 @@ Page({
       )
       
       // 合并所有批次的任务并按日龄分组
-      const mergedTasks: {[key: number]: any[]} = {}
+      const mergedTasks: {[key: number]: unknown[]} = {}
       
-      upcomingTasksResults.forEach((batchTasks: any[]) => {
-        batchTasks.forEach((dayGroup: any) => {
+      upcomingTasksResults.forEach((batchTasks: unknown[]) => {
+        batchTasks.forEach((dayGroup: unknown) => {
           const dayAge = dayGroup.dayAge
           if (!mergedTasks[dayAge]) {
             mergedTasks[dayAge] = []
@@ -1224,7 +1224,7 @@ Page({
         })
         
         const activeBatches = batchResult.result?.data || []
-        let allCompletedTasks: any[] = []
+        let allCompletedTasks: unknown[] = []
         
         for (const batch of activeBatches) {
           try {
@@ -1232,8 +1232,8 @@ Page({
             const result = await CloudApi.getTodos(batch._id, dayAge)
             
             if (result.success && result.data) {
-              const completedTasks = result.data.filter((task: any) => task.completed === true)
-              const formattedTasks = completedTasks.map((task: any) => ({
+              const completedTasks = result.data.filter((task: unknown) => task.completed === true)
+              const formattedTasks = completedTasks.map((task: unknown) => ({
                 id: task._id,
                 title: task.title,
                 completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
@@ -1272,8 +1272,8 @@ Page({
         const result = await CloudApi.getTodos(this.data.currentBatchId, dayAge)
         
         if (result.success && result.data) {
-          const completedTasks = result.data.filter((task: any) => task.completed === true)
-          const formattedTasks = completedTasks.map((task: any) => ({
+          const completedTasks = result.data.filter((task: unknown) => task.completed === true)
+          const formattedTasks = completedTasks.map((task: unknown) => ({
             id: task._id,
             title: task.title,
             completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
@@ -1333,7 +1333,7 @@ Page({
   /**
    * 任务详情弹窗可见性变化 - 与首页保持一致
    */
-  onTaskDetailPopupChange(event: any) {
+  onTaskDetailPopupChange(event: unknown) {
     if (!event.detail.visible) {
       this.closeTaskDetailPopup()
     } else {
@@ -1373,7 +1373,7 @@ Page({
 
       const updates: Record<string, boolean> = {}
       
-      res.forEach((rect: any, index: number) => {
+      res.forEach((rect: unknown, index: number) => {
         if (!rect) return
 
         const id = ids[index]
@@ -1490,7 +1490,7 @@ Page({
             ...selectedTask,
             completed: true,
             statusText: '已完成'
-          } as any
+          } as unknown
         })
         
         // 立即更新当前页面的任务状态以显示划线效果
@@ -1521,7 +1521,7 @@ Page({
         throw new Error(result.result?.error || result.result?.message || '完成任务失败')
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: error.message === '任务已经完成' ? '该任务已完成' : '完成失败，请重试',
         icon: error.message === '任务已经完成' ? 'success' : 'error',
@@ -1540,7 +1540,7 @@ Page({
     let taskFound = false
     
     // 🔥 强化ID匹配逻辑 - 尝试所有可能的ID字段
-    const matchTask = (task: any) => {
+    const matchTask = (task: unknown) => {
       const possibleIds = [task._id, task.id, task.taskId].filter(Boolean)
       const targetIds = [taskId].filter(Boolean)
       
@@ -1560,7 +1560,7 @@ Page({
     // 🔥 重点：更新批次任务分组（这里才是真正的数据源）
     const updatedTodayTasksByBatch = this.data.todayTasksByBatch.map(batchGroup => ({
       ...batchGroup,
-      tasks: batchGroup.tasks.map((task: any) => {
+      tasks: batchGroup.tasks.map((task: unknown) => {
         if (matchTask(task)) {
           taskFound = true
           // 批次任务列表中找到并更新任务
@@ -1611,7 +1611,7 @@ Page({
       
       if (result.result && result.result.success) {
         const tasks = result.result.data || []
-        const targetTask = tasks.find((task: any) => 
+        const targetTask = tasks.find((task: unknown) => 
           task._id === taskId || task.taskId === taskId || task.id === taskId
         )
         
@@ -1726,8 +1726,8 @@ Page({
         const materials = result.result.data.materials || []
         // 只显示有库存的药品
         const availableMedicines = materials
-          .filter((material: any) => (material.currentStock || 0) > 0)
-          .map((material: any) => ({
+          .filter((material: unknown) => (material.currentStock || 0) > 0)
+          .map((material: unknown) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -1748,7 +1748,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: '网络异常，请重试',
         icon: 'error'
@@ -1759,7 +1759,7 @@ Page({
   /**
    * 选择药品
    */
-  onMedicineSelect(e: any) {
+  onMedicineSelect(e: CustomEvent) {
     const index = e.detail.value
     const selectedMedicine = this.data.availableMedicines[index]
     
@@ -1786,7 +1786,7 @@ Page({
   /**
    * 用药表单输入处理
    */
-  onMedicationFormInput(e: any) {
+  onMedicationFormInput(e: CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1808,7 +1808,7 @@ Page({
   /**
    * 用药数量输入处理
    */
-  onMedicationQuantityInput(e: any) {
+  onMedicationQuantityInput(e: CustomEvent) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
@@ -1990,7 +1990,7 @@ Page({
         throw new Error(result.result?.message || '提交失败')
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({
@@ -2021,7 +2021,7 @@ Page({
       } else {
         // 已移除调试日志
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 已移除调试日志
     }
   },
@@ -2076,8 +2076,8 @@ Page({
         // 已移除调试日志
         // 只显示有库存的营养品
         const availableNutrition = materials
-          .filter((material: any) => (material.currentStock || 0) > 0)
-          .map((material: any) => ({
+          .filter((material: unknown) => (material.currentStock || 0) > 0)
+          .map((material: unknown) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -2099,7 +2099,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 已移除调试日志
       wx.showToast({
         title: '网络异常，请重试',
@@ -2111,7 +2111,7 @@ Page({
   /**
    * 选择营养品
    */
-  onNutritionSelect(e: any) {
+  onNutritionSelect(e: CustomEvent) {
     const index = e.detail.value
     const selectedNutrition = this.data.availableNutrition[index]
     
@@ -2138,7 +2138,7 @@ Page({
   /**
    * 营养表单输入处理
    */
-  onNutritionFormInput(e: any) {
+  onNutritionFormInput(e: CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -2160,7 +2160,7 @@ Page({
   /**
    * 营养数量输入处理
    */
-  onNutritionQuantityInput(e: any) {
+  onNutritionQuantityInput(e: CustomEvent) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
@@ -2328,7 +2328,7 @@ Page({
         throw new Error(result.result?.message || '提交失败')
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({
@@ -2359,7 +2359,7 @@ Page({
       } else {
         // 已移除调试日志
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 已移除调试日志
     }
   }

@@ -71,12 +71,12 @@ class PerformanceMonitor {
   /**
    * 监控setData调用
    */
-  monitorSetData(component: any) {
+  monitorSetData(component: unknown) {
     if (!this.enabled) return
     
     const originalSetData = component.setData.bind(component)
     
-    component.setData = (data: any, callback?: () => void) => {
+    component.setData = (data: unknown, callback?: () => void) => {
       const startTime = Date.now()
       const dataSize = this.getDataSize(data)
       
@@ -114,7 +114,7 @@ class PerformanceMonitor {
   /**
    * 监控云函数调用
    */
-  monitorCloudCall(name: string, promise: Promise<any>): Promise<any> {
+  monitorCloudCall(name: string, promise: Promise<unknown>): Promise<unknown> {
     if (!this.enabled) return promise
     
     const startTime = Date.now()
@@ -144,7 +144,7 @@ class PerformanceMonitor {
   /**
    * 获取数据大小（字节）
    */
-  private getDataSize(data: any): number {
+  private getDataSize(data: unknown): number {
     try {
       return JSON.stringify(data).length
     } catch {
@@ -160,7 +160,7 @@ class PerformanceMonitor {
     if (typeof wx !== 'undefined' && wx.getPerformance) {
       const performance = wx.getPerformance()
       // 使用any类型来访问可能存在的memory属性
-      const memory = (performance as any).memory
+      const memory = (performance as unknown).memory
       if (memory) {
         return {
           usage: Math.round(memory.usedJSHeapSize / 1048576), // 转换为MB
@@ -279,7 +279,7 @@ export const performanceMonitor = new PerformanceMonitor()
 /**
  * 便捷方法：在页面中快速启用性能监控
  */
-export function enablePerformanceMonitoring(page: any) {
+export function enablePerformanceMonitoring(page: unknown) {
   performanceMonitor.enable()
   performanceMonitor.monitorSetData(page)
   

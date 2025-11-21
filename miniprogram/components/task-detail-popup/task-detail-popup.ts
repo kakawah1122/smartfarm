@@ -38,7 +38,7 @@ Component({
   },
 
   observers: {
-    'task': function(task: any) {
+    'task': function(task: unknown) {
       if (task) {
         // 根据任务类型设置确认按钮文本
         let confirmText = '完成任务'
@@ -66,7 +66,7 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: any) {
+    onVisibleChange(e: CustomEvent) {
       if (!e.detail.visible) {
         this.onClose()
       }

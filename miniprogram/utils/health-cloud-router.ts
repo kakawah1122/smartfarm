@@ -42,8 +42,8 @@ const ACTION_TO_FUNCTION_MAP: Record<string, string> = {
  */
 export async function callHealthFunction(data: {
   action: string;
-  [key: string]: any;
-}): Promise<any> {
+  [key: string]: unknown;
+}): Promise<unknown> {
   const { action } = data
   
   // 查找对应的云函数
@@ -80,7 +80,7 @@ export async function callHealthFunction(data: {
  * 批量调用健康管理云函数
  */
 export async function batchCallHealthFunction(
-  requests: Array<{ action: string; [key: string]: any }>
+  requests: Array<{ action: string; [key: string]: unknown}>
 ): Promise<any[]> {
   const promises = requests.map(data => callHealthFunction(data))
   return Promise.all(promises)

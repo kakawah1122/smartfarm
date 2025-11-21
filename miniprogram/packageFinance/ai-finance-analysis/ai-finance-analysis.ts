@@ -17,27 +17,27 @@ Component({
     // 财务数据（从父组件传入）
     financeData: {
       type: Object,
-      value: null as any
+      value: null as unknown
     },
     // 时间范围（可选，可能为 null 或 undefined）
     dateRange: {
       type: Object,
-      value: null as any
+      value: null as unknown
     },
     // 可选：生产数据（如果父组件已加载，直接传入，避免重复调用云函数）
     productionData: {
       type: Object,
-      value: null as any
+      value: null as unknown
     },
     // 可选：健康数据
     healthData: {
       type: Object,
-      value: null as any
+      value: null as unknown
     },
     // 可选：鹅价数据
     goosePriceData: {
       type: Object,
-      value: null as any
+      value: null as unknown
     }
   },
 
@@ -47,7 +47,7 @@ Component({
     analyzing: false,
     
     // AI分析结果
-    analysisResult: null as any,
+    analysisResult: null as unknown,
     analysisError: null as string | null,
     
     // 用户自定义分析需求
@@ -76,7 +76,7 @@ Component({
   methods: {
     
     // 保存分析到历史
-    async saveToHistory(analysisResult: any, customQuery: string = '') {
+    async saveToHistory(analysisResult: unknown, customQuery: string = '') {
       try {
         const db = wx.cloud.database()
         const dateRange = this.properties.dateRange
@@ -106,7 +106,7 @@ Component({
     },
     
     // 获取日期范围文本
-    getDateRangeText(dateRange: any): string {
+    getDateRangeText(dateRange: unknown): string {
       if (!dateRange || !dateRange.start || !dateRange.end) {
         return '全部时间'
       }
@@ -186,7 +186,7 @@ Component({
         
         return {
           recentDeaths: deathRecords.data || [],
-          totalDeaths: (deathRecords.data || []).reduce((sum: number, r: any) => sum + (r.deathCount || 0), 0)
+          totalDeaths: (deathRecords.data || []).reduce((sum: number, r: unknown) => sum + (r.deathCount || 0), 0)
         }
       } catch (error) {
         logger.warn('获取健康数据失败:', error)
@@ -198,7 +198,7 @@ Component({
     collectGoosePriceData() {
       try {
         // 1. 尝试从全局状态获取（首页可能已加载）
-        const app = getApp() as any
+        const app = getApp() as unknown
         if (app.globalData && app.globalData.goosePrice) {
           return Promise.resolve(app.globalData.goosePrice)
         }
@@ -289,7 +289,7 @@ Component({
         } else {
           throw new Error(result?.error || 'AI分析失败')
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('AI财务分析失败:', error)
         this.setData({
           analysisError: error.message || '分析失败，请稍后重试',
@@ -519,7 +519,7 @@ ${month === 12 ? '✓ 入栏谨慎：保温成本高10-15%，4个月后（4月�
     },
     
     // 构建财务分析用户提示词
-    buildFinanceAnalysisPrompt(financeData: any, customQuery: string = '', moduleData?: any): string {
+    buildFinanceAnalysisPrompt(financeData: unknown, customQuery: string = '', moduleData?: unknown): string {
       const { income, expense, profit, costBreakdown, dateRange } = financeData
       
       // 获取当前日期和季节信息
@@ -594,7 +594,7 @@ ${month === 12 ? '✓ 入栏谨慎：保温成本高10-15%，4个月后（4月�
 【健康与死亡数据】
 累计死亡：${totalDeaths}只
 最近死亡记录：${recentDeaths}条
-主要死因：${health.recentDeaths?.slice(0, 3).map((d: any) => d.deathReason).join('、') || '暂无'}
+主要死因：${health.recentDeaths?.slice(0, 3).map((d: unknown) => d.deathReason).join('、') || '暂无'}
 `
       }
       
@@ -687,7 +687,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
     },
 
     // 解析AI返回的分析结果
-    parseAnalysisResult(aiResponse: string): any {
+    parseAnalysisResult(aiResponse: string): unknown {
       try {
         // 尝试解析JSON格式
         const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
@@ -696,7 +696,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
           const parsed = JSON.parse(jsonStr)
           
           // 深度转换对象为字符串的函数
-          const deepConvertToString = (value: any, depth: number = 0): any => {
+          const deepConvertToString = (value: unknown, depth: number = 0): any => {
             // 防止无限递归
             if (depth > 10) {
               return String(value)
@@ -746,7 +746,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
           }
           
           // 格式化成本分解对象
-          const formatCostBreakdown = (breakdown: any): string => {
+          const formatCostBreakdown = (breakdown: unknown): string => {
             if (typeof breakdown === 'string') {
               return breakdown
             }
@@ -834,7 +834,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
           }
           
           // 递归处理整个结果对象，确保所有值字段都是字符串
-          const formatObject = (obj: any, depth: number = 0): any => {
+          const formatObject = (obj: unknown, depth: number = 0): any => {
             if (depth > 10 || typeof obj !== 'object' || obj === null) {
               return obj
             }
@@ -925,7 +925,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
     },
 
     // 输入框内容变化
-    onQueryInput(e: any) {
+    onQueryInput(e: CustomEvent) {
       this.setData({
         customQuery: e.detail.value || ''
       })
@@ -990,7 +990,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
     },
     
     // 修正输入变化
-    onRefinementInput(e: any) {
+    onRefinementInput(e: CustomEvent) {
       this.setData({
         refinementQuery: e.detail.value || ''
       })

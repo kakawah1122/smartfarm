@@ -38,7 +38,7 @@
  *   .get()
  * ```
  */
-export function buildNotDeletedCondition(db: any, strictMode: boolean = true): { isDeleted: any } {
+export function buildNotDeletedCondition(db: unknown, strictMode: boolean = true): { isDeleted: unknown} {
   const _ = db.command
   
   if (strictMode) {
@@ -74,10 +74,10 @@ export function buildNotDeletedCondition(db: any, strictMode: boolean = true): {
  * ```
  */
 export function buildQueryConditions(
-  db: any,
-  conditions: Record<string, any> = {},
+  db: unknown,
+  conditions: Record<string, unknown> = {},
   strictMode: boolean = true
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     ...conditions,
     ...buildNotDeletedCondition(db, strictMode)

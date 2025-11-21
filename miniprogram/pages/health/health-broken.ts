@@ -25,7 +25,7 @@ interface PageData {
   // 批次管理
   currentBatchId: string
   currentBatchNumber: string
-  availableBatches: any[]
+  availableBatches: unknown[]
   showBatchDropdown: boolean
   
   // 健康数据
@@ -48,9 +48,9 @@ interface PageData {
   }
   
   // 任务数据
-  todayTasksByBatch: any[]
-  upcomingTasksByBatch: any[]
-  historyTasksByBatch: any[]
+  todayTasksByBatch: unknown[]
+  upcomingTasksByBatch: unknown[]
+  historyTasksByBatch: unknown[]
   
   // UI状态
   loading: boolean
@@ -68,8 +68,7 @@ interface PageData {
   showVaccineFormPopup: boolean
   vaccineFormData: any
   showMedicationFormPopup: boolean
-  medicationFormData: any
-}
+  medicationFormData: unknown}
 
 // 创建页面
 Page<PageData, any>({
@@ -226,7 +225,7 @@ Page<PageData, any>({
   /**
    * 生命周期 - 加载
    */
-  async onLoad(options: any) {
+  async onLoad(options: unknown) {
     // 创建控制器
     this.controller = new HealthController(this)
     
@@ -295,7 +294,7 @@ Page<PageData, any>({
   /**
    * 切换标签页
    */
-  onTabChange(e: any) {
+  onTabChange(e: CustomEvent) {
     const tab = e.detail?.value || e.currentTarget?.dataset?.tab
     if (tab) {
       this.controller?.switchTab(tab)
@@ -305,7 +304,7 @@ Page<PageData, any>({
   /**
    * 切换子标签页
    */
-  onPreventionSubTabChange(e: any) {
+  onPreventionSubTabChange(e: CustomEvent) {
     const subTab = e.detail?.value
     if (subTab) {
       this.controller?.switchSubTab(subTab)
@@ -324,7 +323,7 @@ Page<PageData, any>({
   /**
    * 选择批次
    */
-  async selectBatchFromDropdown(e: any) {
+  async selectBatchFromDropdown(e: CustomEvent) {
     const index = parseInt(e.currentTarget.dataset.index)
     const batches = this.data.availableBatches
     
@@ -352,7 +351,7 @@ Page<PageData, any>({
   /**
    * 显示任务详情
    */
-  showTaskDetail(e: any) {
+  showTaskDetail(e: CustomEvent) {
     const task = e.currentTarget?.dataset?.task
     if (task) {
       this.setData({
@@ -379,7 +378,7 @@ Page<PageData, any>({
   /**
    * 完成任务
    */
-  async completeTask(e: any) {
+  async completeTask(e: CustomEvent) {
     const taskId = e.currentTarget?.dataset?.taskId
     if (!taskId) return
     
@@ -405,7 +404,7 @@ Page<PageData, any>({
   /**
    * 显示诊断详情
    */
-  viewDiagnosisDetail(e: any) {
+  viewDiagnosisDetail(e: CustomEvent) {
     const record = e.currentTarget?.dataset?.record
     if (record) {
       this.setData({
@@ -434,7 +433,7 @@ Page<PageData, any>({
   /**
    * 显示预防记录详情
    */
-  viewPreventionDetail(e: any) {
+  viewPreventionDetail(e: CustomEvent) {
     const record = e.currentTarget?.dataset?.record
     if (record) {
       this.setData({

@@ -27,10 +27,10 @@ type PageData = {
   loading: boolean
   dateRange: 'week' | 'month' | 'quarter' | 'year'
   overview: CostOverview
-  costBreakdown: any[]
-  monthlyTrend: any[]
+  costBreakdown: unknown[]
+  monthlyTrend: unknown[]
   comparison: CostComparison
-  suggestions: any[]
+  suggestions: unknown[]
 }
 
 const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
@@ -81,7 +81,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
           action: 'get_cost_analysis',
           dateRange: this.data.dateRange
         }
-      }) as CloudCallResult<any>
+      }) as CloudCallResult<unknown>
 
       if (result?.success && result.data) {
         const data = result.data
@@ -125,7 +125,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   // 查看成本分类详情
   onCategoryDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { category: { category: string; amount: number; percentage: number; items: Array<{ name: string; cost: number }> } } } }) {
     const { category } = e.currentTarget.dataset
-    const items = category.items.map((item: any) => `${item.name}: ¥${item.cost}`).join('\n')
+    const items = category.items.map((item: unknown) => `${item.name}: ¥${item.cost}`).join('\n')
     
     wx.showModal({
       title: `${category.category}详细构成`,

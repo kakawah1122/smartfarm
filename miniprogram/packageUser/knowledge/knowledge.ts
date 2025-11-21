@@ -17,10 +17,10 @@ const pageConfig = {
     ],
     
     // 热门文章
-    hotArticle: null as any,
+    hotArticle: null as unknown,
     
     // 文章列表
-    articles: [] as any[],
+    articles: [] as unknown[],
     
     filteredArticles: []
   },
@@ -47,7 +47,7 @@ const pageConfig = {
         const articles = result.result.data.list || []
         
         // 转换为前端需要的格式
-        const formattedArticles = articles.map((article: any) => ({
+        const formattedArticles = articles.map((article: unknown) => ({
           id: article._id,
           title: article.title,
           description: article.description,
@@ -120,7 +120,7 @@ const pageConfig = {
   },
 
   // 搜索输入
-  onSearchInput(e: any) {
+  onSearchInput(e: CustomEvent) {
     this.setData({
       searchKeyword: e.detail.value
     })
@@ -149,7 +149,7 @@ const pageConfig = {
   },
 
   // 选择分类 - TDesign 格式
-  selectCategory(e: any) {
+  selectCategory(e: CustomEvent) {
     const categoryId = e.detail?.value || e.currentTarget?.dataset?.id
     const allArticles = this.data.articles
     
@@ -170,7 +170,7 @@ const pageConfig = {
   },
 
   // 查看文章
-  viewArticle(e: any) {
+  viewArticle(e: CustomEvent) {
     const dataset = e.currentTarget.dataset
     let article = dataset.item
 

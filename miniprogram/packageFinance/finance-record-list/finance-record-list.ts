@@ -5,7 +5,7 @@ import { logger } from '../../utils/logger'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
 
 interface AllFinanceRecordsResponse {
-  records: any[]
+  records: unknown[]
 }
 
 interface CloudCallResult<T = any> {
@@ -15,14 +15,13 @@ interface CloudCallResult<T = any> {
 }
 
 type PageData = {
-  records: any[]
-  displayRecords: any[]
+  records: unknown[]
+  displayRecords: unknown[]
   currentType: 'all' | 'income' | 'expense'
   typeTabs: { label: string; value: 'all' | 'income' | 'expense' }[]
   loading: boolean
   showDetailPopup: boolean
-  selectedRecord: any
-}
+  selectedRecord: unknown}
 
 const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   data: {
@@ -38,7 +37,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     
     // 交易详情弹窗
     showDetailPopup: false,
-    selectedRecord: null as any
+    selectedRecord: null as unknown
   },
 
   onLoad(this: PageInstance<PageData>) {
@@ -46,7 +45,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   },
 
   // 返回上一页
-  goBack(e?: any) {
+  goBack(e?: unknown) {
     // 阻止事件冒泡，避免 navigation-bar 执行默认返回
     if (e) {
       e.stopPropagation && e.stopPropagation()
@@ -115,10 +114,10 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
 
       if (result?.success) {
         const allRecords = result.data?.records || []
-        const records: any[] = []
+        const records: unknown[] = []
 
         // 处理所有记录
-        allRecords.forEach((record: any) => {
+        allRecords.forEach((record: unknown) => {
           let title = ''
           let description = record.description || ''
           
@@ -201,7 +200,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
           icon: 'none'
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.setData({ loading: false })
       logger.error('加载财务记录失败:', error)
       wx.showToast({
@@ -217,7 +216,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     let filtered = records
 
     if (currentType !== 'all') {
-      filtered = records.filter((r: any) => r.type === currentType)
+      filtered = records.filter((r: unknown) => r.type === currentType)
     }
 
     this.setData({
@@ -226,7 +225,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   },
 
   // 查看记录详情
-  viewRecordDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { item: any } } }) {
+  viewRecordDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { item: unknown} } }) {
     const item = e.currentTarget.dataset.item
     this.setData({
       selectedRecord: item,

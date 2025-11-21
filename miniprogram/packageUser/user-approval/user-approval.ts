@@ -4,7 +4,7 @@ import { createPageWithNavbar } from '../../utils/navigation'
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 用户列表数据
-    userList: [] as any[],
+    userList: [] as unknown[],
     loading: true,
     loadingMore: false,
     hasMore: true,
@@ -28,7 +28,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 用户详情弹窗
     showUserDetail: false,
-    selectedUser: null as any,
+    selectedUser: null as unknown,
     
     // 审批弹窗
     showApprovalDialog: false,
@@ -417,7 +417,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 事件处理
-  onTabChange(e: any) {
+  onTabChange(e: CustomEvent) {
     this.setData({
       activeTab: e.detail.value,
       selectedUsers: [] // 切换标签时清除选择
@@ -425,7 +425,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.loadUserList()
   },
 
-  onSearchChange(e: any) {
+  onSearchChange(e: CustomEvent) {
     this.setData({
       searchKeyword: e.detail.value
     })
@@ -442,12 +442,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.loadUserList()
   },
 
-  onUserClick(e: any) {
+  onUserClick(e: CustomEvent) {
     const user = e.currentTarget.dataset.user
     this.getUserDetail(user._id)
   },
 
-  onCheckboxChange(e: any) {
+  onCheckboxChange(e: CustomEvent) {
     e.stopPropagation() // 阻止冒泡到 cell 点击事件
     
     const userId = e.currentTarget.dataset.userId
@@ -545,7 +545,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 表单事件
-  onAssignedRoleChange(e: any) {
+  onAssignedRoleChange(e: CustomEvent) {
     const selectedIndex = e.detail.value
     const selectedRole = this.data.roleOptions[selectedIndex[0]]?.value || 'user'
     this.setData({
@@ -554,19 +554,19 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  onApprovalRemarkChange(e: any) {
+  onApprovalRemarkChange(e: CustomEvent) {
     this.setData({
       'approvalData.approvalRemark': e.detail.value
     })
   },
 
-  onRejectedReasonChange(e: any) {
+  onRejectedReasonChange(e: CustomEvent) {
     this.setData({
       rejectedReason: e.detail.value
     })
   },
 
-  onBatchRoleChange(e: any) {
+  onBatchRoleChange(e: CustomEvent) {
     const selectedIndex = e.detail.value
     const selectedRole = this.data.roleOptions[selectedIndex[0]]?.value || 'user'
     this.setData({
@@ -575,7 +575,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  onBatchRemarkChange(e: any) {
+  onBatchRemarkChange(e: CustomEvent) {
     this.setData({
       'batchData.remark': e.detail.value
     })
@@ -634,7 +634,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 数据标准化函数
-  normalizeUserData(user: any) {
+  normalizeUserData(user: unknown) {
     // 确保所有必要字段都有默认值
     const normalized = {
       ...user,

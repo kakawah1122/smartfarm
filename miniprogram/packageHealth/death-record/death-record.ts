@@ -67,7 +67,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 解剖分析
     autopsyImages: [] as string[], // 解剖照片
-    aiAnalysisResult: null as any, // AI分析结果
+    aiAnalysisResult: null as unknown, // AI分析结果
     aiConfidencePercent: '0.0', // AI置信度百分比（格式化后）
     showAnalysisResult: false, // 显示分析结果
     
@@ -81,7 +81,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     formErrors: {} as Record<string, string>
   },
 
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     const { diagnosisId, treatmentId, affectedCount, batchId, batchNumber, sourceType } = options || {}
     
     // 初始化日期为今天
@@ -220,7 +220,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 使用批次信息计算财务损失
-  async calculateFinancialLossWithBatch(batch: any) {
+  async calculateFinancialLossWithBatch(batch: unknown) {
     try {
       // ✅ 直接使用批次的入栏单价（unitPrice），不分摊饲养成本
       const costPerAnimal = parseFloat(batch.unitPrice) || 0
@@ -241,7 +241,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 死亡日期选择
-  onDeathDateChange(e: any) {
+  onDeathDateChange(e: CustomEvent) {
     this.setData({
       'formData.deathDate': e.detail.value
     }, () => {
@@ -250,7 +250,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 死亡数量输入
-  onDeathCountInput(e: any) {
+  onDeathCountInput(e: CustomEvent) {
     const count = parseInt(e.detail.value) || 0
     this.setData({
       'formData.deathCount': count
@@ -266,7 +266,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 死亡原因输入
-  onDeathCauseInput(e: any) {
+  onDeathCauseInput(e: CustomEvent) {
     this.setData({
       'formData.deathCause': e.detail.value
     }, () => {
@@ -275,7 +275,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 死亡原因选择
-  selectDeathCause(e: any) {
+  selectDeathCause(e: CustomEvent) {
     const { cause } = e.currentTarget.dataset
     this.setData({
       'formData.deathCause': cause
@@ -285,7 +285,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 死亡分类选择
-  onDeathCategoryChange(e: any) {
+  onDeathCategoryChange(e: CustomEvent) {
     const index = parseInt(e.detail.value)
     const selected = this.data.deathCategoryOptions[index]
     this.setData({
@@ -296,7 +296,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 处理方式选择
-  onDisposalMethodChange(e: any) {
+  onDisposalMethodChange(e: CustomEvent) {
     const index = parseInt(e.detail.value)
     const selected = this.data.disposalMethodOptions[index]
     this.setData({
@@ -307,7 +307,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 描述输入
-  onDescriptionInput(e: any) {
+  onDescriptionInput(e: CustomEvent) {
     this.setData({
       'formData.description': e.detail.value
     })
@@ -337,7 +337,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 验证单个字段
-  validateField(field: string, value: any) {
+  validateField(field: string, value: unknown) {
     const errors = { ...this.data.formErrors }
     
     switch (field) {
@@ -458,7 +458,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           throw new Error(result.result?.message || '提交失败')
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       wx.showToast({
         title: error.message || '提交失败，请重试',
@@ -511,7 +511,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 预览解剖照片
-  onPreviewAutopsyImage(e: any) {
+  onPreviewAutopsyImage(e: CustomEvent) {
     const { src } = e.currentTarget.dataset
     wx.previewImage({
       urls: this.data.autopsyImages,
@@ -520,7 +520,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 删除解剖照片
-  onDeleteAutopsyImage(e: any) {
+  onDeleteAutopsyImage(e: CustomEvent) {
     const { index } = e.currentTarget.dataset
     const images = [...this.data.autopsyImages]
     images.splice(index, 1)
@@ -624,7 +624,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       } else {
         throw new Error(result.result?.message || 'AI分析失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       wx.showToast({
         title: error.message || 'AI分析失败，请重试',
@@ -648,7 +648,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     if (alternatives.length > 0) {
       content += `\n其他可能原因：\n`
-      alternatives.forEach((alt: any, index: number) => {
+      alternatives.forEach((alt: unknown, index: number) => {
         content += `${index + 1}. ${alt.disease} (${(alt.confidence * 100).toFixed(1)}%)\n`
       })
     }

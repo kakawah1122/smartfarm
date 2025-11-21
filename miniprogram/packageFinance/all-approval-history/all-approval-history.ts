@@ -4,7 +4,7 @@ import CloudApi from '../../utils/cloud-api'
 Page({
   data: {
     // 审批历史记录列表
-    approvalHistory: [] as any[],
+    approvalHistory: [] as unknown[],
     
     // 加载状态
     loading: false,
@@ -17,7 +17,7 @@ Page({
     
     // 弹窗
     showDetailPopup: false,
-    selectedApprovalItem: null as any,
+    selectedApprovalItem: null as unknown,
     
     // 空状态
     isEmpty: false
@@ -48,7 +48,7 @@ Page({
     })
     
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<unknown>(
         'finance-management',
         {
           action: 'get_approval_history',
@@ -62,7 +62,7 @@ Page({
       )
       
       if (result.success && result.data?.records) {
-        const records = result.data.records.map((item: any) => this.formatApprovalItem(item))
+        const records = result.data.records.map((item: unknown) => this.formatApprovalItem(item))
         
         const newList = append ? [...this.data.approvalHistory, ...records] : records
         const hasMore = result.data.pagination.page < result.data.pagination.totalPages
@@ -99,7 +99,7 @@ Page({
   },
   
   // 格式化审批项
-  formatApprovalItem(record: any): any {
+  formatApprovalItem(record: unknown): unknown {
     // 获取申请人信息
     const applicant = record.metadata?.operator || '未知'
     
@@ -172,7 +172,7 @@ Page({
   },
   
   // 点击历史记录项
-  onClickHistoryItem(e: any) {
+  onClickHistoryItem(e: CustomEvent) {
     const { item } = e.currentTarget.dataset
     this.setData({
       selectedApprovalItem: item,
@@ -194,7 +194,7 @@ Page({
   },
 
   // 弹窗visible状态变化（支持点击遮罩层关闭）
-  onDetailPopupVisibleChange(e: any) {
+  onDetailPopupVisibleChange(e: CustomEvent) {
     const { visible } = e.detail
     if (!visible && this.data.showDetailPopup) {
       this.closeDetailPopup()

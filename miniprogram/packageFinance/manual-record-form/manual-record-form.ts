@@ -260,7 +260,7 @@ const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRe
             icon: 'success',
             duration: 1500
           })
-        } catch (error: any) {
+        } catch (error: unknown) {
           wx.hideLoading()
           wx.showToast({
             title: error.message || '上传失败',
@@ -280,7 +280,7 @@ const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRe
   },
 
   // 预览图片
-  previewImage(e: any) {
+  previewImage(e: CustomEvent) {
     const { url } = e.currentTarget.dataset
     const { uploadedFiles } = this.data
     const urls = uploadedFiles.map(file => file.fileID)
@@ -432,7 +432,7 @@ const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRe
         }
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: error.message || '提交失败，请重试',
         icon: 'none',

@@ -6,7 +6,7 @@
 /**
  * 判断是否为疫苗任务
  */
-export function isVaccineTask(task: any): boolean {
+export function isVaccineTask(task: unknown): boolean {
   if (!task) return false
   
   // 🔥 优先排除明确的非疫苗任务类型
@@ -37,7 +37,7 @@ export function isVaccineTask(task: any): boolean {
 /**
  * 判断是否为用药管理任务
  */
-export function isMedicationTask(task: any): boolean {
+export function isMedicationTask(task: unknown): boolean {
   if (!task) return false
   
   if (task.type === 'medication' || task.type === 'medicine') {
@@ -61,7 +61,7 @@ export function isMedicationTask(task: any): boolean {
 /**
  * 判断是否为营养管理任务
  */
-export function isNutritionTask(task: any): boolean {
+export function isNutritionTask(task: unknown): boolean {
   if (!task) return false
   
   if (task.type === 'nutrition') {
@@ -105,15 +105,15 @@ export function getTaskTypeName(type: string): string {
 /**
  * 按批次分组任务
  */
-export function groupTasksByBatch(tasks: any[] = []) {
+export function groupTasksByBatch(tasks: unknown[] = []) {
   const batchesMap: Record<string, {
     batchId: string
     batchNumber: string
     dayAge: number
-    tasks: any[]
+    tasks: unknown[]
   }> = {}
 
-  tasks.forEach((task: any) => {
+  tasks.forEach((task: unknown) => {
     if (!task) return
 
     const batchId = task.batchId || 'unknown'
@@ -143,7 +143,7 @@ export function groupTasksByBatch(tasks: any[] = []) {
 
   // 对每个批次的任务排序
   groups.forEach(group => {
-    group.tasks.sort((a: any, b: any) => {
+    group.tasks.sort((a: unknown, b: unknown) => {
       // 优先级排序
       const priorityDiff = (a.priority || 0) - (b.priority || 0)
       if (priorityDiff !== 0) return priorityDiff
@@ -287,7 +287,7 @@ export function calculatePercentage(value: number, total: number, decimals: numb
 /**
  * 安全解析数字
  */
-export function safeParseNumber(value: any, defaultValue: number = 0): number {
+export function safeParseNumber(value: unknown, defaultValue: number = 0): number {
   if (typeof value === 'number') return value
   if (typeof value === 'string') {
     const num = parseFloat(value)
@@ -299,8 +299,8 @@ export function safeParseNumber(value: any, defaultValue: number = 0): number {
 /**
  * 批量更新数据（优化setData调用）
  */
-export function batchSetData(page: any, updates: Record<string, any>) {
-  const data: Record<string, any> = {}
+export function batchSetData(page: unknown, updates: Record<string, unknown>) {
+  const data: Record<string, unknown> = {}
   
   for (const [key, value] of Object.entries(updates)) {
     data[key] = value

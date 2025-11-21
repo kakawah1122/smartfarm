@@ -37,7 +37,7 @@ export interface WeatherData {
   humidity: number
   windSpeed: number
   airQuality: string
-  forecast: any[]
+  forecast: unknown[]
 }
 
 /**
@@ -185,7 +185,7 @@ export class IndexDataService {
   /**
    * 获取快捷操作列表
    */
-  static getQuickActions(): any[] {
+  static getQuickActions(): unknown[] {
     return [
       {
         id: 'entry',
@@ -241,7 +241,7 @@ export class IndexDataService {
   /**
    * 获取当前位置
    */
-  private static async getCurrentLocation(): Promise<any> {
+  private static async getCurrentLocation(): Promise<unknown> {
     return new Promise((resolve) => {
       wx.getLocation({
         type: 'wgs84',
@@ -261,7 +261,7 @@ export class IndexDataService {
   /**
    * 设置缓存
    */
-  private static setCache(key: string, data: any, expireTime?: number): void {
+  private static setCache(key: string, data: unknown, expireTime?: number): void {
     const expire = expireTime || this.cacheTime
     this.cache.set(key, {
       data: data,
@@ -273,7 +273,7 @@ export class IndexDataService {
   /**
    * 获取缓存
    */
-  private static getCache(key: string): any {
+  private static getCache(key: string): unknown {
     const cached = this.cache.get(key)
     if (cached && cached.timestamp && cached.data) {
       if (Date.now() - cached.timestamp < cached.expire) {

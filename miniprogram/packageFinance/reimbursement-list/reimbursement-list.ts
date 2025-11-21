@@ -17,8 +17,7 @@ interface ReimbursementListResponse {
     _id: string
     reimbursement: ExtendedReimbursementRecord
     createTime?: string
-    [key: string]: any
-  }>
+    [key: string]: unknown}>
 }
 
 /**
@@ -58,13 +57,12 @@ const STATUS_CONFIG = {
 }
 
 type PageData = {
-  list: any[]
+  list: unknown[]
   currentStatus: 'all' | 'pending' | 'approved' | 'rejected'
   statusTabs: { label: string; value: 'all' | 'pending' | 'approved' | 'rejected' }[]
   loading: boolean
   showDetailDialog: boolean
-  selectedRecord: any
-}
+  selectedRecord: unknown}
 
 const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   data: {
@@ -78,7 +76,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     ],
     loading: false,
     showDetailDialog: false,
-    selectedRecord: null as any
+    selectedRecord: null as unknown
   },
 
   onLoad(this: PageInstance<PageData>) {
@@ -88,7 +86,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   /**
    * 返回上一页
    */
-  goBack(e?: any) {
+  goBack(e?: unknown) {
     // 阻止事件冒泡，避免 navigation-bar 执行默认返回
     if (e) {
       e.stopPropagation && e.stopPropagation()
@@ -181,7 +179,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
    */
   onItemTap(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { id: string } } }) {
     const { id } = e.currentTarget.dataset
-    const item = this.data.list.find((item: any) => item._id === id)
+    const item = this.data.list.find((item: unknown) => item._id === id)
     
     if (item) {
       this.setData({

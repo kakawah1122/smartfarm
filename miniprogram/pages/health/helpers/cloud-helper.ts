@@ -199,7 +199,7 @@ export class HealthCloudHelper {
 /**
  * 标准化健康数据（完整版，保留所有字段）
  */
-export function normalizeHealthData(rawData: any) {
+export function normalizeHealthData(rawData: unknown) {
   return {
     batches: rawData.batches || [],
     totalBatches: rawData.totalBatches ?? ((rawData.batches || []).length),

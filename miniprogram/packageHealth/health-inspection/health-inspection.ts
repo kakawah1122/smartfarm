@@ -396,7 +396,7 @@ const pageConfig: WechatMiniprogram.Page.Options<HealthInspectionData, WechatMin
   },
 
   // 字段验证
-  validateField(field: string, value: any) {
+  validateField(field: string, value: unknown) {
     const errors = { ...this.data.formErrors }
     
     switch (field) {

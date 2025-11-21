@@ -76,7 +76,7 @@ const formatCurrency = (value: unknown): string => {
   return numeric.toFixed(2)
 }
 
-const normalizeAutopsyFindings = (raw: any): AutopsyFindingsNormalized | null => {
+const normalizeAutopsyFindings = (raw: unknown): AutopsyFindingsNormalized | null => {
   if (!raw) {
     return null
   }
@@ -190,7 +190,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
 
       // 处理成本分解数据（直接使用云函数计算好的数据）
       let costBreakdown = null
-      const financialLossAny = record.financialLoss as any
+      const financialLossAny = record.financialLoss as unknown
       if (financialLossAny?.costBreakdown) {
         const breakdown = financialLossAny.costBreakdown
         
@@ -278,7 +278,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
           financeLossDisplay: formatCurrency(record.financeLoss),
           correctedAt: record.correctedAt ? formatDateTime(record.correctedAt) : record.correctedAt,
           costBreakdown: costBreakdown
-        } as any,
+        } as unknown,
         diagnosisResult: diagnosisResultData,
         primaryResult,
         differentialList,

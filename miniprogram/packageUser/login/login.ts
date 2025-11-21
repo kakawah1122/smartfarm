@@ -149,7 +149,7 @@ Page({
         
         // 更新页面数据
         this.setData({
-          userInfo: userInfo as any,
+          userInfo: userInfo as unknown,
           nickname: userInfo.nickname || '',
           phone: userInfo.phone || '',
           farmName: userInfo.farmName || ''
@@ -399,7 +399,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       
       // 根据不同错误类型提供具体的错误信息
@@ -457,7 +457,7 @@ Page({
         confirmText: '确定'
       })
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       
       wx.showModal({
@@ -471,26 +471,26 @@ Page({
 
 
   // 输入框事件
-  onNicknameInput(e: any) {
+  onNicknameInput(e: CustomEvent) {
     this.setData({
       nickname: e.detail.value
     })
   },
 
-  onPhoneInput(e: any) {
+  onPhoneInput(e: CustomEvent) {
     this.setData({
       phone: e.detail.value
     })
   },
 
-  onFarmNameInput(e: any) {
+  onFarmNameInput(e: CustomEvent) {
     this.setData({
       farmName: e.detail.value
     })
   },
 
   // 选择头像
-  async onChooseAvatar(e: any) {
+  async onChooseAvatar(e: CustomEvent) {
     const { avatarUrl } = e.detail
     this.setData({
       selectedAvatarUrl: avatarUrl
@@ -503,7 +503,7 @@ Page({
   },
 
   // 获取微信昵称
-  onNicknameChange(e: any) {
+  onNicknameChange(e: CustomEvent) {
     const nickname = e.detail.value
     this.setData({
       nickname: nickname
@@ -700,21 +700,21 @@ Page({
   },
 
   // 邀请码输入
-  onInviteCodeInput(e: any) {
+  onInviteCodeInput(e: CustomEvent) {
     this.setData({
       inviteCode: e.detail.value.toUpperCase()
     })
   },
 
   // 姓名输入
-  onInviteNicknameInput(e: any) {
+  onInviteNicknameInput(e: CustomEvent) {
     this.setData({
       inviteNickname: e.detail.value
     })
   },
 
   // 手机号输入
-  onInvitePhoneInput(e: any) {
+  onInvitePhoneInput(e: CustomEvent) {
     this.setData({
       invitePhone: e.detail.value
     })

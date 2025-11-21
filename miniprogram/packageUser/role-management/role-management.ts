@@ -54,7 +54,7 @@ Page({
     showRoleDialog: false,
     selectedUser: {} as User,
     selectedRole: '',
-    availableRoles: [] as any[]
+    availableRoles: [] as unknown[]
   },
 
   onLoad() {
@@ -187,7 +187,7 @@ Page({
   },
 
   // 搜索用户
-  onSearchChange(event: any) {
+  onSearchChange(event: unknown) {
     const searchKeyword = event.detail.value
     this.setData({ searchKeyword })
     
@@ -209,7 +209,7 @@ Page({
   },
 
   // 选择用户
-  onUserSelect(event: any) {
+  onUserSelect(event: unknown) {
     if (!this.canManageUsers()) {
       wx.showToast({
         title: '无权限管理用户',
@@ -230,7 +230,7 @@ Page({
   },
 
   // 选择角色
-  onRoleSelect(event: any) {
+  onRoleSelect(event: unknown) {
     const role = event.currentTarget.dataset.role
     this.setData({ selectedRole: role })
   },
@@ -328,5 +328,5 @@ Page({
   },
 
   // 私有属性
-  searchTimer: null as any
+  searchTimer: null as unknown
 })

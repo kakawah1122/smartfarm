@@ -56,7 +56,7 @@ export class PermissionManager {
    * @param permission 权限名称
    * @returns 是否有权限
    */
-  static hasPermission(userInfo: any, permission: string): boolean {
+  static hasPermission(userInfo: unknown, permission: string): boolean {
     if (!userInfo) return false
     
     // 管理员拥有所有权限
@@ -77,7 +77,7 @@ export class PermissionManager {
    * @param permissions 权限列表
    * @returns 是否有任一权限
    */
-  static hasAnyPermission(userInfo: any, permissions: string[]): boolean {
+  static hasAnyPermission(userInfo: unknown, permissions: string[]): boolean {
     return permissions.some(permission => this.hasPermission(userInfo, permission))
   }
   
@@ -87,7 +87,7 @@ export class PermissionManager {
    * @param permissions 权限列表
    * @returns 是否有所有权限
    */
-  static hasAllPermissions(userInfo: any, permissions: string[]): boolean {
+  static hasAllPermissions(userInfo: unknown, permissions: string[]): boolean {
     return permissions.every(permission => this.hasPermission(userInfo, permission))
   }
   
@@ -114,7 +114,7 @@ export class PermissionManager {
    * @param userInfo 用户信息
    * @returns 权限列表
    */
-  static getUserPermissionList(userInfo: any): Array<{code: string, name: string}> {
+  static getUserPermissionList(userInfo: unknown): Array<{code: string, name: string}> {
     if (!userInfo || !userInfo.permissions) return []
     
     // 如果是管理员或拥有所有权限，返回所有权限
@@ -138,7 +138,7 @@ export class PermissionManager {
    * @param showToast 是否显示提示
    * @returns 是否有权限
    */
-  static validatePermission(userInfo: any, permission: string, showToast: boolean = true): boolean {
+  static validatePermission(userInfo: unknown, permission: string, showToast: boolean = true): boolean {
     const hasPermission = this.hasPermission(userInfo, permission)
     
     if (!hasPermission && showToast) {
@@ -157,7 +157,7 @@ export class PermissionManager {
    * @param userInfo 用户信息
    * @returns 是否是管理员
    */
-  static isAdmin(userInfo: any): boolean {
+  static isAdmin(userInfo: unknown): boolean {
     return userInfo && userInfo.role === 'admin'
   }
   
@@ -166,7 +166,7 @@ export class PermissionManager {
    * @param userInfo 用户信息
    * @returns 是否是员工
    */
-  static isEmployee(userInfo: any): boolean {
+  static isEmployee(userInfo: unknown): boolean {
     return userInfo && (userInfo.role === 'employee' || userInfo.role === 'admin')
   }
   
@@ -174,7 +174,7 @@ export class PermissionManager {
    * 获取当前用户信息
    * @returns 用户信息
    */
-  static getCurrentUser(): any {
+  static getCurrentUser(): unknown {
     const app = getApp()
     return app.globalData.userInfo
   }
@@ -185,7 +185,7 @@ export class PermissionManager {
    * @param userInfo 用户信息
    * @returns 过滤后的菜单项
    */
-  static filterMenuByPermission(menuItems: any[], userInfo: any): any[] {
+  static filterMenuByPermission(menuItems: unknown[], userInfo: unknown): unknown[] {
     return menuItems.filter(item => {
       if (!item.requiredPermission) return true
       return this.hasPermission(userInfo, item.requiredPermission)
@@ -199,10 +199,10 @@ export class PermissionManager {
  * @param showToast 是否显示权限不足提示
  */
 export function requirePermission(permission: string, showToast: boolean = true) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
     
-    descriptor.value = function (...args: any[]) {
+    descriptor.value = function (...args: unknown[]) {
       const userInfo = PermissionManager.getCurrentUser()
       
       if (!PermissionManager.validatePermission(userInfo, permission, showToast)) {

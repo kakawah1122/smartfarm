@@ -41,7 +41,7 @@ Component({
     stockQuantity: {
       type: Number,
       value: 0,
-      observer: function(newVal: any) {
+      observer: function(newVal: unknown) {
         // 确保值始终为数字，避免类型不匹配警告
         // 如果传入的不是数字，转换为数字
         if (newVal != null && typeof newVal !== 'number') {
@@ -76,7 +76,7 @@ Component({
 
   methods: {
     // 输入处理
-    onInput(e: any) {
+    onInput(e: CustomEvent) {
       const { field } = e.currentTarget.dataset
       const { value } = e.detail
       
@@ -87,7 +87,7 @@ Component({
     },
 
     // 数值输入处理
-    onNumberInput(e: any) {
+    onNumberInput(e: CustomEvent) {
       const { field } = e.currentTarget.dataset
       const { value } = e.detail
       

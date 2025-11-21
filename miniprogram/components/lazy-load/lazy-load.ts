@@ -56,7 +56,7 @@ Component({
      * 初始化 IntersectionObserver
      */
     initObserver() {
-      if ((this.data as any)._observer) return
+      if ((this.data as unknown)._observer) return
       
       // 创建观察器
       const observer = this.createIntersectionObserver({
@@ -69,7 +69,7 @@ Component({
         top: 0,
         left: 0,
         right: 0,
-        bottom: (this.data as any).threshold || 100  // 提前加载的像素数
+        bottom: (this.data as unknown).threshold || 100  // 提前加载的像素数
       }
       
       observer.relativeToViewport(margins)
@@ -91,7 +91,7 @@ Component({
      * 处理进入视窗
      */
     handleInView() {
-      const data = this.data as any
+      const data = this.data as unknown
       if (data.isLoaded && data.once) {
         return
       }
@@ -114,7 +114,7 @@ Component({
      * 断开观察器
      */
     disconnectObserver() {
-      const observer = (this.data as any)._observer
+      const observer = (this.data as unknown)._observer
       if (observer) {
         observer.disconnect()
         this.setData({
@@ -137,7 +137,7 @@ Component({
     /**
      * 处理加载错误
      */
-    handleError(error: any) {
+    handleError(error: unknown) {
       this.setData({
         hasError: true
       })

@@ -25,7 +25,7 @@ interface CloudFunctionConfig {
 export class CloudFunctionManager {
   private static instance: CloudFunctionManager
   private optimizer: RequestOptimizer
-  private batchCache = new Map<string, { data: any; timestamp: number }>()
+  private batchCache = new Map<string, { data: unknown; timestamp: number }>()
   private batchCacheTime = 10 * 60 * 1000 // 批次信息缓存10分钟
   
   private constructor() {
@@ -45,7 +45,7 @@ export class CloudFunctionManager {
   /**
    * 调用云函数
    */
-  async call(config: CloudFunctionConfig): Promise<any> {
+  async call(config: CloudFunctionConfig): Promise<unknown> {
     // 特殊处理：批次信息缓存
     if (config.name === 'production-entry' && config.data.action === 'getActiveBatches') {
       return this.getActiveBatchesCached()
@@ -82,7 +82,7 @@ export class CloudFunctionManager {
   /**
    * 获取活跃批次（带缓存）
    */
-  private async getActiveBatchesCached(): Promise<any> {
+  private async getActiveBatchesCached(): Promise<unknown> {
     const cacheKey = 'active_batches'
     const now = Date.now()
     

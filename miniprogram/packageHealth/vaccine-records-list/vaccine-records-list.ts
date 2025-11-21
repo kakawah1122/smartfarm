@@ -322,7 +322,7 @@ Page({
       } else {
         throw new Error(result?.error || '加载失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.showToast({
         title: error.message || '加载失败',
         icon: 'none'
@@ -334,7 +334,7 @@ Page({
   /**
    * 点击记录卡片，显示详情弹窗
    */
-  onRecordTap(e: any) {
+  onRecordTap(e: CustomEvent) {
     const { id } = e.currentTarget.dataset
     // 从所有记录中查找
     let record = this.data.records.find(r => r._id === id)
@@ -395,7 +395,7 @@ Page({
   /**
    * 数量输入处理
    */
-  onCountInput(e: any) {
+  onCountInput(e: CustomEvent) {
     const value = e.detail.value
     this.setData({
       countInputValue: value
@@ -495,7 +495,7 @@ Page({
             success: () => {
               // 通知健康页面切换到"治疗管理"标签
               const pages = getCurrentPages()
-              const healthPage = pages.find((page: any) => page.route === 'pages/health/health')
+              const healthPage = pages.find((page: unknown) => page.route === 'pages/health/health')
               if (healthPage) {
                 healthPage.setData({
                   activeCategory: 'treatment'
@@ -507,7 +507,7 @@ Page({
       } else {
         throw new Error(result?.error || result?.message || '创建失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       wx.showModal({
         title: '创建失败',
@@ -555,7 +555,7 @@ Page({
             success: () => {
               // 通知健康页面切换到"治疗管理"标签（查看死亡统计）
               const pages = getCurrentPages()
-              const healthPage = pages.find((page: any) => page.route === 'pages/health/health')
+              const healthPage = pages.find((page: unknown) => page.route === 'pages/health/health')
               if (healthPage) {
                 healthPage.setData({
                   activeCategory: 'treatment'
@@ -567,7 +567,7 @@ Page({
       } else {
         throw new Error(result?.error || result?.message || '创建失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       wx.showModal({
         title: '创建失败',

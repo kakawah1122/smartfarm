@@ -124,7 +124,7 @@ export class ProductionDataLoader {
     }
     
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<unknown>(
         'production-dashboard',
         { action: 'overview' },  // 修复：使用正确的action名称
         { showError: false }
@@ -178,7 +178,7 @@ export class ProductionDataLoader {
       }
       
       return null
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 添加错误重试机制
       if (retryCount < MAX_RETRY_COUNT) {
         logger.warn(`概览数据加载失败，${RETRY_DELAY}ms后重试 (${retryCount + 1}/${MAX_RETRY_COUNT}):`, error)
@@ -206,7 +206,7 @@ export class ProductionDataLoader {
    */
   static async loadEntryRecords(page = 1, pageSize = 10): Promise<any[]> {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<unknown>(
         'production-entry',
         {
           action: 'list',
@@ -224,7 +224,7 @@ export class ProductionDataLoader {
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 格式化记录
-        return records.map((record: any) => ({
+        return records.map((record: unknown) => ({
           ...record,
           id: record._id || record.batchNumber,
           batchNumber: record.batchNumber || record._id,
@@ -252,7 +252,7 @@ export class ProductionDataLoader {
    */
   static async loadExitRecords(page = 1, pageSize = 10): Promise<any[]> {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<unknown>(
         'production-exit',
         {
           action: 'list',
@@ -270,7 +270,7 @@ export class ProductionDataLoader {
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 格式化记录
-        return records.map((record: any) => ({
+        return records.map((record: unknown) => ({
           ...record,
           id: record._id || record.exitNumber,
           exitNumber: record.exitNumber || record._id,
@@ -300,7 +300,7 @@ export class ProductionDataLoader {
    */
   static async loadMaterialRecords(page = 1, pageSize = 10): Promise<any[]> {
     try {
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<unknown>(
         'production-material',
         {
           action: 'list_records',  // 修复：使用正确的action名称
@@ -318,7 +318,7 @@ export class ProductionDataLoader {
         const currentUser = app.globalData?.userInfo?.nickname || '系统用户'
         
         // 格式化记录（修复：正确处理材料名称和类型）
-        return records.map((record: any) => ({
+        return records.map((record: unknown) => ({
           ...record,
           id: record._id || record.recordNumber,
           recordNumber: record.recordNumber || record._id,
@@ -377,7 +377,7 @@ export class ProductionDataLoader {
   /**
    * 获取显示描述
    */
-  private static getDisplayDescription(record: any): string {
+  private static getDisplayDescription(record: unknown): string {
     const type = record.recordType || record.type
     const material = record.material?.name || '物料'
     const quantity = record.quantity || 0

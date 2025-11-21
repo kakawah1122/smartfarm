@@ -521,7 +521,7 @@ export class DynamicStorageManager {
    * @param params 记录参数
    * @returns 记录结果
    */
-  private static async recordFileInfo(params: any): Promise<{success: boolean, error?: string}> {
+  private static async recordFileInfo(params: unknown): Promise<{success: boolean, error?: string}> {
     try {
       await wx.cloud.callFunction({
         name: 'dynamic-file-manager',
@@ -564,7 +564,7 @@ export class DynamicStorageManager {
    * @param options 查询选项
    * @returns 文件列表
    */
-  static async queryFilesByTimeRange(options: QueryOptions): Promise<{success: boolean, data?: any[], error?: string}> {
+  static async queryFilesByTimeRange(options: QueryOptions): Promise<{success: boolean, data?: unknown[], error?: string}> {
     try {
       const result = await wx.cloud.callFunction({
         name: 'dynamic-file-manager',
@@ -605,7 +605,7 @@ export class DynamicStorageManager {
    * 获取存储统计信息
    * @returns 统计信息
    */
-  static async getStorageStats(): Promise<{success: boolean, data?: any, error?: string}> {
+  static async getStorageStats(): Promise<{success: boolean, data?: unknown, error?: string}> {
     try {
       const result = await wx.cloud.callFunction({
         name: 'dynamic-file-manager',

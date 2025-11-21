@@ -24,7 +24,7 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: any) {
+    onVisibleChange(e: CustomEvent) {
       if (!e.detail.visible) {
         this.onClose()
       }

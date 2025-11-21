@@ -45,7 +45,7 @@ export async function fixAllBatchTasks() {
         success: () => {
           // 刷新页面数据
           const pages = getCurrentPages()
-          const currentPage = pages[pages.length - 1] as any
+          const currentPage = pages[pages.length - 1] as unknown
           if (currentPage && currentPage.loadAllData) {
             currentPage.loadAllData()
           }
@@ -58,7 +58,7 @@ export async function fixAllBatchTasks() {
         duration: 2000
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     wx.hideLoading()
     console.error('修复任务失败:', error)
     wx.showToast({
@@ -97,7 +97,7 @@ export async function fixSingleBatchTasks(batchId: string) {
       // 刷新页面
       setTimeout(() => {
         const pages = getCurrentPages()
-        const currentPage = pages[pages.length - 1] as any
+        const currentPage = pages[pages.length - 1] as unknown
         if (currentPage && currentPage.loadAllData) {
           currentPage.loadAllData()
         }
@@ -109,7 +109,7 @@ export async function fixSingleBatchTasks(batchId: string) {
         duration: 2000
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     wx.hideLoading()
     console.error('修复任务失败:', error)
     wx.showToast({

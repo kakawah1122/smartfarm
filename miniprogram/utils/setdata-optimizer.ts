@@ -5,12 +5,11 @@
  */
 
 interface PendingData {
-  [key: string]: any
-}
+  [key: string]: unknown}
 
 interface OptimizedComponent {
-  setData: (data: any, callback?: () => void) => void
-  _optimizedSetData?: (data: any, callback?: () => void) => void
+  setData: (data: unknown, callback?: () => void) => void
+  _optimizedSetData?: (data: unknown, callback?: () => void) => void
   _pendingData?: PendingData
   _pendingCallbacks?: Array<() => void>
   _updateTimer?: number
@@ -71,7 +70,7 @@ export function optimizeSetData(
   }
   
   // 替换setData方法
-  component.setData = function(data: any, callback?: () => void) {
+  component.setData = function(data: unknown, callback?: () => void) {
     // 合并数据到待处理队列
     Object.assign(component._pendingData!, data)
     
@@ -97,7 +96,7 @@ export function optimizeSetData(
       flushUpdate()
     } else {
       // 延迟执行
-      component._updateTimer = setTimeout(flushUpdate, delay) as any
+      component._updateTimer = setTimeout(flushUpdate, delay) as unknown
     }
   }
 }
@@ -135,13 +134,13 @@ export function restoreSetData(component: OptimizedComponent) {
  * 防抖优化器
  * 用于优化频繁触发的操作
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => any>(
   func: T,
   wait: number = 300
 ): T {
   let timeout: number | undefined
   
-  return function(this: any, ...args: Parameters<T>) {
+  return function(this: unknown, ...args: Parameters<T>) {
     const context = this
     
     if (timeout) {
@@ -150,7 +149,7 @@ export function debounce<T extends (...args: any[]) => any>(
     
     timeout = setTimeout(() => {
       func.apply(context, args)
-    }, wait) as any
+    }, wait) as unknown
   } as T
 }
 
@@ -158,14 +157,14 @@ export function debounce<T extends (...args: any[]) => any>(
  * 节流优化器
  * 用于限制操作频率
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => any>(
   func: T,
   wait: number = 100
 ): T {
   let lastTime = 0
   let timeout: number | undefined
   
-  return function(this: any, ...args: Parameters<T>) {
+  return function(this: unknown, ...args: Parameters<T>) {
     const context = this
     const now = Date.now()
     const remaining = wait - (now - lastTime)
@@ -182,7 +181,7 @@ export function throttle<T extends (...args: any[]) => any>(
         lastTime = Date.now()
         timeout = undefined
         func.apply(context, args)
-      }, remaining) as any
+      }, remaining) as unknown
     }
   } as T
 }

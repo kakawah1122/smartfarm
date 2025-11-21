@@ -152,7 +152,7 @@ export class ProductionNavigationManager {
       // 出栏相关
       addExit: () => this.navigateToExitForm(),
       viewAllExitRecords: this.navigateToExitRecordsList.bind(this),
-      navigateToExitForm: (params: any) => this.navigateToExitForm(params),
+      navigateToExitForm: (params: unknown) => this.navigateToExitForm(params),
       
       // 库存相关
       viewInventoryDetail: this.navigateToInventoryDetail.bind(this),
@@ -180,7 +180,7 @@ export const navigateToPurchaseForm = ProductionNavigationManager.navigateToPurc
 /**
  * 设置导航处理器
  */
-export function setupNavigationHandlers(pageInstance: any) {
+export function setupNavigationHandlers(pageInstance: unknown) {
   const handlers = ProductionNavigationManager.createNavigationHandlers()
   
   // 绑定到页面实例

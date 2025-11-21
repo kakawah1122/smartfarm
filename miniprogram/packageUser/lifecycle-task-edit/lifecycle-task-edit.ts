@@ -123,9 +123,9 @@ Component({
           
           // 设置各种索引
           const taskType = task.type || 'inspection'
-          const taskTypeIndex = this.data.taskTypes.findIndex((t: any) => t.value === taskType)
+          const taskTypeIndex = this.data.taskTypes.findIndex((t: unknown) => t.value === taskType)
           const categoryIndex = this.data.categories.indexOf(task.category)
-          const priorityIndex = this.data.priorities.findIndex((p: any) => p.value === task.priority)
+          const priorityIndex = this.data.priorities.findIndex((p: unknown) => p.value === task.priority)
           
           this.setData({
             formData: {
@@ -174,9 +174,9 @@ Component({
         notes: ''
       }
       
-      const taskTypeIndex = this.data.taskTypes.findIndex((t: any) => t.value === defaultTask.type)
+      const taskTypeIndex = this.data.taskTypes.findIndex((t: unknown) => t.value === defaultTask.type)
       const categoryIndex = this.data.categories.indexOf(defaultTask.category)
-      const priorityIndex = this.data.priorities.findIndex((p: any) => p.value === defaultTask.priority)
+      const priorityIndex = this.data.priorities.findIndex((p: unknown) => p.value === defaultTask.priority)
       
       this.setData({
         formData: defaultTask,
@@ -187,14 +187,14 @@ Component({
     },
 
     // 输入任务标题
-    onTitleInput(e: any) {
+    onTitleInput(e: CustomEvent) {
       this.setData({
         'formData.title': e.detail.value
       })
     },
 
     // 选择任务类型
-    onTypeChange(e: any) {
+    onTypeChange(e: CustomEvent) {
       const index = parseInt(e.detail.value)
       const type = this.data.taskTypes[index].value
       
@@ -220,7 +220,7 @@ Component({
     },
 
     // 选择分类
-    onCategoryChange(e: any) {
+    onCategoryChange(e: CustomEvent) {
       const index = parseInt(e.detail.value)
       this.setData({
         'formData.category': this.data.categories[index],
@@ -229,7 +229,7 @@ Component({
     },
 
     // 选择优先级
-    onPriorityChange(e: any) {
+    onPriorityChange(e: CustomEvent) {
       const index = parseInt(e.detail.value)
       this.setData({
         'formData.priority': this.data.priorities[index].value,
@@ -238,49 +238,49 @@ Component({
     },
 
     // 输入描述
-    onDescriptionInput(e: any) {
+    onDescriptionInput(e: CustomEvent) {
       this.setData({
         'formData.description': e.detail.value
       })
     },
 
     // 输入用量
-    onDosageInput(e: any) {
+    onDosageInput(e: CustomEvent) {
       this.setData({
         'formData.dosage': e.detail.value
       })
     },
 
     // 输入持续天数
-    onDurationInput(e: any) {
+    onDurationInput(e: CustomEvent) {
       this.setData({
         'formData.duration': parseInt(e.detail.value) || 1
       })
     },
 
     // 输入系列中的第几天
-    onDayInSeriesInput(e: any) {
+    onDayInSeriesInput(e: CustomEvent) {
       this.setData({
         'formData.dayInSeries': parseInt(e.detail.value) || 1
       })
     },
 
     // 输入预计时间
-    onEstimatedTimeInput(e: any) {
+    onEstimatedTimeInput(e: CustomEvent) {
       this.setData({
         'formData.estimatedTime': parseInt(e.detail.value) || 0
       })
     },
 
     // 输入所需材料
-    onMaterialsInput(e: any) {
+    onMaterialsInput(e: CustomEvent) {
       this.setData({
         'formData.materials': e.detail.value
       })
     },
 
     // 输入备注
-    onNotesInput(e: any) {
+    onNotesInput(e: CustomEvent) {
       this.setData({
         'formData.notes': e.detail.value
       })

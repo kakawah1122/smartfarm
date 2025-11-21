@@ -138,7 +138,7 @@ Component({
 
     // 原有的折线图绘制逻辑
     renderLineChart() {
-      const series = (this.properties.series || []).map((item: any) => ({
+      const series = (this.properties.series || []).map((item: unknown) => ({
         date: item.date,
         value: typeof item.value === 'number' ? item.value : parseFloat(item.value)
       }))
@@ -205,8 +205,8 @@ Component({
         ctx.stroke()
       }
 
-      const areaColor = (this.properties.colorScheme as any)?.area || 'rgba(0, 82, 217, 0.12)'
-      const lineColor = (this.properties.colorScheme as any)?.line || '#0052d9'
+      const areaColor = (this.properties.colorScheme as unknown)?.area || 'rgba(0, 82, 217, 0.12)'
+      const lineColor = (this.properties.colorScheme as unknown)?.line || '#0052d9'
 
       // 绘制面积
       ctx.beginPath()
@@ -257,7 +257,7 @@ Component({
 
     // 双线图绘制逻辑（最高价和最低价）
     renderDualLineChart() {
-      const ranges = (this.properties.priceRanges || []).map((item: any) => ({
+      const ranges = (this.properties.priceRanges || []).map((item: unknown) => ({
         date: item.date,
         min: typeof item.min === 'number' ? item.min : parseFloat(item.min),
         max: typeof item.max === 'number' ? item.max : parseFloat(item.max)
@@ -470,7 +470,7 @@ Component({
       const query = this.createSelectorQuery()
       
       query.select('#trendCanvas')
-        .boundingClientRect((rect: any) => {
+        .boundingClientRect((rect: unknown) => {
           if (!rect) return
 
           // 计算触摸点相对于 canvas 的位置
@@ -499,7 +499,7 @@ Component({
           let minDistance = Infinity
           const touchThreshold = 40 // 触摸有效范围（像素），增大范围更容易触发
 
-          ranges.forEach((item: any, index: number) => {
+          ranges.forEach((item: unknown, index: number) => {
             const x = resolveX(index)
             const distance = Math.abs(touchX - x)
             
@@ -511,7 +511,7 @@ Component({
 
           // 如果找到了最近的点，显示提示框
           if (nearestIndex !== -1) {
-            const dataPoint = ranges[nearestIndex] as any
+            const dataPoint = ranges[nearestIndex] as unknown
 
             this.setData({
               tooltip: {

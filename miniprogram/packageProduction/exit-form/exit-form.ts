@@ -30,9 +30,9 @@ const pageConfig = {
     
     // 批次选择器相关
     showBatchPicker: false,
-    availableBatches: [] as any[],  // 可选择的入栏批次
+    availableBatches: [] as unknown[],  // 可选择的入栏批次
     batchOptions: [] as string[],   // 批次选择器选项（显示用）
-    batchActionItems: [] as any[], // ActionSheet组件数据格式
+    batchActionItems: [] as unknown[], // ActionSheet组件数据格式
     
     // 计算结果
     totalWeight: '0.00',      // 总重量
@@ -59,7 +59,7 @@ const pageConfig = {
     selectedBatchAvailable: 0
   },
 
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     // 初始化表单
     this.initializeForm()
     
@@ -73,7 +73,7 @@ const pageConfig = {
   },
 
   // 处理来自AI盘点的参数
-  handleAIParams(options: any) {
+  handleAIParams(options: unknown) {
     try {
       const aiData = {
         count: parseInt(options.aiCount) || 0,
@@ -131,12 +131,12 @@ const pageConfig = {
       // 从云函数获取已入栏且有剩余可出栏数量的批次（真实剩余量）
       const batches = await this.getEntryBatches()
       
-      const batchOptions = batches.map((batch: any) => 
+      const batchOptions = batches.map((batch: unknown) => 
         `${batch.batchId} (${batch.breed} - 可出栏: ${batch.availableQuantity}羽)`
       )
       
       // ActionSheet组件需要的数据格式
-      const batchActionItems = batches.map((batch: any, index: number) => ({
+      const batchActionItems = batches.map((batch: unknown, index: number) => ({
         label: `${batch.batchId} (${batch.breed} - 可出栏: ${batch.availableQuantity}羽)`,
         value: index,
         disabled: batch.availableQuantity <= 0
@@ -171,7 +171,7 @@ const pageConfig = {
         const availableBatches = result.result.data || []
         
         // 转换为页面使用的数据结构
-        const batches = availableBatches.map((item: any) => ({
+        const batches = availableBatches.map((item: unknown) => ({
           batchId: item.batchNumber,
           batchNumber: item.batchNumber,
           breed: item.breed || '未知品种',
@@ -212,7 +212,7 @@ const pageConfig = {
   },
 
   // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
-  onDateConfirm(e: any) {
+  onDateConfirm(e: CustomEvent) {
     const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     
     this.setData({
@@ -259,7 +259,7 @@ const pageConfig = {
   },
 
   // 表单字段变化
-  onFieldChange(e: any) {
+  onFieldChange(e: CustomEvent) {
     const { value } = e.detail
     const { field } = e.currentTarget.dataset
     
@@ -300,7 +300,7 @@ const pageConfig = {
   },
 
   // 总重量输入变化
-  onTotalWeightChange(e: any) {
+  onTotalWeightChange(e: CustomEvent) {
     const { value } = e.detail
     this.setData({
       totalWeight: value
@@ -359,7 +359,7 @@ const pageConfig = {
   // 获取提交时使用的批次号
   getBatchNumberForSubmission(displayBatchId: string): string {
     // 从可用批次列表中查找对应的批次号
-    const batch = this.data.availableBatches.find((b: any) => b.batchId === displayBatchId)
+    const batch = this.data.availableBatches.find((b: unknown) => b.batchId === displayBatchId)
     if (batch && batch.batchNumber) {
       return batch.batchNumber
     }

@@ -3,13 +3,13 @@
 Page({
   data: {
     // 批次列表
-    batchList: [] as any[],
+    batchList: [] as unknown[],
     
     // 可用模板列表
-    templates: [] as any[],
+    templates: [] as unknown[],
     
     // 模板任务映射
-    templateTasks: {} as any,
+    templateTasks: {} as unknown,
     
     // 是否加载中
     loading: false,
@@ -71,7 +71,7 @@ Page({
       if (result.result?.success && result.result.data?.length > 0) {
         templates = result.result.data
         // 构建模板任务映射
-        templates.forEach((template: any) => {
+        templates.forEach((template: unknown) => {
           // 默认模板使用'default'作为ID，其他使用_id
           const templateId = template.isDefault ? 'default' : template._id
           // 确保任务是数组格式
@@ -89,7 +89,7 @@ Page({
       }
       
       // 保存模板列表
-      const templateList = templates.map((t: any) => ({
+      const templateList = templates.map((t: unknown) => ({
         id: t.isDefault ? 'default' : t._id,
         name: t.templateName || t.name || '未命名模板'
       }))
@@ -134,12 +134,12 @@ Page({
       if (result.result?.success && result.result.data) {
         // 云函数返回的是按日龄分组的对象，需要转换为任务数组
         const tasksByDayAge = result.result.data
-        const tasks: any[] = []
+        const tasks: unknown[] = []
         
         // 将按日龄分组的任务转换为平面数组
         Object.keys(tasksByDayAge).forEach(dayAge => {
           const dayTasks = tasksByDayAge[dayAge] || []
-          dayTasks.forEach((task: any) => {
+          dayTasks.forEach((task: unknown) => {
             tasks.push({
               ...task,
               dayAge: parseInt(dayAge)
@@ -168,7 +168,7 @@ Page({
         .get()
       
       // 计算每个批次的当前日龄和今日任务
-      const batchList = batches.map((batch: any) => {
+      const batchList = batches.map((batch: unknown) => {
         const currentDayAge = this.calculateDayAge(batch.entryDate)
         
         // 如果批次没有模板，默认使用'default'（默认模板）
@@ -176,7 +176,7 @@ Page({
         let templateName = batch.templateName || ''
         
         // 查找对应的模板
-        const template = this.data.templates.find((t: any) => t.id === templateId)
+        const template = this.data.templates.find((t: unknown) => t.id === templateId)
         if (template) {
           templateName = template.name
         } else if (this.data.templates.length > 0) {
@@ -186,7 +186,7 @@ Page({
           templateName = firstTemplate.name
         }
         
-        const templateIndex = Math.max(0, this.data.templates.findIndex((t: any) => t.id === templateId))
+        const templateIndex = Math.max(0, this.data.templates.findIndex((t: unknown) => t.id === templateId))
         const todayTasks = this.getTasksForDayAge(templateId, currentDayAge)
         
         // 格式化日期
@@ -240,7 +240,7 @@ Page({
   },
 
   // 获取指定日龄的任务
-  getTasksForDayAge(templateId: string | null, dayAge: number): any[] {
+  getTasksForDayAge(templateId: string | null, dayAge: number): unknown[] {
     if (!templateId) {
       return []
     }
@@ -258,14 +258,14 @@ Page({
     }
     
     // 筛选出当前日龄的任务
-    const tasks = allTasks.filter((task: any) => task.dayAge === dayAge)
+    const tasks = allTasks.filter((task: unknown) => task.dayAge === dayAge)
     
     // 限制返回的任务数量，避免渲染过多
     return tasks.slice(0, 5)
   },
 
   // 模板选择变更
-  onTemplateChange(e: any) {
+  onTemplateChange(e: CustomEvent) {
     const { batchIndex } = e.currentTarget.dataset
     const templateIndex = parseInt(e.detail.value)
     const selectedTemplate = this.data.templates[templateIndex]
@@ -305,7 +305,7 @@ Page({
       wx.showLoading({ title: '保存中...' })
       
       // 收集配置信息
-      const updates = this.data.batchList.map((batch: any) => ({
+      const updates = this.data.batchList.map((batch: unknown) => ({
         batchId: batch.id,
         templateId: batch.templateId,
         templateName: batch.templateName

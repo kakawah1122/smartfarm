@@ -31,8 +31,7 @@ interface PreviewData {
   date: string
   goslingBreeds: GoslingBreed[]
   meatBreeds: MeatBreed[]
-  rawData: any
-}
+  rawData: unknown}
 
 interface BatchPreviewData {
   records: PreviewData[]  // 多条日期记录
@@ -50,8 +49,8 @@ interface HistoryItem {
     source: string
     createTime: any
     operator: string
-    goslingBreeds: any[]
-    meatBreeds: any[]
+    goslingBreeds: unknown[]
+    meatBreeds: unknown[]
   }[]
 }
 
@@ -68,13 +67,11 @@ interface ParsedGoosePriceResult {
   date?: string
   goslingBreeds?: ParsedBreedItem[]
   meatBreeds?: ParsedBreedItem[]
-  [key: string]: any
-}
+  [key: string]: unknown}
 
 interface ParsedBatchGoosePriceResult {
   records?: ParsedGoosePriceResult[]  // 多条日期记录
-  [key: string]: any
-}
+  [key: string]: unknown}
 
 const GOOSE_PRICE_SYSTEM_PROMPT =
   '你是一名擅长从价格表截图中提取结构化数据的助手，请严格按照示例JSON输出结果。'
@@ -114,8 +111,8 @@ function parseFloatOrNull(value: number | string | undefined | null): number | n
 }
 
 function extractMinMax(item: ParsedBreedItem): { min: number | null; max: number | null } {
-  let min = parseFloatOrNull(item.min as any)
-  let max = parseFloatOrNull(item.max as any)
+  let min = parseFloatOrNull(item.min as unknown)
+  let max = parseFloatOrNull(item.max as unknown)
 
   if ((min === null || max === null) && item.range) {
     const parts = item.range
@@ -132,7 +129,7 @@ function extractMinMax(item: ParsedBreedItem): { min: number | null; max: number
   }
 
   if ((min === null || max === null) && item.price !== undefined) {
-    const priceVal = parseFloatOrNull(item.price as any)
+    const priceVal = parseFloatOrNull(item.price as unknown)
     if (priceVal !== null) {
       min = priceVal
       max = priceVal
@@ -239,7 +236,7 @@ function parseGoosePriceContent(content: string): ParsedBatchGoosePriceResult | 
   // 判断是批量数据还是单条数据
   if (parsed.records && Array.isArray(parsed.records) && parsed.records.length > 0) {
     // 批量数据格式
-    parsed.records = parsed.records.map((record: any) => {
+    parsed.records = parsed.records.map((record: unknown) => {
       record.date = record.date || new Date().toISOString().split('T')[0]
       record.goslingBreeds = Array.isArray(record.goslingBreeds) ? record.goslingBreeds : []
       record.meatBreeds = Array.isArray(record.meatBreeds) ? record.meatBreeds : []
@@ -247,7 +244,7 @@ function parseGoosePriceContent(content: string): ParsedBatchGoosePriceResult | 
     })
     
     // 过滤掉没有数据的记录
-    parsed.records = parsed.records.filter((record: any) => 
+    parsed.records = parsed.records.filter((record: unknown) => 
       (record.goslingBreeds && record.goslingBreeds.length > 0) ||
       (record.meatBreeds && record.meatBreeds.length > 0)
     )
@@ -330,7 +327,7 @@ Page({
     // 弹窗相关
     showDetailPopup: false,
     selectedDate: '',
-    selectedDateRecords: [] as any[]
+    selectedDateRecords: [] as unknown[]
   },
 
   onLoad() {
@@ -343,14 +340,14 @@ Page({
   },
 
   // 日期选择
-  onDateChange(e: any) {
+  onDateChange(e: CustomEvent) {
     this.setData({
       'manualData.date': e.detail.value
     })
   },
 
   // 鹅苗最低价输入
-  onGoslingMinInput(e: any) {
+  onGoslingMinInput(e: CustomEvent) {
     const { key } = e.currentTarget.dataset
     this.setData({
       [`manualData.gosling.${key}.min`]: e.detail.value
@@ -358,7 +355,7 @@ Page({
   },
 
   // 鹅苗最高价输入
-  onGoslingMaxInput(e: any) {
+  onGoslingMaxInput(e: CustomEvent) {
     const { key } = e.currentTarget.dataset
     this.setData({
       [`manualData.gosling.${key}.max`]: e.detail.value
@@ -366,7 +363,7 @@ Page({
   },
 
   // 肉鹅最低价输入
-  onMeatMinInput(e: any) {
+  onMeatMinInput(e: CustomEvent) {
     const { key } = e.currentTarget.dataset
     this.setData({
       [`manualData.meat.${key}.min`]: e.detail.value
@@ -374,7 +371,7 @@ Page({
   },
 
   // 肉鹅最高价输入
-  onMeatMaxInput(e: any) {
+  onMeatMaxInput(e: CustomEvent) {
     const { key } = e.currentTarget.dataset
     this.setData({
       [`manualData.meat.${key}.max`]: e.detail.value
@@ -521,7 +518,7 @@ Page({
         duration: 2000
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       wx.hideLoading()
       wx.showToast({
         title: '保存失败：' + error.message,
@@ -585,7 +582,7 @@ Page({
             title: '图片上传成功',
             icon: 'success'
           })
-        } catch (error: any) {
+        } catch (error: unknown) {
           wx.hideLoading()
           wx.showToast({
             title: '图片上传失败，请重试',
@@ -702,7 +699,7 @@ Page({
       setTimeout(() => {
         this.loadHistory()
       }, 500)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 保存失败，静默处理
     }
   },
@@ -761,7 +758,7 @@ Page({
       await this.saveLatestRecord(parsedGoosePrice as ParsedGoosePriceResult)
         
       this.setData({ recognizing: false })
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.setData({ recognizing: false })
 
       wx.showToast({
@@ -792,8 +789,8 @@ Page({
         .get()
 
       // 按日期分组，每个日期只显示一条记录（最新的）
-      const groupedByDate: { [key: string]: any[] } = {}
-      result.data.forEach((item: any) => {
+      const groupedByDate: { [key: string]: unknown[] } = {}
+      result.data.forEach((item: unknown) => {
         if (!groupedByDate[item.date]) {
           groupedByDate[item.date] = []
         }
@@ -832,7 +829,7 @@ Page({
   },
 
   // 查看历史记录（打开弹窗显示该日期的所有记录）
-  viewHistory(e: any) {
+  viewHistory(e: CustomEvent) {
     const { item } = e.currentTarget.dataset
     
     this.setData({

@@ -166,14 +166,14 @@ export class PaginationManager<T> {
 /**
  * 节流函数
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => any>(
   func: T,
   delay: number = 300
 ): T {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   let lastExecTime = 0
   
-  return function(this: any, ...args: Parameters<T>) {
+  return function(this: unknown, ...args: Parameters<T>) {
     const currentTime = Date.now()
     
     if (currentTime - lastExecTime > delay) {
@@ -193,13 +193,13 @@ export function throttle<T extends (...args: any[]) => any>(
 /**
  * 防抖函数
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => any>(
   func: T,
   delay: number = 300
 ): T {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   
-  return function(this: any, ...args: Parameters<T>) {
+  return function(this: unknown, ...args: Parameters<T>) {
     if (timeoutId) clearTimeout(timeoutId)
     
     timeoutId = setTimeout(() => {

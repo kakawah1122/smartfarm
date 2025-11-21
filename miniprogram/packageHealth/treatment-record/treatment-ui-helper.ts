@@ -165,7 +165,7 @@ export class TreatmentUIHelper {
   /**
    * 生成用药清单显示
    */
-  static formatMedicationList(medications: any[]): string[] {
+  static formatMedicationList(medications: unknown[]): string[] {
     return medications.map(med => {
       const parts = []
       parts.push(med.medicineName)
@@ -179,7 +179,7 @@ export class TreatmentUIHelper {
   /**
    * 获取批次选项列表
    */
-  static formatBatchOptions(batches: any[]): Array<{
+  static formatBatchOptions(batches: unknown[]): Array<{
     label: string
     value: string
     subLabel?: string
@@ -288,7 +288,7 @@ export class TreatmentUIHelper {
   /**
    * 生成导出数据
    */
-  static formatExportData(records: any[]): string {
+  static formatExportData(records: unknown[]): string {
     const headers = ['治疗ID', '批次', '动物数', '症状', '诊断', '兽医', '开始时间', '状态', '费用']
     
     const rows = records.map(record => [
@@ -363,7 +363,7 @@ export class TreatmentUIHelper {
     description: string
     actionText?: string
   } {
-    const configs: Record<string, any> = {
+    const configs: Record<string, unknown> = {
       noData: {
         icon: 'folder-add',
         title: '暂无治疗记录',

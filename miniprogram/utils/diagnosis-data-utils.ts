@@ -15,8 +15,7 @@ export interface DiagnosisRecord {
   confidence?: number
   images?: (string | null)[]
   treatmentDuration?: string
-  [key: string]: any
-}
+  [key: string]: unknown}
 
 /**
  * 统一诊断记录数据格式
@@ -24,7 +23,7 @@ export interface DiagnosisRecord {
  * @param record 原始诊断记录数据
  * @returns 标准化后的诊断记录数据
  */
-export function normalizeDiagnosisRecord(record: any): DiagnosisRecord {
+export function normalizeDiagnosisRecord(record: unknown): DiagnosisRecord {
   // 统一疾病名称字段：优先使用 diagnosis，如果没有则使用 diagnosisResult
   const diagnosis = record.diagnosis || record.diagnosisResult || '未知疾病'
 
@@ -61,7 +60,7 @@ export function normalizeDiagnosisRecord(record: any): DiagnosisRecord {
 
   // 过滤图片数组中的无效值
   const images = (record.images || []).filter(
-    (img: any) => img !== null && img !== undefined && typeof img === 'string'
+    (img: unknown) => img !== null && img !== undefined && typeof img === 'string'
   )
 
   return {
@@ -86,7 +85,7 @@ export function normalizeDiagnosisRecord(record: any): DiagnosisRecord {
  * @param records 原始诊断记录数组
  * @returns 标准化后的诊断记录数组
  */
-export function normalizeDiagnosisRecords(records: any[]): DiagnosisRecord[] {
+export function normalizeDiagnosisRecords(records: unknown[]): DiagnosisRecord[] {
   return records.map(normalizeDiagnosisRecord)
 }
 

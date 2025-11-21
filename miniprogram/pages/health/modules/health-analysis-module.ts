@@ -501,7 +501,7 @@ export class DataFormatter {
 /**
  * 导出便捷方法
  */
-export function setupAnalysisModule(pageInstance: any) {
+export function setupAnalysisModule(pageInstance: unknown) {
   // 绑定分析方法到页面实例
   pageInstance.calculateHealthRate = (stats: Partial<HealthStats>) => 
     HealthAnalysisManager.calculateHealthRate(stats)
@@ -509,7 +509,7 @@ export function setupAnalysisModule(pageInstance: any) {
   pageInstance.calculateSurvivalRate = (stats: Partial<HealthStats>) => 
     HealthAnalysisManager.calculateSurvivalRate(stats)
     
-  pageInstance.generateAnalysisReport = (data: any) => 
+  pageInstance.generateAnalysisReport = (data: unknown) => 
     HealthAnalysisManager.generateAnalysisReport(data)
   
   // 返回管理器

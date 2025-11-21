@@ -16,7 +16,7 @@ export interface AICountResult {
   confidence: number
   abnormalDetection?: {
     suspiciousAnimals: number
-    details: any[]
+    details: unknown[]
   }
   avgWeight?: number
   type?: string
@@ -124,7 +124,7 @@ export class ProductionAIManager {
       }
       
       // 调用AI分析云函数
-      const result = await CloudApi.callFunction<any>(
+      const result = await CloudApi.callFunction<unknown>(
         'ai-count-service',
         {
           action: 'analyzePoultry',
@@ -163,10 +163,10 @@ export class ProductionAIManager {
       wx.cloud.uploadFile({
         cloudPath,
         filePath: imagePath,
-        success: (res: any) => {
+        success: (res: unknown) => {
           resolve({ fileID: res.fileID })
         },
-        fail: (error: any) => {
+        fail: (error: unknown) => {
           logger.error('图片上传失败:', error)
           resolve(null)
         }
@@ -322,7 +322,7 @@ export class ProductionAIManager {
    */
   private static createExitRecord(data: AICountResult): void {
     // 触发创建出栏记录事件
-    const eventChannel = (getCurrentPages()[getCurrentPages().length - 1] as any).getOpenerEventChannel?.()
+    const eventChannel = (getCurrentPages()[getCurrentPages().length - 1] as unknown).getOpenerEventChannel?.()
     if (eventChannel) {
       eventChannel.emit('navigateToExitForm', data)
     }

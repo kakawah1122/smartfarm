@@ -42,14 +42,14 @@ export async function processImageUrls(
 
       if (tempUrlResult.fileList) {
         const tempUrlMap = new Map(
-          tempUrlResult.fileList.map((file: any) => [file.fileID, file.tempFileURL])
+          tempUrlResult.fileList.map((file: unknown) => [file.fileID, file.tempFileURL])
         )
 
         processedImages = processedImages
           .map((url: string) => tempUrlMap.get(url) || url)
           .filter((url: string) => url && typeof url === 'string')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('图片URL转换失败，使用原始URL:', error)
       if (showErrorToast) {
         wx.showToast({
@@ -70,10 +70,10 @@ export async function processImageUrls(
 
     if (tempUrlResult.fileList && tempUrlResult.fileList.length > 0) {
       processedImages = tempUrlResult.fileList
-        .map((item: any) => item.tempFileURL || item.fileID)
-        .filter((url: any) => url && typeof url === 'string')
+        .map((item: unknown) => item.tempFileURL || item.fileID)
+        .filter((url: unknown) => url && typeof url === 'string')
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.warn('图片URL转换失败，使用原始URL:', error)
     if (showErrorToast) {
       wx.showToast({

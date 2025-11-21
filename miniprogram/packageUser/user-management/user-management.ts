@@ -4,7 +4,7 @@ import { createPageWithNavbar } from '../../utils/navigation'
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 用户列表数据
-    userList: [] as any[],
+    userList: [] as unknown[],
     loading: true,
     loadingMore: false,
     hasMore: true,
@@ -31,7 +31,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 用户详情弹窗
     showUserDetail: false,
-    selectedUser: null as any,
+    selectedUser: null as unknown,
     originalRole: '', // 原始角色，用于判断是否有变更
     roleChanged: false, // 角色是否变更
     
@@ -59,7 +59,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     displayPermissions: [] as string[]
   },
 
-  onLoad(options: any) {
+  onLoad(options: unknown) {
     // 检查是否从员工管理中间页传递了权限信息
     if (options && options.from === 'employee-management' && options.hasPermission === 'true') {
       const userInfo = {
@@ -144,7 +144,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         const pagination = result.result.data.pagination
         
         // 标准化用户数据，确保字段一致性
-        const newUsers = rawUsers.map((user: any) => ({
+        const newUsers = rawUsers.map((user: unknown) => ({
           ...user,
           nickname: user.nickname || user.nickName || '未设置昵称',
           farmName: user.farmName || user.department || '未设置农场',
@@ -163,7 +163,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       } else {
         throw new Error(result.result?.message || '加载失败')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.setData({
         loading: false,
         loadingMore: false,
@@ -187,7 +187,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 显示用户详情弹窗
-  openUserDetail(user: any) {
+  openUserDetail(user: unknown) {
     const currentRoleIndex = this.data.roleOptions.findIndex(
       (option: { label: string; value: string }) => option.value === user.role
     )
@@ -330,14 +330,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 事件处理
-  onTabChange(e: any) {
+  onTabChange(e: CustomEvent) {
     this.setData({
       activeTab: e.detail.value
     })
     this.loadUserList()
   },
 
-  onUserClick(e: any) {
+  onUserClick(e: CustomEvent) {
     const user = e.currentTarget.dataset.user
     this.openUserDetail(user)
   },
@@ -357,13 +357,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     })
   },
 
-  onUserDetailPopupChange(e: any) {
+  onUserDetailPopupChange(e: CustomEvent) {
     if (!e.detail.visible) {
       this.closeUserDetail()
     }
   },
 
-  onPopupVisibleChange(e: any) {
+  onPopupVisibleChange(e: CustomEvent) {
     if (!e.detail.visible) {
       this.closeUserDetail()
     }
@@ -373,7 +373,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 阻止事件冒泡
   },
 
-  onRoleChange(e: any) {
+  onRoleChange(e: CustomEvent) {
     const selectedIndex = e.detail.value[0] || e.detail.value
     const selectedRole = this.data.roleOptions[selectedIndex]?.value
     const roleChanged = selectedRole !== this.data.originalRole
