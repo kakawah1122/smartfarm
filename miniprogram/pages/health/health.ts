@@ -19,6 +19,9 @@ import { HealthNavigationManager } from './modules/health-navigation-module'
 import { HealthEventManager, setupEventManagement } from './modules/health-event-module'
 import { SetDataBatcher, createSetDataBatcher } from './helpers/setdata-batcher'
 import { ListPaginator, createPaginator } from './helpers/list-pagination'
+import { createVaccineModule, VaccineModuleManager } from './modules/health-vaccine-module'
+import { createMonitoringModule, MonitoringModuleManager } from './modules/health-monitoring-module'
+import { createPreventionModule, PreventionModuleManager } from './modules/health-prevention-module'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
@@ -443,10 +446,16 @@ Page<PageData, any>({
   pendingAllBatchesPromise: null as Promise<any> | null,
   latestAllBatchesSnapshot: null as unknown,
   latestAllBatchesFetchedAt: 0,
-  setDataBatcher: null as SetDataBatcher | null,  // setData批量更新器
-  diagnosisHistoryPaginator: null as ListPaginator<any> | null,  // 诊断历史分页器
-  abnormalListPaginator: null as ListPaginator<any> | null,  // 异常列表分页器
-  
+  batchAnalysisCache: null as unknown,
+  setDataBatcher: null as SetDataBatcher | null,
+  navigationManager: null as HealthNavigationManager | null,
+  eventManager: null as HealthEventManager | null,
+  diagnosisHistoryPaginator: null as ListPaginator | null,
+  abnormalListPaginator: null as ListPaginator | null,
+  debouncedLoadHealthData: null as unknown,
+  vaccineModule: null as VaccineModuleManager | null,
+  monitoringModule: null as MonitoringModuleManager | null,
+  preventionModule: null as PreventionModuleManager | null,
   invalidateAllBatchesCache() {
     this.pendingAllBatchesPromise = null
     this.latestAllBatchesSnapshot = null
@@ -506,6 +515,11 @@ Page<PageData, any>({
   async onLoad(options: unknown) {
     // 🎯 初始化事件管理（新增模块化功能）
     setupEventManagement(this)
+    
+    // 🎯 初始化功能模块
+    this.vaccineModule = createVaccineModule(this)
+    this.monitoringModule = createMonitoringModule(this)
+    this.preventionModule = createPreventionModule(this)
     
     // ✅ 优化：立即初始化页面，不等待数据修复
     wx.nextTick(() => {
@@ -1377,9 +1391,19 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载预防管理数据
+   * 加载预防管理数据（委托给预防模块）
    */
   async loadPreventionData() {
+    if (this.preventionModule) {
+      await this.preventionModule.loadPreventionData()
+    }
+  },
+
+  /**
+   * 原始加载预防数据（已迁移）
+   * @deprecated
+   */
+  async loadPreventionData_deprecated() {
     const MAX_RETRIES = 2
     
     // 性能优化：添加加载状态，避免重复请求
@@ -1577,9 +1601,19 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载今日待办任务（合并后的通用方法）
+   * 加载今日待办任务（委托给预防模块）
    */
   async loadTodayTasks() {
+    if (this.preventionModule) {
+      await this.preventionModule.loadTodayTasks()
+    }
+  },
+
+  /**
+   * 原始加载今日任务方法（已迁移）
+   * @deprecated
+   */
+  async loadTodayTasks_deprecated() {
     const isAllBatches = this.data.currentBatchId === 'all'
     
     try {
@@ -1679,9 +1713,20 @@ Page<PageData, any>({
   },
 
   /**
-   * 分组历史任务（按批次和日龄组合分组）
+   * 分组历史任务（委托给预防模块）
    */
-  groupHistoryTasksByBatch(tasks: Batch[] = []) {
+  groupHistoryTasksByBatch(tasks: any[] = []) {
+    if (this.preventionModule) {
+      return this.preventionModule.groupHistoryTasksByBatch(tasks)
+    }
+    return []
+  },
+
+  /**
+   * 原始分组历史任务（已迁移）
+   * @deprecated
+   */
+  groupHistoryTasksByBatch_deprecated(tasks: Batch[] = []) {
     const batchMap: Record<string, any> = {}
     
     tasks.forEach((task: unknown) => {
@@ -1733,27 +1778,11 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载监控数据（实时健康状态已整合到顶部）
+   * 加载监控数据（委托给监控模块）
    */
   async loadMonitoringData() {
-    try {
-      // 如果没有实时状态数据，使用健康统计数据填充
-      const currentData = this.data.monitoringData?.realTimeStatus || {}
-      
-      // 如果当前批次不是全部批次，且监控数据为空，使用健康统计数据填充
-      if (this.data.currentBatchId !== 'all' && 
-          (!currentData.healthyCount && !currentData.abnormalCount)) {
-        this.setData({
-          'monitoringData.realTimeStatus': {
-            healthyCount: this.data.healthStats.healthyCount || 0,
-            abnormalCount: this.data.healthStats.abnormalCount || 0
-          },
-          'monitoringData.abnormalList': [],
-          'monitoringData.diseaseDistribution': []
-        })
-      }
-    } catch (error: unknown) {
-      // 加载失败，静默处理
+    if (this.monitoringModule) {
+      await this.monitoringModule.loadMonitoringData()
     }
   },
 
@@ -2196,9 +2225,20 @@ Page<PageData, any>({
   },
 
   /**
-   * 标准化任务对象，兼容旧字段
+   * 标准化任务数据格式（委托给预防模块）
    */
-  normalizeTask(task: unknown = {}, overrides: Record<string, any> = {}) {
+  normalizeTask(task: any = {}, overrides: Record<string, any> = {}) {
+    if (this.preventionModule) {
+      return this.preventionModule.normalizeTask(task, overrides)
+    }
+    return task
+  },
+
+  /**
+   * 原始标准化任务（已迁移）
+   * @deprecated
+   */
+  normalizeTask_deprecated(task: unknown = {}, overrides: Record<string, any> = {}) {
     const normalizedId = task._id || task.taskId || task.id || ''
     const normalizedTitle = task.title || task.taskName || task.name || task.displayTitle || task.content || '未命名任务'
     const normalizedDescription = task.description || task.content || ''
@@ -2221,9 +2261,19 @@ Page<PageData, any>({
 
 
   /**
-   * 加载即将到来的任务（合并后的通用方法）
+   * 加载即将到来的任务（委托给预防模块）
    */
   async loadUpcomingTasks() {
+    if (this.preventionModule) {
+      await this.preventionModule.loadUpcomingTasks()
+    }
+  },
+
+  /**
+   * 原始加载即将到来任务（已迁移）
+   * @deprecated
+   */
+  async loadUpcomingTasks_deprecated() {
     const isAllBatches = this.data.currentBatchId === 'all'
     
     try {
@@ -2341,9 +2391,19 @@ Page<PageData, any>({
 
 
   /**
-   * 加载历史任务（从breeding-todo迁移）- 修复：直接查询数据库获取所有已完成任务
+   * 加载历史任务（委托给预防模块）
    */
   async loadHistoryTasks() {
+    if (this.preventionModule) {
+      await this.preventionModule.loadHistoryTasks()
+    }
+  },
+
+  /**
+   * 原始加载历史任务（已迁移）
+   * @deprecated
+   */
+  async loadHistoryTasks_deprecated() {
     try {
       this.setData({ loading: true })
       
@@ -3450,21 +3510,23 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 打开疫苗表单
+   * 打开疫苗表单（委托给疫苗模块）
    */
   async openVaccineForm(task: unknown) {
-    // 获取当前批次的存栏数量
-    await this.initVaccineFormData(task)
-    this.setData({
-      showVaccineFormPopup: true,
-      showTaskDetailPopup: false
-    })
+    if (this.vaccineModule) {
+      this.vaccineModule.initVaccineForm(task)
+      this.setData({
+        showVaccineFormPopup: true,
+        showTaskDetailPopup: false
+      })
+    }
   },
 
   /**
-   * 初始化疫苗表单数据
+   * 初始化疫苗表单数据（已迁移到疫苗模块）
+   * @deprecated 使用 vaccineModule.initVaccineForm 代替
    */
-  async initVaccineFormData(task: unknown) {
+  async initVaccineFormData_deprecated(task: unknown) {
     // 获取当前批次的存栏数量
     let currentBatchStockQuantity = 0
     const batchId = task.batchId || this.data.currentBatchId
@@ -3552,9 +3614,19 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   },
 
   /**
-   * 疫苗表单输入处理（适配组件事件）
+   * 处理疫苗表单输入（委托给疫苗模块）
    */
   onVaccineFormInput(e: WechatMiniprogram.CustomEvent) {
+    if (this.vaccineModule) {
+      this.vaccineModule.onVaccineFormInput(e)
+    }
+  },
+
+  /**
+   * 原始疫苗表单输入处理（已迁移）
+   * @deprecated
+   */
+  onVaccineFormInput_deprecated(e: WechatMiniprogram.CustomEvent) {
     const { field, value } = e.detail || e.currentTarget?.dataset || {}
     const actualValue = value || e.detail?.value || ''
     
