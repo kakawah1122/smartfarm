@@ -52,24 +52,8 @@ const markHomepageNeedSync = () => {
   }
 }
 
-// 任务状态管理
-const getLocalTaskStatus = () => {
-  try {
-    return wx.getStorageSync('taskStatus') || {}
-  } catch (e) {
-    return {}
-  }
-}
-
-const updateLocalTaskStatus = (taskId: string, status: string) => {
-  try {
-    const taskStatus = getLocalTaskStatus()
-    taskStatus[taskId] = status
-    wx.setStorageSync('taskStatus', taskStatus)
-  } catch (e) {
-    console.error('更新任务状态失败:', e)
-  }
-}
+// 任务状态管理函数已移除，因为未被使用
+// 如需要，可以重新实现 getLocalTaskStatus 和 updateLocalTaskStatus
 
 // 类型定义
 interface BaseResponse<T> {
@@ -142,11 +126,8 @@ type WeatherConditionInfo = {
   icon?: string
 }
 
-type WeatherApiPayload = {
-  locationInfo?: WeatherLocationInfo
-  current?: WeatherCurrentInfo
-  condition?: WeatherConditionInfo
-}
+// WeatherApiPayload类型已移除，因为未被使用
+// 相关功能已通过WeatherData接口实现
 
 type MaterialItem = {
   _id: string
@@ -698,8 +679,8 @@ Page({
     }
     
     // 安全地获取天气数据
-    const currentWeather = actualWeatherData.current || {}
-    const conditionInfo = actualWeatherData.condition || {}
+    const currentWeather = actualWeatherData.current as WeatherCurrentInfo || {}
+    const conditionInfo = actualWeatherData.condition as WeatherConditionInfo || {}
     
     // 检查是否有API失败的标识
     const hasError = (conditionInfo.text && conditionInfo.text.includes('获取失败')) || 
@@ -716,13 +697,13 @@ Page({
     }
     
     updateData.weather = {
-        temperature: currentWeather.temperature || this.data.weather.temperature,
-        humidity: currentWeather.humidity || this.data.weather.humidity,
-        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || this.data.weather.condition),
-        emoji: hasError ? '❌' : (conditionInfo.emoji || this.data.weather.emoji),
-        feelsLike: currentWeather.feelsLike || this.data.weather.feelsLike,
-        windDirection: currentWeather.windDirection || this.data.weather.windDirection,
-        windScale: currentWeather.windScale || this.data.weather.windScale,
+        temperature: currentWeather.temperature || (this.data.weather as any).temperature,
+        humidity: currentWeather.humidity || (this.data.weather as any).humidity,
+        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || (this.data.weather as any).condition),
+        emoji: hasError ? '❌' : (conditionInfo.emoji || (this.data.weather as any).emoji),
+        feelsLike: currentWeather.feelsLike || (this.data.weather as any).feelsLike,
+        windDirection: currentWeather.windDirection || (this.data.weather as any).windDirection,
+        windScale: currentWeather.windScale || (this.data.weather as any).windScale,
         updateTime: hasError ? '获取失败' : (this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新'),
         loading: false,
         hasError: hasError
@@ -1297,11 +1278,11 @@ Page({
   /**
    * 初始化疫苗表单数据
    */
-  initVaccineFormData(task: unknown) {
+  initVaccineFormData(task: any) {
     const vaccineFormData: VaccineFormData = {
       veterinarianName: '',
       veterinarianContact: '',
-      vaccineName: task.title || '', // 使用任务标题作为疫苗名称初始值
+      vaccineName: task?.title || '', // 使用任务标题作为疫苗名称初始值
       manufacturer: '',
       batchNumber: '',
       dosage: '0.5ml/只',
@@ -1313,7 +1294,7 @@ Page({
       otherCost: '',
       totalCost: 0,
       totalCostFormatted: '¥0.00',
-      notes: task.description || '' // 使用任务描述作为备注初始值
+      notes: task?.description || '' // 使用任务描述作为备注初始值
     }
 
     this.setData({
@@ -1567,7 +1548,7 @@ Page({
     }
 
     // 检查任务ID是否存在
-    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as unknown)._id
+    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as any)._id
     if (!taskId) {
       wx.showToast({
         title: '任务ID缺失，无法完成',
@@ -1606,8 +1587,8 @@ Page({
   /**
    * 任务详情弹窗可见性变化
    */
-  onTaskDetailPopupChange(event: unknown) {
-    if (!event.detail.visible) {
+  onTaskDetailPopupChange(event: any) {
+    if (!event?.detail?.visible) {
       this.closeTaskDetailPopup()
     }
   },
@@ -1628,7 +1609,7 @@ Page({
   },
 
   // 跳转到鹅价详情页
-  navigateToPriceDetail(event: unknown) {
+  navigateToPriceDetail(event: any) {
     const { goosePriceData, priceBreeds, currentPriceBreed, priceUpdateTime } = this.data
     if (!goosePriceData || Object.keys(goosePriceData).length === 0) {
       wx.showToast({
@@ -2639,7 +2620,7 @@ Page({
       if (result.success && result.data) {
         const articles = result.data.list || []
         // 转换为前端需要的格式
-        const formattedArticles = articles.map((article: unknown) => ({
+        const formattedArticles = articles.map((article: any) => ({
           _id: article._id,
           title: article.title,
           description: article.description,
