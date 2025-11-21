@@ -682,7 +682,6 @@ async function createMaterialRecord(event, wxContext) {
     // 确保 notes 字段是字符串类型
     let notesValue = recordData.notes || ''
     if (typeof notesValue === 'object' && notesValue !== null) {
-      debugLog('[创建物料记录] notes 字段是对象类型，尝试转换', notesValue)
       // 优先提取对象中的文本字段
       if (notesValue.value || notesValue.text || notesValue.content || notesValue.remark) {
         notesValue = notesValue.value || notesValue.text || notesValue.content || notesValue.remark
