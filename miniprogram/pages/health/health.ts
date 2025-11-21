@@ -1936,6 +1936,8 @@ Page<PageData, any>({
       
       // 获取治疗成本（确保是数字类型，处理字符串"0.00"）
       let treatmentCost = 0
+      console.log('=== 开始获取治疗成本 ===')
+      
       try {
         const treatmentCostResult = await safeCloudCall({
           name: 'health-cost',  // 使用拆分后的云函数
@@ -1946,14 +1948,22 @@ Page<PageData, any>({
           }
         })
         
+        console.log('治疗成本云函数返回:', treatmentCostResult)
+        
         if (treatmentCostResult?.success) {
           const costValue = treatmentCostResult.data?.totalCost
+          console.log('治疗成本原始值:', costValue, '类型:', typeof costValue)
           // 处理字符串类型的成本（如"0.00"）
           treatmentCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
+          console.log('处理后的治疗成本:', treatmentCost)
+        } else {
+          console.warn('治疗成本查询不成功:', treatmentCostResult)
         }
       } catch (error) {
         console.error('获取治疗成本失败:', error)
+        // 从已有数据中获取
         treatmentCost = Number(this.data.treatmentData?.stats?.totalTreatmentCost) || 0
+        console.log('使用缓存的治疗成本:', treatmentCost)
       }
       
       // 提取饲养成本（确保是数字类型）

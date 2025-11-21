@@ -191,10 +191,11 @@ async function calculateTreatmentCost(event, wxContext) {
     
     if (batchId && batchId !== 'all') {
       conditions.batchId = batchId
-    } else {
-      // 全部批次，需要添加用户条件
-      conditions._openid = wxContext.OPENID
     }
+    // 移除openid限制，统计所有用户的治疗记录
+    // else {
+    //   conditions._openid = wxContext.OPENID
+    // }
     
     if (dateRange && dateRange.start && dateRange.end) {
       conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
