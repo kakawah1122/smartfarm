@@ -7,7 +7,7 @@
     "material-record-detail-popup": "../../components/material-record-detail-popup/material-record-detail-popup",
     "t-row": "tdesign-miniprogram/row/row",
     "t-col": "tdesign-miniprogram/col/col",
-    "lazy-load": "../../components/lazy-load/lazy-load"
+    "lazy-load": "/components/lazy-load/lazy-load"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

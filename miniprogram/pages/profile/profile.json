@@ -2,7 +2,7 @@
   "usingComponents": {
     "navigation-bar": "../../components/navigation-bar/navigation-bar",
     "bottom-popup": "../../components/bottom-popup/bottom-popup",
-    "lazy-load": "../../components/lazy-load/lazy-load"
+    "lazy-load": "/components/lazy-load/lazy-load"
   },
   "navigationStyle": "custom"
 }
