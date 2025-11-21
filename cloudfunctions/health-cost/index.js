@@ -188,28 +188,6 @@ async function calculateBatchCost(event, wxContext) {
     // 单只综合成本（用于死亡损失计算）
     const totalAvgCost = entryUnitCost + avgBreedingCost + avgPreventionCost + avgTreatmentCost
     
-    // 调试日志
-    console.log('[calculateBatchCost] 成本计算结果:', {
-      batchId,
-      currentQuantity,
-      分摊基数: {
-        饲喂数量: totalFeedCount,
-        预防数量: totalPreventionCount,
-        病鹅数量: totalAffectedCount
-      },
-      单项成本: {
-        鹅苗成本: entryUnitCost.toFixed(2),
-        饲养成本分摊: avgBreedingCost.toFixed(2),
-        预防成本分摊: avgPreventionCost.toFixed(2),
-        治疗成本分摊: avgTreatmentCost.toFixed(2)
-      },
-      单只综合成本: totalAvgCost.toFixed(2),
-      总成本: {
-        饲养总成本: breedingCost.toFixed(2),
-        预防总成本: preventionCost.toFixed(2),
-        治疗总成本: treatmentCost.toFixed(2)
-      }
-    })
     
     return {
       success: true,
@@ -269,42 +247,23 @@ async function calculateTreatmentCost(event, wxContext) {
   try {
     const { dateRange, batchId } = event
     
-    // 先测试能否获取所有记录
-    console.log('[calculateTreatmentCost] 开始执行')
-    console.log('[calculateTreatmentCost] 环境:', cloud.DYNAMIC_CURRENT_ENV)
-    console.log('[calculateTreatmentCost] 传入参数:', { dateRange, batchId })
-    
-    // 先不加任何条件，直接查询
-    let conditions = {}
-    
-    // 暂时不添加任何条件限制
-    
-    // 暂时移除日期范围限制，确保能查到数据
-    // if (dateRange && dateRange.start && dateRange.end) {
-    //   conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
-    // }
-    
-    // 添加调试日志
-    console.log('[calculateTreatmentCost] 查询条件:', JSON.stringify(conditions))
-    console.log('[calculateTreatmentCost] 集合名:', COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-    
-    // 先测试直接查询集合，不加where条件
-    try {
-      const testResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS).get()
-      console.log('[calculateTreatmentCost] 测试查询（不加条件）结果:', testResult.data.length)
-    } catch (testErr) {
-      console.error('[calculateTreatmentCost] 测试查询失败:', testErr)
+    // 构建查询条件
+    let conditions = {
+      isDeleted: false
     }
     
-    // 使用统一的集合配置进行正式查询
+    if (batchId && batchId !== 'all') {
+      conditions.batchId = batchId
+    }
+    
+    if (dateRange && dateRange.start && dateRange.end) {
+      conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
+    }
+    
+    // 使用统一的集合配置进行查询
     const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where(conditions)
       .get()
-    
-    console.log('[calculateTreatmentCost] 查询结果数量:', result.data.length)
-    if (result.data.length > 0) {
-      console.log('[calculateTreatmentCost] 第一条记录:', JSON.stringify(result.data[0]))
-    }
     
     let totalCost = 0
     let treatmentCount = 0

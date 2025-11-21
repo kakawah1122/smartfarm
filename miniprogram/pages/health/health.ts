@@ -1339,9 +1339,6 @@ Page<PageData, any>({
             })
             
             // 单独获取用药和疫苗统计（确保数据正确显示）
-            // 🔧 添加调试日志
-            console.log('=== 开始获取预防统计数据 ===')
-            console.log('当前批次ID:', this.data.currentBatchId || 'all')
             
             try {
               // 并行获取用药、疫苗和消毒的实际记录数
@@ -1377,11 +1374,6 @@ Page<PageData, any>({
                 })
               ])
               
-              // 🔧 调试：打印返回的原始数据
-              console.log('=== 云函数返回的原始数据 ===')
-              console.log('medication返回:', medicationResult)
-              console.log('vaccine返回:', vaccineRecordsResult)
-              console.log('all返回:', allPreventionResult)
               
               // 强制更新所有统计数据
               const finalStats = {
@@ -1395,18 +1387,12 @@ Page<PageData, any>({
               
               // 从查询结果中获取实际数量
               if (medicationResult?.success && medicationResult.data) {
-                console.log('✅ medication数量:', medicationResult.data.total)
                 finalStats.medicationCount = medicationResult.data.total || 0
-              } else {
-                console.log('❌ medication查询失败或无数据')
               }
               
               if (vaccineRecordsResult?.success && vaccineRecordsResult.data) {
-                console.log('✅ vaccine数量:', vaccineRecordsResult.data.total)
                 finalStats.vaccineCount = vaccineRecordsResult.data.total || 0
                 finalStats.vaccineCoverage = vaccineRecordsResult.data.total || 0
-              } else {
-                console.log('❌ vaccine查询失败或无数据')
               }
               
               // 使用全部预防记录计算接种率
@@ -1431,8 +1417,6 @@ Page<PageData, any>({
                 }
               })
               
-              console.log('📊 最终设置的统计数据:', finalStats)
-              logger.info('预防统计更新:', finalStats)
               
             } catch (e) {
               logger.error('获取预防统计失败:', e)
@@ -1936,8 +1920,6 @@ Page<PageData, any>({
       
       // 获取治疗成本（确保是数字类型，处理字符串"0.00"）
       let treatmentCost = 0
-      console.log('=== 开始获取治疗成本 ===')
-      
       try {
         const treatmentCostResult = await safeCloudCall({
           name: 'health-cost',  // 使用拆分后的云函数
@@ -1948,22 +1930,14 @@ Page<PageData, any>({
           }
         })
         
-        console.log('治疗成本云函数返回:', treatmentCostResult)
-        
         if (treatmentCostResult?.success) {
           const costValue = treatmentCostResult.data?.totalCost
-          console.log('治疗成本原始值:', costValue, '类型:', typeof costValue)
           // 处理字符串类型的成本（如"0.00"）
           treatmentCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
-          console.log('处理后的治疗成本:', treatmentCost)
-        } else {
-          console.warn('治疗成本查询不成功:', treatmentCostResult)
         }
       } catch (error) {
-        console.error('获取治疗成本失败:', error)
         // 从已有数据中获取
         treatmentCost = Number(this.data.treatmentData?.stats?.totalTreatmentCost) || 0
-        console.log('使用缓存的治疗成本:', treatmentCost)
       }
       
       // 提取饲养成本（确保是数字类型）
