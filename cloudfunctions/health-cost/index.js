@@ -184,26 +184,24 @@ async function calculateTreatmentCost(event, wxContext) {
   try {
     const { dateRange, batchId } = event
     
-    // 构建查询条件 - 放宽限制以兼容更多数据
-    let conditions = {
-      // 移除isDeleted限制，或使用更宽松的条件
-      $or: [
-        { isDeleted: false },
-        { isDeleted: { $exists: false } }  // 兼容没有isDeleted字段的记录
-      ]
-    }
+    // 构建查询条件 - 最宽松的条件，确保能查到数据
+    let conditions = {}
     
-    if (batchId && batchId !== 'all') {
-      conditions.batchId = batchId
-    }
+    // 如果指定了批次，只查询该批次
+    // if (batchId && batchId !== 'all') {
+    //   conditions.batchId = batchId
+    // }
+    
+    // 暂时不限制任何条件，查看是否能获取到数据
     // 移除openid限制，统计所有用户的治疗记录
     // else {
     //   conditions._openid = wxContext.OPENID
     // }
     
-    if (dateRange && dateRange.start && dateRange.end) {
-      conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
-    }
+    // 暂时移除日期范围限制，确保能查到数据
+    // if (dateRange && dateRange.start && dateRange.end) {
+    //   conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
+    // }
     
     // 添加调试日志
     console.log('[calculateTreatmentCost] 查询条件:', JSON.stringify(conditions))
