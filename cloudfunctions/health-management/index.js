@@ -4564,27 +4564,32 @@ async function calculateBatchCost(event, wxContext) {
     const totalCost = entryCost + totalBreedingCost + preventionCost + treatmentCost
     const avgTotalCost = initialQuantity > 0 ? (totalCost / initialQuantity) : 0
     
+    // 确保所有成本值都是有效数字
+    const safeAvgBreedingCost = (!isNaN(avgBreedingCost) && isFinite(avgBreedingCost)) ? avgBreedingCost : 0
+    const safeAvgTotalCost = (!isNaN(avgTotalCost) && isFinite(avgTotalCost)) ? avgTotalCost : 0
+    const safeEntryUnitCost = (!isNaN(entryUnitCost) && isFinite(entryUnitCost)) ? entryUnitCost : 0
+    
     return {
       success: true,
       data: {
-        avgCost: avgBreedingCost.toFixed(2),
-        avgBreedingCost: avgBreedingCost.toFixed(2),
-        avgTotalCost: avgTotalCost.toFixed(2),
-        entryUnitCost: entryUnitCost.toFixed(2),
+        avgCost: safeAvgBreedingCost.toFixed(2),
+        avgBreedingCost: safeAvgBreedingCost.toFixed(2),
+        avgTotalCost: safeAvgTotalCost.toFixed(2),
+        entryUnitCost: safeEntryUnitCost.toFixed(2),
         breakdown: {
-          // 批次总成本
-          entryCostTotal: entryCost.toFixed(2),
-          materialCostTotal: materialCost.toFixed(2),
-          feedCostTotal: feedCost.toFixed(2),
-          breedingCostTotal: totalBreedingCost.toFixed(2),
-          preventionCostTotal: preventionCost.toFixed(2),
-          treatmentCostTotal: treatmentCost.toFixed(2),
-          totalCostTotal: totalCost.toFixed(2),
-          // 每只分摊成本（前端直接使用）
-          entryUnitCost: entryUnitCost.toFixed(2),
-          breedingCost: avgBreedingCost.toFixed(2),
-          preventionCost: avgPreventionCost.toFixed(2),
-          treatmentCost: avgTreatmentCost.toFixed(2),
+          // 批次总成本 - 确保所有值都是有效数字
+          entryCostTotal: ((!isNaN(entryCost) && isFinite(entryCost)) ? entryCost : 0).toFixed(2),
+          materialCostTotal: ((!isNaN(materialCost) && isFinite(materialCost)) ? materialCost : 0).toFixed(2),
+          feedCostTotal: ((!isNaN(feedCost) && isFinite(feedCost)) ? feedCost : 0).toFixed(2),
+          breedingCostTotal: ((!isNaN(totalBreedingCost) && isFinite(totalBreedingCost)) ? totalBreedingCost : 0).toFixed(2),
+          preventionCostTotal: ((!isNaN(preventionCost) && isFinite(preventionCost)) ? preventionCost : 0).toFixed(2),
+          treatmentCostTotal: ((!isNaN(treatmentCost) && isFinite(treatmentCost)) ? treatmentCost : 0).toFixed(2),
+          totalCostTotal: ((!isNaN(totalCost) && isFinite(totalCost)) ? totalCost : 0).toFixed(2),
+          // 每只分摊成本（前端直接使用）- 使用已经安全检查过的变量
+          entryUnitCost: safeEntryUnitCost.toFixed(2),
+          breedingCost: safeAvgBreedingCost.toFixed(2),
+          preventionCost: ((!isNaN(avgPreventionCost) && isFinite(avgPreventionCost)) ? avgPreventionCost : 0).toFixed(2),
+          treatmentCost: ((!isNaN(avgTreatmentCost) && isFinite(avgTreatmentCost)) ? avgTreatmentCost : 0).toFixed(2),
           // 实际操作数量（用于前端显示分摊基准）
           feedTargetCount: totalFeedTargetCount,
           preventionTargetCount: totalPreventionTargetCount,
@@ -6310,19 +6315,23 @@ async function updateTreatmentProgress(event, wxContext) {
           const costResult = await calculateBatchCost({ batchId: batchDocId }, { OPENID: openid })
           if (costResult.success && costResult.data) {
             // 使用综合平均成本（包含鹅苗、饲养、预防、治疗的分摊）
-            unitCost = parseFloat(costResult.data.avgTotalCost) || 0
+            const parsedCost = parseFloat(costResult.data.avgTotalCost)
+            // 确保不是NaN，如果是NaN则使用0
+            unitCost = (!isNaN(parsedCost) && parsedCost > 0) ? parsedCost : 0
             costBreakdown = costResult.data.breakdown
             debugLog('批次综合平均成本:', unitCost)
             debugLog('成本明细:', costBreakdown)
           } else {
             // 降级：使用入栏单价
-            unitCost = parseFloat(batch.unitPrice) || 0
+            const fallbackCost = parseFloat(batch.unitPrice)
+            unitCost = (!isNaN(fallbackCost) && fallbackCost > 0) ? fallbackCost : 0
             debugLog('获取综合成本失败，降级使用入栏单价:', unitCost)
           }
         } catch (costError) {
           console.error('计算批次成本失败:', costError)
           // 降级：使用入栏单价
-          unitCost = parseFloat(batch.unitPrice) || 0
+          const fallbackCost = parseFloat(batch.unitPrice)
+          unitCost = (!isNaN(fallbackCost) && fallbackCost > 0) ? fallbackCost : 0
           debugLog('计算综合成本异常，降级使用入栏单价:', unitCost)
         }
       } else {
@@ -6365,7 +6374,10 @@ async function updateTreatmentProgress(event, wxContext) {
       
       // ✅ 计算财务损失 = 综合平均成本 × 死亡数量（已包含所有分摊成本）
       // 注意：治疗成本已经包含在avgTotalCost的分摊中，不应重复计算
-      const financeLoss = unitCost * count
+      // 确保unitCost和count都是有效数字
+      const safeUnitCost = (!isNaN(unitCost) && isFinite(unitCost)) ? unitCost : 0
+      const safeCount = (!isNaN(count) && isFinite(count) && count > 0) ? count : 1
+      const financeLoss = safeUnitCost * safeCount
       
       // ✅ 先查找是否已存在该治疗记录的死亡记录
       const existingDeathRecords = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
@@ -6387,25 +6399,33 @@ async function updateTreatmentProgress(event, wxContext) {
         const newDeathCount = oldDeathCount + count
         
         // ✅ 兼容新旧数据结构
-        const oldFinanceLoss = existingRecord.financialLoss?.totalLoss || existingRecord.financeLoss || existingRecord.totalCost || 0
-        const newFinanceLoss = oldFinanceLoss + financeLoss
+        const oldFinanceLoss = parseFloat(existingRecord.financialLoss?.totalLoss || existingRecord.financeLoss || existingRecord.totalCost || 0)
+        const safeOldFinanceLoss = (!isNaN(oldFinanceLoss) && isFinite(oldFinanceLoss)) ? oldFinanceLoss : 0
+        const newFinanceLoss = safeOldFinanceLoss + financeLoss
         
-        const oldTreatmentCost = existingRecord.financialLoss?.treatmentCost || existingRecord.treatmentCost || 0
-        const newTreatmentCost = oldTreatmentCost + deathTreatmentCost
+        const oldTreatmentCost = parseFloat(existingRecord.financialLoss?.treatmentCost || existingRecord.treatmentCost || 0)
+        const safeOldTreatmentCost = (!isNaN(oldTreatmentCost) && isFinite(oldTreatmentCost)) ? oldTreatmentCost : 0
+        const newTreatmentCost = safeOldTreatmentCost + deathTreatmentCost
         
-        const oldMedicationCost = existingRecord.financialLoss?.medicationCost || existingRecord.medicationCost || 0
-        const newMedicationCost = oldMedicationCost + deathMedicationCost
+        const oldMedicationCost = parseFloat(existingRecord.financialLoss?.medicationCost || existingRecord.medicationCost || 0)
+        const safeOldMedicationCost = (!isNaN(oldMedicationCost) && isFinite(oldMedicationCost)) ? oldMedicationCost : 0
+        const newMedicationCost = safeOldMedicationCost + deathMedicationCost
+        
+        // 确保所有新值都是有效数字
+        const safeNewFinanceLoss = (!isNaN(newFinanceLoss) && isFinite(newFinanceLoss)) ? newFinanceLoss : 0
+        const safeNewTreatmentCost = (!isNaN(newTreatmentCost) && isFinite(newTreatmentCost)) ? newTreatmentCost : 0
+        const safeNewMedicationCost = (!isNaN(newMedicationCost) && isFinite(newMedicationCost)) ? newMedicationCost : 0
         
         await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS).doc(deathRecordId).update({
           data: {
             deathCount: newDeathCount,
-            financeLoss: parseFloat(newFinanceLoss.toFixed(2)),
-            totalCost: parseFloat(newFinanceLoss.toFixed(2)),
-            treatmentCost: parseFloat(newTreatmentCost.toFixed(2)),
-            medicationCost: parseFloat(newMedicationCost.toFixed(2)),
+            financeLoss: parseFloat(safeNewFinanceLoss.toFixed(2)),
+            totalCost: parseFloat(safeNewFinanceLoss.toFixed(2)),
+            treatmentCost: parseFloat(safeNewTreatmentCost.toFixed(2)),
+            medicationCost: parseFloat(safeNewMedicationCost.toFixed(2)),
             // ✅ 同时更新结构化的 financialLoss 对象
-            'financialLoss.totalLoss': parseFloat(newFinanceLoss.toFixed(2)),
-            'financialLoss.treatmentCost': parseFloat(newTreatmentCost.toFixed(2)),
+            'financialLoss.totalLoss': parseFloat(safeNewFinanceLoss.toFixed(2)),
+            'financialLoss.treatmentCost': parseFloat(safeNewTreatmentCost.toFixed(2)),
             updatedAt: new Date()
           }
         })
@@ -6414,6 +6434,12 @@ async function updateTreatmentProgress(event, wxContext) {
         
       } else {
         // ✅ 不存在，创建新的死亡记录
+        // 确保所有数值都是有效的
+        const safeFinanceLoss = (!isNaN(financeLoss) && isFinite(financeLoss)) ? financeLoss : 0
+        const safeDeathTreatmentCost = (!isNaN(deathTreatmentCost) && isFinite(deathTreatmentCost)) ? deathTreatmentCost : 0
+        const safeDeathMedicationCost = (!isNaN(deathMedicationCost) && isFinite(deathMedicationCost)) ? deathMedicationCost : 0
+        const safeTreatmentCostPerAnimal = (!isNaN(treatmentCostPerAnimal) && isFinite(treatmentCostPerAnimal)) ? treatmentCostPerAnimal : 0
+        
         const deathRecordData = {
           batchId: treatment.batchId,
           batchNumber: batchNumber,
@@ -6424,13 +6450,13 @@ async function updateTreatmentProgress(event, wxContext) {
           deathCause: diagnosisText,
           deathCategory: 'disease',
           source: 'treatment',
-          financeLoss: parseFloat(financeLoss.toFixed(2)),
-          unitCost: parseFloat(unitCost.toFixed(2)),
-          costPerAnimal: parseFloat(unitCost.toFixed(2)),
-          totalCost: parseFloat(financeLoss.toFixed(2)),
-          treatmentCost: parseFloat(deathTreatmentCost.toFixed(2)),
-          medicationCost: parseFloat(deathMedicationCost.toFixed(2)),
-          treatmentCostPerAnimal: parseFloat(treatmentCostPerAnimal.toFixed(2)),
+          financeLoss: parseFloat(safeFinanceLoss.toFixed(2)),
+          unitCost: parseFloat(safeUnitCost.toFixed(2)),
+          costPerAnimal: parseFloat(safeUnitCost.toFixed(2)),
+          totalCost: parseFloat(safeFinanceLoss.toFixed(2)),
+          treatmentCost: parseFloat(safeDeathTreatmentCost.toFixed(2)),
+          medicationCost: parseFloat(safeDeathMedicationCost.toFixed(2)),
+          treatmentCostPerAnimal: parseFloat(safeTreatmentCostPerAnimal.toFixed(2)),
           medications: treatment.medications || [],
           notes: notes || '',
           isDeleted: false,
@@ -6440,9 +6466,9 @@ async function updateTreatmentProgress(event, wxContext) {
           updatedAt: new Date(),
           // ✅ 新增结构化财务损失字段，兼容死亡记录列表页面
           financialLoss: {
-            totalLoss: parseFloat(financeLoss.toFixed(2)),
-            unitCost: parseFloat(unitCost.toFixed(2)),
-            treatmentCost: parseFloat(deathTreatmentCost.toFixed(2)),
+            totalLoss: parseFloat(safeFinanceLoss.toFixed(2)),
+            unitCost: parseFloat(safeUnitCost.toFixed(2)),
+            treatmentCost: parseFloat(safeDeathTreatmentCost.toFixed(2)),
             calculationMethod: 'avg_total_cost',  // 使用综合平均成本
             currency: 'CNY',
             // 保存成本明细供参考

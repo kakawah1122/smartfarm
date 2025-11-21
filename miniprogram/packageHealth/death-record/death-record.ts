@@ -3,7 +3,7 @@ import { createPageWithNavbar } from '../../utils/navigation'
 import { markHomepageNeedSync } from '../../utils/global-sync'
 import { logger } from '../../utils/logger'
 
-const pageConfig = {
+const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 表单数据
     formData: {
@@ -410,6 +410,10 @@ const pageConfig = {
         wx.hideLoading()
         
         if (result.result && result.result.success) {
+          // ✅ 设置刷新标志，通知健康页面刷新
+          wx.setStorageSync('health_page_need_refresh', true)
+          markHomepageNeedSync()
+          
           wx.showToast({
             title: '死亡记录已提交',
             icon: 'success'
@@ -497,6 +501,7 @@ const pageConfig = {
         })
       },
       fail: (error) => {
+        console.error('图片选择失败:', error)
         wx.showToast({
           title: '图片选择失败',
           icon: 'none'
