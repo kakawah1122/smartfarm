@@ -19,9 +19,6 @@ import { setupNavigationHandlers } from './modules/production-navigation-module'
 import { ProductionDataLoader } from './modules/production-data-loader'
 import { ProductionAIManager } from './modules/production-ai-module'
 
-// 分页配置
-const PAGE_SIZE = 20;
-
 type ProductionPageData = WechatMiniprogram.Page.DataOption & {
   aiCount: {
     active: boolean
@@ -33,22 +30,7 @@ type ProductionPageData = WechatMiniprogram.Page.DataOption & {
     rounds: unknown[]
     currentRound: number
     cumulativeTotal: number
-  },
-  
-  // 新增分页相关
-  pagination: {
-    entry: { page: number; hasMore: boolean; loading: boolean };
-    exit: { page: number; hasMore: boolean; loading: boolean };
-    material: { page: number; hasMore: boolean; loading: boolean };
-  };
-  
-  // 性能优化标记
-  isFirstLoad: boolean;
-  tabLoadStatus: {
-    entry: boolean;
-    exit: boolean;
-    material: boolean;
-  };
+  }
 }
 
 const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: ProductionPageData } = {
@@ -129,29 +111,10 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       rounds: [] as unknown[],       // 各轮次记录
       currentRound: 0,           // 当前轮次
       cumulativeTotal: 0         // 累计总数
-    },
-    
-    // 新增分页数据
-    pagination: {
-      entry: { page: 1, hasMore: true, loading: false },
-      exit: { page: 1, hasMore: true, loading: false },
-      material: { page: 1, hasMore: true, loading: false }
-    },
-    
-    // 性能优化标记
-    isFirstLoad: true,
-    tabLoadStatus: {
-      entry: false,
-      exit: false,
-      material: false
     }
   },
 
   onLoad() {
-    // 🎯 性能优化：分步加载
-    const startTime = Date.now()
-    logger.info('生产页面开始加载')
-    
     // 初始化导航处理器
     setupNavigationHandlers(this)
     
@@ -161,18 +124,10 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       'aiCount.rounds': [],
       'aiCount.currentRound': 0,
       'aiCount.cumulativeTotal': 0,
-      isDataLoaded: false,
-      isFirstLoad: true
+      isDataLoaded: false
     })
-    
-    // 🎯 优化：只加载概览数据，延迟加载详细数据
-    this.loadDashboardData().then(() => {
-      logger.info(`概览数据加载完成，耗时：${Date.now() - startTime}ms`)
-      // 延迟100ms后加载当前tab数据
-      setTimeout(() => {
-        this.loadCurrentTabData()
-      }, 100)
-    })
+    // 只在 onLoad 时加载一次初始数据
+    this.loadData()
   },
 
   onReady() {
@@ -182,40 +137,22 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   onShow() {
     // 只在数据已经加载过的情况下才刷新（从其他页面返回时）
     if (this.data.isDataLoaded) {
-      this.refreshData()
+    this.refreshData()
     }
   },
 
-  // 🎯 优化：按需加载当前tab数据
-  loadCurrentTabData() {
-    const activeTab = this.data.activeTab
-    
-    // 检查是否已加载
-    if (this.data.tabLoadStatus[activeTab]) {
-      return
-    }
-    
-    switch(activeTab) {
-      case 'entry':
-        this.loadEntryData()
-        break
-      case 'exit':
-        this.loadExitData()
-        break
-      case 'material':
-        this.loadMaterialData()
-        break
-    }
-  },
-  
-  // 原有loadData方法保留（兼容性）
+  // 加载数据
   async loadData() {
-    if (this.data.isDataLoaded) return
-    
     try {
-      await this.loadDashboardData()
-      // 只加载当前tab
-      this.loadCurrentTabData()
+      // 并行加载所有数据
+      await Promise.all([
+        this.loadDashboardData(),
+        this.loadEntryData(),
+        this.loadExitData(),
+    this.loadMaterialData()
+      ])
+      
+      // 标记数据已加载
       this.setData({ isDataLoaded: true })
     } catch (error: unknown) {
       logger.error('加载数据失败:', error)
