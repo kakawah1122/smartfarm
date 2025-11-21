@@ -225,7 +225,7 @@
     </scroll-view>
     
     <!-- 底部按钮区域 -->
-    <view class="popup-footer" wx:if="{{!selectedRecord.effectiveness || selectedRecord.effectiveness === 'pending'}}">
+    <view class="popup-footer" wx:if="{{!selectedRecord.effectiveness || (selectedRecord.effectiveness !== 'excellent' && selectedRecord.effectiveness !== 'good' && selectedRecord.effectiveness !== 'fair' && selectedRecord.effectiveness !== 'poor')}}">
       <t-button 
         theme="primary" 
         size="large" 
