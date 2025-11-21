@@ -63,10 +63,16 @@ App<AppOption>({
     if (!wx.cloud) {
       console.error('请使用 2.2.3 或以上的基础库以使用云能力')
     } else {
-      wx.cloud.init({
-        env: wx.cloud.DYNAMIC_CURRENT_ENV, // ✅ 按项目规范使用动态环境变量
-        traceUser: false, // 禁用用户追踪以避免实时日志问题
-      });
+      try {
+        wx.cloud.init({
+          env: wx.cloud.DYNAMIC_CURRENT_ENV, // ✅ 按项目规范使用动态环境变量
+          traceUser: false, // 禁用用户追踪以避免实时日志问题
+        });
+        console.log('云开发初始化成功')
+      } catch (error) {
+        console.error('云开发初始化失败:', error)
+        // 继续运行，不阻断应用启动
+      }
     }
 
     // 获取系统信息，设置状态栏高度

@@ -391,17 +391,34 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // Tab切换 - TDesign 格式
-  // Tab切换
-  switchTab(e: WechatMiniprogram.CustomEvent) {
+  onTabChange(e: WechatMiniprogram.CustomEvent) {
     const { value } = e.detail
     this.setData({
       activeTab: value
     })
     
-    // 如果切换到物料管理tab，刷新物料数据
-    if (value === 'material') {
-      this.loadMaterialData()
+    // 按需加载tab数据
+    if (!this.data.tabLoadStatus[value]) {
+      switch(value) {
+        case 'entry':
+          this.loadEntryData()
+          break
+        case 'exit':
+          this.loadExitData()
+          break
+        case 'material':
+          this.loadMaterialData()
+          break
+      }
+      this.setData({
+        [`tabLoadStatus.${value}`]: true
+      })
     }
+  },
+  
+  // Tab切换（兼容旧版本）
+  switchTab(e: WechatMiniprogram.CustomEvent) {
+    this.onTabChange(e)
   },
 
 

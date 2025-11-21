@@ -645,19 +645,31 @@ Page({
   // 获取鹅价数据
   async getGoosePriceData() {
     try {
+      // 检查云开发是否初始化
+      if (!wx.cloud) {
+        console.warn('云开发未初始化，使用默认价格数据')
+        return this.setDefaultPriceData()
+      }
+      
       const db = wx.cloud.database()
       
       // 获取最新的价格记录（添加日期条件避免全表扫描）
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
       
-      const result = await db.collection('goose_prices')
-        .where({
-          updateTime: db.command.gte(thirtyDaysAgo)
-        })
-        .orderBy('updateTime', 'desc')
-        .limit(1)
-        .get()
+      let result
+      try {
+        result = await db.collection('goose_prices')
+          .where({
+            updateTime: db.command.gte(thirtyDaysAgo)
+          })
+          .orderBy('updateTime', 'desc')
+          .limit(1)
+          .get()
+      } catch (dbError) {
+        console.warn('数据库查询失败，使用默认价格数据:', dbError)
+        return this.setDefaultPriceData()
+      }
 
       if (result.data && result.data.length > 0) {
         const latestPrice = result.data[0]
@@ -830,6 +842,30 @@ Page({
       logger.error('获取鹅价数据失败:', error)
       return false
     }
+  },
+
+  // 设置默认价格数据（降级方案）
+  setDefaultPriceData() {
+    this.setData({
+      goosePriceData: {
+        adult: '14-16',
+        gosling: '30-35',
+        trend: 'stable',
+        adultUnit: '/斤',
+        goslingUnit: '/羽',
+        breeds: [{
+          label: '狮头鹅',
+          value: '15-17'
+        }, {
+          label: '马岗鹅',
+          value: '13-15'
+        }],
+        averagePrice: 15,
+        goslingRange: '30-35',
+        updateTime: new Date().toLocaleString('zh-CN')
+      }
+    })
+    return true
   },
 
   generatePriceHistory(base: number, days: number, volatility: number) {
