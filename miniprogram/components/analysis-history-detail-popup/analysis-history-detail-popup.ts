@@ -1,15 +1,23 @@
+import type {
+  InputEvent,
+  TapEvent,
+  ScrollEvent,
+  CustomEvent,
+  PropType
+} from '../../../../../../../../typings/core';
+
 // 分析历史详情弹窗组件
 Component({
   options: {
     styleIsolation: 'apply-shared'
   },
 
-  properties: {
+  properties: {properties: {
     // 是否显示弹窗
     visible: {
-      type: Boolean,
+      type: Boolean as PropType<boolean>,
       value: false
-    },
+    }},
     // 分析记录数据
     record: {
       type: Object,
@@ -17,13 +25,13 @@ Component({
     }
   },
 
-  data: {
+  data: {data: {
     // 内部处理的记录数据
-    processedRecord: null as any
-  },
+    processedRecord: null as unknown
+  }},
 
   observers: {
-    'record': function(record: any) {
+    'record': function(record: unknown) {
       if (record) {
         this.processRecord(record)
       }
@@ -32,7 +40,7 @@ Component({
 
   methods: {
     // 格式化日期时间
-    formatDateTime(dateValue: any): string {
+    formatDateTime(dateValue: CustomEvent): string {
       if (!dateValue) return '未知时间'
       
       try {
@@ -71,7 +79,7 @@ Component({
     },
     
     // 处理记录数据
-    processRecord(record: any) {
+    processRecord(record: unknown) {
       if (!record) return
       
       const processed = {
@@ -94,7 +102,7 @@ Component({
     },
 
     // 提取分析摘要
-    extractSummary(result: any): string {
+    extractSummary(result: unknown): string {
       if (!result) return '暂无摘要'
       
       if (result.format === 'text') {
@@ -128,7 +136,7 @@ Component({
     },
 
     // 格式化分析结果
-    formatAnalysisResult(result: any): any[] {
+    formatAnalysisResult(result: unknown): unknown[] {
       if (!result) return []
       
       const sections = []
@@ -230,9 +238,9 @@ Component({
     },
 
     // 提取详情字段
-    extractDetails(obj: any, excludeKeys: string[] = []): any[] {
+    extractDetails(obj: unknown, excludeKeys: string[] = []): unknown[] {
       const details = []
-      const labelMap: any = {
+      const labelMap: unknown = {
         profitMargin: '利润率分析',
         efficiency: '经营效率',
         breakdown: '成本分解',
@@ -266,7 +274,7 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: any) {
+    onVisibleChange(e: unknown) {
       if (!e.detail.visible) {
         this.onClose()
       }

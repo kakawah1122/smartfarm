@@ -1,3 +1,14 @@
+import type { 
+  BaseResponse, 
+  CloudFunctionResponse,
+  Batch, 
+  HealthRecord, 
+  FinanceRecord,
+  InputEvent, 
+  TapEvent, 
+  PickerEvent, 
+  ScrollEvent 
+} from '../../../typings/core';
 // production.ts
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
@@ -15,8 +26,8 @@ type ProductionPageData = WechatMiniprogram.Page.DataOption & {
     imageUrl: string
     result: any
     error: string | null
-    history: any[]
-    rounds: any[]
+    history: unknown[]
+    rounds: unknown[]
     currentRound: number
     cumulativeTotal: number
   }
@@ -92,7 +103,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       active: false,        // 是否激活AI盘点功能
       loading: false,       // AI盘点中
       imageUrl: '',         // 拍摄的图片URL
-      result: null as any,  // 识别结果
+      result: null as BaseResponse,  // 识别结果
       error: null as string | null,
       history: [] as any[], // 盘点历史
       
@@ -1043,7 +1054,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // 计算平均置信度
-  calculateAvgConfidence(rounds: any[]) {
+  calculateAvgConfidence(rounds: unknown[]) {
     if (!rounds || rounds.length === 0) return 0
     const sum = rounds.reduce((acc, r) => acc + (r.confidence || 0), 0)
     return Math.round(sum / rounds.length)

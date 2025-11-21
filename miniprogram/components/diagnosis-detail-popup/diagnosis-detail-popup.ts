@@ -1,15 +1,23 @@
+import type {
+  InputEvent,
+  TapEvent,
+  ScrollEvent,
+  CustomEvent,
+  PropType
+} from '../../../../../../../../typings/core';
+
 // components/diagnosis-detail-popup/diagnosis-detail-popup.ts
 Component({
   options: {
     styleIsolation: 'apply-shared'
   },
 
-  properties: {
+  properties: {properties: {
     // 是否显示弹窗
     visible: {
-      type: Boolean,
+      type: Boolean as PropType<boolean>,
       value: false
-    },
+    }},
     // 记录数据
     record: {
       type: Object,
@@ -24,14 +32,14 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: any) {
+    onVisibleChange(e: unknown) {
       if (!e.detail.visible) {
         this.onClose()
       }
     },
 
     // 预览图片
-    onPreviewImage(e: any) {
+    onPreviewImage(e: unknown) {
       const { url } = e.currentTarget.dataset
       const images = this.properties.record?.images || []
       

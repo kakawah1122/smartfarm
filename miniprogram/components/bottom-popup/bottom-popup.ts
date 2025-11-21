@@ -1,8 +1,16 @@
+import type {
+  InputEvent,
+  TapEvent,
+  ScrollEvent,
+  CustomEvent,
+  PropType
+} from '../../../../../../../../typings/core';
+
 // 底部弹窗组件
 Component<{
   isProcessing: boolean
 }, {}, {
-  onVisibleChange(e: any): void
+  onVisibleChange(e: unknown): void
   onClose(): void
   onCancel(): void
   onConfirm(): void
@@ -11,11 +19,11 @@ Component<{
     styleIsolation: 'apply-shared'
   },
   
-  properties: {
+  properties: {properties: {
     visible: {
-      type: Boolean,
+      type: Boolean as PropType<boolean>,
       value: false
-    },
+    }},
     title: {
       type: String,
       value: ''
@@ -58,9 +66,9 @@ Component<{
     }
   },
 
-  data: {
+  data: {data: {
     isProcessing: false  // 添加处理状态，避免重复触发
-  },
+  }},
 
   observers: {
     visible(visible: boolean) {
@@ -73,7 +81,7 @@ Component<{
   },
 
   methods: {
-    onVisibleChange(e: any) {
+    onVisibleChange(e: CustomEvent) {
       const { visible } = e.detail
       
       // 防止重复处理
@@ -89,7 +97,7 @@ Component<{
         // 当弹窗关闭时（点击遮罩层），触发 close 事件通知父组件
         this.triggerEvent('close')
       }
-      this.triggerEvent('visiblechange', { visible })
+      this.triggerEvent('visiblechange', { visible } as Record<string, unknown>)
     },
     
     onClose() {

@@ -1,3 +1,14 @@
+import type { 
+  BaseResponse, 
+  CloudFunctionResponse,
+  Batch, 
+  HealthRecord, 
+  FinanceRecord,
+  InputEvent, 
+  TapEvent, 
+  PickerEvent, 
+  ScrollEvent 
+} from '../../../typings/core';
 // health.ts - 健康管理页面
 import CloudApi from '../../utils/cloud-api'
 import { formatTime, getCurrentBeijingDate } from '../../utils/util'
@@ -161,7 +172,7 @@ interface PageData {
   
   // 批次数据
   showBatchDropdown: boolean
-  availableBatches: any[]
+  availableBatches: Batch[]
   
   // 弹窗相关
   showDetailPopup: boolean
@@ -175,7 +186,7 @@ interface PageData {
   monitoringData: any
   treatmentData: any
   analysisData: any
-  activeAlerts: any[]
+  activeAlerts: unknown[]
   
   // 时间范围
   dateRange: {
@@ -219,16 +230,16 @@ Page<PageData, any>({
     batchPreventionList: [],
     
     // 即将到来的任务（从breeding-todo迁移）
-    upcomingTasks: [] as any[],
+    upcomingTasks: [] as BaseResponse[],
     
     // 历史任务（从breeding-todo迁移）
-    historyTasks: [] as any[],
+    historyTasks: [] as BaseResponse[],
     
     // 按批次分组的今日待办任务（从breeding-todo迁移）
-    todayTasksByBatch: [] as any[],
+    todayTasksByBatch: [] as BaseResponse[],
     
     // 任务详情弹窗（从breeding-todo迁移）
-    selectedTask: null as any,
+    selectedTask: null as BaseResponse,
     showTaskDetailPopup: false,
     
     // 任务详情字段多行状态
@@ -270,8 +281,8 @@ Page<PageData, any>({
     
     // 用药管理表单数据（从breeding-todo迁移）
     showMedicationFormPopup: false,
-    availableMedicines: [] as any[],
-    selectedMedicine: null as any,
+    availableMedicines: [] as BaseResponse[],
+    selectedMedicine: null as BaseResponse,
     medicationFormData: {
       medicineId: '',
       medicineName: '',
@@ -761,7 +772,7 @@ Page<PageData, any>({
   /**
    * 切换选项卡
    */
-  switchTab(e: any) {
+  switchTab(e: InputEvent) {
     const { tab } = e.currentTarget.dataset
     // 已移除调试日志
     this.setData({ activeTab: tab })
@@ -1582,7 +1593,7 @@ Page<PageData, any>({
     
     try {
       // 获取批次信息
-      let batches: any[] = []
+      let batches: Batch[] = []
       
       if (isAllBatches) {
         // 获取所有活跃批次
@@ -1657,7 +1668,7 @@ Page<PageData, any>({
       const validBatchTasks = results.filter((item: any) => item !== null && item.tasks.length > 0)
       
       // 收集所有任务
-      let allTasks: any[] = []
+      let allTasks: Batch[] = []
       validBatchTasks.forEach((batchData: any) => {
         allTasks = allTasks.concat(batchData.tasks)
       })
@@ -1679,7 +1690,7 @@ Page<PageData, any>({
   /**
    * 分组历史任务（按批次和日龄组合分组）
    */
-  groupHistoryTasksByBatch(tasks: any[] = []) {
+  groupHistoryTasksByBatch(tasks: Batch[] = []) {
     const batchMap: Record<string, any> = {}
     
     tasks.forEach((task: any) => {
@@ -1963,7 +1974,7 @@ Page<PageData, any>({
       const isAllBatches = batchId === 'all'
       
       // 并行获取所有成本数据
-      let preventionPromise: Promise<any>
+      let preventionPromise: Promise<BaseResponse>
       
       if (isAllBatches) {
         preventionPromise = safeCloudCall({
@@ -2228,7 +2239,7 @@ Page<PageData, any>({
       this.setData({ loading: true })
       
       // 获取批次信息
-      let batches: any[] = []
+      let batches: Batch[] = []
       
       if (isAllBatches) {
         // 获取所有活跃批次
@@ -2304,7 +2315,7 @@ Page<PageData, any>({
       const results = await Promise.all(promises)
       
       // 展平嵌套数组并过滤null值
-      const upcomingTasksByBatch: any[] = []
+      const upcomingTasksByBatch: Batch[] = []
       results.forEach(result => {
         if (result !== null) {
           if (Array.isArray(result)) {
