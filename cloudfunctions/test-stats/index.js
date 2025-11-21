@@ -1,6 +1,4 @@
 // 测试预防统计数据的云函数
-// 在云开发控制台的云函数测试页面运行
-
 const cloud = require('wx-server-sdk')
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV

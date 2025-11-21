@@ -1,0 +1,9 @@
+{
+  "name": "test-stats",
+  "version": "1.0.0",
+  "description": "测试预防统计数据",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
