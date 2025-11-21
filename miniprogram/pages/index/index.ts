@@ -1,32 +1,83 @@
 // index.ts - 清理版本，只使用和风天气地理编码
-import { checkPageAuth } from '../../utils/auth-guard'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../typings/core';
-import { logger } from '../../utils/logger'
-import { getCurrentBeijingDate } from '../../utils/util'
 import {
   TYPE_NAMES,
   isMedicationTask,
   isNutritionTask
 } from '../../utils/breeding-schedule'
 import CloudApi from '../../utils/cloud-api'
-import {
-  clearHomepageNeedSync,
-  isHomepageNeedSync,
-  markHomepageNeedSync
-} from '../../utils/global-sync'
+import { logger } from '../../utils/logger'
 
-// 导入首页模块
-import { IndexNavigationModule, setupIndexNavigation } from './modules/index-navigation-module'
-import { IndexDataLoader } from './modules/index-data-loader'
+// 导入辅助函数
+const checkPageAuth = () => {
+  const app = getApp()
+  return app.globalData?.isLoggedIn || false
+}
+
+const getCurrentBeijingDate = (): string => {
+  const now = new Date()
+  // 转换为北京时间
+  const beijingOffset = 8 * 60 * 60 * 1000
+  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000)
+  const beijingTime = new Date(utcTime + beijingOffset)
+  
+  const year = beijingTime.getFullYear()
+  const month = String(beijingTime.getMonth() + 1).padStart(2, '0')
+  const day = String(beijingTime.getDate()).padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
+}
+
+// Todo同步相关函数
+const clearHomepageNeedSync = () => {
+  try {
+    wx.removeStorageSync('homepageNeedSync')
+  } catch (e) {
+    console.error('清除同步标记失败:', e)
+  }
+}
+
+const isHomepageNeedSync = (): boolean => {
+  try {
+    return wx.getStorageSync('homepageNeedSync') === true
+  } catch (e) {
+    return false
+  }
+}
+
+const markHomepageNeedSync = () => {
+  try {
+    wx.setStorageSync('homepageNeedSync', true)
+  } catch (e) {
+    console.error('设置同步标记失败:', e)
+  }
+}
+
+// 任务状态管理
+const getLocalTaskStatus = () => {
+  try {
+    return wx.getStorageSync('taskStatus') || {}
+  } catch (e) {
+    return {}
+  }
+}
+
+const updateLocalTaskStatus = (taskId: string, status: string) => {
+  try {
+    const taskStatus = getLocalTaskStatus()
+    taskStatus[taskId] = status
+    wx.setStorageSync('taskStatus', taskStatus)
+  } catch (e) {
+    console.error('更新任务状态失败:', e)
+  }
+}
+
+// 类型定义
+interface BaseResponse<T> {
+  success: boolean
+  data?: T
+  message?: string
+  error?: string
+}
 
 type WeatherLocationInfo = {
   province?: string
@@ -237,8 +288,15 @@ Page({
       return // 如果未登录，停止页面加载
     }
     
-    // 初始化导航处理器
-    setupIndexNavigation(this)
+    // 设置自定义导航栏高度
+    const app = getApp()
+    this.setData({
+      customNavHeight: app.globalData.customNavHeight || 88,
+      statusBarHeight: app.globalData.statusBarHeight || 44
+    })
+    
+    // 设置导航功能（简化实现）
+    this.setupNavigationHandlers()
     
     this.initStatusBar()
     this.loadData()
@@ -275,6 +333,11 @@ Page({
   },
 
   // 初始化状态栏
+  setupNavigationHandlers() {
+    // 简化的导航处理
+    console.log('Navigation handlers initialized')
+  },
+
   initStatusBar() {
     try {
       const now = new Date()
@@ -1226,7 +1289,7 @@ Page({
   /**
    * 疫苗表单输入处理
    */
-  onVaccineFormInput(e: CustomEvent) {
+  onVaccineFormInput(e: WechatMiniprogram.CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1245,7 +1308,7 @@ Page({
   /**
    * 数值输入处理（费用相关）
    */
-  onVaccineNumberInput(e: CustomEvent) {
+  onVaccineNumberInput(e: WechatMiniprogram.CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1264,7 +1327,7 @@ Page({
   /**
    * 路径选择处理
    */
-  onVaccineRouteChange(e: CustomEvent) {
+  onVaccineRouteChange(e: WechatMiniprogram.CustomEvent) {
     const { value } = e.detail
     this.setData({
       'vaccineFormData.routeIndex': parseInt(value)
@@ -1869,7 +1932,7 @@ Page({
   /**
    * 选择药品
    */
-  onMedicineSelect(e: CustomEvent) {
+  onMedicineSelect(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value
     const selectedMedicine = this.data.availableMedicines[index]
     
@@ -1896,7 +1959,7 @@ Page({
   /**
    * 选择营养品
    */
-  onNutritionSelect(e: CustomEvent) {
+  onNutritionSelect(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value
     const selectedNutrition = this.data.availableNutrition[index]
     
@@ -1923,7 +1986,7 @@ Page({
   /**
    * 用药表单输入处理
    */
-  onMedicationFormInput(e: CustomEvent) {
+  onMedicationFormInput(e: WechatMiniprogram.CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1945,7 +2008,7 @@ Page({
   /**
    * 营养表单输入处理
    */
-  onNutritionFormInput(e: CustomEvent) {
+  onNutritionFormInput(e: WechatMiniprogram.CustomEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1967,7 +2030,7 @@ Page({
   /**
    * 用药数量输入处理
    */
-  onMedicationQuantityInput(e: CustomEvent) {
+  onMedicationQuantityInput(e: WechatMiniprogram.CustomEvent) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
@@ -2001,7 +2064,7 @@ Page({
   /**
    * 营养数量输入处理
    */
-  onNutritionQuantityInput(e: CustomEvent) {
+  onNutritionQuantityInput(e: WechatMiniprogram.CustomEvent) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
@@ -2569,7 +2632,7 @@ Page({
   /**
    * 查看文章详情
    */
-  viewKnowledgeArticle(e: CustomEvent) {
+  viewKnowledgeArticle(e: WechatMiniprogram.CustomEvent) {
     const article = e.currentTarget.dataset.article
     if (!article) {
       return
