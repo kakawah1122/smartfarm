@@ -1,4 +1,6 @@
+/* breeding-todo.scss - 现代化养殖待办事项页面样式 */
 
+/* ========== 待办详情弹窗样式（最高优先级）========== */
 .record-detail-content {
   padding: 0 !important;
 }
@@ -20,6 +22,7 @@
   overflow: visible !important;
 }
 
+/* 所有信息行样式 */
 .record-detail-content .info-row,
 .record-detail-content .info-row-description,
 .record-detail-content .info-row-notes {
@@ -31,6 +34,7 @@
   margin-bottom: 0 !important;
 }
 
+/* 分割线 - 使用明显的虚线样式 */
 .record-detail-content .divider-line {
   height: 2rpx !important;
   min-height: 2rpx !important;
@@ -64,6 +68,7 @@
   line-height: 1.5 !important;
 }
 
+/* 自动对齐样式 - 默认右对齐，多行时左对齐 */
 .record-detail-content .info-value.auto-align {
   text-align: right !important;
 }
@@ -72,6 +77,7 @@
   text-align: left !important;
 }
 
+/* 状态标签容器 */
 .record-detail-content .status-value {
   display: flex !important;
   align-items: center !important;
@@ -79,10 +85,12 @@
   flex: 1 !important;
 }
 
+/* 任务描述行 */
 .record-detail-content .info-row-description {
   align-items: flex-start !important;
 }
 
+/* 用量行 - 内容较长，左对齐 */
 .record-detail-content .info-row-dosage {
   align-items: flex-start !important;
 }
@@ -105,6 +113,7 @@
   line-height: 1.5 !important;
 }
 
+/* 注意事项行 */
 .record-detail-content .info-row-notes {
   align-items: flex-start !important;
   background: rgba(237, 123, 47, 0.05) !important;
@@ -127,22 +136,26 @@
   line-height: 1.5 !important;
 }
 
+/* 注释文本样式 */
 .record-detail-content .note-text {
   word-break: break-all !important;
   white-space: pre-wrap !important;
   line-height: 1.5 !important;
 }
 
+/* 重要提示文本 */
 .record-detail-content .important-text {
   color: var(--color-warning, #ed7b2f) !important;
   font-weight: var(--font-weight-medium, 500) !important;
   line-height: 1.6 !important;
 }
 
+/* 物料文本 */
 .record-detail-content .materials-text {
   white-space: normal !important;
 }
 
+/* 用量文本 - 左对齐，多行显示 */
 .record-detail-content .dosage-text {
   text-align: left !important;
   white-space: normal !important;
@@ -151,11 +164,14 @@
   line-height: 1.5 !important;
 }
 
+/* 独立物料文本样式（用于其他上下文） */
 .materials-text {
   color: var(--primary-blue, #0052d9) !important;
   font-weight: var(--font-weight-medium, 500) !important;
   white-space: normal !important;
 }
+
+/* ========== 全局容器样式 ========== */
 
 /* 全局强制浅色背景覆盖 */
 page {
@@ -168,6 +184,7 @@ page {
   overflow: hidden;
 }
 
+/* 移动端容器 - 优化布局 */
 .mobile-container {
   width: 100%;
   height: 100vh;
@@ -179,6 +196,7 @@ page {
   flex-direction: column;
 }
 
+/* 滚动容器 - 导航栏安全间距适配 */
 .scroll-container {
   flex: 1;
   background-color: #f9fafb !important;
@@ -191,6 +209,8 @@ page {
   overflow-y: auto;
   overflow-x: hidden;
 }
+
+/* ========== 卡片通用样式 ========== */
 
 .card {
   background: var(--color-bg-primary, #ffffff);
@@ -236,7 +256,7 @@ page {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-xl, 32rpx);
-
+  
   .header-actions {
     display: flex;
     align-items: center;
@@ -252,6 +272,12 @@ page {
   line-height: var(--line-height-tight);
 }
 
+/* ========== 批次信息卡片 ========== */
+
+.batch-info-card {
+  background: var(--color-bg-primary, #ffffff);
+}
+
 .batch-info-card .card-content {
   color: var(--color-text-primary);
   padding: var(--spacing-base, 16rpx) var(--spacing-lg, 24rpx);
@@ -261,10 +287,27 @@ page {
   margin-bottom: 0;
 }
 
+.batch-title-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .batch-label {
   font-size: var(--font-size-sm, 26rpx);
   font-weight: var(--font-weight-medium, 500);
   color: var(--color-text-primary);
+}
+
+.batch-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8rpx);
+  padding: var(--spacing-xs, 6rpx) var(--spacing-sm, 12rpx);
+  background: rgba(0, 82, 217, 0.1);
+  border-radius: var(--radius-sm, 8rpx);
+  border: 1rpx solid rgba(0, 82, 217, 0.2);
+  transition: all 0.2s ease;
 }
 
 .batch-selector-btn:active {
@@ -277,6 +320,8 @@ page {
   font-weight: var(--font-weight-medium, 500);
   font-size: var(--font-size-sm, 26rpx);
 }
+
+/* ========== 任务概览卡片 ========== */
 
 .task-overview-card {
   background: var(--secondary-gradient, linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%));
@@ -381,6 +426,8 @@ page {
   box-shadow: 0 1rpx 3rpx rgba(0, 82, 217, 0.3);
 }
 
+/* ========== Tab切换卡片 ========== */
+
 .tabs-card {
   margin-bottom: 0;
 }
@@ -388,6 +435,8 @@ page {
 .modern-tabs {
   --td-tab-track-color: var(--primary-blue, #0052d9);
 }
+
+/* ========== 任务重叠提醒 ========== */
 
 .overlap-alerts {
   margin: var(--spacing-lg, 24rpx) 0;
@@ -414,6 +463,8 @@ page {
   color: var(--color-text-secondary);
 }
 
+/* ========== 按批次分组的任务列表 ========== */
+
 .batch-task-groups {
   padding: var(--spacing-base, 16rpx) 0;
 }
@@ -437,6 +488,7 @@ page {
   min-height: 80rpx;
 }
 
+/* 不同批次颜色方案 */
 .batch-group:nth-child(1) .batch-group-header {
   background: rgba(0, 82, 217, 0.08);
   border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
@@ -548,6 +600,8 @@ page {
   overflow: hidden;
 }
 
+/* ========== 现代化任务列表 ========== */
+
 .batch-task-list .modern-task-card {
   background: white;
   border-radius: 0;
@@ -569,6 +623,7 @@ page {
   background: rgba(0, 82, 217, 0.04);
 }
 
+/* 不同批次任务卡片背景色 */
 .batch-group:nth-child(1) .batch-task-list .modern-task-card:hover {
   background: rgba(0, 82, 217, 0.04);
 }
@@ -593,6 +648,7 @@ page {
   background: rgba(52, 196, 154, 0.04);
 }
 
+/* 为不同批次的任务卡片添加背景渐变效果 */
 .batch-group:nth-child(1) .batch-task-list .modern-task-card {
   background: linear-gradient(to right, rgba(0, 82, 217, 0.02) 0%, #ffffff 8rpx);
 }
@@ -617,6 +673,7 @@ page {
   background: linear-gradient(to right, rgba(52, 196, 154, 0.02) 0%, #ffffff 8rpx);
 }
 
+/* 批次颜色循环（7个及以上） */
 .batch-group:nth-child(7) .batch-group-header {
   background: rgba(0, 82, 217, 0.08);
   border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
@@ -648,6 +705,7 @@ page {
   background: #ed7b2f;
 }
 
+/* 循环任务卡片hover效果 */
 .batch-group:nth-child(7) .batch-task-list .modern-task-card:hover {
   background: rgba(0, 82, 217, 0.04);
 }
@@ -660,6 +718,7 @@ page {
   background: rgba(237, 123, 47, 0.04);
 }
 
+/* 循环批次任务卡片背景渐变 */
 .batch-group:nth-child(7) .batch-task-list .modern-task-card {
   background: linear-gradient(to right, rgba(0, 82, 217, 0.02) 0%, #ffffff 8rpx);
 }
@@ -675,6 +734,10 @@ page {
 .batch-task-list .modern-task-card .task-main {
   cursor: pointer;
 }
+
+/* 移除左侧竖线 */
+
+/* 删除重复定义，使用底部的统一样式 */
 
 .modern-task-card:active {
   transform: scale(0.98);
@@ -702,6 +765,8 @@ page {
   margin-bottom: var(--spacing-xs, 4rpx);
   flex: 1;
 }
+
+/* 删除重复定义，使用底部的统一样式 */
 
 .task-badges {
   display: flex;
@@ -767,6 +832,8 @@ page {
   flex-shrink: 0;
 }
 
+/* 移除任务操作按钮样式 */
+
 .expand-btn {
   width: 48rpx;
   height: 48rpx;
@@ -782,6 +849,8 @@ page {
   background: rgba(0, 0, 0, 0.08);
   transform: scale(0.9);
 }
+
+/* ========== 任务详情展开区域 ========== */
 
 .task-detail-expanded {
   margin-top: var(--spacing-lg, 24rpx);
@@ -851,6 +920,8 @@ page {
 .action-btn {
   flex: 1;
 }
+
+/* ========== 即将到来任务 ========== */
 
 .upcoming-tasks {
   padding: var(--spacing-base, 16rpx) 0;
@@ -954,6 +1025,7 @@ page {
   flex: 1;
 }
 
+
 .upcoming-task-item .task-info {
   flex: 1;
 }
@@ -994,8 +1066,10 @@ page {
 }
 
 .upcoming-task-right {
-  display: none; }
+  display: none; /* 隐藏右侧图标 */
+}
 
+/* 为即将到来任务添加不同日龄的颜色方案 */
 .upcoming-day-group:nth-child(1) .upcoming-day-header {
   background: rgba(0, 82, 217, 0.08);
   border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
@@ -1122,6 +1196,8 @@ page {
   background: rgba(52, 196, 154, 0.04);
 }
 
+/* ========== 历史任务 ========== */
+
 .history-tasks {
   padding: var(--spacing-base, 16rpx) 0;
 }
@@ -1157,7 +1233,8 @@ page {
 }
 
 .completion-icon {
-  display: none; }
+  display: none; /* 隐藏完成图标 */
+}
 
 .history-task-info {
   flex: 1;
@@ -1206,6 +1283,7 @@ page {
   font-weight: 500;
 }
 
+/* 为历史任务添加交替的颜色方案 */
 .history-task-item:nth-child(6n+1) {
   background: linear-gradient(to right, rgba(0, 82, 217, 0.02) 0%, #ffffff 8rpx);
 }
@@ -1254,6 +1332,7 @@ page {
   background: rgba(52, 196, 154, 0.04);
 }
 
+/* ========== 已完成任务的样式 ========== */
 .modern-task-card.completed {
   opacity: 0.75 !important;
   background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, rgba(40, 167, 69, 0.05) 100%) !important;
@@ -1293,6 +1372,8 @@ page {
   font-weight: 600;
   z-index: 10;
 }
+
+/* ========== 空状态 ========== */
 
 .modern-empty-state {
   display: flex;
@@ -1348,6 +1429,8 @@ page {
   margin: 0 auto;
 }
 
+/* ========== 批次选择弹窗 ========== */
+
 .modern-overlay {
   z-index: 1000;
 }
@@ -1360,6 +1443,7 @@ page {
   overflow: hidden;
   position: relative;
 }
+
 
 .dialog-header {
   display: flex;
@@ -1485,6 +1569,9 @@ page {
   border-radius: 50%;
 }
 
+
+/* ========== 加载状态 ========== */
+
 .modern-loading {
   position: fixed;
   top: 0;
@@ -1508,16 +1595,18 @@ page {
   margin-top: var(--spacing-base, 16rpx);
 }
 
+/* ========== 响应式设计 ========== */
+
 @media (max-width: 640rpx) {
   .overview-stats {
     flex-direction: column;
   }
-
+  
   .batch-status-info {
     flex-direction: column;
     gap: var(--spacing-sm, 8rpx);
   }
-
+  
 }
 
 @media (orientation: landscape) {
@@ -1525,6 +1614,8 @@ page {
     padding-bottom: var(--spacing-lg, 24rpx);
   }
 }
+
+/* ========== 主题色彩变量 ========== */
 
 :root {
   --primary-blue: #0052d9;
@@ -1534,49 +1625,51 @@ page {
   --color-warning: #ed7b2f;
   --color-error: #d54941;
   --color-info: #0075ff;
-
+  
   --color-text-primary: #1f2937;
   --color-text-secondary: #6b7280;
   --color-text-tertiary: #9ca3af;
-
+  
   --color-bg-primary: #ffffff;
   --color-border-level-1: #e5e7eb;
-
+  
   --font-size-xs: 20rpx;
   --font-size-sm: 24rpx;
   --font-size-base: 28rpx;
   --font-size-lg: 32rpx;
   --font-size-xl: 40rpx;
-
+  
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-
+  
   --spacing-xs: 4rpx;
   --spacing-sm: 8rpx;
   --spacing-base: 16rpx;
   --spacing-lg: 24rpx;
   --spacing-xl: 32rpx;
-
+  
   --radius-sm: 6rpx;
   --radius-base: 12rpx;
   --radius-lg: 16rpx;
   --radius-xl: 24rpx;
-
+  
   --shadow-base: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
 }
+
+/* ========== 疫苗接种表单样式（优化版） ========== */
 
 .vaccine-form-content {
   padding: 0;
   max-height: 75vh;
   overflow-y: auto;
   background: #ffffff;
-
+  
   .form-section {
     margin-bottom: 32rpx;
-
+    
     .section-title {
       font-size: 30rpx;
       font-weight: 600;
@@ -1593,7 +1686,7 @@ page {
       -webkit-backdrop-filter: blur(10rpx);
       box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.08);
     }
-
+    
     // 表单行 - 类似任务详情的 info-row 样式
     .form-row {
       display: flex;
@@ -1602,11 +1695,11 @@ page {
       padding: 20rpx 32rpx;
       min-height: 88rpx;
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-
+      
       &:last-child {
         border-bottom: none;
       }
-
+      
       // 标签样式 - 类似 info-label
       .form-label {
         flex-shrink: 0;
@@ -1614,7 +1707,7 @@ page {
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
         margin-right: 24rpx;
-
+        
         // 处理必填星号（通过JavaScript动态添加）
         &.required::after {
           content: " *";
@@ -1622,7 +1715,7 @@ page {
           font-weight: 600;
         }
       }
-
+      
       // 输入框样式 - 类似 info-value
       .form-input, .form-textarea {
         flex: 1;
@@ -1634,20 +1727,20 @@ page {
         background: #ffffff;
         text-align: right;
         min-height: 44rpx !important;
-
+        
         &:focus {
           border-color: var(--td-brand-color, #0052d9);
           box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1);
           outline: none;
         }
-
+        
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 26rpx;
         }
       }
-
+      
       // 文本域特殊处理
       .form-textarea {
         min-height: 60rpx;
@@ -1656,12 +1749,12 @@ page {
         resize: none;
         text-align: left;
         line-height: 1.6;
-
+        
         &::placeholder {
           text-align: left;
         }
       }
-
+      
       // 选择器样式 - 类似 info-value
       .picker-input {
         flex: 1;
@@ -1676,7 +1769,7 @@ page {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-
+        
         &::after {
           content: '';
           width: 12rpx;
@@ -1688,7 +1781,7 @@ page {
           flex-shrink: 0;
         }
       }
-
+      
       // 只读字段样式 - 突出显示金额等重要信息
       .readonly-input {
         flex: 1;
@@ -1703,18 +1796,18 @@ page {
         border: 1rpx solid rgba(0, 82, 217, 0.2);
         min-height: 44rpx;
       }
-
+      
       // 描述和备注行特殊处理
       &.textarea-row {
         align-items: flex-start;
-
+        
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-
+  
   // 错误提示样式
   .form-errors {
     margin: 24rpx 32rpx;
@@ -1723,18 +1816,18 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(227, 77, 89, 0.3);
     box-shadow: 0 2rpx 8rpx rgba(227, 77, 89, 0.1);
-
+    
     .error-text {
       display: block;
       color: var(--td-error-color, #e34d59);
       font-size: 26rpx;
       line-height: 1.5;
       margin-bottom: 8rpx;
-
+      
       &:last-child {
         margin-bottom: 0;
       }
-
+      
       &::before {
         content: "• ";
         color: var(--td-error-color, #e34d59);
@@ -1745,35 +1838,37 @@ page {
   }
 }
 
+/* ========== 异常反应处理弹窗样式 ========== */
+
 .adverse-reaction-content {
   padding: 0;
   max-height: 70vh;
   overflow-y: auto;
-
+  
   .info-card {
     margin: 0 var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
     background: #f0f9ff;
     border: 1rpx solid #b3d8ff;
     border-radius: var(--radius-lg);
-
+    
     .card-content {
       padding: var(--spacing-lg);
-
+      
       .info-row {
         display: flex;
         align-items: center;
         margin-bottom: var(--spacing-base);
-
+        
         &:last-child {
           margin-bottom: 0;
         }
-
+        
         .info-label {
           font-size: var(--font-size-base);
           color: var(--color-text-secondary);
           margin-right: var(--spacing-lg);
         }
-
+        
         .info-value {
           font-size: var(--font-size-base);
           color: var(--color-text-primary);
@@ -1784,6 +1879,8 @@ page {
   }
 }
 
+/* ========== 用药管理表单样式（优化版 - 与首页保持一致） ========== */
+
 .medication-form-content {
   padding: 0;
   max-height: 75vh;
@@ -1792,10 +1889,10 @@ page {
   /* GPU加速优化 */
   transform: translateZ(0);
   will-change: scroll-position;
-
+  
   .form-section {
     margin-bottom: 20rpx; // 优化：从32rpx减小到20rpx
-
+    
     .section-title {
       font-size: 28rpx; // 优化：从30rpx减小到28rpx
       font-weight: 600;
@@ -1806,7 +1903,7 @@ page {
       border-radius: 8rpx; // 优化：移除顶部圆角限制
       word-break: break-all;
     }
-
+    
     .form-row {
       display: flex;
       align-items: center;
@@ -1814,11 +1911,11 @@ page {
       padding: 16rpx 20rpx; // 优化：减小内边距
       min-height: 80rpx; // 优化：从88rpx减小
       border-bottom: 1rpx solid #f0f0f0; // 优化：统一边框颜色
-
+      
       &:last-child {
         border-bottom: none;
       }
-
+      
       .form-label {
         flex-shrink: 0;
         font-size: 26rpx; // 优化：从28rpx减小
@@ -1826,14 +1923,14 @@ page {
         line-height: 1.4;
         margin-right: 16rpx; // 优化：从24rpx减小
         width: 160rpx; // 优化：从180rpx减小
-
+        
         &.required::after {
           content: " *";
           color: #e34d59;
           font-weight: 600;
         }
       }
-
+      
       .form-input, .form-textarea {
         flex: 1;
         padding: 10rpx 12rpx !important; // 优化：增加内边距
@@ -1844,21 +1941,21 @@ page {
         background: #fafafa; // 优化：浅灰背景
         text-align: right;
         min-height: 44rpx !important;
-
+        
         &:focus {
           border-color: #0052d9; // 蓝色边框
           box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1); // 蓝色阴影
           outline: none;
           background: #ffffff; // 聚焦时白色背景
         }
-
+        
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 26rpx;
         }
       }
-
+      
       .form-textarea {
         min-height: 60rpx;
         max-height: 200rpx;
@@ -1866,12 +1963,12 @@ page {
         resize: none;
         text-align: left;
         line-height: 1.6;
-
+        
         &::placeholder {
           text-align: left;
         }
       }
-
+      
       .picker-input {
         flex: 1;
         display: flex;
@@ -1885,7 +1982,7 @@ page {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-
+        
         &::after {
           content: '';
           width: 12rpx;
@@ -1897,7 +1994,7 @@ page {
           flex-shrink: 0;
         }
       }
-
+      
       .unit-text {
         position: absolute;
         right: 24rpx;
@@ -1907,7 +2004,7 @@ page {
         color: var(--color-text-tertiary);
         pointer-events: none;
       }
-
+      
       .error-text {
         display: block;
         font-size: 24rpx;
@@ -1915,40 +2012,40 @@ page {
         margin-top: 8rpx;
         line-height: 1.4;
       }
-
+      
       &.textarea-row {
         align-items: flex-start;
-
+        
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-
+  
   .medicine-info {
     margin: 16rpx 20rpx; // 优化：减小外边距
     padding: 16rpx; // 优化：从20rpx减小
     background: #fafafa; // 优化：简洁的浅灰背景
     border-radius: 12rpx;
     border: 1rpx solid #f0f0f0; // 优化：统一边框颜色
-
+    
     .info-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8rpx 0;
-
+      
       &:last-child {
         border-bottom: none;
       }
-
+      
       .info-label {
         font-size: 26rpx;
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
       }
-
+      
       .info-value {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
@@ -1957,7 +2054,7 @@ page {
       }
     }
   }
-
+  
   .form-errors {
     margin: 24rpx 32rpx;
     padding: 20rpx;
@@ -1965,21 +2062,21 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(227, 77, 89, 0.3);
     box-shadow: 0 2rpx 8rpx rgba(227, 77, 89, 0.1);
-
+    
     .error-item {
       margin-bottom: 8rpx;
-
+      
       &:last-child {
         margin-bottom: 0;
       }
-
+      
       .error-text {
         display: block;
         color: var(--td-error-color, #e34d59);
         font-size: 26rpx;
         line-height: 1.5;
         margin: 0;
-
+        
         &::before {
           content: "• ";
           color: var(--td-error-color, #e34d59);
@@ -1991,6 +2088,8 @@ page {
   }
 }
 
+/* ========== 营养管理表单样式（优化版 - 与首页保持一致） ========== */
+
 .nutrition-form-content {
   padding: 0;
   max-height: 75vh;
@@ -1999,10 +2098,10 @@ page {
   /* GPU加速优化 */
   transform: translateZ(0);
   will-change: scroll-position;
-
+  
   .form-section {
     margin-bottom: 32rpx;
-
+    
     .section-title {
       font-size: 30rpx;
       font-weight: 600;
@@ -2019,7 +2118,7 @@ page {
       -webkit-backdrop-filter: blur(10rpx);
       box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.08);
     }
-
+    
     .form-row {
       display: flex;
       align-items: center;
@@ -2027,11 +2126,11 @@ page {
       padding: 20rpx 32rpx;
       min-height: 88rpx;
       border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-
+      
       &:last-child {
         border-bottom: none;
       }
-
+      
       .form-label {
         flex-shrink: 0;
         font-size: 28rpx;
@@ -2039,14 +2138,14 @@ page {
         line-height: 1.4;
         margin-right: 24rpx;
         width: 180rpx;
-
+        
         &.required::after {
           content: " *";
           color: var(--td-error-color, #e34d59);
           font-weight: 600;
         }
       }
-
+      
       .form-input, .form-textarea {
         flex: 1;
         padding: 8rpx 12rpx !important;
@@ -2057,20 +2156,20 @@ page {
         background: #ffffff;
         text-align: right;
         min-height: 44rpx !important;
-
+        
         &:focus {
           border-color: #10b981;
           box-shadow: 0 0 0 2rpx rgba(16, 185, 129, 0.1);
           outline: none;
         }
-
+        
         &::placeholder {
           color: #cccccc;
           text-align: right;
           font-size: 26rpx;
         }
       }
-
+      
       .form-textarea {
         min-height: 60rpx;
         max-height: 200rpx;
@@ -2078,12 +2177,12 @@ page {
         resize: none;
         text-align: left;
         line-height: 1.6;
-
+        
         &::placeholder {
           text-align: left;
         }
       }
-
+      
       .picker-input {
         flex: 1;
         display: flex;
@@ -2097,7 +2196,7 @@ page {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
         position: relative;
-
+        
         &::after {
           content: '';
           width: 12rpx;
@@ -2109,7 +2208,7 @@ page {
           flex-shrink: 0;
         }
       }
-
+      
       .unit-text {
         position: absolute;
         right: 24rpx;
@@ -2119,7 +2218,7 @@ page {
         color: var(--color-text-tertiary);
         pointer-events: none;
       }
-
+      
       .error-text {
         display: block;
         font-size: 24rpx;
@@ -2127,17 +2226,17 @@ page {
         margin-top: 8rpx;
         line-height: 1.4;
       }
-
+      
       &.textarea-row {
         align-items: flex-start;
-
+        
         .form-label {
           margin-top: 16rpx;
         }
       }
     }
   }
-
+  
   .nutrition-info {
     margin: 24rpx 32rpx;
     padding: 20rpx;
@@ -2145,23 +2244,23 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(16, 185, 129, 0.2);
     box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.1);
-
+    
     .info-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8rpx 0;
-
+      
       &:last-child {
         border-bottom: none;
       }
-
+      
       .info-label {
         font-size: 26rpx;
         color: var(--td-text-color-secondary, #666666);
         line-height: 1.4;
       }
-
+      
       .info-value {
         font-size: 28rpx;
         color: var(--td-text-color-primary, #000000);
@@ -2170,7 +2269,7 @@ page {
       }
     }
   }
-
+  
   .form-errors {
     margin: 24rpx 32rpx;
     padding: 20rpx;
@@ -2178,21 +2277,21 @@ page {
     border-radius: 12rpx;
     border: 1rpx solid rgba(227, 77, 89, 0.3);
     box-shadow: 0 2rpx 8rpx rgba(227, 77, 89, 0.1);
-
+    
     .error-item {
       margin-bottom: 8rpx;
-
+      
       &:last-child {
         margin-bottom: 0;
       }
-
+      
       .error-text {
         display: block;
         color: var(--td-error-color, #e34d59);
         font-size: 26rpx;
         line-height: 1.5;
         margin: 0;
-
+        
         &::before {
           content: "• ";
           color: var(--td-error-color, #e34d59);
@@ -2204,23 +2303,33 @@ page {
   }
 }
 
+/* ========== 响应式优化（小屏幕适配） ========== */
+/* 已合并到下方统一的响应式适配中 */
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
 .form-input:focus,
 .form-textarea:focus,
 .picker-input:focus {
   transform: translateZ(0);
 }
 
+/* 优化滚动性能 */
 .medication-form-content,
 .nutrition-form-content {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
+/* 减少动画开销 */
 .form-input,
 .form-textarea,
 .picker-input {
   transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
+
+/* ========== 响应式适配（小屏幕优化） ========== */
 
 @media (max-width: 750rpx) {
   .vaccine-form-content,
@@ -2232,29 +2341,29 @@ page {
         align-items: stretch;
         padding: 16rpx 24rpx;
         min-height: auto;
-
+        
         .form-label {
           width: auto;
           margin-right: 0;
           margin-bottom: 12rpx;
           font-size: 26rpx;
         }
-
+        
         .form-input, .form-textarea, .readonly-input, .picker-input {
           width: 100%;
           text-align: left;
-
+          
           &::placeholder {
             text-align: left;
           }
         }
-
+        
         .form-textarea {
           &::placeholder {
             text-align: left;
           }
         }
-
+        
         .unit-text {
           position: static;
           transform: none;
@@ -2262,29 +2371,29 @@ page {
           align-self: flex-end;
         }
       }
-
+      
       .section-title {
         font-size: 28rpx;
         padding: 20rpx 24rpx 12rpx 24rpx;
       }
     }
-
+    
     .medicine-info, .nutrition-info, .form-errors {
       margin: 20rpx 24rpx;
       padding: 16rpx;
     }
   }
-
+  
   .input-with-unit {
     flex-direction: row;
     align-items: center;
-
+    
     .form-input {
       flex: 1;
       padding-right: 60rpx;
       text-align: left;
     }
-
+    
     .unit-text {
       position: absolute;
       right: 16rpx;
@@ -2293,19 +2402,21 @@ page {
   }
 }
 
+/* ========== 表单UI优化样式 ========== */
+
 // 输入框和单位组合容器
 .input-with-unit {
   position: relative;
   display: flex;
   align-items: center;
   flex: 1;
-
+  
   .form-input {
     flex: 1;
     padding-right: 80rpx; // 为单位文本留出空间
     text-align: left; // 覆盖右对齐，避免与单位重叠
   }
-
+  
   .unit-text {
     position: absolute;
     right: 24rpx;
@@ -2325,7 +2436,7 @@ page {
   color: #666 !important;
   cursor: not-allowed;
   position: relative;
-
+  
   &::after {
     content: "";
     position: absolute;
@@ -2338,3 +2449,7 @@ page {
   }
 }
 
+/* 已合并到上方统一的响应式适配中 */
+
+/* ========== 强制应用蓝色边框样式（最高优先级）========== */
+/* 已合并到文件开头的统一样式定义中 */

@@ -1,10 +1,11 @@
+/* TDesign 字体覆盖文件 - 兼容微信小程序WXSS语法 */
 
 /* 字体定义覆盖 - 移除!important，WXSS可能不完全支持 */
 @font-face {
   font-family: t;
-  src: local('PingFang SC'),
-       local('Helvetica Neue'),
-       local('Arial'),
+  src: local('PingFang SC'), 
+       local('Helvetica Neue'), 
+       local('Arial'), 
        local('sans-serif');
   font-weight: normal;
   font-style: normal;
@@ -13,19 +14,21 @@
 /* 覆盖带引号的字体族名称 */
 @font-face {
   font-family: "t";
-  src: local('PingFang SC'),
-       local('Helvetica Neue'),
-       local('Arial'),
+  src: local('PingFang SC'), 
+       local('Helvetica Neue'), 
+       local('Arial'), 
        local('sans-serif');
   font-weight: normal;
   font-style: normal;
 }
 
+/* TDesign图标元素字体覆盖 */
 .t-icon,
 .t-icon-base {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* 图标伪元素覆盖 */
 .t-icon::before,
 .t-icon::after {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
@@ -38,6 +41,7 @@ text {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* 确保图标显示正常 */
 .t-icon {
   display: inline-block;
   font-style: normal;

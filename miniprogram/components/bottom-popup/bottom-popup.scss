@@ -1,3 +1,10 @@
+/* 底部弹窗组件样式 */
+
+.bottom-popup-content {
+  border-radius: 32rpx 32rpx 0 0 !important;
+  max-height: 85vh !important; /* 优化：增加到 85vh，减少底部空白 */
+  padding: 0 !important;
+}
 
 .bottom-popup-container {
   padding: 0;
@@ -6,8 +13,10 @@
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  overflow: hidden; }
+  overflow: hidden; /* 防止整个容器滚动，只允许内容区滚动 */
+}
 
+/* 弹窗头部 */
 .popup-header {
   display: flex;
   justify-content: space-between;
@@ -35,7 +44,7 @@
   justify-content: center;
   background: #f5f5f5;
   border-radius: 50%;
-
+  
   &:active {
     background: #e8e8e8;
   }
@@ -48,6 +57,7 @@
   font-weight: 300;
 }
 
+/* 内容区域（可滚动） */
 .popup-content {
   flex: 1;
   min-height: 200rpx; /* 修复真机问题：确保有最小高度 */
@@ -55,8 +65,10 @@
   max-height: calc(85vh - 240rpx); /* 限制最大高度 */
   padding: 16rpx 24rpx; /* 优化：缩小 padding，减少空白 */
   box-sizing: border-box;
-  }
+  /* scroll-view 组件自己控制滚动 */
+}
 
+/* 操作按钮 */
 .popup-actions {
   background: #ffffff;
   border-top: 1rpx solid #f0f0f0;
@@ -67,14 +79,15 @@
 
 .action-buttons {
   display: flex;
-  gap: 16rpx; }
+  gap: 16rpx; /* 优化：缩小按钮间距 */
+}
 
 .secondary-button {
   flex: 1;
   background: #f8f9fa !important;
   color: #6c757d !important;
   border: 1rpx solid #e9ecef !important;
-
+  
   &:active {
     background: #e9ecef !important;
   }
@@ -86,11 +99,11 @@
   border: none !important;
   color: #ffffff !important;
   font-weight: 500 !important;
-
+  
   &:active {
     background: linear-gradient(135deg, #1976d2 0%, #3a73d7 100%) !important;
   }
-
+  
   &.disabled {
     background: #e9ecef !important;
     color: #6c757d !important;
@@ -98,6 +111,7 @@
   }
 }
 
+/* 自定义内容区域常用样式 */
 .info-card {
   background: #fafafa;
   margin: 0;

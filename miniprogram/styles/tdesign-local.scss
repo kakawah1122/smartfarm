@@ -1,4 +1,6 @@
+/* 本地TDesign样式 - 完全移除外部字体依赖 */
 
+/* 重新定义 t-icon 基础类，使用纯CSS图标 */
 .t-icon-base {
   font-style: normal;
   font-weight: 400;
@@ -13,6 +15,7 @@
   font-family: inherit;
 }
 
+/* 常用图标的CSS实现（替代字体图标） */
 .t-icon-arrow-right::before {
   content: '';
   display: inline-block;
@@ -70,6 +73,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif !important;
 }
 
+/* 通用图标样式 */
 .t-icon {
   display: inline-flex;
   align-items: center;

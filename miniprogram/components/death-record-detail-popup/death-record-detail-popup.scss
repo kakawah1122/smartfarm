@@ -1,18 +1,23 @@
+/* 死亡记录详情弹窗组件样式 */
 
+/* 详情内容容器 */
 .record-detail-content {
   padding: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 0 !important;
-  min-height: 400rpx !important;   }
+  min-height: 400rpx !important; /* 添加最小高度 */
+  /* 移除滚动相关样式，由父组件的 scroll-view 处理 */
+}
 
+/* 详情区块 */
 .detail-section {
   margin-bottom: 32rpx !important;
-
+  
   &:last-child {
     margin-bottom: 0 !important;
   }
-
+  
   .section-title {
     font-size: 28rpx !important;
     font-weight: 600 !important;
@@ -25,6 +30,7 @@
   }
 }
 
+/* 信息卡片 */
 .record-detail-content .info-card {
   background: white !important;
   border-radius: 12rpx !important;
@@ -34,6 +40,7 @@
   border: 2rpx solid #0052d9 !important;
 }
 
+/* 卡片内容 */
 .record-detail-content .card-content {
   display: flex !important;
   flex-direction: column !important;
@@ -41,6 +48,7 @@
   overflow: visible !important;
 }
 
+/* 信息行 */
 .record-detail-content .info-row {
   display: flex !important;
   justify-content: space-between !important;
@@ -50,6 +58,7 @@
   margin-bottom: 0 !important;
 }
 
+/* 虚线分隔符 */
 .record-detail-content .divider-line {
   height: 2rpx !important;
   min-height: 2rpx !important;
@@ -61,6 +70,7 @@
   display: block !important;
 }
 
+/* 标签样式 */
 .record-detail-content .info-label {
   font-size: 26rpx !important;
   color: #666 !important;
@@ -70,6 +80,7 @@
   font-weight: 400 !important;
 }
 
+/* 值样式 */
 .record-detail-content .info-value {
   font-size: 28rpx !important;
   color: #333 !important;
@@ -81,6 +92,7 @@
   line-height: 1.5 !important;
 }
 
+/* 症状文本样式 */
 .record-detail-content .symptoms-text {
   font-size: 26rpx !important;
   color: #666 !important;
@@ -98,6 +110,7 @@
   -webkit-box-orient: vertical !important;
 }
 
+/* 死亡统计 */
 .death-summary {
   display: grid !important;
   grid-template-columns: repeat(1, 1fr) !important;
@@ -113,22 +126,22 @@
   background: #fafafa !important;
   border-radius: 12rpx !important;
   border: 2rpx solid #e8e8e8 !important;
-
+  
   &.danger {
     background: linear-gradient(135deg, #fff0f0 0%, #ffe6e6 100%) !important;
     border-color: #e34d59 !important;
-
+    
     .stat-value {
       color: #e34d59 !important;
     }
   }
-
+  
   .stat-label {
     font-size: 24rpx !important;
     color: #666 !important;
     text-align: center !important;
   }
-
+  
   .stat-value {
     font-size: 36rpx !important;
     font-weight: 600 !important;
@@ -137,6 +150,7 @@
   }
 }
 
+/* 成本网格 */
 .cost-grid {
   display: flex !important;
   flex-direction: column !important;
@@ -151,20 +165,20 @@
   background: #fafafa !important;
   border-radius: 12rpx !important;
   gap: 16rpx !important;
-
+  
   .cost-label {
     font-size: 26rpx !important;
     color: #666 !important;
     flex-shrink: 0 !important;
   }
-
+  
   .cost-value {
     font-size: 30rpx !important;
     font-weight: 600 !important;
     color: #333 !important;
     text-align: right !important;
     word-break: break-all !important;
-
+    
     &.danger {
       color: #e34d59 !important;
       font-size: 32rpx !important;
@@ -172,13 +186,14 @@
   }
 }
 
+/* 备注说明卡片 */
 .description-card {
   background: #f8f9fa !important;
   border-radius: 12rpx !important;
   padding: 24rpx !important;
   border: 1rpx solid #e8e8e8 !important;
   box-sizing: border-box !important;
-
+  
   .description-text {
     font-size: 26rpx !important;
     color: #333 !important;
@@ -189,6 +204,7 @@
   }
 }
 
+/* 修正信息样式 */
 .correction-card {
   background: #f8fafc !important;
   border: 2rpx solid #e2e8f0 !important;
@@ -253,6 +269,7 @@
   }
 }
 
+/* 成本分解容器 */
 .cost-breakdown-container {
   display: flex !important;
   flex-direction: column !important;
@@ -268,25 +285,25 @@
   justify-content: space-between !important;
   align-items: center !important;
   padding: 10rpx 0 !important;
-
+  
   .breakdown-label {
     display: flex !important;
     align-items: center !important;
     gap: 10rpx !important;
-
+    
     .label-dot {
       width: 10rpx !important;
       height: 10rpx !important;
       border-radius: 50% !important;
       flex-shrink: 0 !important;
     }
-
+    
     .label-text {
       font-size: 26rpx !important;
       color: #666 !important;
     }
   }
-
+  
   .breakdown-value {
     font-size: 28rpx !important;
     color: #333 !important;
@@ -308,13 +325,13 @@
   background: linear-gradient(90deg, #f0f7ff 0%, transparent 100%) !important;
   border-radius: 8rpx !important;
   margin-top: 8rpx !important;
-
+  
   .total-label {
     font-size: 28rpx !important;
     color: #333 !important;
     font-weight: 600 !important;
   }
-
+  
   .total-value {
     font-size: 32rpx !important;
     color: #0052d9 !important;
@@ -329,13 +346,13 @@
   padding: 14rpx 16rpx !important;
   background: linear-gradient(90deg, #fff3f3 0%, transparent 100%) !important;
   border-radius: 8rpx !important;
-
+  
   .loss-label {
     font-size: 28rpx !important;
     color: #333 !important;
     font-weight: 600 !important;
   }
-
+  
   .loss-value {
     font-size: 32rpx !important;
     color: #e34d59 !important;
@@ -343,12 +360,13 @@
   }
 }
 
+/* section-title 增强 */
 .detail-section .section-title {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   gap: 12rpx !important;
-
+  
   .title-text {
     flex: 1 !important;
   }

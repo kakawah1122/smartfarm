@@ -1,3 +1,4 @@
+/* employee-permission.scss - 员工权限设置页面样式 */
 .page-container {
   min-height: 100vh;
   background: #f5f6fa;
@@ -5,6 +6,8 @@
   padding-bottom: 40rpx;
 }
 
+
+/* 搜索和筛选区域 */
 .search-section {
   background: #ffffff;
   padding: 24rpx;
@@ -17,6 +20,7 @@
   margin-top: 32rpx;
 }
 
+/* TDesign 标签页样式覆盖 */
 .filter-tabs .t-tabs__nav {
   background: #f8f9fa;
   border-radius: 16rpx;
@@ -34,6 +38,7 @@
   color: #ffffff !important;
 }
 
+/* 内容区域 */
 .content-container {
   padding: 0 16rpx;
 }
@@ -46,6 +51,7 @@
   align-items: center;
 }
 
+/* 员工列表 */
 .employee-list {
   display: flex;
   flex-direction: column;
@@ -61,7 +67,7 @@
   transition: all 0.3s ease;
   overflow: hidden;
   margin-bottom: 16rpx;
-
+  
   &:active {
     transform: scale(0.98);
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
@@ -103,6 +109,7 @@
   letter-spacing: -0.5rpx;
 }
 
+
 .employee-role {
   display: flex;
   align-items: center;
@@ -120,7 +127,7 @@
   min-width: 60rpx;
   text-align: center;
   display: inline-block;
-
+  
   &::before {
     content: '';
     position: absolute;
@@ -133,10 +140,14 @@
   }
 }
 
+
+
+/* 加载更多 */
 .load-more {
   margin: 16rpx;
 }
 
+/* 权限详情弹窗样式 */
 .permission-detail-popup {
   border-radius: 32rpx 32rpx 0 0 !important;
   max-height: 80vh !important;
@@ -149,6 +160,7 @@
   overflow-y: auto;
 }
 
+/* 弹窗头部 */
 .popup-header {
   display: flex;
   justify-content: space-between;
@@ -177,7 +189,7 @@
   background: #f5f5f5;
   border-radius: 32rpx;
   transition: all 0.3s ease;
-
+  
   &:active {
     background: #e8e8e8;
     transform: scale(0.95);
@@ -190,6 +202,7 @@
   font-weight: 500;
 }
 
+/* 员工资料区域 */
 .employee-profile-section {
   padding: 32rpx;
   background: #f8f9fa;
@@ -219,6 +232,7 @@
   border: 2rpx solid;
 }
 
+/* 信息卡片 */
 .info-card {
   background: #ffffff;
   margin: 24rpx 32rpx;
@@ -248,7 +262,7 @@
   background: #3498db;
   border-radius: 8rpx;
   transition: all 0.2s ease;
-
+  
   &:active {
     background: #2980b9;
     transform: scale(0.95);
@@ -265,13 +279,14 @@
   padding: 32rpx;
 }
 
+/* 基本信息行 */
 .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16rpx 0;
   border-bottom: 1rpx solid #f5f5f5;
-
+  
   &:last-child {
     border-bottom: none;
   }
@@ -301,13 +316,14 @@
   border: 2rpx solid #e0e0e0;
   border-radius: 8rpx;
   padding: 12rpx 16rpx;
-
+  
   &:focus {
     border-color: #3498db;
     background: #fafcff;
   }
 }
 
+/* 权限角色信息 */
 .permission-role-info {
   display: flex;
   justify-content: space-between;
@@ -332,6 +348,7 @@
   text-align: center;
 }
 
+/* 权限列表 */
 .permission-list-title {
   display: block;
   font-size: 28rpx;
@@ -365,6 +382,7 @@
   flex: 1;
 }
 
+/* 弹窗操作按钮 */
 .popup-actions {
   display: flex;
   gap: 24rpx;
@@ -377,6 +395,7 @@
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom, 0));
 }
 
+/* 角色选择区域（在权限详情弹窗中） */
 .role-selection-section {
   padding: 32rpx;
 }
@@ -393,6 +412,7 @@
   color: #1a1a1a;
 }
 
+/* 角色选项 */
 .role-options {
   display: flex;
   flex-direction: column;
@@ -405,12 +425,12 @@
   border-radius: 16rpx;
   padding: 24rpx;
   transition: all 0.3s ease;
-
+  
   &.selected {
     background: rgba(52, 152, 219, 0.08);
     border-color: #3498db;
   }
-
+  
   &:active {
     transform: scale(0.98);
   }
@@ -499,13 +519,14 @@
   }
 }
 
+/* 页面元素动画 */
 .search-section {
   animation: slideInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
 }
 
 .employee-card {
   animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
-
+  
   &:nth-child(1) { animation-delay: 0.1s; }
   &:nth-child(2) { animation-delay: 0.2s; }
   &:nth-child(3) { animation-delay: 0.3s; }
@@ -514,15 +535,18 @@
   &:nth-child(n+6) { animation-delay: 0.6s; }
 }
 
+
+/* 响应式适配 */
 @media (max-width: 750rpx) {
   .employee-card {
     padding: 24rpx;
   }
-
+  
   .employee-name {
     font-size: 28rpx;
   }
 }
+
 
 // ==================== 邀请管理样式 ====================
 
@@ -542,6 +566,7 @@
   padding: 16rpx;
 }
 
+/* 邀请管理筛选标签页样式 */
 .filter-section .t-tabs__nav {
   background: #f8f9fa;
   border-radius: 16rpx;
@@ -565,24 +590,24 @@
   margin: 0 16rpx 16rpx 16rpx;
   border-radius: 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-
+  
   .stats-grid {
     display: flex;
     padding: 24rpx 16rpx;
-
+    
     .stat-item {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-
+      
       .stat-number {
         font-size: 40rpx;
         font-weight: 600;
         color: #0052d9;
         line-height: 1.2;
       }
-
+      
       .stat-label {
         font-size: 24rpx;
         color: #666666;
@@ -595,7 +620,7 @@
 // 邀请卡片样式
 .invite-list {
   padding: 0 16rpx;
-
+  
   .invite-card {
     background: #ffffff;
     border-radius: 16rpx;
@@ -603,21 +628,21 @@
     padding: 24rpx;
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
     transition: all 0.3s ease;
-
+    
     &:active {
       transform: scale(0.98);
       box-shadow: 0 1rpx 6rpx rgba(0, 0, 0, 0.12);
     }
-
+    
       .invite-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: 16rpx;
-
+      
       .invite-info {
         flex: 1;
-
+        
         .invite-code {
           font-size: 32rpx;
           font-weight: 600;
@@ -625,49 +650,49 @@
           display: block;
           margin-bottom: 8rpx;
         }
-
+        
         .invite-phone {
           font-size: 26rpx;
           color: #666666;
           display: block;
           margin-bottom: 4rpx;
         }
-
+        
         .invite-role {
           font-size: 24rpx;
           color: #999999;
         }
       }
-
+      
       .invite-status {
         display: flex;
         align-items: center;
         gap: 12rpx;
-
+        
         .status-tag {
           padding: 6rpx 12rpx;
           border-radius: 16rpx;
           font-size: 22rpx;
           font-weight: 500;
-
+          
           &.warning-tag {
             background: #fff3cd;
             color: #856404;
             border: 1rpx solid #ffeaa7;
           }
-
+          
           &.success-tag {
             background: #d4edda;
             color: #155724;
             border: 1rpx solid #c3e6cb;
           }
-
+          
           &.danger-tag {
             background: #f8d7da;
             color: #721c24;
             border: 1rpx solid #f5c6cb;
           }
-
+          
           &.default-tag {
             background: #e9ecef;
             color: #495057;
@@ -676,7 +701,7 @@
         }
       }
     }
-
+    
     .invite-remark {
       .remark-text {
         font-size: 24rpx;
@@ -697,7 +722,7 @@
   bottom: calc(60rpx + env(safe-area-inset-bottom, 0));
   right: 24rpx;
   z-index: 1000;
-
+  
   .create-invite-btn {
     display: flex;
     align-items: center;
@@ -707,18 +732,18 @@
     padding: 24rpx 36rpx;
     box-shadow: 0 8rpx 24rpx rgba(26, 115, 232, 0.3);
     transition: all 0.3s ease;
-
+    
     &:active {
       transform: scale(0.95);
       box-shadow: 0 4rpx 12rpx rgba(26, 115, 232, 0.4);
     }
-
+    
     .create-btn-icon {
       font-size: 36rpx;
       font-weight: 300;
       margin-right: 12rpx;
     }
-
+    
     .create-btn-text {
       font-size: 28rpx;
       font-weight: 500;
@@ -726,6 +751,7 @@
   }
 }
 
+/* 邀请详情弹窗样式 */
 .invite-detail-popup {
   border-radius: 32rpx 32rpx 0 0 !important;
   max-height: 80vh !important;
@@ -740,7 +766,7 @@
 
 .invite-detail-content {
   padding: 32rpx;
-
+  
   .detail-section {
     .detail-item {
       display: flex;
@@ -748,17 +774,17 @@
       align-items: center;
       padding: 20rpx 0;
       border-bottom: 1rpx solid #f5f5f5;
-
+      
       &:last-child {
         border-bottom: none;
       }
-
+      
       .detail-label {
         font-size: 28rpx;
         color: #666666;
         font-weight: 500;
       }
-
+      
       .detail-value {
         font-size: 28rpx;
         color: #333333;
@@ -771,42 +797,60 @@
 }
 
 // 创建邀请弹窗样式
-
-
+.create-dialog-popup {
+  .create-dialog-content {
+    background: #ffffff;
+    border-radius: 20rpx;
+    width: 640rpx;
+    max-height: 80vh;
+    
+    .create-dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 40rpx 40rpx 20rpx;
+      border-bottom: 1rpx solid #f0f0f0;
+      
+      .create-dialog-title {
+        font-size: 36rpx;
+        font-weight: 600;
+        color: #333333;
+      }
+      
       .create-dialog-close {
         font-size: 40rpx;
         color: #999999;
         padding: 10rpx;
         margin: -10rpx;
-
+        
         &:active {
           color: #666666;
         }
       }
     }
-
+    
     .create-dialog-body {
       padding: 30rpx 40rpx;
       max-height: 50vh;
       overflow-y: auto;
-
+      
       .form-tip {
         background: #f0f8ff;
         border-radius: 12rpx;
         padding: 24rpx;
         margin-bottom: 30rpx;
         border-left: 4rpx solid #1a73e8;
-
+        
         .tip-text {
           font-size: 26rpx;
           color: #1a73e8;
           line-height: 1.4;
         }
       }
-
+      
       .form-group {
         margin-bottom: 30rpx;
-
+        
         .form-label {
           font-size: 28rpx;
           color: #333333;
@@ -814,7 +858,7 @@
           display: block;
           font-weight: 500;
         }
-
+        
         .picker-container {
           display: flex;
           justify-content: space-between;
@@ -823,18 +867,18 @@
           border: 2rpx solid #e0e0e0;
           border-radius: 12rpx;
           background: #fafafa;
-
+          
           .picker-text {
             font-size: 28rpx;
             color: #333333;
           }
-
+          
           .picker-arrow {
             font-size: 24rpx;
             color: #999999;
           }
         }
-
+        
         .form-textarea {
           width: 100%;
           min-height: 120rpx;
@@ -846,38 +890,38 @@
           color: #333333;
           line-height: 1.4;
           box-sizing: border-box;
-
+          
           &:focus {
             border-color: #1a73e8;
             background: #ffffff;
           }
         }
       }
-
+      
       // 成功显示样式
       .invite-success-content {
         text-align: center;
-
+        
         .success-tip {
           margin-bottom: 30rpx;
-
+          
           .success-text {
             font-size: 32rpx;
             color: #1a73e8;
             font-weight: 600;
           }
         }
-
+        
         .invite-code-section {
           margin-bottom: 30rpx;
-
+          
           .invite-code-label {
             font-size: 26rpx;
             color: #666666;
             display: block;
             margin-bottom: 16rpx;
           }
-
+          
           .invite-code-box {
             background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
             color: #ffffff;
@@ -885,7 +929,7 @@
             border-radius: 16rpx;
             position: relative;
             overflow: hidden;
-
+            
             &::before {
               content: '';
               position: absolute;
@@ -896,11 +940,11 @@
               background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
               transition: left 0.5s;
             }
-
+            
             &:active::before {
               left: 100%;
             }
-
+            
             .invite-code-value {
               font-size: 36rpx;
               font-weight: 600;
@@ -909,17 +953,20 @@
               margin-bottom: 8rpx;
               letter-spacing: 2rpx;
             }
-
-
+            
+            .copy-hint {
+              font-size: 22rpx;
+              opacity: 0.8;
+            }
           }
         }
-
+        
         .usage-instructions {
           text-align: left;
           background: #f8f9fa;
           padding: 24rpx;
           border-radius: 12rpx;
-
+          
           .instructions-title {
             font-size: 26rpx;
             color: #333333;
@@ -927,14 +974,14 @@
             display: block;
             margin-bottom: 16rpx;
           }
-
+          
           .instruction-item {
             font-size: 24rpx;
             color: #666666;
             line-height: 1.6;
             display: block;
             margin-bottom: 8rpx;
-
+            
             &:last-child {
               margin-bottom: 0;
             }
@@ -942,12 +989,12 @@
         }
       }
     }
-
+    
     .create-dialog-footer {
       display: flex;
       gap: 20rpx;
       padding: 20rpx 40rpx 40rpx;
-
+      
       .dialog-btn {
         flex: 1;
         padding: 24rpx;
@@ -956,21 +1003,28 @@
         font-size: 28rpx;
         font-weight: 500;
         transition: all 0.3s ease;
-
+        
         &:active {
           transform: scale(0.98);
         }
-
+        
         &.cancel-btn {
           background: #f5f5f5;
           color: #666666;
         }
-
+        
         &.confirm-btn {
           background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
           color: #ffffff;
         }
-
-        &
+        
+        &.copy-btn {
+          background: linear-gradient(135deg, #00c851 0%, #00a652 100%);
+          color: #ffffff;
+        }
       }
+    }
+  }
+}
 
+/* 撤销弹窗样式已移除 */

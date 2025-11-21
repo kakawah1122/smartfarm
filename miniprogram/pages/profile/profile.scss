@@ -1,4 +1,6 @@
+/* profile.scss - 个人中心样式 */
 
+/* ========== 页面容器 ========== */
 .page-container {
   height: 100vh;
   background-color: #f5f5f5;
@@ -7,6 +9,7 @@
   overflow: hidden;
 }
 
+/* ========== 内容包装器 ========== */
 .content-wrapper {
   flex: 1;
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx);
@@ -15,6 +18,7 @@
   overflow: hidden;
 }
 
+/* ========== 滚动容器 ========== */
 .list-container {
   flex: 1;
   height: 0; /* 关键：设置为0，让flex:1生效 */
@@ -22,6 +26,7 @@
   box-sizing: border-box;
 }
 
+/* ========== 个人信息卡片 ========== */
 .profile-card {
   background: linear-gradient(135deg, #0052d9 0%, #0099ff 100%);
   margin: 0 0 16rpx 0;
@@ -49,7 +54,7 @@
   padding: 0;
   border: none;
   overflow: hidden;
-
+  
   &::after {
     border: none;
   }
@@ -84,7 +89,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
-
+  
   &:active {
     opacity: 0.7;
   }
@@ -110,6 +115,8 @@
   display: block;
 }
 
+
+/* ========== 卡片通用样式 ========== */
 .card {
   background: white;
   margin: 0 0 16rpx 0;
@@ -126,12 +133,13 @@
   color: #333;
 }
 
+/* 标题行（标题+查看全部按钮） */
 .card-title-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20rpx;
-
+  
   .card-title {
     margin-bottom: 0;
   }
@@ -144,12 +152,13 @@
   padding: 8rpx 16rpx;
   border-radius: 8rpx;
   transition: all 0.3s;
-
+  
   &:active {
     background: rgba(0, 82, 217, 0.1);
   }
 }
 
+/* ========== 功能组整合卡片 ========== */
 .function-group-card {
   padding: 32rpx 0;
 }
@@ -166,13 +175,13 @@
   text-align: left;
   display: block;
   padding: 0 32rpx;
-
+  
   /* 移除所有可能的伪元素图标 */
   &::before,
   &::after {
     content: none !important;
   }
-
+  
   /* 确保文本左对齐，移除任何默认缩进 */
   text {
     display: inline;
@@ -187,6 +196,7 @@
   margin: 24rpx 0;
 }
 
+/* ========== 功能列表样式 ========== */
 .function-list {
   display: flex;
   flex-direction: column;
@@ -200,11 +210,11 @@
   padding: 20rpx 0;
   border-bottom: 1rpx solid #f5f5f5;
   transition: background 0.2s;
-
+  
   &:last-child {
     border-bottom: none;
   }
-
+  
   &:active {
     background: #f8f9fa;
     margin: 0 -32rpx;
@@ -224,12 +234,14 @@
   font-weight: 300;
 }
 
+/* ========== 数据网格 ========== */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16rpx;
   margin-bottom: 20rpx;
 }
+
 
 .stat-item {
   text-align: center;
@@ -255,6 +267,7 @@
   margin-top: 4rpx;
 }
 
+/* ========== 按钮样式 ========== */
 .btn-primary {
   width: 100%;
   height: 80rpx;
@@ -268,11 +281,12 @@
   font-weight: 500;
   margin-bottom: 32rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2);
-
+  
   &::after {
     border: none;
   }
 }
+
 
 .btn-logout {
   width: calc(100% - 64rpx);
@@ -285,19 +299,26 @@
   font-size: 28rpx;
   font-weight: 500;
   box-shadow: 0 4rpx 12rpx rgba(227, 77, 89, 0.2);
-
+  
   &::after {
     border: none;
   }
 }
 
+
+
+
+
+/* ========== 报销表单样式 ========== */
 .reimbursement-form {
   padding: 0; /* 移除 padding，由 bottom-popup 的 popup-content 统一控制 */
   box-sizing: border-box;
 }
 
+/* 表单分区 */
 .form-section {
-  margin-bottom: 12rpx; }
+  margin-bottom: 12rpx; /* 优化：缩小间距 */
+}
 
 .section-title {
   font-size: 28rpx;
@@ -306,8 +327,10 @@
   padding: 12rpx 16rpx;
   background: linear-gradient(135deg, var(--td-brand-color-1, #f0f7ff) 0%, var(--td-brand-color-2, #e6f0ff) 100%); /* 蓝色渐变背景 */
   border-radius: 8rpx;
-  margin-bottom: 12rpx; }
+  margin-bottom: 12rpx; /* 与卡片的间距 */
+}
 
+/* 表单卡片 */
 .form-card {
   width: 100%;
   background: var(--td-bg-color-container, #ffffff);
@@ -317,27 +340,31 @@
   box-sizing: border-box;
 }
 
+/* Picker包裹器样式 */
 .picker-wrapper {
   display: block;
   border-bottom: 1rpx dashed var(--td-border-level-1-color, #e7e7e7);
-
+  
   &:last-child {
     border-bottom: none;
   }
 }
 
+/* 表单项样式 - 左右布局 */
 .form-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 60rpx; /* 优化：缩小高度 */
   padding: 12rpx 20rpx; /* 优化：缩小内边距 */
-  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0); /* 优化：实线边框 */
+  
   &:last-child {
     border-bottom: none;
   }
 }
 
+/* picker内的form-item不需要底部边框 */
 .picker-wrapper .form-item {
   border-bottom: none;
 }
@@ -348,7 +375,7 @@
   margin-right: 16rpx; /* 优化：缩小间距 */
   flex-shrink: 0;
   line-height: 44rpx;
-
+  
   /* 必填标识 */
   &.required::after {
     content: ' *';
@@ -368,7 +395,7 @@
   text-align: right;
   min-width: 0; /* 确保输入框不会超出flex容器 */
   box-sizing: border-box;
-
+  
   &::placeholder {
     color: var(--td-text-color-placeholder, #999);
   }
@@ -385,7 +412,7 @@
   min-height: 80rpx; /* 优化：减小最小高度，配合 auto-height */
   line-height: 1.6;
   box-sizing: border-box;
-
+  
   &::placeholder {
     color: var(--td-text-color-placeholder, #999);
   }
@@ -404,27 +431,30 @@
   line-height: 44rpx;
 }
 
+/* 文本域表单项 */
 .form-item-textarea {
   display: block;
   padding: 16rpx; /* 优化：缩小内边距 */
   border-bottom: none;
-
+  
   .form-label {
     display: block;
     margin-bottom: 12rpx; /* 优化：缩小间距 */
     min-width: auto;
   }
-
+  
   .form-textarea {
     width: 100%;
   }
 }
 
+/* ========== 凭证上传 ========== */
 .voucher-upload {
   display: flex;
   flex-wrap: wrap;
   gap: 12rpx; /* 优化：缩小间距 */
-  margin-top: 0; }
+  margin-top: 0; /* 优化：移除上边距 */
+}
 
 .voucher-item {
   position: relative;
@@ -478,6 +508,7 @@
   color: #999;
 }
 
+/* ========== 安全区域 ========== */
 .safe-area {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
@@ -485,8 +516,11 @@
   flex-shrink: 0;
 }
 
+/* ========== 表单样式（用于弹窗内容） ========== */
+
 .edit-user-form {
   padding: 0 24rpx;
   box-sizing: border-box;
 }
+
 

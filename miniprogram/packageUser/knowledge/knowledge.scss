@@ -3,6 +3,7 @@ page {
   background-color: #f5f5f5;
 }
 
+/* 页面容器 - 按照项目规范 */
 .page-container {
   height: 100vh;
   background-color: #f5f5f5;
@@ -11,6 +12,7 @@ page {
   overflow: hidden;
 }
 
+/* 内容包装器 - 按照项目规范 */
 .content-wrapper {
   flex: 1;
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
@@ -19,6 +21,7 @@ page {
   overflow: hidden;
 }
 
+/* 搜索栏 */
 .search-section {
   flex-shrink: 0;
   background: white;
@@ -30,6 +33,7 @@ page {
   position: relative;
 }
 
+/* 分类导航 */
 .category-nav {
   flex-shrink: 0;
   background: white;
@@ -43,12 +47,22 @@ page {
   --td-tab-item-color: #666 !important;
 }
 
+/* 滚动列表容器 - 按照项目规范 */
 .scroll-container {
   flex: 1;
   padding: 16rpx 24rpx;
   box-sizing: border-box;
 }
 
+/* 文章列表 */
+.articles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding-bottom: 0;
+}
+
+/* 热门文章 */
 .hot-article {
   display: flex;
   flex-direction: column;
@@ -132,6 +146,13 @@ page {
   font-weight: 500;
 }
 
+/* 文章列表 */
+.article-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
 .article-item {
   display: flex;
   flex-direction: column;
@@ -166,6 +187,7 @@ page {
   -webkit-box-orient: vertical;
 }
 
+/* 文章底部 - 标签和日期 */
 .article-item-footer {
   display: flex;
   align-items: center;
@@ -179,10 +201,40 @@ page {
   font-weight: 500;
 }
 
+/* 分类主题颜色 */
+.category-success {
+  color: #00a870;
+}
+
+.category-danger {
+  color: #e34d59;
+}
+
+.category-primary {
+  color: #0052d9;
+}
+
+.category-warning {
+  color: #ed7b2f;
+}
+
+.category-default {
+  color: #8a8a8a;
+}
+
 .article-date {
   color: #999;
   white-space: nowrap;
   margin-left: auto;
+}
+
+.article-stats {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  font-size: 24rpx;
+  color: #888;
+  flex-wrap: wrap;
 }
 
 .stat-item {
@@ -205,6 +257,7 @@ page {
   white-space: nowrap;
 }
 
+/* 卡片样式 */
 .card {
   background: white;
   border-radius: 16rpx;
@@ -250,6 +303,7 @@ page {
   color: #333;
 }
 
+/* 热门推荐卡片 */
 .hot-card {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.02) 0%, rgba(249, 115, 22, 0.05) 100%);
   border: 1rpx solid rgba(239, 68, 68, 0.1);
@@ -264,10 +318,16 @@ page {
   --td-cell-bg-color: transparent !important;
 }
 
+/* 文章列表卡片 */
+.article-list-card {
+  background: white;
+}
+
 .article-list-card::before {
   background: linear-gradient(90deg, #0052d9, #00a870);
 }
 
+/* 文章列表项优化 - 按照项目规范 */
 .article-list {
   display: flex;
   flex-direction: column;
@@ -294,11 +354,38 @@ page {
   box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
+.article-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.article-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
 .article-title {
   font-size: 30rpx;
   font-weight: 600;
   color: #333;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.article-desc {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -313,6 +400,14 @@ page {
   margin-top: 0;
   padding-top: 12rpx;
   border-top: 1rpx solid #f0f0f0;
+}
+
+.article-stats {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  font-size: 24rpx;
+  color: #888;
 }
 
 .stat-item {
@@ -336,6 +431,7 @@ page {
   flex-shrink: 0;
 }
 
+/* 空状态提示 */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -359,6 +455,7 @@ page {
   line-height: 1.6;
 }
 
+/* 底部安全区域 - 按照项目规范 */
 .safe-area {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
@@ -366,17 +463,21 @@ page {
   flex-shrink: 0;
 }
 
+/* 卡片间距优化 - 按照项目规范 */
 .scroll-container > .card:first-child {
-  margin-top: 0; }
+  margin-top: 0; /* 第一个卡片顶部不需要额外间距 */
+}
 
 .card:last-child {
-  margin-bottom: 0; }
+  margin-bottom: 0; /* 最后一张卡片不需要底部间距，由safe-area处理 */
+}
 
+/* 响应式设计 */
 @media screen and (max-width: 480px) {
   .scroll-container {
     padding: 12rpx 16rpx;
   }
-
+  
   .search-section {
     padding: 12rpx 16rpx;
   }
@@ -390,11 +491,14 @@ page {
   }
 }
 
+
+/* 加载状态 */
 .card.loading {
   opacity: 0.6;
   pointer-events: none;
 }
 
+/* 动画增强 */
 .card {
   animation: slideInUp 0.3s ease-out;
 }
@@ -410,6 +514,7 @@ page {
   }
 }
 
+/* 搜索高亮 */
 .search-highlight {
   background: rgba(237, 123, 47, 0.15);
   color: #ed7b2f;
@@ -418,6 +523,13 @@ page {
   font-weight: 500;
 }
 
+/* 文章分类样式 */
+.category-icon {
+  display: inline-block;
+  margin-right: 8rpx;
+}
+
+/* 阅读统计样式 */
 .read-stats {
   display: flex;
   align-items: center;

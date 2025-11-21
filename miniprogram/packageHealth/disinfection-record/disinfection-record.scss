@@ -1,8 +1,9 @@
+/* disinfection-record.scss - 环境消毒记录页面样式 */
 
 .disinfection-record-page {
   background-color: #f5f5f5;
   min-height: 100vh;
-
+  
   .page-container {
     padding: 32rpx 32rpx 0;
     padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
@@ -75,20 +76,21 @@
   }
 }
 
+/* 操作按钮 */
 .action-buttons {
   display: flex;
   gap: 24rpx;
   padding: 32rpx 0;
-
+  
   .t-button {
     flex: 1;
-
+    
     &.t-button--light {
       --td-button-light-color: #666;
       --td-button-light-border-color: #d0d0d0;
       --td-button-light-bg-color: #fff;
     }
-
+    
     &.t-button--primary {
       --td-button-primary-bg-color: #0052d9;
       --td-button-primary-border-color: #0052d9;
@@ -116,6 +118,7 @@
   border-radius: 24rpx 24rpx 0 0;
 }
 
+/* 响应式适配 */
 @media screen and (max-width: 400px) {
   .disinfection-record-page {
     .page-container {
@@ -137,24 +140,27 @@
   }
 }
 
+/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   .disinfection-record-page {
     background-color: #1a1a1a;
-
+    
     .form-container {
       background: #2a2a2a;
       color: #fff;
     }
-
+    
     .section-title {
       background: #333;
       color: #fff;
     }
-
+    
     .form-item .form-label {
       color: #fff;
     }
   }
 }
 
+
+/* 底部安全区域 */
 .safe-area { height: 120rpx; }

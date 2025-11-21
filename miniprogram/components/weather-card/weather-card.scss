@@ -1,4 +1,6 @@
+/* weather-card.scss - 天气卡片组件样式 - 全新iOS风格 */
 
+/* 天气卡片 - 极简iOS风格 + 动态背景 */
 .weather-card {
   /* 默认背景：使用通透深色“晴”天气渐变，避免首次渲染时颜色闪烁 */
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(59, 130, 246, 0.68) 100%);
@@ -23,6 +25,7 @@
   padding: 32rpx 24rpx;
 }
 
+/* ==================== 顶部区域 - 位置信息 ==================== */
 .weather-header-ios {
   display: flex;
   justify-content: flex-start;
@@ -52,6 +55,7 @@
   text-shadow: 0 1rpx 3rpx rgba(15, 23, 42, 0.45);
 }
 
+/* ==================== 中部区域 - 温度和状况 ==================== */
 .temperature-section-ios {
   display: flex;
   flex-direction: column;
@@ -105,6 +109,7 @@
   text-shadow: 0 1rpx 3rpx rgba(15, 23, 42, 0.5);
 }
 
+/* 错误状态样式 */
 .error-text {
   color: #ff3b30 !important;
   opacity: 0.8;
@@ -118,6 +123,7 @@
   margin-top: 8rpx;
 }
 
+/* ==================== 底部区域 - 详细信息 ==================== */
 .weather-details-ios {
   display: flex;
   align-items: center;
@@ -161,6 +167,7 @@
   margin: 0 8rpx;
 }
 
+/* ==================== 动态天气效果层 ==================== */
 .weather-animation-layer {
   position: absolute;
   top: 0;
@@ -177,6 +184,7 @@
   z-index: 1;
 }
 
+/* ==================== 雨滴效果 ==================== */
 .rain-container {
   position: absolute;
   top: 0;
@@ -208,6 +216,7 @@
 }
 }
 
+/* ==================== 雪花效果 ==================== */
 .snow-container {
   position: absolute;
   top: 0;
@@ -238,6 +247,7 @@
   }
 }
 
+/* ==================== 云朵飘动效果 ==================== */
 .cloud-container {
   position: absolute;
   top: 0;
@@ -285,6 +295,7 @@
   }
 }
 
+/* ==================== 雷电效果 ==================== */
 .thunder-container {
   position: absolute;
   top: 0;
@@ -318,6 +329,7 @@
   }
 }
 
+/* ==================== 雾霾效果 ==================== */
 .fog-container {
   position: absolute;
   top: 0;
@@ -330,11 +342,11 @@
   position: absolute;
   width: 200%;
   height: 100%;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.3) 25%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.3) 75%,
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 25%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    rgba(255, 255, 255, 0.3) 75%, 
     transparent 100%
   );
   animation: fogMove linear infinite;

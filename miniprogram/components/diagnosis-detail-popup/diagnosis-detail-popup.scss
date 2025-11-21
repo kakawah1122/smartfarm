@@ -1,3 +1,4 @@
+/* 诊断详情弹窗组件样式 */
 .diagnosis-detail-content {
   padding: 0;
 }
@@ -8,7 +9,7 @@
   padding: 20rpx;
   margin-bottom: 12rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-
+  
   &:last-child {
     margin-bottom: 0;
   }
@@ -35,7 +36,7 @@
   justify-content: space-between;
   padding: 12rpx 0;
   border-bottom: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
-
+  
   &:last-child {
     border-bottom: none;
   }
@@ -56,17 +57,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
+  
   &.primary {
     color: #0052d9;
     font-weight: 600;
   }
-
+  
   &.confidence {
     color: #667eea;
     font-weight: 600;
   }
-
+  
   &.text-content {
     text-align: left;
     max-width: 60%;
@@ -75,7 +76,7 @@
     line-height: 1.5;
     font-size: 26rpx;
   }
-
+  
   &.wrap-text {
     white-space: normal;
     word-wrap: break-word;
@@ -121,27 +122,28 @@
   flex: 1;
 }
 
+/* 修正记录卡片样式 */
 .correction-section {
   background: #fff;
   padding: 20rpx;
   border-radius: 16rpx;
   border: 2rpx solid #00a870;
   box-shadow: 0 4rpx 12rpx rgba(0, 168, 112, 0.1);
-
+  
   .detail-section-title {
     background: linear-gradient(135deg, #f0faf5 0%, #e6f7f0 100%);
     color: #00a870;
   }
-
+  
   .detail-item {
     padding: 12rpx 0;
     border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
-
+    
     &:last-child {
       border-bottom: none;
     }
   }
-
+  
   .detail-value {
     &.corrected {
       color: #00a870;
@@ -151,34 +153,35 @@
   }
 }
 
+/* 实际治疗记录卡片样式 */
 .treatment-section {
   background: #fff;
   padding: 20rpx;
   border-radius: 16rpx;
   border: 2rpx solid #0052d9;
   box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.1);
-
+  
   .detail-section-title {
     background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
     color: #0052d9;
   }
-
+  
   .detail-item {
     padding: 12rpx 0;
     border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
-
+    
     &:last-child {
       border-bottom: none;
     }
   }
-
+  
   .medications-list-actual {
     display: flex;
     flex-direction: column;
     gap: 8rpx;
     width: 100%;
   }
-
+  
   .medication-item-actual {
     display: flex;
     align-items: center;
@@ -186,19 +189,19 @@
     padding: 12rpx;
     background: rgba(255, 255, 255, 0.8);
     border-radius: 8rpx;
-
+    
     .medication-info {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4rpx;
-
+      
       .medication-name {
         font-size: 26rpx;
         color: #333;
         font-weight: 500;
       }
-
+      
       .medication-detail {
         font-size: 24rpx;
         color: #999;
@@ -207,6 +210,7 @@
   }
 }
 
+/* 评分显示 */
 .rating-display {
   display: flex;
   align-items: center;
@@ -216,7 +220,7 @@
 .star-display {
   font-size: 32rpx;
   color: #e0e0e0;
-
+  
   &.active {
     color: #ffa726;
   }
@@ -229,6 +233,7 @@
   margin-left: 8rpx;
 }
 
+/* 诊断图片展示 */
 .diagnosis-images {
   display: flex;
   flex-wrap: wrap;
@@ -242,7 +247,7 @@
   border-radius: 12rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
-
+  
   &:active {
     opacity: 0.8;
     transform: scale(0.98);

@@ -21,7 +21,7 @@
   gap: 16rpx;
   padding: 24rpx;
   background: transparent;
-
+  
   .stats-card {
     flex: 1;
     padding: 24rpx;
@@ -30,14 +30,14 @@
     box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.08);
     text-align: center;
     position: relative;
-
+    
     .stats-value {
       font-size: 36rpx;
       font-weight: 600;
       color: #0052d9;
       margin-bottom: 12rpx;
     }
-
+    
     .stats-label {
       font-size: 26rpx;
       color: #666;
@@ -46,32 +46,55 @@
 }
 
 // 操作栏 - 优化布局和样式
-
-
+.action-bar {
+  padding: 0 24rpx;
+  
+  // 筛选区域
+  .filter-section {
+    display: flex;
+    gap: 16rpx;
+    margin-bottom: 20rpx;
+    
+    .filter-item {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 22rpx 24rpx;
+      background: #fff;
+      border-radius: 12rpx;
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+      transition: background 0.2s, transform 0.2s;
+      
+      .filter-label {
+        font-size: 26rpx;
+        color: #999;
+        margin-right: 8rpx;
+      }
+      
       .filter-value {
         flex: 1;
         font-size: 28rpx;
         color: #333;
         font-weight: 500;
       }
-
+      
       &:active {
         background: #f8f8f8;
         transform: scale(0.98);
       }
     }
   }
-
+  
   // 操作按钮区域
   .action-buttons {
     display: flex;
     gap: 16rpx;
     margin-bottom: 20rpx;
-
+    
     t-button {
       text-align: center;
     }
-
+    
     .t-button {
       flex: 1;
       // 完全使用TDesign的默认样式
@@ -84,7 +107,7 @@
   padding: 24rpx 24rpx 20rpx; /* 优化：增加顶部 padding 从 0 到 24rpx */
   height: 100%;
   overflow-y: auto;
-
+  
   // 模板信息栏
   .template-info-bar {
     background: #fff;
@@ -92,7 +115,7 @@
     padding: 20rpx 24rpx;
     margin: 0 0 20rpx 0;
     box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-
+    
     .info-content {
       .template-name {
         font-size: 32rpx;
@@ -103,7 +126,7 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-
+      
       .template-desc {
         font-size: 26rpx;
         color: #666;
@@ -113,34 +136,34 @@
       }
     }
   }
-
+  
   .day-group {
     margin-bottom: 20rpx;
-
+    
     .day-card {
       background: #fff;
       border-radius: 16rpx;
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
       overflow: hidden;
     }
-
+    
     .day-header {
       display: flex;
       align-items: center;
       padding: 20rpx 24rpx;
       transition: background 0.2s;
-
+      
       &:active {
         background: #f5f5f5;
       }
-
+      
       .day-age {
         font-size: 32rpx;
         font-weight: 600;
         color: #1a1a1a;
         margin-right: 16rpx;
       }
-
+      
       .task-count {
         font-size: 26rpx;
         color: #666;
@@ -149,38 +172,38 @@
         border-radius: 8rpx;
         margin-right: auto;
       }
-
+      
       .add-btn {
         font-size: 28rpx;
         color: #0052d9;
         padding: 8rpx 0;
         margin-left: auto;
-
+        
         &:active {
           opacity: 0.7;
         }
       }
     }
-
+    
     .header-divider {
       height: 1rpx;
       background: transparent;
       border-top: 2rpx dashed #e5e5e5;
       margin: 0 24rpx;
     }
-
+    
     .tasks-container {
       padding: 0;
-
+      
       .task-item {
         padding: 20rpx 24rpx;
-
+        
         .task-header {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
           margin-bottom: 12rpx;
-
+          
           .task-title {
             flex: 1;
             font-size: 30rpx;
@@ -189,7 +212,7 @@
             line-height: 1.5;
             margin-right: 12rpx;
           }
-
+          
           .task-meta {
             display: flex;
             gap: 8rpx;
@@ -197,7 +220,7 @@
             justify-content: flex-end;
           }
         }
-
+        
         .task-content {
           .task-description {
             font-size: 26rpx;
@@ -206,7 +229,7 @@
             display: block;
             margin-bottom: 12rpx;
           }
-
+          
           .task-detail {
             display: inline-flex;
             align-items: center;
@@ -215,13 +238,13 @@
             padding: 6rpx 12rpx;
             background: #f5f7fa;
             border-radius: 6rpx;
-
+            
             .detail-label {
               font-size: 24rpx;
               color: #999;
               margin-right: 6rpx;
             }
-
+            
             .detail-value {
               font-size: 24rpx;
               color: #0052d9;
@@ -241,16 +264,16 @@
   align-items: center;
   justify-content: center;
   padding: 200rpx 0;
-
+  
   .t-empty {
     text-align: center;
-
+    
     .t-empty__description {
       color: #999;
       font-size: 28rpx;
       margin: 32rpx 0;
     }
-
+    
     .t-button {
       margin-top: 40rpx;
     }
@@ -322,23 +345,23 @@
 // 模板列表样式
 .template-list {
   animation: fadeInUp 0.4s ease;
-
+  
   padding: 24rpx;
   padding-bottom: 120rpx; // 为底部按钮留出空间
-
+  
   .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 20rpx 0;
-
+    
     .section-title {
       font-size: 32rpx;
       font-weight: bold;
       color: #333;
     }
   }
-
+  
   .bottom-actions {
     position: fixed;
     bottom: 0;
@@ -350,12 +373,12 @@
     background: #fff;
     box-shadow: 0 -2rpx 16rpx rgba(0, 0, 0, 0.05);
     padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-
+    
     .t-button {
       flex: 1;
     }
   }
-
+  
   .template-cards {
     .template-card {
       background: #fff;
@@ -367,15 +390,15 @@
       align-items: center;
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
       transition: background 0.3s ease, transform 0.3s ease;
-
+      
       &:active {
         background: #f5f5f5;
         transform: scale(0.98);
       }
-
+      
       .template-info {
         flex: 1;
-
+        
         .template-name {
           display: block;
           font-size: 32rpx;
@@ -383,19 +406,19 @@
           color: #333;
           margin-bottom: 8rpx;
         }
-
+        
         .template-desc {
           display: block;
           font-size: 26rpx;
           color: #999;
         }
       }
-
+      
       .template-meta {
         display: flex;
         align-items: center;
         gap: 16rpx;
-
+        
         .task-total {
           font-size: 26rpx;
           color: #0052d9;
@@ -431,31 +454,31 @@
 // 骨架屏样式
 .skeleton-loader {
   padding: 24rpx;
-
+  
   .skeleton-card {
     background: #fff;
     border-radius: 16rpx;
     padding: 24rpx;
     margin-bottom: 20rpx;
-
+    
     .skeleton-item {
       background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 50%, #f2f2f2 75%);
       background-size: 200% 100%;
       animation: skeleton-loading 1.4s ease infinite;
       border-radius: 8rpx;
-
+      
       &.title {
         height: 32rpx;
         width: 60%;
         margin-bottom: 16rpx;
       }
-
+      
       &.desc {
         height: 24rpx;
         width: 80%;
         margin-bottom: 12rpx;
       }
-
+      
       &.meta {
         height: 20rpx;
         width: 40%;
@@ -471,24 +494,47 @@
   100% {
     background-position: -200% 0;
   }
+}
 
 // 任务项动画进入效果
-
+.animated-entry {
+  animation: fadeInUp 0.4s ease backwards;
+  
+  &:nth-child(1) { animation-delay: 0.05s; }
   &:nth-child(2) { animation-delay: 0.1s; }
   &:nth-child(3) { animation-delay: 0.15s; }
   &:nth-child(4) { animation-delay: 0.2s; }
   &:nth-child(5) { animation-delay: 0.25s; }
-
+  
   // 超过5个项目使用统一延迟
   &:nth-child(n+6) { animation-delay: 0.3s; }
+}
 
 // 优化滚动性能
 .task-groups {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-
+  
   &::-webkit-scrollbar {
     display: none;
+  }
+}
 
 // 返回栏样式
-
+.back-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx;
+  background: #fff;
+  margin-bottom: 20rpx;
+  border-radius: 16rpx;
+  margin: 0 24rpx 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  
+  .current-template-name {
+    font-size: 30rpx;
+    color: #333;
+    font-weight: 500;
+  }
+}

@@ -3,6 +3,7 @@
 
 @import "../../styles/health-vars.scss";
 
+/* 页面容器 */
 .treatment-records-page {
   height: 100vh;
   background-color: #f5f5f5;
@@ -11,6 +12,7 @@
   overflow: hidden;
 }
 
+/* 内容包装器 */
 .content-wrapper {
   flex: 1;
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
@@ -19,6 +21,7 @@
   overflow: hidden;
 }
 
+/* 滚动容器 */
 .list-container {
   flex: 1;
   padding: 16rpx 24rpx;
@@ -133,7 +136,7 @@
     min-width: 0;
     word-break: break-all;
     overflow-wrap: anywhere;
-
+    
     &.highlight {
       color: $health-warning-color;
       font-weight: 600;
@@ -177,7 +180,7 @@
   align-items: center;
   flex: 0 0 auto;
   min-width: 0;
-
+  
   &.full-width {
     flex: 1 1 100%;
     // ✅ 移除 flex-wrap，让用药信息在一行显示
@@ -214,7 +217,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
+    
     &.highlight {
       color: $health-warning-color;
       font-weight: 600;
@@ -229,7 +232,7 @@
       color: $health-danger-color;
       font-weight: 600;
     }
-
+    
     // 治疗编号专用样式 - 确保不换行
     &.treatment-number {
       white-space: nowrap;
@@ -268,6 +271,7 @@
     font-weight: 500;
   }
 }
+
 
 .safe-area {
   height: constant(safe-area-inset-bottom);

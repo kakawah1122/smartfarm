@@ -1,3 +1,4 @@
+/* reimbursement-list.scss - 报销列表样式 */
 
 .page-container {
   height: 100vh;
@@ -7,6 +8,7 @@
   overflow: hidden;
 }
 
+/* 内容区域 - 参照首页设置导航栏安全间距 */
 .content-wrapper {
   flex: 1;
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
@@ -15,6 +17,7 @@
   overflow: hidden;
 }
 
+/* 筛选标签 */
 .filter-tabs {
   display: flex;
   padding: 16rpx 32rpx 12rpx 32rpx;
@@ -55,6 +58,7 @@
   border-radius: 2rpx;
 }
 
+/* 列表容器 */
 .list-container {
   flex: 1;
   padding: 16rpx 32rpx;
@@ -67,6 +71,7 @@
   gap: 16rpx;
 }
 
+/* 报销项 */
 .reimbursement-item {
   background: white;
   border-radius: 16rpx;
@@ -74,7 +79,7 @@
   border: 1rpx solid #e7e7e7;
   transition: all 0.2s;
   box-sizing: border-box;
-
+  
   &:active {
     transform: scale(0.98);
     opacity: 0.9;
@@ -98,17 +103,17 @@
   padding: 4rpx 16rpx;
   border-radius: 8rpx;
   font-size: 24rpx;
-
+  
   &.warning {
     background: #fff3e0;
     color: #ff9800;
   }
-
+  
   &.success {
     background: #e8f5e9;
     color: #4caf50;
   }
-
+  
   &.danger {
     background: #ffebee;
     color: #f44336;
@@ -154,18 +159,20 @@
   color: #999;
 }
 
+/* 空状态 */
 .empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 200rpx 0;
-
+  
   .empty-text {
     font-size: 28rpx;
     color: var(--td-text-color-placeholder, #999);
   }
 }
 
+/* 安全区域 */
 .safe-area {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);

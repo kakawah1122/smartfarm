@@ -1,3 +1,4 @@
+/* cost-analysis.scss - 成本分析页面样式 */
 
 .cost-analysis-page {
   background-color: #f5f5f5;
@@ -10,7 +11,7 @@
   align-items: center;
   justify-content: center;
   height: 400rpx;
-
+  
   .loading-text {
     margin-top: 20rpx;
     color: #666;
@@ -20,8 +21,10 @@
 
 .content-container {
   padding: 20rpx;
-  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 20rpx); }
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 20rpx); /* 状态栏 + 导航栏 + 安全间距 */
+}
 
+/* 日期范围选择器 */
 .date-range-selector {
   background: white;
   border-radius: 16rpx;
@@ -30,6 +33,7 @@
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
 }
 
+/* 总览卡片 */
 .overview-card {
   background: white;
   border-radius: 16rpx;
@@ -121,6 +125,7 @@
   }
 }
 
+/* 成本构成卡片 */
 .cost-breakdown-card {
   background: white;
   border-radius: 16rpx;
@@ -233,6 +238,7 @@
   }
 }
 
+/* 趋势卡片 */
 .trend-card {
   background: white;
   border-radius: 16rpx;
@@ -326,6 +332,7 @@
   }
 }
 
+/* 建议卡片 */
 .suggestions-card {
   background: white;
   border-radius: 16rpx;
@@ -423,6 +430,7 @@
   }
 }
 
+/* 对比分析卡片 */
 .comparison-card {
   background: white;
   border-radius: 16rpx;
@@ -465,10 +473,12 @@
   }
 }
 
+/* 操作区域 */
 .actions-section {
   margin-top: 30rpx;
 }
 
+/* 底部安全区域 */
 .safe-area {
   height: 120rpx;
 }

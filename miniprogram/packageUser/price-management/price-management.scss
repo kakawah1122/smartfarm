@@ -1,3 +1,4 @@
+/* 鹅价管理页面样式 */
 
 .page-container {
   height: 100vh;
@@ -13,8 +14,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0; }
+  min-height: 0; /* 重要：允许 flex 子元素缩小 */
+}
 
+/* AI识别区域 */
 .ai-section {
   margin-top: 0;
   margin-bottom: 24rpx;
@@ -24,8 +27,10 @@
   flex: 1;
   padding: 16rpx 24rpx;
   box-sizing: border-box;
-  height: 0; }
+  height: 0; /* 重要：配合 flex: 1 使用，让 scroll-view 正确计算高度 */
+}
 
+/* 手动录入表单 */
 .manual-section {
   margin-top: 4rpx;
 }
@@ -104,6 +109,7 @@
   width: 100%;
 }
 
+/* AI识别区域 */
 .ai-tip-box {
   display: flex;
   align-items: center;
@@ -148,7 +154,7 @@
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
-
+  
   &:active {
     transform: scale(0.98);
     border-color: #0052d9;
@@ -211,7 +217,7 @@
   font-weight: 600;
   border-radius: 16rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.25);
-
+  
   &:active {
     transform: scale(0.98);
   }
@@ -241,6 +247,7 @@
   }
 }
 
+/* 历史记录区域 */
 .history-section {
   margin-top: 24rpx;
 }
@@ -311,10 +318,13 @@
   font-size: 28rpx;
 }
 
+
+/* 底部安全区域 */
 .safe-area {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
   min-height: 0;
   flex-shrink: 0;
 }
+
 

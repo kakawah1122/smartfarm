@@ -96,7 +96,7 @@
     font-weight: $health-value-weight;
     text-align: left;
   }
-
+  
   &:last-child {
     margin-bottom: 0;
   }
@@ -131,7 +131,7 @@
   align-items: center;
   flex: 0 0 auto;
   min-width: 0;
-
+  
   &.full-width {
     flex: 1 1 100%;
   }
@@ -166,7 +166,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
+    
     &.highlight {
       color: $health-warning-color;
       font-weight: 600;
@@ -224,6 +224,11 @@
   }
 }
 
+.status-tag {
+  /* TDesign tag component */
+}
+
+
 .safe-area-bottom {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
@@ -272,12 +277,12 @@
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(100%);
+  from { 
+    transform: translateY(100%); 
     opacity: 0;
   }
-  to {
-    transform: translateY(0);
+  to { 
+    transform: translateY(0); 
     opacity: 1;
   }
 }
@@ -344,7 +349,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16rpx 0;
-
+  
   &:not(:last-child) {
     border-bottom: 1rpx solid #e8e8e8;
   }
@@ -635,7 +640,7 @@
   justify-content: center;
   font-weight: 600;
   transition: all 0.3s;
-
+  
   &.btn-primary {
     background: linear-gradient(135deg, #0052d9 0%, #0040b3 100%);
     color: white;
@@ -646,7 +651,7 @@
     color: #0052d9;
     border: 2rpx solid #0052d9;
   }
-
+  
   &:active {
     opacity: 0.8;
     transform: scale(0.98);

@@ -6,14 +6,15 @@
 @font-face {
   font-family: t;
   /* 使用本地系统字体替代外部字体文件，避免网络请求 */
-  src: local('PingFang SC Regular'),
-       local('Helvetica Neue'),
-       local('Arial'),
+  src: local('PingFang SC Regular'), 
+       local('Helvetica Neue'), 
+       local('Arial'), 
        local('sans-serif') !important;
   font-weight: 400 !important;
   font-style: normal;
 }
 
+/* 强制覆盖所有可能的t字体族引用 */
 .t-icon,
 .t-icon-base,
 [class*="t-icon-"]::before,
@@ -24,9 +25,9 @@
 /* 禁用所有可能的外部字体加载 */
 @font-face {
   font-family: "t";
-  src: local('PingFang SC Regular'),
-       local('Helvetica Neue'),
-       local('Arial'),
+  src: local('PingFang SC Regular'), 
+       local('Helvetica Neue'), 
+       local('Arial'), 
        local('sans-serif') !important;
   font-weight: 400 !important;
   font-style: normal;
@@ -36,19 +37,20 @@
 page {
   /* 使用TDesign标准背景色变量，支持深色模式自动切换 */
   background-color: var(--td-bg-color-page, #f5f5f5);
-
+  
   /* 安全区域变量 - 刘海屏适配 */
   --safe-area-inset-top: env(safe-area-inset-top);
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
   --safe-area-inset-left: env(safe-area-inset-left);
   --safe-area-inset-right: env(safe-area-inset-right);
-
+  
   /* 状态栏高度适配 - 固定值避免calc错误 */
   --status-bar-height: 44rpx;
   --navbar-height: 88rpx;
   --total-header-height: 132rpx;
-
-    /* 核心品牌色 - 现代蓝色渐变系统 */
+  
+  /* === TDesign 主题色系统 - 现代化蓝色设计 === */
+  /* 核心品牌色 - 现代蓝色渐变系统 */
   --td-brand-color: #0052d9;
   --td-brand-color-1: #f2f3ff;
   --td-brand-color-2: #d9e1ff;
@@ -64,14 +66,15 @@ page {
   --td-brand-color-light-active: #d9e1ff;
   --td-brand-color-active: #1976d2;
   --td-brand-color-disabled: #b5c7ff;
-
+  
   /* 语义色彩系统 */
   --td-warning-color: #ed7b2f;
   --td-error-color: #d54941;
   --td-success-color: #00a870;
   --td-info-color: #0052d9;
-
-    /* 按钮主要颜色 - 现代蓝色渐变 */
+  
+  /* === TDesign 按钮全局样式变量 === */
+  /* 按钮主要颜色 - 现代蓝色渐变 */
   --td-button-primary-bg-color: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   --td-button-primary-border-color: transparent;
   --td-button-primary-color: #ffffff;
@@ -79,7 +82,7 @@ page {
   --td-button-primary-disabled-bg: #b5c7ff;
   --td-button-primary-disabled-border-color: #b5c7ff;
   --td-button-primary-disabled-color: #ffffff;
-
+  
   /* 按钮基础样式 */
   --td-button-border-radius: 12rpx;
   --td-button-font-weight: 500;
@@ -89,8 +92,9 @@ page {
   --td-button-medium-height: 72rpx;
   --td-button-medium-font-size: 28rpx;
   --td-button-medium-padding-horizontal: 24rpx;
-
-    /* 与TDesign按钮保持一致的现代蓝色风格 */
+  
+  /* === 统一现代蓝色主色调系统 === */
+  /* 与TDesign按钮保持一致的现代蓝色风格 */
   --primary-blue: #0052d9;
   --primary-blue-light: #4582e8;
   --primary-blue-lighter: #f2f3ff;
@@ -99,7 +103,7 @@ page {
   --primary-gradient: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   --primary-gradient-reverse: linear-gradient(135deg, #1976d2 0%, #4582e8 100%);
   --header-gradient: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
-
+  
   /* 语义化色彩 */
   --color-success: #10b981;
   --color-success-light: #dcfdf4;
@@ -113,33 +117,33 @@ page {
   --color-info: #3b82f6;
   --color-info-light: #dbeafe;
   --color-info-lighter: #eff6ff;
-
+  
   /* 中性色系统 */
   --color-text-primary: #111827;
   --color-text-secondary: #374151;
   --color-text-tertiary: #6b7280;
   --color-text-quaternary: #9ca3af;
   --color-text-disabled: #d1d5db;
-
+  
   /* 背景色系统 - 支持深色模式自动切换 */
   --color-bg-primary: var(--td-bg-color-container, #ffffff);
   --color-bg-secondary: var(--td-bg-color-component, #f9fafb);
   --color-bg-tertiary: var(--td-bg-color-secondarycontainer, #f3f4f6);
   --color-bg-quaternary: #e5e7eb;
   --color-bg-page: var(--td-bg-color-page, #f5f5f5);
-
+  
   /* 边框色系统 */
   --color-border-light: #f3f4f6;
   --color-border-base: #e5e7eb;
   --color-border-dark: #d1d5db;
-
+  
   /* 阴影系统 */
   --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
   --shadow-base: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
   --shadow-md: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
   --shadow-lg: 0 16rpx 48rpx rgba(0, 0, 0, 0.16);
   --shadow-colored: 0 4rpx 24rpx rgba(14, 165, 233, 0.15);
-
+  
   /* 圆角系统 */
   --radius-xs: 8rpx;
   --radius-sm: 12rpx;
@@ -148,7 +152,7 @@ page {
   --radius-lg: 24rpx;
   --radius-xl: 32rpx;
   --radius-full: 50%;
-
+  
   /* 间距系统 */
   --spacing-xs: 8rpx;
   --spacing-sm: 12rpx;
@@ -158,7 +162,7 @@ page {
   --spacing-xl: 32rpx;
   --spacing-2xl: 40rpx;
   --spacing-3xl: 48rpx;
-
+  
   /* 字体系统 */
   --font-size-xs: 20rpx;
   --font-size-sm: 22rpx;
@@ -169,18 +173,18 @@ page {
   --font-size-2xl: 40rpx;
   --font-size-3xl: 48rpx;
   --font-size-4xl: 56rpx;
-
+  
   /* 行高系统 */
   --line-height-tight: 1.2;
   --line-height-base: 1.4;
   --line-height-relaxed: 1.6;
-
+  
   /* 字重系统 */
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-
+  
   /* Z-index 层级系统 */
   --z-index-dropdown: 1000;
   --z-index-sticky: 1010;
@@ -189,13 +193,14 @@ page {
   --z-index-modal: 1040;
   --z-index-popover: 1050;
   --z-index-tooltip: 1060;
-
+  
   background-color: var(--color-bg-page);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   color: var(--td-text-color-primary, var(--color-text-primary));
   line-height: var(--line-height-base);
 }
 
+/* 布局类 */
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .flex-row { flex-direction: row; }
@@ -213,6 +218,7 @@ page {
 .flex-1 { flex: 1; }
 .flex-shrink-0 { flex-shrink: 0; }
 
+/* 文本类 */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
@@ -225,6 +231,7 @@ page {
 .text-danger { color: var(--color-danger); }
 .text-info { color: var(--color-info); }
 
+/* 字体大小 */
 .text-xs { font-size: var(--font-size-xs); }
 .text-sm { font-size: var(--font-size-sm); }
 .text-base { font-size: var(--font-size-base); }
@@ -235,11 +242,24 @@ page {
 .text-3xl { font-size: var(--font-size-3xl); }
 .text-4xl { font-size: var(--font-size-4xl); }
 
+/* 字重 */
 .font-normal { font-weight: var(--font-weight-normal); }
 .font-medium { font-weight: var(--font-weight-medium); }
 .font-semibold { font-weight: var(--font-weight-semibold); }
 .font-bold { font-weight: var(--font-weight-bold); }
 
+/* 背景色 */
+.bg-primary { background-color: var(--color-bg-primary); }
+.bg-secondary { background-color: var(--color-bg-secondary); }
+.bg-tertiary { background-color: var(--color-bg-tertiary); }
+.bg-gradient { background: var(--primary-gradient); }
+.bg-gradient-reverse { background: var(--primary-gradient-reverse); }
+.bg-success-light { background: var(--color-success-light); }
+.bg-warning-light { background: var(--color-warning-light); }
+.bg-danger-light { background: var(--color-danger-light); }
+.bg-info-light { background: var(--color-info-light); }
+
+/* 圆角 */
 .rounded-xs { border-radius: var(--radius-xs); }
 .rounded-sm { border-radius: var(--radius-sm); }
 .rounded-base { border-radius: var(--radius-base); }
@@ -248,12 +268,14 @@ page {
 .rounded-xl { border-radius: var(--radius-xl); }
 .rounded-full { border-radius: var(--radius-full); }
 
+/* 阴影 */
 .shadow-sm { box-shadow: var(--shadow-sm); }
 .shadow-base { box-shadow: var(--shadow-base); }
 .shadow-md { box-shadow: var(--shadow-md); }
 .shadow-lg { box-shadow: var(--shadow-lg); }
 .shadow-colored { box-shadow: var(--shadow-colored); }
 
+/* 间距 - Margin */
 .m-0 { margin: 0; }
 .m-xs { margin: var(--spacing-xs); }
 .m-sm { margin: var(--spacing-sm); }
@@ -300,6 +322,7 @@ page {
 .mr-lg { margin-right: var(--spacing-lg); }
 .mr-xl { margin-right: var(--spacing-xl); }
 
+/* 间距 - Padding */
 .p-0 { padding: 0; }
 .p-xs { padding: var(--spacing-xs); }
 .p-sm { padding: var(--spacing-sm); }
@@ -346,6 +369,7 @@ page {
 .pr-lg { padding-right: var(--spacing-lg); }
 .pr-xl { padding-right: var(--spacing-xl); }
 
+/* 组件基础样式 */
 .card {
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
@@ -384,6 +408,9 @@ page {
   padding: 0;
 }
 
+/* 自定义导航栏样式已移至 navigation-bar 组件，此处不再定义全局样式以避免冲突 */
+
+/* 页面容器 - 刘海屏适配 */
 .page-container {
   min-height: 100vh;
   background-color: var(--color-bg-page);
@@ -391,6 +418,7 @@ page {
   padding-bottom: var(--safe-area-inset-bottom, 0);
 }
 
+/* TDesign 组件全局样式覆盖 - 简化版本 */
 .app .t-navbar,
 .page .t-navbar {
 background: var(--primary-gradient) ;
@@ -409,6 +437,7 @@ background: var(--primary-gradient) ;
   box-shadow: var(--shadow-sm);
 }
 
+/* === TDesign 按钮全局样式优化 === */
 .app .t-button,
 .page .t-button {
 border-radius: var(--td-button-border-radius) ;
@@ -421,6 +450,7 @@ border-radius: var(--td-button-border-radius) ;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) ;
 }
 
+/* 主要按钮 - 现代蓝色渐变 */
 .app .t-button--primary,
 .page .t-button--primary {
 background: var(--td-button-primary-bg-color) ;
@@ -442,6 +472,7 @@ background: var(--td-button-primary-bg-color) ;
   opacity: 0.6 !important;
 }
 
+/* 语义化按钮样式 */
 .app .t-button--success,
 .page .t-button--success {
 background: linear-gradient(135deg, var(--td-success-color), #059669) ;
@@ -465,6 +496,7 @@ background: linear-gradient(135deg, var(--td-error-color), #dc2626) ;
   box-shadow: 0 4rpx 16rpx rgba(213, 73, 65, 0.2) ;
 }
 
+/* 轻量按钮样式 */
 .app .t-button--light,
 .page .t-button--light {
 background: var(--td-brand-color-light) ;
@@ -550,6 +582,7 @@ border-radius: 8rpx ;
   font-size: 30rpx ;
 }
 
+/* TDesign Button 全局样式 - 极致紧凑 */
 .app .t-button,
 .page .t-button {
 border-radius: 12rpx ;
@@ -565,7 +598,7 @@ border-radius: 12rpx ;
 .page .t-button--theme-primary {
 background: linear-gradient(135deg, #0052d9 0%, #2b6def 100%) ;
   box-shadow: 0 8rpx 20rpx rgba(0, 82, 217, 0.3) ;
-
+  
   &:active {
     transform: scale(0.98);
     box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.2) ;
@@ -587,6 +620,7 @@ border: none ;
   white-space: normal ;
 }
 
+/* 下拉菜单选项内容 */
 .t-dropdown-item__content {
   flex: 1 !important;
   min-width: 0 !important;
@@ -594,16 +628,19 @@ border: none ;
   white-space: normal !important;
 }
 
+/* 下拉菜单弹出层 */
 .t-dropdown-menu__content {
   max-height: 60vh !important;
   overflow-y: auto !important;
   z-index: 99999 !important;
 }
 
+/* 下拉菜单遮罩层 */
 .t-dropdown-menu__mask {
   z-index: 99998 !important;
 }
 
+/* TDesign Input 全局样式 - 极致紧凑 */
 .t-input {
   --td-input-height: 44rpx;
   --td-input-font-size: 30rpx;
@@ -621,6 +658,7 @@ border: none ;
   align-items: center !important;
 }
 
+/* TDesign Cell 全局样式 - 极致紧凑 */
 .t-cell {
   --td-cell-height: 44rpx;
   --td-cell-font-size: 30rpx;
@@ -655,6 +693,7 @@ border-radius: var(--radius-base) ;
   --td-swipe-cell-bg-color: var(--td-bg-color-container, var(--color-bg-primary));
 }
 
+/* iPhone SE (1st gen) 及类似小屏设备 */
 @media screen and (max-width: 320px) {
   :root {
     --spacing-xs: 6rpx;
@@ -666,13 +705,14 @@ border-radius: var(--radius-base) ;
     --spacing-2xl: 32rpx;
     --spacing-3xl: 40rpx;
   }
-
+  
   .card {
     margin: var(--spacing-sm) var(--spacing-base);
     padding: var(--spacing-lg);
   }
 }
 
+/* iPhone 6/7/8 及类似设备 */
 @media screen and (min-width: 375px) and (max-width: 414px) {
   :root {
     --font-size-xs: 22rpx;
@@ -684,66 +724,72 @@ border-radius: var(--radius-base) ;
   }
 }
 
+/* iPhone X/11/12/13 系列及类似刘海屏设备 */
 @media screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2),
        screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
-
+  
+  /* 刘海屏特殊适配 */
   .gradient-header,
   .custom-navbar {
     padding-top: 44rpx;
   }
-
+  
   .status-bar {
     height: 44rpx;
     padding-top: 4rpx;
   }
 }
 
+/* iPhone 14 Pro/15 Pro 系列动态岛设备 */
 @media screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
        screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-
+  
+  /* 动态岛适配 */
   .gradient-header,
   .custom-navbar {
     padding-top: 54rpx;
   }
-
+  
   .status-bar {
     height: 54rpx;
     padding-top: 4rpx;
   }
 }
 
+/* iPad 及大屏设备 */
 @media screen and (min-width: 768px) {
   .page-container {
     max-width: 768rpx;
     margin: 0 auto;
     box-shadow: var(--shadow-lg);
   }
-
+  
   .card {
     margin: var(--spacing-xl) var(--spacing-2xl);
     padding: var(--spacing-2xl);
   }
-
+  
   .mobile-container {
     max-width: 768rpx;
     margin: 0 auto;
   }
 }
 
+/* 横屏适配 */
 @media screen and (orientation: landscape) and (max-height: 500px) {
   .gradient-header {
     padding: var(--spacing-base) var(--spacing-xl);
     border-radius: 0 0 var(--spacing-lg) var(--spacing-lg);
   }
-
+  
   .card {
     margin: var(--spacing-base) var(--spacing-lg);
     padding: var(--spacing-lg);
   }
-
+  
   .scroll-container {
     padding-top: 156rpx;
   }

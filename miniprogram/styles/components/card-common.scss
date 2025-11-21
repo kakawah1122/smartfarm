@@ -4,61 +4,97 @@
  */
 
 // 基础卡片样式
-
-
+.base-card {
+  background: var(--td-bg-color-container);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
   // 卡片头部
   .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20rpx;
-
+    
     .card-title {
       font-size: 32rpx;
       font-weight: 600;
       color: var(--td-text-color-primary);
       display: flex;
       align-items: center;
-
+      
       .title-icon {
         width: 36rpx;
         height: 36rpx;
         margin-right: 12rpx;
       }
     }
-
-
-
+    
+    .card-action {
+      display: flex;
+      align-items: center;
+      color: var(--td-text-color-secondary);
+      font-size: 26rpx;
+      
+      .action-text {
+        margin-right: 8rpx;
+      }
+      
       .action-icon {
         width: 24rpx;
         height: 24rpx;
       }
     }
   }
-
+  
   // 卡片内容
   .card-content {
-
-
-
-
-
-
+    .content-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12rpx 0;
+      
+      &:not(:last-child) {
+        border-bottom: 1rpx solid var(--td-component-stroke);
+      }
+      
+      .content-label {
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary);
+      }
+      
+      .content-value {
+        font-size: 28rpx;
+        color: var(--td-text-color-primary);
+        font-weight: 500;
+        
+        &.highlight {
+          color: var(--td-brand-color);
+        }
+        
         &.success {
           color: var(--td-success-color);
         }
-
+        
         &.warning {
           color: var(--td-warning-color);
         }
-
+        
         &.danger {
           color: var(--td-error-color);
         }
       }
     }
   }
-
+  
   // 卡片底部
   .card-footer {
     margin-top: 20rpx;
@@ -67,30 +103,30 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-
+    
     .footer-info {
       font-size: 24rpx;
       color: var(--td-text-color-placeholder);
     }
-
+    
     .footer-actions {
       display: flex;
       align-items: center;
       gap: 24rpx;
-
+      
       .footer-btn {
         padding: 8rpx 24rpx;
         border-radius: 20rpx;
         font-size: 24rpx;
         border: 1rpx solid var(--td-component-stroke);
         color: var(--td-text-color-secondary);
-
+        
         &.primary {
           background: var(--td-brand-color);
           color: #fff;
           border-color: var(--td-brand-color);
         }
-
+        
         &.danger {
           color: var(--td-error-color);
           border-color: var(--td-error-color);
@@ -104,31 +140,31 @@
 .stat-card {
   @extend .base-card;
   padding: 32rpx;
-
+  
   .stat-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24rpx;
-
+    
     .stat-title {
       font-size: 28rpx;
       color: var(--td-text-color-secondary);
     }
-
+    
     .stat-trend {
       display: flex;
       align-items: center;
       font-size: 24rpx;
-
+      
       &.up {
         color: var(--td-success-color);
       }
-
+      
       &.down {
         color: var(--td-error-color);
       }
-
+      
       .trend-icon {
         width: 20rpx;
         height: 20rpx;
@@ -136,13 +172,13 @@
       }
     }
   }
-
+  
   .stat-value {
     font-size: 48rpx;
     font-weight: 600;
     color: var(--td-text-color-primary);
     line-height: 1.2;
-
+    
     .stat-unit {
       font-size: 28rpx;
       font-weight: 400;
@@ -150,7 +186,7 @@
       color: var(--td-text-color-secondary);
     }
   }
-
+  
   .stat-desc {
     margin-top: 16rpx;
     font-size: 24rpx;
@@ -161,12 +197,12 @@
 // 信息卡片样式
 .info-card {
   @extend .base-card;
-
+  
   .info-item {
     display: flex;
     align-items: flex-start;
     padding: 16rpx 0;
-
+    
     .info-icon {
       width: 32rpx;
       height: 32rpx;
@@ -174,41 +210,41 @@
       margin-top: 4rpx;
       flex-shrink: 0;
     }
-
+    
     .info-content {
       flex: 1;
-
+      
       .info-title {
         font-size: 28rpx;
         color: var(--td-text-color-primary);
         margin-bottom: 8rpx;
         font-weight: 500;
       }
-
+      
       .info-desc {
         font-size: 26rpx;
         color: var(--td-text-color-secondary);
         line-height: 1.5;
       }
-
+      
       .info-tags {
         display: flex;
         flex-wrap: wrap;
         gap: 12rpx;
         margin-top: 12rpx;
-
+        
         .info-tag {
           padding: 4rpx 16rpx;
           background: var(--td-bg-color-component);
           border-radius: 16rpx;
           font-size: 22rpx;
           color: var(--td-text-color-secondary);
-
+          
           &.primary {
             background: rgba(var(--td-brand-color-rgb), 0.1);
             color: var(--td-brand-color);
           }
-
+          
           &.success {
             background: rgba(var(--td-success-color-rgb), 0.1);
             color: var(--td-success-color);
@@ -224,15 +260,15 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20rpx;
-
+  
   @media screen and (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
   }
-
+  
   @media screen and (min-width: 1024px) {
     grid-template-columns: repeat(4, 1fr);
   }
-
+  
   .grid-item {
     @extend .base-card;
     padding: 24rpx;
@@ -241,23 +277,26 @@
     align-items: center;
     justify-content: center;
     min-height: 160rpx;
-
+    
     .grid-icon {
       width: 48rpx;
       height: 48rpx;
       margin-bottom: 12rpx;
     }
-
+    
     .grid-label {
       font-size: 26rpx;
       color: var(--td-text-color-secondary);
       margin-bottom: 8rpx;
     }
-
+    
     .grid-value {
       font-size: 32rpx;
       font-weight: 600;
       color: var(--td-text-color-primary);
+    }
+  }
+}
 
 // 快捷操作卡片
 .quick-action-card {
@@ -268,9 +307,40 @@
   background: var(--td-bg-color-container);
   border-radius: 24rpx;
   margin-bottom: 20rpx;
-
-
-
-
-
-
+  
+  .action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24rpx 12rpx;
+    border-radius: 16rpx;
+    transition: all 0.3s ease;
+    
+    &:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+    
+    .action-icon-wrapper {
+      width: 80rpx;
+      height: 80rpx;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12rpx;
+      
+      .action-icon {
+        width: 40rpx;
+        height: 40rpx;
+      }
+    }
+    
+    .action-label {
+      font-size: 26rpx;
+      color: var(--td-text-color-primary);
+      text-align: center;
+    }
+  }
+}

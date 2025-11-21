@@ -1,3 +1,4 @@
+/* 文章管理页面样式 */
 
 .page-container {
   height: 100vh;
@@ -15,6 +16,7 @@
   overflow: hidden;
 }
 
+/* 分类筛选 */
 .category-filter {
   display: flex;
   gap: 16rpx;
@@ -42,6 +44,7 @@
   font-weight: 600;
 }
 
+/* 滚动容器 */
 .scroll-container {
   flex: 1;
   padding: 16rpx 24rpx;
@@ -49,23 +52,27 @@
   box-sizing: border-box;
 }
 
+/* 底部安全区域占位 */
 .safe-area-bottom {
   height: calc(var(--safe-area-inset-bottom, 0) + 16rpx);
   min-height: 16rpx;
 }
 
+/* 文章列表 */
 .article-list {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 
+/* 滑动容器 */
 .swipe-item-wrapper {
   position: relative;
   overflow: hidden;
   border-radius: 16rpx;
 }
 
+/* 滑动操作按钮 */
 .swipe-actions {
   position: absolute;
   right: 0;
@@ -102,6 +109,7 @@
   font-size: 22rpx;
 }
 
+/* 文章卡片 */
 .article-item {
   position: relative;
   background: #fff;
@@ -139,7 +147,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding-right: 120rpx; /* 为标签预留空间，避免重叠 */
-  min-width: 0; }
+  min-width: 0; /* 确保flex布局正常工作 */
+}
 
 .article-tag {
   position: absolute;
@@ -149,6 +158,7 @@
   z-index: 1;
 }
 
+/* 标签字体颜色样式 - 只设置字体颜色，背景透明 */
 .article-tag.t-tag,
 .article-tag .t-tag {
   background: transparent !important;
@@ -182,6 +192,7 @@
   color: #6b7280 !important;
 }
 
+/* 确保标签内部文本也应用颜色 */
 .article-tag .t-tag__text {
   color: inherit !important;
 }
@@ -206,6 +217,7 @@
   margin: 0 4rpx;
 }
 
+/* 空状态 */
 .empty-state {
   text-align: center;
   padding: 100rpx 0;
@@ -218,6 +230,7 @@
   padding: 32rpx 0;
 }
 
+/* 底部操作栏 */
 .bottom-action-bar {
   position: fixed;
   bottom: 0;
@@ -235,6 +248,7 @@
   width: 100%;
 }
 
+/* 表单弹窗 */
 .form-modal {
   position: fixed;
   top: 0;
@@ -408,11 +422,15 @@
 
 .form-actions t-button {
   flex: 1;
-  width: 0; }
+  width: 0; /* 确保flex布局正常工作 */
+}
 
 .form-actions .t-button {
   flex: 1 !important;
   width: 0 !important;
   min-width: 0 !important;
 }
+
+
+
 

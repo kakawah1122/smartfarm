@@ -32,6 +32,7 @@ $shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);   // 大阴影
 $shadow-brand-sm: 0 2rpx 8rpx rgba(0, 82, 217, 0.15);
 $shadow-brand-base: 0 4rpx 12rpx rgba(0, 82, 217, 0.25);
 $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
+/* 基础页面样式 */
 .page {
   background-color: var(--td-bg-color-page, #f5f5f5);
   --td-brand-color: #0052d9;
@@ -46,6 +47,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   flex-direction: column;
   overflow: hidden;
 }
+/* 批次筛选和Tab导航卡片组 */
 .filter-tabs-card {
   background: white;
   margin: 0 16rpx $spacing-base;
@@ -54,11 +56,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   overflow: visible;
   position: relative;
 }
+/* 批次筛选区域 */
 .batch-filter-section {
   padding: $spacing-lg;
   border-bottom: 1rpx solid #f0f0f0;
   position: relative; // 为下拉列表定位
-
+  
   .filter-header {
     display: flex;
     align-items: center;
@@ -123,7 +126,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   overflow-y: auto;
   z-index: 10000;
   animation: slideDown 0.2s ease-out;
-
+  
   .batch-option {
     display: flex;
     align-items: center;
@@ -131,44 +134,44 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     padding: $spacing-lg;
     border-bottom: 1rpx solid #f0f0f0;
     transition: background-color 0.2s;
-
+    
     &:last-child {
       border-bottom: none;
     }
-
+    
     &:active {
       background-color: #f5f5f5;
     }
-
+    
     &.active {
       background-color: #f0f7ff;
     }
-
+    
     .batch-info {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4rpx;
     }
-
+    
     .batch-name {
       font-size: 28rpx;
       color: #1f2937;
       font-weight: 500;
     }
-
+    
     .batch-meta {
       font-size: 24rpx;
       color: #6b7280;
     }
-
+    
     .check-icon {
       font-size: 28rpx;
       color: #0052d9;
       font-weight: bold;
     }
   }
-
+  
   .empty-dropdown {
     padding: 40rpx;
     text-align: center;
@@ -177,6 +180,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   }
 }
 
+/* 健康数据概览（整合实时状态） */
 .health-stats-section {
   padding: $spacing-lg;
   background: white;
@@ -300,6 +304,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   }
 }
 
+/* 下拉菜单遮罩层 */
 .dropdown-mask {
   position: fixed;
   top: 0;
@@ -317,6 +322,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     pointer-events: auto;
   }
 }
+/* 健康概览卡片 */
 .health-overview {
   padding: 24rpx;
   background: white;
@@ -352,6 +358,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-size: 24rpx;
   opacity: 0.9;
 }
+/* 活跃预警 */
 .active-alerts {
   margin: 0 24rpx 16rpx;
   padding: 24rpx;
@@ -384,9 +391,18 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   align-items: center;
   padding: 16rpx;
   border-radius: 12rpx;
-  &
-  &
-  &
+  &.alert-high {
+    background: #fef0f0;
+    border-left: 4rpx solid #e34d59;
+  }
+  &.alert-medium {
+    background: #fff7e6;
+    border-left: 4rpx solid #ed7b2f;
+  }
+  &.alert-low {
+    background: #f0f9ff;
+    border-left: 4rpx solid #0052d9;
+  }
 }
 .alert-content {
   flex: 1;
@@ -401,6 +417,8 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-size: 24rpx;
   color: var(--td-text-color-secondary);
 }
+/* 主要Tab切换 */
+/* 主Tab标签栏优化 */
 .health-main-tabs {
   --td-tab-track-color: var(--td-brand-color);
   --td-tab-item-active-color: var(--td-brand-color);
@@ -408,6 +426,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   --td-tab-item-font-size: 28rpx;
   padding: 0 24rpx;
 }
+/* 内容包装器（符合规范8） */
 .content-wrapper {
   flex: 1;
   margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx);
@@ -416,6 +435,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   overflow: hidden;
 }
 
+/* Tab内容区域 */
 .tab-content-container {
   flex: 1;
   padding-bottom: 120rpx;
@@ -425,6 +445,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 .tab-content {
   padding: 0 24rpx 24rpx;
 }
+/* 通用样式 */
 .section-title {
   font-size: 32rpx;
   font-weight: 600;
@@ -442,6 +463,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-size: 24rpx;
   color: var(--td-brand-color);
 }
+/* 预防管理Tab样式 (合并了健康监控) */
 .prevention-content {
   .prevention-stats {
     background: white;
@@ -550,6 +572,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       line-height: 1.5;
     }
   }
+  /* 健康监控部分样式 - 实时健康状态已整合到顶部 */
   .abnormal-list {
     background: white;
     border-radius: 16rpx;
@@ -557,7 +580,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     margin-bottom: 24rpx;
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   }
-
+  .abnormal-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+    margin-top: 16rpx;
+  }
   .abnormal-item {
     display: flex;
     align-items: center;
@@ -566,7 +594,9 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     background: var(--td-bg-color-container);
     border-radius: 12rpx;
   }
-
+  .abnormal-info {
+    flex: 1;
+  }
   .animal-id {
     font-size: 28rpx;
     font-weight: 600;
@@ -627,7 +657,10 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     display: block;
     margin-bottom: 4rpx;
   }
-
+  .case-count {
+    font-size: 24rpx;
+    color: var(--td-text-color-secondary);
+  }
   .disease-bar {
     flex: 1;
     height: 20rpx;
@@ -635,8 +668,15 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     border-radius: 10rpx;
     overflow: hidden;
   }
-
+  .bar-fill {
+    height: 100%;
+    background: var(--td-brand-color);
+    border-radius: 10rpx;
+    transition: width 0.3s ease;
+  }
 }
+/* 健康监控Tab样式 - 已移除，监控内容已整合到预防管理Tab */
+/* 诊疗管理Tab样式 */
 .treatment-content {
   .treatment-stats {
     background: white;
@@ -759,7 +799,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           height: 3rpx;
           background: #0284C7;
           border-radius: 2rpx;
-          box-shadow:
+          box-shadow: 
             0 -6rpx 0 #0284C7,
             0 6rpx 0 #0284C7;
         }
@@ -774,12 +814,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           background: #0284C7;
           border-radius: 2rpx;
           clip-path: polygon(
-            50% 0%,
-            100% 50%,
-            60% 50%,
-            60% 100%,
-            40% 100%,
-            40% 50%,
+            50% 0%, 
+            100% 50%, 
+            60% 50%, 
+            60% 100%, 
+            40% 100%, 
+            40% 50%, 
             0% 50%
           );
         }
@@ -814,6 +854,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           transform: rotate(-45deg);
         }
       }
+      /* ========== AI智能诊断相关样式 ========== */
       .css-icon-ai {
         font-size: 52rpx;
         line-height: 1;
@@ -851,6 +892,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       &.stat-card-full-width {
         grid-column: 1 / -1;
       }
+      /* ========== AI智能诊断样式结束 ========== */
       .css-icon-heart {
         position: relative;
         width: 32rpx;
@@ -895,10 +937,10 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           background: #ED7B2F;
           border-radius: 50% 50% 0 0;
           clip-path: polygon(
-            0% 100%,
-            0% 30%,
-            50% 0%,
-            100% 30%,
+            0% 100%, 
+            0% 30%, 
+            50% 0%, 
+            100% 30%, 
             100% 100%
           );
         }
@@ -912,7 +954,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           height: 3rpx;
           background: #ED7B2F;
           border-radius: 2rpx;
-          box-shadow:
+          box-shadow: 
             0 6rpx 0 -1rpx #ED7B2F,
             0 8rpx 0 -2rpx #ED7B2F;
         }
@@ -1127,13 +1169,13 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   .empty-placeholder {
     padding: 60rpx 0;
     text-align: center;
-
+    
     // 移除 t-empty 默认的图标占位
     t-empty {
       --td-empty-icon-size: 0;
       --td-empty-image-height: 0;
     }
-
+    
     .empty-text {
       font-size: 28rpx;
       color: var(--td-text-color-placeholder);
@@ -1146,7 +1188,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     padding: $spacing-lg;
     margin-bottom: $spacing-lg;
     box-shadow: $shadow-base;
-
+    
     // 自定义按钮深色背景（蓝青色系）
     .diagnosis-history-btn {
       background: linear-gradient(135deg, #0891B2 0%, #06B6D4 100%) !important;
@@ -1160,6 +1202,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 效果分析Tab样式 */
 .analysis-content {
   .survival-analysis,
   .cost-analysis {
@@ -1169,12 +1212,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     margin-bottom: 24rpx;
     box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   }
-
+  
   // 存活率卡片容器 - 全宽显示
   .survival-cards-grid {
     margin-bottom: 20rpx;
   }
-
+  
   // 存活率卡片样式 - 左中右三栏布局
   .stat-card-survival-rate {
     position: relative;
@@ -1187,7 +1230,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     overflow: hidden;
     box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
     margin-bottom: 24rpx;
-
+    
     // 左：图标
     .stat-icon {
       flex-shrink: 0;
@@ -1199,7 +1242,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       align-items: center;
       justify-content: center;
     }
-
+    
     // 中：文字标签
     .stat-content {
       flex: 1;
@@ -1207,14 +1250,14 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       display: flex;
       align-items: center;
     }
-
+    
     .stat-label {
       font-size: 36rpx;
       color: #ffffff;
       font-weight: 700;
       opacity: 0.9;
     }
-
+    
     // 右：数值
     .stat-value-wrapper {
       flex-shrink: 0;
@@ -1222,7 +1265,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       align-items: center;
       justify-content: flex-end;
     }
-
+    
     .stat-value {
       font-size: 56rpx;
       font-weight: 700;
@@ -1230,11 +1273,29 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       line-height: 1;
     }
   }
-
-
-
-
-
+  
+  .analysis-card {
+    margin-top: 16rpx;
+  }
+  .analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+  }
+  .analysis-value {
+    font-size: 48rpx;
+    font-weight: 600;
+    color: var(--td-brand-color);
+  }
+  .analysis-trend {
+    font-size: 24rpx;
+    padding: 8rpx 12rpx;
+    border-radius: 16rpx;
+    &.trend-improving {
+      background: #f0f9ff;
+      color: #00a870;
+    }
     &.trend-stable {
       background: #f5f5f5;
       color: var(--td-text-color-secondary);
@@ -1262,7 +1323,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     font-weight: 600;
     color: var(--td-text-color-primary);
   }
-
+  .cost-overview {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16rpx;
+    margin-top: 16rpx;
+  }
   .cost-item {
     text-align: center;
     padding: 20rpx;
@@ -1285,6 +1351,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 详情弹窗样式 */
 .detail-content {
   padding: 24rpx;
 }
@@ -1311,39 +1378,46 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-size: 24rpx;
   color: var(--td-text-color-placeholder);
 }
+/* 响应式设计 */
 @media (max-width: 375px) {
   .stats-grid,
-
-
-
+  .action-grid,
+  .cost-overview {
+    grid-template-columns: 1fr;
+    gap: 12rpx;
+  }
+  
   // 存活率卡片在小屏幕的适配
   .analysis-content {
     .stat-card-survival-rate {
       gap: 16rpx;
       padding: 24rpx 20rpx;
-
+      
       .stat-icon {
         width: 72rpx;
         height: 72rpx;
       }
-
+      
       .stat-label {
         font-size: 36rpx;
       }
-
+      
       .stat-value {
         font-size: 48rpx;
       }
     }
   }
-
+  
   .overview-grid,
   .status-overview {
     flex-direction: column;
     gap: 12rpx;
   }
   .stage-breakdown,
-
+  .action-row {
+    flex-direction: column;
+    gap: 12rpx;
+  }
   .treatment-content {
     .treatment-stats {
       padding: 16rpx;
@@ -1397,7 +1471,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
             width: 14rpx;
             height: 3rpx;
             top: 10rpx;
-            box-shadow:
+            box-shadow: 
               0 -5rpx 0 #0284C7,
               0 5rpx 0 #0284C7;
           }
@@ -1475,7 +1549,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
             width: 12rpx;
             height: 2rpx;
             top: 9rpx;
-            box-shadow:
+            box-shadow: 
               0 -4rpx 0 #0284C7,
               0 4rpx 0 #0284C7;
           }
@@ -1507,6 +1581,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 诊断记录详情弹窗样式 */
 .diagnosis-detail-content {
   padding: 0; // 底部边距由 bottom-popup 组件管理
 }
@@ -1516,7 +1591,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   padding: 20rpx; // 优化：从24rpx减小到20rpx
   margin-bottom: 12rpx; // 优化：从16rpx减小到12rpx
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-
+  
   // 最后一个section不需要margin-bottom
   &:last-child {
     margin-bottom: 0;
@@ -1612,6 +1687,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-weight: 400;
   flex: 1;
 }
+/* 修正记录卡片样式 */
 .correction-section {
   background: #fff;
   padding: 20rpx;
@@ -1637,6 +1713,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 实际治疗记录卡片样式 */
 .treatment-section {
   background: #fff;
   padding: 20rpx;
@@ -1688,6 +1765,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 评分显示 */
 .rating-display {
   display: flex;
   align-items: center;
@@ -1706,6 +1784,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-weight: 600;
   margin-left: 8rpx;
 }
+/* 诊断图片展示 */
 .diagnosis-images {
   display: flex;
   flex-wrap: wrap;
@@ -1729,6 +1808,8 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-weight: 400;
   margin-left: 8rpx;
 }
+/* ==================== 预防管理样式 ==================== */
+/* 今日待办区域 */
 .today-tasks-section {
   margin: 0 0 $spacing-lg 0;
   .today-tasks-list {
@@ -1824,6 +1905,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 无待办提示 */
 .empty-tasks {
   background: white;
   border-radius: $radius-md;
@@ -1852,6 +1934,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     text-align: center;
   }
 }
+/* 近期计划时间线 */
 .upcoming-tasks-section {
   margin: 0 0 $spacing-lg 0;
   .timeline {
@@ -2049,13 +2132,14 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   }
 }
 
+/* 效果分析中的预防统计 */
 .prevention-stats-analysis {
   padding: $spacing-lg;
   background: white;
   margin: 0 0 $spacing-base 0;
   border-radius: $radius-md;
   box-shadow: $shadow-base;
-
+  
   .stats-grid-two-analysis {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -2073,12 +2157,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: $shadow-sm;
-
+    
     &:active {
       transform: scale(0.97);
       box-shadow: $shadow-sm;
     }
-
+    
     .stat-icon {
       display: flex;
       align-items: center;
@@ -2089,28 +2173,28 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       margin-right: $spacing-base;
       flex-shrink: 0;
     }
-
+    
     .stat-content {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4rpx;
     }
-
+    
     .stat-value {
       font-size: 44rpx;
       font-weight: 700;
       line-height: 1.2;
       letter-spacing: -0.5px;
     }
-
+    
     .stat-label {
       font-size: 24rpx;
       line-height: 1.2;
       opacity: 0.85;
       font-weight: 500;
     }
-
+    
     &.stat-card-vaccination {
       background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
       .stat-icon {
@@ -2123,7 +2207,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         color: #047857;
       }
     }
-
+    
     &.stat-card-vaccine-count {
       background: linear-gradient(135deg, #E6F3FF 0%, #CCE5FF 100%);
       .stat-icon {
@@ -2139,6 +2223,19 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   }
 }
 
+/* ==================== 效果分析样式 ==================== */
+.analysis-stats {
+  padding: $spacing-lg;
+  background: white;
+  margin: 0 $spacing-lg $spacing-base;
+  border-radius: $radius-md;
+  box-shadow: $shadow-base;
+  .stats-grid-four-analysis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-sm;
+    margin-top: $spacing-base;
+  }
   .stat-card {
     display: flex;
     flex-direction: column;
@@ -2205,7 +2302,10 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         margin-bottom: 0;
         margin-right: $spacing-base;
       }
-
+      .css-icon-chart {
+        font-size: 52rpx;
+        line-height: 1;
+      }
       .stat-content {
         flex: 1;
         gap: 6rpx;
@@ -2283,6 +2383,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* ==================== CSS图标 - 预防管理 ==================== */
 .css-icon-percent {
   position: relative;
   width: 36rpx;
@@ -2368,9 +2469,41 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     border-radius: 50%;
   }
 }
-
+.css-icon-coin {
+  position: relative;
+  width: 32rpx;
+  height: 32rpx;
+  background: #0284C7;
+  border-radius: 50%;
+  box-shadow: inset 0 -8rpx 0 rgba(255, 255, 255, 0.2),
+              inset 0 8rpx 0 rgba(0, 0, 0, 0.1);
+  &::before {
+    content: '¥';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20rpx;
+    color: white;
+    font-weight: 700;
+    line-height: 1;
+  }
 }
-
+.css-icon-animals {
+  position: relative;
+  width: 40rpx;
+  height: 32rpx;
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8rpx;
+    width: 20rpx;
+    height: 20rpx;
+    background: #7C3AED;
+    border-radius: 50% 50% 0 0;
+    clip-path: polygon(0 60%, 50% 0, 100% 60%, 100% 100%, 0 100%);
+  }
   &::after {
     content: '';
     position: absolute;
@@ -2384,6 +2517,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     opacity: 0.7;
   }
 }
+/* ==================== CSS图标 - 效果分析 ==================== */
 .css-icon-trend-up {
   position: relative;
   width: 36rpx;
@@ -2506,6 +2640,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     border-radius: 2rpx 2rpx 0 0;
   }
 }
+/* ==================== 成本分析卡片样式 ==================== */
 .analysis-content .cost-analysis {
   // 统一样式已在 .analysis-content 中定义，这里只定义子元素样式
   .section-header {
@@ -2623,7 +2758,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   position: relative;
   width: 40rpx;
   height: 36rpx;
-
+  
   // 外圆环背景
   &::before {
     content: '';
@@ -2641,12 +2776,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       #E0E7FF 270deg,
       #E0E7FF 360deg
     );
-    box-shadow:
+    box-shadow: 
       inset 0 2rpx 4rpx rgba(0, 0, 0, 0.1),
       0 4rpx 8rpx rgba(99, 102, 241, 0.3),
       inset -1rpx -1rpx 2rpx rgba(255, 255, 255, 0.4);
   }
-
+  
   // 内圆点
   &::after {
     content: '';
@@ -2658,7 +2793,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     height: 12rpx;
     border-radius: 50%;
     background: linear-gradient(135deg, #818CF8 0%, #6366F1 100%);
-    box-shadow:
+    box-shadow: 
       inset -1rpx -1rpx 2rpx rgba(0, 0, 0, 0.2),
       inset 1rpx 1rpx 2rpx rgba(255, 255, 255, 0.3),
       0 2rpx 4rpx rgba(99, 102, 241, 0.4);
@@ -2747,7 +2882,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   position: relative;
   width: 32rpx;
   height: 36rpx;
-
+  
   // 饲料袋主体
   &::before {
     content: '';
@@ -2760,7 +2895,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     border-radius: 4rpx 4rpx 8rpx 8rpx;
     box-shadow: inset 2rpx 2rpx 0 rgba(255, 255, 255, 0.3);
   }
-
+  
   // 饲料袋口部
   &::after {
     content: '';
@@ -2803,6 +2938,8 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     transform: rotate(135deg);
   }
 }
+/* 预防管理子标签页 */
+/* 预防管理子标签（整合到卡片内） */
 .prevention-sub-tabs {
   padding: 0;
   border-top: 1rpx solid #f0f0f0;
@@ -2810,10 +2947,37 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 .prevention-subtab-content {
   padding-top: 0;
 }
-
+/* 批次信息卡片 */
+.batch-info-card {
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin: 0 $spacing-lg $spacing-lg;
+  box-shadow: $shadow-sm;
+  border-left: 4rpx solid #10B981;
+  .batch-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-base;
+    .batch-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #059669;
+    }
   }
-
+  .batch-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    .batch-detail {
+      font-size: 26rpx;
+      color: #065F46;
+      line-height: 1.4;
+    }
+  }
 }
+/* 时间线进度统计 */
 .timeline-progress {
   background: white;
   border-radius: $radius-md;
@@ -2875,6 +3039,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 全周期时间线 */
 .full-timeline {
   margin: 0 0 $spacing-lg 0;
   .timeline-full-list {
@@ -3004,10 +3169,15 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           color: #9CA3AF;
         }
       }
-
+      .completed-time {
+        font-size: 22rpx;
+        color: #10B981;
+        font-weight: 500;
+      }
     }
   }
 }
+/* 空状态 - 时间线 */
 .empty-timeline {
   display: flex;
   flex-direction: column;
@@ -3030,10 +3200,74 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     color: #9CA3AF;
   }
 }
-
+/* 批次对比 */
+.batch-comparison {
+  background: white;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin: 0 $spacing-lg $spacing-lg;
+  box-shadow: $shadow-sm;
+  .comparison-table {
+    margin-top: $spacing-base;
+  }
+  .comparison-header,
+  .comparison-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 1.2fr;
+    gap: $spacing-sm;
+    padding: $spacing-base;
+    align-items: center;
+  }
+  .comparison-header {
+    background: #F9FAFB;
+    border-radius: $radius-sm;
+    .col-batch,
+    .col-vaccination,
+    .col-completion,
+    .col-cost {
+      font-size: 24rpx;
+      font-weight: 600;
+      color: #6B7280;
     }
-
-
+  }
+  .comparison-row {
+    border-bottom: 1rpx solid #F3F4F6;
+    &:last-child {
+      border-bottom: none;
+    }
+    .col-batch {
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+      .batch-number {
+        font-size: 26rpx;
+        font-weight: 500;
+        color: #111827;
+      }
+      .batch-date {
+        font-size: 22rpx;
+        color: #9CA3AF;
+      }
+    }
+    .col-vaccination,
+    .col-completion {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-xs;
+      .rate-bar {
+        width: 100%;
+        height: 12rpx;
+        background: #F3F4F6;
+        border-radius: 6rpx;
+        overflow: hidden;
+        .rate-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+          border-radius: 6rpx;
+          transition: width 0.3s ease;
+          &.rate-fill-success {
+            background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+          }
         }
       }
       .rate-value {
@@ -3042,10 +3276,16 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         font-weight: 500;
       }
     }
-
+    .col-cost {
+      .cost-value {
+        font-size: 26rpx;
+        font-weight: 600;
+        color: #F59E0B;
+      }
     }
   }
 }
+/* ========== 空状态样式优化 ========== */
 .modern-empty-state {
   display: flex;
   align-items: flex-start;
@@ -3079,18 +3319,20 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 任务详情弹窗样式已提取到组件 */
+/* ========== 疫苗接种表单样式（无边框样式，参考饲料投喂记录表单） ========== */
 .vaccine-form-content {
   padding: 0;
   max-height: 75vh;
   overflow-y: auto;
   background: #f5f5f5;
-
+  
   .form-section {
     margin-bottom: 12rpx;
     background-color: #fff;
     border-radius: 12rpx;
     overflow: hidden;
-
+    
     .section-title {
       font-size: 28rpx;
       font-weight: 600;
@@ -3100,7 +3342,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
       border-radius: 8rpx;
     }
-
+    
     .form-item {
       display: flex;
       align-items: center;
@@ -3108,24 +3350,24 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       padding: 12rpx 20rpx;
       border-bottom: 1rpx solid #f0f0f0;
       min-height: 60rpx;
-
+      
       &:last-child {
         border-bottom: none;
       }
-
+      
       &.error-item {
         padding: 8rpx 20rpx;
         border-bottom: none;
         background-color: #fff5f5;
       }
-
+      
       .item-label {
         flex-shrink: 0;
         font-size: 26rpx;
         color: #333;
         margin-right: 16rpx;
         line-height: 44rpx;
-
+        
         &.required::after {
           content: ' *';
           color: #e34d59;
@@ -3133,12 +3375,12 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           line-height: 44rpx;
         }
       }
-
+      
       .item-input {
         flex: 1;
         display: flex;
         align-items: center;
-
+        
         input {
           flex: 1;
           font-size: 26rpx;
@@ -3146,20 +3388,20 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           text-align: right;
           border: none;
           background: transparent;
-
+          
           &::placeholder {
             color: #999;
             text-align: right;
           }
         }
       }
-
+      
       .item-value {
         flex: 1;
         display: flex;
         justify-content: flex-end;
         align-items: center;
-
+        
         .value-text {
           display: flex;
           align-items: center;
@@ -3172,7 +3414,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
           white-space: nowrap;
         }
       }
-
+      
       .textarea-input {
         width: 100%;
         min-height: 120rpx;
@@ -3183,24 +3425,24 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         box-sizing: border-box;
         border: none;
         background: transparent;
-
+        
         &::placeholder {
           color: #999;
         }
       }
-
+      
       // textarea 单独一行显示
       &.textarea-item {
         flex-direction: column;
         align-items: flex-start;
         padding: 12rpx 20rpx;
-
+        
         .textarea-input {
           width: 100%;
           margin-top: 8rpx;
         }
       }
-
+      
       .error-text {
         color: #e34d59;
         font-size: 24rpx;
@@ -3210,25 +3452,25 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       }
     }
   }
-
+  
   .form-errors {
     margin: 12rpx 20rpx;
     padding: 16rpx;
     background: rgba(227, 77, 89, 0.08);
     border-radius: 8rpx;
     border-left: 4rpx solid #e34d59;
-
+    
     .error-text {
       display: block;
       color: #e34d59;
       font-size: 24rpx;
       line-height: 1.5;
       margin-bottom: 8rpx;
-
+      
       &:last-child {
         margin-bottom: 0;
       }
-
+      
       &::before {
         content: "• ";
         color: #e34d59;
@@ -3237,13 +3479,13 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       }
     }
   }
-
+  
   .form-bottom-buttons {
     display: flex;
     gap: 16rpx;
     padding: 24rpx 32rpx 32rpx 32rpx;
     margin-top: 16rpx;
-
+    
     .form-button {
       flex: 1;
       height: 88rpx;
@@ -3253,26 +3495,26 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
       font-weight: 600;
       border: none;
       transition: all 0.3s ease;
-
+      
       &::after {
         border: none;
       }
-
+      
       &.form-button-cancel {
         background: #f5f5f5;
         color: #666666;
-
+        
         &:active {
           background: #e8e8e8;
           transform: scale(0.98);
         }
       }
-
+      
       &.form-button-primary {
         background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
         color: #ffffff;
         box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.3);
-
+        
         &:active {
           background: linear-gradient(135deg, #0046ba 0%, #3a71d1 100%);
           transform: scale(0.98);
@@ -3282,6 +3524,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* 用药管理表单样式（从breeding-todo完整复制） */
 .medication-form-content {
   padding: 0;
   max-height: 75vh;
@@ -3450,6 +3693,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     background: transparent;
   }
 }
+/* 营养管理表单样式（从breeding-todo完整复制） */
 .nutrition-form-content {
   padding: 0;
   max-height: 75vh;
@@ -3631,6 +3875,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     }
   }
 }
+/* ========== 按批次分组的任务列表样式（从 breeding-todo 迁移） ========== */
 .batch-task-groups {
   padding: 0;
   margin-top: var(--spacing-xs, 8rpx);
@@ -3651,6 +3896,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
   min-height: 56rpx;
 }
+/* 不同批次颜色方案 */
 .batch-group:nth-child(1) .batch-group-header {
   background: rgba(0, 82, 217, 0.08);
   border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
@@ -3747,6 +3993,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   border-radius: 0 0 var(--radius-lg, 16rpx) var(--radius-lg, 16rpx);
   padding: 20rpx;
 }
+/* ========== 现代化任务卡片样式 ========== */
 .batch-task-list .modern-task-card {
   border-radius: 12rpx;
   margin-bottom: 16rpx;
@@ -3760,6 +4007,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 .batch-task-list .modern-task-card:last-child {
   margin-bottom: 0;
 }
+/* 不同批次任务卡片hover效果 */
 .batch-group:nth-child(1) .batch-task-list .modern-task-card:hover {
   background: rgba(0, 82, 217, 0.10) !important;
   border-color: rgba(0, 82, 217, 0.40) !important;
@@ -3784,6 +4032,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   background: rgba(52, 196, 154, 0.10) !important;
   border-color: rgba(52, 196, 154, 0.40) !important;
 }
+/* 为不同批次的任务卡片添加背景色和边框 */
 .batch-group:nth-child(1) .batch-task-list .modern-task-card {
   background: rgba(0, 82, 217, 0.05) !important;
   border-color: rgba(0, 82, 217, 0.25) !important;
@@ -3808,6 +4057,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   background: rgba(52, 196, 154, 0.05) !important;
   border-color: rgba(52, 196, 154, 0.25) !important;
 }
+/* 批次颜色循环（7个及以上） */
 .batch-group:nth-child(7) .batch-group-header {
   background: rgba(0, 82, 217, 0.08);
   border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
@@ -3832,6 +4082,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 .batch-group:nth-child(9) .batch-task-count {
   background: #ed7b2f;
 }
+/* 循环任务卡片hover效果 */
 .batch-group:nth-child(7) .batch-task-list .modern-task-card:hover {
   background: rgba(0, 82, 217, 0.10) !important;
   border-color: rgba(0, 82, 217, 0.40) !important;
@@ -3844,6 +4095,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   background: rgba(237, 123, 47, 0.10) !important;
   border-color: rgba(237, 123, 47, 0.40) !important;
 }
+/* 循环任务卡片背景色和边框 */
 .batch-group:nth-child(7) .batch-task-list .modern-task-card {
   background: rgba(0, 82, 217, 0.05) !important;
   border-color: rgba(0, 82, 217, 0.25) !important;
@@ -3884,12 +4136,14 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   margin-bottom: var(--spacing-xs, 4rpx);
   flex: 1;
 }
+/* 右上角标签 */
 .task-badges-top {
   position: absolute;
   top: 0;
   right: 0;
   z-index: 10;
-  pointer-events: none; }
+  pointer-events: none; /* 让点击事件穿透到下方的 task-main */
+}
 .task-badges {
   display: flex;
   gap: var(--spacing-sm, 8rpx);
@@ -3905,52 +4159,62 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   border: 1rpx solid transparent;
   white-space: nowrap;
 }
+/* 疫苗 - 深蓝色 */
 .type-badge.type-vaccine {
   background: rgba(0, 82, 217, 0.12);
   color: #0052d9;
   border-color: rgba(0, 82, 217, 0.2);
 }
+/* 用药 - 红色 */
 .type-badge.type-medication,
 .type-badge.type-medicine {
   background: rgba(230, 67, 67, 0.12);
   color: #e64343;
   border-color: rgba(230, 67, 67, 0.2);
 }
+/* 营养 - 橙色 */
 .type-badge.type-nutrition {
   background: rgba(255, 153, 0, 0.12);
   color: #ff9900;
   border-color: rgba(255, 153, 0, 0.2);
 }
+/* 消毒 - 紫色 */
 .type-badge.type-disinfection {
   background: rgba(162, 105, 227, 0.12);
   color: #a269e3;
   border-color: rgba(162, 105, 227, 0.2);
 }
+/* 巡检 - 青色 */
 .type-badge.type-inspection {
   background: rgba(52, 196, 154, 0.12);
   color: #34c49a;
   border-color: rgba(52, 196, 154, 0.2);
 }
+/* 清洁 - 棕色 */
 .type-badge.type-cleaning {
   background: rgba(139, 110, 79, 0.12);
   color: #8b6e4f;
   border-color: rgba(139, 110, 79, 0.2);
 }
+/* 喂养 - 绿色 */
 .type-badge.type-feeding {
   background: rgba(0, 168, 112, 0.12);
   color: #00a870;
   border-color: rgba(0, 168, 112, 0.2);
 }
+/* 护理 - 粉色 */
 .type-badge.type-care {
   background: rgba(236, 64, 122, 0.12);
   color: #ec407a;
   border-color: rgba(236, 64, 122, 0.2);
 }
+/* 其他 - 灰色 */
 .type-badge.type-other {
   background: rgba(150, 150, 150, 0.12);
   color: #666666;
   border-color: rgba(150, 150, 150, 0.2);
 }
+/* 健康(兼容旧代码) */
 .type-badge.type-health {
   background: rgba(0, 168, 112, 0.12);
   color: #00a870;
@@ -3984,6 +4248,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   white-space: nowrap;
   flex-shrink: 0;
 }
+/* ========== 即将到来任务样式（从 breeding-todo 迁移） ========== */
 .upcoming-tasks {
   padding: var(--spacing-base, 16rpx) 0;
 }
@@ -4107,7 +4372,9 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   white-space: nowrap;
 }
 .upcoming-task-right {
-  display: none; }
+  display: none; /* 隐藏右侧图标 */
+}
+/* 为即将到来任务添加不同日龄的颜色方案 */
 .upcoming-day-group:nth-child(1) .upcoming-day-header {
   background: rgba(0, 82, 217, 0.08);
   border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
@@ -4200,10 +4467,14 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
 }
 .upcoming-day-group:nth-child(6) .upcoming-task-item {
   border-left: 3rpx solid rgba(52, 196, 154, 0.3);
+}
 .upcoming-day-group:nth-child(6) .upcoming-task-item:hover {
   background: rgba(52, 196, 154, 0.04);
+}
+/* ========== 历史任务样式（从 breeding-todo 迁移） ========== */
 .history-tasks {
   padding: var(--spacing-base, 16rpx) 0;
+}
 .history-task-item {
   background: white;
   border-radius: var(--radius-lg, 16rpx);
@@ -4214,22 +4485,28 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   position: relative;
   overflow: hidden;
   border-left: 3rpx solid rgba(0, 168, 112, 0.3);
+}
 .history-task-item:hover {
   background: rgba(0, 168, 112, 0.04);
   transform: scale(0.98);
+}
 .history-task-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
 .history-task-left {
   display: flex;
   align-items: center;
   gap: 0; /* 移除间距，因为没有复选框 */
   flex: 1;
+}
 .completion-icon {
-  display: none; }
+  display: none; /* 隐藏完成图标 */
+}
 .history-task-info {
   flex: 1;
+}
 .history-task-title {
   font-size: 28rpx;
   font-weight: 600;
@@ -4237,11 +4514,13 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   line-height: 1.4;
   margin-bottom: var(--spacing-xs, 4rpx);
   flex: 1;
+}
 .history-task-meta {
   display: flex;
   align-items: center;
   gap: 32rpx;
   flex-wrap: wrap;
+}
 .completion-time,
 .day-age-info,
 .batch-info {
@@ -4250,6 +4529,7 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   font-weight: 500;
   white-space: nowrap;
   flex-shrink: 0;
+}
 .completed-badge {
   background: var(--color-success, #00a870);
   color: white;
@@ -4260,9 +4540,14 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
   line-height: 1.2;
   white-space: nowrap;
   text-align: center;
+}
 
+
+/* 底部安全区域 */
+/* 底部安全区域（符合规范8.5） */
 .safe-area {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);
   min-height: 0;
   flex-shrink: 0;
+}

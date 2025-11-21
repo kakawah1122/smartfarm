@@ -1,3 +1,4 @@
+/* ai-diagnosis.scss - AI智能诊断页面样式 - 基于TDesign设计规范 */
 
 .ai-diagnosis-page {
   background-color: var(--td-bg-color-page, #f5f5f5);
@@ -9,6 +10,8 @@
   padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx); /* 状态栏 + 导航栏 + 安全间距（增加到40rpx） */
   padding-bottom: 120rpx;
 }
+
+/* ==================== 免责声明样式 ==================== */
 
 .disclaimer-banner {
   background: linear-gradient(135deg, #fff9e6 0%, #fff3d6 100%);
@@ -38,6 +41,8 @@
   font-weight: 500;
 }
 
+/* ==================== 诊断结果展示样式 - 全新设计 ==================== */
+
 .diagnosis-result {
   display: flex;
   flex-direction: column;
@@ -46,6 +51,7 @@
   padding-bottom: 32rpx;
 }
 
+/* 诊断头部卡片 */
 .result-header-card {
   background: linear-gradient(135deg, #0d5a4a 0%, #1a7a5a 100%);
   border-radius: 20rpx;
@@ -79,6 +85,7 @@
   text-align: center;
 }
 
+/* 诊断卡片通用样式 */
 .diagnosis-card {
   background: #ffffff;
   border-radius: 20rpx;
@@ -105,6 +112,11 @@
   font-size: 24rpx;
   color: #999999;
 }
+
+/* 卡片内容区域 */
+
+/* 主要诊断卡片 */
+/* 主要诊断卡片：移除边框，保持简洁 */
 
 .confidence-badge {
   display: flex;
@@ -141,8 +153,10 @@
   padding: 16rpx 20rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
-  }
+  /* 移除左边框 */
+}
 
+/* 鉴别诊断 */
 .differential-list {
   display: flex;
   flex-direction: column;
@@ -156,7 +170,8 @@
   padding: 16rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
-  }
+  /* 移除左边框 */
+}
 
 .diff-name {
   font-size: 30rpx;
@@ -174,6 +189,7 @@
   border-radius: 20rpx;
 }
 
+/* 立即措施卡片 */
 .action-card {
   /* 移除左边框 */
   background: #ffffff;
@@ -192,7 +208,8 @@
   padding: 20rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
-  }
+  /* 移除边框 */
+}
 
 .action-number {
   flex-shrink: 0;
@@ -216,13 +233,16 @@
   padding-top: 6rpx;
 }
 
+/* 药物治疗卡片 */
+/* 药物治疗卡片：已移除左边框，保持简洁 */
+
 .medication-box {
   background: #f8f9fa;
   padding: 24rpx;
   border-radius: 16rpx;
   /* 移除边框 */
   margin-bottom: 20rpx;
-
+  
   &:last-child {
     margin-bottom: 0;
   }
@@ -266,6 +286,7 @@
   color: #333333;
 }
 
+/* 简单列表样式 */
 .simple-list {
   display: flex;
   flex-direction: column;
@@ -303,6 +324,7 @@
   line-height: 1.6;
 }
 
+/* 操作按钮 */
 .result-actions {
   display: flex;
   flex-direction: column;
@@ -330,7 +352,7 @@
   box-shadow: 0 4rpx 12rpx rgba(30, 58, 138, 0.35) !important;
   letter-spacing: 1rpx !important;
   box-sizing: border-box !important;
-
+  
   .t-button__content {
     width: 100% !important;
     display: flex !important;
@@ -339,19 +361,19 @@
     text-align: center !important;
     gap: 8rpx !important;
   }
-
+  
   .t-loading,
   .t-loading__spinner {
     color: #ffffff !important;
   }
-
+  
   &[disabled],
   &.t-is-disabled {
     background: linear-gradient(135deg, #d0d0d0 0%, #c0c0c0 100%) !important;
     color: #999999 !important;
     box-shadow: none !important;
   }
-
+  
   &:active:not([disabled]) {
     background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
     box-shadow: 0 2rpx 6rpx rgba(30, 58, 138, 0.4) !important;
@@ -362,13 +384,14 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16rpx;
-
+  
   .t-button {
     font-size: 26rpx;
     border-radius: 12rpx;
   }
 }
 
+/* 诊断表单样式 */
 .diagnosis-form {
   display: flex;
   flex-direction: column;
@@ -431,7 +454,7 @@
   align-items: center;
   margin-bottom: 20rpx;
   gap: 12rpx;
-
+  
   &:last-child {
     margin-bottom: 0;
   }
@@ -514,7 +537,7 @@
   margin: 0;
   text-align: left;
   transition: all 0.3s ease;
-
+  
   &:focus {
     border-bottom-color: var(--td-brand-color);
     outline: none;
@@ -553,11 +576,11 @@
   align-items: center;
   width: 100%;
   line-height: 1.5;
-
+  
   &.placeholder {
     color: var(--td-text-color-placeholder);
   }
-
+  
   // 点击效果
   &:active {
     background: white;
@@ -607,22 +630,22 @@
   color: var(--td-text-color-primary);
   transition: all 0.2s ease;
   cursor: pointer;
-
+  
   .tag-icon {
     font-size: 24rpx;
     color: var(--td-brand-color);
     font-weight: bold;
   }
-
+  
   .tag-name {
     line-height: 1;
   }
-
+  
   &:active {
     transform: scale(0.95);
     background: var(--td-bg-color-container);
     border-color: var(--td-brand-color);
-
+    
     .tag-icon {
       color: var(--td-brand-color);
     }
@@ -642,7 +665,7 @@
   line-height: 1.6;
   box-sizing: border-box;
   transition: all 0.3s ease;
-
+  
   &:focus {
     border-color: var(--td-brand-color);
     background: white;
@@ -657,6 +680,8 @@
   color: var(--td-text-color-placeholder);
   margin-top: 8rpx;
 }
+
+/* ✨ 图片上传样式 - 增强版 */
 
 // 标题区域
 .section-header-with-tip {
@@ -673,6 +698,12 @@
   padding: 6rpx 16rpx;
   background: linear-gradient(135deg, rgba(0, 82, 217, 0.1) 0%, rgba(0, 132, 244, 0.1) 100%);
   border-radius: 20rpx;
+}
+
+.benefit-text {
+  font-size: 24rpx;
+  color: #0052d9;
+  font-weight: 500;
 }
 
 // ✨ 拍摄建议卡片
@@ -753,7 +784,7 @@
   justify-content: center;
   z-index: 10;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
-
+  
   &:active {
     transform: scale(0.9);
     background: rgba(255, 255, 255, 1);
@@ -795,12 +826,12 @@
   border: 2rpx dashed var(--td-border-level-2-color);
   border-radius: 12rpx;
   transition: all 0.3s ease;
-
+  
   &:active {
     transform: scale(0.95);
     background: var(--td-bg-color-container-hover);
   }
-
+  
   // ✨ 首次上传强调样式
   &.first-upload {
     border: 2rpx dashed #0052d9;
@@ -815,7 +846,7 @@
   margin-top: 8rpx;
   text-align: center;
   width: 100%;
-
+  
   &.upload-text-primary {
     color: #0052d9;
     font-weight: 600;
@@ -870,7 +901,7 @@
   gap: 4rpx;
   padding: 0;
   box-sizing: border-box;
-
+  
   &:active {
     transform: scale(0.95);
     background: #e8e8e8;
@@ -935,12 +966,12 @@
   border: none;
   box-shadow: 0 4rpx 12rpx rgba(30, 58, 138, 0.35);
   letter-spacing: 1rpx;
-
+  
   // 确保按钮内容居中
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-
+  
   &[disabled],
   &.t-is-disabled {
     background: linear-gradient(135deg, #d0d0d0 0%, #c0c0c0 100%);
@@ -948,7 +979,7 @@
     box-shadow: none;
     opacity: 0.6;
   }
-
+  
   &:active:not([disabled]):not(.t-is-disabled) {
     background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
     box-shadow: 0 2rpx 6rpx rgba(30, 58, 138, 0.4);
@@ -1060,6 +1091,7 @@
   line-height: 1.6;
 }
 
+/* ✨ 必填项提示样式 */
 .required-hint {
   margin-top: 20rpx;
   padding: 20rpx 24rpx;
@@ -1112,7 +1144,7 @@
 .link-text {
   font-size: 28rpx;
   color: #1d4ed8;
-
+  
   &:active {
     opacity: 0.7;
   }
@@ -1131,11 +1163,11 @@
 .symptom-tag-inline.tag-checked {
   background: rgba(0, 82, 217, 0.1);
   border-color: var(--td-brand-color);
-
+  
   .tag-icon {
     color: var(--td-brand-color);
   }
-
+  
   .tag-name {
     color: var(--td-brand-color);
     font-weight: 600;
@@ -1144,16 +1176,18 @@
 
 .autopsy-tips-card {
   background: linear-gradient(135deg, #fff0f0 0%, #ffe8e8 100%);
-
+  
   .tips-title-text {
     color: #e34d59;
   }
 }
 
+/* 加载状态样式 */
 .t-loading {
   --td-loading-color: var(--td-brand-color);
 }
 
+/* 标签选中状态优化 */
 .t-tag--theme-primary {
   --td-tag-primary-color: white;
   --td-tag-primary-bg-color: var(--td-brand-color);
@@ -1181,6 +1215,8 @@
 .diagnosis-result {
   animation: fadeInUp 0.6s ease-out;
 }
+
+/* 轮询进度样式已移除，使用按钮加载状态替代 */
 
 /* ==================== 全局TDesign按钮覆盖 ==================== */
 // 确保页面中所有block按钮都占满宽度

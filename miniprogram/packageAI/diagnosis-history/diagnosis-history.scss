@@ -1,3 +1,4 @@
+/* diagnosis-history.scss - 诊断历史页面样式 */
 /* ✅ 导入诊断记录公共样式 */
 @import '../../styles/diagnosis-record.scss';
 
@@ -8,12 +9,14 @@
   flex-direction: column;
 }
 
+/* 记录容器 */
 .records-container {
   padding: 24rpx;
   padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx);
   padding-bottom: 120rpx;
 }
 
+/* 加载状态 */
 .loading-container {
   display: flex;
   justify-content: center;
@@ -22,15 +25,18 @@
   padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 140rpx);
 }
 
+/* 空状态 */
 .empty-container {
   padding: 120rpx 24rpx;
   padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 140rpx);
 }
 
+/* 记录列表 - 样式继承自公共样式 */
 .records-list {
   // 样式继承自公共样式 .records-list
 }
 
+/* 记录项 - 样式继承自公共样式 */
 .record-item {
   // 样式继承自公共样式 .record-item
 }
@@ -39,6 +45,7 @@
   // 样式继承自公共样式 .record-main
 }
 
+/* 加载更多 */
 .load-more {
   display: flex;
   justify-content: center;
@@ -55,6 +62,7 @@
   margin-top: 24rpx;
 }
 
+/* 详情弹窗样式 */
 .detail-content {
   padding: 24rpx;
   max-height: 80vh;
@@ -154,6 +162,7 @@
   flex: 1;
 }
 
+/* 修正记录卡片样式 */
 .correction-section {
   background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
   padding: 24rpx;
@@ -204,6 +213,7 @@
   }
 }
 
+/* 实际治疗记录卡片样式 */
 .treatment-section {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   padding: 24rpx;
@@ -261,24 +271,24 @@
     padding: 12rpx;
     background: rgba(255, 255, 255, 0.8);
     border-radius: 8rpx;
-
+    
     .medication-icon {
       font-size: 32rpx;
       flex-shrink: 0;
     }
-
+    
     .medication-info {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4rpx;
-
+      
       .medication-name {
         font-size: 26rpx;
         color: #333;
         font-weight: 500;
       }
-
+      
       .medication-detail {
         font-size: 24rpx;
         color: #999;
@@ -287,6 +297,7 @@
   }
 }
 
+/* 评分显示 */
 .rating-display {
   display: flex;
   align-items: center;
@@ -296,7 +307,7 @@
 .star-display {
   font-size: 32rpx;
   color: #e0e0e0;
-
+  
   &.active {
     color: #ffa726;
   }
@@ -309,6 +320,7 @@
   margin-left: 8rpx;
 }
 
+/* 诊断图片展示 */
 .diagnosis-images {
   display: flex;
   flex-wrap: wrap;
@@ -322,7 +334,7 @@
   border-radius: 12rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
-
+  
   &:active {
     opacity: 0.8;
     transform: scale(0.98);
@@ -342,15 +354,16 @@
   border-top: 2rpx solid var(--td-border-level-1-color, #e7e7e7);
 }
 
+/* 响应式设计 */
 @media (max-width: 375px) {
   .records-container {
     padding: 16rpx;
   }
-
+  
   .record-item {
     padding: 20rpx;
   }
-
+  
   .record-name {
     font-size: 30rpx;
   }

@@ -4,6 +4,9 @@
  * 遵循项目UI规范和TDesign设计系统
  */
 
+/* ==================== 记录卡片基础样式 ==================== */
+
+/* 记录项容器 */
 .record-item-base {
   background: var(--td-bg-color-container, #ffffff);
   border-radius: 16rpx;
@@ -11,13 +14,14 @@
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
   border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
   transition: all 0.3s ease;
-
+  
   &:active {
     transform: scale(0.98);
     background: var(--td-bg-color-component-hover, #f8f8f8);
   }
 }
 
+/* 记录头部 */
 .record-header-base {
   margin-bottom: 12rpx;
 }
@@ -37,18 +41,22 @@
   flex: 1;
 }
 
+/* ==================== 记录内容样式 ==================== */
+
+/* 内容容器 */
 .record-content-base {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
 }
 
+/* 双列布局容器 */
 .info-grid-base {
   display: flex;
   justify-content: space-between;
   gap: 32rpx;
   margin-bottom: 12rpx;
-
+  
   &:last-child {
     margin-bottom: 0;
   }
@@ -58,11 +66,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-
+  
   &.left-column {
     align-items: flex-start;
   }
-
+  
   &.right-column {
     align-items: flex-end;
   }
@@ -74,15 +82,17 @@
   white-space: nowrap;
 }
 
+/* 单行布局容器 */
 .info-row-base {
   display: flex;
   align-items: center;
   padding: 6rpx 0;
-
+  
   &:last-child {
     padding-bottom: 0;
   }
-
+  
+  /* 双字段布局时的group */
   .info-group {
     display: flex;
     align-items: center;
@@ -93,6 +103,7 @@
   }
 }
 
+/* 信息标签 */
 .info-label-base {
   font-size: 26rpx;
   color: var(--td-text-color-secondary, #999);
@@ -102,13 +113,14 @@
   white-space: nowrap;
 }
 
+/* 信息值 */
 .info-value-base {
   font-size: 28rpx;
   color: var(--td-text-color-primary, #333);
   font-weight: 500;
   line-height: 1.6;
   word-wrap: break-word;
-
+  
   /* 数量高亮 */
   &.quantity-value {
     color: #0052d9;
@@ -116,6 +128,8 @@
     font-size: 30rpx;
   }
 }
+
+/* ==================== 记录底部样式 ==================== */
 
 .record-footer-base {
   display: flex;
@@ -138,27 +152,29 @@
   font-weight: 500;
 }
 
+/* ==================== 响应式设计 ==================== */
+
 @media screen and (max-width: 480px) {
   .record-item-base {
     padding: 16rpx;
   }
-
+  
   .record-name-base {
     font-size: 28rpx;
   }
-
+  
   .info-grid-base {
     gap: 24rpx;
   }
-
+  
   .info-label-base {
     font-size: 24rpx;
   }
-
+  
   .info-value-base {
     font-size: 26rpx;
   }
-
+  
   .operator-text-base,
   .date-text-base {
     font-size: 24rpx;
@@ -170,19 +186,19 @@
     flex-direction: column;
     gap: 8rpx;
   }
-
+  
   .info-column-base {
     width: 100%;
-
+    
     &.right-column {
       align-items: flex-start;
     }
   }
-
+  
   .record-name-base {
     font-size: 26rpx;
   }
-
+  
   .record-footer-base {
     flex-direction: column;
     align-items: flex-start;

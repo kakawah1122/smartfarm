@@ -1,4 +1,6 @@
+/* diagnosis-record.scss - 诊断记录公共样式 */
 
+/* 记录项容器 */
 .diagnosis-record-item,
 .record-item {
   background: var(--td-bg-color-container, #ffffff);
@@ -7,13 +9,14 @@
   border: 1rpx solid var(--td-border-level-1-color, #e7e7e7);
   transition: all 0.3s ease;
   position: relative;
-
+  
   &:active {
     background: var(--td-bg-color-container-active, #f5f5f5);
     transform: scale(0.98);
   }
 }
 
+/* 记录主体 */
 .record-main {
   display: flex;
   flex-direction: column;
@@ -21,6 +24,7 @@
   flex: 1;
 }
 
+/* 记录头部 */
 .record-header {
   display: flex;
   align-items: center;
@@ -37,6 +41,7 @@
   line-height: 1.4;
 }
 
+/* 置信度标签 */
 .confidence-badge {
   flex-shrink: 0;
   display: flex;
@@ -56,12 +61,14 @@
   white-space: nowrap;
 }
 
+/* 记录内容 */
 .record-content {
   display: flex;
   flex-direction: column;
   gap: 10rpx;
 }
 
+/* 信息行 */
 .info-row {
   display: flex;
   align-items: center;
@@ -111,6 +118,7 @@
   }
 }
 
+/* 记录底部 */
 .record-footer {
   display: flex;
   align-items: center;
@@ -154,6 +162,7 @@
   flex-shrink: 0;
 }
 
+/* 记录列表容器 */
 .diagnosis-records-list,
 .records-list {
   display: flex;

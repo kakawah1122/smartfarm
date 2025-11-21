@@ -5,11 +5,11 @@
 .lazy-load-container {
   position: relative;
   width: 100%;
-
+  
   // 占位符样式
   .lazy-load-placeholder {
     padding: 24rpx;
-
+    
     .lazy-load-skeleton {
       .skeleton-item {
         background: linear-gradient(
@@ -22,22 +22,22 @@
         animation: skeleton-loading 1.5s infinite;
         border-radius: 8rpx;
         margin-bottom: 16rpx;
-
+        
         &.skeleton-title {
           height: 32rpx;
           width: 60%;
         }
-
+        
         &.skeleton-text {
           height: 24rpx;
           width: 100%;
-
+          
           &:last-child {
             width: 80%;
           }
         }
       }
-
+      
       @keyframes skeleton-loading {
         0% {
           background-position: -200% 0;
@@ -48,7 +48,7 @@
       }
     }
   }
-
+  
   // 加载中样式
   .lazy-load-loading {
     display: flex;
@@ -56,7 +56,7 @@
     align-items: center;
     justify-content: center;
     padding: 48rpx 24rpx;
-
+    
     .loading-spinner {
       width: 32rpx;
       height: 32rpx;
@@ -65,13 +65,13 @@
       border-radius: 50%;
       animation: spinner-rotate 0.8s linear infinite;
     }
-
+    
     .loading-text {
       margin-top: 16rpx;
       font-size: 26rpx;
       color: var(--td-text-color-secondary);
     }
-
+    
     @keyframes spinner-rotate {
       from {
         transform: rotate(0deg);
@@ -81,7 +81,7 @@
       }
     }
   }
-
+  
   // 错误样式
   .lazy-load-error {
     display: flex;
@@ -89,19 +89,19 @@
     align-items: center;
     justify-content: center;
     padding: 48rpx 24rpx;
-
+    
     .error-text {
       margin-top: 16rpx;
       font-size: 28rpx;
       color: var(--td-text-color-secondary);
     }
   }
-
+  
   // 内容容器
   .lazy-load-content {
     animation: fade-in 0.3s ease;
   }
-
+  
   @keyframes fade-in {
     from {
       opacity: 0;

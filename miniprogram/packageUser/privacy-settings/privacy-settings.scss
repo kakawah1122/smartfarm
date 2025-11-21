@@ -1,3 +1,4 @@
+/* privacy-settings.scss - 隐私设置页面样式 */
 
 page {
   background-color: #f5f5f5;
@@ -13,6 +14,7 @@ page {
   background-color: #f5f5f5;
 }
 
+/* 加载状态 */
 .loading-container {
   display: flex;
   align-items: center;
@@ -25,6 +27,7 @@ page {
   color: #999;
 }
 
+/* 卡片通用样式 */
 .card {
   background: white;
   margin: 0 32rpx 16rpx;
@@ -65,7 +68,10 @@ page {
   }
 
   .status-badge {
-    &
+    &.authorized {
+      color: #0f7a4a;
+      background: rgba(13, 181, 126, 0.16);
+    }
 
     &.unauthorized {
       color: #c41d3a;
@@ -125,6 +131,7 @@ page {
   margin-bottom: 24rpx;
 }
 
+/* 状态行 */
 .status-row {
   display: flex;
   justify-content: space-between;
@@ -146,8 +153,12 @@ page {
   border-radius: 20rpx;
   transition: all 0.3s ease;
 
-  &
-
+  &.authorized {
+    color: #1f8a5e;
+    background: rgba(13, 181, 126, 0.14);
+    box-shadow: 0 4rpx 12rpx rgba(13, 181, 126, 0.16);
+  }
+  
   &.unauthorized {
     color: #c41d3a;
     background: rgba(231, 76, 94, 0.14);
@@ -161,6 +172,7 @@ page {
   line-height: 1.6;
 }
 
+/* 协议行 */
 .contract-row {
   display: flex;
   justify-content: space-between;
@@ -181,6 +193,7 @@ page {
   line-height: 1.6;
 }
 
+/* 查看协议按钮 */
 .contract-btn {
   padding: 6rpx 16rpx !important;
   height: auto !important;
@@ -189,6 +202,7 @@ page {
   line-height: 1.4 !important;
 }
 
+/* 说明列表 */
 .info-list {
   display: flex;
   flex-direction: column;
@@ -201,7 +215,7 @@ page {
   gap: 8rpx;
   padding-bottom: 20rpx;
   border-bottom: 1rpx solid #f5f5f5;
-
+  
   &:last-child {
     border-bottom: none;
     padding-bottom: 0;
@@ -220,6 +234,7 @@ page {
   line-height: 1.6;
 }
 
+/* 安全区域 */
 .safe-area-bottom {
   height: calc(env(safe-area-inset-bottom) + 32rpx);
 }

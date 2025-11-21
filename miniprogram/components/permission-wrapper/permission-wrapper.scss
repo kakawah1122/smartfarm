@@ -1,3 +1,4 @@
+/* 权限控制组件样式 */
 
 .permission-loading {
   display: flex;
@@ -7,9 +8,21 @@
   min-height: 120rpx;
 }
 
+.permission-content {
+  /* 有权限时的内容容器，保持原有样式 */
+}
+
+.permission-denied {
+  /* 无权限时的容器 */
+}
+
 .permission-denied-content {
   padding: 32rpx;
   text-align: center;
+}
+
+.permission-empty {
+  /* TDesign空状态组件的自定义样式 */
 }
 
 .permission-placeholder {

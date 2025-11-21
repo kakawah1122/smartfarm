@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-
+  
   .load-more-btn {
     width: 100%;
     max-width: 600rpx;
@@ -22,38 +22,38 @@
     color: var(--td-text-color-secondary);
     font-size: 28rpx;
     transition: all 0.3s ease;
-
+    
     &:active {
       transform: scale(0.98);
       opacity: 0.8;
     }
-
+    
     &.loading {
       pointer-events: none;
       opacity: 0.7;
-
+      
       .loading-icon {
         animation: rotate 1s linear infinite;
         margin-right: 8rpx;
       }
     }
-
+    
     &.no-more {
       pointer-events: none;
       opacity: 0.5;
       color: var(--td-text-color-placeholder);
     }
   }
-
+  
   .load-more-text {
     font-size: 26rpx;
     color: var(--td-text-color-secondary);
-
+    
     &.no-more-text {
       color: var(--td-text-color-placeholder);
     }
   }
-
+  
   @keyframes rotate {
     from {
       transform: rotate(0deg);
@@ -67,7 +67,7 @@
 // 骨架屏样式
 .skeleton-container {
   padding: 24rpx;
-
+  
   .skeleton-item {
     background: linear-gradient(
       90deg,
@@ -79,38 +79,38 @@
     animation: loading 1.5s infinite;
     border-radius: 8rpx;
     margin-bottom: 16rpx;
-
+    
     &.skeleton-title {
       height: 32rpx;
       width: 60%;
     }
-
+    
     &.skeleton-text {
       height: 24rpx;
       width: 100%;
-
+      
       &:nth-child(2) {
         width: 80%;
       }
-
+      
       &:nth-child(3) {
         width: 90%;
       }
     }
-
+    
     &.skeleton-card {
       height: 200rpx;
       width: 100%;
       border-radius: 16rpx;
     }
-
+    
     &.skeleton-avatar {
       width: 80rpx;
       height: 80rpx;
       border-radius: 50%;
     }
   }
-
+  
   @keyframes loading {
     0% {
       background-position: -200% 0;
@@ -129,21 +129,21 @@
   align-items: center;
   justify-content: center;
   min-height: 400rpx;
-
+  
   .empty-icon {
     width: 160rpx;
     height: 160rpx;
     margin-bottom: 32rpx;
     opacity: 0.6;
   }
-
+  
   .empty-title {
     font-size: 32rpx;
     color: var(--td-text-color-primary);
     font-weight: 500;
     margin-bottom: 16rpx;
   }
-
+  
   .empty-description {
     font-size: 26rpx;
     color: var(--td-text-color-secondary);
@@ -151,7 +151,7 @@
     line-height: 1.6;
     max-width: 500rpx;
   }
-
+  
   .empty-action-btn {
     margin-top: 48rpx;
     padding: 0 48rpx;
@@ -173,38 +173,38 @@
   height: 100rpx;
   color: var(--td-text-color-secondary);
   font-size: 26rpx;
-
+  
   &.refreshing {
     .refresh-icon {
       animation: rotate 1s linear infinite;
     }
   }
-
+  
   .refresh-icon {
     margin-right: 12rpx;
     width: 32rpx;
     height: 32rpx;
   }
-
+  
   .refresh-text {
     &.pull-down {
       &::after {
         content: '下拉刷新';
       }
     }
-
+    
     &.release {
       &::after {
         content: '释放刷新';
       }
     }
-
+    
     &.refreshing {
       &::after {
         content: '刷新中...';
       }
     }
-
+    
     &.success {
       &::after {
         content: '刷新成功';
