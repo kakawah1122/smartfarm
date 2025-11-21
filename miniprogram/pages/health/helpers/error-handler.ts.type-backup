@@ -47,7 +47,7 @@ export async function withErrorHandler<T>(
     }
     
     return result
-  } catch (error: unknown) {
+  } catch (error: any) {
     if (showLoading) {
       wx.hideLoading()
     }
@@ -90,7 +90,7 @@ export async function withRetry<T>(
   maxRetries = 3,
   delay = 1000
 ): Promise<T> {
-  let lastError: unknown
+  let lastError: any
   
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -112,7 +112,7 @@ export async function withRetry<T>(
  */
 export async function batchExecute<T>(
   tasks: Array<() => Promise<T>>
-): Promise<Array<{ success: boolean; data?: T; error?: unknown }>> {
+): Promise<Array<{ success: boolean; data?: T; error?: any }>> {
   return Promise.all(
     tasks.map(async task => {
       try {

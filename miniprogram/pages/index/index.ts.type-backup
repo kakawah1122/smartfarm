@@ -1,15 +1,5 @@
 // index.ts - 清理版本，只使用和风天气地理编码
 import { checkPageAuth } from '../../utils/auth-guard'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../typings/core';
 import { logger } from '../../utils/logger'
 import { getCurrentBeijingDate } from '../../utils/util'
 import {
@@ -167,7 +157,7 @@ Page({
     },
     
     // 任务相关
-    selectedTask: null as unknown,
+    selectedTask: null as any,
     showTaskDetailPopup: false,
     
     // 疫苗表单数据
@@ -200,8 +190,8 @@ Page({
     
     // 用药管理表单数据
     showMedicationFormPopup: false,
-    availableMedicines: [] as unknown[], // 可用的药品库存
-    selectedMedicine: null as unknown,
+    availableMedicines: [] as any[], // 可用的药品库存
+    selectedMedicine: null as any,
     medicationFormData: {
       medicineId: '',
       medicineName: '',
@@ -216,8 +206,8 @@ Page({
 
     // 营养管理表单数据
     showNutritionFormPopup: false,
-    availableNutrition: [] as unknown[], // 可用的营养品库存
-    selectedNutrition: null as unknown,
+    availableNutrition: [] as any[], // 可用的营养品库存
+    selectedNutrition: null as any,
     nutritionFormData: {
       nutritionId: '',
       nutritionName: '',
@@ -269,7 +259,7 @@ Page({
 
         clearHomepageNeedSync()
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 检查同步状态失败
     }
   },
@@ -316,7 +306,7 @@ Page({
         statusBarHeight: 44,
         statusBarText: `${timeStr} • 中国移动 • 100%`
       })
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 状态栏初始化失败，使用默认值
     }
   },
@@ -363,7 +353,7 @@ Page({
             this.updateWeatherUI(cacheData.data)
             // 继续执行后续的API请求来更新数据
           }
-        } catch (error: unknown) {
+        } catch (error: any) {
           // 忽略缓存读取错误
         }
       } else {
@@ -377,7 +367,7 @@ Page({
       })
       
       // 获取位置和天气
-      this.getLocationAndWeather().then((res: unknown) => {
+      this.getLocationAndWeather().then((res: any) => {
         if (res.success && res.data) {
           const weatherData = res.data
           
@@ -475,7 +465,7 @@ Page({
                   })
                   reject(new Error(errorMsg))
                 }
-              }).catch((error: unknown) => {
+              }).catch((error: any) => {
                 wx.showModal({
                   title: '网络错误',
                   content: '无法连接天气服务，请检查网络后重试',
@@ -498,7 +488,7 @@ Page({
   },
   
   // 处理位置获取错误
-  handleLocationError(error: unknown) {
+  handleLocationError(error: any) {
     
     if (error.errMsg) {
       if (error.errMsg.includes('auth')) {
@@ -563,7 +553,7 @@ Page({
     }
     
     // ✅ 优化：合并setData调用，避免重复设置location
-    const updateData: unknown = {}
+    const updateData: any = {}
     
     // 详细检查位置信息
     const locationInfo = actualWeatherData.locationInfo
@@ -625,7 +615,7 @@ Page({
   },
 
   // 格式化更新时间
-  formatUpdateTime(updateTime: unknown) {
+  formatUpdateTime(updateTime: any) {
     if (!updateTime) return '刚刚更新'
     
     try {
@@ -637,7 +627,7 @@ Page({
       if (diff < 60) return `${diff}分钟前更新`
       if (diff < 24 * 60) return `${Math.floor(diff / 60)}小时前更新`
       return '超过1天前更新'
-    } catch (error: unknown) {
+    } catch (error: any) {
       return '刚刚更新'
     }
   },
@@ -693,7 +683,7 @@ Page({
         
         // 处理鹅苗价格
         if (latestPrice.goslingBreeds && latestPrice.goslingBreeds.length > 0) {
-          latestPrice.goslingBreeds.forEach((breed: unknown) => {
+          latestPrice.goslingBreeds.forEach((breed: any) => {
             const min = typeof breed.min === 'number' ? breed.min : null
             const max = typeof breed.max === 'number' ? breed.max : null
             const range = breed.range || '--'
@@ -724,8 +714,8 @@ Page({
         // 处理肉鹅价格（映射到adult字段）
         if (latestPrice.meatBreeds && latestPrice.meatBreeds.length > 0) {
           // 使用肉鹅130日龄的价格作为成鹅价格
-          const meat130 = latestPrice.meatBreeds.find((m: unknown) => m.key === 'meat130')
-          const meat120 = latestPrice.meatBreeds.find((m: unknown) => m.key === 'meat120')
+          const meat130 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat130')
+          const meat120 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat120')
           
           // 格式化价格范围的辅助函数
           const formatRange = (min: number | null, max: number | null, range: string) => {
@@ -880,7 +870,7 @@ Page({
     }
     
     // 格式化价格显示：如果最低价和最高价一致，只显示一个数字
-    const formatPriceRange = (priceData: unknown) => {
+    const formatPriceRange = (priceData: any) => {
       if (!priceData) {
         return '--'
       }
@@ -940,7 +930,7 @@ Page({
   cacheGoosePriceSnapshot(snapshot: { updateTime: string; breeds: Array<{ key: string; label: string }>; data: Record<string, any> }) {
     try {
       wx.setStorageSync('goose_price_snapshot', snapshot)
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 忽略缓存失败
     }
   },
@@ -955,7 +945,7 @@ Page({
     try {
       // 首页不再显示待办列表，方法保留作为占位
       return true
-    } catch (error: unknown) {
+    } catch (error: any) {
       return false
     }
   },
@@ -986,7 +976,7 @@ Page({
   getLocalTaskCompletions() {
     try {
       return wx.getStorageSync('completed_tasks') || {}
-    } catch (error: unknown) {
+    } catch (error: any) {
       return {}
     }
   },
@@ -1008,7 +998,7 @@ Page({
       }
       
       wx.setStorageSync(key, completedTasks)
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 保存任务完成状态失败
     }
   },
@@ -1024,7 +1014,7 @@ Page({
       }
 
       markHomepageNeedSync()
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 首页更新全局状态失败
     }
   },
@@ -1054,7 +1044,7 @@ Page({
       if (globalData.taskStatusUpdates && globalData.taskStatusUpdates[taskId]) {
         globalData.taskStatusUpdates[taskId].synced = true
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 标记全局状态失败
     }
   },
@@ -1078,16 +1068,16 @@ Page({
       // 3. 尝试直接调用待办页面的同步方法（如果存在）
       try {
         const pages = getCurrentPages()
-        const breedingTodoPage = pages.find((page: unknown) => page.route === 'packageHealth/breeding-todo/breeding-todo')
-        if (breedingTodoPage && typeof (breedingTodoPage as unknown).syncTaskStatusFromHomepage === 'function') {
+        const breedingTodoPage = pages.find((page: any) => page.route === 'packageHealth/breeding-todo/breeding-todo')
+        if (breedingTodoPage && typeof (breedingTodoPage as any).syncTaskStatusFromHomepage === 'function') {
           setTimeout(() => {
-            (breedingTodoPage as unknown).syncTaskStatusFromHomepage(taskId, completed)
+            (breedingTodoPage as any).syncTaskStatusFromHomepage(taskId, completed)
           }, 100) // 延迟100ms确保状态保存完成
         }
-      } catch (error: unknown) {
+      } catch (error: any) {
         // 直接调用待办页面方法失败（正常情况）
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 通知待办页面失败
     }
   },
@@ -1095,7 +1085,7 @@ Page({
   /**
    * 判断是否为疫苗接种任务
    */
-  isVaccineTask(task: unknown): boolean {
+  isVaccineTask(task: any): boolean {
     // 首先排除用药管理任务
     if (task.type === 'medication' || task.type === 'medicine') {
       return false
@@ -1114,14 +1104,14 @@ Page({
   /**
    * 判断是否为用药管理任务
    */
-  isMedicationTask(task: unknown): boolean {
+  isMedicationTask(task: any): boolean {
     return isMedicationTask(task)
   },
 
   /**
    * 判断是否为营养管理任务
    */
-  isNutritionTask(task: unknown): boolean {
+  isNutritionTask(task: any): boolean {
     return isNutritionTask(task)
   },
 
@@ -1142,7 +1132,7 @@ Page({
   /**
    * 打开疫苗表单
    */
-  openVaccineForm(task: unknown) {
+  openVaccineForm(task: any) {
     this.initVaccineFormData(task)
     this.setData({
       showVaccineFormPopup: true,
@@ -1153,7 +1143,7 @@ Page({
   /**
    * 初始化疫苗表单数据
    */
-  initVaccineFormData(task: unknown) {
+  initVaccineFormData(task: any) {
     const vaccineFormData: VaccineFormData = {
       veterinarianName: '',
       veterinarianContact: '',
@@ -1190,7 +1180,7 @@ Page({
   /**
    * 疫苗表单输入处理
    */
-  onVaccineFormInput(e: CustomEvent) {
+  onVaccineFormInput(e: any) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1209,7 +1199,7 @@ Page({
   /**
    * 数值输入处理（费用相关）
    */
-  onVaccineNumberInput(e: CustomEvent) {
+  onVaccineNumberInput(e: any) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1228,7 +1218,7 @@ Page({
   /**
    * 路径选择处理
    */
-  onVaccineRouteChange(e: CustomEvent) {
+  onVaccineRouteChange(e: any) {
     const { value } = e.detail
     this.setData({
       'vaccineFormData.routeIndex': parseInt(value)
@@ -1423,7 +1413,7 @@ Page({
     }
 
     // 检查任务ID是否存在
-    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as unknown)._id
+    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as any)._id
     if (!taskId) {
       wx.showToast({
         title: '任务ID缺失，无法完成',
@@ -1462,7 +1452,7 @@ Page({
   /**
    * 任务详情弹窗可见性变化
    */
-  onTaskDetailPopupChange(event: unknown) {
+  onTaskDetailPopupChange(event: any) {
     if (!event.detail.visible) {
       this.closeTaskDetailPopup()
     }
@@ -1484,7 +1474,7 @@ Page({
   },
 
   // 跳转到鹅价详情页
-  navigateToPriceDetail(event: unknown) {
+  navigateToPriceDetail(event: any) {
     const { goosePriceData, priceBreeds, currentPriceBreed, priceUpdateTime } = this.data
     if (!goosePriceData || Object.keys(goosePriceData).length === 0) {
       wx.showToast({
@@ -1510,7 +1500,7 @@ Page({
   },
 
   // 手动刷新天气数据
-  onWeatherRefresh(_event: unknown) {
+  onWeatherRefresh(_event: any) {
     // 在微信小程序中，使用catchtap来阻止事件冒泡，而不是stopPropagation()
     
     this.setData({ 'weather.loading': true })
@@ -1522,7 +1512,7 @@ Page({
         icon: 'success',
         duration: 1500
       })
-    }).catch((_error: unknown) => {
+    }).catch((_error: any) => {
       wx.showToast({
         title: '刷新失败',
         icon: 'error',
@@ -1534,7 +1524,7 @@ Page({
   },
 
   // 缓存天气数据到本地存储
-  cacheWeatherData(weatherData: unknown) {
+  cacheWeatherData(weatherData: any) {
     try {
       const cacheData = {
         data: weatherData,
@@ -1542,7 +1532,7 @@ Page({
         expireTime: Date.now() + 60 * 60 * 1000 // 1小时过期
       }
       wx.setStorageSync('weather_cache', cacheData)
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('检查天气更新失败:', error)
     }
   },
@@ -1555,7 +1545,7 @@ Page({
         return cacheData.data
       }
       return null
-    } catch (error: unknown) {
+    } catch (error: any) {
       return null
     }
   },
@@ -1564,7 +1554,7 @@ Page({
   clearWeatherCache() {
     try {
       wx.removeStorageSync('weather_cache')
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('获取天气缓存失败:', error)
     }
   },
@@ -1595,7 +1585,7 @@ Page({
         setTimeout(() => {
           this.getWeatherData(true).then(() => {
             // 静默更新成功，不显示任何提示
-          }).catch((error: unknown) => {
+          }).catch((error: any) => {
             // 静默失败，不干扰用户体验，继续使用缓存数据
             logger.warn('静默刷新天气失败:', error)
           })
@@ -1606,7 +1596,7 @@ Page({
           this.updateWeatherUI(cacheData.data)
         }
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('检查并自动刷新天气失败:', error)
     }
   },
@@ -1659,7 +1649,7 @@ Page({
   /**
    * 打开用药管理表单
    */
-  async openMedicationForm(task: unknown) {
+  async openMedicationForm(task: any) {
     // 确保selectedTask数据正确设置
     this.setData({
       selectedTask: task
@@ -1691,7 +1681,7 @@ Page({
   /**
    * 打开营养管理表单
    */
-  async openNutritionForm(task: unknown) {
+  async openNutritionForm(task: any) {
     // 确保selectedTask数据正确设置
     this.setData({
       selectedTask: task
@@ -1764,7 +1754,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       wx.showToast({
         title: '网络异常，请重试',
         icon: 'error'
@@ -1821,7 +1811,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('获取营养品库存失败:', error)
       wx.showToast({
         title: '网络异常，请重试',
@@ -1833,7 +1823,7 @@ Page({
   /**
    * 选择药品
    */
-  onMedicineSelect(e: CustomEvent) {
+  onMedicineSelect(e: any) {
     const index = e.detail.value
     const selectedMedicine = this.data.availableMedicines[index]
     
@@ -1860,7 +1850,7 @@ Page({
   /**
    * 选择营养品
    */
-  onNutritionSelect(e: CustomEvent) {
+  onNutritionSelect(e: any) {
     const index = e.detail.value
     const selectedNutrition = this.data.availableNutrition[index]
     
@@ -1887,7 +1877,7 @@ Page({
   /**
    * 用药表单输入处理
    */
-  onMedicationFormInput(e: CustomEvent) {
+  onMedicationFormInput(e: any) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1909,7 +1899,7 @@ Page({
   /**
    * 营养表单输入处理
    */
-  onNutritionFormInput(e: CustomEvent) {
+  onNutritionFormInput(e: any) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -1931,7 +1921,7 @@ Page({
   /**
    * 用药数量输入处理
    */
-  onMedicationQuantityInput(e: CustomEvent) {
+  onMedicationQuantityInput(e: any) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
@@ -1965,7 +1955,7 @@ Page({
   /**
    * 营养数量输入处理
    */
-  onNutritionQuantityInput(e: CustomEvent) {
+  onNutritionQuantityInput(e: any) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
@@ -2206,7 +2196,7 @@ Page({
         throw new Error(result.message || result.error || '提交失败')
       }
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       
@@ -2258,7 +2248,7 @@ Page({
       } else {
         // 已移除调试日志
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
     }
   },
@@ -2266,7 +2256,7 @@ Page({
   /**
    * 仅完成用药管理任务（不创建物料记录）
    */
-  async completeMedicationTaskOnly(selectedTask: unknown) {
+  async completeMedicationTaskOnly(selectedTask: any) {
     try {
       wx.showLoading({ title: '完成任务中...' })
       
@@ -2284,7 +2274,7 @@ Page({
       this.closeMedicationFormPopup()
       this.loadTodayBreedingTasks() // 刷新任务列表
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({
@@ -2337,7 +2327,7 @@ Page({
       // 首页构建的营养记录数据
 
       // 调用云函数创建营养记录
-      const result = await CloudApi.callFunction<BaseResponse>(
+      const result = await CloudApi.callFunction<any>(
         'production-material',
         {
           action: 'create_record',
@@ -2372,7 +2362,7 @@ Page({
         throw new Error(result.message || result.error || '提交失败')
       }
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       
@@ -2403,7 +2393,7 @@ Page({
   /**
    * 完成营养管理任务
    */
-  async completeNutritionTask(task: unknown) {
+  async completeNutritionTask(task: any) {
     // 首页完成营养管理任务
     
     try {
@@ -2427,7 +2417,7 @@ Page({
         // 已移除调试日志
         return false
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       return false
     }
@@ -2436,7 +2426,7 @@ Page({
   /**
    * 仅完成营养管理任务（不创建物料记录）
    */
-  async completeNutritionTaskOnly(selectedTask: unknown) {
+  async completeNutritionTaskOnly(selectedTask: any) {
     try {
       wx.showLoading({ title: '完成任务中...' })
 
@@ -2459,7 +2449,7 @@ Page({
       this.closeNutritionFormPopup()
       this.loadTodayBreedingTasks() // 刷新任务列表
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({
@@ -2490,7 +2480,7 @@ Page({
       if (result.success && result.data) {
         const articles = result.data.list || []
         // 转换为前端需要的格式
-        const formattedArticles = articles.map((article: unknown) => ({
+        const formattedArticles = articles.map((article: any) => ({
           _id: article._id,
           title: article.title,
           description: article.description,
@@ -2533,7 +2523,7 @@ Page({
   /**
    * 查看文章详情
    */
-  viewKnowledgeArticle(e: CustomEvent) {
+  viewKnowledgeArticle(e: any) {
     const article = e.currentTarget.dataset.article
     if (!article) {
       return

@@ -3,8 +3,8 @@
 interface PreventionRecord {
   _id: string
   preventionType: string
-  vaccineInfo?: unknown
-  costInfo?: unknown
+  vaccineInfo?: any
+  costInfo?: any
 }
 
 interface PreventionStats {
@@ -73,7 +73,7 @@ export function calculatePreventionStats(records: PreventionRecord[]): Preventio
 /**
  * 格式化预防记录，映射数据库字段到显示字段
  */
-export function formatPreventionRecord(record: unknown) {
+export function formatPreventionRecord(record: any) {
   // 预防类型中文名称映射
   const preventionTypeNames: { [key: string]: string } = {
     'vaccine': '疫苗接种',

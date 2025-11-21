@@ -8,7 +8,7 @@ interface ValidationRule {
   min?: number
   max?: number
   pattern?: RegExp
-  custom?: (value: unknown) => boolean | string
+  custom?: (value: any) => boolean | string
   message?: string
 }
 
@@ -23,7 +23,7 @@ export class FormValidator {
   /**
    * 验证单个字段
    */
-  static validateField(value: unknown, rules: ValidationRule | ValidationRule[]): string | null {
+  static validateField(value: any, rules: ValidationRule | ValidationRule[]): string | null {
     const ruleArray = Array.isArray(rules) ? rules : [rules]
     
     for (const rule of ruleArray) {
@@ -70,7 +70,7 @@ export class FormValidator {
   /**
    * 验证整个表单
    */
-  static validateForm(formData: unknown, rules: ValidationRules): {
+  static validateForm(formData: any, rules: ValidationRules): {
     isValid: boolean
     errors: Record<string, string>
     errorList: string[]

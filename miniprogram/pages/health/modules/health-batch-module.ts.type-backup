@@ -7,16 +7,6 @@
 /// <reference path="../../../../typings/index.d.ts" />
 
 import { safeCloudCall } from '../../../utils/safe-cloud-call'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 import { logger } from '../../../utils/logger'
 
 /**
@@ -34,7 +24,7 @@ export interface BatchInfo {
   dayAge?: number
   vaccinationRate?: string
   healthStatus?: string
-  [key: string]: unknown
+  [key: string]: any
 }
 
 /**
@@ -93,7 +83,7 @@ export class HealthBatchManager {
         : (result.data?.batches || [])
       
       // 计算日龄和健康状态
-      const processedBatches = batches.map((batch: unknown) => ({
+      const processedBatches = batches.map((batch: any) => ({
         ...batch,
         dayAge: this.calculateDayAge(batch.entryDate),
         healthStatus: this.getHealthStatus(batch)
@@ -276,7 +266,7 @@ export class HealthBatchManager {
     order: 'asc' | 'desc' = 'desc'
   ): BatchInfo[] {
     const sorted = [...batches].sort((a, b) => {
-      let aValue: unknown, bValue: unknown
+      let aValue: any, bValue: any
       
       switch (sortBy) {
         case 'entryDate':
@@ -456,7 +446,7 @@ export class BatchDataWatcher {
 /**
  * 导出便捷方法
  */
-export function setupBatchManagement(pageInstance: unknown) {
+export function setupBatchManagement(pageInstance: any) {
   // 绑定批次管理方法到页面实例
   pageInstance.getBatchList = () => HealthBatchManager.getBatchList()
   pageInstance.getBatchDetail = (batchId: string) => HealthBatchManager.getBatchDetail(batchId)

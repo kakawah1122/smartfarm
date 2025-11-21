@@ -88,7 +88,7 @@ export class DataPathBuilder {
   /**
    * 设置分析数据
    */
-  setAnalysisData(section: string, data: unknown) {
+  setAnalysisData(section: string, data: any) {
     Object.keys(data).forEach(key => {
       this.updates[`analysisData.${section}.${key}`] = data[key]
     })
@@ -98,7 +98,7 @@ export class DataPathBuilder {
   /**
    * 设置任意数据路径
    */
-  set(path: string, value: unknown) {
+  set(path: string, value: any) {
     this.updates[path] = value
     return this
   }

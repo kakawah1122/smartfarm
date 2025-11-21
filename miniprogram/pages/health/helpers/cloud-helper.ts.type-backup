@@ -5,16 +5,6 @@
  */
 
 import { safeCloudCall } from '../../../utils/safe-cloud-call'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 import CloudApi from '../../../utils/cloud-api'
 import { logger } from '../../../utils/logger'
 

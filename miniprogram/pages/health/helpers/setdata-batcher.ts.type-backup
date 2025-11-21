@@ -5,17 +5,17 @@
  */
 
 interface BatchUpdate {
-  [key: string]: unknown
+  [key: string]: any
 }
 
 export class SetDataBatcher {
-  private page: unknown
+  private page: any
   private updates: BatchUpdate = {}
   private timer: number | null = null
   private delay: number
   private isProcessing: boolean = false
 
-  constructor(page: unknown, delay: number = 16) { // 默认一帧时间
+  constructor(page: any, delay: number = 16) { // 默认一帧时间
     this.page = page
     this.delay = delay
   }
@@ -25,7 +25,7 @@ export class SetDataBatcher {
    * @param path 数据路径
    * @param value 数据值
    */
-  add(path: string, value: unknown): void {
+  add(path: string, value: any): void {
     this.updates[path] = value
     this.scheduleUpdate()
   }
@@ -103,7 +103,7 @@ export class SetDataBatcher {
  * @param delay 延迟时间（ms）
  * @returns SetDataBatcher实例
  */
-export function createSetDataBatcher(page: unknown, delay?: number): SetDataBatcher {
+export function createSetDataBatcher(page: any, delay?: number): SetDataBatcher {
   return new SetDataBatcher(page, delay)
 }
 
@@ -119,7 +119,7 @@ export class DataDiffer {
    * @param prefix 路径前缀
    * @returns 差异对象
    */
-  static diff(oldData: unknown, newData: unknown, prefix: string = ''): BatchUpdate {
+  static diff(oldData: any, newData: any, prefix: string = ''): BatchUpdate {
     const updates: BatchUpdate = {}
 
     // 如果是基础类型或null，直接比较
@@ -162,7 +162,7 @@ export class DataDiffer {
    * @param newData 新数据
    * @param batcher 批量更新器（可选）
    */
-  static applyDiff(page: unknown, oldData: unknown, newData: unknown, batcher?: SetDataBatcher): void {
+  static applyDiff(page: any, oldData: any, newData: any, batcher?: SetDataBatcher): void {
     const updates = DataDiffer.diff(oldData, newData)
     
     if (Object.keys(updates).length === 0) {

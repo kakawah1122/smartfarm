@@ -1,16 +1,6 @@
 // health-data-loader.ts - 健康数据加载模块（✅优化：wx.storage持久化缓存）
 
 import CloudApi from '../../../utils/cloud-api'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 import { calculatePreventionStats, formatPreventionRecord } from './health-stats-calculator'
 
 // ✅ 优化：使用wx.storage替代Map，实现持久化缓存
@@ -18,7 +8,7 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
 const CACHE_PREFIX = 'health_cache_' // 缓存key前缀
 
 interface CachedData {
-  data: unknown
+  data: any
   timestamp: number
 }
 
@@ -40,7 +30,7 @@ function isCacheValid(cacheKey: string): boolean {
 /**
  * 获取缓存数据（✅优化：从wx.storage读取）
  */
-function getCachedData(cacheKey: string): unknown {
+function getCachedData(cacheKey: string): any {
   try {
     const cached = wx.getStorageSync(CACHE_PREFIX + cacheKey) as CachedData
     return cached ? cached.data : null
@@ -52,7 +42,7 @@ function getCachedData(cacheKey: string): unknown {
 /**
  * 设置缓存数据（✅优化：保存到wx.storage）
  */
-function setCachedData(cacheKey: string, data: unknown) {
+function setCachedData(cacheKey: string, data: any) {
   try {
     wx.setStorageSync(CACHE_PREFIX + cacheKey, {
       data,

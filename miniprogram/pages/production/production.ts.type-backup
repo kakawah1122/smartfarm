@@ -24,7 +24,7 @@ type ProductionPageData = WechatMiniprogram.Page.DataOption & {
     active: boolean
     loading: boolean
     imageUrl: string
-    result: unknown
+    result: any
     error: string | null
     history: unknown[]
     rounds: unknown[]
@@ -105,10 +105,10 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       imageUrl: '',         // 拍摄的图片URL
       result: null as BaseResponse,  // 识别结果
       error: null as string | null,
-      history: [] as unknown[], // 盘点历史
+      history: [] as any[], // 盘点历史
       
       // 累加相关
-      rounds: [] as unknown[],       // 各轮次记录
+      rounds: [] as any[],       // 各轮次记录
       currentRound: 0,           // 当前轮次
       cumulativeTotal: 0         // 累计总数
     }
@@ -154,7 +154,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       
       // 标记数据已加载
       this.setData({ isDataLoaded: true })
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('加载数据失败:', error)
     }
   },
@@ -173,7 +173,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         const defaultStats = ProductionDataLoader.getDefaultStats()
         this.setData(defaultStats)
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('概览数据加载失败:', error)
       // 设置默认数据
       const defaultStats = ProductionDataLoader.getDefaultStats()
@@ -244,7 +244,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         entryRecords: records,
         isEmpty: records.length === 0
       })
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('加载入栏数据失败:', error)
       this.setData({ entryRecords: [], isEmpty: true })
     }
@@ -258,7 +258,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         exitRecords: records,
         isEmpty: records.length === 0
       })
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('加载出栏数据失败:', error)
       this.setData({ exitRecords: [], isEmpty: true })
     }
@@ -273,7 +273,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         materialRecords: records.slice(0, 5),
         isEmpty: records.length === 0
       })
-    } catch (error: unknown) {
+    } catch (error: any) {
       logger.error('加载物料数据失败:', error)
       this.setData({ materialRecords: [], isEmpty: true })
     }
@@ -319,7 +319,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // Tab切换 - TDesign 格式
-  onTabChange(e: CustomEvent) {
+  onTabChange(e: any) {
     const { value } = e.detail
     this.setData({
       activeTab: value
@@ -501,7 +501,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         icon: 'success',
         duration: 1000
       })
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 用户取消不显示错误
       if (error.errMsg && error.errMsg.includes('cancel')) {
         return
@@ -602,7 +602,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       }
       
       // 调用AI图像识别云函数（传递云存储文件ID）
-      const result = await CloudApi.callFunction<BaseResponse>(
+      const result = await CloudApi.callFunction<any>(
         'ai-multi-model',
         {
           action: 'image_recognition',
@@ -707,7 +707,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         })
       }
       
-    } catch (error: unknown) {
+    } catch (error: any) {
       
       this.setData({
         'aiCount.loading': false,
@@ -732,7 +732,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
   
   // 修正识别结果（用于AI学习）
-  async correctRecognitionResult(recognitionResult: unknown, imageFileID: string) {
+  async correctRecognitionResult(recognitionResult: any, imageFileID: string) {
     wx.showModal({
       title: '标记正确数量',
       editable: true,
@@ -751,7 +751,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
           
           // 保存学习案例（使用AI分析的场景特征）
           try {
-            const result = await CloudApi.callFunction<BaseResponse>(
+            const result = await CloudApi.callFunction<any>(
               'ai-learning-cases',
               {
                 action: 'save_case',
@@ -791,7 +791,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
                 rounds[rounds.length - 1] = updatedResult
                 
                 // 重新计算累加总数
-                const cumulativeTotal = rounds.reduce((sum: number, r: unknown) => sum + r.totalCount, 0)
+                const cumulativeTotal = rounds.reduce((sum: number, r: any) => sum + r.totalCount, 0)
                 
                 this.setData({
                   'aiCount.rounds': rounds,
@@ -801,7 +801,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
             } else {
               throw new Error(result.error || '保存失败')
             }
-          } catch (error: unknown) {
+          } catch (error: any) {
             wx.showToast({
               title: '保存失败：' + error.message,
               icon: 'none'
@@ -824,7 +824,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         success: true,
         fileID: result.fileID
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       return {
         success: false,
@@ -862,7 +862,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // 导航到出栏表单并预填数据
-  navigateToExitForm(aiResult: unknown) {
+  navigateToExitForm(aiResult: any) {
     // 构造传递给出栏表单的参数
     const params = {
       fromAI: true,
@@ -884,7 +884,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         // 导航成功后关闭AI盘点界面
         this.closeAICount()
       },
-      fail: (_error: unknown) => {
+      fail: (_error: any) => {
         // 已移除调试日志
         wx.showToast({
           title: '跳转失败，请重试',
@@ -951,7 +951,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       // 刷新页面数据
       this.refreshData()
       
-    } catch (error: unknown) {
+    } catch (error: any) {
       // 已移除调试日志
       wx.hideLoading()
       
@@ -964,7 +964,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
   
   // 添加识别结果到累加记录
-  addRecognitionToRounds(result: unknown) {
+  addRecognitionToRounds(result: any) {
     const { rounds, currentRound, cumulativeTotal } = this.data.aiCount
     
     // 创建新的轮次记录
@@ -1076,7 +1076,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
 
 
   // 查看入栏记录详情
-  viewEntryRecordDetail(e: CustomEvent) {
+  viewEntryRecordDetail(e: any) {
     const record = e.currentTarget.dataset.record
     // 格式化数据以匹配组件期望的字段
     const formattedRecord = {
@@ -1092,7 +1092,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // 查看出栏记录详情
-  viewExitRecordDetail(e: CustomEvent) {
+  viewExitRecordDetail(e: any) {
     const record = e.currentTarget.dataset.record
     // 格式化数据以匹配组件期望的字段
     const formattedRecord = {
@@ -1137,7 +1137,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
 
 
   // 查看物料记录详情
-  viewMaterialRecordDetail(e: CustomEvent) {
+  viewMaterialRecordDetail(e: any) {
     const record = e.currentTarget.dataset.record
     // 格式化数据以匹配组件期望的字段
     const formattedRecord = {

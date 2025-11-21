@@ -12,7 +12,7 @@
 //   recordId?: string
 //   mode?: 'view' | 'create' | 'edit'
 //   alertId?: string
-//   events?: unknown
+//   events?: any
 // }
 
 /**
@@ -25,7 +25,7 @@ export class HealthNavigationManager {
   /**
    * 通用导航方法
    */
-  private static navigate(url: string, options?: unknown) {
+  private static navigate(url: string, options?: any) {
     wx.navigateTo({
       url,
       ...options
@@ -42,7 +42,7 @@ export class HealthNavigationManager {
   /**
    * 跳转到治疗记录详情页
    */
-  static navigateToTreatmentDetail(id: string, events?: unknown) {
+  static navigateToTreatmentDetail(id: string, events?: any) {
     this.navigate(
       `/packageHealth/treatment-record/treatment-record?id=${id}&mode=view`,
       events ? { events } : undefined
@@ -52,7 +52,7 @@ export class HealthNavigationManager {
   /**
    * 跳转到治疗记录列表页
    */
-  static navigateToTreatmentList(events?: unknown) {
+  static navigateToTreatmentList(events?: any) {
     this.navigate(
       '/packageHealth/treatment-records-list/treatment-records-list',
       events ? { events } : undefined
@@ -121,7 +121,7 @@ export class HealthNavigationManager {
   /**
    * 跳转到治愈记录列表
    */
-  static navigateToCuredList(events?: unknown) {
+  static navigateToCuredList(events?: any) {
     this.navigate(
       '/packageHealth/cured-records-list/cured-records-list',
       events ? { events } : undefined
@@ -131,7 +131,7 @@ export class HealthNavigationManager {
   /**
    * 跳转到死亡记录列表
    */
-  static navigateToDeathList(events?: unknown) {
+  static navigateToDeathList(events?: any) {
     this.navigate(
       '/packageHealth/death-records-list/death-records-list',
       events ? { events } : undefined
@@ -141,7 +141,7 @@ export class HealthNavigationManager {
   /**
    * 跳转到异常记录列表
    */
-  static navigateToAbnormalList(events?: unknown) {
+  static navigateToAbnormalList(events?: any) {
     this.navigate(
       '/packageHealth/abnormal-records-list/abnormal-records-list',
       events ? { events } : undefined
@@ -151,7 +151,7 @@ export class HealthNavigationManager {
   /**
    * 跳转到疫苗记录列表
    */
-  static navigateToVaccineList(events?: unknown) {
+  static navigateToVaccineList(events?: any) {
     this.navigate(
       '/packageHealth/vaccine-records-list/vaccine-records-list',
       events ? { events } : undefined
@@ -161,7 +161,7 @@ export class HealthNavigationManager {
   /**
    * 跳转到用药记录列表
    */
-  static navigateToMedicationList(events?: unknown) {
+  static navigateToMedicationList(events?: any) {
     this.navigate(
       '/packageHealth/medication-records-list/medication-records-list',
       events ? { events } : undefined
@@ -223,11 +223,11 @@ export class HealthNavigationManager {
       },
       
       // 治疗相关
-      viewTreatmentRecord: (id: string, events?: unknown) => {
+      viewTreatmentRecord: (id: string, events?: any) => {
         this.navigateToTreatmentDetail(id, events)
       },
       
-      viewTreatmentList: (events?: unknown) => {
+      viewTreatmentList: (events?: any) => {
         this.navigateToTreatmentList(events)
       },
       
@@ -235,7 +235,7 @@ export class HealthNavigationManager {
         this.createTreatmentRecord(batchId)
       },
       
-      onTreatingClick: (events?: unknown) => {
+      onTreatingClick: (events?: any) => {
         this.navigateToTreatmentList(events)
       },
       
@@ -248,11 +248,11 @@ export class HealthNavigationManager {
         this.createPreventionRecord(batchId)
       },
       
-      onVaccineCountClick: (events?: unknown) => {
+      onVaccineCountClick: (events?: any) => {
         this.navigateToVaccineList(events)
       },
       
-      onMedicationCountClick: (events?: unknown) => {
+      onMedicationCountClick: (events?: any) => {
         this.navigateToMedicationList(events)
       },
       
@@ -266,15 +266,15 @@ export class HealthNavigationManager {
       },
       
       // 记录列表相关
-      onCuredClick: (events?: unknown) => {
+      onCuredClick: (events?: any) => {
         this.navigateToCuredList(events)
       },
       
-      onDeathClick: (events?: unknown) => {
+      onDeathClick: (events?: any) => {
         this.navigateToDeathList(events)
       },
       
-      onAbnormalCountClick: (events?: unknown) => {
+      onAbnormalCountClick: (events?: any) => {
         this.navigateToAbnormalList(events)
       },
       
@@ -289,7 +289,7 @@ export class HealthNavigationManager {
 /**
  * 导出便捷方法
  */
-export function setupNavigationHandlers(pageInstance: unknown) {
+export function setupNavigationHandlers(pageInstance: any) {
   const handlers = HealthNavigationManager.createNavigationHandlers()
   
   // 为页面实例添加导航方法

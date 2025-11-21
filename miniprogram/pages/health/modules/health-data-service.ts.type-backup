@@ -1,26 +1,16 @@
 import { safeCloudCall } from '../../../utils/safe-cloud-call'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 import { callHealthFunction } from '../../../utils/health-cloud-router'
 
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
 
-let pendingAllBatchesPromise: Promise<BaseResponse> | null = null
-let latestAllBatchesSnapshot: unknown = null
+let pendingAllBatchesPromise: Promise<any> | null = null
+let latestAllBatchesSnapshot: any = null
 let latestAllBatchesFetchedAt = 0
 
 function getCachedAllBatchesData() {
   try {
-    const cached = wx.getStorageSync(ALL_BATCHES_CACHE_KEY) as { timestamp: number; data: unknown }
+    const cached = wx.getStorageSync(ALL_BATCHES_CACHE_KEY) as { timestamp: number; data: any }
     if (!cached) return null
     if (Date.now() - cached.timestamp > CACHE_DURATION) {
       return null
@@ -31,7 +21,7 @@ function getCachedAllBatchesData() {
   }
 }
 
-function setCachedAllBatchesData(data: unknown) {
+function setCachedAllBatchesData(data: any) {
   try {
     wx.setStorageSync(ALL_BATCHES_CACHE_KEY, {
       timestamp: Date.now(),
@@ -158,11 +148,12 @@ export async function getBatchCompleteData(params: {
   return result.data || {}
 }
 
-export function buildHealthStatsUpdate(healthData: unknown, preventionStats: unknown, options: {
+export function buildHealthStatsUpdate(healthData: any, preventionStats: any, options: {
   vaccinationRate: number
-  batchesWithPrevention: Batch[]
-  diagnosisHistory?: Batch[]
-  abnormalList?: Batch[]}) {
+  batchesWithPrevention: any[]
+  diagnosisHistory?: any[]
+  abnormalList?: any[]
+}) {
   const { vaccinationRate, batchesWithPrevention, diagnosisHistory, abnormalList } = options
   const originalQuantity = healthData.originalTotalQuantity || 0
   return {

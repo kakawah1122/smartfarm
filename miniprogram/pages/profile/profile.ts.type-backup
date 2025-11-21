@@ -1,15 +1,5 @@
 // profile.ts - 个人中心页面逻辑
 import { logger } from '../../utils/logger'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../typings/core';
 
 // 报销类型配置 - 养殖场景
 const REIMBURSEMENT_TYPES = [
@@ -143,7 +133,7 @@ Page({
   async loadUserInfo() {
     try {
       const app = getApp<IAppOption>()
-      const userInfo: unknown = app.globalData?.userInfo || wx.getStorageSync('userInfo')
+      const userInfo: any = app.globalData?.userInfo || wx.getStorageSync('userInfo')
       
       if (!userInfo) {
         throw new Error('未登录')
@@ -210,7 +200,7 @@ Page({
   /**
    * 选择头像
    */
-  async onChooseAvatar(e: CustomEvent) {
+  async onChooseAvatar(e: any) {
     const { avatarUrl } = e.detail
     
     if (!avatarUrl) {
@@ -372,7 +362,7 @@ Page({
   /**
    * 导航到功能页面
    */
-  navigateToFunction(e: CustomEvent) {
+  navigateToFunction(e: any) {
     const { page, action } = e.currentTarget.dataset
     
     if (page) {
@@ -390,7 +380,7 @@ Page({
   /**
    * 处理系统设置
    */
-  handleSystemSetting(e: CustomEvent) {
+  handleSystemSetting(e: any) {
     const { action } = e.currentTarget.dataset
     this.handleAction(action)
   },
@@ -453,7 +443,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           const app = getApp<IAppOption>()
-          const globalData: unknown = app.globalData || {}
+          const globalData: any = app.globalData || {}
           globalData.openid = undefined
           globalData.isLoggedIn = false
           globalData.userInfo = undefined
@@ -472,25 +462,25 @@ Page({
   /**
    * 表单输入处理
    */
-  onReimbursementTypeChange(e: CustomEvent) {
+  onReimbursementTypeChange(e: any) {
     this.setData({
       'reimbursementForm.typeIndex': e.detail.value
     })
   },
 
-  onAmountInput(e: CustomEvent) {
+  onAmountInput(e: any) {
     this.setData({
       'reimbursementForm.amount': e.detail.value
     })
   },
 
-  onDateChange(e: CustomEvent) {
+  onDateChange(e: any) {
     this.setData({
       'reimbursementForm.date': e.detail.value
     })
   },
 
-  onDescriptionInput(e: InputEvent) {
+  onDescriptionInput(e: any) {
     this.setData({
       'reimbursementForm.description': e.detail.value
     })
@@ -526,7 +516,7 @@ Page({
   /**
    * 移除凭证
    */
-  removeVoucher(e: CustomEvent) {
+  removeVoucher(e: any) {
     const { index } = e.currentTarget.dataset
     const vouchers = this.data.reimbursementForm.vouchers
     vouchers.splice(index, 1)
@@ -576,19 +566,19 @@ Page({
   /**
    * 编辑用户信息表单输入处理
    */
-  onNickNameInput(e: CustomEvent) {
+  onNickNameInput(e: any) {
     this.setData({
       'editUserForm.nickName': e.detail.value
     })
   },
 
-  onPhoneInput(e: CustomEvent) {
+  onPhoneInput(e: any) {
     this.setData({
       'editUserForm.phone': e.detail.value
     })
   },
 
-  onFarmNameInput(e: CustomEvent) {
+  onFarmNameInput(e: any) {
     this.setData({
       'editUserForm.farmName': e.detail.value
     })
@@ -640,7 +630,7 @@ Page({
         // 更新本地用户信息
         const app = getApp<IAppOption>()
         if (app.globalData) {
-          const userInfo: unknown = app.globalData.userInfo
+          const userInfo: any = app.globalData.userInfo
           userInfo.nickName = nickName.trim()
           userInfo.nickname = nickName.trim()
           userInfo.phone = phone.trim()
@@ -661,7 +651,7 @@ Page({
       } else {
         throw new Error(result.result?.message || '更新失败')
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       wx.hideLoading()
       wx.showToast({ 
         title: error.message || '更新失败', 

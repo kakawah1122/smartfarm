@@ -1,14 +1,4 @@
 import { logger } from '../../../utils/logger'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 // health-watchers.ts - 健康数据实时监听模块
 
 type DatabaseRealtimeListener = {
@@ -138,7 +128,7 @@ export function startDataWatcher(
                 scheduleRefresh()
               }
             },
-            onError: (err: unknown) => {
+            onError: (err: any) => {
               // ✅ 区分不同类型的错误
               const errorMsg = err?.message || err?.errMsg || String(err)
               
@@ -168,7 +158,7 @@ export function startDataWatcher(
         
         // 只在成功创建后赋值
         setWatcherRef(watcherKey, watcher)
-      } catch (error: unknown) {
+      } catch (error: any) {
         const errorMsg = error?.message || error?.errMsg || String(error)
         
         // ✅ 静默处理已知的状态机错误
@@ -298,7 +288,7 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
     }
 
     // watcher已就绪，可以安全关闭
-    const handleCloseError = (error: unknown) => {
+    const handleCloseError = (error: any) => {
       const errorMsg = error?.message || error?.errMsg || String(error || '')
 
       if (!isNonFatalError(errorMsg)) {
@@ -313,7 +303,7 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
       if (closeResult && typeof (closeResult as PromiseLike<unknown>).then === 'function') {
         ;(closeResult as PromiseLike<unknown>).then(null, handleCloseError)
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       handleCloseError(error)
     } finally {
       setWatcherRef(watcherName, null)

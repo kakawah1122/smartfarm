@@ -6,9 +6,9 @@
 export class BatchUpdater {
   private pendingUpdates: Record<string, any> = {}
   private updateTimer: number | null = null
-  private pageInstance: unknown
+  private pageInstance: any
   
-  constructor(pageInstance: unknown) {
+  constructor(pageInstance: any) {
     this.pageInstance = pageInstance
   }
   
@@ -36,7 +36,7 @@ export class BatchUpdater {
     
     this.updateTimer = setTimeout(() => {
       this.flush()
-    }, 0) as unknown
+    }, 0) as any
   }
   
   /**
@@ -73,6 +73,6 @@ export class BatchUpdater {
 /**
  * 创建批量更新器
  */
-export function createBatchUpdater(pageInstance: unknown): BatchUpdater {
+export function createBatchUpdater(pageInstance: any): BatchUpdater {
   return new BatchUpdater(pageInstance)
 }
