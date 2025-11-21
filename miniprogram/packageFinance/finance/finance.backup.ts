@@ -89,9 +89,6 @@ type FinancialSummaryResponse = {
   }
 }
 
-// 分页配置
-const PAGE_SIZE = 20;
-
 const pageConfig: unknown = {
   options: {
     styleIsolation: 'shared'
@@ -203,114 +200,42 @@ const pageConfig: unknown = {
     
     // 拒绝原因输入弹窗
     showRejectReasonPopup: false,
-    rejectReason: '',
-    
-    // 性能优化相关
-    isFirstLoad: true,
-    tabLoadStatus: {
-      records: false,
-      approval: false,
-      reports: false,
-      aiAnalysis: false
-    },
-    recordsPagination: {
-      page: 1,
-      hasMore: true,
-      loading: false
-    },
-    dataCache: {
-      lastUpdateTime: 0,
-      cacheTimeout: 5 * 60 * 1000 // 5分钟缓存
-    }
+    rejectReason: ''
   },
 
   onLoad() {
-    // 🎯 性能优化：分步加载
-    const startTime = Date.now()
-    logger.info('财务页面开始加载')
-    
-    // 初始化时间选项（同步操作）
+    // 初始化时间选项
     this.initTimeOptions()
+    
+    // 加载财务数据
+    this.loadFinanceData()
+    
+    // 不再需要在主页加载历史记录，改为按钮直接跳转
+    // this.loadAnalysisHistory()  
+    // this.loadApprovalHistory()
+    
+    // 加载财务记录
+    this.loadFinanceRecords()
+    // 加载审批事项
+    this.loadApprovalItems()
+    // 加载财务报表
+    this.loadFinancialReports()
+    // 加载AI分析所需的模块数据（避免组件内重复调用）
+    this.loadModuleDataForAI()
     
     // 初始化筛选记录
     this.setData({
       filteredRecords: [],
-      displayRecords: [],
-      isFirstLoad: true
-    })
-    
-    // 🎯 优化：只加载概览数据（快速显示首屏）
-    this.loadFinanceData().then(() => {
-      logger.info(`概览数据加载完成，耗时：${Date.now() - startTime}ms`)
-      
-      // 延迟100ms后加载当前tab数据
-      setTimeout(() => {
-        this.loadCurrentTabData()
-      }, 100)
+      displayRecords: []
     })
   },
   
-  // 🎯 优化：onShow智能刷新
+  // 页面显示时刷新数据
   onShow() {
-    // 只在非首次加载且缓存过期时刷新
-    if (!this.data.isFirstLoad) {
-      const now = Date.now()
-      const { lastUpdateTime, cacheTimeout } = this.data.dataCache
-      
-      if (now - lastUpdateTime > cacheTimeout) {
-        // 只刷新当前tab数据
-        this.refreshCurrentTab()
-      }
-    }
-    
-    // 清除首次加载标记
-    if (this.data.isFirstLoad) {
-      this.setData({ isFirstLoad: false })
-    }
-  },
-  
-  // 🎯 优化：按需加载当前tab数据
-  loadCurrentTabData() {
-    const activeTab = this.data.activeTab
-    
-    // 检查是否已加载
-    if (this.data.tabLoadStatus[activeTab]) {
-      return
-    }
-    
-    switch(activeTab) {
-      case 'records':
-        this.loadFinanceRecords()
-        break
-      case 'approval':
-        this.loadApprovalItems()
-        break
-      case 'reports':
-        this.loadFinancialReports()
-        break
-      case 'aiAnalysis':
-        this.loadModuleDataForAI()
-        break
-    }
-    
-    // 标记已加载
-    this.setData({
-      [`tabLoadStatus.${activeTab}`]: true,
-      'dataCache.lastUpdateTime': Date.now()
-    })
-  },
-  
-  // 刷新当前tab数据
-  refreshCurrentTab() {
-    const activeTab = this.data.activeTab
-    
-    // 重置tab加载状态
-    this.setData({
-      [`tabLoadStatus.${activeTab}`]: false
-    })
-    
-    // 重新加载
-    this.loadCurrentTabData()
+    // 刷新财务记录，确保显示最新数据
+    this.loadFinanceRecords()
+    // 刷新财务概览数据
+    this.loadFinanceData()
   },
   
   // 初始化时间选项
