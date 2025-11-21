@@ -72,6 +72,7 @@ type MedicationPageData = {
   stats: StatsSummary
   showDetailDialog: boolean
   selectedRecord: MedicationListRecord | null
+  needsEvaluation: boolean
   showEvaluationDialog: boolean
   effectivenessOptions: EffectivenessOption[]
   evaluationFormData: EvaluationFormData
@@ -116,6 +117,7 @@ const initialMedicationPageData: MedicationPageData = {
   stats: initialStats,
   showDetailDialog: false,
   selectedRecord: null,
+  needsEvaluation: false,
   showEvaluationDialog: false,
   effectivenessOptions: initialEffectivenessOptions,
   evaluationFormData: initialFormData
@@ -208,9 +210,15 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
     const record = page.data.records.find(item => item._id === id)
 
     if (record) {
+      // 判断是否需要显示评估按钮
+      const needsEvaluation = !record.effectiveness || 
+                             record.effectiveness === 'pending' || 
+                             !['excellent', 'good', 'fair', 'poor'].includes(record.effectiveness)
+      
       page.setData({
         selectedRecord: record,
-        showDetailDialog: true
+        showDetailDialog: true,
+        needsEvaluation: needsEvaluation
       })
     }
   },
