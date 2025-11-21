@@ -54,7 +54,7 @@ async function calculateBatchCost(event, wxContext) {
     
     // 2. 饲养成本（饲料 + 物料）
     let breedingCost = 0
-    let feedCount = 0
+    let totalFeedCount = 0  // 累计饲喂数量
     let materialCount = 0
     
     // 获取投喂记录
@@ -67,7 +67,8 @@ async function calculateBatchCost(event, wxContext) {
     
     feedResult.data.forEach(record => {
       breedingCost += (Number(record.totalCost) || 0)
-      feedCount++
+      // 累计实际饲喂数量（如果有feedCount字段）
+      totalFeedCount += (Number(record.feedCount) || Number(record.quantity) || currentQuantity)
     })
     
     // 获取物料使用记录  
@@ -84,9 +85,14 @@ async function calculateBatchCost(event, wxContext) {
       materialCount++
     })
     
-    // 3. 预防成本
+    // 如果没有饲喂记录，使用当前存栏数作为默认值
+    if (totalFeedCount === 0) {
+      totalFeedCount = currentQuantity || 1
+    }
+    
+    // 3. 预防成本（来自待办任务执行）
     let preventionCost = 0
-    let preventionCount = 0
+    let totalPreventionCount = 0  // 累计实际预防数量
     
     const preventionResult = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
       .where({
@@ -98,19 +104,29 @@ async function calculateBatchCost(event, wxContext) {
     preventionResult.data.forEach(record => {
       if (record.costInfo) {
         preventionCost += (Number(record.costInfo.totalCost) || 0)
-        preventionCount++
+        // 获取实际预防数量（可能来自任务的目标数量）
+        const targetCount = Number(record.targetCount) || Number(record.animalCount) || currentQuantity
+        totalPreventionCount += targetCount
       }
     })
     
-    // 4. 治疗成本（兼容多种数据结构）
+    // 如果没有预防记录，使用当前存栏数
+    if (totalPreventionCount === 0) {
+      totalPreventionCount = currentQuantity || 1
+    }
+    
+    // 4. 治疗成本（基于病鹅数量）
     let treatmentCost = 0
-    let treatmentCount = 0
+    let totalAffectedCount = 0  // 累计病鹅数量
     
     const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
         batchId: batchId
       })
       .get()
+    
+    // 获取关联的AI诊断记录ID列表
+    const diagnosisIds = []
     
     treatmentResult.data.forEach(record => {
       // 兼容多种数据结构，与calculateTreatmentCost保持一致
@@ -135,27 +151,64 @@ async function calculateBatchCost(event, wxContext) {
       
       if (cost > 0) {
         treatmentCost += cost
-        treatmentCount++
+        // 收集诊断ID
+        if (record.diagnosisId) {
+          diagnosisIds.push(record.diagnosisId)
+        }
+        // 如果记录中直接有受影响数量
+        if (record.affectedCount) {
+          totalAffectedCount += Number(record.affectedCount)
+        }
       }
     })
     
-    // 计算平均成本（基于当前存栏数）
-    const avgBreedingCost = currentQuantity > 0 ? breedingCost / currentQuantity : 0
-    const avgPreventionCost = currentQuantity > 0 ? preventionCost / currentQuantity : 0
-    const avgTreatmentCost = currentQuantity > 0 ? treatmentCost / currentQuantity : 0
+    // 如果有诊断ID，查询AI诊断记录获取受影响数量
+    if (diagnosisIds.length > 0 && totalAffectedCount === 0) {
+      const diagnosisResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+        .where({
+          _id: _.in(diagnosisIds)
+        })
+        .get()
+      
+      diagnosisResult.data.forEach(diagnosis => {
+        totalAffectedCount += Number(diagnosis.affectedCount || diagnosis.animalCount || 0)
+      })
+    }
+    
+    // 如果没有受影响数量，使用当前存栏数
+    if (totalAffectedCount === 0) {
+      totalAffectedCount = currentQuantity || 1
+    }
+    
+    // 计算平均成本（基于实际分摊基数）
+    const avgBreedingCost = totalFeedCount > 0 ? breedingCost / totalFeedCount : 0
+    const avgPreventionCost = totalPreventionCount > 0 ? preventionCost / totalPreventionCount : 0
+    const avgTreatmentCost = totalAffectedCount > 0 ? treatmentCost / totalAffectedCount : 0
+    
+    // 单只综合成本（用于死亡损失计算）
     const totalAvgCost = entryUnitCost + avgBreedingCost + avgPreventionCost + avgTreatmentCost
     
     // 调试日志
     console.log('[calculateBatchCost] 成本计算结果:', {
       batchId,
       currentQuantity,
-      entryUnitCost: entryUnitCost.toFixed(2),
-      avgBreedingCost: avgBreedingCost.toFixed(2),
-      avgPreventionCost: avgPreventionCost.toFixed(2),
-      avgTreatmentCost: avgTreatmentCost.toFixed(2),
-      totalAvgCost: totalAvgCost.toFixed(2),
-      treatmentTotalCost: treatmentCost.toFixed(2),
-      treatmentCount
+      分摊基数: {
+        饲喂数量: totalFeedCount,
+        预防数量: totalPreventionCount,
+        病鹅数量: totalAffectedCount
+      },
+      单项成本: {
+        鹅苗成本: entryUnitCost.toFixed(2),
+        饲养成本分摊: avgBreedingCost.toFixed(2),
+        预防成本分摊: avgPreventionCost.toFixed(2),
+        治疗成本分摊: avgTreatmentCost.toFixed(2)
+      },
+      单只综合成本: totalAvgCost.toFixed(2),
+      总成本: {
+        饲养总成本: breedingCost.toFixed(2),
+        预防总成本: preventionCost.toFixed(2),
+        治疗总成本: treatmentCost.toFixed(2)
+      }
     })
     
     return {
@@ -173,18 +226,18 @@ async function calculateBatchCost(event, wxContext) {
           breeding: {
             unitCost: avgBreedingCost.toFixed(2),
             totalCost: breedingCost.toFixed(2),
-            feedCount,
+            baseCount: totalFeedCount,  // 分摊基数：总饲喂数量
             materialCount
           },
           prevention: {
             unitCost: avgPreventionCost.toFixed(2),
             totalCost: preventionCost.toFixed(2),
-            count: preventionCount
+            baseCount: totalPreventionCount  // 分摊基数：实际预防数量
           },
           treatment: {
             unitCost: avgTreatmentCost.toFixed(2),
             totalCost: treatmentCost.toFixed(2),
-            count: treatmentCount
+            baseCount: totalAffectedCount  // 分摊基数：病鹅数量
           },
           total: {
             unitCost: totalAvgCost.toFixed(2),
