@@ -3522,62 +3522,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     }
   },
 
-  /**
-   * 初始化疫苗表单数据（已迁移到疫苗模块）
-   * @deprecated 使用 vaccineModule.initVaccineForm 代替
-   */
-  async initVaccineFormData_deprecated(task: unknown) {
-    // 获取当前批次的存栏数量
-    let currentBatchStockQuantity = 0
-    const batchId = task.batchId || this.data.currentBatchId
-    if (batchId && batchId !== 'all') {
-      try {
-        const batchResult = await safeCloudCall({
-          name: 'production-entry',
-          data: { action: 'getActiveBatches' },
-          useCache: true  // 自动缓存10分钟
-        })
-        
-        if ((batchResult as any).result?.success) {
-          const activeBatches = (batchResult as any).result.data || []
-          const currentBatch = activeBatches.find((b: unknown) => b._id === batchId)
-          if (currentBatch) {
-            currentBatchStockQuantity = currentBatch.currentStock || 
-                                       currentBatch.currentQuantity || 
-                                       currentBatch.currentCount || 
-                                       0
-          }
-        }
-      } catch (error: any) {
-        logger.error('获取批次存栏数失败:', error)
-      }
-    }
-    
-    const vaccineFormData = {
-      veterinarianName: '',
-      veterinarianContact: '',
-      vaccineName: task.title || '',
-      manufacturer: '',
-      batchNumber: '',
-      dosage: '0.5ml/只',
-      routeIndex: 0,
-      vaccinationCount: currentBatchStockQuantity,  // 默认填充存栏数量
-      location: '',
-      vaccineCost: '',
-      veterinaryCost: '',
-      otherCost: '',
-      totalCost: 0,
-      totalCostFormatted: '¥0.00',
-      notes: task.description || ''
-    }
-
-    this.setData({
-      selectedTask: task,
-      currentBatchStockQuantity: Number(currentBatchStockQuantity) || 0,  // 设置存栏数量，确保为数字
-      vaccineFormData,
-      vaccineFormErrors: {}
-    })
-  },
 
   /**
    * 通用关闭表单方法
@@ -3622,30 +3566,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     }
   },
 
-  /**
-   * 原始疫苗表单输入处理（已迁移）
-   * @deprecated
-   */
-  onVaccineFormInput_deprecated(e: WechatMiniprogram.CustomEvent) {
-    const { field, value } = e.detail || e.currentTarget?.dataset || {}
-    const actualValue = value || e.detail?.value || ''
-    
-    if (!field) return
-    
-    this.setData({
-      [`vaccineFormData.${field}`]: actualValue
-    })
-
-    // 清除对应字段的错误
-    if (this.data.vaccineFormErrors[field]) {
-      const newErrors = { ...this.data.vaccineFormErrors }
-      delete newErrors[field]
-      this.setData({
-        vaccineFormErrors: newErrors,
-        vaccineFormErrorList: Object.values(newErrors)
-      })
-    }
-  },
 
   /**
    * 数值输入处理（费用相关，适配组件事件）
