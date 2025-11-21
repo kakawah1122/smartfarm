@@ -37,14 +37,14 @@ const results = {
 
 // 正则表达式
 const PATTERNS = {
-  // kebab-case: 文件名和组件名
-  kebabCase: /^[a-z]+(-[a-z]+)*$/,
+  // kebab-case: 文件名和组件名（支持数字和版本号）
+  kebabCase: /^[a-z]+[a-z0-9]*(-[a-z]+[a-z0-9]*)*$/,
   // camelCase: 变量和函数名
   camelCase: /^[a-z][a-zA-Z0-9]*$/,
   // PascalCase: 类名和接口名
   pascalCase: /^[A-Z][a-zA-Z0-9]*$/,
-  // 匹配类定义
-  classDefinition: /(?:class|interface|type|enum)\s+([A-Za-z_][A-Za-z0-9_]*)/g,
+  // 匹配类定义（改进：避免匹配到关键字）
+  classDefinition: /(?:^|\s)(?:export\s+)?(?:abstract\s+)?(?:class|interface|type|enum)\s+([A-Z][A-Za-z0-9_]*)/gm,
   // 匹配函数定义
   functionDefinition: /(?:function\s+|const\s+|let\s+|var\s+)([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=\s*(?:async\s+)?(?:\([^)]*\)|[a-zA-Z_][a-zA-Z0-9_]*)\s*=>|=\s*function|\()/g,
   // 匹配变量定义
