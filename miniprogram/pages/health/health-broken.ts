@@ -58,15 +58,15 @@ interface PageData {
   
   // 弹窗状态
   showTaskDetailPopup: boolean
-  selectedTask: any
+  selectedTask: unknown
   showDetailPopup: boolean
-  selectedRecord: any
+  selectedRecord: unknown
   showDiagnosisDetailPopup: boolean
-  selectedDiagnosisRecord: any
+  selectedDiagnosisRecord: unknown
   
   // 表单数据
   showVaccineFormPopup: boolean
-  vaccineFormData: any
+  vaccineFormData: unknown
   showMedicationFormPopup: boolean
   medicationFormData: unknown}
 

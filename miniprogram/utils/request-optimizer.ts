@@ -10,7 +10,7 @@
  */
 export interface RequestConfig {
   name: string
-  data: any
+  data: Record<string, unknown>
   priority?: number // 优先级，数字越大优先级越高
   retry?: number // 重试次数
   timeout?: number // 超时时间（毫秒）
@@ -205,7 +205,7 @@ export class RequestOptimizer {
     return new Promise((resolve, reject) => {
       // 设置超时
       const timeout = config.timeout || 10000
-      let timeoutId: any = null
+      let timeoutId: unknown = null
       
       // 超时处理
       timeoutId = setTimeout(() => {

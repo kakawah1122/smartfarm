@@ -199,7 +199,7 @@ Component({
       const type = this.data.taskTypes[index].value
       
       // 根据类型自动设置分类
-      const typeToCategory: any = {
+      const typeToCategory: unknown = {
         'inspection': '健康管理',
         'vaccine': '疫苗接种',
         'medication': '用药管理',

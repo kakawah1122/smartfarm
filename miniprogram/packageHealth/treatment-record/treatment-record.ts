@@ -360,7 +360,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         const aiResult = result.result.data
         
         // ✅ 合并所有setData调用，提升性能
-        const updateData: any = {
+        const updateData: unknown = {
           'formData.diagnosis': aiResult.primaryDiagnosis || '',
           'formData.diagnosisConfidence': aiResult.confidence || 0,
           'formData.affectedCount': aiResult.affectedCount || 0,

@@ -294,7 +294,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
 
   // 获取收入标题
   getRevenueTitle(revenueType: string, description: string): string {
-    const typeMap: any = {
+    const typeMap: unknown = {
       'sales': '销售收入',
       'other': '其他收入'
     }
@@ -303,7 +303,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
 
   // 获取支出标题
   getCostTitle(costType: string, description: string): string {
-    const typeMap: any = {
+    const typeMap: unknown = {
       'feed': '饲料成本',
       'health': '医疗费用',
       'labor': '其他费用',
@@ -318,7 +318,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
 
   // 获取报销类型标题
   getReimbursementTypeTitle(reimbursementType: string): string {
-    const typeMap: any = {
+    const typeMap: unknown = {
       'feed': '饲料采购',
       'medicine': '兽药采购',
       'vaccine': '防疫费用',

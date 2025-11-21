@@ -30,7 +30,7 @@ Component({
     },
 
     // 弹窗可见性变化
-    onVisibleChange(e: any) {
+    onVisibleChange(e: WechatMiniprogram.CustomEvent) {
       if (!e.detail?.visible) {
         this.triggerEvent('close')
       }

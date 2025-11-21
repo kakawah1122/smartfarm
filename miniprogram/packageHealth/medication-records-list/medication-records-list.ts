@@ -22,7 +22,7 @@ interface MedicationRecord {
   notes?: string
   operator?: string
   operatorName?: string
-  createdAt?: any
+  createdAt?: unknown
   // 格式化字段
   formattedTotalCost?: string
   preventionTypeName?: string

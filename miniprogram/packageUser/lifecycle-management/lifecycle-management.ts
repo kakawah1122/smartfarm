@@ -114,7 +114,7 @@ Component({
       }
       
       // 默认折叠所有日龄
-      const expandedGroups: any = {}
+      const expandedGroups: unknown = {}
       
       this.setData({
         taskGroups: filteredGroups,
@@ -126,7 +126,7 @@ Component({
 
     // 按日龄分组任务
     groupTasksByDayAge(tasks: unknown[]) {
-      const groups: any = {}
+      const groups: unknown = {}
       
       tasks.forEach(task => {
         if (!groups[task.dayAge]) {
@@ -351,7 +351,7 @@ Component({
     // 显示任务预览
     showTaskPreview(parsedData: unknown) {
       // 按日龄分组任务
-      const tasksByDay: any = {}
+      const tasksByDay: unknown = {}
       
       parsedData.tasks.forEach((task: unknown) => {
         if (!tasksByDay[task.dayAge]) {
@@ -697,7 +697,7 @@ Component({
         }))
         
         // 默认折叠所有日龄
-        const expandedGroups: any = {}
+        const expandedGroups: unknown = {}
         
         this.setData({
           groupedTasks,

@@ -17,7 +17,7 @@ interface FeedUsageFormData {
   notes: string           // 备注
 }
 
-const pageConfig: any = {
+const pageConfig: unknown = {
   data: {
     // 表单数据
     formData: {

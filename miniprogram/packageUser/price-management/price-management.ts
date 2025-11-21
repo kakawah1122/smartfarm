@@ -42,12 +42,12 @@ interface HistoryItem {
   date: string
   recordCount: number
   source: string
-  updateTime: any
+  updateTime: WechatMiniprogram.CustomEvent
   allRecords: {
-    _id: any
+    _id: unknown
     date: string
     source: string
-    createTime: any
+    createTime: WechatMiniprogram.CustomEvent
     operator: string
     goslingBreeds: unknown[]
     meatBreeds: unknown[]
@@ -181,7 +181,7 @@ function parseGoosePriceContent(content: string): ParsedBatchGoosePriceResult | 
     throw new Error('AI未返回识别内容')
   }
 
-  let parsed: any = null
+  let parsed: unknown = null
   const trimmed = content.trim()
 
   const tryParse = (text: string) => {
@@ -609,7 +609,7 @@ Page({
 
   // 填充表单数据（AI识别成功后调用）
   fillFormData(parsedData: ParsedGoosePriceResult) {
-    const formData: any = {
+    const formData: unknown = {
       date: parsedData.date || new Date().toISOString().split('T')[0],
       gosling: {
         middle: { min: '', max: '' },
@@ -720,7 +720,7 @@ Page({
 
     try {
       // 调用多模型AI服务进行识别
-      const aiResult: any = await wx.cloud.callFunction({
+      const aiResult: unknown = await wx.cloud.callFunction({
         name: 'ai-multi-model',
         data: {
           action: 'chat_completion',

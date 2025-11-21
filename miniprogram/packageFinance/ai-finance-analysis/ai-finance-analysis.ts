@@ -696,7 +696,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
           const parsed = JSON.parse(jsonStr)
           
           // 深度转换对象为字符串的函数
-          const deepConvertToString = (value: unknown, depth: number = 0): any => {
+          const deepConvertToString = (value: unknown, depth: number = 0): unknown => {
             // 防止无限递归
             if (depth > 10) {
               return String(value)
@@ -755,7 +755,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
             }
             
             // 字段名映射（包含更多可能的字段）
-            const fieldMap: any = {
+            const fieldMap: unknown = {
               feedCostPercentage: '饯料成本占比',
               feedCost: '饯料成本',
               feedPercentage: '饯料占比',
@@ -834,7 +834,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
           }
           
           // 递归处理整个结果对象，确保所有值字段都是字符串
-          const formatObject = (obj: unknown, depth: number = 0): any => {
+          const formatObject = (obj: unknown, depth: number = 0): unknown => {
             if (depth > 10 || typeof obj !== 'object' || obj === null) {
               return obj
             }
@@ -849,14 +849,14 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
               })
             }
             
-            const result: any = {}
+            const result: { success?: boolean; data?: unknown; error?: string } = {}
             for (const [key, value] of Object.entries(obj)) {
               if (Array.isArray(value)) {
                 // 数组特殊处理（如suggestions的各个数组）
                 result[key] = value.map(item => String(item))
               } else if (typeof value === 'object' && value !== null) {
                 // 嵌套对象：转换所有子字段为字符串
-                const subObj: any = {}
+                const subObj: unknown = {}
                 for (const [subKey, subValue] of Object.entries(value)) {
                   // 特殊处理breakdown字段
                   if (subKey === 'breakdown') {

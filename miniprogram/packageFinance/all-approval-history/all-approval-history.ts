@@ -137,7 +137,7 @@ Page({
   
   // 获取报销类型标题
   getReimbursementTypeTitle(type: string): string {
-    const typeMap: any = {
+    const typeMap: unknown = {
       'feed': '饲料采购',
       'medicine': '兽药疫苗',
       'equipment': '设备维护',

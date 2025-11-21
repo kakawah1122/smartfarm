@@ -215,7 +215,7 @@ export class HealthDataManager {
   /**
    * 从缓存读取数据
    */
-  static getCachedData(key: string): any | null {
+  static getCachedData(key: string): unknown | null {
     try {
       const cacheData = wx.getStorageSync(`health_${key}`)
       if (cacheData && cacheData.timestamp && cacheData.data) {

@@ -89,7 +89,7 @@ type FinancialSummaryResponse = {
   }
 }
 
-const pageConfig: any = {
+const pageConfig: unknown = {
   options: {
     styleIsolation: 'shared'
   },
@@ -494,7 +494,7 @@ const pageConfig: any = {
     
     // 按类型筛选
     if (this.data.filters.type !== '全部类型') {
-      const typeMap: any = { '收入': 'income', '支出': 'expense' }
+      const typeMap: unknown = { '收入': 'income', '支出': 'expense' }
       filtered = filtered.filter(record => 
         record.type === typeMap[this.data.filters.type]
       )
@@ -861,7 +861,7 @@ const pageConfig: any = {
 
   // 获取收入标题
   getRevenueTitle(revenueType: string, description: string): string {
-    const typeMap: any = {
+    const typeMap: unknown = {
       'sales': '销售收入',
       'subsidy': '补贴收入',
       'other': '其他收入'
@@ -871,7 +871,7 @@ const pageConfig: any = {
 
   // 获取支出标题
   getCostTitle(costType: string, description: string): string {
-    const typeMap: any = {
+    const typeMap: unknown = {
       'feed': '饲料成本',
       'health': '医疗费用',
       'labor': '其他费用',     // 人工归入其他费用
@@ -886,7 +886,7 @@ const pageConfig: any = {
 
   // 获取报销类型标题
   getReimbursementTypeTitle(reimbursementType: string): string {
-    const typeMap: any = {
+    const typeMap: unknown = {
       'feed': '饲料采购',
       'medicine': '兽药采购',
       'vaccine': '防疫费用',

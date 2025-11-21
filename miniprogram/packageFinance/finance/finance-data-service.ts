@@ -220,7 +220,7 @@ export class FinanceDataService {
    */
   static async performAIAnalysis(params: {
     type: string
-    dateRange?: any
+    dateRange?: unknown
     query?: string
   }): Promise<FinanceAnalysis> {
     try {

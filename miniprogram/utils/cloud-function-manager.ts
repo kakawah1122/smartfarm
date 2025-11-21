@@ -10,7 +10,7 @@ import { logger } from './logger'
 
 interface CloudFunctionConfig {
   name: string
-  data: any
+  data: Record<string, unknown>
   cache?: boolean // 是否缓存
   cacheTime?: number // 缓存时间（毫秒）
   priority?: number // 优先级

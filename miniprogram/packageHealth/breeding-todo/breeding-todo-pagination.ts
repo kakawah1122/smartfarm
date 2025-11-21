@@ -122,7 +122,7 @@ export class PaginationHelper {
  */
 export class DataCache {
   private static cache: Map<string, {
-    data: any
+    data: Record<string, unknown>
     timestamp: number
     expiry: number
   }> = new Map()
@@ -141,7 +141,7 @@ export class DataCache {
   /**
    * 获取缓存
    */
-  static get(key: string): any | null {
+  static get(key: string): unknown | null {
     const cached = this.cache.get(key)
     if (!cached) return null
     

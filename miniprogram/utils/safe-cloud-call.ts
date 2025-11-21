@@ -31,7 +31,7 @@ function initManager() {
  */
 export async function safeCloudCall(config: {
   name: string
-  data: any
+  data: Record<string, unknown>
   useCache?: boolean // 是否使用缓存
   cacheTime?: number // 缓存时间（毫秒）
   timeout?: number // 超时时间（毫秒）
@@ -82,7 +82,7 @@ export async function safeCloudCall(config: {
  */
 export async function safeBatchCall(configs: Array<{
   name: string
-  data: any
+  data: Record<string, unknown>
   useCache?: boolean
   cacheTime?: number
   timeout?: number

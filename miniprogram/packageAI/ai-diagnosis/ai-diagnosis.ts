@@ -660,7 +660,7 @@ const pageConfig: AnyObject = {
 
     try {
       // 准备诊断数据
-      const diagnosisData: any = {
+      const diagnosisData: unknown = {
         action: 'ai_diagnosis',
         diagnosisType: diagnosisType,
         selectedBatchId: this.data.selectedBatchId,
@@ -722,7 +722,7 @@ const pageConfig: AnyObject = {
 
       // ✨ 改为异步：提交诊断任务
       // 诊断前获取批次综合数据，用于动态生成Prompt
-      let batchPromptData: any = null
+      let batchPromptData: unknown = null
       if (this.data.selectedBatchId) {
         try {
           const promptDataRawResult = await wx.cloud.callFunction({

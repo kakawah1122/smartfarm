@@ -63,11 +63,11 @@ export class EventManager {
       maxWait = 0
     } = options
     
-    let timer: any = null
+    let timer: unknown = null
     let lastCallTime: number | null = null
     let lastArgs: unknown[] | null = null
-    let lastContext: any = null
-    let result: any
+    let lastContext: unknown = null
+    let result: { success?: boolean; data?: unknown; error?: string }
     
     const invokeFunc = () => {
       const args = lastArgs
@@ -164,10 +164,10 @@ export class EventManager {
       trailing = true
     } = options
     
-    let timer: any = null
+    let timer: unknown = null
     let lastCallTime = 0
     let lastArgs: unknown[] | null = null
-    let lastContext: any = null
+    let lastContext: unknown = null
     
     const invokeFunc = () => {
       const args = lastArgs

@@ -66,7 +66,7 @@ Page({
       })
       
       let templates = []
-      let templateTasks: any = {}
+      let templateTasks: unknown = {}
       
       if (result.result?.success && result.result.data?.length > 0) {
         templates = result.result.data

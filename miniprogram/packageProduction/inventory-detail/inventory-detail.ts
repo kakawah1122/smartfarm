@@ -99,7 +99,7 @@ const pageConfig = {
   async getMaterialsData(): Promise<MaterialDetail[]> {
     try {
       // 调用云函数获取物料列表，支持分类过滤
-      const requestData: any = {
+      const requestData: unknown = {
         action: 'list_materials'
       }
       

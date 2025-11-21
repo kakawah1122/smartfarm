@@ -209,9 +209,9 @@ class CloudApi {
   static async createPreventionRecord(data: {
     batchId: string
     preventionType: string
-    vaccineInfo?: any
-    veterinarianInfo?: any
-    costInfo?: any
+    vaccineInfo?: unknown
+    veterinarianInfo?: unknown
+    costInfo?: unknown
     notes?: string
   }): Promise<CloudApiResponse> {
     return this.callFunction(
@@ -322,7 +322,7 @@ class CloudApi {
     healthRecordId?: string
     symptoms?: string[]
     images?: string[]
-    aiDiagnosis?: any
+    aiDiagnosis?: unknown
     humanVerification?: unknown}): Promise<CloudApiResponse> {
     return this.callFunction(
       'health-management',
@@ -404,7 +404,7 @@ class CloudApi {
     description?: string
     amount: number
     batchId?: string
-    costBreakdown?: any
+    costBreakdown?: unknown
     relatedRecords?: unknown[]
     costDate: string
   }): Promise<CloudApiResponse> {
@@ -451,7 +451,7 @@ class CloudApi {
    */
   static async generateFinanceReport(params: {
     reportType: string
-    dateRange: any
+    dateRange: WechatMiniprogram.CustomEvent
     includeCharts?: boolean
   }): Promise<CloudApiResponse> {
     return this.callFunction(
