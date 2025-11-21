@@ -1,0 +1,9 @@
+{
+  "name": "add-test-data",
+  "version": "1.0.0",
+  "description": "添加测试数据",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

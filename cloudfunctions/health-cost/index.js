@@ -213,12 +213,27 @@ async function calculateTreatmentCost(event, wxContext) {
     let otherCost = 0
     
     result.data.forEach(record => {
-      if (record.costInfo) {
-        const cost = Number(record.costInfo.totalCost) || 0
-        totalCost += cost
+      // 兼容两种数据结构
+      let cost = 0
+      
+      // 1. 优先从 costInfo.totalCost 获取（新结构）
+      if (record.costInfo && record.costInfo.totalCost) {
+        cost = Number(record.costInfo.totalCost) || 0
         medicationCost += Number(record.costInfo.medicationCost) || 0
         veterinaryCost += Number(record.costInfo.veterinaryCost) || 0
         otherCost += Number(record.costInfo.otherCost) || 0
+      } 
+      // 2. 如果没有costInfo，从amount字段获取（旧结构）
+      else if (record.amount) {
+        cost = Number(record.amount) || 0
+        // 根据category判断成本类型
+        if (record.category === 'medication' || record.category === 'vaccine') {
+          medicationCost += cost
+        }
+      }
+      
+      if (cost > 0) {
+        totalCost += cost
         treatmentCount++
       }
     })
