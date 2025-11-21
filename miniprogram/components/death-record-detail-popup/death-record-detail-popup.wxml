@@ -86,12 +86,12 @@
           <text class="breakdown-value">¥{{record.costBreakdown.preventionCost}}</text>
         </view>
         
-        <view class="breakdown-item" wx:if="{{record.costBreakdown.treatmentCost && record.costBreakdown.treatmentCost !== '0.00'}}">
+        <view class="breakdown-item" wx:if="{{record.costBreakdown.treatmentCost}}">
           <view class="breakdown-label">
             <view class="label-dot" style="background: #e34d59;"></view>
             <text class="label-text">治疗成本</text>
           </view>
-          <text class="breakdown-value">¥{{record.costBreakdown.treatmentCost}}</text>
+          <text class="breakdown-value">¥{{record.costBreakdown.treatmentCost || '0.00'}}</text>
         </view>
         
         <view class="breakdown-divider"></view>

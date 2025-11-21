@@ -102,20 +102,39 @@ async function calculateBatchCost(event, wxContext) {
       }
     })
     
-    // 4. 治疗成本
+    // 4. 治疗成本（兼容多种数据结构）
     let treatmentCost = 0
     let treatmentCount = 0
     
     const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
       .where({
-        batchId: batchId,
-        isDeleted: false
+        batchId: batchId
       })
       .get()
     
     treatmentResult.data.forEach(record => {
-      if (record.costInfo) {
-        treatmentCost += (Number(record.costInfo.totalCost) || 0)
+      // 兼容多种数据结构，与calculateTreatmentCost保持一致
+      let cost = 0
+      
+      // 1. 标准结构：costInfo.totalCost
+      if (record.costInfo && record.costInfo.totalCost) {
+        cost = Number(record.costInfo.totalCost) || 0
+      }
+      // 2. 治疗统计记录：curedMedicationCost
+      else if (record.treatmentType === 'medication' && record.curedMedicationCost !== undefined) {
+        cost = Number(record.curedMedicationCost) || 0
+      }
+      // 3. 根级别的totalCost
+      else if (record.totalCost !== undefined) {
+        cost = Number(record.totalCost) || 0
+      }
+      // 4. amount字段
+      else if (record.amount) {
+        cost = Number(record.amount) || 0
+      }
+      
+      if (cost > 0) {
+        treatmentCost += cost
         treatmentCount++
       }
     })
@@ -125,6 +144,19 @@ async function calculateBatchCost(event, wxContext) {
     const avgPreventionCost = currentQuantity > 0 ? preventionCost / currentQuantity : 0
     const avgTreatmentCost = currentQuantity > 0 ? treatmentCost / currentQuantity : 0
     const totalAvgCost = entryUnitCost + avgBreedingCost + avgPreventionCost + avgTreatmentCost
+    
+    // 调试日志
+    console.log('[calculateBatchCost] 成本计算结果:', {
+      batchId,
+      currentQuantity,
+      entryUnitCost: entryUnitCost.toFixed(2),
+      avgBreedingCost: avgBreedingCost.toFixed(2),
+      avgPreventionCost: avgPreventionCost.toFixed(2),
+      avgTreatmentCost: avgTreatmentCost.toFixed(2),
+      totalAvgCost: totalAvgCost.toFixed(2),
+      treatmentTotalCost: treatmentCost.toFixed(2),
+      treatmentCount
+    })
     
     return {
       success: true,
