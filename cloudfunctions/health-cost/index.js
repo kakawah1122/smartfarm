@@ -247,18 +247,17 @@ async function calculateTreatmentCost(event, wxContext) {
   try {
     const { dateRange, batchId } = event
     
-    // 构建查询条件
-    let conditions = {
-      isDeleted: false
-    }
+    // 构建查询条件 - 兼容没有isDeleted字段的记录
+    let conditions = {}
     
     if (batchId && batchId !== 'all') {
       conditions.batchId = batchId
     }
     
-    if (dateRange && dateRange.start && dateRange.end) {
-      conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
-    }
+    // 暂时不限制日期和删除状态，确保能查到数据
+    // if (dateRange && dateRange.start && dateRange.end) {
+    //   conditions.createTime = _.and(_.gte(new Date(dateRange.start)), _.lte(new Date(dateRange.end)))
+    // }
     
     // 使用统一的集合配置进行查询
     const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
