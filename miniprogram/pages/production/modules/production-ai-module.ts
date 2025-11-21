@@ -46,49 +46,25 @@ export class ProductionAIManager {
   private static isCumulativeMode = false
   
   /**
-   * 开始AI盘点
+   * 开始AI盘点（展开/折叠面板）
    */
   static async startAICount(): Promise<void> {
-    // 检查是否已登录
-    const app = getApp()
-    const isLoggedIn = app.globalData?.isLoggedIn || false
+    // 获取当前页面实例
+    const pages = getCurrentPages()
+    const currentPage = pages[pages.length - 1] as any
     
-    if (!isLoggedIn) {
-      wx.showModal({
-        title: '提示',
-        content: '请先登录后再使用AI盘点功能',
-        showCancel: false
-      })
-      return
-    }
-    
-    // 选择盘点图片
-    const image = await this.chooseImage()
-    if (!image) {
-      return
-    }
-    
-    // 显示loading
-    wx.showLoading({
-      title: '图片分析中...',
-      mask: true
+    // 切换AI盘点面板的展开/折叠状态
+    const isActive = currentPage.data.aiCount?.active || false
+    currentPage.setData({
+      'aiCount.active': !isActive
     })
     
-    try {
-      // 上传图片并分析
-      const result = await this.analyzeImage(image)
-      wx.hideLoading()
-      
-      if (result) {
-        // 处理盘点结果
-        await this.handleCountResult(result)
-      }
-    } catch (error) {
-      wx.hideLoading()
-      logger.error('AI盘点失败:', error)
+    // 如果是展开状态，显示提示信息
+    if (!isActive) {
       wx.showToast({
-        title: 'AI分析失败',
-        icon: 'error'
+        title: '请拍照进行AI盘点',
+        icon: 'none',
+        duration: 2000
       })
     }
   }
