@@ -1,0 +1,58 @@
+<!-- 虚拟列表任务组件 -->
+<view class="task-virtual-container" style="height: {{height}}rpx">
+  <virtual-list
+    list="{{tasks}}"
+    height="{{height}}"
+    item-height="{{itemHeight}}"
+    buffer-size="{{bufferSize}}"
+    bind:pullrefresh="onPullRefresh"
+    bind:loadmore="onLoadMore"
+    enable-pull-refresh="{{enablePullRefresh}}"
+    enable-load-more="{{enableLoadMore}}"
+  >
+    <view slot="item" slot-scope="{{item}}" class="modern-task-card {{item.completed ? 'completed' : ''}}">
+      <!-- 任务主体 -->
+      <view class="task-main" bind:tap="onTaskTap" data-task="{{item}}">
+        <!-- 右上角标签 -->
+        <view class="task-label {{item.labelClass || ''}}">{{item.labelText || ''}}</view>
+        
+        <!-- 任务信息 -->
+        <view class="task-info">
+          <view class="task-title">{{item.taskName || '未命名任务'}}</view>
+          <view class="task-meta">
+            <view class="meta-item" wx:if="{{item.type}}">
+              <text class="meta-label">类型：</text>
+              <text class="meta-value">{{item.typeName || item.type}}</text>
+            </view>
+            <view class="meta-item" wx:if="{{item.batchNumber}}">
+              <text class="meta-label">批次：</text>
+              <text class="meta-value">{{item.batchNumber}}</text>
+            </view>
+            <view class="meta-item" wx:if="{{item.dayAge}}">
+              <text class="meta-label">日龄：</text>
+              <text class="meta-value">第{{item.dayAge}}天</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 任务操作按钮 -->
+        <view class="task-actions" wx:if="{{!item.completed && !hideActions}}">
+          <view class="action-button complete" catch:tap="onCompleteTask" data-task="{{item}}">
+            <text class="iconfont icon-check"></text>
+            <text>完成</text>
+          </view>
+          <view class="action-button detail" catch:tap="onViewDetail" data-task="{{item}}">
+            <text class="iconfont icon-detail"></text>
+            <text>详情</text>
+          </view>
+        </view>
+
+        <!-- 已完成状态 -->
+        <view class="completed-badge" wx:if="{{item.completed}}">
+          <text class="iconfont icon-check-circle"></text>
+          <text>已完成</text>
+        </view>
+      </view>
+    </view>
+  </virtual-list>
+</view>
