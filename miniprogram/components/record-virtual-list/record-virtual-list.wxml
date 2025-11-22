@@ -1,39 +1,15 @@
-<!-- miniprogram/packageHealth/abnormal-records-list/abnormal-records-list.wxml -->
-<view class="abnormal-records-page">
-  <!-- 自定义导航栏 -->
-  <navigation-bar 
-    title="异常记录" 
-    showBack="{{true}}" 
-    fallbackUrl="/pages/health/health"
-    bind:back="goBack"
-  />
-
-  <!-- 加载状态 -->
-  <view class="loading-container" wx:if="{{loading}}">
-    <t-loading theme="circular" size="60rpx" text="加载中..." />
-  </view>
-
-  <!-- 空状态 -->
-  <view class="empty-container" wx:if="{{!loading && records.length === 0}}">
-    <text class="empty-text">暂无异常记录</text>
-  </view>
-
-  <!-- 记录列表 - 虚拟列表版本 -->
-  <record-virtual-list 
-    wx:if="{{!loading && records.length > 0 && useVirtualList}}"
-    records="{{records}}"
-    height="{{virtualListHeight}}"
-    item-height="260"
-    buffer-size="3"
-    bind:recordtap="onVirtualRecordTap"
-  />
-
-  <!-- 记录列表 - 原始版本（备份，可通过useVirtualList=false切换） -->
-  <view class="records-list" wx:if="{{!loading && records.length > 0 && !useVirtualList}}">
-    <view 
+<!-- 记录虚拟列表组件 -->
+<view class="record-virtual-container">
+  <virtual-list
+    list="{{records}}"
+    height="{{height}}"
+    item-height="{{itemHeight}}"
+    buffer-size="{{bufferSize}}"
+    enable-pull-refresh="{{false}}"
+    enable-load-more="{{false}}"
+  >
+    <view slot="item" slot-scope="{{item}}" 
       class="record-card"
-      wx:for="{{records}}"
-      wx:key="_id"
       bind:tap="onRecordTap"
       data-id="{{item._id}}"
     >
@@ -88,9 +64,5 @@
         </view>
       </view>
     </view>
-  </view>
-
-  <!-- 底部安全区域 -->
-  <view class="safe-area-bottom"></view>
-
+  </virtual-list>
 </view>

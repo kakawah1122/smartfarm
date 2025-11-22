@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "virtual-list": "/components/virtual-list/virtual-list",
+    "t-tag": "tdesign-miniprogram/tag/tag"
+  }
+}

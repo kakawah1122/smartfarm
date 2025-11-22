@@ -7,6 +7,8 @@ import type { AbnormalRecord } from '../types/abnormal'
 interface AbnormalRecordsPageData {
   loading: boolean
   records: AbnormalRecord[]
+  useVirtualList: boolean // 是否使用虚拟列表
+  virtualListHeight: number // 虚拟列表容器高度（rpx）
 }
 
 interface RecordTapDataset {
@@ -16,6 +18,8 @@ interface RecordTapDataset {
 type AbnormalRecordsPageCustom = {
   loadAbnormalRecords: () => Promise<void>
   onRecordTap: (event: WechatMiniprogram.TouchEvent<RecordTapDataset>) => void
+  onVirtualRecordTap: (event: WechatMiniprogram.CustomEvent<{ id: string }>) => void
+  calculateVirtualListHeight: () => void
 }
 
 type AbnormalRecordsPageInstance = WechatMiniprogram.Page.Instance<
@@ -25,7 +29,9 @@ type AbnormalRecordsPageInstance = WechatMiniprogram.Page.Instance<
 
 const initialAbnormalRecordsData: AbnormalRecordsPageData = {
   loading: true,
-  records: []
+  records: [],
+  useVirtualList: true, // 启用虚拟列表优化
+  virtualListHeight: 1000 // 默认高度
 }
 
 const abnormalRecordsPageConfig: WechatMiniprogram.Page.Options<
@@ -35,6 +41,7 @@ const abnormalRecordsPageConfig: WechatMiniprogram.Page.Options<
   data: initialAbnormalRecordsData,
 
   onLoad() {
+    this.calculateVirtualListHeight()
     void this.loadAbnormalRecords()
   },
 
@@ -93,6 +100,39 @@ const abnormalRecordsPageConfig: WechatMiniprogram.Page.Options<
 
     wx.navigateTo({
       url: `/packageHealth/abnormal-record-detail/abnormal-record-detail?id=${id}`
+    })
+  },
+
+  /**
+   * 虚拟列表记录点击事件
+   */
+  onVirtualRecordTap(event) {
+    const { id } = event.detail
+    if (!id) {
+      return
+    }
+
+    wx.navigateTo({
+      url: `/packageHealth/abnormal-record-detail/abnormal-record-detail?id=${id}`
+    })
+  },
+
+  /**
+   * 计算虚拟列表容器高度
+   */
+  calculateVirtualListHeight() {
+    const page = this as AbnormalRecordsPageInstance
+    
+    // 获取系统信息
+    const systemInfo = wx.getSystemInfoSync()
+    const windowHeight = systemInfo.windowHeight
+    const navbarHeight = systemInfo.statusBarHeight ? systemInfo.statusBarHeight + 44 : 88 // 状态栏 + 导航栏
+    
+    // 计算可用高度（px转rpx，1px = 2rpx）
+    const availableHeight = (windowHeight - navbarHeight) * 2
+    
+    page.setData({
+      virtualListHeight: availableHeight
     })
   }
 }
