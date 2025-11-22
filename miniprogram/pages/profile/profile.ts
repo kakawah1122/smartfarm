@@ -197,10 +197,14 @@ Page({
         'userInfo.avatarUrl': userInfo.avatarUrl,
         'userInfo.workYears': workYears,
         'userInfo.joinDate': joinDate.toLocaleDateString(),
-        adminFunctions: isAdmin ? this.data.adminFunctions : [],
+        isAdmin: isAdmin,  // 🔧 修复：添加isAdmin字段
+        adminFunctions: isAdmin ? ADMIN_FUNCTIONS : [],  // 🔧 修复：使用常量而不是this.data
         showAdminSection: userInfo.role === 'super_admin'
       }, () => {
-        console.log('[Profile] setData完成, 当前data.userInfo.role=', this.data.userInfo.role)
+        console.log('[Profile] setData完成')
+        console.log('  userInfo.role=', this.data.userInfo.role)
+        console.log('  isAdmin=', this.data.isAdmin)
+        console.log('  adminFunctions.length=', this.data.adminFunctions.length)
       })
     } catch (error) {
       console.error('[Profile] 加载用户信息失败:', error)

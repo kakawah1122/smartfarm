@@ -1,6 +1,14 @@
 /**
  * SetData 智能批量更新包装器 - Profile页面专用
  * 用于优化频繁的setData调用，自动批量合并更新
+ * 
+ * 设计原则：
+ * 1. 批量合并：将短时间内多次setData合并为一次，减少渲染次数
+ * 2. 路径更新：支持'a.b.c'格式的路径更新
+ * 3. 回调保证：确保所有回调按顺序执行
+ * 4. 紧急更新：支持urgent参数立即执行
+ * 
+ * 符合微信小程序性能优化规范
  */
 
 export interface SetDataWrapper {
@@ -10,8 +18,8 @@ export interface SetDataWrapper {
 }
 
 export function createSetDataWrapper(context: any): SetDataWrapper {
-  const BATCH_DELAY = 16 // ms, 约等于一帧
-  const MAX_BATCH_SIZE = 50 // 最大批量属性数
+  const BATCH_DELAY = 16 // ms, 约等于一帧（符合微信小程序建议）
+  const MAX_BATCH_SIZE = 50 // 最大批量属性数（避免单次setData数据过大）
   
   let pendingUpdates: Record<string, any> = {}
   let pendingCallbacks: Array<() => void> = []
@@ -20,6 +28,8 @@ export function createSetDataWrapper(context: any): SetDataWrapper {
   
   /**
    * 合并更新数据
+   * 注意：对于路径更新（如'a.b.c'），直接覆盖，不做深度合并
+   * 这符合微信小程序setData的行为
    */
   const mergeData = (target: Record<string, any>, source: Record<string, any>) => {
     Object.keys(source).forEach(key => {
@@ -29,6 +39,7 @@ export function createSetDataWrapper(context: any): SetDataWrapper {
   
   /**
    * 执行批量更新
+   * 将累积的更新一次性发送给原生setData
    */
   const flush = () => {
     if (Object.keys(pendingUpdates).length === 0) {
@@ -48,13 +59,16 @@ export function createSetDataWrapper(context: any): SetDataWrapper {
       flushTimer = null
     }
     
+    console.log('[SetDataWrapper] 执行批量更新，共', Object.keys(updates).length, '个字段')
+    
     // 执行原生setData
     context.setData.call(context, updates, () => {
+      console.log('[SetDataWrapper] 批量更新完成')
       callbacks.forEach(cb => {
         try {
           cb()
         } catch (error) {
-          console.error('[SetDataWrapper] Callback error:', error)
+          console.error('[SetDataWrapper] 回调执行错误:', error)
         }
       })
     })
