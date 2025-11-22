@@ -7,6 +7,63 @@ import {
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
 import { createSetDataWrapper, SetDataWrapper } from '../health/helpers/setdata-wrapper'
+import type {
+  WeatherData,
+  TaskData,
+  GoosePriceData,
+  PriceBreed,
+  VaccineFormData,
+  MaterialData,
+  LocationError,
+  CloudResponse,
+  CloudFunctionResponse,
+  BatchCache,
+  WeatherCache,
+  ArticleData,
+  CustomEvent,
+  WeatherApiResponse,
+  WeatherCurrentInfo,
+  WeatherConditionInfo
+} from './types'
+
+// 其他辅助类型
+type MaterialItem = {
+  _id: string
+  name: string
+  unit?: string
+  currentStock?: number
+  category?: string
+  description?: string
+}
+
+type MaterialListResponse = {
+  materials: MaterialItem[]
+}
+
+type CreateMaterialRecordResponse = {
+  recordId?: string
+}
+
+type CompleteTaskResponse = {
+  completed?: boolean
+}
+
+type KnowledgeArticle = {
+  _id: string
+  title: string
+  description?: string
+  category?: string
+  categoryName?: string
+  categoryTheme?: string
+  views?: number
+  readTime?: string
+  date?: string
+  content?: string
+}
+
+type KnowledgeListResponse = {
+  list: KnowledgeArticle[]
+}
 
 // 导入辅助函数
 const checkPageAuth = () => {
@@ -65,133 +122,7 @@ interface BaseResponse<T> {
   errMsg?: string
 }
 
-interface CloudFunctionResponse<T = any> {
-  success: boolean
-  data?: T
-  message?: string
-  error?: string
-  errMsg?: string
-}
-
-interface WeatherData {
-  location?: {
-    province?: string
-    city?: string
-    district?: string
-  }
-  locationInfo?: {
-    province?: string
-    city?: string
-    district?: string
-  }
-  weather?: {
-    temperature?: number
-    humidity?: number
-    description?: string
-    icon?: string
-  }
-  current?: {
-    temperature?: number
-    humidity?: number
-    description?: string
-    icon?: string
-  }
-  condition?: {
-    text?: string
-    icon?: string
-  }
-}
-
-interface WeatherApiResponse extends WeatherData {}
-
-// WeatherLocationInfo类型已集成到WeatherData接口中
-
-type WeatherCurrentInfo = {
-  temperature?: number
-  humidity?: number
-  description?: string
-  icon?: string
-  feelsLike?: number
-  windDirection?: string
-  windScale?: string
-  updateTime?: string | Date
-}
-
-type WeatherConditionInfo = {
-  text?: string
-  emoji?: string
-  icon?: string
-}
-
-// WeatherApiPayload类型已移除，因为未被使用
-// 相关功能已通过WeatherData接口实现
-
-type MaterialItem = {
-  _id: string
-  name: string
-  unit?: string
-  currentStock?: number
-  category?: string
-  description?: string
-}
-
-type MaterialListResponse = {
-  materials: MaterialItem[]
-}
-
-type CreateMaterialRecordResponse = {
-  recordId?: string
-}
-
-type CompleteTaskResponse = {
-  completed?: boolean
-}
-
-type KnowledgeArticle = {
-  _id: string
-  title: string
-  description?: string
-  category?: string
-  categoryName?: string
-  categoryTheme?: string
-  views?: number
-  readTime?: string
-  date?: string
-  content?: string
-}
-
-type KnowledgeListResponse = {
-  list: KnowledgeArticle[]
-}
-
-interface VaccineFormData {
-  // 兽医信息
-  veterinarianName: string
-  veterinarianContact: string
-  
-  // 疫苗信息
-  vaccineName: string
-  manufacturer: string
-  batchNumber: string
-  dosage: string
-  routeIndex: number
-  
-  // 接种信息
-  vaccinationCount: number
-  location: string
-  
-  // 费用信息
-  vaccineCost: string
-  veterinaryCost: string
-  otherCost: string
-  totalCost: number
-  totalCostFormatted: string
-  
-  // 备注
-  notes: string
-}
-
-type PriceBreed = { key: string; label: string }
+// 类型定义已移动到 types.d.ts 文件中
 
 Page({
   // 优化器实例
@@ -587,7 +518,7 @@ Page({
   },
   
   // 处理位置获取错误
-  handleLocationError(error: any) {
+  handleLocationError(error: LocationError) {
     
     if (error?.errMsg) {
       if (error.errMsg.includes('auth')) {
@@ -641,7 +572,7 @@ Page({
   },
 
   // 更新天气 UI
-  updateWeatherUI(weatherData: any) {
+  updateWeatherUI(weatherData: WeatherData) {
     if (!weatherData) {
       return
     }
@@ -655,17 +586,25 @@ Page({
     }
     
     // ✅ 优化：合并setData调用，避免重复设置location
-    const updateData: any = {}
+    const updateData: Record<string, any> = {}
     
     // 详细检查位置信息
     const locationInfo = actualWeatherData.location || actualWeatherData.locationInfo
     
     if (locationInfo) {
-      updateData.location = {
+      if (typeof locationInfo === 'object' && locationInfo !== null) {
+        updateData.location = {
           province: locationInfo.province || '当前位置',
           city: locationInfo.city || '实时定位', 
           district: locationInfo.district || '周边区域'
         }
+      } else {
+        updateData.location = {
+          province: '当前位置',
+          city: '实时定位',
+          district: '周边区域'
+        }
+      }
     } else {
       updateData.location = {
           province: '位置解析失败',
@@ -686,9 +625,16 @@ Page({
     const conditionInfo = actualWeatherData.condition as WeatherConditionInfo || {}
     
     // 检查是否有API失败的标识
-    const hasError = (conditionInfo.text && conditionInfo.text.includes('获取失败')) || 
-                     (conditionInfo.text && conditionInfo.text.includes('API调用失败')) ||
-                     (locationInfo && locationInfo.city && locationInfo.city.includes('API调用失败'))
+    let hasError = false
+    if (conditionInfo.text) {
+      hasError = conditionInfo.text.includes('获取失败') || conditionInfo.text.includes('API调用失败')
+    }
+    if (!hasError && typeof actualWeatherData.location === 'object' && actualWeatherData.location?.city) {
+      hasError = actualWeatherData.location.city.includes('API调用失败')
+    }
+    if (!hasError && typeof locationInfo === 'object' && locationInfo?.city) {
+      hasError = locationInfo.city.includes('API调用失败')
+    }
     
     // 如果有错误，更新位置信息
     if (hasError) {
@@ -797,7 +743,7 @@ Page({
         
         // 处理鹅苗价格
         if (latestPrice.goslingBreeds && latestPrice.goslingBreeds.length > 0) {
-          latestPrice.goslingBreeds.forEach((breed: any) => {
+          latestPrice.goslingBreeds.forEach((breed: PriceBreed) => {
             const min = typeof breed.min === 'number' ? breed.min : null
             const max = typeof breed.max === 'number' ? breed.max : null
             const range = breed.range || '--'
@@ -828,8 +774,8 @@ Page({
         // 处理肉鹅价格（映射到adult字段）
         if (latestPrice.meatBreeds && latestPrice.meatBreeds.length > 0) {
           // 使用肉鹅130日龄的价格作为成鹅价格
-          const meat130 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat130')
-          const meat120 = latestPrice.meatBreeds.find((m: any) => m.key === 'meat120')
+          const meat130 = latestPrice.meatBreeds.find((m: { key: string }) => m.key === 'meat130')
+          const meat120 = latestPrice.meatBreeds.find((m: { key: string }) => m.key === 'meat120')
           
           // 格式化价格范围的辅助函数
           const formatRange = (min: number | null, max: number | null, range: string) => {
@@ -1008,7 +954,7 @@ Page({
     }
     
     // 格式化价格显示：如果最低价和最高价一致，只显示一个数字
-    const formatPriceRange = (priceData: any) => {
+    const formatPriceRange = (priceData: PriceBreed | null) => {
       if (!priceData) {
         return '--'
       }
