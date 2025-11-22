@@ -96,20 +96,23 @@ Page({
   },
 
   onLoad() {
-    // 创建 SetData 包装器
-    const setDataWrapper = createSetDataWrapper(this)
+    console.log('[Profile] onLoad开始')
     
-    // 保存原始 setData
+    // 🔧 关键修复：先保存原始setData，再创建包装器
     const originalSetData = this.setData.bind(this)
+    
+    // 创建SetData包装器，传入原始setData
+    const setDataWrapper = createSetDataWrapper({
+      ...this,
+      setData: originalSetData
+    })
     
     // 替换 setData 方法
     this.setData = (data: any, callback?: () => void, urgent?: boolean) => {
-      if (setDataWrapper) {
-        setDataWrapper.setData(data, callback, urgent)
-      } else {
-        originalSetData(data, callback)
-      }
+      setDataWrapper.setData(data, callback, urgent)
     }
+    
+    console.log('[Profile] setData包装器已安装')
     
     // 原来的初始化逻辑
     this.initPage()
