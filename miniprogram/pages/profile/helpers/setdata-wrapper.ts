@@ -15,6 +15,7 @@ export interface SetDataWrapper {
   setData: (data: Record<string, any>, callback?: () => void, urgent?: boolean) => void
   forceFlush: () => void
   cleanup: () => void
+  destroy: () => void  // 🔧 新增：兼容自动拦截模式的接口
 }
 
 export function createSetDataWrapper(context: any): SetDataWrapper {
@@ -129,6 +130,8 @@ export function createSetDataWrapper(context: any): SetDataWrapper {
   return {
     setData: wrappedSetData,
     forceFlush,
-    cleanup
+    cleanup,
+    // 🔧 新增：兼容destroy接口
+    destroy: cleanup
   }
 }
