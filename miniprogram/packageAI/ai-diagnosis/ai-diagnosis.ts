@@ -136,11 +136,22 @@ const pageConfig: AnyObject = {
       diagnosisId: '',
       showPolling: false,
       pollRetries: 0,
-      sourceRecordId: recordId || ''
+      sourceRecordId: recordId || '',
+      // 🔧 确保基础字段有默认值（修复真机显示问题）
+      selectedBatchId: '',
+      selectedBatchNumber: '',
+      dayAge: 0,
+      affectedCount: '',
+      deathCount: '',
+      symptoms: '',
+      autopsyFindings: '',
+      diagnosisType: 'live_diagnosis'
     })
     
-    // 加载批次列表
-    this.loadBatchList()
+    // 延迟加载批次列表，确保页面渲染完成
+    wx.nextTick(() => {
+      this.loadBatchList()
+    })
     
     this.validateForm()
   },
