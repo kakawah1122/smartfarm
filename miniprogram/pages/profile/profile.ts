@@ -175,7 +175,7 @@ Page({
         : `${totalMonths}个月`
       
       // 判断是否是管理员
-      const isAdmin = ['manager', 'super_admin'].includes(userInfo.role || '')
+      const isAdmin = ['admin', 'manager', 'super_admin'].includes(userInfo.role || '')
       
       // 使用路径更新优化 setData 性能
       this.setData({
@@ -558,9 +558,11 @@ Page({
   getRoleDisplayName(role: string): string {
     const roleNames: Record<string, string> = {
       'super_admin': '超级管理员',
+      'admin': '管理员',
       'manager': '经理',
       'employee': '员工',
-      'veterinarian': '兽医'
+      'veterinarian': '兽医',
+      'user': '普通用户'
     }
     return roleNames[role] || '用户'
   },
