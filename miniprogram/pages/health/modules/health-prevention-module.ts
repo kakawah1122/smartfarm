@@ -4,28 +4,17 @@
  * 保持原有功能和UI完全不变
  */
 
-import { safeCloudCall } from '../../../utils/safe-cloud-call'
-import { calculateCurrentAge } from '../../../utils/health-utils'
 import { logger } from '../../../utils/logger'
+import { calculateCurrentAge } from '../../../utils/health-utils'
+import { safeCloudCall } from '../../../utils/safe-cloud-call'
 import CloudApi from '../../../utils/cloud-api'
-import type {
-  BatchData,
-  PreventionTask,
-  PageInstance
-} from './types'
-
-// 简单的响应类型定义
-interface BaseResponse<T = any> {
-  success: boolean
-  data?: T
-  error?: string
-}
+import type { BaseResponse } from '../../../../typings/core'
 
 // 预防任务模块管理器
 export class PreventionModuleManager {
-  private pageInstance: PageInstance
+  private pageInstance: any
   
-  constructor(pageInstance: PageInstance) {
+  constructor(pageInstance: any) {
     this.pageInstance = pageInstance
   }
   
@@ -50,7 +39,7 @@ export class PreventionModuleManager {
         default:
           await this.loadTodayTasks()
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('加载预防数据失败:', error)
       wx.showToast({
         title: '加载数据失败',
@@ -65,7 +54,7 @@ export class PreventionModuleManager {
   async loadTodayTasks() {
     try {
       // 获取批次列表
-      let batches: BatchData[] = []
+      let batches = []
       
       if (this.pageInstance.data.currentBatchId === 'all') {
         // 全部批次模式：获取所有活跃批次
@@ -78,7 +67,7 @@ export class PreventionModuleManager {
       } else {
         // 单批次模式：只处理当前批次
         const currentBatch = this.pageInstance.data.availableBatches?.find(
-          (b: BatchData) => b._id === this.pageInstance.data.currentBatchId
+          (b: any) => b._id === this.pageInstance.data.currentBatchId
         )
         if (currentBatch) {
           batches = [currentBatch]
@@ -94,10 +83,9 @@ export class PreventionModuleManager {
       }
       
       // 并行加载所有批次的任务
-      const batchTasksPromises = batches.map(async (batch: BatchData) => {
+      const batchTasksPromises = batches.map(async (batch: any) => {
         try {
-          const entryDate = batch.entryDate ? (typeof batch.entryDate === 'string' ? batch.entryDate : batch.entryDate.toISOString()) : ''
-          const dayAge = batch.dayAge || calculateCurrentAge(entryDate)
+          const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
           const result = await safeCloudCall({
             name: 'breeding-todo',
             data: {
@@ -107,10 +95,10 @@ export class PreventionModuleManager {
             }
           })
           
-          const response = result as BaseResponse<PreventionTask[]>
+          const response = result as BaseResponse
           if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
             const tasks = response.data
-            const normalizedTasks = tasks.map((task: PreventionTask) =>
+            const normalizedTasks = tasks.map((task: any) =>
               this.normalizeTask(task, {
                 batchNumber: batch.batchNumber || batch._id,
                 dayAge: task.dayAge || dayAge
@@ -161,7 +149,7 @@ export class PreventionModuleManager {
   async loadUpcomingTasks() {
     try {
       // 获取批次列表
-      let batches: BatchData[] = []
+      let batches = []
       
       if (this.pageInstance.data.currentBatchId === 'all') {
         // 全部批次模式
@@ -169,7 +157,7 @@ export class PreventionModuleManager {
       } else {
         // 单批次模式
         const currentBatch = this.pageInstance.data.availableBatches?.find(
-          (b: BatchData) => b._id === this.pageInstance.data.currentBatchId
+          (b: any) => b._id === this.pageInstance.data.currentBatchId
         )
         if (currentBatch) {
           batches = [currentBatch]

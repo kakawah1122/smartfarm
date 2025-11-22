@@ -30,7 +30,7 @@ type AbnormalRecordsPageInstance = WechatMiniprogram.Page.Instance<
 const initialAbnormalRecordsData: AbnormalRecordsPageData = {
   loading: true,
   records: [],
-  useVirtualList: true, // 启用虚拟列表优化
+  useVirtualList: false, // 暂时禁用虚拟列表，回退到原版本
   virtualListHeight: 1000 // 默认高度
 }
 
