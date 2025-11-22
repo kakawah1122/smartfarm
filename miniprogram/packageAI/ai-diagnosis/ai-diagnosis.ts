@@ -127,9 +127,17 @@ const pageConfig: AnyObject = {
 
   onLoad(options: unknown) {
     const { recordId } = options || {}
-    if (recordId) {
-      this.setData({ sourceRecordId: recordId })
-    }
+    
+    // 重置诊断状态（修复真机缓存问题）
+    this.setData({
+      diagnosisStatus: 'idle',
+      diagnosisResult: null,
+      diagnosisError: '',
+      diagnosisId: '',
+      showPolling: false,
+      pollRetries: 0,
+      sourceRecordId: recordId || ''
+    })
     
     // 加载批次列表
     this.loadBatchList()
