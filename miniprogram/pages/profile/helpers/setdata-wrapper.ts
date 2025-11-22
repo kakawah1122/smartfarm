@@ -59,11 +59,8 @@ export function createSetDataWrapper(context: any): SetDataWrapper {
       flushTimer = null
     }
     
-    console.log('[SetDataWrapper] 执行批量更新，共', Object.keys(updates).length, '个字段')
-    
     // 执行原生setData
     context.setData.call(context, updates, () => {
-      console.log('[SetDataWrapper] 批量更新完成')
       callbacks.forEach(cb => {
         try {
           cb()

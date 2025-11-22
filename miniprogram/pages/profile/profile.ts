@@ -96,8 +96,6 @@ Page({
   },
 
   onLoad() {
-    console.log('[Profile] onLoad开始')
-    
     // 🔧 关键修复：先保存原始setData，再创建包装器
     const originalSetData = this.setData.bind(this)
     
@@ -111,8 +109,6 @@ Page({
     this.setData = (data: any, callback?: () => void, urgent?: boolean) => {
       setDataWrapper.setData(data, callback, urgent)
     }
-    
-    console.log('[Profile] setData包装器已安装')
     
     // 原来的初始化逻辑
     this.initPage()
@@ -160,12 +156,8 @@ Page({
    */
   async loadUserInfo() {
     try {
-      console.log('[Profile] loadUserInfo开始执行')
       const app = getApp() as AppInstance
       const userInfo = app.globalData?.userInfo || wx.getStorageSync('userInfo') as ExtendedUserInfo
-      
-      console.log('[Profile] 获取到的userInfo:', userInfo)
-      console.log('[Profile] userInfo.role=', userInfo?.role)
       
       if (!userInfo) {
         throw new Error('未登录')
@@ -186,7 +178,6 @@ Page({
       
       // 获取角色显示名称
       const roleDisplayName = this.getRoleDisplayName(userInfo.role || 'user')
-      console.log('[Profile] 准备setData, roleDisplayName=', roleDisplayName)
       
       // 使用路径更新优化 setData 性能
       this.setData({
@@ -197,17 +188,11 @@ Page({
         'userInfo.avatarUrl': userInfo.avatarUrl,
         'userInfo.workYears': workYears,
         'userInfo.joinDate': joinDate.toLocaleDateString(),
-        isAdmin: isAdmin,  // 🔧 修复：添加isAdmin字段
-        adminFunctions: isAdmin ? ADMIN_FUNCTIONS : [],  // 🔧 修复：使用常量而不是this.data
+        isAdmin: isAdmin,
+        adminFunctions: isAdmin ? ADMIN_FUNCTIONS : [],
         showAdminSection: userInfo.role === 'super_admin'
-      }, () => {
-        console.log('[Profile] setData完成')
-        console.log('  userInfo.role=', this.data.userInfo.role)
-        console.log('  isAdmin=', this.data.isAdmin)
-        console.log('  adminFunctions.length=', this.data.adminFunctions.length)
       })
     } catch (error) {
-      console.error('[Profile] 加载用户信息失败:', error)
       logger.error('加载用户信息失败:', error)
       throw error
     }
@@ -574,7 +559,6 @@ Page({
    * 获取角色显示名称
    */
   getRoleDisplayName(role: string): string {
-    console.log('[Profile] getRoleDisplayName被调用, role=', role)
     const roleNames: Record<string, string> = {
       'super_admin': '超级管理员',
       'admin': '管理员',
@@ -583,9 +567,7 @@ Page({
       'veterinarian': '兽医',
       'user': '普通用户'
     }
-    const displayName = roleNames[role] || '用户'
-    console.log('[Profile] getRoleDisplayName返回:', displayName)
-    return displayName
+    return roleNames[role] || '用户'
   },
 
   /**
