@@ -54,8 +54,18 @@
       />
     </view>
 
-    <!-- 记录列表 -->
-    <view class="records-list" wx:if="{{records.length > 0}}">
+    <!-- 记录列表 - 虚拟列表版本 -->
+    <death-record-virtual-list 
+      wx:if="{{records.length > 0 && useVirtualList}}"
+      records="{{records}}"
+      height="{{virtualListHeight}}"
+      item-height="300"
+      buffer-size="3"
+      bind:recordtap="onVirtualRecordTap"
+    />
+
+    <!-- 记录列表 - 原始版本（备份） -->
+    <view class="records-list" wx:if="{{records.length > 0 && !useVirtualList}}">
       <view 
         class="record-card"
         wx:for="{{records}}"

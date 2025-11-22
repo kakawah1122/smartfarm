@@ -1,0 +1,72 @@
+<!-- 死亡记录虚拟列表组件 -->
+<view class="death-record-virtual-container">
+  <virtual-list
+    list="{{records}}"
+    height="{{height}}"
+    item-height="{{itemHeight}}"
+    buffer-size="{{bufferSize}}"
+    enable-pull-refresh="{{false}}"
+    enable-load-more="{{false}}"
+  >
+    <view slot="item" slot-scope="{{item}}" 
+      class="record-card"
+      bind:tap="onRecordTap"
+      data-id="{{item._id}}"
+    >
+      <!-- 记录头部 -->
+      <view class="record-header">
+        <view class="record-title-row">
+          <text class="record-name">{{item.displayDeathCause}}</text>
+          <!-- 只在需要确认的情况下显示标签 -->
+          <t-tag 
+            wx:if="{{item.isCorrected || (!item.treatmentId && !item.isCorrected)}}"
+            theme="{{item.isCorrected ? 'success' : 'warning'}}" 
+            size="small" 
+            class="status-tag"
+          >
+            {{item.isCorrected ? '已修正' : '待确认'}}
+          </t-tag>
+        </view>
+        <!-- 修正信息提示 -->
+        <view class="correction-info" wx:if="{{item.isCorrected && item.deathCause && item.correctedCause}}">
+          <text class="original-cause">原诊断：{{item.deathCause}}</text>
+          <text class="arrow">→</text>
+          <text class="corrected-cause">修正为：{{item.correctedCause}}</text>
+        </view>
+      </view>
+
+      <!-- 记录内容 -->
+      <view class="record-content">
+        <!-- 批次信息 -->
+        <view class="info-row">
+          <text class="info-label">批次：</text>
+          <text class="info-value">{{item.batchNumber || item.batchId}}</text>
+        </view>
+
+        <!-- 死亡数量 -->
+        <view class="info-row">
+          <text class="info-label">死亡：</text>
+          <text class="info-value death-count">{{item.deathCount}} 只</text>
+        </view>
+
+        <!-- 症状/异常描述 -->
+        <view class="info-row" wx:if="{{item.displayFindings}}">
+          <text class="info-label">症状：</text>
+          <text class="info-value">{{item.displayFindings}}</text>
+        </view>
+
+        <!-- 损失金额 -->
+        <view class="info-row">
+          <text class="info-label">损失：</text>
+          <text class="info-value loss-value">¥{{item.formattedTotalLoss}}</text>
+        </view>
+
+        <!-- 底部：日期 + 操作员 -->
+        <view class="record-footer">
+          <text class="date-text">{{item.deathDate}}</text>
+          <text class="operator-text">{{item.operatorName}}</text>
+        </view>
+      </view>
+    </view>
+  </virtual-list>
+</view>

@@ -36,13 +36,17 @@ type DeathListPageData = {
   showDetailPopup: boolean
   selectedRecord: DerivedDeathRecord | null
   pendingRecordId: string
+  useVirtualList: boolean // 是否使用虚拟列表
+  virtualListHeight: number // 虚拟列表容器高度（rpx）
 }
 
 type DeathListPageCustom = {
   loadDeathRecords: () => Promise<void>
   onRecordTap: (event: WechatMiniprogram.TouchEvent<RecordTapDataset>) => void
+  onVirtualRecordTap: (event: WechatMiniprogram.CustomEvent<{ id: string }>) => void
   closeDetailPopup: () => void
   goBack: (event?: GoBackEvent) => void
+  calculateVirtualListHeight: () => void
 }
 
 type DeathListPageInstance = WechatMiniprogram.Page.Instance<DeathListPageData, DeathListPageCustom>
@@ -59,7 +63,9 @@ const initialData: DeathListPageData = {
   stats: initialStats,
   showDetailPopup: false,
   selectedRecord: null,
-  pendingRecordId: ''
+  pendingRecordId: '',
+  useVirtualList: true, // 启用虚拟列表优化
+  virtualListHeight: 1000 // 默认高度
 }
 
 const formatNumber = (value: number): string => value.toFixed(2)
@@ -69,6 +75,8 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
 
   onLoad(options?: Record<string, any>) {
     const page = this as DeathListPageInstance
+
+    page.calculateVirtualListHeight()
 
     if (options && typeof options.recordId === 'string' && options.recordId.trim()) {
       page.setData({ pendingRecordId: options.recordId })
@@ -315,6 +323,46 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
         }
       })
     }
+  },
+
+  /**
+   * 虚拟列表记录点击事件
+   */
+  onVirtualRecordTap(event) {
+    const page = this as DeathListPageInstance
+    const { id } = event.detail
+    
+    if (!id) {
+      return
+    }
+
+    const record = page.data.records.find(r => r._id === id)
+    if (record) {
+      page.setData({
+        selectedRecord: record,
+        showDetailPopup: true
+      })
+    }
+  },
+
+  /**
+   * 计算虚拟列表容器高度
+   */
+  calculateVirtualListHeight() {
+    const page = this as DeathListPageInstance
+    
+    // 获取系统信息
+    const systemInfo = wx.getSystemInfoSync()
+    const windowHeight = systemInfo.windowHeight
+    const navbarHeight = systemInfo.statusBarHeight ? systemInfo.statusBarHeight + 44 : 88
+    
+    // 减去统计卡片高度（约200rpx）和安全区域
+    const statsHeight = 100 // px
+    const availableHeight = (windowHeight - navbarHeight - statsHeight) * 2
+    
+    page.setData({
+      virtualListHeight: availableHeight
+    })
   }
 }
 
