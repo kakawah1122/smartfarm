@@ -26,6 +26,7 @@ export const PERMISSIONS = {
 
 // 角色定义
 export const ROLES = {
+  'super_admin': '超级管理员',
   'admin': '管理员',
   'employee': '员工',
   'user': '普通用户'
@@ -33,13 +34,15 @@ export const ROLES = {
 
 // 角色颜色配置
 export const ROLE_COLORS = {
-  'admin': '#f56c6c',    // 红色
-  'employee': '#409eff', // 蓝色
-  'user': '#67c23a'      // 绿色
+  'super_admin': '#ff0000', // 深红色（超级管理员）
+  'admin': '#f56c6c',       // 红色（管理员）
+  'employee': '#409eff',    // 蓝色（员工）
+  'user': '#67c23a'         // 绿色（普通用户）
 }
 
 // 角色默认权限
 export const ROLE_PERMISSIONS = {
+  'super_admin': ['all'],
   'admin': ['all'],
   'employee': ['basic', 'production.view', 'health.view'],
   'user': ['basic']
@@ -59,8 +62,8 @@ export class PermissionManager {
   static hasPermission(userInfo: unknown, permission: string): boolean {
     if (!userInfo) return false
     
-    // 管理员拥有所有权限
-    if (userInfo.role === 'admin') return true
+    // 🔧 关键修复：管理员和超级管理员都拥有所有权限
+    if (userInfo.role === 'admin' || userInfo.role === 'super_admin') return true
     
     // 检查是否有所有权限
     if (userInfo.permissions && userInfo.permissions.includes('all')) return true
