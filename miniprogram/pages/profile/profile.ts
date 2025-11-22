@@ -1,10 +1,14 @@
 // profile.ts - 个人中心页面逻辑
 import { logger } from '../../utils/logger'
-import { createSetDataWrapper, SetDataWrapper } from './helpers/setdata-wrapper'
+import { createSetDataWrapper } from './helpers/setdata-wrapper'
 import type { 
-  InputEvent, 
-  CustomEvent
-} from '../../typings/core';
+  ExtendedUserInfo,
+  AppInstance,
+  CustomEvent,
+  InputEvent,
+  GlobalData,
+  ErrorResponse
+} from './types'
 
 // 报销类型配置 - 养殖场景
 const REIMBURSEMENT_TYPES = [
@@ -153,15 +157,15 @@ Page({
    */
   async loadUserInfo() {
     try {
-      const app = getApp<IAppOption>()
-      const userInfo = app.globalData?.userInfo || wx.getStorageSync('userInfo')
+      const app = getApp() as AppInstance
+      const userInfo = app.globalData?.userInfo || wx.getStorageSync('userInfo') as ExtendedUserInfo
       
       if (!userInfo) {
         throw new Error('未登录')
       }
       
       // 计算工龄
-      const joinDate = userInfo?.createTime ? new Date(userInfo.createTime) : new Date()
+      const joinDate = userInfo?.createTime ? new Date(userInfo.createTime as string) : new Date()
       const now = new Date()
       const years = now.getFullYear() - joinDate.getFullYear()
       const months = now.getMonth() - joinDate.getMonth()
@@ -171,18 +175,19 @@ Page({
         : `${totalMonths}个月`
       
       // 判断是否是管理员
-      const isAdmin = ['manager', 'super_admin'].includes(userInfo.role)
+      const isAdmin = ['manager', 'super_admin'].includes(userInfo.role || '')
       
       // 使用路径更新优化 setData 性能
       this.setData({
         'userInfo.name': userInfo.nickname || userInfo.nickName || '未设置',
-        'userInfo.role': this.getRoleDisplayName(userInfo.role),
+        'userInfo.role': this.getRoleDisplayName(userInfo.role || 'user'),
         'userInfo.farm': userInfo.farmName || userInfo.department || '智慧养殖场',
-        'userInfo.phone': userInfo.phone || '未设置',
-        'userInfo.avatarUrl': userInfo.avatarUrl || '/assets/icons/profile.png',
+        'userInfo.phone': userInfo.phone || '',
+        'userInfo.avatarUrl': userInfo.avatarUrl,
         'userInfo.workYears': workYears,
-        isAdmin: isAdmin,
-        userRole: userInfo.role
+        'userInfo.joinDate': joinDate.toLocaleDateString(),
+        adminFunctions: isAdmin ? this.data.adminFunctions : [],
+        showAdminSection: userInfo.role === 'super_admin'
       })
     } catch (error) {
       logger.error('加载用户信息失败:', error)
@@ -464,8 +469,8 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          const app = getApp<IAppOption>()
-          const globalData: unknown = app.globalData || {}
+          const app = getApp() as AppInstance
+          const globalData = (app.globalData || {}) as GlobalData
           globalData.openid = undefined
           globalData.isLoggedIn = false
           globalData.userInfo = undefined
@@ -650,16 +655,14 @@ Page({
       
       if (result.result && result.result.success) {
         // 更新本地用户信息
-        const app = getApp<IAppOption>()
-        if (app.globalData) {
-          const userInfo: unknown = app.globalData.userInfo
-          userInfo.nickName = nickName.trim()
-          userInfo.nickname = nickName.trim()
-          userInfo.phone = phone.trim()
-          userInfo.farmName = farmName.trim()
-          userInfo.department = farmName.trim()
-          wx.setStorageSync('userInfo', userInfo)
-        }
+        const app = getApp() as AppInstance
+        const userInfo = (app.globalData?.userInfo || {}) as ExtendedUserInfo
+        userInfo.nickName = nickName
+        userInfo.nickname = nickName
+        userInfo.phone = phone
+        userInfo.farmName = farmName
+        userInfo.department = farmName
+        wx.setStorageSync('userInfo', userInfo)
         
         // 更新页面显示
         await this.loadUserInfo()
@@ -673,10 +676,10 @@ Page({
       } else {
         throw new Error(result.result?.message || '更新失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
       wx.hideLoading()
       wx.showToast({ 
-        title: error.message || '更新失败', 
+        title: (error as ErrorResponse).message || '更新失败', 
         icon: 'none' 
       })
     }
