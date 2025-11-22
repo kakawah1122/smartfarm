@@ -225,15 +225,9 @@
     </scroll-view>
     
     <!-- 底部按钮区域 -->
-    <view class="popup-footer" wx:if="{{!selectedRecord.effectiveness || (selectedRecord.effectiveness !== 'excellent' && selectedRecord.effectiveness !== 'good' && selectedRecord.effectiveness !== 'fair' && selectedRecord.effectiveness !== 'poor')}}">
-      <t-button 
-        theme="primary" 
-        size="large" 
-        block
-        bindtap="showEvaluationForm"
-      >
-        进行效果评估
-      </t-button>
+    <!-- 调试信息：effectiveness = {{selectedRecord.effectiveness}} -->
+    <view class="popup-footer" wx:if="{{selectedRecord.effectiveness !== 'excellent' && selectedRecord.effectiveness !== 'good' && selectedRecord.effectiveness !== 'fair' && selectedRecord.effectiveness !== 'poor'}}">
+      <text style="display:block;padding:20rpx;text-align:center;color:#0052d9;font-size:32rpx;" bindtap="showEvaluationForm">进行效果评估</text>
     </view>
   </view>
 
