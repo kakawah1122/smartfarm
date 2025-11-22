@@ -157,8 +157,12 @@ Page({
    */
   async loadUserInfo() {
     try {
+      console.log('[Profile] loadUserInfo开始执行')
       const app = getApp() as AppInstance
       const userInfo = app.globalData?.userInfo || wx.getStorageSync('userInfo') as ExtendedUserInfo
+      
+      console.log('[Profile] 获取到的userInfo:', userInfo)
+      console.log('[Profile] userInfo.role=', userInfo?.role)
       
       if (!userInfo) {
         throw new Error('未登录')
@@ -177,10 +181,14 @@ Page({
       // 判断是否是管理员
       const isAdmin = ['admin', 'manager', 'super_admin'].includes(userInfo.role || '')
       
+      // 获取角色显示名称
+      const roleDisplayName = this.getRoleDisplayName(userInfo.role || 'user')
+      console.log('[Profile] 准备setData, roleDisplayName=', roleDisplayName)
+      
       // 使用路径更新优化 setData 性能
       this.setData({
         'userInfo.name': userInfo.nickname || userInfo.nickName || '未设置',
-        'userInfo.role': this.getRoleDisplayName(userInfo.role || 'user'),
+        'userInfo.role': roleDisplayName,
         'userInfo.farm': userInfo.farmName || userInfo.department || '智慧养殖场',
         'userInfo.phone': userInfo.phone || '',
         'userInfo.avatarUrl': userInfo.avatarUrl,
@@ -188,8 +196,11 @@ Page({
         'userInfo.joinDate': joinDate.toLocaleDateString(),
         adminFunctions: isAdmin ? this.data.adminFunctions : [],
         showAdminSection: userInfo.role === 'super_admin'
+      }, () => {
+        console.log('[Profile] setData完成, 当前data.userInfo.role=', this.data.userInfo.role)
       })
     } catch (error) {
+      console.error('[Profile] 加载用户信息失败:', error)
       logger.error('加载用户信息失败:', error)
       throw error
     }
@@ -556,6 +567,7 @@ Page({
    * 获取角色显示名称
    */
   getRoleDisplayName(role: string): string {
+    console.log('[Profile] getRoleDisplayName被调用, role=', role)
     const roleNames: Record<string, string> = {
       'super_admin': '超级管理员',
       'admin': '管理员',
@@ -564,7 +576,9 @@ Page({
       'veterinarian': '兽医',
       'user': '普通用户'
     }
-    return roleNames[role] || '用户'
+    const displayName = roleNames[role] || '用户'
+    console.log('[Profile] getRoleDisplayName返回:', displayName)
+    return displayName
   },
 
   /**
