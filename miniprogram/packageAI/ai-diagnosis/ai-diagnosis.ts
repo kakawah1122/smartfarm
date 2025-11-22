@@ -130,7 +130,7 @@ const pageConfig: AnyObject = {
   onLoad(options: AnyObject) {
     const { recordId } = options || {}
     
-    // 重置诊断状态（修复真机缓存问题）
+    // 🔧 修复：只重置诊断相关状态，不重置表单字段
     this.setData({
       diagnosisStatus: 'idle',
       diagnosisResult: null,
@@ -138,22 +138,11 @@ const pageConfig: AnyObject = {
       diagnosisId: '',
       showPolling: false,
       pollRetries: 0,
-      sourceRecordId: recordId || '',
-      // 🔧 确保基础字段有默认值（修复真机显示问题）
-      selectedBatchId: '',
-      selectedBatchNumber: '',
-      dayAge: 0,
-      affectedCount: '',
-      deathCount: '',
-      symptoms: '',
-      autopsyFindings: '',
-      diagnosisType: 'live_diagnosis'
+      sourceRecordId: recordId || ''
     })
     
-    // 延迟加载批次列表，确保页面渲染完成
-    wx.nextTick(() => {
-      this.loadBatchList()
-    })
+    // 立即加载批次列表，不延迟
+    this.loadBatchList()
     
     this.validateForm()
   },
@@ -284,14 +273,25 @@ const pageConfig: AnyObject = {
     const selectedBatch = this.data.availableBatches[index] as AnyObject
     
     if (selectedBatch) {
-      this.setData({
+      const batchData = {
         batchPickerIndex: index,
         selectedBatchId: selectedBatch._id,
         selectedBatchNumber: selectedBatch.batchNumber,
         dayAge: selectedBatch.dayAge || 0
-      }, () => {
+      }
+      
+      logger.info('批次选择变化:', batchData)
+      
+      this.setData(batchData, () => {
+        logger.info('批次数据已设置:', {
+          selectedBatchId: this.data.selectedBatchId,
+          selectedBatchNumber: this.data.selectedBatchNumber,
+          dayAge: this.data.dayAge
+        })
         this.validateForm()
       })
+    } else {
+      logger.error('未找到批次数据:', { index, availableBatches: this.data.availableBatches })
     }
   },
 

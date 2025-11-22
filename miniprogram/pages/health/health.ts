@@ -3518,17 +3518,41 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async completeNormalTask(task: unknown) {
     try {
+      // 🔧 修复：使用兼容的字段获取方式
+      const taskId = task._id || task.taskId || task.id
+      const batchId = task.batchId || this.data.currentBatchId
+      
+      if (!taskId) {
+        wx.showToast({
+          title: '任务ID缺失',
+          icon: 'error'
+        })
+        return
+      }
+      
+      if (!batchId) {
+        wx.showToast({
+          title: '批次ID缺失',
+          icon: 'error'
+        })
+        return
+      }
+      
+      logger.info('完成任务:', { taskId, batchId, task })
+      
       const result = await safeCloudCall({
         name: 'breeding-todo',
         data: {
           action: 'completeTask',
-          taskId: task._id,
-          batchId: task.batchId,
+          taskId: taskId,
+          batchId: batchId,
           notes: ''
         }
       })
       
       const response = result as BaseResponse
+      
+      // 🔧 修复：完善错误处理
       if (response.success) {
         this.closeTaskDetailPopup()
         // 📝 优化：统一使用 loadPreventionData 刷新任务列表
@@ -3539,11 +3563,21 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           title: '任务完成',
           icon: 'success'
         })
+      } else {
+        // 🔧 新增：显示云函数返回的错误信息
+        logger.error('完成任务失败:', response)
+        wx.showToast({
+          title: response.error || response.message || '操作失败',
+          icon: 'error',
+          duration: 3000
+        })
       }
     } catch (error: unknown) {
+      logger.error('完成任务异常:', error)
       wx.showToast({
-        title: '操作失败',
-        icon: 'error'
+        title: (error as Error).message || '操作失败',
+        icon: 'error',
+        duration: 3000
       })
     }
   },

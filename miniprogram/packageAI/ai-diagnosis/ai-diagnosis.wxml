@@ -230,7 +230,7 @@
         </view>
 
         <!-- 日龄（自动显示） -->
-        <view class="form-row day-age-row" wx:if="{{selectedBatchId}}">
+        <view class="form-row day-age-row" wx:if="{{selectedBatchId && selectedBatchId !== ''}}">
           <text class="form-label">鹅只日龄</text>
           <view class="form-value">
             <text class="value-text">{{dayAge}}</text>
