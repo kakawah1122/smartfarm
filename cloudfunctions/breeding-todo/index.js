@@ -1023,3 +1023,138 @@ async function cleanAllOrphanTasksForce() {
     }
   }
 }
+
+/**
+ * 获取即将到来的任务（未来7天）
+ */
+async function getUpcomingTodos(event, wxContext) {
+  const { batchId, startDayAge, endDayAge } = event
+  const openid = wxContext.OPENID
+
+  try {
+    if (!batchId) {
+      return {
+        success: false,
+        error: '批次ID不能为空'
+      }
+    }
+
+    // 验证批次存在性
+    const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES).doc(batchId).get()
+    if (!batchResult.data) {
+      throw new Error('批次不存在')
+    }
+
+    // 查询指定日龄范围的未完成任务
+    const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES).where({
+      batchId,
+      dayAge: _.gte(startDayAge).and(_.lte(endDayAge)),
+      completed: _.neq(true)
+    }).orderBy('dayAge', 'asc').get()
+
+    return {
+      success: true,
+      data: tasksResult.data
+    }
+  } catch (error) {
+    console.error('获取即将到来任务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+/**
+ * 获取已完成的任务
+ */
+async function getCompletedTodos(event, wxContext) {
+  const { batchId, limit = 50 } = event
+  const openid = wxContext.OPENID
+
+  try {
+    // 构建查询条件
+    let query = {
+      completed: true
+    }
+
+    // 如果指定了批次，添加批次过滤
+    if (batchId && batchId !== 'all') {
+      query.batchId = batchId
+    }
+
+    // 查询已完成的任务，按完成时间倒序
+    const tasksResult = await db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
+      .where(query)
+      .orderBy('completedAt', 'desc')
+      .limit(limit)
+      .get()
+
+    return {
+      success: true,
+      data: tasksResult.data
+    }
+  } catch (error) {
+    console.error('获取已完成任务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+/**
+ * 云函数主入口
+ */
+exports.main = async (event, context) => {
+  const wxContext = cloud.getWXContext()
+  const { action } = event
+
+  try {
+    switch (action) {
+      case 'getTodos':
+        return await getTodos(event, wxContext)
+      
+      case 'getUpcomingTodos':
+        return await getUpcomingTodos(event, wxContext)
+      
+      case 'getCompletedTodos':
+        return await getCompletedTodos(event, wxContext)
+      
+      case 'completeTask':
+        const { taskId, batchId, notes } = event
+        if (!taskId) {
+          throw new Error('taskId 参数缺失')
+        }
+        if (!batchId) {
+          throw new Error('batchId 参数缺失')
+        }
+        
+        const result = await completeTask(taskId, wxContext.OPENID, batchId, notes || '')
+        if (result.already_completed) {
+          return result
+        }
+        
+        return { 
+          success: true, 
+          message: '任务完成成功', 
+          data: result 
+        }
+      
+      case 'cleanOrphanTasks':
+        return await cleanOrphanTasks(wxContext.OPENID)
+      
+      case 'cleanAllOrphanTasksForce':
+        return await cleanAllOrphanTasksForce()
+      
+      default:
+        throw new Error(`未知操作: ${action}`)
+    }
+  } catch (error) {
+    console.error(`breeding-todo云函数错误 [action: ${action}]:`, error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
