@@ -130,6 +130,8 @@ const pageConfig: AnyObject = {
   onLoad(options: AnyObject) {
     const { recordId } = options || {}
     
+    console.log('[AI诊断] onLoad开始', { recordId })
+    
     // 🔧 修复：只重置诊断相关状态，不重置表单字段
     this.setData({
       diagnosisStatus: 'idle',
@@ -148,6 +150,14 @@ const pageConfig: AnyObject = {
   },
 
   onShow() {
+    console.log('[AI诊断] onShow - 当前数据状态', {
+      selectedBatchId: this.data.selectedBatchId,
+      selectedBatchNumber: this.data.selectedBatchNumber,
+      dayAge: this.data.dayAge,
+      diagnosisType: this.data.diagnosisType,
+      availableBatches: this.data.availableBatches?.length || 0
+    })
+    
     // 页面显示时重新验证表单
     this.validateForm()
   },
@@ -203,7 +213,7 @@ const pageConfig: AnyObject = {
         
         const selectedBatch = activeBatches[selectedIndex] as AnyObject
         
-        logger.info('加载批次列表成功:', {
+        console.log('[AI诊断] 加载批次列表成功', {
           totalBatches: activeBatches.length,
           selectedIndex,
           selectedBatch: {
@@ -222,11 +232,19 @@ const pageConfig: AnyObject = {
           selectedBatchNumber: selectedBatch.batchNumber || '',
           dayAge: selectedBatch.dayAge || 0
         }, () => {
-          logger.info('批次数据已设置:', {
+          console.log('[AI诊断] 批次数据已设置', {
             selectedBatchId: this.data.selectedBatchId,
             selectedBatchNumber: this.data.selectedBatchNumber,
             dayAge: this.data.dayAge
           })
+          
+          // 🔧 添加Toast确认数据设置成功
+          wx.showToast({
+            title: `已选择批次 ${this.data.selectedBatchNumber}`,
+            icon: 'none',
+            duration: 2000
+          })
+          
           this.validateForm()
         })
       } else {
@@ -234,7 +252,14 @@ const pageConfig: AnyObject = {
       }
     } catch (error: unknown) {
       wx.hideLoading()
-      logger.error('加载批次列表失败:', error)
+      console.error('[AI诊断] 加载批次列表失败', error)
+      
+      wx.showModal({
+        title: '加载失败',
+        content: `错误: ${(error as Error).message || '无法加载批次列表'}`,
+        showCancel: false
+      })
+      
       wx.showModal({
         title: '加载失败',
         content: (error as Error).message || '无法加载批次列表，请重试',
@@ -288,6 +313,8 @@ const pageConfig: AnyObject = {
     const index = parseInt(String(rawValue), 10)
     const selectedBatch = this.data.availableBatches[index] as AnyObject
     
+    console.log('[AI诊断] 批次选择器变化', { rawValue, index, selectedBatch })
+    
     if (selectedBatch) {
       const batchData = {
         batchPickerIndex: index,
@@ -296,10 +323,10 @@ const pageConfig: AnyObject = {
         dayAge: selectedBatch.dayAge || 0
       }
       
-      logger.info('批次选择变化:', batchData)
+      console.log('[AI诊断] 批次选择变化', batchData)
       
       this.setData(batchData, () => {
-        logger.info('批次数据已设置:', {
+        console.log('[AI诊断] 批次数据已更新', {
           selectedBatchId: this.data.selectedBatchId,
           selectedBatchNumber: this.data.selectedBatchNumber,
           dayAge: this.data.dayAge
@@ -307,7 +334,7 @@ const pageConfig: AnyObject = {
         this.validateForm()
       })
     } else {
-      logger.error('未找到批次数据:', { index, availableBatches: this.data.availableBatches })
+      console.error('[AI诊断] 未找到批次数据', { index, availableBatches: this.data.availableBatches })
     }
   },
 
