@@ -1,15 +1,10 @@
 // profile.ts - 个人中心页面逻辑
 import { logger } from '../../utils/logger'
+import { createSetDataWrapper, SetDataWrapper } from './helpers/setdata-wrapper'
 import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
   InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../typings/core';
+  CustomEvent
+} from '../../typings/core';
 
 // 报销类型配置 - 养殖场景
 const REIMBURSEMENT_TYPES = [
@@ -97,6 +92,22 @@ Page({
   },
 
   onLoad() {
+    // 创建 SetData 包装器
+    const setDataWrapper = createSetDataWrapper(this)
+    
+    // 保存原始 setData
+    const originalSetData = this.setData.bind(this)
+    
+    // 替换 setData 方法
+    this.setData = (data: any, callback?: () => void, urgent?: boolean) => {
+      if (setDataWrapper) {
+        setDataWrapper.setData(data, callback, urgent)
+      } else {
+        originalSetData(data, callback)
+      }
+    }
+    
+    // 原来的初始化逻辑
     this.initPage()
   },
 
@@ -143,14 +154,14 @@ Page({
   async loadUserInfo() {
     try {
       const app = getApp<IAppOption>()
-      const userInfo: unknown = app.globalData?.userInfo || wx.getStorageSync('userInfo')
+      const userInfo = app.globalData?.userInfo || wx.getStorageSync('userInfo')
       
       if (!userInfo) {
         throw new Error('未登录')
       }
       
       // 计算工龄
-      const joinDate = userInfo.createTime ? new Date(userInfo.createTime) : new Date()
+      const joinDate = userInfo?.createTime ? new Date(userInfo.createTime) : new Date()
       const now = new Date()
       const years = now.getFullYear() - joinDate.getFullYear()
       const months = now.getMonth() - joinDate.getMonth()
@@ -442,6 +453,7 @@ Page({
         wx.showToast({ title: '功能开发中', icon: 'none' })
     }
   },
+
 
   /**
    * 退出登录
