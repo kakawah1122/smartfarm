@@ -189,11 +189,6 @@ const pageConfig: AnyObject = {
           `${batch.batchNumber} (${batch.dayAge || 0}日龄)`
         )
 
-        this.setData({
-          availableBatches: activeBatches,
-          batchPickerRange: pickerRange
-        })
-
         // 自动选择批次
         let selectedIndex = 0
         
@@ -206,13 +201,34 @@ const pageConfig: AnyObject = {
           }
         }
         
-        // 自动选择第一个批次
-        this.setData({
-          batchPickerIndex: selectedIndex
+        const selectedBatch = activeBatches[selectedIndex] as AnyObject
+        
+        logger.info('加载批次列表成功:', {
+          totalBatches: activeBatches.length,
+          selectedIndex,
+          selectedBatch: {
+            _id: selectedBatch._id,
+            batchNumber: selectedBatch.batchNumber,
+            dayAge: selectedBatch.dayAge
+          }
         })
         
-        // 触发选择事件，填充批次信息
-        this.onBatchPickerChange({ detail: { value: selectedIndex } })
+        // 🔧 关键修复：直接设置所有字段，不依赖onBatchPickerChange
+        this.setData({
+          availableBatches: activeBatches,
+          batchPickerRange: pickerRange,
+          batchPickerIndex: selectedIndex,
+          selectedBatchId: selectedBatch._id || '',
+          selectedBatchNumber: selectedBatch.batchNumber || '',
+          dayAge: selectedBatch.dayAge || 0
+        }, () => {
+          logger.info('批次数据已设置:', {
+            selectedBatchId: this.data.selectedBatchId,
+            selectedBatchNumber: this.data.selectedBatchNumber,
+            dayAge: this.data.dayAge
+          })
+          this.validateForm()
+        })
       } else {
         throw new Error(String((result as AnyObject)?.message || (result as AnyObject)?.error || '加载批次失败'))
       }

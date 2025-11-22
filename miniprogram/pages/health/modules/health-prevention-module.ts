@@ -326,6 +326,8 @@ export class PreventionModuleManager {
    */
   normalizeTask(task: any = {}, overrides: Record<string, any> = {}) {
     return {
+      // 🔧 关键修复：保留原始_id字段，这是数据库文档ID
+      _id: task._id || task.id || '',
       id: task.id || task._id || '',
       taskId: task.taskId || task.id || task._id || '',
       batchId: task.batchId || this.pageInstance.data.currentBatchId || '',

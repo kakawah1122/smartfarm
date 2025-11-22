@@ -3518,11 +3518,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   async completeNormalTask(task: unknown) {
     try {
-      // 🔧 修复：使用兼容的字段获取方式
+      // 🔧 修复：使用兼容的字段获取方式，优先使用_id（数据库文档ID）
       const taskId = task._id || task.taskId || task.id
       const batchId = task.batchId || this.data.currentBatchId
       
       if (!taskId) {
+        logger.error('任务ID缺失:', task)
         wx.showToast({
           title: '任务ID缺失',
           icon: 'error'
@@ -3531,6 +3532,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       }
       
       if (!batchId) {
+        logger.error('批次ID缺失:', task)
         wx.showToast({
           title: '批次ID缺失',
           icon: 'error'
@@ -3538,7 +3540,16 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         return
       }
       
-      logger.info('完成任务:', { taskId, batchId, task })
+      logger.info('开始完成任务:', { 
+        taskId, 
+        batchId, 
+        taskFields: {
+          _id: task._id,
+          id: task.id,
+          taskId: task.taskId,
+          title: task.title
+        }
+      })
       
       const result = await safeCloudCall({
         name: 'breeding-todo',
