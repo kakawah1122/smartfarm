@@ -4,18 +4,22 @@
  * 保持原有功能和UI完全不变
  */
 
-import { safeCloudCall } from '../../../utils/cloud-helper'
-import { calculateCurrentAge } from '../../../utils/date-utils'
+import { safeCloudCall } from '../../../utils/safe-cloud-call'
+import { calculateCurrentAge } from '../../../utils/health-utils'
 import { logger } from '../../../utils/logger'
-import { BaseResponse } from '../../../types/health.d'
+import CloudApi from '../../../utils/cloud-api'
 import type {
   BatchData,
   PreventionTask,
-  BatchTaskData,
-  PageInstance,
-  TaskOverrides,
-  GroupedTasks
+  PageInstance
 } from './types'
+
+// 简单的响应类型定义
+interface BaseResponse<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+}
 
 // 预防任务模块管理器
 export class PreventionModuleManager {
@@ -92,7 +96,8 @@ export class PreventionModuleManager {
       // 并行加载所有批次的任务
       const batchTasksPromises = batches.map(async (batch: BatchData) => {
         try {
-          const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
+          const entryDate = batch.entryDate ? (typeof batch.entryDate === 'string' ? batch.entryDate : batch.entryDate.toISOString()) : ''
+          const dayAge = batch.dayAge || calculateCurrentAge(entryDate)
           const result = await safeCloudCall({
             name: 'breeding-todo',
             data: {

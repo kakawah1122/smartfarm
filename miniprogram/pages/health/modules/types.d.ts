@@ -85,6 +85,7 @@ export interface PageInstance {
     [key: string]: any
   }
   setData: (data: any, callback?: () => void) => void
+  loadAvailableBatches?: () => Promise<void>
   refreshPreventionData?: () => void
   completeNormalTask?: (taskId: string, completed: boolean) => Promise<void>
 }
