@@ -24,6 +24,9 @@ const {
   updatePreventionEffectiveness
 } = require('./extended-functions.js')
 
+// 引入完成预防任务函数
+const { completePreventionTask } = require('./complete-prevention-task.js')
+
 /**
  * 创建预防记录
  */
@@ -233,8 +236,9 @@ exports.main = async (event, context) => {
       case 'updatePreventionEffectiveness':
         return await updatePreventionEffectiveness(event, wxContext)
       
-      // 注意：complete_prevention_task暂时仍在health-management中
-      // 因为它涉及复杂的权限检查和审计日志，需要单独迁移
+      case 'complete_prevention_task':
+      case 'completePreventionTask':
+        return await completePreventionTask(event, wxContext)
       
       default:
         return {

@@ -96,8 +96,8 @@ const ACTION_FUNCTION_MAP: Record<string, string> = {
   'getPreventionTasksByBatch': 'health-prevention',
   'get_batch_prevention_comparison': 'health-prevention',
   'getBatchPreventionComparison': 'health-prevention',
-  'complete_prevention_task': 'health-management',  // 暂时保留在health-management
-  'completePreventionTask': 'health-management',     // 涉及复杂权限和审计，稍后迁移
+  'complete_prevention_task': 'health-prevention',  // 已迁移到health-prevention
+  'completePreventionTask': 'health-prevention',     // 已迁移到health-prevention
   'update_prevention_effectiveness': 'health-prevention',
   'updatePreventionEffectiveness': 'health-prevention',
   
