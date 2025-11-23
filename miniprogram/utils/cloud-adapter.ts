@@ -81,13 +81,21 @@ const ACTION_FUNCTION_MAP: Record<string, string> = {
   'get_abnormal_stats': 'health-abnormal',
   'delete_abnormal_records': 'health-abnormal',
   
-  // 预防保健相关（尚未迁移）
-  'get_prevention_dashboard': 'health-management',
-  'getPreventionDashboard': 'health-management',
-  'get_prevention_tasks_by_batch': 'health-management',
-  'getPreventionTasksByBatch': 'health-management',
-  'get_batch_prevention_comparison': 'health-management',
-  'getBatchPreventionComparison': 'health-management',
+  // 预防保健相关（已迁移到health-prevention）
+  'create_prevention_record': 'health-prevention',
+  'list_prevention_records': 'health-prevention',
+  'get_prevention_dashboard': 'health-prevention',
+  'getPreventionDashboard': 'health-prevention',
+  'get_today_prevention_tasks': 'health-prevention',
+  'getTodayPreventionTasks': 'health-prevention',
+  'get_prevention_tasks_by_batch': 'health-prevention',
+  'getPreventionTasksByBatch': 'health-prevention',
+  'get_batch_prevention_comparison': 'health-prevention',
+  'getBatchPreventionComparison': 'health-prevention',
+  'complete_prevention_task': 'health-management',  // 暂时保留在health-management
+  'completePreventionTask': 'health-management',     // 涉及复杂权限和审计，稍后迁移
+  'update_prevention_effectiveness': 'health-prevention',
+  'updatePreventionEffectiveness': 'health-prevention',
   
   // 其他统计相关（尚未迁移）
   'get_cured_records_list': 'health-management',

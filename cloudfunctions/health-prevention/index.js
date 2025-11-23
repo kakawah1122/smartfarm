@@ -16,6 +16,14 @@ const _ = db.command
 // 引入共享的集合配置
 const { COLLECTIONS } = require('./collections.js')
 
+// 引入扩展函数
+const {
+  getTodayPreventionTasks,
+  getPreventionTasksByBatch,
+  getBatchPreventionComparison,
+  updatePreventionEffectiveness
+} = require('./extended-functions.js')
+
 /**
  * 创建预防记录
  */
@@ -208,6 +216,25 @@ exports.main = async (event, context) => {
       case 'get_prevention_dashboard':
       case 'getPreventionDashboard':
         return await getPreventionDashboard(event, wxContext)
+      
+      case 'get_today_prevention_tasks':
+      case 'getTodayPreventionTasks':
+        return await getTodayPreventionTasks(event, wxContext)
+      
+      case 'get_prevention_tasks_by_batch':
+      case 'getPreventionTasksByBatch':
+        return await getPreventionTasksByBatch(event, wxContext)
+      
+      case 'get_batch_prevention_comparison':
+      case 'getBatchPreventionComparison':
+        return await getBatchPreventionComparison(event, wxContext)
+      
+      case 'update_prevention_effectiveness':
+      case 'updatePreventionEffectiveness':
+        return await updatePreventionEffectiveness(event, wxContext)
+      
+      // 注意：complete_prevention_task暂时仍在health-management中
+      // 因为它涉及复杂的权限检查和审计日志，需要单独迁移
       
       default:
         return {
