@@ -1,0 +1,81 @@
+<!-- 通用骨架屏组件 -->
+<view class="skeleton-container" wx:if="{{loading}}">
+  <!-- 卡片骨架屏 -->
+  <block wx:if="{{type === 'card'}}">
+    <view class="skeleton-card" wx:for="{{rows}}" wx:key="index">
+      <view class="skeleton-header">
+        <view class="skeleton-avatar skeleton-animate"></view>
+        <view class="skeleton-title">
+          <view class="skeleton-line skeleton-animate" class="skeleton-w60"></view>
+          <view class="skeleton-line skeleton-animate" class="skeleton-subtitle"></view>
+        </view>
+      </view>
+      <view class="skeleton-content">
+        <view class="skeleton-line skeleton-animate" class="skeleton-w100"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-w80"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-w60"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 列表骨架屏 -->
+  <block wx:elif="{{type === 'list'}}">
+    <view class="skeleton-list">
+      <view class="skeleton-list-item" wx:for="{{rows}}" wx:key="index">
+        <view class="skeleton-line skeleton-animate" class="skeleton-w100"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-title"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 统计卡片骨架屏 -->
+  <block wx:elif="{{type === 'stats'}}">
+    <view class="skeleton-stats">
+      <view class="skeleton-stat-card skeleton-animate" wx:for="{{4}}" wx:key="index">
+        <view class="skeleton-circle"></view>
+        <view class="skeleton-stat-content">
+          <view class="skeleton-line" class="skeleton-stat-value"></view>
+          <view class="skeleton-line" class="skeleton-stat-label"></view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 表格骨架屏 -->
+  <block wx:elif="{{type === 'table'}}">
+    <view class="skeleton-table">
+      <view class="skeleton-table-header">
+        <view class="skeleton-cell skeleton-animate" wx:for="{{columns}}" wx:key="index" style="width: {{100/columns}}%;"></view>
+      </view>
+      <view class="skeleton-table-row" wx:for="{{rows}}" wx:key="index">
+        <view class="skeleton-cell skeleton-animate" wx:for="{{columns}}" wx:key="colIndex" style="width: {{100/columns}}%;"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 详情骨架屏 -->
+  <block wx:elif="{{type === 'detail'}}">
+    <view class="skeleton-detail">
+      <view class="skeleton-detail-header">
+        <view class="skeleton-line skeleton-animate" style="width: 200rpx; height: 44rpx;"></view>
+        <view class="skeleton-line skeleton-animate" style="width: 120rpx; height: 32rpx; margin-top: 16rpx;"></view>
+      </view>
+      <view class="skeleton-detail-section" wx:for="{{rows}}" wx:key="index">
+        <view class="skeleton-line skeleton-animate" style="width: 150rpx; height: 36rpx; margin-bottom: 20rpx;"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-w100"></view>
+        <view class="skeleton-line skeleton-animate" style="width: 90%;"></view>
+        <view class="skeleton-line skeleton-animate" style="width: 75%;"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 自定义骨架屏插槽 -->
+  <block wx:elif="{{type === 'custom'}}">
+    <slot name="skeleton"></slot>
+  </block>
+</view>
+
+<!-- 实际内容 -->
+<view wx:if="{{!loading}}" class="skeleton-content-wrapper">
+  <slot></slot>
+</view>
