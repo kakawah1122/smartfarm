@@ -64,12 +64,16 @@ const ACTION_FUNCTION_MAP: Record<string, string> = {
   'create_role': 'user-permission',
   'update_role': 'user-permission',
   
-  // 健康概览相关（尚未迁移，暂时指向health-management）
-  'get_dashboard_snapshot': 'health-management',
-  'get_health_overview': 'health-management',
-  'get_all_batches_health_summary': 'health-management',
-  'get_health_dashboard_complete': 'health-management',
-  'get_homepage_health_overview': 'health-management',
+  // 健康概览相关（已迁移到health-overview）
+  'get_dashboard_snapshot': 'health-overview',
+  'get_health_overview': 'health-overview',
+  'get_all_batches_health_summary': 'health-overview',
+  'get_health_dashboard_complete': 'health-overview',
+  'get_homepage_health_overview': 'health-overview',
+  'get_health_statistics': 'health-overview',
+  'getHealthStatistics': 'health-overview',
+  'get_health_statistics_optimized': 'health-overview',
+  'getHealthStatisticsOptimized': 'health-overview',
   
   // 异常记录相关（已迁移到health-abnormal）
   'create_abnormal_record': 'health-abnormal',

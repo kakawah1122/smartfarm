@@ -17,6 +17,13 @@ const $ = db.command.aggregate
 // 引入共享的集合配置
 const { COLLECTIONS } = require('./collections.js')
 
+// 引入扩展函数
+const {
+  getHealthDashboardComplete,
+  getHealthStatistics,
+  getHealthStatisticsOptimized
+} = require('./extended-functions.js')
+
 /**
  * 获取健康概览数据
  * 用于首页展示
@@ -390,6 +397,17 @@ exports.main = async (event, context) => {
       
       case 'get_homepage_health_overview':
         return await getHomepageHealthOverview(event, wxContext)
+      
+      case 'get_health_dashboard_complete':
+        return await getHealthDashboardComplete(event, wxContext)
+      
+      case 'get_health_statistics':
+      case 'getHealthStatistics':
+        return await getHealthStatistics(event, wxContext)
+      
+      case 'get_health_statistics_optimized':
+      case 'getHealthStatisticsOptimized':
+        return await getHealthStatisticsOptimized(event, wxContext)
       
       default:
         return {
