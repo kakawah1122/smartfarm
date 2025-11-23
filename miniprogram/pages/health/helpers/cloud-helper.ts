@@ -9,6 +9,16 @@ import CloudApi from '../../../utils/cloud-api'
 import { logger } from '../../../utils/logger'
 
 /**
+ * 云函数返回结果的通用类型
+ */
+interface CloudFunctionResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+/**
  * 健康管理云函数调用封装
  */
 export class HealthCloudHelper {
@@ -38,7 +48,7 @@ export class HealthCloudHelper {
         diagnosisLimit,
         abnormalLimit
       }
-    })
+    }) as CloudFunctionResult
     
     if (!result?.success) {
       throw new Error('获取健康面板数据失败')
@@ -58,7 +68,7 @@ export class HealthCloudHelper {
         batchId: batchId,
         today: today
       }
-    })
+    }) as CloudFunctionResult
     
     return result
   }
@@ -74,7 +84,7 @@ export class HealthCloudHelper {
         batchId: batchId,
         includes: includes
       }
-    })
+    }) as CloudFunctionResult
     
     return result
   }
@@ -163,7 +173,7 @@ export class HealthCloudHelper {
         batchId: batchId,
         type: type
       }
-    })
+    }) as CloudFunctionResult
     
     return result
   }
@@ -180,7 +190,7 @@ export class HealthCloudHelper {
     const result = await safeCloudCall({
       name: 'ai-diagnosis',
       data: params
-    })
+    }) as CloudFunctionResult
     
     return result
   }
