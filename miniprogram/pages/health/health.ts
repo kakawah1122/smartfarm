@@ -1,5 +1,13 @@
 // @ts-nocheck
 import type { BaseResponse, Batch, InputEvent } from '../../../typings/core';
+// 类型定义 - 用于替换any类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
+type BaseEvent = WechatMiniprogram.BaseEvent;
+interface ErrorWithMessage {
+  message: string;
+  [key: string]: any;
+}
+
 // health.ts - 健康管理页面
 import CloudApi from '../../utils/cloud-api'
 import { formatTime, getCurrentBeijingDate } from '../../utils/util'
@@ -57,7 +65,7 @@ function getCachedAllBatchesData() {
     }
 
     return cached.data
-  } catch (error: any) {
+  } catch (error) {
     return null
   }
 }
@@ -68,7 +76,7 @@ function setCachedAllBatchesData(data: unknown) {
       timestamp: Date.now(),
       data
     })
-  } catch (error: any) {
+  } catch (error) {
     // 缓存失败不影响主流程
   }
 }
@@ -483,7 +491,7 @@ Page<PageData, any>({
       if (result && (result as BaseResponse).result?.success) {
         // 修复成功，静默处理
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('修复治疗记录失败:', error)
       // 静默处理，不影响页面加载
     }
@@ -505,7 +513,7 @@ Page<PageData, any>({
       if (result && (result as BaseResponse).result?.success) {
         // 修复成功，静默处理
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('修复批次死亡数据失败:', error)
       // 静默处理，不影响页面加载
     }
@@ -1603,7 +1611,7 @@ Page<PageData, any>({
             
             return // 成功处理，退出
           }
-        } catch (error: any) {
+        } catch (error) {
           logger.error('[loadPreventionData] 错误:', error)
           if (attempt < MAX_RETRIES) {
             const delay = (attempt + 1) * 1000
@@ -1722,7 +1730,7 @@ Page<PageData, any>({
             }
           }
           return null
-        } catch (error: any) {
+        } catch (error) {
           logger.error(`批次任务加载失败:`, error)
           return null
         }
@@ -2111,7 +2119,7 @@ Page<PageData, any>({
           // 处理字符串类型的成本（如"0.00"）
           treatmentCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
         }
-      } catch (error: any) {
+      } catch (error) {
         // 从已有数据中获取
         treatmentCost = Number(this.data.treatmentData?.stats?.totalTreatmentCost) || 0
       }
@@ -2386,7 +2394,7 @@ Page<PageData, any>({
             }
           }
           return null
-        } catch (error: any) {
+        } catch (error) {
           logger.error(`批次即将到来任务加载失败:`, error)
           return null
         }
@@ -2463,7 +2471,7 @@ Page<PageData, any>({
             const activeBatches = Array.isArray(batchResult.data) ? batchResult.data : (batchResult.data.batches || [])
             validBatchIds = activeBatches.map((b: unknown) => b._id)
           }
-        } catch (error: any) {
+        } catch (error) {
           logger.error('[历史任务] 获取批次列表失败:', error)
         }
       } else {
@@ -2640,7 +2648,7 @@ Page<PageData, any>({
         this.setData({ historyTasksByBatch: [] })
       }
 
-    } catch (error: any) {
+    } catch (error) {
       logger.error('加载历史任务失败:', error)
       this.setData({ historyTasksByBatch: [] })
       wx.showToast({
@@ -3039,7 +3047,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 全面刷新数据
       await this.refreshAllDataForBatchChange()
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('切换批次失败:', error)
       wx.showToast({
         title: '切换失败',
@@ -3099,7 +3107,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       
       // 全面刷新数据
       await this.refreshAllDataForBatchChange()
-    } catch (error: any) {
+    } catch (error) {
       console.error('[批次选择] 切换失败:', error)
       wx.showToast({
         title: '切换失败',
@@ -3161,7 +3169,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         this.startDataWatcher()
       })
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('刷新批次数据失败:', error)
       // 即使出错也要重新启动监听器
       wx.nextTick(() => {
@@ -3401,7 +3409,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           'selectedTask.completedBy': '用户'
         })
       }
-    } catch (error: any) {
+    } catch (error) {
       // 查询失败，显示默认值
       this.setData({
         'selectedTask.completedBy': '用户'
@@ -3874,7 +3882,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
                                        0
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         logger.error('获取批次存栏数失败:', error)
       }
     }

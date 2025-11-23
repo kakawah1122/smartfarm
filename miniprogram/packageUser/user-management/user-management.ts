@@ -1,6 +1,14 @@
 // user-management.ts - 用户管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+
+// 类型定义 - 用于替换any类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
+type BaseEvent = WechatMiniprogram.BaseEvent;
+interface ErrorWithMessage {
+  message: string;
+  [key: string]: any;
+}
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 用户列表数据

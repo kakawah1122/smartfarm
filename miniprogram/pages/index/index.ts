@@ -1536,7 +1536,7 @@ Page({
   /**
    * 任务详情弹窗可见性变化
    */
-  onTaskDetailPopupChange(event: any) {
+  onTaskDetailPopupChange(event: CustomEvent) {
     if (!event?.detail?.visible) {
       this.closeTaskDetailPopup()
     }
@@ -1558,7 +1558,7 @@ Page({
   },
 
   // 跳转到鹅价详情页
-  navigateToPriceDetail(event: any) {
+  navigateToPriceDetail(event: CustomEvent) {
     const { goosePriceData, priceBreeds, currentPriceBreed, priceUpdateTime } = this.data
     if (!goosePriceData || Object.keys(goosePriceData).length === 0) {
       wx.showToast({
@@ -1634,7 +1634,7 @@ Page({
         return cacheData.data
       }
       return null
-    } catch (error: any) {
+    } catch (error) {
       return null
     }
   },
@@ -1643,7 +1643,7 @@ Page({
   clearWeatherCache() {
     try {
       wx.removeStorageSync('weather_cache')
-    } catch (error: any) {
+    } catch (error) {
       logger.error('获取天气缓存失败:', error)
     }
   },
@@ -1685,7 +1685,7 @@ Page({
           this.updateWeatherUI(cacheData.data)
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       logger.error('检查并自动刷新天气失败:', error)
     }
   },
@@ -1843,7 +1843,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: any) {
+    } catch (error) {
       wx.showToast({
         title: '网络异常，请重试',
         icon: 'error'
@@ -1900,7 +1900,7 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: any) {
+    } catch (error) {
       logger.error('获取营养品库存失败:', error)
       wx.showToast({
         title: '网络异常，请重试',
@@ -2285,7 +2285,7 @@ Page({
         throw new Error(result.message || result.error || '提交失败')
       }
 
-    } catch (error: any) {
+    } catch (error) {
       // 已移除调试日志
       wx.hideLoading()
       
@@ -2337,7 +2337,7 @@ Page({
       } else {
         // 已移除调试日志
       }
-    } catch (error: any) {
+    } catch (error) {
       // 已移除调试日志
     }
   },
@@ -2363,7 +2363,7 @@ Page({
       this.closeMedicationFormPopup()
       this.loadTodayBreedingTasks() // 刷新任务列表
 
-    } catch (error: any) {
+    } catch (error) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({
@@ -2451,7 +2451,7 @@ Page({
         throw new Error(result.message || result.error || '提交失败')
       }
 
-    } catch (error: any) {
+    } catch (error) {
       // 已移除调试日志
       wx.hideLoading()
       
@@ -2506,7 +2506,7 @@ Page({
         // 已移除调试日志
         return false
       }
-    } catch (error: any) {
+    } catch (error) {
       // 已移除调试日志
       return false
     }
@@ -2538,7 +2538,7 @@ Page({
       this.closeNutritionFormPopup()
       this.loadTodayBreedingTasks() // 刷新任务列表
 
-    } catch (error: any) {
+    } catch (error) {
       // 已移除调试日志
       wx.hideLoading()
       wx.showToast({

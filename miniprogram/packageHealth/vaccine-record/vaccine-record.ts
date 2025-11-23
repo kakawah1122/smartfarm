@@ -1,5 +1,13 @@
 // vaccine-record.ts - 疫苗接种记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
+// 类型定义 - 用于替换any类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
+type BaseEvent = WechatMiniprogram.BaseEvent;
+interface ErrorWithMessage {
+  message: string;
+  [key: string]: any;
+}
+
 import CloudApi from '../../utils/cloud-api'
 import type { VaccineFormData, PageOptions, BatchInfo } from '../types/prevention'
 import { 
