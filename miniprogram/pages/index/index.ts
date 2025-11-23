@@ -646,13 +646,13 @@ Page({
     }
     
     updateData.weather = {
-        temperature: currentWeather.temperature || (this.data.weather as any).temperature,
-        humidity: currentWeather.humidity || (this.data.weather as any).humidity,
-        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || (this.data.weather as any).condition),
-        emoji: hasError ? '❌' : (conditionInfo.emoji || (this.data.weather as any).emoji),
-        feelsLike: currentWeather.feelsLike || (this.data.weather as any).feelsLike,
-        windDirection: currentWeather.windDirection || (this.data.weather as any).windDirection,
-        windScale: currentWeather.windScale || (this.data.weather as any).windScale,
+        temperature: currentWeather.temperature || (this.data.weather as unknown).temperature,
+        humidity: currentWeather.humidity || (this.data.weather as unknown).humidity,
+        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || (this.data.weather as unknown).condition),
+        emoji: hasError ? '❌' : (conditionInfo.emoji || (this.data.weather as unknown).emoji),
+        feelsLike: currentWeather.feelsLike || (this.data.weather as unknown).feelsLike,
+        windDirection: currentWeather.windDirection || (this.data.weather as unknown).windDirection,
+        windScale: currentWeather.windScale || (this.data.weather as unknown).windScale,
         updateTime: hasError ? '获取失败' : (this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新'),
         loading: false,
         hasError: hasError
@@ -1497,7 +1497,7 @@ Page({
     }
 
     // 检查任务ID是否存在
-    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as any)._id
+    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as unknown)._id
     if (!taskId) {
       wx.showToast({
         title: '任务ID缺失，无法完成',

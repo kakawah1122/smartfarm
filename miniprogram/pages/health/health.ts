@@ -1674,7 +1674,7 @@ Page<PageData, any>({
           data: { action: 'getActiveBatches' },
           useCache: true
         })
-        batches = (result as any).result?.data || []
+        batches = (result as unknown).result?.data || []
       } else if (this.data.currentBatchId) {
         // 获取单个批次
         const result = await safeCloudCall({
@@ -1684,7 +1684,7 @@ Page<PageData, any>({
             batchId: this.data.currentBatchId
           }
         })
-        const batch = (result as any).result?.data
+        const batch = (result as unknown).result?.data
         if (batch) {
           batches = [batch]
         }
@@ -2407,7 +2407,7 @@ Page<PageData, any>({
       results.forEach(result => {
         if (result !== null) {
           if (Array.isArray(result)) {
-            upcomingTasksByBatch.push(...(result as any))
+            upcomingTasksByBatch.push(...(result as unknown))
           } else {
             upcomingTasksByBatch.push(result)
           }
@@ -3872,8 +3872,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           useCache: true  // 自动缓存10分钟
         })
         
-        if ((batchResult as any).result?.success) {
-          const activeBatches = (batchResult as any).result.data || []
+        if ((batchResult as unknown).result?.success) {
+          const activeBatches = (batchResult as unknown).result.data || []
           const currentBatch = activeBatches.find((b: unknown) => b._id === batchId)
           if (currentBatch) {
             currentBatchStockQuantity = currentBatch.currentStock || 

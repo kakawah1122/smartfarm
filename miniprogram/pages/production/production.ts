@@ -1,12 +1,4 @@
 import type { 
-// 类型定义 - 用于替换any类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
-type BaseEvent = WechatMiniprogram.BaseEvent;
-interface ErrorWithMessage {
-  message: string;
-  [key: string]: any;
-}
-
   BaseResponse, 
   CloudFunctionResponse,
   Batch, 
@@ -17,6 +9,14 @@ interface ErrorWithMessage {
   PickerEvent, 
   ScrollEvent 
 } from '../../../typings/core';
+
+// 类型定义 - 用于替换any类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
+type BaseEvent = WechatMiniprogram.BaseEvent;
+interface ErrorWithMessage {
+  message: string;
+  [key: string]: any;
+}
 // production.ts
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
