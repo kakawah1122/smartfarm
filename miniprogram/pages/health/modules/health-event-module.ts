@@ -23,6 +23,21 @@ interface ThrottleOptions {
 }
 
 /**
+ * 页面实例接口（用于类型安全）
+ */
+interface PageInstance {
+  lastClickTime?: number
+  checkDoubleClick?: (interval?: number) => boolean
+  debouncedLoadData?: Function
+  onUnload?: Function
+  throttledScrollHandler?: Function
+  setData?: (data: any, callback?: () => void) => void
+  setDataImmediate?: (data: any, callback?: () => void) => void
+  setDataDebounced?: (data: any, callback?: () => void) => void
+  [key: string]: any
+}
+
+/**
  * 事件管理器
  */
 export class HealthEventManager {
@@ -64,7 +79,7 @@ export class HealthEventManager {
       immediate = false 
     } = options
     
-    let timer: unknown = null
+    let timer: number | null = null
     let result: unknown
     
     const debounced = function(this: unknown, ...args: unknown[]) {
@@ -80,10 +95,10 @@ export class HealthEventManager {
       const callNow = immediate && !timer
       
       if (timer) {
-        clearTimeout(timer)
+        clearTimeout(timer as number)
       }
       
-      timer = setTimeout(later, delay)
+      timer = setTimeout(later, delay) as unknown as number
       
       if (callNow) {
         result = fn.apply(context, args)
@@ -95,7 +110,7 @@ export class HealthEventManager {
     // 添加取消方法
     debounced.cancel = () => {
       if (timer) {
-        clearTimeout(timer)
+        clearTimeout(timer as number)
         timer = null
       }
     }
@@ -109,12 +124,9 @@ export class HealthEventManager {
    * @param options 节流配置
    */
   static throttle(fn: Function, options: ThrottleOptions = {}) {
-    const { 
-      delay = this.DEFAULT_THROTTLE_DELAY,
-      trailing = true 
-    } = options
+    const { delay = this.DEFAULT_THROTTLE_DELAY, trailing = false } = options
     
-    let timer: unknown = null
+    let timer: number | null = null
     let lastTime = 0
     let lastArgs: unknown[] | null = null
     let lastContext: unknown = null
@@ -134,7 +146,7 @@ export class HealthEventManager {
       
       if (remaining <= 0 || remaining > delay) {
         if (timer) {
-          clearTimeout(timer)
+          clearTimeout(timer as number)
           timer = null
         }
         lastTime = now
@@ -148,14 +160,14 @@ export class HealthEventManager {
             lastArgs = null
             lastContext = null
           }
-        }, remaining)
+        }, remaining) as unknown as number
       }
     }
     
     // 添加取消方法
     throttled.cancel = () => {
       if (timer) {
-        clearTimeout(timer)
+        clearTimeout(timer as number)
         timer = null
       }
       lastTime = 0
@@ -170,7 +182,7 @@ export class HealthEventManager {
    * 为页面实例添加防重复点击功能
    * @param pageInstance 页面实例
    */
-  static setupClickPrevention(pageInstance: unknown) {
+  static setupClickPrevention(pageInstance: PageInstance) {
     // 初始化点击时间记录 - 设置为很久以前的时间，避免第一次点击被误判为重复点击
     if (!pageInstance.lastClickTime) {
       pageInstance.lastClickTime = Date.now() - 10000 // 10秒前
@@ -193,7 +205,7 @@ export class HealthEventManager {
    * @param loadFunction 数据加载函数
    * @param delay 防抖延迟
    */
-  static setupDebouncedLoad(pageInstance: unknown, loadFunction: Function, delay = 100) {
+  static setupDebouncedLoad(pageInstance: PageInstance, loadFunction: Function, delay = 100) {
     // 创建防抖版本的加载函数
     const debouncedLoad = this.debounce(loadFunction.bind(pageInstance), { delay })
     
@@ -216,7 +228,7 @@ export class HealthEventManager {
    * @param scrollHandler 滚动处理函数
    * @param delay 节流延迟
    */
-  static setupThrottledScroll(pageInstance: unknown, scrollHandler: Function, delay = 100) {
+  static setupThrottledScroll(pageInstance: PageInstance, scrollHandler: Function, delay = 300) {
     // 创建节流版本的滚动处理函数
     const throttledScroll = this.throttle(scrollHandler.bind(pageInstance), { 
       delay,
@@ -263,7 +275,7 @@ export class HealthEventManager {
    * @param pageInstance 页面实例
    * @param handlers 事件处理器映射
    */
-  static bindClickHandlers(pageInstance: unknown, handlers: Record<string, Function>) {
+  static bindClickHandlers(pageInstance: PageInstance, handlers: Record<string, Function>) {
     const wrappedHandlers: Record<string, Function> = {}
     
     for (const [name, handler] of Object.entries(handlers)) {
@@ -332,18 +344,21 @@ export class HealthEventManager {
   /**
    * 设置页面数据更新的防抖
    * @param pageInstance 页面实例
+   * @param delay 防抖延迟
    */
-  static setupDataUpdateDebounce(pageInstance: unknown) {
-    const originalSetData = pageInstance.setData.bind(pageInstance)
+  static setupDataUpdateDebounce(pageInstance: PageInstance, _delay = 100) {
+    const originalSetData = pageInstance.setData?.bind(pageInstance)
     
     // 创建防抖版本的 setData
     const debouncedSetData = this.debounce((data: unknown, callback?: Function) => {
-      originalSetData(data, callback)
+      originalSetData?.(data, callback)
     }, { delay: 50 })
     
     // 添加立即更新和防抖更新两个方法
-    pageInstance.setDataImmediate = originalSetData
-    pageInstance.setDataDebounced = debouncedSetData
+    if (originalSetData) {
+      pageInstance.setDataImmediate = originalSetData
+      pageInstance.setDataDebounced = debouncedSetData
+    }
   }
 }
 
@@ -351,7 +366,7 @@ export class HealthEventManager {
  * 快速设置页面事件管理
  * @param pageInstance 页面实例
  */
-export function setupEventManagement(pageInstance: unknown) {
+export function setupEventManagement(pageInstance: PageInstance) {
   // 设置防重复点击
   HealthEventManager.setupClickPrevention(pageInstance)
   
