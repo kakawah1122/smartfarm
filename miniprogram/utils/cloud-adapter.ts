@@ -71,12 +71,15 @@ const ACTION_FUNCTION_MAP: Record<string, string> = {
   'get_health_dashboard_complete': 'health-management',
   'get_homepage_health_overview': 'health-management',
   
-  // 异常记录相关（尚未迁移）
-  'create_abnormal_record': 'health-management',
-  'get_abnormal_record_detail': 'health-management',
-  'get_abnormal_records': 'health-management',
-  'list_abnormal_records': 'health-management',
-  'correct_abnormal_diagnosis': 'health-management',
+  // 异常记录相关（已迁移到health-abnormal）
+  'create_abnormal_record': 'health-abnormal',
+  'get_abnormal_record_detail': 'health-abnormal',
+  'get_abnormal_records': 'health-abnormal',
+  'list_abnormal_records': 'health-abnormal',
+  'correct_abnormal_diagnosis': 'health-abnormal',
+  'update_abnormal_status': 'health-abnormal',
+  'get_abnormal_stats': 'health-abnormal',
+  'delete_abnormal_records': 'health-abnormal',
   
   // 预防保健相关（尚未迁移）
   'get_prevention_dashboard': 'health-management',

@@ -423,6 +423,9 @@ exports.main = async (event, context) => {
       case 'list_abnormal_records':
         return await listAbnormalRecords(event, wxContext)
       
+      case 'get_abnormal_records':
+        return await listAbnormalRecords(event, wxContext)
+      
       case 'get_abnormal_record_detail':
         return await getAbnormalRecordDetail(event, wxContext)
       
