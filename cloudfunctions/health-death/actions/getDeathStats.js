@@ -1,32 +1,11 @@
 /**
- * getDeathStats 处理函数
+ * getDeathStats 处理函数（向后兼容）
+ * 复用 get_death_stats 的逻辑
  */
 
-const cloud = require('wx-server-sdk')
-const { COLLECTIONS } = require('../collections.js')
-
-cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
-})
-
-const db = cloud.database()
-const _ = db.command
+const getDeathStats = require('./get_death_stats')
 
 /**
  * 主处理函数
  */
-exports.main = async (event, wxContext) => {
-  try {
-    // TODO: 从原云函数迁移具体业务逻辑
-    
-    return {
-      success: true,
-      data: {
-        message: 'getDeathStats executed successfully'
-      }
-    }
-  } catch (error) {
-    console.error('[getDeathStats] 错误:', error)
-    throw error
-  }
-}
+exports.main = getDeathStats.main
