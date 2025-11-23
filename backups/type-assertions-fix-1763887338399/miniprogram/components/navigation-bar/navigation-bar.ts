@@ -33,7 +33,7 @@ Component({
       try {
         // 使用新的API获取窗口信息
         // 使用类型断言绕过TypeScript类型检查（类型定义文件还未更新）
-        const windowInfo = (wx as unknown).getWindowInfo ? (wx as unknown).getWindowInfo() : {}
+        const windowInfo = (wx as any).getWindowInfo ? (wx as any).getWindowInfo() : {}
         const statusBarHeight = windowInfo.statusBarHeight || 44
         
         // 获取胶囊按钮信息
@@ -78,7 +78,7 @@ Component({
       // 检查当前页面是否定义了goBack方法（通常表示页面绑定了back事件）
       const pages = getCurrentPages()
       const currentPage = pages.length > 0 ? pages[pages.length - 1] : null
-      const hasBackEventListener = currentPage && typeof (currentPage as unknown).goBack === 'function'
+      const hasBackEventListener = currentPage && typeof (currentPage as any).goBack === 'function'
       
       if (hasBackEventListener) {
         // 如果页面绑定了back事件，只触发事件，让页面处理返回逻辑

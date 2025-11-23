@@ -193,7 +193,7 @@ App<AppOption>({
   async login() {
     try {
       // 调用微信登录
-      const loginRes = await CloudApi.callFunction<unknown>(
+      const loginRes = await CloudApi.callFunction<any>(
         'login',
         {},
         {

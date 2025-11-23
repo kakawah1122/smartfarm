@@ -169,7 +169,7 @@ export class MonitoringModuleManager {
             ...data
           }
         }
-      ) as unknown
+      ) as any
       
       wx.hideLoading()
       

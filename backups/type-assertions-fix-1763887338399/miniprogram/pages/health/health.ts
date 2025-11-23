@@ -448,7 +448,7 @@ Page<PageData, any>({
   dataWatchers: null as ReturnType<typeof createWatcherManager> | null,
   loadDataDebounceTimer: null as unknown,  // 防抖定时器
   isLoadingData: false,  // 数据加载标志，防止重复加载
-  pendingAllBatchesPromise: null as Promise<unknown> | null,
+  pendingAllBatchesPromise: null as Promise<any> | null,
   latestAllBatchesSnapshot: null as unknown,
   latestAllBatchesFetchedAt: 0,
   batchAnalysisCache: null as unknown,
@@ -2269,7 +2269,7 @@ Page<PageData, any>({
   /**
    * 标准化任务数据格式（委托给预防模块）
    */
-  normalizeTask(task: Record<string, unknown> = {}, overrides: Record<string, any> = {}) {
+  normalizeTask(task: any = {}, overrides: Record<string, any> = {}) {
     if (this.preventionModule) {
       return this.preventionModule.normalizeTask(task, overrides)
     }

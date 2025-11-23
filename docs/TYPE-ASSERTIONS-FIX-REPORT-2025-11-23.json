@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-11-23T08:43:01.732Z",
+  "filesFixed": 15,
+  "totalFixes": 42,
+  "backupDir": "backups/type-assertions-fix-1763887338399",
+  "files": [
+    "miniprogram/app.ts",
+    "miniprogram/components/analysis-history-detail-popup/analysis-history-detail-popup.ts",
+    "miniprogram/components/finance-record-detail-popup/finance-record-detail-popup.ts",
+    "miniprogram/components/navigation-bar/navigation-bar.ts",
+    "miniprogram/components/virtual-list/virtual-list.ts",
+    "miniprogram/components/weather-card/weather-card.ts",
+    "miniprogram/packageAI/weather-detail/weather-detail.ts",
+    "miniprogram/packageHealth/death-records-list/death-records-list.ts",
+    "miniprogram/packageProduction/material-records-list/material-records-list.ts",
+    "miniprogram/pages/health/health.ts",
+    "miniprogram/pages/health/modules/health-data-loader-v2.ts",
+    "miniprogram/pages/health/modules/health-monitoring-module.ts",
+    "miniprogram/pages/health/modules/health-prevention-module.ts",
+    "miniprogram/pages/health/modules/health-vaccine-module.ts",
+    "miniprogram/pages/index/index.ts"
+  ]
+}

@@ -55,7 +55,7 @@ const pageConfig = {
       const page = isLoadMore ? this.data.currentPage + 1 : 1
       
       // 构建查询参数
-      const queryData: unknown = {
+      const queryData: any = {
         action: 'list_records',
         page: page,
         pageSize: this.data.pageSize

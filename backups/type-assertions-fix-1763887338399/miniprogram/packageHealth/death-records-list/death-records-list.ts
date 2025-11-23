@@ -183,7 +183,7 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
 
         // 处理成本分解数据（直接使用云函数计算好的数据）
         let costBreakdown = null
-        const financialLossAny = record.financialLoss as unknown
+        const financialLossAny = record.financialLoss as any
         if (financialLossAny?.costBreakdown) {
           const breakdown = financialLossAny.costBreakdown
           

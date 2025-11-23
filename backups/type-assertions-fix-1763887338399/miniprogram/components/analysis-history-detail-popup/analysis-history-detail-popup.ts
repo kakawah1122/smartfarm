@@ -25,7 +25,7 @@ Component({
 
   data: {
     // 内部处理的记录数据
-    processedRecord: null as unknown
+    processedRecord: null as any
   },
 
   observers: {

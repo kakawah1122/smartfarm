@@ -269,7 +269,7 @@ export class VaccineModuleManager {
             action: 'createRecord',
             data: recordData
           }
-        ) as unknown
+        ) as any
         
         if (result?.result?.success) {
           wx.showToast({

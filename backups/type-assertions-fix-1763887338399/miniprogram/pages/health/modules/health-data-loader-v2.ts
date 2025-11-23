@@ -131,7 +131,7 @@ export interface DataLoaderOptions {
  * 健康数据加载器
  */
 export class HealthDataLoader {
-  private pendingRequests: Map<string, Promise<unknown>> = new Map()
+  private pendingRequests: Map<string, Promise<any>> = new Map()
   
   /**
    * 加载健康概览数据（使用现有的 HealthCloudHelper）

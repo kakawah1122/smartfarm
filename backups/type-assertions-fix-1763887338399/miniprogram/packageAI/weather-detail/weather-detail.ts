@@ -279,7 +279,7 @@ Page({
     // 显示错误提示
     let errorMessage = `${context}失败，请稍后重试`
     if (error && typeof error === 'object') {
-      errorMessage = (error as unknown).message || (error as unknown).errMsg || errorMessage
+      errorMessage = (error as any).message || (error as any).errMsg || errorMessage
     }
     wx.showToast({
       title: errorMessage,

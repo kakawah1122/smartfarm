@@ -46,7 +46,7 @@ Component({
     // 可视区域结束索引
     endIndex: 0,
     // 渲染列表
-    visibleList: [] as unknown[],
+    visibleList: [] as any[],
     // 占位高度
     topHeight: 0,
     bottomHeight: 0,
@@ -118,7 +118,7 @@ Component({
      */
     onScroll(e: WechatMiniprogram.ScrollViewScroll) {
       const { scrollTop } = e.detail
-      const self = this as unknown
+      const self = this as any
       
       // 节流处理
       if (self._scrollTimer) {

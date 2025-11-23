@@ -264,7 +264,7 @@ Page({
   // 检查并同步任务状态
   checkAndSyncTaskStatus() {
     try {
-      const globalData = getApp<unknown>().globalData || {}
+      const globalData = getApp<any>().globalData || {}
 
       if (isHomepageNeedSync()) {
         // 立即同步全局状态中的任务更新
@@ -639,13 +639,13 @@ Page({
     }
     
     updateData.weather = {
-        temperature: currentWeather.temperature || (this.data.weather as unknown).temperature,
-        humidity: currentWeather.humidity || (this.data.weather as unknown).humidity,
-        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || (this.data.weather as unknown).condition),
-        emoji: hasError ? '❌' : (conditionInfo.emoji || (this.data.weather as unknown).emoji),
-        feelsLike: currentWeather.feelsLike || (this.data.weather as unknown).feelsLike,
-        windDirection: currentWeather.windDirection || (this.data.weather as unknown).windDirection,
-        windScale: currentWeather.windScale || (this.data.weather as unknown).windScale,
+        temperature: currentWeather.temperature || (this.data.weather as any).temperature,
+        humidity: currentWeather.humidity || (this.data.weather as any).humidity,
+        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || (this.data.weather as any).condition),
+        emoji: hasError ? '❌' : (conditionInfo.emoji || (this.data.weather as any).emoji),
+        feelsLike: currentWeather.feelsLike || (this.data.weather as any).feelsLike,
+        windDirection: currentWeather.windDirection || (this.data.weather as any).windDirection,
+        windScale: currentWeather.windScale || (this.data.weather as any).windScale,
         updateTime: hasError ? '获取失败' : (this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新'),
         loading: false,
         hasError: hasError
@@ -1083,9 +1083,9 @@ Page({
   // 更新全局任务状态
   updateGlobalTaskStatus(taskId: string, completed: boolean) {
     try {
-      getApp<unknown>().globalData = getApp<unknown>().globalData || {}
-      getApp<unknown>().globalData.taskStatusUpdates = getApp<unknown>().globalData.taskStatusUpdates || {}
-      getApp<unknown>().globalData.taskStatusUpdates[taskId] = {
+      getApp<any>().globalData = getApp<any>().globalData || {}
+      getApp<any>().globalData.taskStatusUpdates = getApp<any>().globalData.taskStatusUpdates || {}
+      getApp<any>().globalData.taskStatusUpdates[taskId] = {
         completed,
         timestamp: Date.now()
       }
@@ -1117,7 +1117,7 @@ Page({
     
     // 标记全局状态已同步
     try {
-      const globalData = getApp<unknown>().globalData || {}
+      const globalData = getApp<any>().globalData || {}
       if (globalData.taskStatusUpdates && globalData.taskStatusUpdates[taskId]) {
         globalData.taskStatusUpdates[taskId].synced = true
       }
@@ -1131,16 +1131,16 @@ Page({
     try {
       
       // 1. 保存到全局状态（供待办页面使用）
-      getApp<unknown>().globalData = getApp<unknown>().globalData || {}
-      getApp<unknown>().globalData.taskStatusUpdates = getApp<unknown>().globalData.taskStatusUpdates || {}
-      getApp<unknown>().globalData.taskStatusUpdates[taskId] = {
+      getApp<any>().globalData = getApp<any>().globalData || {}
+      getApp<any>().globalData.taskStatusUpdates = getApp<any>().globalData.taskStatusUpdates || {}
+      getApp<any>().globalData.taskStatusUpdates[taskId] = {
         completed,
         timestamp: Date.now(),
         source: 'homepage' // 标识更新来源
       }
       
       // 2. 设置待办页面同步标识
-      getApp<unknown>().globalData.needSyncBreedingTodo = true
+      getApp<any>().globalData.needSyncBreedingTodo = true
       
       // 3. 尝试直接调用待办页面的同步方法（如果存在）
       try {
@@ -1490,7 +1490,7 @@ Page({
     }
 
     // 检查任务ID是否存在
-    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as unknown)._id
+    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as any)._id
     if (!taskId) {
       wx.showToast({
         title: '任务ID缺失，无法完成',
@@ -1616,7 +1616,7 @@ Page({
 
   // 获取缓存的天气数据
   getEffectiveBatchId(): string {
-    const batchCache: unknown = wx.getStorageSync('taskBatchCache')
+    const batchCache: any = wx.getStorageSync('taskBatchCache')
     return batchCache?._id || batchCache?.id || batchCache?.batchNumber || batchCache?.batchId || ''
   },
 
@@ -2409,7 +2409,7 @@ Page({
       // 首页构建的营养记录数据
 
       // 调用云函数创建营养记录
-      const result = await CloudApi.callFunction<BaseResponse<unknown>>(
+      const result = await CloudApi.callFunction<BaseResponse<any>>(
         'production-material',
         {
           action: 'create_record',

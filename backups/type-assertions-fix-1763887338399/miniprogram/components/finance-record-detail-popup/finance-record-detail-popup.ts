@@ -25,7 +25,7 @@ Component({
   },
 
   data: {
-    detailInfo: null as unknown
+    detailInfo: null as any
   },
 
   methods: {

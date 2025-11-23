@@ -74,7 +74,7 @@ Component({
   lifetimes: {
     attached() {
       // 组件初始化时立即设置背景和动画效果，避免闪烁
-      const condition = (this.data.weather as unknown).condition || '晴'
+      const condition = (this.data.weather as any).condition || '晴'
       this.setData({
         weatherBackground: this.getWeatherBackground(condition),
         weatherEffect: this.getWeatherEffect(condition)
