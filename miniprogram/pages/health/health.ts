@@ -192,6 +192,9 @@ interface PageData {
 }
 
 Page<PageData, any>({
+  // 私有属性，用于防止重复点击
+  _lastTaskClickTime: 0,
+  
   data: {
     // 选项卡
     activeTab: 'prevention', // prevention|monitoring|treatment|analysis
@@ -3283,10 +3286,13 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 查看任务详情（优化：立即显示弹窗，异步加载用户信息）
    */
   async viewTaskDetail(e: WechatMiniprogram.CustomEvent) {
-    // 修复：确保checkDoubleClick存在且正确检查重复点击
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) {
+    // 内联防重复点击逻辑，不依赖可能未初始化的方法
+    const now = Date.now()
+    if (this._lastTaskClickTime && now - this._lastTaskClickTime < 300) {
+      console.log('点击过于频繁，忽略')
       return
     }
+    this._lastTaskClickTime = now
     
     const task = e.currentTarget.dataset.task
     if (!task) return
@@ -3502,8 +3508,13 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 任务操作确认
    */
   onTaskConfirm() {
-    // 添加双击保护
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    // 内联防重复点击逻辑
+    const now = Date.now()
+    if (this._lastTaskClickTime && now - this._lastTaskClickTime < 300) {
+      console.log('操作过于频繁，忽略')
+      return
+    }
+    this._lastTaskClickTime = now
     
     const task = this.data.selectedTask
     if (!task) return

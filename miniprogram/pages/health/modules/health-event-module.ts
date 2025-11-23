@@ -26,8 +26,8 @@ interface ThrottleOptions {
  * 事件管理器
  */
 export class HealthEventManager {
-  // 默认防重复点击时间间隔
-  static readonly DEFAULT_CLICK_INTERVAL = 500
+  // 默认防重复点击时间间隔（缩短到300ms，提高响应速度）
+  static readonly DEFAULT_CLICK_INTERVAL = 300
   
   // 默认防抖延迟时间
   static readonly DEFAULT_DEBOUNCE_DELAY = 100
