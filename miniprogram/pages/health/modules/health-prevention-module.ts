@@ -124,7 +124,7 @@ export class PreventionModuleManager {
       const validBatchTasks = results.filter((item: any) => item !== null && item.tasks.length > 0)
       
       // 收集所有任务
-      let allTasks: any[] = []
+      let allTasks: Task[] = []
       validBatchTasks.forEach((batchData: any) => {
         allTasks = allTasks.concat(batchData.tasks)
       })
@@ -228,7 +228,7 @@ export class PreventionModuleManager {
       allBatchTasks.sort((a, b) => a.dayAge - b.dayAge)
       
       // 收集所有任务
-      let allTasks: any[] = []
+      let allTasks: Task[] = []
       allBatchTasks.forEach((batchData: any) => {
         allTasks = allTasks.concat(batchData.tasks)
       })
@@ -290,7 +290,7 @@ export class PreventionModuleManager {
   /**
    * 分组历史任务（按批次和日龄组合分组）
    */
-  groupHistoryTasksByBatch(tasks: any[] = []) {
+  groupHistoryTasksByBatch(tasks: Task[] = []) {
     const batchMap: Record<string, any> = {}
     
     tasks.forEach((task: any) => {

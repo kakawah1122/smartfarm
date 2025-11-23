@@ -914,7 +914,7 @@ Page<PageData, any>({
     this.isLoadingData = true  // 设置加载标志
     
     // 优化：使用批量更新器
-    const updates: any = {}
+    const updates: unknown = {}
     
     // 如果是静默刷新，不设置loading状态，避免阻塞UI
     if (!silent) {
@@ -1762,7 +1762,7 @@ Page<PageData, any>({
   /**
    * 分组历史任务（委托给预防模块）
    */
-  groupHistoryTasksByBatch(tasks: any[] = []) {
+  groupHistoryTasksByBatch(tasks: Task[] = []) {
     if (this.preventionModule) {
       return this.preventionModule.groupHistoryTasksByBatch(tasks)
     }
