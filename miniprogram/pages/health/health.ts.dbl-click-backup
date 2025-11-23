@@ -1898,7 +1898,7 @@ Page<PageData, any>({
    * 诊断记录点击事件 - 使用公共工具函数处理
    */
   async onDiagnosisRecordTap(e: WechatMiniprogram.CustomEvent) {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     const { record } = e.currentTarget.dataset
     
@@ -1957,7 +1957,7 @@ Page<PageData, any>({
    */
   onViewAllDiagnosis() {
     // 使用事件管理器的防重复点击
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     // 使用导航管理器
     HealthNavigationManager.navigateToDiagnosisHistory()
@@ -1967,7 +1967,7 @@ Page<PageData, any>({
    * 点击治疗记录，跳转到详情页
    */
   onTreatmentRecordTap(e: WechatMiniprogram.CustomEvent) {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     const { id } = e.currentTarget.dataset
     HealthNavigationManager.navigateToTreatmentDetail(id, {
@@ -1981,7 +1981,7 @@ Page<PageData, any>({
    * 查看全部治疗记录
    */
   onViewAllTreatments() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToTreatmentList({
       treatmentListUpdated: () => {
@@ -2172,7 +2172,7 @@ Page<PageData, any>({
    */
   viewPreventionRecord(e: WechatMiniprogram.CustomEvent) {
     const { recordId } = e.currentTarget.dataset
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     HealthNavigationManager.navigateToPreventionRecord(recordId)
   },
 
@@ -2181,7 +2181,7 @@ Page<PageData, any>({
    */
   viewHealthAlert(e: WechatMiniprogram.CustomEvent) {
     const { alertId } = e.currentTarget.dataset
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     HealthNavigationManager.navigateToHealthAlert(alertId)
   },
 
@@ -2189,7 +2189,7 @@ Page<PageData, any>({
    * 创建新的健康记录（使用模块化导航）
    */
   createHealthRecord() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     HealthNavigationManager.createHealthInspection(this.data.currentBatchId)
   },
 
@@ -2198,7 +2198,7 @@ Page<PageData, any>({
    */
   createPreventionRecord() {
     // 使用事件管理器的防重复点击
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     // 使用导航管理器
     HealthNavigationManager.createPreventionRecord(this.data.currentBatchId)
@@ -2681,7 +2681,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   createTreatmentRecord() {
     // 使用事件管理器的防重复点击
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     // 使用导航管理器
     HealthNavigationManager.createTreatmentRecord(this.data.currentBatchId)
@@ -2692,7 +2692,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   openAiDiagnosis() {
     // 使用事件管理器的防重复点击
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     // 使用导航管理器
     HealthNavigationManager.navigateToAiDiagnosis(this.data.currentBatchId)
@@ -2765,7 +2765,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 待诊断卡片点击 - 跳转到AI诊断页面（使用模块化导航）
    */
   onPendingDiagnosisClick() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     HealthNavigationManager.navigateToAiDiagnosis()
   },
 
@@ -2773,7 +2773,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 治疗中卡片点击 - 跳转到治疗记录列表（使用模块化导航）
    */
   onOngoingTreatmentClick() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToTreatmentList({
       treatmentListUpdated: () => {
@@ -3175,7 +3175,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 跳转到治愈记录列表（使用模块化导航）
    */
   navigateToCuredRecords() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToCuredList({
       curedRecordsUpdated: () => {
@@ -3188,7 +3188,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 跳转到死亡记录列表（使用模块化导航）
    */
   navigateToDeathRecords() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToDeathList({
       deathRecordsUpdated: () => {
@@ -3201,7 +3201,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 点击死亡数卡片，跳转到死亡记录列表（使用模块化导航）
    */
   onDeathCountTap() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToDeathList({
       deathRecordsUpdated: () => {
@@ -3214,7 +3214,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 点击异常数量，跳转到异常记录列表（使用模块化导航）
    */
   onAbnormalCountTap() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToAbnormalList({
       abnormalRecordsUpdated: () => {
@@ -3227,7 +3227,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 点击疫苗数量，跳转到疫苗记录列表（使用模块化导航）
    */
   onVaccineCountTap() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToVaccineList({
       vaccineRecordsUpdated: () => {
@@ -3240,7 +3240,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 点击用药数量，跳转到用药记录列表（使用模块化导航）
    */
   onMedicationCountTap() {
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
+    if (this.checkDoubleClick && this.checkDoubleClick()) return
     
     HealthNavigationManager.navigateToMedicationList({
       medicationRecordsUpdated: () => {
@@ -3502,9 +3502,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 任务操作确认
    */
   onTaskConfirm() {
-    // 添加双击保护
-    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
-    
     const task = this.data.selectedTask
     if (!task) return
 
