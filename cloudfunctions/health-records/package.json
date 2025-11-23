@@ -1,0 +1,13 @@
+{
+  "name": "health-records",
+  "version": "1.0.0",
+  "description": "健康记录管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  },
+  "config": {
+    "timeout": 20,
+    "memory": 128
+  }
+}

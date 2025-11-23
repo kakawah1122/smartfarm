@@ -1,0 +1,13 @@
+{
+  "name": "health-death",
+  "version": "1.0.0",
+  "description": "死亡记录管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  },
+  "config": {
+    "timeout": 20,
+    "memory": 128
+  }
+}

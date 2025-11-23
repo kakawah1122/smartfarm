@@ -24,8 +24,19 @@
     </view>
 
     <!-- 记录列表 -->
-    <scroll-view class="list-container" scroll-y>
+    <scroll-view 
+      class="list-container" 
+      scroll-y
+      bindscroll="{{virtualRenderEnabled ? 'onScroll' : ''}}"
+    >
       <view class="records-list">
+        <!-- 虚拟渲染顶部占位（仅在启用虚拟渲染时显示） -->
+        <view 
+          wx:if="{{virtualRenderEnabled && virtualTopHeight > 0}}" 
+          style="height: {{virtualTopHeight}}px;"
+        ></view>
+        
+        <!-- 记录列表（保持原有结构不变） -->
         <view 
           wx:for="{{displayRecords}}" 
           wx:key="id"
@@ -48,6 +59,12 @@
             </view>
           </view>
         </view>
+        
+        <!-- 虚拟渲染底部占位（仅在启用虚拟渲染时显示） -->
+        <view 
+          wx:if="{{virtualRenderEnabled && virtualBottomHeight > 0}}" 
+          style="height: {{virtualBottomHeight}}px;"
+        ></view>
       </view>
       
       <!-- 底部安全区域占位 -->
@@ -61,5 +78,7 @@
     record="{{selectedRecord}}"
     bind:close="closeDetailPopup"
   />
+  
+  <!-- 虚拟渲染已默认开启（生产环境） -->
 </view>
 

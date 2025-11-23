@@ -3,6 +3,7 @@
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
+import { VirtualRenderHelper, throttle } from '../../utils/virtual-render-helper'
 
 interface AllFinanceRecordsResponse {
   records: unknown[]
@@ -15,13 +16,21 @@ interface CloudCallResult<T = any> {
 }
 
 type PageData = {
-  records: unknown[]
-  displayRecords: unknown[]
+  records: any[]
+  displayRecords: any[]
   currentType: 'all' | 'income' | 'expense'
   typeTabs: { label: string; value: 'all' | 'income' | 'expense' }[]
   loading: boolean
   showDetailPopup: boolean
-  selectedRecord: unknown}
+  selectedRecord: any
+  // 虚拟渲染相关
+  virtualRenderEnabled: boolean
+  virtualDisplayRecords: any[]
+  virtualTopHeight: number
+  virtualBottomHeight: number}
+
+// 创建虚拟渲染助手实例（初始禁用）
+let virtualHelper: VirtualRenderHelper | null = null
 
 const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   data: {
@@ -37,15 +46,24 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     
     // 交易详情弹窗
     showDetailPopup: false,
-    selectedRecord: null as unknown
+    selectedRecord: null as unknown,
+    
+    // 虚拟渲染相关（生产环境默认开启）
+    virtualRenderEnabled: true, // 生产环境默认开启
+    virtualDisplayRecords: [],
+    virtualTopHeight: 0,
+    virtualBottomHeight: 0
   },
 
   onLoad(this: PageInstance<PageData>) {
+    // 初始化虚拟渲染（生产环境）
+    this.initVirtualRender()
+    // 加载数据
     this.loadRecords()
   },
 
   // 返回上一页
-  goBack(e?: unknown) {
+  goBack(e?: any) {
     // 阻止事件冒泡，避免 navigation-bar 执行默认返回
     if (e) {
       e.stopPropagation && e.stopPropagation()
@@ -114,10 +132,10 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
 
       if (result?.success) {
         const allRecords = result.data?.records || []
-        const records: unknown[] = []
+        const records: any[] = []
 
         // 处理所有记录
-        allRecords.forEach((record: unknown) => {
+        allRecords.forEach((record: any) => {
           let title = ''
           let description = record.description || ''
           
@@ -129,7 +147,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
             // 如果没有 rawRecord，使用 record 本身
             if (!record.rawRecord) {
               rawRecord = {
-                ...record,
+                ...(record as any),
                 batchNumber: record.batchNumber,
                 customer: record.customer,
                 supplier: record.supplier,
@@ -216,16 +234,81 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     let filtered = records
 
     if (currentType !== 'all') {
-      filtered = records.filter((r: unknown) => r.type === currentType)
+      filtered = records.filter((r: any) => r.type === currentType)
     }
 
-    this.setData({
-      displayRecords: filtered
+    // 如果启用虚拟渲染，更新虚拟渲染状态
+    if (this.data.virtualRenderEnabled && virtualHelper) {
+      virtualHelper.setData(filtered)
+      this.updateVirtualDisplay()
+    } else {
+      // 使用传统方式显示所有数据
+      this.setData({
+        displayRecords: filtered
+      })
+    }
+  },
+  
+  // 初始化虚拟渲染（生产环境）
+  initVirtualRender(this: PageInstance<PageData>) {
+    // 生产环境自动初始化
+    if (!this.data.virtualRenderEnabled) return
+    
+    virtualHelper = new VirtualRenderHelper({
+      itemHeight: 160, // 每项高度（rpx转px）
+      containerHeight: 600, // 容器高度
+      bufferSize: 5, // 缓冲区
+      enableVirtual: true // 生产环境默认开启
     })
+  },
+  
+  // 更新虚拟显示数据
+  updateVirtualDisplay(this: PageInstance<PageData>) {
+    if (!virtualHelper || !this.data.virtualRenderEnabled) {
+      return
+    }
+    
+    const state = virtualHelper.getVirtualState()
+    this.setData({
+      virtualDisplayRecords: state.visibleData,
+      virtualTopHeight: state.topPlaceholder,
+      virtualBottomHeight: state.bottomPlaceholder,
+      // 同时更新displayRecords以保持兼容
+      displayRecords: state.visibleData
+    })
+  },
+  
+  // 处理滚动事件（使用节流）
+  onScroll: throttle(function(this: PageInstance<PageData>, e: WechatMiniprogram.ScrollViewScroll) {
+    if (!virtualHelper || !this.data.virtualRenderEnabled) {
+      return
+    }
+    
+    virtualHelper.updateScrollTop(e.detail.scrollTop)
+    this.updateVirtualDisplay()
+  }, 16),
+  
+  // 切换虚拟渲染开关（供测试使用）
+  toggleVirtualRender(this: PageInstance<PageData>) {
+    const newState = !this.data.virtualRenderEnabled
+    this.setData({
+      virtualRenderEnabled: newState
+    })
+    
+    if (newState && !virtualHelper) {
+      this.initVirtualRender()
+    }
+    
+    if (virtualHelper) {
+      virtualHelper.toggle(newState)
+    }
+    
+    // 重新筛选以应用虚拟渲染
+    this.filterRecords()
   },
 
   // 查看记录详情
-  viewRecordDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { item: unknown} } }) {
+  viewRecordDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { item: any} } }) {
     const item = e.currentTarget.dataset.item
     this.setData({
       selectedRecord: item,
