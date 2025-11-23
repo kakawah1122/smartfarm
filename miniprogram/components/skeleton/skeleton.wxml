@@ -57,14 +57,14 @@
   <block wx:elif="{{type === 'detail'}}">
     <view class="skeleton-detail">
       <view class="skeleton-detail-header">
-        <view class="skeleton-line skeleton-animate" style="width: 200rpx; height: 44rpx;"></view>
-        <view class="skeleton-line skeleton-animate" style="width: 120rpx; height: 32rpx; margin-top: 16rpx;"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-detail-value"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-detail-label"></view>
       </view>
       <view class="skeleton-detail-section" wx:for="{{rows}}" wx:key="index">
-        <view class="skeleton-line skeleton-animate" style="width: 150rpx; height: 36rpx; margin-bottom: 20rpx;"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-detail-title"></view>
         <view class="skeleton-line skeleton-animate" class="skeleton-w100"></view>
-        <view class="skeleton-line skeleton-animate" style="width: 90%;"></view>
-        <view class="skeleton-line skeleton-animate" style="width: 75%;"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-w90"></view>
+        <view class="skeleton-line skeleton-animate" class="skeleton-w75"></view>
       </view>
     </view>
   </block>

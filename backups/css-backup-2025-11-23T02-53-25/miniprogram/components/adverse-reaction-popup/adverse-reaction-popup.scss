@@ -1,0 +1,126 @@
+/* 异常反应处理弹窗组件样式 */
+
+.adverse-reaction-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  
+  .info-card {
+    margin: 20rpx;
+    padding: 24rpx;
+    background: #fff5f5;
+    border-radius: 12rpx;
+    border-left: 4rpx solid #e34d59;
+    
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16rpx;
+      
+      .info-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        
+        .info-label {
+          font-size: 26rpx;
+          color: #666666;
+          line-height: 1.4;
+        }
+        
+        .info-value {
+          font-size: 28rpx;
+          color: #e34d59;
+          font-weight: 600;
+          text-align: right;
+        }
+      }
+    }
+  }
+  
+  .form-section {
+    margin-bottom: 20rpx;
+    
+    .section-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #000000;
+      margin-bottom: 12rpx;
+      padding: 12rpx 20rpx;
+      background: rgba(227, 77, 89, 0.08);
+      border-left: 4rpx solid #e34d59;
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16rpx 20rpx;
+      min-height: 80rpx;
+      border-bottom: 1rpx solid #f0f0f0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .form-label {
+        flex-shrink: 0;
+        font-size: 26rpx;
+        color: #666;
+        line-height: 1.4;
+        margin-right: 16rpx;
+        width: 160rpx;
+      }
+      
+      .form-input, .form-textarea {
+        flex: 1;
+        font-size: 28rpx;
+        color: #333;
+        text-align: right;
+        line-height: 44rpx;
+        
+        &::placeholder {
+          color: #999;
+          text-align: right;
+        }
+      }
+      
+      .form-textarea {
+        min-height: 80rpx;
+        max-height: 200rpx;
+        height: auto;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        padding: 0;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        font-size: 28rpx;
+        color: #333;
+        line-height: 44rpx;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+}
+

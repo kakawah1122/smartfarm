@@ -1,0 +1,890 @@
+// miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.scss
+// 疫苗记录列表页面样式（基于death-records-list样式）
+
+@import "../../styles/health-vars.scss";
+
+.vaccine-records-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.page-content {
+  padding-top: 160rpx; /* 导航栏总高度 + 适当间距 */
+  padding-bottom: 40rpx;
+}
+
+// ============ 加载状态 ============
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+// ============ 统计卡片 ============
+.stats-section {
+  padding: 32rpx;
+  background: transparent;
+  margin-bottom: 8rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 28rpx 16rpx;
+  border-radius: $health-card-radius;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  
+  &.primary {
+    background: linear-gradient(135deg, #003a9b 0%, #0052d9 100%);
+  }
+  
+  &.warning {
+    background: linear-gradient(135deg, #b85c1f 0%, #d4661f 100%);
+  }
+  
+  &.success {
+    background: linear-gradient(135deg, #006b4a 0%, #00a870 100%);
+  }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  width: 100%;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1;
+}
+
+// ============ 空状态 ============
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.tip-title {
+  font-size: $health-title-size;
+  color: $health-text-primary;
+  font-weight: 500;
+}
+
+.tip-subtitle {
+  font-size: $health-label-size;
+  color: $health-text-placeholder;
+  line-height: $health-label-line-height;
+}
+
+// ============ 记录列表 ============
+.records-list {
+  padding: 0 32rpx 24rpx;
+}
+
+// ============ 批次分组 ============
+.batch-group {
+  margin-bottom: 24rpx;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.batch-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 20rpx;
+  background: $health-batch-bg;
+  border-radius: $health-batch-radius $health-batch-radius 0 0;
+  border-bottom: $health-border-width solid $health-border-primary;
+  min-height: 48rpx;
+  
+  .batch-group-info {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12rpx;
+  }
+  
+  .batch-group-title {
+    font-size: $health-value-size;
+    font-weight: 600;
+    color: $health-batch-color;
+    line-height: 1.4;
+  }
+  
+  .batch-record-count {
+    background: $health-batch-count-bg;
+    color: $health-batch-count-color;
+    padding: 4rpx 12rpx;
+    border-radius: $health-tag-radius;
+    font-size: $health-small-size;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+}
+
+// 不同批次颜色方案（循环使用）
+.batch-group:nth-child(1) .batch-group-header {
+  background: rgba(0, 82, 217, 0.08);
+  border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
+  
+  .batch-group-title {
+    color: #0052d9;
+  }
+  
+  .batch-record-count {
+    background: #0052d9;
+  }
+}
+
+.batch-group:nth-child(2) .batch-group-header {
+  background: rgba(0, 168, 112, 0.08);
+  border-bottom: 1rpx solid rgba(0, 168, 112, 0.15);
+  
+  .batch-group-title {
+    color: #00a870;
+  }
+  
+  .batch-record-count {
+    background: #00a870;
+  }
+}
+
+.batch-group:nth-child(3) .batch-group-header {
+  background: rgba(237, 123, 47, 0.08);
+  border-bottom: 1rpx solid rgba(237, 123, 47, 0.15);
+  
+  .batch-group-title {
+    color: #ed7b2f;
+  }
+  
+  .batch-record-count {
+    background: #ed7b2f;
+  }
+}
+
+.batch-group:nth-child(4) .batch-group-header {
+  background: rgba(162, 105, 227, 0.08);
+  border-bottom: 1rpx solid rgba(162, 105, 227, 0.15);
+  
+  .batch-group-title {
+    color: #a269e3;
+  }
+  
+  .batch-record-count {
+    background: #a269e3;
+  }
+}
+
+.batch-group:nth-child(5) .batch-group-header {
+  background: rgba(213, 73, 65, 0.08);
+  border-bottom: 1rpx solid rgba(213, 73, 65, 0.15);
+  
+  .batch-group-title {
+    color: #d54941;
+  }
+  
+  .batch-record-count {
+    background: #d54941;
+  }
+}
+
+.batch-group:nth-child(6) .batch-group-header {
+  background: rgba(52, 196, 154, 0.08);
+  border-bottom: 1rpx solid rgba(52, 196, 154, 0.15);
+  
+  .batch-group-title {
+    color: #34c49a;
+  }
+  
+  .batch-record-count {
+    background: #34c49a;
+  }
+}
+
+// 循环颜色方案（7个及以上）
+.batch-group:nth-child(7) .batch-group-header {
+  background: rgba(0, 82, 217, 0.08);
+  border-bottom: 1rpx solid rgba(0, 82, 217, 0.15);
+  
+  .batch-group-title {
+    color: #0052d9;
+  }
+  
+  .batch-record-count {
+    background: #0052d9;
+  }
+}
+
+.batch-group:nth-child(8) .batch-group-header {
+  background: rgba(0, 168, 112, 0.08);
+  border-bottom: 1rpx solid rgba(0, 168, 112, 0.15);
+  
+  .batch-group-title {
+    color: #00a870;
+  }
+  
+  .batch-record-count {
+    background: #00a870;
+  }
+}
+
+.batch-records-list {
+  background: white;
+  border-radius: 0 0 $health-batch-radius $health-batch-radius;
+  padding: 12rpx;
+  border: $health-border-width solid $health-border-light;
+  border-top: none;
+  
+  .record-card {
+    margin-bottom: 12rpx;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.record-card {
+  background: #fff;
+  border-radius: $health-card-radius;
+  margin-bottom: 20rpx;
+  box-shadow: $health-card-shadow;
+  transition: all $health-transition-normal ease;
+  overflow: hidden;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+// 记录头部
+.record-header {
+  padding: $health-card-padding 32rpx 20rpx;
+  border-bottom: $health-border-width solid $health-border-light;
+}
+
+.record-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.record-name {
+  font-size: $health-number-size;
+  font-weight: 600;
+  color: $health-text-primary;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.status-tag {
+  flex-shrink: 0;
+}
+
+// 记录内容
+.record-content {
+  padding: $health-card-padding 32rpx;
+}
+
+// 信息行布局
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+  flex-wrap: nowrap;
+  
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.info-group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  
+  // 批次组：占据左侧更多空间
+  &.info-group-batch {
+    flex: 1 1 auto;
+    min-width: 140rpx;
+    margin-right: 24rpx;
+  }
+  
+  // 数量组：固定宽度
+  &.info-group-count {
+    flex: 0 0 auto;
+    min-width: 120rpx;
+  }
+  
+  // 成本组：占据左侧更多空间
+  &.info-group-cost {
+    flex: 1 1 auto;
+    min-width: 140rpx;
+    margin-right: 24rpx;
+  }
+  
+  // 剂量组：固定宽度
+  &.info-group-dosage {
+    flex: 0 0 auto;
+    min-width: 140rpx;
+  }
+  
+  // 防疫用药组：占据左侧更多空间
+  &.info-group-rate {
+    flex: 1 1 auto;
+    min-width: 140rpx;
+    margin-right: 24rpx;
+  }
+  
+  // 存栏组：固定宽度
+  &.info-group-stock {
+    flex: 0 0 auto;
+    min-width: 120rpx;
+  }
+
+  .info-label {
+    font-size: $health-label-size;
+    color: $health-label-color;
+    margin-right: 8rpx;
+    flex-shrink: 0;
+    line-height: $health-label-line-height;
+    white-space: nowrap;
+  }
+
+  .info-value {
+    font-size: $health-value-size;
+    color: $health-value-color;
+    font-weight: $health-value-weight;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    &.vaccine-count {
+      color: $health-primary-color;
+      font-weight: 600;
+    }
+
+    &.cost-value {
+      color: $health-cost-color;
+      font-weight: $health-cost-weight;
+    }
+    
+    &.rate-value {
+      color: $health-success-color;
+      font-weight: 600;
+    }
+  }
+}
+
+// 底部信息栏
+.record-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $health-footer-margin-top;
+  padding-top: $health-footer-padding-top;
+  border-top: $health-border-width solid $health-border-light;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+
+  .date-text {
+    font-size: $health-date-size;
+    color: $health-text-placeholder;
+  }
+
+  .operator-text {
+    font-size: $health-date-size;
+    color: $health-text-secondary;
+    font-weight: 500;
+    margin-left: auto;
+  }
+}
+
+// ============ 疫苗详情弹窗 ============
+.detail-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999998;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.detail-popup {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 75vh;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.12);
+  
+  &.show {
+    transform: translateY(0);
+  }
+  
+  .popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 40rpx 32rpx 24rpx;
+    border-bottom: 2rpx solid #f0f0f0;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    
+    .popup-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: 0.5rpx;
+    }
+    
+    .close-btn {
+      width: 56rpx;
+      height: 56rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      border-radius: 50%;
+      
+      .icon-close {
+        font-size: 56rpx;
+        color: #999;
+        line-height: 1;
+        font-weight: 300;
+      }
+      
+      &:active {
+        background: #e8e8e8;
+      }
+    }
+  }
+  
+  .popup-content {
+    flex: 1;
+    padding: 24rpx 32rpx 40rpx;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+}
+
+// 详情区块
+.detail-section {
+  margin-bottom: 20rpx;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  .section-title {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12rpx;
+    padding: 12rpx 16rpx;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+    border-radius: 8rpx;
+    color: #0052d9;
+    word-break: break-all;
+  }
+}
+
+// 信息卡片
+.info-card {
+  background: #fafafa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12rpx 0;
+    gap: 24rpx;
+    
+    &:not(:last-child) {
+      border-bottom: 1rpx solid #f0f0f0;
+    }
+    
+    .info-label {
+      font-size: 26rpx;
+      color: #666;
+      flex-shrink: 0;
+      min-width: 120rpx;
+    }
+    
+    .info-value {
+      font-size: 28rpx;
+      color: #333;
+      font-weight: 500;
+      text-align: right;
+      flex: 1;
+      word-break: break-all;
+      overflow-wrap: break-word;
+      line-height: 1.5;
+    }
+  }
+}
+
+// 疫苗统计
+.vaccine-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.vaccine-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 20rpx 16rpx;
+  background: #fafafa;
+  border-radius: 12rpx;
+  border: 2rpx solid #e8e8e8;
+  
+  &.primary {
+    background: linear-gradient(135deg, #e6f2ff 0%, #cce5ff 100%);
+    border-color: #0052d9;
+    
+    .stat-label {
+      color: #0052d9;
+    }
+    
+    .stat-value {
+      color: #0052d9;
+    }
+  }
+  
+  &.success {
+    background: linear-gradient(135deg, #e6f8f0 0%, #ccf0e0 100%);
+    border-color: #00a870;
+    
+    .stat-label {
+      color: #00a870;
+    }
+    
+    .stat-value {
+      color: #00a870;
+    }
+  }
+  
+  .stat-label {
+    font-size: 24rpx;
+    color: #666;
+    text-align: center;
+  }
+  
+  .stat-value {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+  }
+}
+
+// 成本网格
+.cost-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.cost-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: #fafafa;
+  border-radius: 12rpx;
+  gap: 16rpx;
+  
+  .cost-label {
+    font-size: 26rpx;
+    color: #666;
+    flex-shrink: 0;
+  }
+  
+  .cost-value {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    text-align: right;
+    word-break: break-all;
+    
+    &.primary {
+      color: #0052d9;
+      font-size: 32rpx;
+    }
+  }
+}
+
+// 描述卡片
+.description-card {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  border: 1rpx solid #e8e8e8;
+  box-sizing: border-box;
+  
+  .description-text {
+    font-size: 26rpx;
+    color: #333;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+// 疫苗追踪操作
+.tracking-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.tracking-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx 28rpx;
+  border-radius: 16rpx;
+  transition: all 0.3s ease;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  
+  .button-text {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.4;
+    text-align: center;
+  }
+  
+  // 警告按钮样式（异常用药）
+  &.tracking-button-warning {
+    background: linear-gradient(135deg, #ed7b2f 0%, #ff8f47 100%);
+    
+    &:active {
+      background: linear-gradient(135deg, #d86a1f 0%, #ed7b2f 100%);
+    }
+  }
+  
+  // 危险按钮样式（记录死亡）
+  &.tracking-button-danger {
+    background: linear-gradient(135deg, #e34d59 0%, #f55966 100%);
+    
+    &:active {
+      background: linear-gradient(135deg, #c93d48 0%, #e34d59 100%);
+    }
+  }
+}
+
+// ============ 受影响数量输入对话框 ============
+.count-input-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000000;
+  animation: fadeIn 0.3s ease;
+}
+
+.count-input-popup {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 1000001;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.12);
+  
+  &.show {
+    transform: translateY(0);
+  }
+}
+
+.count-input-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40rpx 32rpx 24rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+  
+  .count-input-title {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  
+  .count-input-close {
+    width: 56rpx;
+    height: 56rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    border-radius: 50%;
+    font-size: 56rpx;
+    color: #999;
+    line-height: 1;
+    font-weight: 300;
+    
+    &:active {
+      background: #e8e8e8;
+    }
+  }
+}
+
+.count-input-content {
+  padding: 40rpx 32rpx;
+}
+
+.count-input-hint {
+  margin-bottom: 32rpx;
+  
+  text {
+    font-size: 28rpx;
+    color: #666;
+    line-height: 1.6;
+  }
+}
+
+.count-input-field {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 28rpx;
+  background: #fafafa;
+  border-radius: 16rpx;
+  border: 2rpx solid #e8e8e8;
+  
+  .count-input {
+    flex: 1;
+    font-size: 32rpx;
+    color: #333;
+    font-weight: 500;
+    
+    &::placeholder {
+      color: #999;
+    }
+  }
+  
+  .count-input-unit {
+    font-size: 28rpx;
+    color: #666;
+    margin-left: 16rpx;
+    flex-shrink: 0;
+  }
+}
+
+.count-input-footer {
+  display: flex;
+  gap: 24rpx;
+  padding: 24rpx 32rpx 40rpx;
+  border-top: 2rpx solid #f0f0f0;
+}
+
+.count-input-btn {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  
+  &.count-input-btn-cancel {
+    background: #f5f5f5;
+    color: #666;
+    
+    &:active {
+      background: #e8e8e8;
+      transform: scale(0.98);
+    }
+  }
+  
+  &.count-input-btn-confirm {
+    background: linear-gradient(135deg, #0052d9 0%, #0066ff 100%);
+    color: #ffffff;
+    
+    &:active {
+      background: linear-gradient(135deg, #003d9e 0%, #0052d9 100%);
+      transform: scale(0.98);
+    }
+  }
+}
+
+

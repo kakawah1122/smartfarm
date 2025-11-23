@@ -1,0 +1,393 @@
+/* survival-analysis.scss - 存活率分析页面样式 */
+
+.survival-analysis-page {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding-top: calc(var(--navbar-height, 132rpx) + 20rpx); /* 导航栏总高度 + 适当间距 */
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400rpx;
+  
+  .loading-text {
+    margin-top: 20rpx;
+    color: #666;
+    font-size: 28rpx;
+  }
+}
+
+.content-container {
+  padding: 20rpx;
+}
+
+/* 日期范围选择器 */
+.date-range-selector {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 总览卡片 */
+.overview-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30rpx;
+
+    .card-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .trend-indicator {
+      display: flex;
+      align-items: center;
+      padding: 8rpx 16rpx;
+      border-radius: 20rpx;
+      font-size: 24rpx;
+
+      &.trend-improving {
+        background: #e8f5e8;
+        color: #00a870;
+      }
+
+      &.trend-declining {
+        background: #ffeaea;
+        color: #e34d59;
+      }
+
+      text {
+        margin-left: 8rpx;
+      }
+    }
+  }
+
+  .overview-main {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30rpx;
+
+    .main-rate {
+      flex: 1;
+
+      .rate-value {
+        display: block;
+        font-size: 64rpx;
+        font-weight: bold;
+        color: #0052d9;
+        line-height: 1;
+      }
+
+      .rate-label {
+        display: block;
+        font-size: 28rpx;
+        color: #666;
+        margin-top: 8rpx;
+      }
+    }
+
+    .overview-stats {
+      display: flex;
+      gap: 40rpx;
+
+      .stat-item {
+        text-align: center;
+
+        .stat-value {
+          display: block;
+          font-size: 36rpx;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .stat-label {
+          display: block;
+          font-size: 24rpx;
+          color: #666;
+          margin-top: 8rpx;
+        }
+      }
+    }
+  }
+
+  .comparison-bar {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 20rpx;
+    border-top: 1px solid #f0f0f0;
+
+    .comparison-item {
+      text-align: center;
+
+      .comparison-label {
+        display: block;
+        font-size: 24rpx;
+        color: #999;
+      }
+
+      .comparison-value {
+        display: block;
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #333;
+        margin-top: 8rpx;
+      }
+    }
+  }
+}
+
+/* 分阶段分析卡片 */
+.stage-analysis-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30rpx;
+  }
+
+  .stage-list {
+    .stage-item {
+      display: flex;
+      align-items: center;
+      padding: 20rpx 0;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .stage-info {
+        flex: 1;
+
+        .stage-name {
+          font-size: 30rpx;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 8rpx;
+        }
+
+        .stage-details {
+          display: flex;
+          gap: 20rpx;
+
+          .stage-rate {
+            font-size: 36rpx;
+            font-weight: 600;
+            color: #0052d9;
+          }
+
+          .stage-count {
+            font-size: 26rpx;
+            color: #666;
+            align-self: flex-end;
+          }
+        }
+      }
+
+      .stage-progress {
+        width: 200rpx;
+        margin-left: 20rpx;
+
+        .progress-bar {
+          height: 12rpx;
+          background: #f0f0f0;
+          border-radius: 6rpx;
+          overflow: hidden;
+
+          .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* 时间趋势卡片 */
+.trend-analysis-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30rpx;
+  }
+
+  .trend-chart {
+    position: relative;
+
+    .trend-list {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 200rpx;
+      margin-bottom: 20rpx;
+
+      .trend-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+
+        .trend-date {
+          font-size: 22rpx;
+          color: #666;
+          margin-bottom: 10rpx;
+        }
+
+        .trend-rate {
+          font-size: 24rpx;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 10rpx;
+        }
+
+        .trend-bar {
+          width: 40rpx;
+          height: 120rpx;
+          background: #f0f0f0;
+          border-radius: 20rpx;
+          position: relative;
+          overflow: hidden;
+
+          .trend-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, #0052d9, #4285f4);
+            border-radius: 20rpx;
+            transition: height 0.5s ease;
+          }
+        }
+      }
+    }
+
+    .trend-axis {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20rpx;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 10rpx;
+
+      .axis-label {
+        font-size: 22rpx;
+        color: #999;
+      }
+    }
+  }
+}
+
+/* 影响因素卡片 */
+.factors-analysis-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30rpx;
+  }
+
+  .factors-list {
+    .factor-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20rpx 0;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .factor-info {
+        flex: 1;
+
+        .factor-name {
+          font-size: 30rpx;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 8rpx;
+        }
+
+        .factor-meta {
+          display: flex;
+          gap: 20rpx;
+
+          .factor-value {
+            font-size: 26rpx;
+            font-weight: 600;
+            color: #0052d9;
+          }
+
+          .correlation {
+            font-size: 24rpx;
+            color: #666;
+          }
+        }
+      }
+
+      .impact-indicator {
+        padding: 8rpx 16rpx;
+        border-radius: 16rpx;
+        font-size: 24rpx;
+        font-weight: 500;
+
+        &.impact-high {
+          background: #e8f5e8;
+          color: #00a870;
+        }
+
+        &.impact-medium {
+          background: #fff3cd;
+          color: #e37318;
+        }
+
+        &.impact-low {
+          background: #f0f0f0;
+          color: #666;
+        }
+      }
+    }
+  }
+}
+
+/* 操作区域 */
+.actions-section {
+  margin-top: 30rpx;
+}
+
+
+/* 底部安全区域 */
+.safe-area { height: 120rpx; }

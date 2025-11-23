@@ -1,0 +1,98 @@
+/* 导航栏组件样式 - 符合微信小程序官方规范 */
+.custom-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: #ffffff;
+  z-index: 99999;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 导航栏内容区域 */
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16rpx;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 左侧返回按钮区域 - iOS风格 */
+.navbar-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 100rpx;
+  height: 100%;
+  z-index: 100000;
+  position: relative;
+  pointer-events: auto;
+  padding-left: 8rpx;
+}
+
+/* 返回按钮可点击区域 */
+.back-button-area {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 80rpx;
+  height: 100%;
+  min-height: 80rpx;
+  position: relative;
+  cursor: pointer;
+  /* 添加点击反馈 */
+  transition: opacity 0.2s ease;
+}
+
+.back-button-area:active {
+  opacity: 0.5;
+}
+
+.back-icon {
+  font-size: 44rpx;
+  color: #1a1a1a;
+  font-weight: 300;
+  line-height: 1;
+  display: block;
+  pointer-events: none;
+  /* iOS风格：更细的笔触 */
+  letter-spacing: -2rpx;
+}
+
+/* 中间标题区域 */
+.navbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 24rpx;
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+/* 标题居中显示（无返回按钮时） */
+.navbar-center-alone {
+  justify-content: center;
+  padding: 0 32rpx; /* 左右留出安全边距，避免和胶囊按钮重叠 */
+}
+
+.navbar-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+  letter-spacing: 0.5rpx;
+}
+
+/* 右侧预留空间 - 与系统胶囊按钮宽度一致 */
+.navbar-right {
+  flex-shrink: 0;
+  height: 100%;
+}

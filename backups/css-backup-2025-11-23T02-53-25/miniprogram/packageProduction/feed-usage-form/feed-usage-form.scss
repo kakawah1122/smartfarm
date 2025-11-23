@@ -1,0 +1,240 @@
+// feed-usage-form.scss - 饲料投喂记录表单样式
+
+.feed-usage-form-page {
+  min-height: 100vh;
+  background-color: var(--td-bg-color-page, #f5f5f5);
+}
+
+.form-container {
+  padding: 20rpx; // 优化：缩小内边距
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 20rpx); /* 状态栏 + 导航栏 + 安全间距 */
+  padding-bottom: 120rpx; // 为底部按钮留出空间
+  box-sizing: border-box;
+}
+
+// 表单区块
+.form-section {
+  margin-bottom: 12rpx; // 优化：缩小间距
+  background-color: var(--td-bg-color-container, #fff);
+  border-radius: 12rpx; // 优化：缩小圆角
+  overflow: hidden;
+}
+
+// 标题和提示容器（同一行）
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20rpx 20rpx 12rpx;
+  padding: 12rpx 16rpx;
+  background: linear-gradient(135deg, var(--td-brand-color-1, #f0f7ff) 0%, var(--td-brand-color-2, #e6f0ff) 100%);
+  border-radius: 8rpx;
+  gap: 12rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--td-brand-color, #0052d9);
+  flex-shrink: 0;
+  
+  // 当 section-title 不在 section-header 内时，添加完整的样式
+  .form-section > & {
+    margin: 20rpx 20rpx 12rpx;
+    padding: 12rpx 16rpx;
+    background: linear-gradient(135deg, var(--td-brand-color-1, #f0f7ff) 0%, var(--td-brand-color-2, #e6f0ff) 100%);
+    border-radius: 8rpx;
+  }
+}
+
+// 使用提示（不包含图标）
+.usage-tip {
+  display: flex;
+  align-items: center;
+  flex-shrink: 1;
+}
+
+.tip-text {
+  font-size: 22rpx;
+  color: var(--td-text-color-placeholder, #999);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+// 表单项
+.form-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 20rpx; // 优化：缩小内边距
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
+  min-height: 60rpx;
+  transition: background-color 0.2s;
+  
+  // 添加点击反馈
+  &:active {
+    background-color: var(--td-bg-color-container-hover, #f5f5f5);
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.item-label {
+  flex-shrink: 0;
+  font-size: 26rpx; // 优化：缩小字体
+  color: var(--td-text-color-primary, #333);
+  margin-right: 16rpx; // 优化：缩小间距
+  line-height: 44rpx;
+  
+  &.required::after {
+    content: ' *';
+    color: var(--td-error-color, #e34d59);
+    margin-left: 4rpx;
+    line-height: 44rpx;
+  }
+}
+
+.item-value {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.value-text {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 26rpx; // 优化：缩小字体
+  color: var(--td-text-color-primary, #333);
+  line-height: 44rpx;
+  width: 100%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.value-text.placeholder {
+  color: var(--td-text-color-placeholder, #999);
+}
+
+.item-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  
+  input {
+    flex: 1;
+    font-size: 26rpx; // 优化：缩小字体
+    color: var(--td-text-color-primary, #333);
+    text-align: right;
+  }
+  
+  .unit {
+    flex-shrink: 0;
+    margin-left: 12rpx; // 优化：缩小间距
+    font-size: 24rpx; // 优化：缩小字体
+    color: var(--td-text-color-secondary, #666);
+  }
+}
+
+// 存栏信息卡片
+.stock-info-card {
+  margin: 8rpx 20rpx 16rpx; // 优化：缩小间距
+  padding: 12rpx 16rpx; // 优化：缩小内边距
+  background: var(--td-bg-color-container, #ffffff); // 优化：白色背景
+  border: 2rpx solid var(--td-brand-color, #0052d9); // 优化：蓝色边框
+  border-radius: 8rpx; // 优化：缩小圆角
+}
+
+.stock-info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stock-label {
+  font-size: 24rpx; // 优化：缩小字体
+  color: var(--td-text-color-secondary, #666); // 优化：深灰色文字
+}
+
+.stock-value {
+  font-size: 32rpx; // 优化：缩小字体
+  font-weight: 600;
+  color: var(--td-brand-color, #0052d9); // 优化：蓝色文字
+}
+
+// 成本预览卡片
+.cost-preview-card {
+  margin: 8rpx 20rpx 16rpx; // 优化：缩小间距
+  padding: 12rpx 16rpx; // 优化：缩小内边距
+  background: var(--td-bg-color-container-secondary, #fafafa); // 优化：浅灰背景
+  border: 1rpx solid var(--td-border-level-1-color, #f0f0f0); // 优化：浅灰边框
+  border-radius: 8rpx; // 优化：缩小圆角
+}
+
+.cost-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0; // 优化：添加垂直内边距
+  border-bottom: 1rpx solid var(--td-border-level-1-color, #f0f0f0); // 优化：添加分隔线
+  
+  &:last-child {
+    border-bottom: none; // 优化：最后一项无分隔线
+    padding-bottom: 0;
+  }
+  
+  &:first-child {
+    padding-top: 0;
+  }
+}
+
+.cost-label {
+  font-size: 24rpx; // 优化：缩小字体
+  color: var(--td-text-color-secondary, #666); // 优化：深灰色文字
+}
+
+.cost-value {
+  font-size: 26rpx; // 优化：缩小字体
+  font-weight: 600;
+  color: var(--td-brand-color, #0052d9); // 优化：蓝色文字
+  
+  &.primary {
+    font-size: 30rpx; // 优化：缩小主要数值字体
+  }
+}
+
+// 文本域
+.textarea-input {
+  width: 100%;
+  min-height: 120rpx; // 优化：缩小最小高度
+  padding: 12rpx 16rpx; // 优化：缩小内边距
+  font-size: 26rpx; // 优化：缩小字体
+  color: var(--td-text-color-primary, #333);
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+// 按钮组
+.button-group {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  padding: 20rpx 24rpx;
+  background-color: var(--td-bg-color-container, #fff);
+  border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
+  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  
+  .t-button {
+    flex: 1;
+    
+    &:first-child {
+      margin-right: 12rpx;
+    }
+  }
+}

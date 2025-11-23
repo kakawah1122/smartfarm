@@ -1,0 +1,484 @@
+/* cost-analysis.scss - 成本分析页面样式 */
+
+.cost-analysis-page {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400rpx;
+  
+  .loading-text {
+    margin-top: 20rpx;
+    color: #666;
+    font-size: 28rpx;
+  }
+}
+
+.content-container {
+  padding: 20rpx;
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 20rpx); /* 状态栏 + 导航栏 + 安全间距 */
+}
+
+/* 日期范围选择器 */
+.date-range-selector {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 总览卡片 */
+.overview-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30rpx;
+
+    .card-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .trend-indicator {
+      display: flex;
+      align-items: center;
+      padding: 8rpx 16rpx;
+      border-radius: 20rpx;
+      font-size: 24rpx;
+
+      &.trend-decreasing {
+        background: #e8f5e8;
+        color: #00a870;
+      }
+
+      &.trend-increasing {
+        background: #ffeaea;
+        color: #e34d59;
+      }
+
+      text {
+        margin-left: 8rpx;
+      }
+    }
+  }
+
+  .overview-main {
+    display: flex;
+    align-items: center;
+
+    .main-cost {
+      flex: 1;
+
+      .cost-value {
+        display: block;
+        font-size: 64rpx;
+        font-weight: bold;
+        color: #0052d9;
+        line-height: 1;
+      }
+
+      .cost-label {
+        display: block;
+        font-size: 28rpx;
+        color: #666;
+        margin-top: 8rpx;
+      }
+    }
+
+    .cost-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 20rpx;
+
+      .breakdown-item {
+        text-align: right;
+
+        .breakdown-value {
+          display: block;
+          font-size: 32rpx;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .breakdown-label {
+          display: block;
+          font-size: 24rpx;
+          color: #666;
+          margin-top: 4rpx;
+        }
+      }
+    }
+  }
+}
+
+/* 成本构成卡片 */
+.cost-breakdown-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30rpx;
+  }
+
+  .breakdown-chart {
+    margin-bottom: 30rpx;
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20rpx;
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+        font-size: 24rpx;
+
+        .legend-color {
+          width: 12rpx;
+          height: 12rpx;
+          border-radius: 50%;
+        }
+
+        .legend-text {
+          color: #333;
+        }
+
+        .legend-percentage {
+          color: #666;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .breakdown-list {
+    .breakdown-item {
+      padding: 20rpx 0;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .item-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15rpx;
+
+        .item-header {
+          display: flex;
+          align-items: center;
+          gap: 12rpx;
+
+          .category-indicator {
+            width: 16rpx;
+            height: 16rpx;
+            border-radius: 50%;
+          }
+
+          .category-name {
+            font-size: 30rpx;
+            font-weight: 500;
+            color: #333;
+          }
+        }
+
+        .amount-info {
+          display: flex;
+          align-items: center;
+          gap: 12rpx;
+
+          .amount-value {
+            font-size: 32rpx;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .amount-percentage {
+            font-size: 24rpx;
+            color: #666;
+          }
+        }
+      }
+
+      .progress-bar {
+        height: 8rpx;
+        background: #f0f0f0;
+        border-radius: 4rpx;
+        overflow: hidden;
+
+        .progress-fill {
+          height: 100%;
+          transition: width 0.3s ease;
+        }
+      }
+    }
+  }
+}
+
+/* 趋势卡片 */
+.trend-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30rpx;
+  }
+
+  .trend-chart {
+    .chart-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 200rpx;
+      margin-bottom: 20rpx;
+
+      .trend-bar {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .bar-stack {
+          display: flex;
+          flex-direction: column;
+          width: 40rpx;
+          margin-bottom: 10rpx;
+
+          .prevention-bar {
+            background: linear-gradient(to top, #0052d9, #4285f4);
+            border-radius: 4rpx 4rpx 0 0;
+            transition: height 0.5s ease;
+          }
+
+          .treatment-bar {
+            background: linear-gradient(to top, #e37318, #ff9500);
+            border-radius: 0 0 4rpx 4rpx;
+            transition: height 0.5s ease;
+          }
+        }
+
+        .month-label {
+          font-size: 22rpx;
+          color: #666;
+          margin-bottom: 4rpx;
+        }
+
+        .total-value {
+          font-size: 24rpx;
+          font-weight: 500;
+          color: #333;
+        }
+      }
+    }
+
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 40rpx;
+      padding-top: 20rpx;
+      border-top: 1px solid #f0f0f0;
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+        font-size: 24rpx;
+        color: #666;
+
+        .legend-color {
+          width: 12rpx;
+          height: 12rpx;
+          border-radius: 2rpx;
+
+          &.prevention {
+            background: #0052d9;
+          }
+
+          &.treatment {
+            background: #e37318;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* 建议卡片 */
+.suggestions-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30rpx;
+  }
+
+  .suggestions-list {
+    .suggestion-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20rpx 0;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .suggestion-content {
+        flex: 1;
+
+        .suggestion-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8rpx;
+
+          .suggestion-category {
+            font-size: 30rpx;
+            font-weight: 500;
+            color: #333;
+          }
+
+          .priority-badge {
+            padding: 4rpx 12rpx;
+            border-radius: 12rpx;
+            font-size: 22rpx;
+            font-weight: 500;
+
+            &.priority-high {
+              background: #ffeaea;
+              color: #e34d59;
+            }
+
+            &.priority-medium {
+              background: #fff3cd;
+              color: #e37318;
+            }
+
+            &.priority-low {
+              background: #f0f0f0;
+              color: #666;
+            }
+          }
+        }
+
+        .suggestion-text {
+          display: block;
+          font-size: 26rpx;
+          color: #666;
+          line-height: 1.4;
+          margin-bottom: 8rpx;
+        }
+
+        .suggestion-saving {
+          display: flex;
+          align-items: center;
+          gap: 8rpx;
+
+          .saving-label {
+            font-size: 24rpx;
+            color: #999;
+          }
+
+          .saving-value {
+            font-size: 26rpx;
+            font-weight: 600;
+            color: #00a870;
+          }
+        }
+      }
+
+      .suggestion-arrow {
+        margin-left: 20rpx;
+      }
+    }
+  }
+}
+
+/* 对比分析卡片 */
+.comparison-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+  .card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30rpx;
+  }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30rpx;
+
+    .comparison-item {
+      text-align: center;
+      padding: 20rpx;
+      background: #f8f9fa;
+      border-radius: 12rpx;
+
+      .comparison-label {
+        display: block;
+        font-size: 24rpx;
+        color: #666;
+        margin-bottom: 8rpx;
+      }
+
+      .comparison-value {
+        display: block;
+        font-size: 30rpx;
+        font-weight: 600;
+        color: #333;
+      }
+    }
+  }
+}
+
+/* 操作区域 */
+.actions-section {
+  margin-top: 30rpx;
+}
+
+/* 底部安全区域 */
+.safe-area {
+  height: 120rpx;
+}

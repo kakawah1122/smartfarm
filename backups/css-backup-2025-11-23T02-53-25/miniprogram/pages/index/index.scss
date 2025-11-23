@@ -1,0 +1,1232 @@
+/* index.scss - 现代化响应式设计 */
+/* 强制浅色背景，解决真机深色问题 */
+
+/* 全局强制浅色背景覆盖 */
+page {
+  background-color: #f5f5f5 !important;
+}
+
+.page-container {
+  height: 100vh;
+  background-color: #f5f5f5 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 防止页面整体滚动 */
+}
+
+/* 内容包装器 - 统一处理导航栏高度 */
+.content-wrapper {
+  flex: 1;
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 32rpx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 滚动容器 - 导航栏安全间距适配 */
+.list-container {
+  flex: 1;
+  background-color: #f9fafb !important;
+  padding: 0; /* 四周都为0，边距由卡片自身的margin控制 */
+  box-sizing: border-box;
+}
+
+/* 底部安全区域占位 */
+.safe-area {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 0;
+  flex-shrink: 0;
+}
+
+/* 卡片通用样式 - iOS风格，保持与天气详情页一致 */
+.card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20rpx;
+  margin: 12rpx 16rpx; /* 与生产管理页保持一致 */
+  box-shadow: none;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+}
+
+.card:last-child {
+  margin-bottom: 0; /* 最后一张卡片底部间距为0，由safe-area处理 */
+}
+
+.card:first-child {
+  margin-top: 10rpx; /* 第一张卡片顶部间距 */
+}
+
+.card:active {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+.card-header {
+  padding: 20rpx 24rpx 16rpx 24rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+}
+
+.card-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.5rpx;
+  line-height: 1.3;
+}
+
+.update-time {
+  font-size: 24rpx;
+  color: rgba(0, 0, 0, 0.45);
+  font-weight: 500;
+}
+
+.card-content {
+  padding: 20rpx 24rpx 24rpx 24rpx;
+}
+
+/* 天气卡片 - 已迁移到 weather-card 组件，这里只保留页面特定的覆盖样式 */
+
+
+/* 价格卡片 - 现代化设计 */
+.price-card {
+  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
+  background: var(--color-bg-primary);
+  box-shadow: 0 4rpx 24rpx rgba(16, 185, 129, 0.1);
+}
+
+.price-card .card-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.price-combined-card {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.88), rgba(11, 22, 43, 0.75));
+  border: 1rpx solid rgba(148, 163, 184, 0.24);
+}
+
+.price-item {
+  flex: 1;
+  padding: 32rpx 24rpx;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 160rpx;
+  box-sizing: border-box;
+  color: #f8fafc;
+}
+
+.price-item:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+}
+
+.price-item:last-child {
+  border-top-right-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.price-divider {
+  width: 2rpx;
+  background: rgba(148, 163, 184, 0.28);
+  margin: 28rpx 0;
+  align-self: stretch;
+  pointer-events: none;
+}
+
+.price-item > .price-label,
+.price-item > .price-value {
+  width: 100%;
+}
+
+.price-item-hover {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+.success-bg {
+  background: linear-gradient(135deg, rgba(26, 77, 94, 0.88) 0%, rgba(44, 95, 111, 0.68) 100%);
+  border: 2rpx solid rgba(70, 120, 133, 0.35);
+}
+
+.primary-bg {
+  background: linear-gradient(135deg, rgba(92, 26, 61, 0.86) 0%, rgba(124, 40, 79, 0.66) 100%);
+  border: 2rpx solid rgba(140, 58, 104, 0.34);
+}
+
+.price-label {
+  display: block;
+  text-align: center;
+  font-size: 30rpx;
+  color: rgba(248, 250, 252, 0.96);
+  line-height: 1.2;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 12rpx;
+  text-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.45);
+}
+
+.price-value {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  font-size: 44rpx;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  gap: var(--spacing-xs);
+  margin-bottom: 8rpx;
+  color: #f8fafc;
+  text-shadow: 0 4rpx 12rpx rgba(15, 23, 42, 0.55);
+}
+
+.price-number {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.price-unit {
+  font-size: 30rpx;
+  font-weight: var(--font-weight-medium);
+  color: rgba(226, 232, 240, 0.9);
+  text-shadow: 0 1rpx 3rpx rgba(15, 23, 42, 0.4);
+}
+
+.success-text {
+  color: #5eead4;
+  text-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.4);
+}
+
+.primary-text {
+  color: #bfdbfe;
+  text-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.4);
+}
+
+/* 天气卡片样式已移至 weather-card 组件 */
+.weather-card {
+  margin-left: 16rpx !important;
+  margin-right: 16rpx !important;
+  margin-top: 10rpx !important;
+  margin-bottom: 12rpx !important;
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 480px) {
+  .card {
+    margin: 12rpx 16rpx; /* 与生产管理页保持一致 */
+  }
+  
+  .card-content {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media screen and (max-width: 350px) {
+  .price-combined-card {
+    flex-direction: column;
+  }
+
+  .price-divider {
+    width: 100%;
+    height: 2rpx;
+    margin: 0 24rpx;
+  }
+
+  .price-item {
+    padding: 28rpx 24rpx;
+    min-height: auto;
+  }
+}
+
+
+/* 动效增强 */
+.card {
+  transform-origin: center;
+  will-change: transform, box-shadow;
+}
+
+.price-item {
+  will-change: transform;
+}
+
+/* 滚动性能优化 */
+.list-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+
+/* 针对刘海屏设备的特殊优化 */
+@supports (padding: max(0px)) {
+  .status-bar {
+    padding-top: max(var(--safe-area-inset-top, 0), 8rpx);
+  }
+  
+  .card {
+    margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0)));
+    margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0)));
+  }
+  
+  /* 确保天气卡片也使用相同的margin */
+  .weather-card {
+    margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0))) !important;
+    margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0))) !important;
+  }
+  
+  /* 详情页天气卡片 */
+  .current-weather-card {
+    margin-left: max(16rpx, calc(16rpx + var(--safe-area-inset-left, 0))) !important;
+    margin-right: max(16rpx, calc(16rpx + var(--safe-area-inset-right, 0))) !important;
+  }
+}
+
+/* 针对不同设备的微调 */
+
+/* 加载状态样式 */
+.card.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.card.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32rpx;
+  height: 32rpx;
+  margin: -16rpx 0 0 -16rpx;
+  border: 2rpx solid var(--color-border-light);
+  border-top-color: var(--primary-blue);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 无障碍增强 */
+.price-item:focus {
+  outline: 2rpx solid var(--primary-blue);
+  outline-offset: 4rpx;
+}
+
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .card {
+    border: 2rpx solid var(--color-border-dark);
+  }
+  
+  .price-item {
+    border: 2rpx solid var(--color-border-base);
+  }
+}
+
+/* ========== 任务详情弹窗样式 ========== */
+.record-detail-content {
+  padding: 0;
+  background: transparent;
+}
+
+.info-card {
+  background: white;
+  border-radius: var(--radius-base, 12rpx);
+  overflow: hidden;
+}
+
+.card-content {
+  padding: var(--spacing-base, 16rpx);
+}
+
+.record-detail-content .info-row {
+  margin-bottom: 20rpx !important;
+  padding: 0 8rpx;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 16rpx;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.record-detail-content .info-row:last-child {
+  margin-bottom: 0 !important;
+}
+
+.record-detail-content .info-label {
+  font-size: 22rpx !important;
+  color: #6c757d !important;
+  font-weight: 500 !important;
+  min-width: 120rpx !important;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.record-detail-content .info-value {
+  font-size: 24rpx !important;
+  color: #1a1a1a !important;
+  font-weight: 400 !important;
+  text-align: right;
+  flex: 1;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.5;
+}
+
+.record-detail-content .status-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.info-row-description .info-value,
+.info-row-notes .info-value {
+  text-align: left !important;
+}
+
+.record-detail-content .note-text {
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.record-detail-content .important-text {
+  color: var(--color-warning, #ed7b2f) !important;
+}
+
+.record-detail-content .materials-text {
+  word-break: break-all;
+  white-space: normal;
+}
+
+/* ========== 疫苗接种表单样式 ========== */
+.vaccine-form-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  
+  .form-section {
+    margin-bottom: 32rpx;
+    
+    .section-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      margin-bottom: 8rpx;
+      padding: 24rpx 32rpx 16rpx 32rpx;
+      background: rgba(0, 82, 217, 0.04);
+      border-left: 4rpx solid var(--td-brand-color, #0052d9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10rpx);
+      -webkit-backdrop-filter: blur(10rpx);
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 32rpx;
+      min-height: 88rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .form-label {
+        flex-shrink: 0;
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+        margin-right: 24rpx;
+        width: 180rpx;
+        
+        &.required::after {
+          content: " *";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+        }
+      }
+      
+      .form-input, .form-textarea {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        background: #ffffff;
+        text-align: right;
+        min-height: 52rpx;
+        
+        &:focus {
+          border-color: var(--td-brand-color, #0052d9);
+          box-shadow: 0 0 0 2rpx rgba(0, 82, 217, 0.1);
+          outline: none;
+        }
+        
+        &::placeholder {
+          color: #cccccc;
+          text-align: right;
+          font-size: 28rpx;
+        }
+      }
+      
+      .form-textarea {
+        min-height: 120rpx;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        background: #ffffff;
+        min-height: 52rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        position: relative;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+      
+      &.total-cost {
+        background: rgba(0, 82, 217, 0.03);
+        
+        .form-label {
+          font-weight: 600;
+          color: var(--td-brand-color, #0052d9);
+        }
+        
+        .cost-value {
+          flex: 1;
+          text-align: right;
+          font-size: 32rpx;
+          font-weight: 600;
+          color: var(--td-brand-color, #0052d9);
+        }
+      }
+    }
+  }
+}
+
+
+
+/* 用药管理表单样式 - 添加到首页样式文件末尾 */
+
+/* ========== 用药管理表单样式（优化版 - 参照接种信息表单） ========== */
+
+.medication-form-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  /* GPU加速优化 */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  
+  .form-section {
+    margin-bottom: 32rpx;
+    
+    .section-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      margin-bottom: 8rpx;
+      padding: 24rpx 32rpx 16rpx 32rpx;
+      background: rgba(22, 163, 74, 0.04);
+      border-left: 4rpx solid #16a34a;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10rpx);
+      -webkit-backdrop-filter: blur(10rpx);
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 32rpx;
+      min-height: 88rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .form-label {
+        flex-shrink: 0;
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+        margin-right: 24rpx;
+        width: 180rpx;
+        
+        &.required::after {
+          content: " *";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+        }
+      }
+      
+      .form-input, .form-textarea {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        background: #ffffff;
+        text-align: right;
+        min-height: 52rpx;
+        
+        &:focus {
+          border-color: #16a34a;
+          box-shadow: 0 0 0 2rpx rgba(22, 163, 74, 0.1);
+          outline: none;
+        }
+        
+        &::placeholder {
+          color: #cccccc;
+          text-align: right;
+          font-size: 28rpx;
+        }
+      }
+      
+      .form-textarea {
+        min-height: 120rpx;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        background: #ffffff;
+        min-height: 52rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        position: relative;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+      
+      .unit-text {
+        position: absolute;
+        right: 24rpx;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24rpx;
+        color: var(--color-text-tertiary);
+        pointer-events: none;
+      }
+      
+      .error-text {
+        display: block;
+        font-size: 24rpx;
+        color: var(--td-error-color, #e34d59);
+        margin-top: 8rpx;
+        line-height: 1.4;
+      }
+      
+      &.textarea-row {
+        align-items: flex-start;
+        
+        .form-label {
+          margin-top: 16rpx;
+        }
+      }
+    }
+  }
+  
+  .medicine-info {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(22, 163, 74, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid #16a34a;
+    
+    .info-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8rpx 0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .info-label {
+        font-size: 26rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+      }
+      
+      .info-value {
+        font-size: 28rpx;
+        color: var(--td-text-color-primary, #000000);
+        font-weight: 600;
+        text-align: right;
+      }
+    }
+  }
+  
+  .form-errors {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(227, 77, 89, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid var(--td-error-color, #e34d59);
+    
+    .error-item {
+      margin-bottom: 8rpx;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .error-text {
+        display: block;
+        color: var(--td-error-color, #e34d59);
+        font-size: 26rpx;
+        line-height: 1.5;
+        margin: 0;
+        
+        &::before {
+          content: "• ";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+          margin-right: 4rpx;
+        }
+      }
+    }
+  }
+}
+
+
+/* ========== 营养管理表单样式（优化版 - 参照接种信息表单） ========== */
+
+.nutrition-form-content {
+  padding: 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #ffffff;
+  /* GPU加速优化 */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  
+  .form-section {
+    margin-bottom: 32rpx;
+    
+    .section-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: var(--td-text-color-primary, #000000);
+      margin-bottom: 8rpx;
+      padding: 24rpx 32rpx 16rpx 32rpx;
+      background: rgba(16, 185, 129, 0.04);
+      border-left: 4rpx solid #10b981;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10rpx);
+      -webkit-backdrop-filter: blur(10rpx);
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 32rpx;
+      min-height: 88rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .form-label {
+        flex-shrink: 0;
+        font-size: 28rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+        margin-right: 24rpx;
+        width: 180rpx;
+        
+        &.required::after {
+          content: " *";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+        }
+      }
+      
+      .form-input, .form-textarea {
+        flex: 1;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        background: #ffffff;
+        text-align: right;
+        min-height: 52rpx;
+        
+        &:focus {
+          border-color: #10b981;
+          box-shadow: 0 0 0 2rpx rgba(16, 185, 129, 0.1);
+          outline: none;
+        }
+        
+        &::placeholder {
+          color: #cccccc;
+          text-align: right;
+          font-size: 28rpx;
+        }
+      }
+      
+      .form-textarea {
+        min-height: 120rpx;
+        resize: none;
+        text-align: left;
+        line-height: 1.6;
+        
+        &::placeholder {
+          text-align: left;
+        }
+      }
+      
+      .picker-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12rpx 16rpx;
+        border: 1rpx solid #e5e5e5;
+        border-radius: 8rpx;
+        background: #ffffff;
+        min-height: 52rpx;
+        font-size: 30rpx;
+        color: var(--td-text-color-primary, #000000);
+        position: relative;
+        
+        &::after {
+          content: '';
+          width: 12rpx;
+          height: 12rpx;
+          border-right: 2rpx solid #cccccc;
+          border-bottom: 2rpx solid #cccccc;
+          transform: rotate(45deg);
+          margin-left: 12rpx;
+          flex-shrink: 0;
+        }
+      }
+      
+      .unit-text {
+        position: absolute;
+        right: 24rpx;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24rpx;
+        color: var(--color-text-tertiary);
+        pointer-events: none;
+      }
+      
+      .error-text {
+        display: block;
+        font-size: 24rpx;
+        color: var(--td-error-color, #e34d59);
+        margin-top: 8rpx;
+        line-height: 1.4;
+      }
+      
+      &.textarea-row {
+        align-items: flex-start;
+        
+        .form-label {
+          margin-top: 16rpx;
+        }
+      }
+    }
+  }
+  
+  .nutrition-info {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(16, 185, 129, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid #10b981;
+    
+    .info-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8rpx 0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .info-label {
+        font-size: 26rpx;
+        color: var(--td-text-color-secondary, #666666);
+        line-height: 1.4;
+      }
+      
+      .info-value {
+        font-size: 28rpx;
+        color: var(--td-text-color-primary, #000000);
+        font-weight: 600;
+        text-align: right;
+      }
+    }
+  }
+  
+  .form-errors {
+    margin: 24rpx 32rpx;
+    padding: 20rpx;
+    background: rgba(227, 77, 89, 0.08);
+    border-radius: 12rpx;
+    border-left: 4rpx solid var(--td-error-color, #e34d59);
+    
+    .error-item {
+      margin-bottom: 8rpx;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .error-text {
+        display: block;
+        color: var(--td-error-color, #e34d59);
+        font-size: 26rpx;
+        line-height: 1.5;
+        margin: 0;
+        
+        &::before {
+          content: "• ";
+          color: var(--td-error-color, #e34d59);
+          font-weight: 600;
+          margin-right: 4rpx;
+        }
+      }
+    }
+  }
+}
+
+
+
+// 只读输入框样式
+.readonly-input {
+  background-color: #f5f5f5 !important;
+  color: #666 !important;
+  cursor: not-allowed;
+  position: relative;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.02);
+    pointer-events: none;
+  }
+}
+
+/* ========== 知识库卡片 ========== */
+
+/* 知识库主题色变量（局部） */
+.knowledge-card {
+  /* 主题色定义 */
+  --knowledge-theme-default: #6366f1;      /* 默认主题：深蓝紫色 */
+  --knowledge-theme-primary: #2563eb;      /* 主要主题：深蓝色 */
+  --knowledge-theme-success: #0891b2;      /* 成功主题：天青色 */
+  --knowledge-theme-danger: #dc2626;        /* 危险主题：深红色 */
+  --knowledge-theme-warning: #d97706;       /* 警告主题：深橙色 */
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md, 20rpx);
+    padding-bottom: var(--spacing-md, 20rpx);
+    border-bottom: 2rpx solid var(--color-border-dark, #d1d5db);
+  }
+  
+  .view-all-link {
+    font-size: var(--font-size-sm, 26rpx);
+    color: var(--td-brand-color, #0052d9);
+    font-weight: var(--font-weight-medium, 500);
+  }
+}
+
+/* 文章列表容器 */
+.knowledge-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  margin-top: 0;
+}
+
+/* 知识库文章项 */
+.knowledge-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base, 16rpx);
+  padding: var(--spacing-md, 20rpx) 0;
+  transition: background 0.2s;
+  
+  &:not(:last-child) {
+    border-bottom: 2rpx solid var(--color-border-dark, #d1d5db);
+    margin-bottom: 0;
+  }
+  
+  &:active {
+    background: var(--color-bg-secondary, #f9fafb);
+  }
+}
+
+/* 知识点标识圆点 */
+.knowledge-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: var(--radius-full, 50%);
+  flex-shrink: 0;
+  background: var(--color-info, #3b82f6);
+  
+  &-default {
+    background: var(--knowledge-theme-default, #6366f1);
+  }
+  
+  &-primary {
+    background: var(--color-info, #3b82f6);
+  }
+  
+  &-success {
+    background: var(--color-success, #10b981);
+  }
+  
+  &-danger {
+    background: var(--color-danger, #ef4444);
+  }
+  
+  &-warning {
+    background: var(--color-warning, #f59e0b);
+  }
+}
+
+/* 知识库文章标题 */
+.knowledge-title {
+  font-size: var(--font-size-md, 28rpx);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: var(--line-height-relaxed, 1.6);
+  flex: 1;
+  letter-spacing: 0.2rpx;
+  color: var(--color-info, #3b82f6);
+  
+  &-default {
+    color: var(--knowledge-theme-default, #6366f1);
+  }
+  
+  &-primary {
+    color: var(--knowledge-theme-primary, #2563eb);
+  }
+  
+  &-success {
+    color: var(--knowledge-theme-success, #0891b2);
+  }
+  
+  &-danger {
+    color: var(--knowledge-theme-danger, #dc2626);
+  }
+  
+  &-warning {
+    color: var(--knowledge-theme-warning, #d97706);
+  }
+}
+
+/* 知识库空状态 */
+.knowledge-empty {
+  text-align: center;
+  padding: var(--spacing-2xl, 40rpx) 0;
+  
+  .empty-hint {
+    font-size: var(--font-size-sm, 26rpx);
+    color: var(--color-text-tertiary, #6b7280);
+  }
+}
+
+/* ========== 响应式优化（小屏幕适配） ========== */
+
+@media (max-width: 750rpx) {
+  /* 疫苗表单响应式适配 */
+  .vaccine-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .form-textarea {
+          &::placeholder {
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+
+  /* 用药管理和营养管理表单响应式适配 */
+  .medication-form-content, .nutrition-form-content {
+    .form-section {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16rpx 24rpx;
+        min-height: auto;
+        
+        .form-label {
+          width: auto;
+          margin-right: 0;
+          margin-bottom: 12rpx;
+          font-size: 26rpx;
+        }
+        
+        .form-input, .form-textarea, .picker-input {
+          width: 100%;
+          text-align: left;
+          
+          &::placeholder {
+            text-align: left;
+          }
+        }
+        
+        .unit-text {
+          position: static;
+          transform: none;
+          margin-left: 12rpx;
+          align-self: flex-end;
+        }
+      }
+      
+      .section-title {
+        font-size: 28rpx;
+        padding: 20rpx 24rpx 12rpx 24rpx;
+      }
+    }
+    
+    .medicine-info, .nutrition-info, .form-errors {
+      margin: 20rpx 24rpx;
+      padding: 16rpx;
+    }
+  }
+}
+
+/* ========== 性能优化 ========== */
+
+/* 减少重绘和回流 */
+.form-input:focus,
+.form-textarea:focus,
+.picker-input:focus {
+  transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.medication-form-content,
+.nutrition-form-content,
+.vaccine-form-content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 减少动画开销 */
+.form-input,
+.form-textarea,
+.picker-input {
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}

@@ -1,0 +1,288 @@
+// miniprogram/packageHealth/cured-records-list/cured-records-list.scss
+// 治愈记录列表页面样式 - 按照项目Flex布局规范
+
+@import "../../styles/health-vars.scss";
+
+/* 页面容器 */
+.page-container {
+  height: 100vh;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 内容包装器 */
+.content-wrapper {
+  flex: 1;
+  margin-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 16rpx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 滚动容器 */
+.list-container {
+  flex: 1;
+  padding: 16rpx 24rpx;
+  box-sizing: border-box;
+}
+
+// ============ 加载状态 ============
+.loading-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx 24rpx;
+}
+
+// ============ 统计卡片 ============
+.stats-section {
+  padding: 32rpx 0;
+  background: transparent;
+  margin-bottom: 8rpx;
+  flex-shrink: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 28rpx 16rpx;
+  border-radius: $health-card-radius;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  
+  &.success {
+    background: linear-gradient(135deg, #007854 0%, #008865 100%);
+  }
+  
+  &.primary {
+    background: linear-gradient(135deg, #003b9e 0%, #004db8 100%);
+  }
+  
+  &.warning {
+    background: linear-gradient(135deg, #c85e1f 0%, #d66e2e 100%);
+  }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  width: 100%;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1;
+}
+
+// ============ 空状态 ============
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 40rpx 24rpx;
+}
+
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.tip-title {
+  font-size: $health-title-size;
+  color: $health-text-primary;
+  font-weight: 500;
+}
+
+.tip-subtitle {
+  font-size: $health-label-size;
+  color: $health-text-placeholder;
+  line-height: $health-label-line-height;
+}
+
+// ============ 记录列表 ============
+.records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding-bottom: 0;
+}
+
+.record-card {
+  background: #fff;
+  border-radius: $health-card-radius;
+  box-shadow: $health-card-shadow;
+  transition: all $health-transition-normal ease;
+  overflow: hidden;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+// 记录头部
+.record-header {
+  padding: $health-card-padding 32rpx 20rpx;
+  border-bottom: $health-border-width $health-border-style $health-border-light;
+}
+
+.record-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.record-name {
+  font-size: $health-title-size;
+  font-weight: $health-title-weight;
+  color: $health-text-primary;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.status-tag {
+  flex-shrink: 0;
+}
+
+// 记录内容
+.record-content {
+  padding: $health-card-padding 32rpx;
+}
+
+// 信息行布局
+.info-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 16rpx;
+  flex-wrap: nowrap;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.info-group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  
+  // 第一个info-group（批次号）占更多空间
+  &:first-child {
+    flex: 1 1 auto;
+    min-width: 180rpx;
+    max-width: 300rpx;
+  }
+
+  // 其他info-group固定宽度
+  &:not(:first-child) {
+    flex: 0 0 auto;
+    margin-left: 16rpx;
+  }
+
+  .info-label {
+    font-size: $health-label-size;
+    color: $health-label-color;
+    margin-right: 8rpx;
+    flex-shrink: 0;
+    line-height: $health-label-line-height;
+    white-space: nowrap;
+  }
+
+  .info-value {
+    font-size: $health-value-size;
+    color: $health-value-color;
+    font-weight: $health-value-weight;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    &.cured-count {
+      color: $health-success-color;
+      font-weight: 600;
+    }
+    
+    // 治疗编号专用样式 - 确保不换行
+    &.treatment-number {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+      color: $health-text-secondary;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
+    }
+  }
+}
+
+.info-group.full-width {
+  flex: 1 1 100%;
+  max-width: none !important;  // 覆盖 :first-child 的 max-width 限制
+  min-width: 0;
+}
+
+// 底部信息栏
+.record-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $health-footer-margin-top;
+  padding-top: $health-footer-padding-top;
+  border-top: $health-border-width $health-border-style $health-border-light;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: $health-footer-gap;
+
+  .date-text {
+    font-size: $health-date-size;
+    color: $health-text-placeholder;
+  }
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+
+  .operator-text {
+    font-size: $health-date-size;
+    color: $health-text-secondary;
+    font-weight: 500;
+  }
+}
+
+// 底部安全区域
+.safe-area {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 0;
+  flex-shrink: 0;
+}

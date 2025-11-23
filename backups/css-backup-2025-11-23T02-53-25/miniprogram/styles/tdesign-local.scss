@@ -1,0 +1,83 @@
+/* 本地TDesign样式 - 完全移除外部字体依赖 */
+
+/* 重新定义 t-icon 基础类，使用纯CSS图标 */
+.t-icon-base {
+  font-style: normal;
+  font-weight: 400;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  text-align: center;
+  display: inline-block;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* 移除字体族，使用边框和背景实现图标效果 */
+  font-family: inherit;
+}
+
+/* 常用图标的CSS实现（替代字体图标） */
+.t-icon-arrow-right::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.t-icon-arrow-left::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-top: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.t-icon-arrow-down::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-bottom: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.t-icon-arrow-up::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-top: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.t-icon-close::before {
+  content: '×';
+  font-size: 18px;
+  line-height: 1;
+}
+
+.t-icon-check::before {
+  content: '✓';
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* 确保所有图标元素不使用外部字体 */
+[class*="t-icon-"] {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif !important;
+}
+
+/* 通用图标样式 */
+.t-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-size: inherit;
+}
