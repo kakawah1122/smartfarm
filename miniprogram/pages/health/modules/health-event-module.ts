@@ -171,9 +171,9 @@ export class HealthEventManager {
    * @param pageInstance 页面实例
    */
   static setupClickPrevention(pageInstance: unknown) {
-    // 初始化点击时间记录
+    // 初始化点击时间记录 - 设置为很久以前的时间，避免第一次点击被误判为重复点击
     if (!pageInstance.lastClickTime) {
-      pageInstance.lastClickTime = 0
+      pageInstance.lastClickTime = Date.now() - 10000 // 10秒前
     }
     
     // 添加防重复点击检查方法

@@ -3283,7 +3283,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 查看任务详情（优化：立即显示弹窗，异步加载用户信息）
    */
   async viewTaskDetail(e: WechatMiniprogram.CustomEvent) {
-    if (this.checkDoubleClick && this.checkDoubleClick()) return
+    // 修复：确保checkDoubleClick存在且正确检查重复点击
+    if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) {
+      return
+    }
     
     const task = e.currentTarget.dataset.task
     if (!task) return

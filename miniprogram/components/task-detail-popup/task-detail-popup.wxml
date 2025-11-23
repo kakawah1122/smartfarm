@@ -143,7 +143,7 @@
         </view>
 
         <!-- 完成状态放在最下方 -->
-        <view class="divider-line"></view>
+        <view class="divider-line" wx:if="{{task.notes}}"></view>
         <view class="info-row">
           <text class="info-label">完成状态：</text>
           <view class="status-value">
