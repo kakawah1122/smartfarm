@@ -104,7 +104,7 @@ export class PerformanceAnalyzer {
       query.selectAll('*').fields({
         id: true,
         dataset: true
-      }, (res: unknown) => {
+      }, (res: any) => {
         if (this.currentPageMetrics.render) {
           this.currentPageMetrics.render.domNodeCount = res?.length || 0
         }
@@ -113,7 +113,7 @@ export class PerformanceAnalyzer {
       // 统计列表项
       query.selectAll('[wx\\:for]').fields({
         dataset: true
-      }, (res: unknown) => {
+      }, (res: any) => {
         if (this.currentPageMetrics.render) {
           this.currentPageMetrics.render.listItemCount = res?.length || 0
         }
@@ -122,7 +122,7 @@ export class PerformanceAnalyzer {
       // 统计图片
       query.selectAll('image').fields({
         dataset: true
-      }, (res: unknown) => {
+      }, (res: any) => {
         if (this.currentPageMetrics.render) {
           this.currentPageMetrics.render.imageCount = res?.length || 0
         }

@@ -1145,7 +1145,7 @@ Page({
       // 3. 尝试直接调用待办页面的同步方法（如果存在）
       try {
         const pages = getCurrentPages()
-        const breedingTodoPage = pages.find((page: Record<string, unknown>) => page.route === 'packageHealth/breeding-todo/breeding-todo')
+        const breedingTodoPage = pages.find((page: any) => page.route === 'packageHealth/breeding-todo/breeding-todo')
         if (breedingTodoPage && typeof breedingTodoPage.syncTaskStatusFromHomepage === 'function') {
           setTimeout(() => {
             breedingTodoPage.syncTaskStatusFromHomepage(taskId, completed)
@@ -1162,7 +1162,7 @@ Page({
   /**
    * 判断是否为疫苗接种任务
    */
-  isVaccineTask(task: Record<string, unknown>): boolean {
+  isVaccineTask(task: any): boolean {
     // 首先排除用药管理任务
     if (task.type === 'medication' || task.type === 'medicine') {
       return false
@@ -1220,7 +1220,7 @@ Page({
   /**
    * 初始化疫苗表单数据
    */
-  initVaccineFormData(task: Record<string, unknown>) {
+  initVaccineFormData(task: any) {
     const vaccineFormData: VaccineFormData = {
       veterinarianName: '',
       veterinarianContact: '',
@@ -1731,7 +1731,7 @@ Page({
   /**
    * 打开用药管理表单
    */
-  async openMedicationForm(task: Record<string, unknown>) {
+  async openMedicationForm(task: any) {
     // 确保selectedTask数据正确设置
     this.setData({
       selectedTask: task
@@ -1763,7 +1763,7 @@ Page({
   /**
    * 打开营养管理表单
    */
-  async openNutritionForm(task: Record<string, unknown>) {
+  async openNutritionForm(task: any) {
     // 确保selectedTask数据正确设置
     this.setData({
       selectedTask: task
@@ -1813,8 +1813,8 @@ Page({
         
         // 只显示有库存的药品
         const availableMedicines = materials
-          .filter((material: Record<string, unknown>) => (material.currentStock || 0) > 0)
-          .map((material: Record<string, unknown>) => ({
+          .filter((material: any) => (material.currentStock || 0) > 0)
+          .map((material: any) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -1869,8 +1869,8 @@ Page({
         
         // 只显示有库存的营养品
         const availableNutrition = materials
-          .filter((material: Record<string, unknown>) => (material.currentStock || 0) > 0)
-          .map((material: Record<string, unknown>) => ({
+          .filter((material: any) => (material.currentStock || 0) > 0)
+          .map((material: any) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -2338,7 +2338,7 @@ Page({
   /**
    * 仅完成用药管理任务（不创建物料记录）
    */
-  async completeMedicationTaskOnly(task: Record<string, unknown>) {
+  async completeMedicationTaskOnly(task: any) {
     try {
       wx.showLoading({ title: '完成任务中...' })
       
@@ -2475,7 +2475,7 @@ Page({
   /**
    * 完成营养管理任务
    */
-  async completeNutritionTask(task: Record<string, unknown>) {
+  async completeNutritionTask(task: any) {
     // 首页完成营养管理任务
     
     try {

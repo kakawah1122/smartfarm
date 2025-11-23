@@ -34,7 +34,7 @@ function sortDiagnosisByRecency(records: DiagnosisRecord[]): DiagnosisRecord[] {
 export class MonitoringModuleManager {
   private pageInstance: any
   
-  constructor(pageInstance: Record<string, unknown>) {
+  constructor(pageInstance: any) {
     this.pageInstance = pageInstance
   }
   
@@ -155,7 +155,7 @@ export class MonitoringModuleManager {
   /**
    * 创建新的异常记录
    */
-  async createAbnormalRecord(data: unknown): Promise<boolean> {
+  async createAbnormalRecord(data: any): Promise<boolean> {
     try {
       wx.showLoading({ title: '创建中...' })
       
@@ -199,6 +199,6 @@ export class MonitoringModuleManager {
 /**
  * 创建监控模块实例
  */
-export function createMonitoringModule(pageInstance: Record<string, unknown>) {
+export function createMonitoringModule(pageInstance: any) {
   return new MonitoringModuleManager(pageInstance)
 }

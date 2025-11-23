@@ -166,7 +166,7 @@ class PageTransition {
   }
   
   // 页面进入动画
-  pageEnter(page: Record<string, unknown>, options: TransitionOptions = {}) {
+  pageEnter(page: any, options: TransitionOptions = {}) {
     const animation = this.fadeIn({
       ...options,
       duration: 300
@@ -178,7 +178,7 @@ class PageTransition {
   }
   
   // 页面退出动画
-  pageExit(page: Record<string, unknown>, options: TransitionOptions = {}) {
+  pageExit(page: any, options: TransitionOptions = {}) {
     const animation = this.fadeOut({
       ...options,
       duration: 200
@@ -190,7 +190,7 @@ class PageTransition {
   }
   
   // Tab切换动画
-  tabSwitch(page: Record<string, unknown>, fromIndex: number, toIndex: number) {
+  tabSwitch(page: any, fromIndex: number, toIndex: number) {
     const direction = toIndex > fromIndex ? 'left' : 'right'
     const slideOutAni = this.slideOut({ direction, duration: 200 })
     const slideInAni = this.slideIn({ direction, duration: 200, delay: 100 })
@@ -209,7 +209,7 @@ class PageTransition {
   }
   
   // 列表项动画
-  listItemEnter(page: Record<string, unknown>, index: number) {
+  listItemEnter(page: any, index: number) {
     const animation = this.slideIn({
       direction: 'right',
       duration: 300,
@@ -222,7 +222,7 @@ class PageTransition {
   }
   
   // 弹窗动画
-  modalShow(page: Record<string, unknown>, modalId: string = 'modal') {
+  modalShow(page: any, modalId: string = 'modal') {
     const bgAnimation = this.fadeIn({ duration: 200 })
     const contentAnimation = this.zoomIn({ duration: 300, delay: 100 })
     
@@ -232,7 +232,7 @@ class PageTransition {
     })
   }
   
-  modalHide(page: Record<string, unknown>, modalId: string = 'modal') {
+  modalHide(page: any, modalId: string = 'modal') {
     const contentAnimation = this.zoomOut({ duration: 200 })
     const bgAnimation = this.fadeOut({ duration: 200, delay: 100 })
     

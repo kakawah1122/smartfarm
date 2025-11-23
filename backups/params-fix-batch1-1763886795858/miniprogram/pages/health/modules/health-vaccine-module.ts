@@ -13,14 +13,14 @@ import CloudApi from '../../../utils/cloud-api'
 export class VaccineModuleManager {
   private pageInstance: any
   
-  constructor(pageInstance: Record<string, unknown>) {
+  constructor(pageInstance: any) {
     this.pageInstance = pageInstance
   }
   
   /**
    * 初始化疫苗表单数据
    */
-  initVaccineForm(task: Record<string, unknown>) {
+  initVaccineForm(task: any) {
     // 获取当前批次的存栏数量
     const currentBatchStockQuantity = (() => {
       const currentBatch = this.pageInstance.data.availableBatches?.find((b: any) => 
@@ -335,6 +335,6 @@ export class VaccineModuleManager {
 /**
  * 创建疫苗模块实例
  */
-export function createVaccineModule(pageInstance: Record<string, unknown>) {
+export function createVaccineModule(pageInstance: any) {
   return new VaccineModuleManager(pageInstance)
 }

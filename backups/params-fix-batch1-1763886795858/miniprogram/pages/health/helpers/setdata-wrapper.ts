@@ -18,7 +18,7 @@ export class SetDataWrapper {
   private readonly batchDelay: number = 16 // 一帧时间
   private readonly maxBatchSize: number = 50 // 最大批量大小
   
-  constructor(page: Record<string, unknown>) {
+  constructor(page: any) {
     this.page = page
     this.originalSetData = page.setData.bind(page)
     this.wrapSetData()
@@ -143,6 +143,6 @@ export class SetDataWrapper {
 /**
  * 创建setData包装器
  */
-export function createSetDataWrapper(page: Record<string, unknown>): SetDataWrapper {
+export function createSetDataWrapper(page: any): SetDataWrapper {
   return new SetDataWrapper(page)
 }

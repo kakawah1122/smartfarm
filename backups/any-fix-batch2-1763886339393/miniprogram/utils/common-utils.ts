@@ -48,7 +48,7 @@ export function showToast(message: string, type: 'success' | 'error' | 'loading'
  * @param error 错误对象
  * @param defaultMessage 默认错误信息
  */
-export function handleError(error: unknown, defaultMessage = '操作失败'): string {
+export function handleError(error: any, defaultMessage = '操作失败'): string {
   console.error('Error:', error);
   
   let message = defaultMessage;
@@ -70,7 +70,7 @@ export function handleError(error: unknown, defaultMessage = '操作失败'): st
  * @param func 要防抖的函数
  * @param delay 延迟时间
  */
-export function debounce<T extends (...args: unknown[]) => any>(
+export function debounce<T extends (...args: any[]) => any>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -93,7 +93,7 @@ export function debounce<T extends (...args: unknown[]) => any>(
  * @param func 要节流的函数
  * @param limit 时间限制
  */
-export function throttle<T extends (...args: unknown[]) => any>(
+export function throttle<T extends (...args: any[]) => any>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
@@ -154,7 +154,7 @@ export function generateId(prefix = ''): string {
  * 检查是否为空值
  * @param value 要检查的值
  */
-export function isEmpty(value: unknown): boolean {
+export function isEmpty(value: any): boolean {
   if (value === null || value === undefined || value === '') {
     return true;
   }

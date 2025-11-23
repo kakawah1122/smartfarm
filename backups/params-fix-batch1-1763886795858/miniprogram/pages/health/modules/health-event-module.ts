@@ -31,9 +31,9 @@ interface PageInstance {
   debouncedLoadData?: Function
   onUnload?: Function
   throttledScrollHandler?: Function
-  setData?: (data: unknown, callback?: () => void) => void
-  setDataImmediate?: (data: unknown, callback?: () => void) => void
-  setDataDebounced?: (data: unknown, callback?: () => void) => void
+  setData?: (data: any, callback?: () => void) => void
+  setDataImmediate?: (data: any, callback?: () => void) => void
+  setDataDebounced?: (data: any, callback?: () => void) => void
   [key: string]: any
 }
 

@@ -34,7 +34,7 @@ function sortDiagnosisByRecency(records: DiagnosisRecord[]): DiagnosisRecord[] {
 export class MonitoringModuleManager {
   private pageInstance: any
   
-  constructor(pageInstance: Record<string, unknown>) {
+  constructor(pageInstance: any) {
     this.pageInstance = pageInstance
   }
   
@@ -58,7 +58,7 @@ export class MonitoringModuleManager {
           'monitoringData.diseaseDistribution': []
         })
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('加载监控数据失败:', error)
       wx.showToast({
         title: '加载监控数据失败',
@@ -92,7 +92,7 @@ export class MonitoringModuleManager {
   /**
    * 从全部批次数据更新监控信息
    */
-  updateMonitoringFromAllBatches(abnormalCount: number, abnormalRecords: unknown[]) {
+  updateMonitoringFromAllBatches(abnormalCount: number, abnormalRecords: any[]) {
     const updater = createDataUpdater()
     
     updater
@@ -155,7 +155,7 @@ export class MonitoringModuleManager {
   /**
    * 创建新的异常记录
    */
-  async createAbnormalRecord(data: unknown): Promise<boolean> {
+  async createAbnormalRecord(data: any): Promise<boolean> {
     try {
       wx.showLoading({ title: '创建中...' })
       
@@ -185,7 +185,7 @@ export class MonitoringModuleManager {
       } else {
         throw new Error(result?.result?.error || '创建失败')
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       wx.hideLoading()
       wx.showToast({
         title: error.message || '创建失败',
@@ -199,6 +199,6 @@ export class MonitoringModuleManager {
 /**
  * 创建监控模块实例
  */
-export function createMonitoringModule(pageInstance: Record<string, unknown>) {
+export function createMonitoringModule(pageInstance: any) {
   return new MonitoringModuleManager(pageInstance)
 }

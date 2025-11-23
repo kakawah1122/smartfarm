@@ -18,7 +18,7 @@ type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
 export class PreventionModuleManager {
   private pageInstance: any
   
-  constructor(pageInstance: Record<string, unknown>) {
+  constructor(pageInstance: any) {
     this.pageInstance = pageInstance
   }
   
@@ -87,7 +87,7 @@ export class PreventionModuleManager {
       }
       
       // 并行加载所有批次的任务
-      const batchTasksPromises = batches.map(async (batch: Record<string, unknown>) => {
+      const batchTasksPromises = batches.map(async (batch: any) => {
         try {
           const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
           const result = await safeCloudCall({
@@ -102,7 +102,7 @@ export class PreventionModuleManager {
           const response = result as BaseResponse
           if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
             const tasks = response.data
-            const normalizedTasks = tasks.map((task: Record<string, unknown>) =>
+            const normalizedTasks = tasks.map((task: any) =>
               this.normalizeTask(task, {
                 batchNumber: batch.batchNumber || batch._id,
                 dayAge: task.dayAge || dayAge
@@ -129,7 +129,7 @@ export class PreventionModuleManager {
       
       // 收集所有任务
       let allTasks: Task[] = []
-      validBatchTasks.forEach((batchData: Record<string, unknown>) => {
+      validBatchTasks.forEach((batchData: any) => {
         allTasks = allTasks.concat(batchData.tasks)
       })
       
@@ -177,7 +177,7 @@ export class PreventionModuleManager {
       }
       
       // 并行加载所有批次的未来7天任务
-      const upcomingPromises = batches.map(async (batch: Record<string, unknown>) => {
+      const upcomingPromises = batches.map(async (batch: any) => {
         try {
           const currentDayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
           const result = await safeCloudCall({
@@ -193,7 +193,7 @@ export class PreventionModuleManager {
           const response = result as BaseResponse
           if (response.success && response.data) {
             const tasks = Array.isArray(response.data) ? response.data : []
-            const normalizedTasks = tasks.map((task: Record<string, unknown>) =>
+            const normalizedTasks = tasks.map((task: any) =>
               this.normalizeTask(task, {
                 batchNumber: batch.batchNumber || batch._id
               })
@@ -201,7 +201,7 @@ export class PreventionModuleManager {
             
             // 按日龄分组
             const tasksByDayAge: Record<number, any[]> = {}
-            normalizedTasks.forEach((task: Record<string, unknown>) => {
+            normalizedTasks.forEach((task: any) => {
               const dayAge = task.dayAge || currentDayAge
               if (!tasksByDayAge[dayAge]) {
                 tasksByDayAge[dayAge] = []
@@ -233,7 +233,7 @@ export class PreventionModuleManager {
       
       // 收集所有任务
       let allTasks: Task[] = []
-      allBatchTasks.forEach((batchData: Record<string, unknown>) => {
+      allBatchTasks.forEach((batchData: any) => {
         allTasks = allTasks.concat(batchData.tasks)
       })
       
@@ -267,7 +267,7 @@ export class PreventionModuleManager {
       
       if (result?.success && result.data) {
         const tasks = Array.isArray(result.data) ? result.data : []
-        const normalizedTasks = tasks.map((task: Record<string, unknown>) => this.normalizeTask(task))
+        const normalizedTasks = tasks.map((task: any) => this.normalizeTask(task))
         
         // 分组历史任务
         const groupedTasks = this.groupHistoryTasksByBatch(normalizedTasks)
@@ -297,7 +297,7 @@ export class PreventionModuleManager {
   groupHistoryTasksByBatch(tasks: Task[] = []) {
     const batchMap: Record<string, any> = {}
     
-    tasks.forEach((task: Record<string, unknown>) => {
+    tasks.forEach((task: any) => {
       const batchKey = task.batchNumber || task.batchId || 'unknown'
       const taskDayAge = task.dayAge || 0
       // 使用批次号和日龄组合作为唯一键
@@ -438,7 +438,7 @@ export class PreventionModuleManager {
   /**
    * 打开任务详情弹窗
    */
-  openTaskDetailPopup(task: Record<string, unknown>) {
+  openTaskDetailPopup(task: any) {
     this.pageInstance.setData({
       selectedTask: task,
       showTaskDetailPopup: true
@@ -459,6 +459,6 @@ export class PreventionModuleManager {
 /**
  * 创建预防模块实例
  */
-export function createPreventionModule(pageInstance: Record<string, unknown>) {
+export function createPreventionModule(pageInstance: any) {
   return new PreventionModuleManager(pageInstance)
 }

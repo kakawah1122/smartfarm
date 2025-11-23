@@ -154,7 +154,7 @@ export function generateId(prefix = ''): string {
  * 检查是否为空值
  * @param value 要检查的值
  */
-export function isEmpty(value: unknown): boolean {
+export function isEmpty(value: any): boolean {
   if (value === null || value === undefined || value === '') {
     return true;
   }

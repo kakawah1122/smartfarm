@@ -1,0 +1,551 @@
+{
+  "totalParams": 98,
+  "paramsByName": {
+    "r": {
+      "count": 5,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 174
+        },
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 187
+        },
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 235
+        },
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 248
+        },
+        {
+          "file": "miniprogram/pages/production/production.ts",
+          "line": 616
+        }
+      ]
+    },
+    "(sum: number, r: any": {
+      "count": 5,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 174
+        },
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 187
+        },
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 235
+        },
+        {
+          "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+          "line": 248
+        },
+        {
+          "file": "miniprogram/pages/production/production.ts",
+          "line": 616
+        }
+      ]
+    },
+    "page": {
+      "count": 10,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/helpers/setdata-wrapper.ts",
+          "line": 21
+        },
+        {
+          "file": "miniprogram/pages/health/helpers/setdata-wrapper.ts",
+          "line": 146
+        },
+        {
+          "file": "miniprogram/pages/health/helpers/setdata-wrapper.ts",
+          "line": 146
+        },
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1148
+        },
+        {
+          "file": "miniprogram/utils/page-transition.ts",
+          "line": 169
+        }
+      ]
+    },
+    "data": {
+      "count": 4,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-event-module.ts",
+          "line": 34
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-event-module.ts",
+          "line": 35
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-event-module.ts",
+          "line": 36
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-monitoring-module.ts",
+          "line": 158
+        }
+      ]
+    },
+    "data: any, callback?: (": {
+      "count": 3,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-event-module.ts",
+          "line": 34
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-event-module.ts",
+          "line": 35
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-event-module.ts",
+          "line": 36
+        }
+      ]
+    },
+    "pageInstance": {
+      "count": 9,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-monitoring-module.ts",
+          "line": 37
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-monitoring-module.ts",
+          "line": 202
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-monitoring-module.ts",
+          "line": 202
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 21
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 462
+        }
+      ]
+    },
+    "healthData": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-monitoring-module.ts",
+          "line": 73
+        }
+      ]
+    },
+    "aggregatedData": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-monitoring-module.ts",
+          "line": 108
+        }
+      ]
+    },
+    "b": {
+      "count": 3,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 74
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 164
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-vaccine-module.ts",
+          "line": 26
+        }
+      ]
+    },
+    "batch": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 90
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 180
+        }
+      ]
+    },
+    "task": {
+      "count": 13,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 105
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 196
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 204
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 270
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 300
+        }
+      ]
+    },
+    "batchData": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 132
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 236
+        }
+      ]
+    },
+    "\n          (b: any": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 73
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 163
+        }
+      ]
+    },
+    "async (batch: any": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 90
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 180
+        }
+      ]
+    },
+    "(task: any": {
+      "count": 5,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 105
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 196
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 204
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 270
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 300
+        }
+      ]
+    },
+    "(batchData: any": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 132
+        },
+        {
+          "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+          "line": 236
+        }
+      ]
+    },
+    "(b: any": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/health/modules/health-vaccine-module.ts",
+          "line": 26
+        }
+      ]
+    },
+    "material": {
+      "count": 4,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1816
+        },
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1817
+        },
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1872
+        },
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1873
+        }
+      ]
+    },
+    "selectedTask": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 2511
+        }
+      ]
+    },
+    "article": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 2565
+        }
+      ]
+    },
+    "(page: any": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1148
+        }
+      ]
+    },
+    "(material: any": {
+      "count": 4,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1816
+        },
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1817
+        },
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1872
+        },
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 1873
+        }
+      ]
+    },
+    "(article: any": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/index/index.ts",
+          "line": 2565
+        }
+      ]
+    },
+    "context": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/pages/profile/helpers/setdata-wrapper.ts",
+          "line": 21
+        },
+        {
+          "file": "miniprogram/pages/profile/helpers/setdata-wrapper.ts",
+          "line": 21
+        }
+      ]
+    },
+    "this": {
+      "count": 4,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 79
+        },
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 102
+        },
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 79
+        },
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 102
+        }
+      ]
+    },
+    "value": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 157
+        },
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 157
+        }
+      ]
+    },
+    "obj": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 179
+        },
+        {
+          "file": "miniprogram/utils/common-utils.ts",
+          "line": 179
+        }
+      ]
+    },
+    "res": {
+      "count": 3,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/utils/performance-analyzer.ts",
+          "line": 107
+        },
+        {
+          "file": "miniprogram/utils/performance-analyzer.ts",
+          "line": 116
+        },
+        {
+          "file": "miniprogram/utils/performance-analyzer.ts",
+          "line": 125
+        }
+      ]
+    },
+    "{\n        id: true,\n        dataset: true\n      }, (res: any": {
+      "count": 1,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/utils/performance-analyzer.ts",
+          "line": 104
+        }
+      ]
+    },
+    "{\n        dataset: true\n      }, (res: any": {
+      "count": 2,
+      "recommendedType": "unknown",
+      "locations": [
+        {
+          "file": "miniprogram/utils/performance-analyzer.ts",
+          "line": 114
+        },
+        {
+          "file": "miniprogram/utils/performance-analyzer.ts",
+          "line": 123
+        }
+      ]
+    }
+  },
+  "filesSummary": [
+    {
+      "file": "miniprogram/pages/health/modules/health-prevention-module.ts",
+      "count": 26
+    },
+    {
+      "file": "miniprogram/pages/index/index.ts",
+      "count": 19
+    },
+    {
+      "file": "miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts",
+      "count": 8
+    },
+    {
+      "file": "miniprogram/utils/common-utils.ts",
+      "count": 8
+    },
+    {
+      "file": "miniprogram/pages/health/modules/health-event-module.ts",
+      "count": 6
+    },
+    {
+      "file": "miniprogram/pages/health/modules/health-monitoring-module.ts",
+      "count": 6
+    },
+    {
+      "file": "miniprogram/pages/health/modules/health-vaccine-module.ts",
+      "count": 6
+    },
+    {
+      "file": "miniprogram/utils/page-transition.ts",
+      "count": 6
+    },
+    {
+      "file": "miniprogram/utils/performance-analyzer.ts",
+      "count": 6
+    },
+    {
+      "file": "miniprogram/pages/health/helpers/setdata-wrapper.ts",
+      "count": 3
+    }
+  ]
+}
