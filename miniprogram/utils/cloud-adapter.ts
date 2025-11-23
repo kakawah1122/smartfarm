@@ -101,12 +101,12 @@ const ACTION_FUNCTION_MAP: Record<string, string> = {
   'update_prevention_effectiveness': 'health-prevention',
   'updatePreventionEffectiveness': 'health-prevention',
   
-  // 其他统计相关（尚未迁移）
-  'get_cured_records_list': 'health-management',
-  'get_diagnosis_history': 'health-management',
-  'get_batch_complete_data': 'health-management',
-  'get_batch_prompt_data': 'health-management',
-  'create_ai_diagnosis': 'health-management',
+  // 其他功能分布
+  'get_cured_records_list': 'health-treatment',  // 治愈记录应该属于治疗模块
+  'get_diagnosis_history': 'ai-diagnosis',  // AI诊断历史
+  'get_batch_complete_data': 'health-overview',  // 批次综合数据
+  'get_batch_prompt_data': 'ai-diagnosis',  // AI诊断提示数据
+  'create_ai_diagnosis': 'ai-diagnosis',  // 创建AI诊断
   'get_treatment_statistics': 'health-treatment'  // 这个已经迁移了
 };
 

@@ -82,6 +82,9 @@ exports.main = async (event, context) => {
         return await create_treatment_from_vaccine(event, wxContext)
       case 'fix_treatment_records_openid':
         return await fix_treatment_records_openid(event, wxContext)
+      case 'get_cured_records_list':
+        const get_cured_records_list = require('./actions/get_cured_records_list')
+        return await get_cured_records_list.main(event, wxContext)
       
       default:
         return {
