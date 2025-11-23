@@ -5,17 +5,6 @@
  */
 
 import { safeCloudCall } from '../../../utils/safe-cloud-call'
-import { smartCloudCall } from '../../../utils/cloud-adapter'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 import CloudApi from '../../../utils/cloud-api'
 import { logger } from '../../../utils/logger'
 
@@ -39,13 +28,17 @@ export class HealthCloudHelper {
       abnormalLimit = 50
     } = options
     
-    const result = await smartCloudCall('get_dashboard_snapshot', {
-      batchId: batchId,
-      includeDiagnosis,
-      includeAbnormalRecords,
-      diagnosisLimit,
-      abnormalLimit
-    }) as any
+    const result = await safeCloudCall({
+      name: 'health-management',
+      data: {
+        action: 'get_dashboard_snapshot',
+        batchId: batchId,
+        includeDiagnosis,
+        includeAbnormalRecords,
+        diagnosisLimit,
+        abnormalLimit
+      }
+    })
     
     if (!result?.success) {
       throw new Error('获取健康面板数据失败')
@@ -58,9 +51,13 @@ export class HealthCloudHelper {
    * 获取预防管理仪表盘
    */
   static async getPreventionDashboard(batchId: string, today?: string) {
-    const result = await smartCloudCall('getPreventionDashboard', {
-      batchId: batchId,
-      today: today
+    const result = await safeCloudCall({
+      name: 'health-management',
+      data: {
+        action: 'getPreventionDashboard',
+        batchId: batchId,
+        today: today
+      }
     })
     
     return result
@@ -70,9 +67,13 @@ export class HealthCloudHelper {
    * 获取批次完整数据
    */
   static async getBatchCompleteData(batchId: string, includes: string[] = []) {
-    const result = await smartCloudCall('get_batch_complete_data', {
-      batchId: batchId,
-      includes: includes
+    const result = await safeCloudCall({
+      name: 'health-management',
+      data: {
+        action: 'get_batch_complete_data',
+        batchId: batchId,
+        includes: includes
+      }
     })
     
     return result
@@ -189,29 +190,32 @@ export class HealthCloudHelper {
  * 标准化健康数据（完整版，保留所有字段）
  */
 export function normalizeHealthData(rawData: unknown) {
+  // 类型断言，将unknown转为any以访问属性
+  const data = rawData as any
+  
   return {
-    batches: rawData.batches || [],
-    totalBatches: rawData.totalBatches ?? ((rawData.batches || []).length),
-    totalAnimals: Number(rawData.totalAnimals ?? 0) || 0,
-    deadCount: Number(rawData.deadCount ?? 0) || 0,
-    sickCount: Number(rawData.sickCount ?? 0) || 0,
-    actualHealthyCount: Number(rawData.actualHealthyCount ?? 0) || 0,
-    healthyRate: rawData.healthyRate || '0',
-    mortalityRate: rawData.mortalityRate || '0',
-    abnormalCount: Number(rawData.abnormalCount ?? 0) || 0,
-    abnormalRecordCount: Number(rawData.abnormalRecordCount ?? 0) || 0,
-    abnormalRecords: rawData.abnormalRecords || [],
-    totalOngoing: Number(rawData.totalOngoing ?? 0) || 0,
-    totalOngoingRecords: Number(rawData.totalOngoingRecords ?? 0) || 0,
-    totalTreatmentCost: Number(rawData.totalTreatmentCost ?? 0) || 0,
-    totalTreated: Number(rawData.totalTreated ?? 0) || 0,
-    totalCured: Number(rawData.totalCured ?? 0) || 0,
-    totalDiedAnimals: Number(rawData.totalDiedAnimals ?? 0) || 0,
-    totalDied: Number(rawData.totalDied ?? rawData.totalDiedAnimals ?? 0) || 0,
-    cureRate: rawData.cureRate || '0',
-    pendingDiagnosis: Number(rawData.pendingDiagnosis ?? 0) || 0,
-    latestDiagnosisRecords: rawData.latestDiagnosisRecords || [],
-    originalTotalQuantity: Number(rawData.originalTotalQuantity ?? 0) || 0,
+    batches: data.batches || [],
+    totalBatches: data.totalBatches ?? ((data.batches || []).length),
+    totalAnimals: Number(data.totalAnimals ?? 0) || 0,
+    deadCount: Number(data.deadCount ?? 0) || 0,
+    sickCount: Number(data.sickCount ?? 0) || 0,
+    actualHealthyCount: Number(data.actualHealthyCount ?? 0) || 0,
+    healthyRate: data.healthyRate || '0',
+    mortalityRate: data.mortalityRate || '0',
+    abnormalCount: Number(data.abnormalCount ?? 0) || 0,
+    abnormalRecordCount: Number(data.abnormalRecordCount ?? 0) || 0,
+    abnormalRecords: data.abnormalRecords || [],
+    totalOngoing: Number(data.totalOngoing ?? 0) || 0,
+    totalOngoingRecords: Number(data.totalOngoingRecords ?? 0) || 0,
+    totalTreatmentCost: Number(data.totalTreatmentCost ?? 0) || 0,
+    totalTreated: Number(data.totalTreated ?? 0) || 0,
+    totalCured: Number(data.totalCured ?? 0) || 0,
+    totalDiedAnimals: Number(data.totalDiedAnimals ?? 0) || 0,
+    totalDied: Number(data.totalDied ?? data.totalDiedAnimals ?? 0) || 0,
+    cureRate: data.cureRate || '0',
+    pendingDiagnosis: Number(data.pendingDiagnosis ?? 0) || 0,
+    latestDiagnosisRecords: data.latestDiagnosisRecords || [],
+    originalTotalQuantity: Number(data.originalTotalQuantity ?? 0) || 0,
     fetchedAt: Date.now()
   }
 }

@@ -62,7 +62,37 @@ const ACTION_FUNCTION_MAP: Record<string, string> = {
   'update_permissions': 'user-permission',
   'get_role_list': 'user-permission',
   'create_role': 'user-permission',
-  'update_role': 'user-permission'
+  'update_role': 'user-permission',
+  
+  // 健康概览相关（尚未迁移，暂时指向health-management）
+  'get_dashboard_snapshot': 'health-management',
+  'get_health_overview': 'health-management',
+  'get_all_batches_health_summary': 'health-management',
+  'get_health_dashboard_complete': 'health-management',
+  'get_homepage_health_overview': 'health-management',
+  
+  // 异常记录相关（尚未迁移）
+  'create_abnormal_record': 'health-management',
+  'get_abnormal_record_detail': 'health-management',
+  'get_abnormal_records': 'health-management',
+  'list_abnormal_records': 'health-management',
+  'correct_abnormal_diagnosis': 'health-management',
+  
+  // 预防保健相关（尚未迁移）
+  'get_prevention_dashboard': 'health-management',
+  'getPreventionDashboard': 'health-management',
+  'get_prevention_tasks_by_batch': 'health-management',
+  'getPreventionTasksByBatch': 'health-management',
+  'get_batch_prevention_comparison': 'health-management',
+  'getBatchPreventionComparison': 'health-management',
+  
+  // 其他统计相关（尚未迁移）
+  'get_cured_records_list': 'health-management',
+  'get_diagnosis_history': 'health-management',
+  'get_batch_complete_data': 'health-management',
+  'get_batch_prompt_data': 'health-management',
+  'create_ai_diagnosis': 'health-management',
+  'get_treatment_statistics': 'health-treatment'  // 这个已经迁移了
 };
 
 /**
