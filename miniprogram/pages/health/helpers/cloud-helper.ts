@@ -5,6 +5,7 @@
  */
 
 import { safeCloudCall } from '../../../utils/safe-cloud-call'
+import { smartCloudCall } from '../../../utils/cloud-adapter'
 import type { 
   BaseResponse, 
   Batch, 
@@ -38,17 +39,13 @@ export class HealthCloudHelper {
       abnormalLimit = 50
     } = options
     
-    const result = await safeCloudCall({
-      name: 'health-management',
-      data: {
-        action: 'get_dashboard_snapshot',
-        batchId: batchId,
-        includeDiagnosis,
-        includeAbnormalRecords,
-        diagnosisLimit,
-        abnormalLimit
-      }
-    })
+    const result = await smartCloudCall('get_dashboard_snapshot', {
+      batchId: batchId,
+      includeDiagnosis,
+      includeAbnormalRecords,
+      diagnosisLimit,
+      abnormalLimit
+    }) as any
     
     if (!result?.success) {
       throw new Error('获取健康面板数据失败')
@@ -61,13 +58,9 @@ export class HealthCloudHelper {
    * 获取预防管理仪表盘
    */
   static async getPreventionDashboard(batchId: string, today?: string) {
-    const result = await safeCloudCall({
-      name: 'health-management',
-      data: {
-        action: 'getPreventionDashboard',
-        batchId: batchId,
-        today: today
-      }
+    const result = await smartCloudCall('getPreventionDashboard', {
+      batchId: batchId,
+      today: today
     })
     
     return result
@@ -77,13 +70,9 @@ export class HealthCloudHelper {
    * 获取批次完整数据
    */
   static async getBatchCompleteData(batchId: string, includes: string[] = []) {
-    const result = await safeCloudCall({
-      name: 'health-management',
-      data: {
-        action: 'get_batch_complete_data',
-        batchId: batchId,
-        includes: includes
-      }
+    const result = await smartCloudCall('get_batch_complete_data', {
+      batchId: batchId,
+      includes: includes
     })
     
     return result

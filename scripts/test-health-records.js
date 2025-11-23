@@ -143,16 +143,40 @@ async function testAction(actionName, testData) {
       return false;
     }
     
-    // 清除require缓存
-    delete require.cache[require.resolve(actionPath)];
+    // 读取action文件内容
+    let actionCode = fs.readFileSync(actionPath, 'utf-8');
     
-    // 模拟wx-server-sdk
-    require.cache[require.resolve('wx-server-sdk')] = {
-      exports: mockCloud
-    };
+    // 替换require('wx-server-sdk')为我们的mock对象
+    actionCode = actionCode.replace(
+      "const cloud = require('wx-server-sdk')",
+      "const cloud = global.mockCloud"
+    );
+    
+    // 修复相对路径问题
+    actionCode = actionCode.replace(
+      "require('../database-manager')",
+      `require('${path.join(__dirname, '..', 'cloudfunctions', 'health-records', 'database-manager.js')}')`
+    );
+    actionCode = actionCode.replace(
+      "require('../collections.js')",
+      `require('${path.join(__dirname, '..', 'cloudfunctions', 'health-records', 'collections.js')}')`
+    );
+    
+    // 创建临时文件
+    const tempFile = path.join(__dirname, `temp-${actionName}.js`);
+    fs.writeFileSync(tempFile, actionCode);
+    
+    // 设置全局mock对象
+    global.mockCloud = mockCloud;
+    
+    // 清除require缓存
+    delete require.cache[require.resolve(tempFile)];
     
     // 加载action
-    const action = require(actionPath);
+    const action = require(tempFile);
+    
+    // 清理临时文件
+    fs.unlinkSync(tempFile);
     
     // 执行测试
     const result = await action.main(testData, mockCloud.getWXContext());

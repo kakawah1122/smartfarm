@@ -3,8 +3,13 @@
  * 自动路由到新的拆分云函数
  */
 
+import { safeCloudCall } from './safe-cloud-call'
+
+// 开关：是否启用新架构
+const USE_NEW_ARCHITECTURE = true
+
 // 云函数action映射表
-const ACTION_FUNCTION_MAP = {
+const ACTION_FUNCTION_MAP: Record<string, string> = {
   'create_health_record': 'health-records',
   'list_health_records': 'health-records',
   'update_health_record': 'health-records',
@@ -65,15 +70,29 @@ const ACTION_FUNCTION_MAP = {
  * 自动路由到正确的云函数
  */
 export async function smartCloudCall(action: string, data: any = {}) {
-  const targetFunction = ACTION_FUNCTION_MAP[action]
-  
-  if (!targetFunction) {
-    // 兼容旧调用方式
-    console.warn(`Action "${action}" 未找到映射，使用默认云函数`)
+  // 如果未启用新架构，使用旧的调用方式
+  if (!USE_NEW_ARCHITECTURE) {
     return await safeCloudCall({
       name: 'health-management',
       data: { action, ...data }
     })
+  }
+  
+  const targetFunction = ACTION_FUNCTION_MAP[action]
+  
+  if (!targetFunction) {
+    // 兼容旧调用方式
+    console.warn(`[SmartCloudCall] Action "${action}" 未找到映射，使用默认云函数`)
+    return await safeCloudCall({
+      name: 'health-management',
+      data: { action, ...data }
+    })
+  }
+  
+  // 记录路由信息（开发环境调试用）
+  // @ts-ignore
+  if (typeof __wxConfig !== 'undefined' && __wxConfig.debug) {
+    console.log(`[SmartCloudCall] 路由: ${action} → ${targetFunction}`)
   }
   
   // 调用新的拆分云函数
