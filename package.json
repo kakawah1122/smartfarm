@@ -8,7 +8,11 @@
     "check:style": "node scripts/check-style-standards.js",
     "check:ts": "node scripts/check-typescript-standards.js",
     "check:all": "npm run check:code && npm run check:style && npm run check:ts",
-    "precommit": "npm run check:ui"
+    "precommit": "npm run check:ui",
+    "backup:css": "node scripts/backup-css-files.js",
+    "scan:css": "node scripts/scan-unused-css-safe.js",
+    "clean:css": "echo '⚠️ 自动清理已禁用，请使用 npm run scan:css 扫描后手动清理'",
+    "clean:css:manual": "echo '请根据扫描报告手动清理CSS'"
   },
   "keywords": [],
   "author": "",
