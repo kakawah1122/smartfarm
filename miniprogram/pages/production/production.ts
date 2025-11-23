@@ -618,7 +618,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
   
   // 添加到累积记录
-  addToRounds(result: any) {
+  addToRounds(result: unknown) {
     const rounds = this.data.aiCount.rounds || []
     const newRound = {
       roundId: rounds.length + 1,

@@ -114,7 +114,7 @@ Page({
     })
     
     // 替换 setData 方法
-    this.setData = (data: any, callback?: () => void, urgent?: boolean) => {
+    this.setData = (data: unknown, callback?: () => void, urgent?: boolean) => {
       setDataWrapper.setData(data, callback, urgent)
     }
     

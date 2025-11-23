@@ -10,6 +10,10 @@ import { safeCloudCall } from '../../../utils/safe-cloud-call'
 import CloudApi from '../../../utils/cloud-api'
 import type { BaseResponse } from '../../../../typings/core'
 
+
+// 类型定义
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
+
 // 预防任务模块管理器
 export class PreventionModuleManager {
   private pageInstance: any
@@ -39,7 +43,7 @@ export class PreventionModuleManager {
         default:
           await this.loadTodayTasks()
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       logger.error('加载预防数据失败:', error)
       wx.showToast({
         title: '加载数据失败',
@@ -114,14 +118,14 @@ export class PreventionModuleManager {
             }
           }
           return null
-        } catch (error: any) {
+        } catch (error: Error | unknown) {
           logger.error(`批次任务加载失败:`, error)
           return null
         }
       })
       
       const results = await Promise.all(batchTasksPromises)
-      const validBatchTasks = results.filter((item: any) => item !== null && item.tasks.length > 0)
+      const validBatchTasks = results.filter((item: unknown) => item !== null && item.tasks.length > 0)
       
       // 收集所有任务
       let allTasks: Task[] = []
@@ -134,7 +138,7 @@ export class PreventionModuleManager {
         'preventionData.todayTasks': allTasks
       })
       
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       logger.error('加载今日任务失败:', error)
       this.pageInstance.setData({
         todayTasksByBatch: [],
@@ -215,7 +219,7 @@ export class PreventionModuleManager {
             }))
           }
           return []
-        } catch (error: any) {
+        } catch (error: Error | unknown) {
           logger.error(`批次未来任务加载失败:`, error)
           return []
         }
@@ -238,7 +242,7 @@ export class PreventionModuleManager {
         'preventionData.upcomingTasks': allTasks
       })
       
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       logger.error('加载未来任务失败:', error)
       this.pageInstance.setData({
         upcomingTasksByBatch: [],
@@ -278,7 +282,7 @@ export class PreventionModuleManager {
           'preventionData.historyTasks': []
         })
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       logger.error('加载历史任务失败:', error)
       this.pageInstance.setData({
         historyTasksByBatch: [],
@@ -379,7 +383,7 @@ export class PreventionModuleManager {
       } else {
         throw new Error(result?.error || '操作失败')
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       wx.hideLoading()
       wx.showToast({
         title: error.message || '操作失败',

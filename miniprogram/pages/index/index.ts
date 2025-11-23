@@ -9,6 +9,10 @@ import { logger } from '../../utils/logger'
 import { createSetDataWrapper, SetDataWrapper } from '../health/helpers/setdata-wrapper'
 import type {
   WeatherData,
+
+// 类型定义
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
+
   TaskData,
   GoosePriceData,
   PriceBreed,
@@ -1674,7 +1678,7 @@ Page({
         setTimeout(() => {
           this.getWeatherData(true).then(() => {
             // 静默更新成功，不显示任何提示
-          }).catch((error: any) => {
+          }).catch((error: Error | unknown) => {
             // 静默失败，不干扰用户体验，继续使用缓存数据
             logger.warn('静默刷新天气失败:', error)
           })
