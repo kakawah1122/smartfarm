@@ -21,7 +21,8 @@ const { COLLECTIONS } = require('./collections.js')
 const {
   getHealthDashboardComplete,
   getHealthStatistics,
-  getHealthStatisticsOptimized
+  getHealthStatisticsOptimized,
+  getBatchCompleteData
 } = require('./extended-functions.js')
 
 /**
@@ -408,6 +409,9 @@ exports.main = async (event, context) => {
       case 'get_health_statistics_optimized':
       case 'getHealthStatisticsOptimized':
         return await getHealthStatisticsOptimized(event, wxContext)
+      
+      case 'get_batch_complete_data':
+        return await getBatchCompleteData(event, wxContext)
       
       default:
         return {

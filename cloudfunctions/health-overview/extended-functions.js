@@ -507,9 +507,215 @@ async function getDashboardSnapshotInternal(event, wxContext) {
   }
 }
 
+/**
+ * 获取批次完整数据（从health-management迁移）
+ * 支持按需加载不同数据模块
+ */
+async function getBatchCompleteData(event, wxContext) {
+  try {
+    const { batchId, includes = [], diagnosisLimit = 10, preventionLimit = 20 } = event
+    const openid = wxContext.OPENID
+    
+    // 验证批次ID
+    if (!batchId || batchId === 'all') {
+      throw new Error('此接口不支持全部批次模式，请使用 get_dashboard_snapshot')
+    }
+    
+    // 初始化返回数据
+    const result = {
+      batchId,
+      timestamp: new Date().toISOString()
+    }
+    
+    // 并行查询所有需要的数据
+    const promises = []
+    
+    // 1. 健康统计（基础数据，总是包含）
+    promises.push(
+      (async () => {
+        try {
+          // 使用优化版本，提升性能
+          const statsResult = await getHealthStatisticsOptimized({ batchId }, wxContext)
+          result.healthStats = statsResult.data || {}
+        } catch (error) {
+          console.error('获取健康统计失败:', error)
+          result.healthStats = null
+        }
+      })()
+    )
+    
+    // 2. 预防数据（如果需要）
+    if (!includes.length || includes.includes('prevention')) {
+      promises.push(
+        (async () => {
+          try {
+            // 调用预防云函数获取数据
+            const preventionResult = await cloud.callFunction({
+              name: 'health-prevention',
+              data: {
+                action: 'list_prevention_records',
+                batchId,
+                limit: preventionLimit
+              }
+            })
+            
+            if (preventionResult.result?.success) {
+              const records = preventionResult.result.data?.records || []
+              
+              // 计算预防统计
+              const preventionStats = {
+                totalPreventions: records.length,
+                vaccineCount: 0,
+                vaccineCoverage: 0,
+                vaccineStats: {},
+                disinfectionCount: 0,
+                totalCost: 0,
+                medicationCount: 0
+              }
+              
+              // 统计疫苗和消毒数据
+              records.forEach(record => {
+                if (record.preventionType === 'vaccination' && record.vaccineInfo) {
+                  const vaccineName = record.vaccineInfo.vaccineName || '未知疫苗'
+                  const targetAnimals = record.vaccineInfo.targetAnimals || 0
+                  const doseNumber = record.vaccineInfo.doseNumber || 1
+                  
+                  if (doseNumber === 1 || doseNumber === '1' || doseNumber === '第一针') {
+                    preventionStats.vaccineCoverage += targetAnimals
+                  }
+                  
+                  preventionStats.vaccineCount += targetAnimals
+                  preventionStats.vaccineStats[vaccineName] = 
+                    (preventionStats.vaccineStats[vaccineName] || 0) + targetAnimals
+                } else if (record.preventionType === 'disinfection') {
+                  preventionStats.disinfectionCount += 1
+                } else if (record.preventionType === 'medication') {
+                  preventionStats.medicationCount++
+                }
+                
+                if (record.costInfo?.totalCost) {
+                  preventionStats.totalCost += parseFloat(record.costInfo.totalCost) || 0
+                }
+              })
+              
+              result.preventionStats = preventionStats
+              result.preventionRecords = records.slice(0, 10) // 只返回最近10条
+            }
+          } catch (error) {
+            console.error('获取预防数据失败:', error)
+            result.preventionStats = null
+            result.preventionRecords = []
+          }
+        })()
+      )
+    }
+    
+    // 3. 治疗统计（如果需要）
+    if (!includes.length || includes.includes('treatment')) {
+      promises.push(
+        (async () => {
+          try {
+            // 调用治疗云函数获取统计
+            const treatmentResult = await cloud.callFunction({
+              name: 'health-treatment',
+              data: {
+                action: 'get_treatment_statistics', 
+                batchId
+              }
+            })
+            
+            if (treatmentResult.result?.success) {
+              result.treatmentStats = treatmentResult.result.data || {}
+            } else {
+              result.treatmentStats = null
+            }
+          } catch (error) {
+            console.error('获取治疗统计失败:', error)
+            result.treatmentStats = null
+          }
+        })()
+      )
+    }
+    
+    // 4. 诊断历史（如果需要）
+    if (!includes.length || includes.includes('diagnosis')) {
+      promises.push(
+        (async () => {
+          try {
+            // 调用AI诊断云函数获取历史
+            const diagnosisResult = await cloud.callFunction({
+              name: 'ai-diagnosis',
+              data: {
+                action: 'get_diagnosis_history',
+                batchId,
+                limit: diagnosisLimit
+              }
+            })
+            
+            if (diagnosisResult.result?.success) {
+              result.diagnosisHistory = diagnosisResult.result.data?.records || []
+            } else {
+              result.diagnosisHistory = []
+            }
+          } catch (error) {
+            console.error('获取诊断历史失败:', error)
+            result.diagnosisHistory = []
+          }
+        })()
+      )
+    }
+    
+    // 5. 异常记录（如果需要）
+    if (!includes.length || includes.includes('abnormal')) {
+      promises.push(
+        (async () => {
+          try {
+            // 调用异常云函数获取记录
+            const abnormalResult = await cloud.callFunction({
+              name: 'health-abnormal',
+              data: {
+                action: 'list_abnormal_records',
+                batchId,
+                limit: 50
+              }
+            })
+            
+            if (abnormalResult.result?.success) {
+              result.abnormalRecords = abnormalResult.result.data?.records || []
+              result.abnormalCount = result.abnormalRecords.length
+            } else {
+              result.abnormalRecords = []
+              result.abnormalCount = 0
+            }
+          } catch (error) {
+            console.error('获取异常记录失败:', error)
+            result.abnormalRecords = []
+            result.abnormalCount = 0
+          }
+        })()
+      )
+    }
+    
+    // 等待所有并行查询完成
+    await Promise.all(promises)
+    
+    return {
+      success: true,
+      data: result
+    }
+  } catch (error) {
+    console.error('[getBatchCompleteData] 错误:', error)
+    return {
+      success: false,
+      error: error.message || '获取批次完整数据失败'
+    }
+  }
+}
+
 // 导出所有函数
 module.exports = {
   getHealthDashboardComplete,
   getHealthStatistics,
-  getHealthStatisticsOptimized
+  getHealthStatisticsOptimized,
+  getBatchCompleteData
 }
