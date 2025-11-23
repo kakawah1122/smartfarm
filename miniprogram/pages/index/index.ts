@@ -1,5 +1,5 @@
 // index.ts - 清理版本，只使用和风天气地理编码
-import type { CustomEvent, ErrorWithMessage, Task, Batch } from '../../types/common';
+import type { CustomEvent } from '../../types/common';
 import {
   TYPE_NAMES,
   isMedicationTask,
@@ -17,9 +17,7 @@ import type {
   WeatherApiResponse,
   WeatherCurrentInfo,
   WeatherConditionInfo
-} from './types'
-
-<T>
+} from './types';
 
 // 其他辅助类型
 type MaterialItem = {

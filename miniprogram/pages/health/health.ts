@@ -1,7 +1,4 @@
 // @ts-nocheck
-import type { CustomEvent, ErrorWithMessage, Task, Batch } from '../../types/common';
-import type { BaseResponse, Batch, InputEvent } from '../../../typings/core';
-<T>;
 
 // health.ts - 健康管理页面
 import CloudApi from '../../utils/cloud-api'

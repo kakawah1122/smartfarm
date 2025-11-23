@@ -1,13 +1,11 @@
 // profile.ts - 个人中心页面逻辑
-import type { CustomEvent, ErrorWithMessage, Task, Batch } from '../../types/common';
-import { logger } from '../../utils/logger'
-<T>;
+import type { CustomEvent } from '../../types/common';
+import { logger } from '../../utils/logger';
 
 import { createSetDataWrapper } from './helpers/setdata-wrapper'
 import type { 
   ExtendedUserInfo,
   AppInstance,
-  CustomEvent,
   InputEvent,
   GlobalData,
   ErrorResponse

@@ -1,17 +1,7 @@
-import type { CustomEvent, ErrorWithMessage, Task, Batch } from '../../types/common';
 import type { 
-  BaseResponse, 
-  CloudFunctionResponse,
-  Batch, 
-  HealthRecord, 
-  FinanceRecord,
-  InputEvent, 
-  TapEvent, 
-  PickerEvent, 
-  ScrollEvent 
+  BaseResponse
 } from '../../../typings/core';
 
-<T>;
 // production.ts
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
