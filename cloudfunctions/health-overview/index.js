@@ -25,6 +25,9 @@ const {
   getBatchCompleteData
 } = require('./extended-functions.js')
 
+// 引入批次提示数据功能
+const { getBatchPromptData } = require('./batch-prompt-data.js')
+
 /**
  * 获取健康概览数据
  * 用于首页展示
@@ -412,6 +415,9 @@ exports.main = async (event, context) => {
       
       case 'get_batch_complete_data':
         return await getBatchCompleteData(event, wxContext)
+      
+      case 'get_batch_prompt_data':
+        return await getBatchPromptData(event, wxContext.OPENID)
       
       default:
         return {

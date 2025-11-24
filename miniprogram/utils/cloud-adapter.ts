@@ -105,9 +105,13 @@ const ACTION_FUNCTION_MAP: Record<string, string> = {
   'get_cured_records_list': 'health-treatment',  // 治愈记录应该属于治疗模块
   'get_diagnosis_history': 'ai-diagnosis',  // AI诊断历史（已在ai-diagnosis实现）
   'get_batch_complete_data': 'health-overview',  // 批次综合数据（已迁移）
-  'get_batch_prompt_data': 'health-management',  // AI诊断提示数据（暂留）
+  'get_batch_prompt_data': 'health-overview',  // AI诊断提示数据（已迁移到health-overview）
   'create_ai_diagnosis': 'process-ai-diagnosis',  // 创建AI诊断（使用原有云函数）
-  'get_treatment_statistics': 'health-treatment'  // 这个已经迁移了
+  'get_treatment_statistics': 'health-treatment',  // 这个已经迁移了
+  
+  // 系统维护功能（迁移到health-treatment）
+  'fix_diagnosis_treatment_status': 'health-treatment',
+  'batch_fix_data_consistency': 'health-treatment'
 };
 
 /**

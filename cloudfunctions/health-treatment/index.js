@@ -36,6 +36,13 @@ const create_treatment_from_abnormal = require('./actions/create_treatment_from_
 const create_treatment_from_vaccine = require('./actions/create_treatment_from_vaccine').main
 const fix_treatment_records_openid = require('./actions/fix_treatment_records_openid').main
 
+// 导入系统维护功能
+const {
+  fixDiagnosisTreatmentStatus,
+  fixTreatmentRecordsOpenId,
+  batchFixDataConsistency
+} = require('./system-maintenance.js')
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const { action } = event
@@ -80,11 +87,17 @@ exports.main = async (event, context) => {
         return await create_treatment_from_abnormal(event, wxContext)
       case 'create_treatment_from_vaccine':
         return await create_treatment_from_vaccine(event, wxContext)
-      case 'fix_treatment_records_openid':
-        return await fix_treatment_records_openid(event, wxContext)
       case 'get_cured_records_list':
         const get_cured_records_list = require('./actions/get_cured_records_list')
         return await get_cured_records_list.main(event, wxContext)
+      
+      // 系统维护功能
+      case 'fix_diagnosis_treatment_status':
+        return await fixDiagnosisTreatmentStatus(event, wxContext.OPENID)
+      case 'fix_treatment_records_openid':
+        return await fixTreatmentRecordsOpenId(event, wxContext.OPENID)
+      case 'batch_fix_data_consistency':
+        return await batchFixDataConsistency(event, wxContext.OPENID)
       
       default:
         return {
