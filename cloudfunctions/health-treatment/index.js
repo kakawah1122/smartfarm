@@ -50,7 +50,7 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const { action } = event
   
-  console.log('[health-treatment] 执行action:', action)
+  // 执行action日志已关闭
   
   try {
     switch (action) {

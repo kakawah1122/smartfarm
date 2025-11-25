@@ -50,7 +50,7 @@ async function fixDiagnosisTreatmentStatus(event, openid) {
       }
     }
     
-    console.log('开始修复诊断治疗状态...')
+    // 开始修复诊断治疗状态
     
     // 查找所有未标记hasTreatment的诊断记录
     const diagnosisRecords = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
@@ -148,7 +148,7 @@ async function fixTreatmentRecordsOpenId(event, openid) {
       }
     }
     
-    console.log('开始修复治疗记录openid...')
+    // 开始修复治疗记录openid
     
     // 查找缺少_openid的记录
     const records = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
@@ -240,7 +240,7 @@ async function batchFixDataConsistency(event, openid) {
       }
     }
     
-    console.log('开始批量修复数据一致性...')
+    // 开始批量修复数据一致性
     
     // 执行多个修复任务
     const results = {
@@ -269,7 +269,7 @@ async function batchFixDataConsistency(event, openid) {
  * TODO: 从health-management迁移完整逻辑
  */
 async function recordTreatmentDeath(event, wxContext) {
-  console.log('[recordTreatmentDeath] 功能待迁移')
+  // [recordTreatmentDeath] 功能待迁移
   return {
     success: false,
     error: '该功能正在迁移中，请暂时使用health-management云函数'

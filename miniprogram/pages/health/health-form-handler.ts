@@ -5,16 +5,7 @@
 
 /// <reference path="../../../typings/index.d.ts" />
 
-import { safeCloudCall } from '../../utils/safe-cloud-call'
-
-/**
- * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
- * 自动路由 health-management 到新云函数
- */
-async function callCloudFunction(config: { name: string; data: Record<string, unknown> }) {
-  const result = await safeCloudCall(config)
-  return { result }
-}
+import { HealthCloud } from '../../utils/cloud-functions'
 
 export interface VaccineFormData {
   vaccinationDate: string
@@ -92,13 +83,9 @@ export class HealthFormHandler {
         }
       }
       
-      // 调用云函数（自动路由到新云函数）
-      const result = await callCloudFunction({
-        name: 'health-management',
-        data: submitData
-      })
+      // 调用云函数
+      const cloudResult = await HealthCloud.prevention.completeTask(submitData)
       
-      const cloudResult = result.result as { success?: boolean; error?: string } | undefined
       if (cloudResult?.success) {
         return cloudResult
       }
@@ -143,13 +130,9 @@ export class HealthFormHandler {
         }
       }
       
-      // 调用云函数（自动路由到新云函数）
-      const result = await callCloudFunction({
-        name: 'health-management',
-        data: submitData
-      })
+      // 调用云函数
+      const cloudResult = await HealthCloud.prevention.completeTask(submitData)
       
-      const cloudResult = result.result as { success?: boolean; error?: string } | undefined
       if (cloudResult?.success) {
         return cloudResult
       }

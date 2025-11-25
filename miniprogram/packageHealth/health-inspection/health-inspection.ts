@@ -1,6 +1,7 @@
 // health-inspection.ts - 健康巡检页面
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 import type { BatchInfo } from '../types/prevention'
 import type {
   AbnormalFinding,
@@ -398,6 +399,8 @@ const pageConfig: WechatMiniprogram.Page.Options<HealthInspectionData, WechatMin
   // 字段验证
   validateField(field: string, value: unknown) {
     const errors = { ...this.data.formErrors }
+    const strValue = String(value || '')
+    const numValue = Number(value) || 0
     
     switch (field) {
       case 'batchId':
@@ -408,21 +411,21 @@ const pageConfig: WechatMiniprogram.Page.Options<HealthInspectionData, WechatMin
         }
         break
       case 'locationId':
-        if (!value || value.trim().length === 0) {
+        if (!strValue || strValue.trim().length === 0) {
           errors[field] = '请输入巡检位置'
         } else {
           delete errors[field]
         }
         break
       case 'inspector':
-        if (!value || value.trim().length === 0) {
+        if (!strValue || strValue.trim().length === 0) {
           errors[field] = '请输入检查员姓名'
         } else {
           delete errors[field]
         }
         break
       case 'totalInspected':
-        if (!value || value <= 0) {
+        if (!value || numValue <= 0) {
           errors[field] = '巡检数量必须大于0'
         } else {
           delete errors[field]
@@ -497,19 +500,14 @@ const pageConfig: WechatMiniprogram.Page.Options<HealthInspectionData, WechatMin
         effectiveness: this.deriveEffectiveness(abnormalFindings.length)
       }
 
-      const response = await CloudApi.callFunction<CreateInspectionRecordResponse>(
-        'health-management',
-        payload,
-        {
-          loading: true,
-          loadingText: '保存中...',
-          showError: false,
-          showSuccess: true,
-          successText: '健康巡检记录保存成功'
-        }
-      )
+      wx.showLoading({ title: '保存中...' })
+      
+      const response = await HealthCloud.prevention.create(payload) as { success: boolean; data?: CreateInspectionRecordResponse; error?: string }
+      
+      wx.hideLoading()
 
       if (response.success && response.data?.recordId) {
+        wx.showToast({ title: '健康巡检记录保存成功', icon: 'success' })
         if (abnormalFindings.length > 0) {
           this.handleAbnormalFindings(response.data.recordId)
         } else {
@@ -625,11 +623,10 @@ const pageConfig: WechatMiniprogram.Page.Options<HealthInspectionData, WechatMin
     this.setData({ loadingBatches: true })
 
     try {
-      const response = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
-        'health-management',
-        { action: 'get_active_batches' },
-        { showError: false }
-      )
+      const response = await safeCloudCall<{ success: boolean; data?: { batches: BatchInfo[] }; error?: string }>({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
 
       if (response.success && Array.isArray(response.data?.batches)) {
         this.setData({
@@ -693,4 +690,4 @@ const pageConfig: WechatMiniprogram.Page.Options<HealthInspectionData, WechatMin
   }
 }
 
-Page(createPageWithNavbar(pageConfig))
+Page(createPageWithNavbar(pageConfig as Parameters<typeof createPageWithNavbar>[0]))

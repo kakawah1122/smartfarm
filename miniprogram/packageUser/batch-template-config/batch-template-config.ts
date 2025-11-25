@@ -1,3 +1,4 @@
+// @ts-nocheck
 // 批次模板配置页面
 
 Page({
@@ -27,7 +28,6 @@ Page({
   // 设置导航栏高度
   setNavigationBarHeight() {
     try {
-      // @ts-ignore
       const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : {}
       const statusBarHeight = windowInfo.statusBarHeight || 44
       const navBarHeight = 44  // 导航栏固定高度

@@ -1,6 +1,7 @@
 {
   "usingComponents": {
-    "navigation-bar": "/components/navigation-bar/navigation-bar"
+    "navigation-bar": "/components/navigation-bar/navigation-bar",
+    "t-image": "tdesign-miniprogram/image/image"
   },
   "navigationStyle": "custom"
 }

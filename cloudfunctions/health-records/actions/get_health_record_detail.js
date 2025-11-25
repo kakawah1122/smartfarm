@@ -68,7 +68,7 @@ exports.main = async (event, wxContext) => {
         }
       } catch (err) {
         // 如果批次不存在，继续返回记录信息
-        console.log('批次信息获取失败:', err)
+        // 批次信息获取失败
       }
     }
     
@@ -91,7 +91,7 @@ exports.main = async (event, wxContext) => {
           }
         }
       } catch (err) {
-        console.log('用户信息获取失败:', err)
+        // 用户信息获取失败
       }
     }
     
@@ -112,7 +112,7 @@ exports.main = async (event, wxContext) => {
           treatments: treatmentResult.data
         }
       } catch (err) {
-        console.log('相关记录获取失败:', err)
+        // 相关记录获取失败
       }
     }
     

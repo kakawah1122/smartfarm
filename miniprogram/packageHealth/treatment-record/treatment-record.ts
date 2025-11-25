@@ -12,12 +12,10 @@ interface ErrorWithMessage {
 import { markHomepageNeedSync } from '../utils/global-sync'
 import { logger } from '../../utils/logger'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
-
-import { smartCloudCall } from '../../utils/cloud-adapter'
+import { HealthCloud } from '../../utils/cloud-functions'
 
 /**
  * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
- * 自动路由 health-management 到新云函数
  */
 async function callCloudFunction(config: { name: string; data: any; timeout?: number }) {
   const result = await safeCloudCall(config)
@@ -316,12 +314,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     try {
       wx.showLoading({ title: '加载中...' })
       
-      const result = await smartCloudCall('get_treatment_record_detail', { treatmentId: treatmentId })
+      const result = await HealthCloud.treatment.getDetail({ treatmentId: treatmentId })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
-        const record = result.result.data
+      if (result && result.success) {
+        const record = result.data
         
         
         // 填充表单数据
@@ -429,10 +427,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 加载异常记录的AI建议
   loadAbnormalRecordAIRecommendation: async function(abnormalRecordId: string) {
     try {
-      const result = await smartCloudCall('get_abnormal_record_detail', { recordId: abnormalRecordId })
+      const result = await HealthCloud.abnormal.getDetail({ recordId: abnormalRecordId })
       
-      if (result.result && result.result.success) {
-        const record = result.result.data
+      if (result && result.success) {
+        const record = result.data
         
         // ✅ 保存受影响的数量（用于健康率计算）
         const affectedCount = record.affectedCount || 1
@@ -502,7 +500,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 加载活跃批次
   loadActiveBatches: async function() {
     try {
-      const result = await smartCloudCall('get_active_batches')
+      const result = await wx.cloud.callFunction({ name: 'production-entry', data: { action: 'getActiveBatches' } })
       
       if (result.result && result.result.success) {
         this.setData({
@@ -1082,13 +1080,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     await this.updateTreatmentRecord()
     
     // 2. 调用 submit_treatment_plan 接口，更新异常记录状态
-    const result = await smartCloudCall('submit_treatment_plan', {
+    const result = await HealthCloud.treatment.submitPlan({
         treatmentId: treatmentId,
         abnormalRecordId: abnormalRecordId,
         treatmentType: formData.treatmentType
     })
     
-    if (result.result && result.result.success) {
+    if (result && result.success) {
       wx.showToast({
         title: '治疗方案提交成功',
         icon: 'success'
@@ -1113,33 +1111,27 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   updateTreatmentRecord: async function() {
     const { treatmentId, formData, treatmentPlan, medications } = this.data
     
-    const result = await callCloudFunction({
-      name: 'health-management',
-      data: {
-        action: 'update_treatment_record',
-        treatmentId: treatmentId,
-        updateData: {
-          batchId: formData.batchId,
-          treatmentDate: formData.treatmentDate,
-          treatmentType: formData.treatmentType,
-          diagnosis: {
-            preliminary: formData.diagnosis,
-            confirmed: formData.diagnosis,
-            confidence: formData.diagnosisConfidence
-          },
-          treatmentPlan: {
-            primary: treatmentPlan.primary,
-            followUpSchedule: treatmentPlan.followUpSchedule
-          },
-          medications: medications,
-          notes: formData.notes,
-          updatedAt: new Date()
-        }
-      }
+    const result = await HealthCloud.treatment.update({
+      treatmentId: treatmentId,
+      batchId: formData.batchId,
+      treatmentDate: formData.treatmentDate,
+      treatmentType: formData.treatmentType,
+      diagnosis: {
+        preliminary: formData.diagnosis,
+        confirmed: formData.diagnosis,
+        confidence: formData.diagnosisConfidence
+      },
+      treatmentPlan: {
+        primary: treatmentPlan.primary,
+        followUpSchedule: treatmentPlan.followUpSchedule
+      },
+      medications: medications,
+      notes: formData.notes,
+      updatedAt: new Date()
     })
     
-    if (!result.result || !result.result.success) {
-      throw new Error(result.result?.message || '更新治疗记录失败')
+    if (!result || !result.success) {
+      throw new Error(result?.message || '更新治疗记录失败')
     }
   },
 
@@ -1183,44 +1175,34 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       abnormalRecordId: abnormalRecordId || undefined  // 关联异常记录ID
     }
     
-    // 如果是从异常记录创建，使用专门的云函数
-    const action = abnormalRecordId 
-      ? 'create_treatment_from_abnormal'
-      : 'create_treatment_record'
-    
     // 调用云函数创建治疗记录
+    const result = abnormalRecordId 
+      ? await HealthCloud.treatment.createFromAbnormal({
+          abnormalRecordId,
+          batchId: formData.batchId,
+          diagnosis: formData.diagnosis,
+          treatmentType: formData.treatmentType,
+          affectedCount: formData.affectedCount || 1,
+          treatmentPlan,
+          medications,
+          hasMedications: medications.length > 0,
+          notes: formData.notes,
+          isDirectSubmit: true
+        })
+      : await HealthCloud.treatment.create({
+          ...treatmentRecord,
+          affectedCount: formData.affectedCount || 1,
+          sourceType: this.data.sourceType,
+          sourceId: this.data.sourceId,
+          diagnosisId: this.data.diagnosisId,
+          isDirectSubmit: true
+        })
     
-    const result = await callCloudFunction({
-      name: 'health-management',
-      data: abnormalRecordId ? {
-        action,
-        abnormalRecordId,
-        batchId: formData.batchId,
-        diagnosis: formData.diagnosis,
-        treatmentType: formData.treatmentType,
-        affectedCount: formData.affectedCount || 1,  // ✅ 传递受影响的动物数量
-        treatmentPlan,
-        medications,
-        hasMedications: medications.length > 0,  // ✅ 使用 medications 长度判断
-        notes: formData.notes,
-        isDirectSubmit: true  // ✅ 添加缺失的参数
-      } : {
-        action,
-        ...treatmentRecord,
-        affectedCount: formData.affectedCount || 1,  // ✅ 传递受影响的动物数量
-        sourceType: this.data.sourceType,
-        sourceId: this.data.sourceId,
-        diagnosisId: this.data.diagnosisId,
-        isDirectSubmit: true  // ✅ 添加缺失的参数
-      }
-    })
-    
-    
-    if (result.result && result.result.success) {
+    if (result && result.success) {
       // ✅ 保存治疗记录编号到页面数据
-      if (result.result.data && result.result.data.treatmentNumber) {
+      if (result.data && result.data.treatmentNumber) {
         this.setData({
-          'formData.treatmentNumber': result.result.data.treatmentNumber
+          'formData.treatmentNumber': result.data.treatmentNumber
         })
       }
       
@@ -1240,7 +1222,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }, 1500)
     } else {
-      throw new Error(result.result?.message || '保存失败')
+      throw new Error(result?.message || '保存失败')
     }
   },
 
@@ -1330,12 +1312,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           if (res.confirm) {
             wx.showLoading({ title: '处理中...' })
             
-            const result = await smartCloudCall('complete_treatment_as_cured', { treatmentId: this.data.treatmentId,
+            const result = await HealthCloud.treatment.completeCured({ treatmentId: this.data.treatmentId,
                 curedCount: this.data.formData.initialCount || 0 })
             
             wx.hideLoading()
             
-            if (result.result && result.result.success) {
+            if (result && result.success) {
               // ✅ 设置刷新标志，通知健康页面刷新
               setHealthPageRefreshFlag()
               
@@ -1388,12 +1370,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     try {
       wx.showLoading({ title: '加载中...' })
       
-      const result = await smartCloudCall('get_treatment_detail', { treatmentId: treatmentId })
+      const result = await HealthCloud.treatment.getDetail({ treatmentId: treatmentId })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
-        const { treatment, progress } = result.result.data
+      if (result && result.success) {
+        const { treatment, progress } = result.data
         
         
         // 填充治疗基本信息（只读）
@@ -1518,7 +1500,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       wx.showLoading({ title: '提交中...' })
       
-      const result = await smartCloudCall('update_treatment_progress', { treatmentId: treatmentId,
+      const result = await HealthCloud.treatment.updateProgress({ treatmentId: treatmentId,
           progressType: progressDialogType,
           count: count,
           notes: progressForm.notes,
@@ -1526,8 +1508,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
-        const { remainingCount, newStatus } = result.result.data || {}
+      if (result && result.success) {
+        const { remainingCount, newStatus } = result.data || {}
         
         // ✅ 根据剩余数量显示不同的提示
         let successMessage = result.result.message || '记录成功'
@@ -1683,18 +1665,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       // 1. 提交治疗笔记
       if (hasNote) {
-        const noteResult = await callCloudFunction({
-          name: 'health-management',
-          data: {
-            action: 'add_treatment_note',
-            treatmentId: treatmentId,
-            note: {
-              content: noteForm.content,
-              recordDate: new Date().toISOString().split('T')[0]
-            }
+        const noteResult = await HealthCloud.treatment.addNote({
+          treatmentId: treatmentId,
+          note: {
+            content: noteForm.content,
+            recordDate: new Date().toISOString().split('T')[0]
           }
         })
-        results.push({ type: '治疗笔记', success: noteResult.result?.success })
+        results.push({ type: '治疗笔记', success: noteResult?.success })
       }
       
       // 2. 批量追加用药
@@ -1704,32 +1682,27 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           const med = selectedMedications[i]
           const quantity = parseFloat(med.quantity)
           
-          const medResult = await callCloudFunction({
-            name: 'health-management',
-            data: {
-              action: 'add_treatment_medication',
-              treatmentId: treatmentId,
-              medication: {
-                materialId: med.materialId,
-                name: med.materialName,
-                materialCode: med.materialCode,
-                category: med.category,
-                unit: med.unit,
-                quantity: quantity,
-                dosage: med.dosage || ''
-              }
+          const medResult = await HealthCloud.treatment.addMedication({
+            treatmentId: treatmentId,
+            medication: {
+              materialId: med.materialId,
+              name: med.materialName,
+              materialCode: med.materialCode,
+              category: med.category,
+              unit: med.unit,
+              quantity: quantity,
+              dosage: med.dosage || ''
             }
           })
           
-          
-          if (!medResult.result?.success) {
+          if (!medResult?.success) {
             // 追加用药失败，继续处理下一条
           }
           
           results.push({ 
             type: `追加用药-${med.materialName}`, 
-            success: medResult.result?.success,
-            message: medResult.result?.message || medResult.result?.error
+            success: medResult?.success,
+            message: medResult?.message || medResult?.error
           })
         }
       }
@@ -1845,12 +1818,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       wx.showLoading({ title: '保存中...' })
       
-      const result = await smartCloudCall('add_treatment_note', { treatmentId: treatmentId,
+      const result = await HealthCloud.treatment.addNote({ treatmentId: treatmentId,
           note: noteForm.content })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         wx.showToast({
           title: '笔记保存成功',
           icon: 'success'
@@ -2113,26 +2086,22 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       wx.showLoading({ title: '追加中...' })
       
-      const result = await callCloudFunction({
-        name: 'health-management',
-        data: {
-          action: 'add_treatment_medication',
-          treatmentId: treatmentId,
-          medication: {
-            materialId: addMedicationForm.materialId,
-            name: addMedicationForm.materialName,
-            materialCode: addMedicationForm.materialCode,
-            category: addMedicationForm.category,
-            unit: addMedicationForm.unit,
-            quantity: quantity,
-            dosage: addMedicationForm.dosage || ''
-          }
+      const result = await HealthCloud.treatment.addMedication({
+        treatmentId: treatmentId,
+        medication: {
+          materialId: addMedicationForm.materialId,
+          name: addMedicationForm.materialName,
+          materialCode: addMedicationForm.materialCode,
+          category: addMedicationForm.category,
+          unit: addMedicationForm.unit,
+          quantity: quantity,
+          dosage: addMedicationForm.dosage || ''
         }
       })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         wx.showToast({
           title: '用药追加成功',
           icon: 'success'
@@ -2152,7 +2121,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
-        throw new Error(result.result?.error || '追加失败')
+        throw new Error(result?.error || '追加失败')
       }
     } catch (error: unknown) {
       wx.hideLoading()
@@ -2223,13 +2192,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       wx.showLoading({ title: '保存中...' })
       
-      const result = await smartCloudCall('update_treatment_plan', { treatmentId: treatmentId,
+      const result = await HealthCloud.treatment.updatePlan({ treatmentId: treatmentId,
           treatmentPlan: adjustPlanForm.treatmentPlan,
           adjustReason: adjustPlanForm.reason })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         wx.showToast({
           title: '方案调整成功',
           icon: 'success'

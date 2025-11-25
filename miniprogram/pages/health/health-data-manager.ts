@@ -4,10 +4,7 @@
  */
 
 /// <reference path="../../../typings/index.d.ts" />
-import { safeCloudCall } from '../../utils/safe-cloud-call'
-import { callHealthFunction } from '../../utils/health-cloud-router'
-
-import { smartCloudCall } from '../../utils/cloud-adapter'
+import { HealthCloud } from '../../utils/cloud-functions'
 interface CloudCallResult<T = any> {
   success: boolean
   data?: T
@@ -25,8 +22,7 @@ export class HealthDataManager {
    */
   static async getDashboardSnapshot(batchId: string = 'all') {
     try {
-      const result = await callHealthFunction({
-        action: 'get_dashboard_snapshot',
+      const result = await HealthCloud.overview.getDashboardSnapshot({
         batchId,
         dateRange: 'all'
       }) as CloudCallResult
@@ -47,8 +43,7 @@ export class HealthDataManager {
    */
   static async getPreventionDashboard(batchId: string = 'all') {
     try {
-      const result = await callHealthFunction({
-        action: 'getPreventionDashboard',
+      const result = await HealthCloud.prevention.getDashboard({
         batchId
       }) as CloudCallResult
       
@@ -68,7 +63,7 @@ export class HealthDataManager {
    */
   static async getBatchCompleteData(batchId: string, dateRange: unknown) {
     try {
-      const result = await smartCloudCall('get_batch_complete_data', { batchId,
+      const result = await HealthCloud.overview.getBatchCompleteData({ batchId,
           dateRange }) as CloudCallResult
       
       if (result?.success) {
@@ -87,8 +82,7 @@ export class HealthDataManager {
    */
   static async getTreatmentCost(batchId: string | null, dateRange: unknown) {
     try {
-      const result = await callHealthFunction({
-        action: 'calculate_treatment_cost',
+      const result = await HealthCloud.treatment.calculateCost({
         dateRange,
         batchId
       }) as CloudCallResult<{ totalCost?: number }>
@@ -109,7 +103,7 @@ export class HealthDataManager {
    */
   static async getAbnormalRecords(batchId: string | null, page: number = 1, pageSize: number = 20) {
     try {
-      const result = await smartCloudCall('get_abnormal_list', { batchId,
+      const result = await HealthCloud.abnormal.list({ batchId,
           page,
           pageSize }) as CloudCallResult<any[]>
       
@@ -133,14 +127,10 @@ export class HealthDataManager {
    */
   static async getDiagnosisRecords(batchId: string | null, page: number = 1, pageSize: number = 20) {
     try {
-      const result = await safeCloudCall({
-        name: 'ai-diagnosis',
-        data: {
-          action: 'get_diagnosis_history',
-          batchId,
-          page,
-          pageSize
-        }
+      const result = await HealthCloud.ai.getHistory({
+        batchId,
+        page,
+        pageSize
       }) as CloudCallResult<any[]>
       
       if (result?.success) {

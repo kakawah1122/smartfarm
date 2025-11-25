@@ -1,7 +1,12 @@
 // health-care.ts - 保健管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 import type { HealthCareFormData, PageOptions, BatchInfo } from '../types/prevention'
+
+// 类型别名
+type InputEvent = WechatMiniprogram.Input
+type PickerChangeEvent = WechatMiniprogram.PickerChange
 import { 
   CARE_TYPE_OPTIONS, 
   METHOD_OPTIONS, 
@@ -166,11 +171,14 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   // 加载活跃批次
   async loadActiveBatches() {
     try {
-      const result = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
-        'health-management',
-        { action: 'get_active_batches' },
-        { loading: true, loadingText: '加载批次列表...', showError: true }
-      )
+      wx.showLoading({ title: '加载批次列表...' })
+      
+      const result = await safeCloudCall<{ success: boolean; data?: { batches: BatchInfo[] } }>({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
+      
+      wx.hideLoading()
       
       if (result.success) {
         this.setData({
@@ -187,7 +195,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   },
 
   // 表单输入处理（添加防抖）
-  onFormInput(e: WechatMiniprogram.InputEvent) {
+  onFormInput(e: InputEvent) {
     const { field } = e.currentTarget.dataset
     const { value } = e.detail
     
@@ -205,7 +213,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   },
 
   // 数字输入处理（添加防抖）
-  onNumberInput(e: WechatMiniprogram.InputEvent) {
+  onNumberInput(e: InputEvent) {
     const { field } = e.currentTarget.dataset
     const value = parseFloat(e.detail.value) || 0
     
@@ -253,8 +261,8 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
     this.setData({ showCareTypePicker: true })
   },
 
-  onCareTypePickerChange(e: WechatMiniprogram.PickerChangeEvent) {
-    const index = e.detail.value as number
+  onCareTypePickerChange(e: PickerChangeEvent) {
+    const index = Number(e.detail.value)
     const selectedType = this.data.careTypeOptions[index]
     
     if (!selectedType) return
@@ -281,8 +289,8 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
     this.setData({ showMethodPicker: true })
   },
 
-  onMethodPickerChange(e: WechatMiniprogram.PickerChangeEvent) {
-    const index = e.detail.value as number
+  onMethodPickerChange(e: PickerChangeEvent) {
+    const index = Number(e.detail.value)
     const selectedMethod = this.data.methodOptions[index]
     
     if (!selectedMethod) return
@@ -304,8 +312,8 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
     this.setData({ showEffectivenessPicker: true })
   },
 
-  onEffectivenessPickerChange(e: WechatMiniprogram.PickerChangeEvent) {
-    const index = e.detail.value as number
+  onEffectivenessPickerChange(e: PickerChangeEvent) {
+    const index = Number(e.detail.value)
     const selectedEffectiveness = this.data.effectivenessOptions[index]
     
     if (!selectedEffectiveness) return
@@ -356,7 +364,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   },
 
   // 日期时间选择器
-  onDateChange(e: WechatMiniprogram.PickerChangeEvent) {
+  onDateChange(e: PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
     const value = e.detail.value as string
     
@@ -366,7 +374,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
     this.validateField(field, value)
   },
 
-  onTimeChange(e: WechatMiniprogram.PickerChangeEvent) {
+  onTimeChange(e: PickerChangeEvent) {
     const { field } = e.currentTarget.dataset
     const value = e.detail.value as string
     
@@ -486,38 +494,32 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
         actualCount: formData.actualCount
       }
       
-      // ✅ 使用CloudApi统一封装
-      const result = await CloudApi.callFunction(
-        'health-management',
-        {
-          action: 'create_prevention_record',
-          preventionType: 'nutrition',
-          batchId: formData.batchId,
-          locationId: formData.locationId,
-          nutritionRecord,
-          executionDate: formData.executionDate,
-          executionTime: formData.executionTime,
-          operator: formData.operator,
-          cost: formData.cost,
-          effectiveness: formData.effectiveness,
-          notes: formData.notes,
-          nextScheduled: formData.nextSchedule ? {
-            date: formData.nextSchedule,
-            type: 'nutrition',
-            notes: `${formData.supplement}保健计划`
-          } : null,
-          sourceType: this.data.sourceType,
-          sourceId: this.data.sourceId
-        },
-        {
-          loading: true,
-          loadingText: '保存中...',
-          showSuccess: true,
-          successText: '保健管理记录保存成功'
-        }
-      )
+      wx.showLoading({ title: '保存中...' })
+      
+      const result = await HealthCloud.prevention.create({
+        preventionType: 'nutrition',
+        batchId: formData.batchId,
+        locationId: formData.locationId,
+        nutritionRecord,
+        executionDate: formData.executionDate,
+        executionTime: formData.executionTime,
+        operator: formData.operator,
+        cost: formData.cost,
+        effectiveness: formData.effectiveness,
+        notes: formData.notes,
+        nextScheduled: formData.nextSchedule ? {
+          date: formData.nextSchedule,
+          type: 'nutrition',
+          notes: `${formData.supplement}保健计划`
+        } : null,
+        sourceType: this.data.sourceType,
+        sourceId: this.data.sourceId
+      })
+      
+      wx.hideLoading()
       
       if (result.success) {
+        wx.showToast({ title: '保健管理记录保存成功', icon: 'success' })
         // 返回上一页
         setTimeout(() => {
           wx.navigateBack()

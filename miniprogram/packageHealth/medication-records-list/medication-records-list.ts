@@ -1,7 +1,7 @@
 // miniprogram/packageHealth/medication-records-list/medication-records-list.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
-import { smartCloudCall } from '../../utils/cloud-adapter'
+import { HealthCloud } from '../../utils/cloud-functions'
 
 interface MedicationRecord {
   _id: string
@@ -161,7 +161,7 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
         mask: true
       })
       
-      const response = await smartCloudCall('list_prevention_records', {
+      const response = await HealthCloud.prevention.list({
         page: 1,
         pageSize: 100
       }) as any
@@ -289,7 +289,7 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
     })
     
     try {
-      const response = await smartCloudCall('update_prevention_effectiveness', {
+      const response = await HealthCloud.prevention.updateEffectiveness({
         recordId: selectedRecord._id,
         effectiveness: option.value,
         effectivenessNote: evaluationFormData.note,

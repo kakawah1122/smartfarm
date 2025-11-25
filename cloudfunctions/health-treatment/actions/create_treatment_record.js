@@ -110,9 +110,9 @@ exports.main = async (event, wxContext) => {
               updatedAt: new Date()
             }
           })
-        console.log('✅ 已同步治疗信息到AI诊断记录:', diagnosisId)
+        // 已同步治疗信息到AI诊断记录
       } catch (syncError) {
-        console.log('⚠️ 同步治疗信息到AI诊断记录失败:', syncError.message)
+        // 同步治疗信息到AI诊断记录失败
         // 不影响主流程
       }
     }

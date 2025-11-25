@@ -25,7 +25,6 @@ import { createMonitoringModule, MonitoringModuleManager } from './modules/healt
 import { createPreventionModule, PreventionModuleManager } from './modules/health-prevention-module'
 import { createSetDataWrapper, SetDataWrapper } from './helpers/setdata-wrapper'
 
-import { smartCloudCall } from '../../utils/cloud-adapter'
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
 
@@ -477,7 +476,7 @@ Page<PageData, any>({
    */
   async fixTreatmentRecordsOpenId() {
     try {
-      const result = await smartCloudCall('fix_treatment_records_openid')
+      const result = await HealthCloud.treatment.fixOpenid({})
       
       if (result && (result as BaseResponse).result?.success) {
         // 修复成功，静默处理
@@ -494,7 +493,7 @@ Page<PageData, any>({
    */
   async fixBatchDeathCount() {
     try {
-      const result = await smartCloudCall('fix_batch_death_count')
+      const result = await HealthCloud.death.fixBatchCount({})
       
       if (result && (result as BaseResponse).result?.success) {
         // 修复成功，静默处理
@@ -526,14 +525,12 @@ Page<PageData, any>({
       this.initializePage(options)
     })
     
-    // ✅ 性能优化：数据修复移至后台执行（延迟1秒，不阻塞首屏）
-    setTimeout(() => {
-      // 修复治疗记录中缺少 _openid 字段的数据
-      this.fixTreatmentRecordsOpenId()
-      
-      // 修复死亡数据不一致问题
-      this.fixBatchDeathCount()
-    }, 1000)
+    // ⚠️ 数据修复方法已禁用（需要管理员权限，仅在控制台手动执行）
+    // 如需执行修复，请在云开发控制台调用对应云函数
+    // setTimeout(() => {
+    //   this.fixTreatmentRecordsOpenId()
+    //   this.fixBatchDeathCount()
+    // }, 1000)
   },
   
   /**
@@ -1018,7 +1015,7 @@ Page<PageData, any>({
           data: {
             action: 'list_prevention_records',
             batchId: 'all',
-            preventionType: 'medication',
+            preventionType: 'medicine',  // 修复：使用正确的类型值
             page: 1,
             pageSize: 1  // 只需要统计数量
           }
@@ -1047,15 +1044,15 @@ Page<PageData, any>({
           totalPreventions: data.totalCount || 0,
           vaccineCount: data.vaccineCount || 0,
           vaccineCoverage: data.vaccineCount || 0,  // 使用疫苗数作为覆盖数
-          medicationCount: 0,  // 初始值，后面会更新
+          medicationCount: data.medicationCount || 0,  // 直接从Dashboard获取
           vaccineStats: {},
           disinfectionCount: data.disinfectionCount || 0,
-          totalCost: 0  // 需要从其他地方获取
+          totalCost: data.preventionCost || 0
         }
       }
       
-      // 更新用药统计（从并行结果中获取）
-      if (medicationResult?.success && medicationResult.data) {
+      // 备用：如果Dashboard没有返回medicationCount，从单独查询获取
+      if (preventionStats.medicationCount === 0 && medicationResult?.success && medicationResult.data) {
         preventionStats.medicationCount = medicationResult.data.total || 0
       }
 
@@ -1254,7 +1251,7 @@ Page<PageData, any>({
    */
   async loadSingleBatchDataOptimized() {
     try {
-      const result = await smartCloudCall('get_batch_complete_data', { batchId: this.data.currentBatchId,
+      const result = await HealthCloud.overview.getBatchCompleteData({ batchId: this.data.currentBatchId,
           includes: ['prevention', 'treatment', 'diagnosis', 'abnormal', 'pending_diagnosis'],
           diagnosisLimit: 10,
           preventionLimit: 20 })
@@ -1496,7 +1493,7 @@ Page<PageData, any>({
                   name: 'health-prevention',
                   data: {
                     action: 'list_prevention_records',
-                    preventionType: 'medication',
+                    preventionType: 'medicine',  // 修复：使用正确的类型值
                     batchId: this.data.currentBatchId || 'all',
                     page: 1,
                     pageSize: 1
@@ -3256,7 +3253,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     // 内联防重复点击逻辑，不依赖可能未初始化的方法
     const now = Date.now()
     if (this._lastTaskClickTime && now - this._lastTaskClickTime < 300) {
-      console.log('点击过于频繁，忽略')
       return
     }
     this._lastTaskClickTime = now
@@ -3478,7 +3474,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     // 内联防重复点击逻辑
     const now = Date.now()
     if (this._lastTaskClickTime && now - this._lastTaskClickTime < 300) {
-      console.log('操作过于频繁，忽略')
       return
     }
     this._lastTaskClickTime = now
@@ -3906,7 +3901,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       if (result && result.success) {
         const materials = result.data.materials || []
         
-        console.log('原始物料数据:', materials)
         
         const availableMedicines = materials
           .filter((material: unknown) => (material.currentStock || 0) > 0)
@@ -3920,7 +3914,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
               category: material.category,
               description: material.description || ''
             }
-            console.log('处理后的药品数据:', medicine)
             return medicine
           })
         
@@ -4147,19 +4140,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         const quantity = Number(medicationRecord.quantity) || 0
         const totalCost = unitPrice * quantity
         
-        console.log('成本计算详情:', {
-          selectedMedicine: this.data.selectedMedicine,
-          unitPrice,
-          quantity,
-          totalCost
-        })
-        
         // 创建健康预防记录 - 使用新架构
         const preventionResult = await HealthCloud.prevention.completeTask({
           taskId: selectedTask._id,
           batchId: batchId,
           preventionData: {
-            preventionType: 'medication',
+            preventionType: 'medicine',  // 修复：使用正确的类型值
             preventionDate: medicationRecord.useDate,
             medicationInfo: {
               name: medicationRecord.materialName,
@@ -4181,9 +4167,6 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           }
         })
         
-        console.log('预防记录创建结果:', preventionResult)
-        console.log('预防记录创建结果类型:', typeof preventionResult)
-        console.log('预防记录创建结果详情:', JSON.stringify(preventionResult))
         
         if (!preventionResult) {
           throw new Error('云函数调用失败：返回值为空，请检查云函数是否正确部署')
@@ -4207,23 +4190,18 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         // 关闭表单
         this.closeMedicationFormPopup()
         
-        console.log('[刷新] 开始刷新所有数据...')
         
         // 刷新数据（使用原来的完整刷新逻辑）
         try {
           // 1. 刷新批次列表（确保新批次能被加载）
-          console.log('[刷新] 1. 刷新批次列表...')
           await this.loadAvailableBatches()
           
           // 2. 刷新基础健康数据（包括健康率、死亡率等）
-          console.log('[刷新] 2. 刷新健康数据...')
           await this.loadHealthData(true)  // silent模式，不显示loading
           
           // 3. 刷新当前标签的数据
-          console.log('[刷新] 3. 刷新标签数据:', this.data.activeTab)
           await this.loadTabData(this.data.activeTab)
           
-          console.log('[刷新] 所有数据刷新完成✅')
         } catch (refreshError) {
           console.error('[刷新] 数据刷新失败:', refreshError)
         }

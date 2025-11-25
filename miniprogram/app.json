@@ -162,7 +162,6 @@
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-loading": "tdesign-miniprogram/loading/loading",
     "t-input": "tdesign-miniprogram/input/input",
-    "t-toast": "tdesign-miniprogram/toast/toast",
     "t-popup": "tdesign-miniprogram/popup/popup",
     "t-search": "tdesign-miniprogram/search/search",
     "t-tag": "tdesign-miniprogram/tag/tag",

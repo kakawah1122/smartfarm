@@ -4,15 +4,32 @@
  * 保持原有功能和UI完全不变
  */
 
-import { logger } from '../../../utils/logger'
-import { calculateCurrentAge } from '../../../utils/health-utils'
-import { safeCloudCall } from '../../../utils/safe-cloud-call'
 import CloudApi from '../../../utils/cloud-api'
-import type { BaseResponse } from '../../../../typings/core'
+import { safeCloudCall } from '../../../utils/safe-cloud-call'
+import { logger } from '../../../utils/logger'
 
+interface BaseResponse {
+  success: boolean
+  data?: any
+  error?: string
+  message?: string
+}
 
-// 类型定义
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
+// 任务类型定义
+interface Task {
+  id: string
+  batchId: string
+  batchNumber: string
+  dayAge: number
+  taskType: string
+  taskName: string
+  status?: string
+  completed?: boolean
+  createTime?: string
+  [key: string]: any
+}
+
+// CustomEvent类型已通过全局定义
 
 // 预防任务模块管理器
 export class PreventionModuleManager {
@@ -23,32 +40,112 @@ export class PreventionModuleManager {
   }
   
   /**
+   * 规范化任务数据
+   */
+  private normalizeTaskData(task: any, overrides: any = {}) {
+    return {
+      _id: task._id || task.id,
+      id: task.id || task._id,
+      taskId: task.taskId || task._id,
+      batchId: task.batchId || overrides.batchId,
+      batchNumber: task.batchNumber || overrides.batchNumber,
+      dayAge: task.dayAge || task.day_age,
+      taskType: task.taskType || task.type || task.category,
+      taskName: task.taskName || task.title || task.name,
+      type: task.type || task.category,
+      category: task.category || task.type,
+      title: task.title || task.taskName,
+      description: task.description || '',
+      status: task.status || (task.completed ? 'completed' : 'pending'),
+      completed: task.completed || false,
+      completedAt: task.completedAt || task.completed_at,
+      isVaccine: task.category === 'vaccine' || task.type === 'vaccine',
+      isMedication: task.category === 'medication' || task.type === 'medication',
+      isNutrition: task.category === 'nutrition' || task.type === 'nutrition'
+    }
+  }
+  
+  /**
+   * 分组历史任务
+   */
+  private groupHistoryTasksByBatch(tasks: any[]) {
+    const grouped: Record<string, any> = {}
+    tasks.forEach(task => {
+      const batchId = task.batchId || 'unknown'
+      if (!grouped[batchId]) {
+        grouped[batchId] = {
+          batchId,
+          batchNumber: task.batchNumber || batchId,
+          tasks: []
+        }
+      }
+      grouped[batchId].tasks.push(task)
+    })
+    return Object.values(grouped)
+  }
+  
+  /**
    * 加载预防数据
    */
   async loadPreventionData() {
+    const subTab = this.pageInstance.data.preventionSubTab
+    
+    // 获取预防统计数据（包括成本）
+    await this.loadPreventionStats()
+    
+    // 根据子标签加载任务
+    if (subTab === 'today') {
+      await this.loadTodayTasks()
+    } else if (subTab === 'upcoming') {
+      await this.loadUpcomingTasks()
+    } else if (subTab === 'history') {
+      await this.loadHistoryTasks()
+    }
+  }
+  
+  /**
+   * 加载预防统计数据（包括成本）
+   */
+  async loadPreventionStats() {
     try {
-      // 根据当前子标签加载相应数据
-      const subTab = this.pageInstance.data.preventionSubTab
+      const batchId = this.pageInstance.data.currentBatchId || 'all'
       
-      switch (subTab) {
-        case 'today':
-          await this.loadTodayTasks()
-          break
-        case 'upcoming':
-          await this.loadUpcomingTasks()
-          break
-        case 'history':
-          await this.loadHistoryTasks()
-          break
-        default:
-          await this.loadTodayTasks()
+      // 调用预防管理云函数获取统计数据
+      const result = await CloudApi.callFunction(
+        'health-prevention',
+        {
+          action: 'getPreventionDashboard',
+          batchId: batchId
+        },
+        { showError: false }
+      ) as BaseResponse
+      
+      if (result?.success && result.data) {
+        const data = result.data as any
+        
+        // 更新预防统计数据 - 使用云函数实际返回的字段名
+        this.pageInstance.setData({
+          'preventionStats': {
+            totalPreventions: data.totalCount || 0,
+            vaccineCount: data.vaccineCount || 0,
+            vaccineCoverage: data.vaccineCoverage || 0,
+            medicationCount: data.medicationCount || 0,
+            disinfectionCount: data.disinfectionCount || 0,
+            totalCost: data.preventionCost || data.totalCost || 0
+          },
+          'preventionData.stats': {
+            vaccinationRate: data.vaccinationRate || 0,
+            vaccineCount: data.vaccineCount || 0,
+            medicationCount: data.medicationCount || 0,
+            vaccineCoverage: data.vaccineCoverage || 0,
+            preventionCost: data.preventionCost || data.totalCost || 0
+          }
+        })
+        
+        logger.info('[loadPreventionStats] 预防成本:', data.totalCost || 0)
       }
-    } catch (error: Error | unknown) {
-      logger.error('加载预防数据失败:', error)
-      wx.showToast({
-        title: '加载数据失败',
-        icon: 'none'
-      })
+    } catch (error) {
+      logger.error('[loadPreventionStats] 获取预防统计失败:', error)
     }
   }
   
@@ -89,7 +186,7 @@ export class PreventionModuleManager {
       // 并行加载所有批次的任务
       const batchTasksPromises = batches.map(async (batch: Record<string, unknown>) => {
         try {
-          const dayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
+          const dayAge = batch.day_age || ((batch as any).dayAge || 1)
           const result = await safeCloudCall({
             name: 'breeding-todo',
             data: {
@@ -119,18 +216,18 @@ export class PreventionModuleManager {
           }
           return null
         } catch (error: Error | unknown) {
-          logger.error(`批次任务加载失败:`, error)
+          logger.error(`批次${(batch as any).batchNumber}今日任务加载失败:`, error)
           return null
         }
       })
       
       const results = await Promise.all(batchTasksPromises)
-      const validBatchTasks = results.filter((item: unknown) => item !== null && item.tasks.length > 0)
+      const validBatchTasks = results.filter((item: any) => item !== null && item.tasks && item.tasks.length > 0)
       
       // 收集所有任务
       let allTasks: Task[] = []
-      validBatchTasks.forEach((batchData: Record<string, unknown>) => {
-        allTasks = allTasks.concat(batchData.tasks)
+      validBatchTasks.forEach((batchData: any) => {
+        allTasks = allTasks.concat(batchData.tasks || [])
       })
       
       this.pageInstance.setData({
@@ -138,8 +235,8 @@ export class PreventionModuleManager {
         'preventionData.todayTasks': allTasks
       })
       
-    } catch (error: Error | unknown) {
-      logger.error('加载今日任务失败:', error)
+    } catch (error: any) {
+      logger.error('获取历史任务失败:', error?.message || error)
       this.pageInstance.setData({
         todayTasksByBatch: [],
         'preventionData.todayTasks': []
@@ -179,14 +276,16 @@ export class PreventionModuleManager {
       // 并行加载所有批次的未来7天任务
       const upcomingPromises = batches.map(async (batch: Record<string, unknown>) => {
         try {
-          const currentDayAge = batch.dayAge || calculateCurrentAge(batch.entryDate)
+          const currentDayAge = (batch as any).dayAge || 1
+          const startDayAge = currentDayAge + 1
+          const endDayAge = currentDayAge + 7
           const result = await safeCloudCall({
             name: 'breeding-todo',
             data: {
               action: 'getUpcomingTodos',
               batchId: batch._id,
-              startDayAge: currentDayAge + 1,
-              endDayAge: currentDayAge + 7
+              startDayAge: startDayAge,
+              endDayAge: endDayAge
             }
           })
           
@@ -194,7 +293,7 @@ export class PreventionModuleManager {
           if (response.success && response.data) {
             const tasks = Array.isArray(response.data) ? response.data : []
             const normalizedTasks = tasks.map((task: Record<string, unknown>) =>
-              this.normalizeTask(task, {
+              this.normalizeTaskData(task, {
                 batchNumber: batch.batchNumber || batch._id
               })
             )
@@ -202,7 +301,7 @@ export class PreventionModuleManager {
             // 按日龄分组
             const tasksByDayAge: Record<number, any[]> = {}
             normalizedTasks.forEach((task: Record<string, unknown>) => {
-              const dayAge = task.dayAge || currentDayAge
+              const dayAge = (task as any).dayAge || currentDayAge
               if (!tasksByDayAge[dayAge]) {
                 tasksByDayAge[dayAge] = []
               }
@@ -212,14 +311,14 @@ export class PreventionModuleManager {
             // 转换为数组格式
             return Object.entries(tasksByDayAge).map(([dayAge, dayTasks]) => ({
               id: `${batch._id}_${dayAge}`,
-              batchId: batch._id,
-              batchNumber: batch.batchNumber || batch._id,
+              batchId: (batch as any)._id,
+              batchNumber: (batch as any).batchNumber || (batch as any)._id,
               dayAge: parseInt(dayAge),
               tasks: dayTasks
             }))
           }
           return []
-        } catch (error: Error | unknown) {
+        } catch (error) {
           logger.error(`批次未来任务加载失败:`, error)
           return []
         }
@@ -234,7 +333,7 @@ export class PreventionModuleManager {
       // 收集所有任务
       let allTasks: Task[] = []
       allBatchTasks.forEach((batchData: Record<string, unknown>) => {
-        allTasks = allTasks.concat(batchData.tasks)
+        allTasks = allTasks.concat((batchData as any).tasks || [])
       })
       
       this.pageInstance.setData({
@@ -266,8 +365,9 @@ export class PreventionModuleManager {
       ) as BaseResponse
       
       if (result?.success && result.data) {
-        const tasks = Array.isArray(result.data) ? result.data : []
-        const normalizedTasks = tasks.map((task: Record<string, unknown>) => this.normalizeTask(task))
+        // 历史任务是直接的数组
+        const tasks: any[] = Array.isArray(result.data) ? result.data : []
+        const normalizedTasks = tasks.map((task: Record<string, unknown>) => this.normalizeTaskData(task))
         
         // 分组历史任务
         const groupedTasks = this.groupHistoryTasksByBatch(normalizedTasks)
@@ -292,9 +392,9 @@ export class PreventionModuleManager {
   }
   
   /**
-   * 分组历史任务（按批次和日龄组合分组）
+   * 分组历史任务（按批次和日龄组合分组） - 外部版本
    */
-  groupHistoryTasksByBatch(tasks: Task[] = []) {
+  groupHistoryTasksByBatchPublic(tasks: Task[] = []) {
     const batchMap: Record<string, any> = {}
     
     tasks.forEach((task: Record<string, unknown>) => {
@@ -386,7 +486,7 @@ export class PreventionModuleManager {
     } catch (error: Error | unknown) {
       wx.hideLoading()
       wx.showToast({
-        title: error.message || '操作失败',
+        title: (error as any)?.message || '完成任务失败',
         icon: 'none'
       })
     }

@@ -8,7 +8,8 @@ interface ErrorWithMessage {
   [key: string]: any;
 }
 
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 import type { VaccineFormData, PageOptions, BatchInfo } from '../types/prevention'
 import { 
   ROUTE_OPTIONS,
@@ -138,11 +139,14 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   // 加载活跃批次
   async loadActiveBatches() {
     try {
-      const result = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
-        'health-management',
-        { action: 'get_active_batches' },
-        { loading: true, loadingText: '加载批次列表...', showError: true }
-      )
+      wx.showLoading({ title: '加载批次列表...' })
+      
+      const result = await safeCloudCall<{ success: boolean; data?: { batches: BatchInfo[] } }>({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
+      
+      wx.hideLoading()
       
       if (result.success) {
         this.setData({
@@ -366,32 +370,26 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
         nextSchedule: formData.nextSchedule
       }
       
-      // ✅ 使用CloudApi统一封装
-      const result = await CloudApi.callFunction<{ recordId: string }>(
-        'health-management',
-        {
-          action: 'create_prevention_record',
-          preventionType: 'vaccine',
-          batchId: formData.batchId,
-          locationId: formData.locationId,
-          vaccineRecord,
-          executionDate: formData.executionDate,
-          executionTime: formData.executionTime,
-          operator: formData.operator,
-          cost: formData.cost,
-          notes: formData.notes,
-          sourceType: this.data.sourceType,
-          sourceId: this.data.sourceId
-        },
-        {
-          loading: true,
-          loadingText: '保存中...',
-          showSuccess: true,
-          successText: '疫苗接种记录保存成功'
-        }
-      )
+      wx.showLoading({ title: '保存中...' })
+      
+      const result = await HealthCloud.prevention.create({
+        preventionType: 'vaccine',
+        batchId: formData.batchId,
+        locationId: formData.locationId,
+        vaccineRecord,
+        executionDate: formData.executionDate,
+        executionTime: formData.executionTime,
+        operator: formData.operator,
+        cost: formData.cost,
+        notes: formData.notes,
+        sourceType: this.data.sourceType,
+        sourceId: this.data.sourceId
+      }) as { success: boolean; data?: { recordId: string }; error?: string }
+      
+      wx.hideLoading()
       
       if (result.success) {
+        wx.showToast({ title: '疫苗接种记录保存成功', icon: 'success' })
         // 如果有不良反应，提示是否进行AI诊断
         if (formData.adverseReactions > 0 && result.data?.recordId) {
           this.handleAdverseReaction(result.data.recordId)

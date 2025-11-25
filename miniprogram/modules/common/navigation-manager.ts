@@ -174,7 +174,7 @@ export class NavigationManager {
    */
   static navigateTo(routeName: string, options?: Partial<NavigationOptions>) {
     if (this.checkDoubleClick()) {
-      console.log('操作太频繁，请稍后再试')
+      // 操作太频繁
       return Promise.reject(new Error('操作太频繁'))
     }
     
@@ -289,12 +289,10 @@ export class NavigationManager {
    * 预加载分包
    */
   static preloadPackage(packageName: string) {
-    // @ts-ignore
     if (wx.preloadSubpackage) {
-      // @ts-ignore
       wx.preloadSubpackage({
         package: packageName,
-        success: () => console.log(`分包 ${packageName} 预加载成功`),
+        success: () => {},
         fail: (error: unknown) => console.error(`分包 ${packageName} 预加载失败:`, error)
       })
     }

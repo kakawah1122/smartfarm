@@ -162,6 +162,7 @@ async function getPreventionDashboard(event, wxContext) {
       totalCount,
       vaccineCount,
       disinfectionCount,
+      medicationCount,
       allRecords
     ] = await Promise.all([
       // 总预防次数
@@ -182,6 +183,14 @@ async function getPreventionDashboard(event, wxContext) {
         .where({
           ...conditions,
           preventionType: 'disinfection'
+        })
+        .count(),
+      
+      // 用药次数
+      db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+        .where({
+          ...conditions,
+          preventionType: 'medicine'
         })
         .count(),
       
@@ -216,7 +225,8 @@ async function getPreventionDashboard(event, wxContext) {
         totalCount: totalCount.total,
         vaccineCount: vaccineCount.total,
         disinfectionCount: disinfectionCount.total,
-        preventionCost: preventionCost,  // 添加预防成本
+        medicationCount: medicationCount.total,  // 添加用药统计
+        preventionCost: preventionCost,
         lastUpdateTime: new Date().toISOString()
       }
     }

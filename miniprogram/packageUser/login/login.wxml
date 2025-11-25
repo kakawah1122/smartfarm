@@ -14,7 +14,7 @@
         <view class="login-logo">
           <image
             class="project-logo-image"
-            src="/assets/project-logo.png"
+            src="../assets/project-logo.png"
             mode="aspectFit"
           />
         </view>

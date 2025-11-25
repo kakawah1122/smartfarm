@@ -102,6 +102,9 @@ export const HealthCloud = {
     
     /** 获取批次预防对比 */
     getBatchComparison: (data: any) => callCloudFunction('health-prevention', 'get_batch_prevention_comparison', data),
+    
+    /** 检查健康预警 */
+    checkAlerts: (data: any) => callCloudFunction('health-prevention', 'check_health_alerts', data),
   },
 
   /**
@@ -298,6 +301,12 @@ export const HealthCloud = {
     
     /** 获取批次提示数据 */
     getBatchPromptData: (data: any) => callCloudFunction('health-overview', 'get_batch_prompt_data', data),
+    
+    /** 获取存活率分析 */
+    getSurvivalAnalysis: (data: any) => callCloudFunction('health-overview', 'get_survival_analysis', data),
+    
+    /** 导出存活率报告 */
+    exportSurvivalReport: (data: any) => callCloudFunction('health-overview', 'export_survival_report', data),
   },
 
   /**
@@ -318,6 +327,12 @@ export const HealthCloud = {
     
     /** 计算健康率 */
     calculateHealthRate: (data: any) => callCloudFunction('health-cost', 'calculate_health_rate', data),
+    
+    /** 获取成本分析数据 */
+    getAnalysis: (data: any) => callCloudFunction('health-cost', 'get_cost_analysis', data),
+    
+    /** 导出成本报告 */
+    exportReport: (data: any) => callCloudFunction('health-cost', 'export_cost_report', data),
   },
 
   /**
@@ -329,6 +344,9 @@ export const HealthCloud = {
     
     /** 获取诊断历史 */
     getHistory: (data: any) => callCloudFunction('ai-diagnosis', 'get_diagnosis_history', data),
+    
+    /** 获取诊断详情 */
+    getDiagnosis: (data: any) => callCloudFunction('ai-diagnosis', 'get_ai_diagnosis', data),
   },
 }
 

@@ -9,6 +9,7 @@
 // 5. 存储统计和分析
 
 const cloud = require('wx-server-sdk');
+const { COLLECTIONS } = require('./collections.js');
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -19,11 +20,11 @@ const _ = db.command;
 
 // 微信云开发数据库最佳实践配置
 const DB_CONFIG = {
-  // 集合名称规范
+  // 集合名称规范 - 使用统一的COLLECTIONS配置
   collections: {
-    dynamicFiles: 'dynamic_file_records',  // 动态文件记录
-    storageStats: 'storage_statistics',    // 存储统计
-    cleanupLogs: 'cleanup_logs'           // 清理日志
+    dynamicFiles: COLLECTIONS.FILE_DYNAMIC_RECORDS,
+    storageStats: COLLECTIONS.SYS_STORAGE_STATISTICS,
+    cleanupLogs: COLLECTIONS.SYS_CLEANUP_LOGS
   },
   
   // 查询优化配置

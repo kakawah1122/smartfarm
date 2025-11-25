@@ -1,7 +1,7 @@
 // miniprogram/packageHealth/death-records-list/death-records-list.ts
 
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
 import { formatDateTime } from '../../utils/health-utils'
 import { logger } from '../../utils/logger'
 import type { DeathRecord } from '../types/death-record'
@@ -100,23 +100,17 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
     page.setData({ loading: true })
 
     try {
-      const response = await CloudApi.callFunction<DeathRecord[]>(
-        'health-management',
-        {
-          action: 'get_death_records_list'
-        },
-        {
-          loading: true,
-          loadingText: '加载死亡记录...',
-          showError: false
-        }
-      )
+      wx.showLoading({ title: '加载死亡记录...' })
+      
+      const response = await HealthCloud.death.list({})
+      
+      wx.hideLoading()
 
       if (!response.success) {
         throw new Error(response.error || '加载失败')
       }
 
-      const deathRecords = response.data || []
+      const deathRecords = (response.data?.records || response.data || []) as DeathRecord[]
 
       let totalDeath = 0
       let totalLoss = 0

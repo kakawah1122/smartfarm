@@ -1,6 +1,6 @@
 // survival-analysis.ts - 存活率分析页面
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
 
 type DateRange = 'week' | 'month' | 'quarter' | 'year'
 
@@ -122,18 +122,13 @@ const pageConfig: WechatMiniprogram.Page.Options<SurvivalAnalysisData, SurvivalA
     const page = this as SurvivalAnalysisPageInstance
     page.setData({ loading: true })
 
-    const response = await CloudApi.callFunction<SurvivalAnalysisResponse>(
-      'health-management',
-      {
-        action: 'get_survival_analysis',
-        dateRange: page.data.dateRange
-      },
-      {
-        loading: true,
-        loadingText: '加载存活率数据...',
-        showError: false
-      }
-    )
+    wx.showLoading({ title: '加载存活率数据...' })
+    
+    const response = await HealthCloud.overview.getSurvivalAnalysis({
+      dateRange: page.data.dateRange
+    }) as { success: boolean; data?: SurvivalAnalysisResponse; error?: string }
+    
+    wx.hideLoading()
 
     if (response.success) {
       const data = response.data || {}
@@ -178,28 +173,23 @@ const pageConfig: WechatMiniprogram.Page.Options<SurvivalAnalysisData, SurvivalA
   async exportReport() {
     const page = this as SurvivalAnalysisPageInstance
 
-    const response = await CloudApi.callFunction(
-      'health-management',
-      {
-        action: 'export_survival_report',
-        dateRange: page.data.dateRange,
-        data: {
-          overview: page.data.overview,
-          stageAnalysis: page.data.stageAnalysis,
-          trendData: page.data.trendData,
-          factors: page.data.factors
-        } as ExportPayload
-      },
-      {
-        loading: true,
-        loadingText: '生成报告中...',
-        showError: false,
-        showSuccess: true,
-        successText: '报告已生成'
-      }
-    )
+    wx.showLoading({ title: '生成报告中...' })
+    
+    const response = await HealthCloud.overview.exportSurvivalReport({
+      dateRange: page.data.dateRange,
+      data: {
+        overview: page.data.overview,
+        stageAnalysis: page.data.stageAnalysis,
+        trendData: page.data.trendData,
+        factors: page.data.factors
+      } as ExportPayload
+    })
+    
+    wx.hideLoading()
 
-    if (!response.success) {
+    if (response.success) {
+      wx.showToast({ title: '报告已生成', icon: 'success' })
+    } else {
       wx.showToast({
         title: response.error || '导出失败',
         icon: 'none'

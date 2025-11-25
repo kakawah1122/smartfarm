@@ -56,11 +56,7 @@ exports.main = async (event, wxContext) => {
     // 4. 更新批次健康数据和健康率
     // TODO: 等health-overview模块迁移后，通过云函数间调用实现
     // 暂时记录日志，不影响主流程
-    console.log('[complete_treatment_as_cured] 需要更新批次健康状态:', {
-      batchId: treatment.batchId,
-      curedCount: actualCuredCount,
-      type: 'cured'
-    })
+    // 需要更新批次健康状态
     
     // 5. 记录审计日志（保持原有审计逻辑）
     await dbManager.createAuditLog(

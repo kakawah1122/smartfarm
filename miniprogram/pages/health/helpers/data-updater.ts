@@ -133,3 +133,27 @@ export class DataPathBuilder {
 export function createDataUpdater() {
   return new DataPathBuilder()
 }
+
+/**
+ * 数据更新器 - 带commit功能
+ */
+export class DataUpdater extends DataPathBuilder {
+  private pageInstance: any
+  
+  constructor(pageInstance: any) {
+    super()
+    this.pageInstance = pageInstance
+  }
+  
+  /**
+   * 提交所有更新
+   */
+  commit() {
+    const updates = this.build()
+    if (Object.keys(updates).length > 0) {
+      this.pageInstance.setData(updates)
+      this.clear()
+    }
+    return this
+  }
+}

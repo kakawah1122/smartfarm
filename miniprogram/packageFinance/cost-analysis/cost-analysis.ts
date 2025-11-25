@@ -1,6 +1,6 @@
 // cost-analysis.ts - 成本分析页面
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
-import { safeCloudCall } from '../../utils/safe-cloud-call'
+import { HealthCloud } from '../../utils/cloud-functions'
 
 interface CloudCallResult<T = any> {
   success: boolean
@@ -21,6 +21,19 @@ type CostComparison = {
   lastYear: number
   industryAverage: number
   bestPractice: number
+}
+
+type CostAnalysisData = {
+  overview?: CostOverview
+  costBreakdown?: unknown[]
+  monthlyTrend?: unknown[]
+  comparison?: CostComparison
+  suggestions?: unknown[]
+}
+
+type CostItem = {
+  name: string
+  cost: number
 }
 
 type PageData = {
@@ -75,16 +88,10 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     this.setData({ loading: true })
     
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'get_cost_analysis',
-          dateRange: this.data.dateRange
-        }
-      }) as CloudCallResult<unknown>
+      const result = await HealthCloud.cost.getAnalysis({ dateRange: this.data.dateRange }) as CloudCallResult<CostAnalysisData>
 
       if (result?.success && result.data) {
-        const data = result.data
+        const data = result.data as CostAnalysisData
         this.setData({
           overview: data.overview || {
             totalCost: 0,
@@ -125,7 +132,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   // 查看成本分类详情
   onCategoryDetail(this: PageInstance<PageData>, e: WechatMiniprogram.BaseEvent & { currentTarget: { dataset: { category: { category: string; amount: number; percentage: number; items: Array<{ name: string; cost: number }> } } } }) {
     const { category } = e.currentTarget.dataset
-    const items = category.items.map((item: unknown) => `${item.name}: ¥${item.cost}`).join('\n')
+    const items = category.items.map((item: CostItem) => `${item.name}: ¥${item.cost}`).join('\n')
     
     wx.showModal({
       title: `${category.category}详细构成`,
@@ -149,17 +156,13 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     wx.showLoading({ title: '生成报告中...' })
     
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
+      const result = await HealthCloud.cost.exportReport({
+        dateRange: this.data.dateRange,
         data: {
-          action: 'export_cost_report',
-          dateRange: this.data.dateRange,
-          data: {
-            overview: this.data.overview,
-            costBreakdown: this.data.costBreakdown,
-            monthlyTrend: this.data.monthlyTrend,
-            suggestions: this.data.suggestions
-          }
+          overview: this.data.overview,
+          costBreakdown: this.data.costBreakdown,
+          monthlyTrend: this.data.monthlyTrend,
+          suggestions: this.data.suggestions
         }
       }) as CloudCallResult
 

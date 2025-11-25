@@ -314,7 +314,7 @@
               <view class="css-icon-medicine"></view>
             </view>
             <view class="stat-content">
-              <text class="stat-value">{{treatmentData.stats.ongoingTreatment}}</text>
+              <text class="stat-value">{{treatmentData.stats.ongoingTreatment || 0}}</text>
               <text class="stat-label">治疗中</text>
             </view>
           </view>

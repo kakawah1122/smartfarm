@@ -1,5 +1,5 @@
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
 import { logger } from '../../utils/logger'
 import { formatDateTime } from '../../utils/health-utils'
 import type {
@@ -147,18 +147,11 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
     page.setData({ loading: true })
 
     try {
-      const response = await CloudApi.callFunction<DeathRecord>(
-        'health-management',
-        {
-          action: 'get_death_record_detail',
-          recordId
-        },
-        {
-          loading: true,
-          loadingText: '加载记录详情...',
-          showError: false
-        }
-      )
+      wx.showLoading({ title: '加载记录详情...' })
+      
+      const response = await HealthCloud.death.getDetail({ recordId })
+      
+      wx.hideLoading()
 
       if (!response.success || !response.data) {
         throw new Error(response.error || '加载失败')
@@ -397,22 +390,17 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
   async submitCorrection(data) {
     const page = this as PageInstance
 
-    const response = await CloudApi.callFunction(
-      'health-management',
-      {
-        action: 'correct_death_diagnosis',
-        recordId: page.data.recordId,
-        correctedCause: data.correctedCause,
-        correctionReason: data.veterinarianDiagnosis,
-        aiAccuracyRating: data.aiAccuracyRating,
-        isConfirmed: data.isConfirmed || false
-      },
-      {
-        loading: true,
-        loadingText: '提交中...',
-        showError: false
-      }
-    )
+    wx.showLoading({ title: '提交中...' })
+    
+    const response = await HealthCloud.death.correctDiagnosis({
+      recordId: page.data.recordId,
+      correctedCause: data.correctedCause,
+      correctionReason: data.veterinarianDiagnosis,
+      aiAccuracyRating: data.aiAccuracyRating,
+      isConfirmed: data.isConfirmed || false
+    })
+    
+    wx.hideLoading()
 
     if (response.success) {
       wx.showToast({ title: '提交成功', icon: 'success' })

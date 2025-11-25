@@ -71,9 +71,9 @@ exports.main = async (event, wxContext) => {
                 updatedAt: new Date()
               }
             })
-          console.log(`✅ 已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
+          // 已同步更新 AI 诊断记录
         } else {
-          console.log('⚠️ 异常记录缺少关联的诊断ID，无法同步更新 AI 诊断记录')
+          // 异常记录缺少关联的诊断ID
         }
       }
     } catch (syncError) {

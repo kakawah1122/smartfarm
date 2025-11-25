@@ -2,18 +2,20 @@
 import { createPageWithNavbar } from '../../utils/navigation'
 import { markHomepageNeedSync } from '../utils/global-sync'
 import { logger } from '../../utils/logger'
-import { safeCloudCall } from '../../utils/safe-cloud-call'
+import { HealthCloud } from '../../utils/cloud-functions'
 
-import { smartCloudCall } from '../../utils/cloud-adapter'
+// 类型定义
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
 
-/**
- * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
- * 自动路由 health-management 到新云函数
- */
-async function callCloudFunction(config: { name: string; data: any; timeout?: number }) {
-  const result = await safeCloudCall(config)
-  return { result }
+interface PageOptions {
+  diagnosisId?: string
+  treatmentId?: string
+  affectedCount?: string
+  batchId?: string
+  batchNumber?: string
+  sourceType?: string
 }
+
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 表单数据
@@ -92,8 +94,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     formErrors: {} as Record<string, string>
   },
 
-  onLoad(options: unknown) {
-    const { diagnosisId, treatmentId, affectedCount, batchId, batchNumber, sourceType } = options || {}
+  onLoad(options: PageOptions = {}) {
+    const { diagnosisId, treatmentId, affectedCount, batchId, batchNumber, sourceType } = options
     
     // 初始化日期为今天
     const today = new Date().toISOString().split('T')[0]
@@ -139,12 +141,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     try {
       wx.showLoading({ title: '加载诊断信息...' })
       
-      const result = await smartCloudCall('get_ai_diagnosis', { diagnosisId: diagnosisId })
+      const result = await HealthCloud.ai.getDiagnosis({ diagnosisId: diagnosisId })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
-        const diagnosis = result.result.data
+      if (result && result.success) {
+        const diagnosis = result.data
         this.setData({
           'formData.deathCause': diagnosis.primaryDiagnosis?.disease || '',
           'formData.batchId': diagnosis.batchId || this.data.formData.batchId
@@ -161,12 +163,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     try {
       wx.showLoading({ title: '加载治疗信息...' })
       
-      const result = await smartCloudCall('get_treatment_record', { treatmentId: treatmentId })
+      const result = await HealthCloud.treatment.getDetail({ treatmentId: treatmentId })
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
-        const treatment = result.result.data
+      if (result && result.success) {
+        const treatment = result.data
         this.setData({
           'formData.deathCause': treatment.diagnosis || '',
           'formData.deathCount': treatment.initialCount || this.data.formData.deathCount,
@@ -219,10 +221,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 使用批次信息计算财务损失
-  async calculateFinancialLossWithBatch(batch: unknown) {
+  async calculateFinancialLossWithBatch(batch: { unitPrice?: number | string }) {
     try {
       // ✅ 直接使用批次的入栏单价（unitPrice），不分摊饲养成本
-      const costPerAnimal = parseFloat(batch.unitPrice) || 0
+      const costPerAnimal = parseFloat(String(batch.unitPrice || 0)) || 0
       const deathCount = this.data.formData.deathCount
       const treatmentCost = this.data.financialLoss.treatmentCost || 0
       
@@ -336,7 +338,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 验证单个字段
-  validateField(field: string, value: unknown) {
+  validateField(field: string, value: string | number) {
     const errors = { ...this.data.formErrors }
     
     switch (field) {
@@ -348,14 +350,14 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
         break
       case 'deathCount':
-        if (!value || value <= 0) {
+        if (!value || Number(value) <= 0) {
           errors.deathCount = '死亡数量必须大于0'
         } else {
           delete errors.deathCount
         }
         break
       case 'deathCause':
-        if (!value || value.trim() === '') {
+        if (!value || String(value).trim() === '') {
           errors.deathCause = '请输入死亡原因'
         } else {
           delete errors.deathCause
@@ -392,23 +394,19 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       // 如果是从治疗失败创建，调用completeTreatmentAsDied
       if (treatmentId) {
-        const result = await callCloudFunction({
-          name: 'health-management',
-          data: {
-            action: 'complete_treatment_as_died',
-            treatmentId: treatmentId,
-            diedCount: formData.deathCount,
-            deathDetails: {
-              description: formData.description,
-              disposalMethod: formData.disposalMethod,
-              operatorName: formData.operatorName || '系统'
-            }
+        const result = await HealthCloud.treatment.completeDied({
+          treatmentId: treatmentId,
+          diedCount: formData.deathCount,
+          deathDetails: {
+            description: formData.description,
+            disposalMethod: formData.disposalMethod,
+            operatorName: formData.operatorName || '系统'
           }
         })
         
         wx.hideLoading()
         
-        if (result.result && result.result.success) {
+        if (result && result.success) {
           // ✅ 设置刷新标志，通知健康页面刷新
           wx.setStorageSync('health_page_need_refresh', true)
           markHomepageNeedSync()
@@ -423,17 +421,17 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             wx.navigateBack({ delta: 2 })
           }, 1500)
         } else {
-          throw new Error(result.result?.message || '提交失败')
+          throw new Error(result?.error || '提交失败')
         }
       } else {
         // 直接创建死亡记录
-        const result = await smartCloudCall('createDeathRecord', { ...formData,
+        const result = await HealthCloud.death.create({ ...formData,
             diagnosisId: diagnosisId || null,
             financialLoss: financialLoss })
         
         wx.hideLoading()
         
-        if (result.result && result.result.success) {
+        if (result && result.success) {
           // ✅ 设置刷新标志，通知健康页面刷新
           wx.setStorageSync('health_page_need_refresh', true)
           markHomepageNeedSync()
@@ -448,13 +446,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             wx.navigateBack()
           }, 1500)
         } else {
-          throw new Error(result.result?.message || '提交失败')
+          throw new Error(result?.error || '提交失败')
         }
       }
     } catch (error: unknown) {
       wx.hideLoading()
       wx.showToast({
-        title: error.message || '提交失败，请重试',
+        title: (error as Error).message || '提交失败，请重试',
         icon: 'none'
       })
     } finally {
@@ -571,9 +569,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       })
 
       wx.hideLoading()
+      
+      const cloudResult = result.result as { success?: boolean; data?: any; error?: string }
 
-      if (result.result && result.result.success) {
-        const analysisData = result.result.data
+      if (cloudResult && cloudResult.success) {
+        const analysisData = cloudResult.data
 
         // 计算置信度百分比
         const confidence = analysisData.primaryDiagnosis?.confidence || 0
@@ -615,12 +615,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           })
         }
       } else {
-        throw new Error(result.result?.message || 'AI分析失败')
+        throw new Error(cloudResult?.error || 'AI分析失败')
       }
     } catch (error: unknown) {
       wx.hideLoading()
       wx.showToast({
-        title: error.message || 'AI分析失败，请重试',
+        title: (error as Error).message || 'AI分析失败，请重试',
         icon: 'none',
         duration: 3000
       })
@@ -641,8 +641,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     if (alternatives.length > 0) {
       content += `\n其他可能原因：\n`
-      alternatives.forEach((alt: unknown, index: number) => {
-        content += `${index + 1}. ${alt.disease} (${(alt.confidence * 100).toFixed(1)}%)\n`
+      alternatives.forEach((alt: { disease?: string; confidence?: number }, index: number) => {
+        content += `${index + 1}. ${alt.disease || '未知'} (${((alt.confidence || 0) * 100).toFixed(1)}%)\n`
       })
     }
 

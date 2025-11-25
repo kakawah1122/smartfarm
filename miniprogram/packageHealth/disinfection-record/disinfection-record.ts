@@ -1,6 +1,7 @@
 // disinfection-record.ts - 环境消毒记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 import type { DisinfectionFormData, PageOptions, BatchInfo } from '../types/prevention'
 import { 
   DISINFECTION_METHOD_OPTIONS,
@@ -162,11 +163,14 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   // 加载活跃批次
   async loadActiveBatches() {
     try {
-      const result = await CloudApi.callFunction<{ batches: BatchInfo[] }>(
-        'health-management',
-        { action: 'get_active_batches' },
-        { loading: true, loadingText: '加载批次列表...', showError: true }
-      )
+      wx.showLoading({ title: '加载批次列表...' })
+      
+      const result = await safeCloudCall<{ success: boolean; data?: { batches: BatchInfo[] } }>({
+        name: 'production-entry',
+        data: { action: 'getActiveBatches' }
+      })
+      
+      wx.hideLoading()
       
       if (result.success) {
         this.setData({
@@ -440,38 +444,32 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
         humidity: formData.humidity
       }
       
-      // ✅ 使用CloudApi统一封装
-      const result = await CloudApi.callFunction<{ recordId: string }>(
-        'health-management',
-        {
-          action: 'create_prevention_record',
-          preventionType: 'disinfection',
-          batchId: formData.batchId,
-          locationId: formData.locationId,
-          disinfectionRecord,
-          executionDate: formData.executionDate,
-          executionTime: formData.executionTime,
-          operator: formData.operator,
-          cost: formData.cost,
-          effectiveness: formData.effectiveness,
-          notes: formData.notes,
-          nextScheduled: formData.nextSchedule ? {
-            date: formData.nextSchedule,
-            type: 'disinfection',
-            notes: '定期环境消毒'
-          } : null,
-          sourceType: this.data.sourceType,
-          sourceId: this.data.sourceId
-        },
-        {
-          loading: true,
-          loadingText: '保存中...',
-          showSuccess: true,
-          successText: '环境消毒记录保存成功'
-        }
-      )
+      wx.showLoading({ title: '保存中...' })
+      
+      const result = await HealthCloud.prevention.create({
+        preventionType: 'disinfection',
+        batchId: formData.batchId,
+        locationId: formData.locationId,
+        disinfectionRecord,
+        executionDate: formData.executionDate,
+        executionTime: formData.executionTime,
+        operator: formData.operator,
+        cost: formData.cost,
+        effectiveness: formData.effectiveness,
+        notes: formData.notes,
+        nextScheduled: formData.nextSchedule ? {
+          date: formData.nextSchedule,
+          type: 'disinfection',
+          notes: '定期环境消毒'
+        } : null,
+        sourceType: this.data.sourceType,
+        sourceId: this.data.sourceId
+      }) as { success: boolean; data?: { recordId: string }; error?: string }
+      
+      wx.hideLoading()
       
       if (result.success) {
+        wx.showToast({ title: '环境消毒记录保存成功', icon: 'success' })
         // 如果消毒效果较差，提示风险评估
         if (formData.effectiveness === 'poor' && result.data?.recordId) {
           this.handlePoorEffectiveness(result.data.recordId)
@@ -509,28 +507,23 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
   // 创建健康风险预警
   async createHealthRiskAlert(preventionRecordId: string) {
     try {
-      await CloudApi.callFunction(
-        'health-management',
-        {
-          action: 'check_health_alerts',
-          triggerType: 'disinfection_poor_effect',
-          relatedRecordId: preventionRecordId,
-          batchId: this.data.formData.batchId,
-          locationId: this.data.formData.locationId
-        },
-        {
-          loading: true,
-          loadingText: '创建监控记录...',
-          showSuccess: true,
-          successText: '已创建健康监控记录'
-        }
-      )
+      wx.showLoading({ title: '创建监控记录...' })
+      
+      await HealthCloud.prevention.checkAlerts({
+        triggerType: 'disinfection_poor_effect',
+        relatedRecordId: preventionRecordId,
+        batchId: this.data.formData.batchId,
+        locationId: this.data.formData.locationId
+      })
+      
+      wx.hideLoading()
+      wx.showToast({ title: '已创建健康监控记录', icon: 'success' })
       
       setTimeout(() => {
         wx.navigateBack()
       }, 1500)
     } catch (error) {
-      // CloudApi已处理错误提示
+      wx.hideLoading()
       wx.navigateBack()
     }
   },

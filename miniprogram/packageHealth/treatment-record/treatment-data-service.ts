@@ -5,6 +5,7 @@
 
 /// <reference path="../../../typings/index.d.ts" />
 import { safeCloudCall } from '../../utils/safe-cloud-call'
+import { HealthCloud } from '../../utils/cloud-functions'
 
 interface CloudCallResult<T = any> {
   success: boolean
@@ -75,13 +76,7 @@ export class TreatmentDataService {
     if (cached) return cached
 
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'get_treatment_record_detail',
-          treatmentId
-        }
-      }) as CloudCallResult<TreatmentRecord>
+      const result = await HealthCloud.treatment.getDetail({ treatmentId }) as CloudCallResult<TreatmentRecord>
 
       if (result?.success && result.data) {
         const data = result.data
@@ -105,13 +100,7 @@ export class TreatmentDataService {
     if (cached) return cached
 
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'get_ongoing_treatments',
-          batchId
-        }
-      }) as CloudCallResult<TreatmentRecord[]>
+      const result = await HealthCloud.treatment.getOngoing({ batchId }) as CloudCallResult<TreatmentRecord[]>
 
       if (result?.success) {
         const data = result.data || []
@@ -131,13 +120,7 @@ export class TreatmentDataService {
    */
   static async createTreatmentRecord(data: Partial<TreatmentRecord>): Promise<unknown> {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'create_treatment_record',
-          ...data
-        }
-      }) as CloudCallResult
+      const result = await HealthCloud.treatment.create(data) as CloudCallResult
 
       if (result?.success) {
         // 清除相关缓存
@@ -158,14 +141,7 @@ export class TreatmentDataService {
    */
   static async updateTreatmentRecord(treatmentId: string, updates: Partial<TreatmentRecord>): Promise<unknown> {
     try {
-      const result = await safeCloudCall<CloudCallResult>({
-        name: 'health-management',
-        data: {
-          action: 'update_treatment_record',
-          treatmentId,
-          ...updates
-        }
-      }) as CloudCallResult
+      const result = await HealthCloud.treatment.update({ treatmentId, ...updates }) as CloudCallResult
 
       if (result?.success) {
         // 清除缓存
@@ -186,14 +162,7 @@ export class TreatmentDataService {
    */
   static async addTreatmentProgress(treatmentId: string, progress: TreatmentProgress): Promise<unknown> {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'update_treatment_progress',
-          treatmentId,
-          progress
-        }
-      }) as CloudCallResult
+      const result = await HealthCloud.treatment.updateProgress({ treatmentId, progress }) as CloudCallResult
 
       if (result?.success) {
         // 清除缓存
@@ -213,14 +182,7 @@ export class TreatmentDataService {
    */
   static async addTreatmentNote(treatmentId: string, note: string): Promise<unknown> {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'add_treatment_note',
-          treatmentId,
-          note
-        }
-      }) as CloudCallResult
+      const result = await HealthCloud.treatment.addNote({ treatmentId, note }) as CloudCallResult
 
       if (result?.success) {
         // 清除缓存
@@ -240,14 +202,7 @@ export class TreatmentDataService {
    */
   static async addMedicationRecord(treatmentId: string, medication: MedicationRecord): Promise<unknown> {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'add_treatment_medication',
-          treatmentId,
-          medication
-        }
-      }) as CloudCallResult
+      const result = await HealthCloud.treatment.addMedication({ treatmentId, medication }) as CloudCallResult
 
       if (result?.success) {
         // 清除缓存
@@ -267,14 +222,7 @@ export class TreatmentDataService {
    */
   static async completeTreatmentAsCured(treatmentId: string, finalNote?: string): Promise<unknown> {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'complete_treatment_as_cured',
-          treatmentId,
-          finalNote
-        }
-      }) as CloudCallResult
+      const result = await HealthCloud.treatment.completeCured({ treatmentId, finalNote }) as CloudCallResult
 
       if (result?.success) {
         // 清除所有相关缓存

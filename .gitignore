@@ -14,3 +14,4 @@ dist
 *.backup
 *-example.ts
 
+cloudfunctions/get-temp-urls/

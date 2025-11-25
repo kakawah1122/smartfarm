@@ -66,8 +66,8 @@ const FUNCTION_CACHE_CONFIG: Record<string, CacheConfig> = {
   'production-entry:getActiveBatches': { level: 2, keyStrategy: 'user' },
   'production-entry:getBatchDetail': { level: 3, keyStrategy: 'batch' },
   'production-dashboard:getProductionOverview': { level: 3, keyStrategy: 'date' },
-  'health-management:get_health_overview': { level: 3, keyStrategy: 'batch' },
-  'health-management:get_prevention_tasks': { level: 4, keyStrategy: 'batch' },
+  'health-overview:get_health_overview': { level: 3, keyStrategy: 'batch' },
+  'health-prevention:get_prevention_tasks': { level: 4, keyStrategy: 'batch' },
   'breeding-todo:getTodos': { level: 4, keyStrategy: 'batch+day' },
   'finance-management:getCostBreakdown': { level: 3, keyStrategy: 'date' },
   'finance-management:getFinanceOverview': { level: 3, keyStrategy: 'date' },
@@ -436,7 +436,14 @@ export class CacheManager {
    */
   static invalidateAfterHealthChange(): void {
     const instance = CacheManager.getInstance()
-    instance.clear('health-management')
+    // 清除所有健康相关模块的缓存
+    instance.clear('health-overview')
+    instance.clear('health-treatment')
+    instance.clear('health-death')
+    instance.clear('health-abnormal')
+    instance.clear('health-records')
+    instance.clear('health-prevention')
+    instance.clear('health-cost')
     logger.log('[CacheManager] 健康记录变更后缓存已失效')
   }
 }

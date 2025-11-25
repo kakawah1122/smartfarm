@@ -60,7 +60,7 @@ export class HealthEventManager {
     return function(this: unknown, ...args: unknown[]) {
       const now = Date.now()
       if (now - lastClickTime < interval) {
-        console.log('防重复点击：操作太频繁')
+        // 防重复点击
         return
       }
       lastClickTime = now
@@ -261,7 +261,7 @@ export class HealthEventManager {
     return function(this: unknown, e: unknown) {
       const now = Date.now()
       if (now - lastClickTime < interval) {
-        console.log('操作太频繁，请稍后再试')
+        // 操作太频繁
         return
       }
       lastClickTime = now

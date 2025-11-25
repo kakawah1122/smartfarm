@@ -75,12 +75,7 @@ exports.main = async (event, wxContext) => {
     // 如果有死亡情况，需要创建死亡记录（通过调用death云函数）
     if (deadCount > 0) {
       // TODO: 调用 health-death 云函数创建死亡记录
-      // 暂时记录日志，等health-death云函数完成后再实现
-      console.log('[create_health_record] 需要创建死亡记录:', {
-        batchId,
-        healthRecordId: result._id,
-        deadCount
-      })
+      // 需要创建死亡记录: batchId, healthRecordId, deadCount
     }
 
     // 记录审计日志

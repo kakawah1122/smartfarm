@@ -86,7 +86,7 @@ exports.main = async (event, wxContext) => {
         // TODO: calculateBatchCost需要在finance模块迁移后通过云函数间调用
         // 暂时使用入栏单价作为降级方案
         costPerAnimal = parseFloat(batch.unitPrice) || 0
-        console.log('[complete_treatment_as_died] 暂时使用入栏单价:', costPerAnimal)
+        // 暂时使用入栏单价
       }
     } catch (costError) {
       console.error('计算财务损失失败:', costError.message)
@@ -122,7 +122,7 @@ exports.main = async (event, wxContext) => {
         }
       })
       
-      console.log(`✅ 更新死亡记录: ${deathRecordId}, 新增死亡数: ${actualDiedCount}, 累计死亡数: ${newDeathCount}`)
+      // 更新死亡记录成功
       
     } else {
       // 不存在，创建新记录
@@ -163,7 +163,7 @@ exports.main = async (event, wxContext) => {
       
       deathRecordId = deathResult._id
       
-      console.log(`✅ 创建死亡记录: ${deathRecordId}, 死亡数: ${actualDiedCount}`)
+      // 创建死亡记录成功
     }
     
     // 4. 更新治疗记录的 outcome

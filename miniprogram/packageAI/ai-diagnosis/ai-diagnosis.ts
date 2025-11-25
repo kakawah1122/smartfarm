@@ -1,8 +1,8 @@
 // @ts-nocheck
 // ai-diagnosis.ts - AI智能诊断页面
 import { createPageWithNavbar } from '../../utils/navigation'
-import { smartCloudCall } from '../../utils/cloud-adapter'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
+import { HealthCloud } from '../../utils/cloud-functions'
 import { logger } from '../../utils/logger'
 import type { InputEvent } from '../../../typings/core'
 
@@ -141,7 +141,6 @@ const pageConfig: AnyObject = {
   onLoad(options: AnyObject) {
     const { recordId } = options || {}
     
-    console.log('[AI诊断] onLoad开始', { recordId })
     
     // 🔧 修复：只重置诊断相关状态，不重置表单字段
     this.setData({
@@ -161,14 +160,6 @@ const pageConfig: AnyObject = {
   },
 
   onShow() {
-    console.log('[AI诊断] onShow - 当前数据状态', {
-      selectedBatchId: this.data.selectedBatchId,
-      selectedBatchNumber: this.data.selectedBatchNumber,
-      dayAge: this.data.dayAge,
-      diagnosisType: this.data.diagnosisType,
-      availableBatches: this.data.availableBatches?.length || 0
-    })
-    
     // 页面显示时重新验证表单
     this.validateForm()
   },
@@ -224,16 +215,6 @@ const pageConfig: AnyObject = {
         
         const selectedBatch = activeBatches[selectedIndex] as AnyObject
         
-        console.log('[AI诊断] 加载批次列表成功', {
-          totalBatches: activeBatches.length,
-          selectedIndex,
-          selectedBatch: {
-            _id: selectedBatch._id,
-            batchNumber: selectedBatch.batchNumber,
-            dayAge: selectedBatch.dayAge
-          }
-        })
-        
         // 🔧 关键修复：直接设置所有字段，不依赖onBatchPickerChange
         this.setData({
           availableBatches: activeBatches,
@@ -243,12 +224,6 @@ const pageConfig: AnyObject = {
           selectedBatchNumber: selectedBatch.batchNumber || '',
           dayAge: selectedBatch.dayAge || 0
         }, () => {
-          console.log('[AI诊断] 批次数据已设置', {
-            selectedBatchId: this.data.selectedBatchId,
-            selectedBatchNumber: this.data.selectedBatchNumber,
-            dayAge: this.data.dayAge
-          })
-          
           // 🔧 添加Toast确认数据设置成功
           wx.showToast({
             title: `已选择批次 ${this.data.selectedBatchNumber}`,
@@ -324,7 +299,6 @@ const pageConfig: AnyObject = {
     const index = parseInt(String(rawValue), 10)
     const selectedBatch = this.data.availableBatches[index] as AnyObject
     
-    console.log('[AI诊断] 批次选择器变化', { rawValue, index, selectedBatch })
     
     if (selectedBatch) {
       const batchData = {
@@ -334,14 +308,8 @@ const pageConfig: AnyObject = {
         dayAge: selectedBatch.dayAge || 0
       }
       
-      console.log('[AI诊断] 批次选择变化', batchData)
       
       this.setData(batchData, () => {
-        console.log('[AI诊断] 批次数据已更新', {
-          selectedBatchId: this.data.selectedBatchId,
-          selectedBatchNumber: this.data.selectedBatchNumber,
-          dayAge: this.data.dayAge
-        })
         this.validateForm()
       })
     } else {
@@ -800,7 +768,7 @@ const pageConfig: AnyObject = {
       let batchPromptData: unknown = null
       if (this.data.selectedBatchId) {
         try {
-          const promptDataRawResult = await smartCloudCall('get_batch_prompt_data', { batchId: this.data.selectedBatchId
+          const promptDataRawResult = await HealthCloud.overview.getBatchPromptData({ batchId: this.data.selectedBatchId
              })
           const promptDataResult = normalizeCloudResult<unknown>(promptDataRawResult)
           if (promptDataResult?.success) {
@@ -1065,7 +1033,7 @@ const pageConfig: AnyObject = {
       }
       
       // 创建治疗记录
-      const rawResult = await smartCloudCall('create_treatment_from_diagnosis', { diagnosisId: diagnosisId,
+      const rawResult = await HealthCloud.treatment.createFromDiagnosis({ diagnosisId: diagnosisId,
           batchId: this.data.selectedBatchId,
           affectedCount: affectedCount,
           diagnosis: diagnosis.primaryDiagnosis?.disease || '待确定',
@@ -1116,7 +1084,7 @@ const pageConfig: AnyObject = {
       
       wx.showLoading({ title: '创建死亡记录...' })
       
-      const rawResult = await smartCloudCall('create_death_record_with_finance', { diagnosisId: this.data.diagnosisId,
+      const rawResult = await HealthCloud.death.createWithFinance({ diagnosisId: this.data.diagnosisId,
           batchId: this.data.selectedBatchId,
           deathCount: deathCount,
           deathCause: deathCause,
@@ -1283,11 +1251,8 @@ const pageConfig: AnyObject = {
       }
       
       
-      // 创建异常记录（自动路由到新云函数）
-      const rawResult = await callCloudFunction({
-        name: 'health-management',
-        data: recordData
-      })
+      // 创建异常记录
+      const rawResult = await HealthCloud.abnormal.create(recordData)
       
       wx.hideLoading()
       

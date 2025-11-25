@@ -1,5 +1,5 @@
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
 import { logger } from '../../utils/logger'
 import type { AbnormalRecord, AbnormalDiagnosisDetails } from '../types/abnormal'
 import { ensureArray, resolveTempFileURLs } from '../utils/data-utils'
@@ -120,18 +120,11 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
     page.setData({ loading: true })
 
     try {
-      const response = await CloudApi.callFunction<AbnormalRecord>(
-        'health-management',
-        {
-          action: 'get_abnormal_record_detail',
-          recordId
-        },
-        {
-          loading: true,
-          loadingText: '加载记录详情...',
-          showError: false
-        }
-      )
+      wx.showLoading({ title: '加载记录详情...' })
+      
+      const response = await HealthCloud.abnormal.getDetail({ recordId })
+      
+      wx.hideLoading()
 
       if (!response.success || !response.data) {
         throw new Error(response.error || '加载失败')
@@ -254,21 +247,16 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
       return
     }
 
-    const response = await CloudApi.callFunction(
-      'health-management',
-      {
-        action: 'correct_abnormal_diagnosis',
-        recordId: record._id,
-        correctedDiagnosis: form.correctedDiagnosis,
-        veterinarianDiagnosis: form.veterinarianDiagnosis,
-        aiAccuracyRating: form.aiAccuracyRating
-      },
-      {
-        loading: true,
-        loadingText: '提交中...',
-        showError: false
-      }
-    )
+    wx.showLoading({ title: '提交中...' })
+    
+    const response = await HealthCloud.abnormal.correctDiagnosis({
+      recordId: record._id,
+      correctedDiagnosis: form.correctedDiagnosis,
+      veterinarianDiagnosis: form.veterinarianDiagnosis,
+      aiAccuracyRating: form.aiAccuracyRating
+    })
+    
+    wx.hideLoading()
 
     if (response.success) {
       wx.showToast({ title: '修正成功', icon: 'success', duration: 1500 })
@@ -365,25 +353,20 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
       return
     }
 
-    const response = await CloudApi.callFunction<{ deathRecordId?: string }>(
-      'health-management',
-      {
-        action: 'create_death_record_with_finance',
-        diagnosisId: record.diagnosisId,
-        batchId: record.batchId,
-        deathCount,
-        deathCause: record.diagnosis || '待确定',
-        deathCategory: 'disease',
-        autopsyFindings: record.autopsyDescription || record.symptoms || '',
-        diagnosisResult: record.diagnosisDetails || null,
-        images: ensureArray(record.images)
-      },
-      {
-        loading: true,
-        loadingText: '归档中...',
-        showError: false
-      }
-    )
+    wx.showLoading({ title: '归档中...' })
+    
+    const response = await HealthCloud.death.createWithFinance({
+      diagnosisId: record.diagnosisId,
+      batchId: record.batchId,
+      deathCount,
+      deathCause: record.diagnosis || '待确定',
+      deathCategory: 'disease',
+      autopsyFindings: record.autopsyDescription || record.symptoms || '',
+      diagnosisResult: record.diagnosisDetails || null,
+      images: ensureArray(record.images)
+    }) as { success: boolean; data?: { deathRecordId?: string }; error?: string }
+    
+    wx.hideLoading()
 
     if (response.success) {
       const deathRecordId = response.data?.deathRecordId

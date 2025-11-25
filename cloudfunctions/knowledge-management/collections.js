@@ -1,10 +1,10 @@
 // 统一的数据库集合名称配置
 // 所有云函数必须引用此文件，禁止硬编码集合名称
 // 基于标准化命名规范：模块前缀_功能描述
-// 共40个标准化集合，涵盖7大业务模块
+// 共43个标准化集合，涵盖8大业务模块
 
 const COLLECTIONS = {
-  // ========== 标准化集合定义（40个） ==========
+  // ========== 标准化集合定义（43个） ==========
   
   // 用户管理模块 (User Management)
   WX_USERS: 'wx_users',
@@ -19,6 +19,8 @@ const COLLECTIONS = {
   PROD_MATERIAL_RECORDS: 'prod_material_records',
   PROD_INVENTORY_LOGS: 'prod_inventory_logs',
   PRODUCTION_BATCHES: 'production_batches',
+  FEED_USAGE_RECORDS: 'feed_usage_records',  // 投喂记录
+  PROD_FEED_USAGE_RECORDS: 'feed_usage_records',  // 投喂记录（别名，保持prod_前缀一致性）
 
   // 健康管理模块 (Health Management)
   HEALTH_RECORDS: 'health_records',
@@ -36,6 +38,7 @@ const COLLECTIONS = {
   FINANCE_REVENUE_RECORDS: 'finance_revenue_records',
   FINANCE_REPORTS: 'finance_reports',
   FINANCE_SUMMARIES: 'finance_summaries',
+  FINANCE_ANALYSIS_HISTORY: 'finance_analysis_history',
 
   // 任务管理模块 (Task Management)
   TASK_BATCH_SCHEDULES: 'task_batch_schedules',
@@ -59,6 +62,9 @@ const COLLECTIONS = {
   // 知识库模块 (Knowledge Management)
   KNOWLEDGE_ARTICLES: 'knowledge_articles',
 
+  // AI模块 (AI Management)
+  AI_LEARNING_CASES: 'ai_learning_cases',  // AI学习案例
+
   // 文件管理模块 (File Management)
   FILE_DYNAMIC_RECORDS: 'file_dynamic_records',
   FILE_STATIC_RECORDS: 'file_static_records'
@@ -79,7 +85,8 @@ const COLLECTION_MODULES = {
     COLLECTIONS.PROD_MATERIALS,
     COLLECTIONS.PROD_MATERIAL_RECORDS,
     COLLECTIONS.PROD_INVENTORY_LOGS,
-    COLLECTIONS.PRODUCTION_BATCHES
+    COLLECTIONS.PRODUCTION_BATCHES,
+    COLLECTIONS.FEED_USAGE_RECORDS  // ✅ 新增：投喂记录
   ],
   
   HEALTH_MANAGEMENT: [
@@ -98,7 +105,8 @@ const COLLECTION_MODULES = {
     COLLECTIONS.FINANCE_COST_RECORDS,
     COLLECTIONS.FINANCE_REVENUE_RECORDS,
     COLLECTIONS.FINANCE_REPORTS,
-    COLLECTIONS.FINANCE_SUMMARIES
+    COLLECTIONS.FINANCE_SUMMARIES,
+    COLLECTIONS.FINANCE_ANALYSIS_HISTORY
   ],
   
   TASK_MANAGEMENT: [
@@ -126,6 +134,10 @@ const COLLECTION_MODULES = {
     COLLECTIONS.KNOWLEDGE_ARTICLES
   ],
   
+  AI_MANAGEMENT: [
+    COLLECTIONS.AI_LEARNING_CASES
+  ],
+  
   FILE_MANAGEMENT: [
     COLLECTIONS.FILE_DYNAMIC_RECORDS,
     COLLECTIONS.FILE_STATIC_RECORDS
@@ -135,7 +147,7 @@ const COLLECTION_MODULES = {
 // 使用指南
 const USAGE_GUIDE = `
 使用说明：
-1. 在云函数中引用：const { COLLECTIONS } = require('./collections.js')
+1. 在云函数中引用：const { COLLECTIONS } = require('../../shared-config/collections.js')
 2. 使用集合：db.collection(COLLECTIONS.WX_USERS)
 3. 禁止硬编码集合名称：db.collection('wx_users') // ❌ 错误
 4. 正确使用配置文件：db.collection(COLLECTIONS.WX_USERS) // ✅ 正确
@@ -147,6 +159,8 @@ const USAGE_GUIDE = `
 - 财务模块：finance_ 前缀
 - 任务模块：task_ 前缀
 - 系统模块：sys_ 前缀
+- 知识库模块：knowledge_ 前缀
+- AI模块：ai_ 前缀
 - 文件模块：file_ 前缀
 `
 

@@ -1,130 +1,12 @@
 import { safeCloudCall } from './safe-cloud-call'
-// smartCloudCall 已弃用，改为在 callFunction 内部自动路由
-
-// 统一的云函数API调用封装
-// 支持TypeScript类型检查和错误处理
-
-// health-management 已废弃，需要路由到新云函数的 action 列表
-// ⚠️ 这是唯一的映射表，所有 health-management 调用都通过此表路由
-const HEALTH_MANAGEMENT_ROUTE_MAP: Record<string, string> = {
-  // 治疗模块 → health-treatment
-  'get_cured_records_list': 'health-treatment',
-  'create_treatment_record': 'health-treatment',
-  'update_treatment_record': 'health-treatment',
-  'list_treatment_records': 'health-treatment',
-  'get_treatment_record_detail': 'health-treatment',
-  'submit_treatment_plan': 'health-treatment',
-  'update_treatment_progress': 'health-treatment',
-  'complete_treatment_as_cured': 'health-treatment',
-  'complete_treatment_as_died': 'health-treatment',
-  'get_ongoing_treatments': 'health-treatment',
-  'add_treatment_note': 'health-treatment',
-  'add_treatment_medication': 'health-treatment',
-  'calculate_treatment_cost': 'health-treatment',
-  'record_treatment_death': 'health-treatment',
-  'get_treatment_statistics': 'health-treatment',
-  'get_treatment_history': 'health-treatment',
-  'get_treatment_detail': 'health-treatment',
-  'create_treatment_from_diagnosis': 'health-treatment',
-  'create_treatment_from_abnormal': 'health-treatment',
-  'create_treatment_from_vaccine': 'health-treatment',
-  
-  // 死亡记录模块 → health-death
-  'get_death_records_list': 'health-death',
-  'create_death_record': 'health-death',
-  'createDeathRecord': 'health-death',
-  'list_death_records': 'health-death',
-  'listDeathRecords': 'health-death',
-  'get_death_stats': 'health-death',
-  'getDeathStats': 'health-death',
-  'get_death_record_detail': 'health-death',
-  'create_death_record_with_finance': 'health-death',
-  'correct_death_diagnosis': 'health-death',
-  'create_death_from_vaccine': 'health-death',
-  
-  // 异常记录模块 → health-abnormal
-  'get_abnormal_records': 'health-abnormal',
-  'create_abnormal_record': 'health-abnormal',
-  'list_abnormal_records': 'health-abnormal',
-  'get_abnormal_record_detail': 'health-abnormal',
-  'correct_abnormal_diagnosis': 'health-abnormal',
-  'update_abnormal_status': 'health-abnormal',
-  'get_abnormal_stats': 'health-abnormal',
-  'delete_abnormal_records': 'health-abnormal',
-  
-  // 健康记录模块 → health-records
-  'create_health_record': 'health-records',
-  'list_health_records': 'health-records',
-  'update_health_record': 'health-records',
-  'delete_health_record': 'health-records',
-  'get_health_record_detail': 'health-records',
-  'get_health_records_by_status': 'health-records',
-  'get_batch_health_summary': 'health-records',
-  'calculate_health_rate': 'health-records',
-  
-  // 预防保健模块 → health-prevention
-  'create_prevention_record': 'health-prevention',
-  'list_prevention_records': 'health-prevention',
-  'get_prevention_dashboard': 'health-prevention',
-  'getPreventionDashboard': 'health-prevention',
-  'complete_prevention_task': 'health-prevention',
-  'completePreventionTask': 'health-prevention',
-  'get_today_prevention_tasks': 'health-prevention',
-  'getTodayPreventionTasks': 'health-prevention',
-  'get_prevention_tasks_by_batch': 'health-prevention',
-  'getPreventionTasksByBatch': 'health-prevention',
-  'get_batch_prevention_comparison': 'health-prevention',
-  'getBatchPreventionComparison': 'health-prevention',
-  'update_prevention_effectiveness': 'health-prevention',
-  'updatePreventionEffectiveness': 'health-prevention',
-  
-  // 健康概览模块 → health-overview
-  'get_health_overview': 'health-overview',
-  'get_dashboard_snapshot': 'health-overview',
-  'get_all_batches_health_summary': 'health-overview',
-  'get_all_batches_health_data': 'health-overview',
-  'get_homepage_health_overview': 'health-overview',
-  'get_health_statistics': 'health-overview',
-  'getHealthStatistics': 'health-overview',
-  'get_health_statistics_optimized': 'health-overview',
-  'getHealthStatisticsOptimized': 'health-overview',
-  'get_health_dashboard_complete': 'health-overview',
-  'get_batch_complete_data': 'health-overview',
-  'get_batch_prompt_data': 'health-overview',
-  'calculate_batch_cost': 'health-overview',
-  'calculateBatchCost': 'health-overview',
-  
-  // 成本计算模块 → health-cost
-  'calculate_cost_stats': 'health-cost',
-  'get_batch_cost_analysis': 'health-cost',
-  'get_prevention_cost': 'health-cost',
-  'get_cost_analysis': 'health-cost',
-  'export_cost_report': 'health-cost',
-  
-  // AI诊断模块 → ai-diagnosis
-  'create_ai_diagnosis': 'ai-diagnosis',
-  'ai_diagnosis': 'ai-diagnosis',
-  'get_diagnosis_history': 'ai-diagnosis',
-  'get_diagnosis_result': 'ai-diagnosis',
-  'update_diagnosis_review': 'ai-diagnosis',
-  'adopt_diagnosis': 'ai-diagnosis',
-  'feedback_diagnosis': 'ai-diagnosis',
-  'update_diagnosis_status': 'ai-diagnosis',
-  'get_diagnosis_stats': 'ai-diagnosis',
-  'get_pending_diagnosis_count': 'ai-diagnosis'
-}
-
-// 导出路由映射表供其他模块使用
-export { HEALTH_MANAGEMENT_ROUTE_MAP }
 
 /**
- * 获取 action 对应的目标云函数名
- * @param action 操作类型
- * @returns 目标云函数名，如果未找到则返回 null
+ * 统一的云函数API调用封装
+ * 
+ * 使用说明：
+ * - 健康管理模块：请使用 HealthCloud（cloud-functions.ts）
+ * - 其他模块：使用 CloudApi.callFunction
  */
-export function getTargetCloudFunction(action: string): string | null {
-  return HEALTH_MANAGEMENT_ROUTE_MAP[action] || null
-}
 
 export interface CloudApiResponse<T = any> {
   success: boolean
@@ -148,7 +30,6 @@ interface CloudApiOptions {
 class CloudApi {
   /**
    * 通用的云函数调用方法
-   * ⚠️ 自动路由：当调用 health-management 时，会自动转发到对应的新云函数
    */
   static async callFunction<T = any>(
     name: string, 
@@ -171,27 +52,10 @@ class CloudApi {
     }
 
     try {
-      // ⚠️ 自动路由：health-management 已废弃，自动转发到新云函数
-      let actualName = name
-      let actualData = data as Record<string, unknown>
-      
-      if (name === 'health-management' && actualData && typeof actualData === 'object') {
-        const action = actualData.action as string
-        const targetFunction = HEALTH_MANAGEMENT_ROUTE_MAP[action]
-        
-        if (targetFunction) {
-          // 路由到新云函数
-          actualName = targetFunction
-          console.log(`[CloudApi] 自动路由: health-management/${action} → ${targetFunction}`)
-        } else {
-          console.warn(`[CloudApi] 未找到 action "${action}" 的路由映射，将调用原 health-management（可能失败）`)
-        }
-      }
-      
       const derivedUseCache = typeof useCache === 'boolean' ? useCache : (loading === false ? false : undefined)
       const result = await safeCloudCall({
-        name: actualName,
-        data: actualData,
+        name,
+        data: data as Record<string, unknown>,
         useCache: derivedUseCache,
         cacheTime,
         timeout
@@ -344,197 +208,6 @@ class CloudApi {
     )
   }
 
-  // ============ 健康管理 API ============
-
-  /**
-   * 创建预防记录
-   */
-  static async createPreventionRecord(data: {
-    batchId: string
-    preventionType: string
-    vaccineInfo?: unknown
-    veterinarianInfo?: unknown
-    costInfo?: unknown
-    notes?: string
-  }): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      {
-        action: 'create_prevention_record',
-        ...data
-      },
-      {
-        loading: true,
-        loadingText: '创建预防记录...',
-        showError: true,
-        showSuccess: true,
-        successText: '预防记录创建成功'
-      }
-    )
-  }
-
-  /**
-   * 查询预防记录列表
-   */
-  static async listPreventionRecords(params: {
-    page?: number
-    pageSize?: number
-    preventionType?: string
-    batchId?: string
-    dateRange?: unknown}): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      {
-        action: 'list_prevention_records',
-        ...params
-      },
-      {
-        loading: false,
-        showError: true
-      }
-    )
-  }
-
-  /**
-   * 创建健康记录
-   */
-  static async createHealthRecord(data: {
-    batchId: string
-    recordType?: string
-    totalCount?: number
-    healthyCount?: number
-    sickCount?: number
-    deadCount?: number
-    symptoms?: string[]
-    diagnosis?: string
-    treatment?: string
-    notes?: string
-  }): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      {
-        action: 'create_health_record',
-        ...data
-      },
-      {
-        loading: true,
-        loadingText: '创建健康记录...',
-        showError: true,
-        showSuccess: true,
-        successText: '健康记录创建成功'
-      }
-    )
-  }
-
-  /**
-   * 创建治疗记录
-   */
-  static async createTreatmentRecord(data: {
-    batchId: string
-    healthRecordId?: string
-    treatmentType?: string
-    diagnosis?: string
-    medications?: unknown[]
-    treatmentPlan?: string
-    veterinarian?: string
-    affectedCount?: number
-    treatmentCost?: number
-    notes?: string
-  }): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      {
-        action: 'create_treatment_record',
-        ...data
-      },
-      {
-        loading: true,
-        loadingText: '创建治疗记录...',
-        showError: true,
-        showSuccess: true,
-        successText: '治疗记录创建成功'
-      }
-    )
-  }
-
-  /**
-   * 创建AI诊断记录
-   */
-  static async createAiDiagnosisRecord(data: {
-    batchId: string
-    healthRecordId?: string
-    symptoms?: string[]
-    images?: string[]
-    aiDiagnosis?: unknown
-    humanVerification?: unknown}): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      {
-        action: 'create_ai_diagnosis',
-        ...data
-      },
-      {
-        loading: true,
-        loadingText: 'AI诊断分析中...',
-        showError: true,
-        showSuccess: true,
-        successText: 'AI诊断完成'
-      }
-    )
-  }
-
-  /**
-   * 获取健康概览（使用新的独立云函数）
-   */
-  static async getHealthOverview(batchId: string, dateRange?: unknown, options?: CloudApiOptions): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-overview',  // 使用拆分后的独立云函数
-      {
-        action: 'get_health_overview',
-        batchId,
-        dateRange
-      },
-      {
-        loading: false, // 由调用方控制 loading 状态
-        showError: true,
-        ...options
-      }
-    )
-  }
-
-  /**
-   * 获取所有批次健康汇总
-   */
-  static async getAllBatchesHealthSummary(): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      {
-        action: 'get_all_batches_health_summary'
-      },
-      {
-        loading: true,
-        loadingText: '加载批次健康数据...',
-        showError: true
-      }
-    )
-  }
-
-  /**
-   * 获取首页健康概览
-   */
-  static async getHomepageHealthOverview(): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      {
-        action: 'get_homepage_health_overview'
-      },
-      {
-        loading: false,
-        showError: true
-      }
-    )
-  }
-
   // ============ 财务管理 API ============
 
   /**
@@ -673,46 +346,6 @@ class CloudApi {
       })
       return []
     }
-  }
-
-  // ============ 死亡记录 API ============
-
-  /**
-   * 创建死亡记录
-   */
-  static async createDeathRecord(data: Record<string, unknown>): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management', 
-      { action: 'createDeathRecord', ...data },
-      { 
-        loading: true,
-        loadingText: '提交死亡记录...',
-        showSuccess: true,
-        successText: '记录提交成功'
-      }
-    )
-  }
-
-  /**
-   * 查询死亡记录列表
-   */
-  static async listDeathRecords(params: Record<string, unknown>): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      { action: 'listDeathRecords', ...params },
-      { loading: true, loadingText: '加载记录...' }
-    )
-  }
-
-  /**
-   * 获取死亡统计
-   */
-  static async getDeathStats(batchId: string): Promise<CloudApiResponse> {
-    return this.callFunction(
-      'health-management',
-      { action: 'getDeathStats', batchId },
-      { loading: true, loadingText: '加载统计数据...' }
-    )
   }
 
   /**

@@ -284,7 +284,6 @@ Page({
   // 初始化状态栏
   setupNavigationHandlers() {
     // 简化的导航处理
-    console.log('Navigation handlers initialized')
   },
 
   initStatusBar() {

@@ -2,7 +2,7 @@
 // 治愈记录列表页面
 
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
+import { HealthCloud } from '../../utils/cloud-functions'
 import { logger } from '../../utils/logger'
 import type { CuredRecord as BaseCuredRecord } from '../types/treatment'
 import { formatCuredRecords } from '../utils/data-utils'
@@ -83,17 +83,11 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
     try {
       page.setData({ loading: true })
 
-      const response = await CloudApi.callFunction<{ records: BaseCuredRecord[] }>(
-        'health-management',
-        {
-          action: 'get_cured_records_list'
-        },
-        {
-          loading: true,
-          loadingText: '加载治愈记录...',
-          showError: false
-        }
-      )
+      wx.showLoading({ title: '加载治愈记录...' })
+      
+      const response = await HealthCloud.treatment.getCuredList({}) as { success: boolean; data?: { records: BaseCuredRecord[] }; error?: string }
+      
+      wx.hideLoading()
 
       if (!response.success) {
         throw new Error(response.error || '查询失败')

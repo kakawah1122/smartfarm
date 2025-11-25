@@ -260,7 +260,7 @@ exports.main = async (event, wxContext) => {
                   updatedAt: new Date()
                 }
               })
-            console.log(`✅ 直接提交：已同步更新 AI 诊断记录 (${diagnosisId}) 的 hasTreatment 为 true`)
+            // 直接提交：已同步更新 AI 诊断记录
           }
         }
       } catch (syncError) {

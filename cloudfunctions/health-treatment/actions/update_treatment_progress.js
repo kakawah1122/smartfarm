@@ -117,7 +117,7 @@ exports.main = async (event, wxContext) => {
         batchDocId = treatment.batchId  // 文档ID就是传入的batchId
       } catch (err) {
         // 如果文档不存在，尝试通过批次号查询
-        console.log('批次ID查询失败，尝试通过批次号查询:', treatment.batchId)
+        // 批次ID查询失败，尝试通过批次号查询
         try {
           const batchQueryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
             .where({
@@ -131,9 +131,9 @@ exports.main = async (event, wxContext) => {
             batch = batchQueryResult.data[0]
             batchNumber = batch.batchNumber
             batchDocId = batch._id  // ✅ 使用查询到的批次文档的真实_id
-            console.log('通过批次号查询成功，批次号:', batchNumber, '文档ID:', batchDocId)
+            // 通过批次号查询成功
           } else {
-            console.log('未找到批次信息:', treatment.batchId)
+            // 未找到批次信息
             // 批次不存在，使用默认值
             batchNumber = treatment.batchId
           }
@@ -147,23 +147,20 @@ exports.main = async (event, wxContext) => {
       let unitCost = 0
       let costBreakdown = null
       
-      console.log('========== 批次成本计算开始 ==========')
-      console.log('治疗记录中的 batchId:', treatment.batchId)
-      console.log('查询到的批次文档ID:', batchDocId)
-      console.log('查询到的批次号:', batchNumber)
+      // 批次成本计算
       
       if (batch) {
         // TODO: calculateBatchCost需要在finance模块迁移后通过云函数间调用
         // 暂时使用入栏单价作为降级方案
         const fallbackCost = parseFloat(batch.unitPrice)
         unitCost = (!isNaN(fallbackCost) && fallbackCost > 0) ? fallbackCost : 0
-        console.log('[update_treatment_progress] 暂时使用入栏单价:', unitCost)
+        // 暂时使用入栏单价
       } else {
         console.error('❌ 批次数据为空')
       }
       
       if (unitCost === 0) {
-        console.log(`❌ 批次 ${batchNumber} (文档ID: ${batchDocId}) 缺少成本数据`)
+        // 批次缺少成本数据
         throw new Error(`批次 ${batchNumber} 缺少成本数据，请先补充批次入栏信息`)
       }
       
@@ -252,7 +249,7 @@ exports.main = async (event, wxContext) => {
           }
         })
         
-        console.log(`✅ 更新死亡记录: ${deathRecordId}, 新增死亡数: ${count}, 累计死亡数: ${newDeathCount}`)
+        // 更新死亡记录成功
         
       } else {
         // ✅ 不存在，创建新的死亡记录
@@ -304,7 +301,7 @@ exports.main = async (event, wxContext) => {
         
         deathRecordId = deathResult._id
         
-        console.log(`✅ 创建死亡记录: ${deathRecordId}, 死亡数: ${count}`)
+        // 创建死亡记录成功
       }
       
       // ✅ 更新批次的死亡数（容错处理）
