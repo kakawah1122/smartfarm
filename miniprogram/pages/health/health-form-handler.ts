@@ -5,6 +5,17 @@
 
 /// <reference path="../../../typings/index.d.ts" />
 
+import { safeCloudCall } from '../../utils/safe-cloud-call'
+
+/**
+ * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
+ * 自动路由 health-management 到新云函数
+ */
+async function callCloudFunction(config: { name: string; data: Record<string, unknown> }) {
+  const result = await safeCloudCall(config)
+  return { result }
+}
+
 export interface VaccineFormData {
   vaccinationDate: string
   batchId: string
@@ -81,17 +92,18 @@ export class HealthFormHandler {
         }
       }
       
-      // 调用云函数
-      const result = await wx.cloud.callFunction({
+      // 调用云函数（自动路由到新云函数）
+      const result = await callCloudFunction({
         name: 'health-management',
         data: submitData
       })
       
-      if (result.result?.success) {
-        return result.result
+      const cloudResult = result.result as { success?: boolean; error?: string } | undefined
+      if (cloudResult?.success) {
+        return cloudResult
       }
       
-      throw new Error(result.result?.error || '提交失败')
+      throw new Error(cloudResult?.error || '提交失败')
     } catch (error) {
       console.error('提交疫苗表单失败:', error)
       throw error
@@ -131,17 +143,18 @@ export class HealthFormHandler {
         }
       }
       
-      // 调用云函数
-      const result = await wx.cloud.callFunction({
+      // 调用云函数（自动路由到新云函数）
+      const result = await callCloudFunction({
         name: 'health-management',
         data: submitData
       })
       
-      if (result.result?.success) {
-        return result.result
+      const cloudResult = result.result as { success?: boolean; error?: string } | undefined
+      if (cloudResult?.success) {
+        return cloudResult
       }
       
-      throw new Error(result.result?.error || '提交失败')
+      throw new Error(cloudResult?.error || '提交失败')
     } catch (error) {
       console.error('提交消毒表单失败:', error)
       throw error

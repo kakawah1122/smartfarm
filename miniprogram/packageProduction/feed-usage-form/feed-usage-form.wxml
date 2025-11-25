@@ -135,6 +135,7 @@
         size="large"
         bindtap="onReset"
         disabled="{{submitting}}"
+        t-class="custom-form-button"
       >
         重置
       </t-button>
@@ -144,6 +145,7 @@
         bindtap="onSubmit"
         loading="{{submitting}}"
         disabled="{{submitting}}"
+        t-class="custom-form-button"
       >
         {{submitting ? '提交中...' : '提交记录'}}
       </t-button>

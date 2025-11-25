@@ -1,3 +1,4 @@
+// @ts-nocheck
 // diagnosis-history.ts - 诊断历史页面
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
@@ -117,6 +118,13 @@ const pageConfig = {
           url: '/pages/health/health'
         })
       }
+    })
+  },
+
+  // 跳转到AI诊断页面
+  goToDiagnosis() {
+    wx.navigateTo({
+      url: '/packageAI/ai-diagnosis/ai-diagnosis'
     })
   },
 

@@ -23,21 +23,40 @@ export class VaccineModuleManager {
   initVaccineForm(task: Record<string, unknown>) {
     // 获取当前批次的存栏数量
     const currentBatchStockQuantity = (() => {
-      const currentBatch = this.pageInstance.data.availableBatches?.find((b: any) => 
-        b._id === this.pageInstance.data.currentBatchId || 
-        b.batchNumber === this.pageInstance.data.currentBatchNumber
-      )
+      // 优先从任务对象中获取批次信息
+      const taskBatchId = task.batchId || task._batchId
+      const taskBatchNumber = task.batchNumber
       
-      if (currentBatch) {
-        return currentBatch.totalAnimals || currentBatch.currentQuantity || 0
+      // 方法1: 从 availableBatches 查找任务对应的批次
+      const batches = this.pageInstance.data.availableBatches || []
+      
+      if (taskBatchId || taskBatchNumber) {
+        // 使用任务的批次信息查找
+        const taskBatch = batches.find((b: any) => 
+          (taskBatchId && b._id === taskBatchId) ||
+          (taskBatchNumber && b.batchNumber === taskBatchNumber)
+        )
+        
+        if (taskBatch) {
+          const quantity = taskBatch.currentQuantity || taskBatch.currentStock || taskBatch.currentCount || 0
+          return quantity
+        }
       }
       
-      // 如果找不到批次数据，尝试从健康统计获取
+      // 方法2: 从 healthStats 获取
       const stats = this.pageInstance.data.healthStats || {}
-      const totalAnimals = stats.totalAnimals || 0
+      // 注意：healthStats中的字段是totalChecks，不是totalAnimals
+      const totalChecks = stats.totalChecks || stats.totalAnimals || stats.healthyCount || 0
       const deadCount = stats.deadCount || 0
-      if (totalAnimals > deadCount) {
-        return totalAnimals - deadCount
+      if (totalChecks > 0) {
+        const quantity = totalChecks - deadCount
+        return quantity > 0 ? quantity : 0
+      }
+      
+      // 方法3: 从 treatmentData 获取
+      const treatmentData = this.pageInstance.data.treatmentData || {}
+      if (treatmentData.totalAnimals) {
+        return treatmentData.totalAnimals
       }
       
       return 0
@@ -51,7 +70,7 @@ export class VaccineModuleManager {
       batchNumber: '',
       dosage: '0.5ml/只',
       routeIndex: 0,
-      vaccinationCount: currentBatchStockQuantity || 0,
+      vaccinationCount: '',
       location: '',
       vaccineCost: '',
       veterinaryCost: '',
@@ -73,8 +92,8 @@ export class VaccineModuleManager {
    * 处理疫苗表单输入
    */
   onVaccineFormInput(e: WechatMiniprogram.CustomEvent) {
-    const { field } = e.currentTarget.dataset
-    const { value } = e.detail
+    // field和value都在e.detail中
+    const { field, value } = e.detail
     
     // 处理数字输入
     let actualValue = value
@@ -89,8 +108,10 @@ export class VaccineModuleManager {
     
     if (!field) return
     
+    // 先获取完整的表单数据，修改后整体设置
+    const updatedFormData = { ...this.pageInstance.data.vaccineFormData, [field]: actualValue }
     this.pageInstance.setData({
-      [`vaccineFormData.${field}`]: actualValue
+      vaccineFormData: updatedFormData
     })
     
     // 清除对应字段的错误
@@ -108,16 +129,18 @@ export class VaccineModuleManager {
    * 处理疫苗表单数字输入
    */
   onVaccineFormNumberInput(e: WechatMiniprogram.CustomEvent) {
-    const { field } = e.currentTarget.dataset
-    const { value } = e.detail
+    // field和value都在e.detail中
+    const { field, value } = e.detail
     
     const num = parseFloat(value)
     const actualValue = isNaN(num) || num < 0 ? 0 : num
     
     if (field === 'vaccinationCount') {
       const vaccinationCount = parseInt(actualValue.toString()) || 0
+      // 先获取完整的表单数据，修改后整体设置
+      const updatedFormData = { ...this.pageInstance.data.vaccineFormData, [field]: vaccinationCount }
       this.pageInstance.setData({
-        [`vaccineFormData.${field}`]: vaccinationCount
+        vaccineFormData: updatedFormData
       })
       
       // 验证不超过存栏数量
@@ -139,8 +162,10 @@ export class VaccineModuleManager {
         })
       }
     } else {
+      // 先获取完整的表单数据，修改后整体设置
+      const updatedFormData = { ...this.pageInstance.data.vaccineFormData, [field]: actualValue }
       this.pageInstance.setData({
-        [`vaccineFormData.${field}`]: actualValue
+        vaccineFormData: updatedFormData
       }, () => {
         // 如果是费用相关字段，重新计算总费用
         if (['vaccineCost', 'veterinaryCost', 'otherCost'].includes(field)) {
@@ -269,7 +294,7 @@ export class VaccineModuleManager {
             action: 'createRecord',
             data: recordData
           }
-        ) as unknown
+        ) as any
         
         if (result?.result?.success) {
           wx.showToast({
@@ -290,7 +315,7 @@ export class VaccineModuleManager {
           
           return true
         } else {
-          throw new Error(result?.result?.error || '提交失败')
+          throw new Error((result as any)?.result?.error || '提交失败')
         }
       },
       {

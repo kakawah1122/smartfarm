@@ -7,6 +7,7 @@
 import { safeCloudCall } from '../../utils/safe-cloud-call'
 import { callHealthFunction } from '../../utils/health-cloud-router'
 
+import { smartCloudCall } from '../../utils/cloud-adapter'
 interface CloudCallResult<T = any> {
   success: boolean
   data?: T
@@ -67,14 +68,8 @@ export class HealthDataManager {
    */
   static async getBatchCompleteData(batchId: string, dateRange: unknown) {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'get_batch_complete_data',
-          batchId,
-          dateRange
-        }
-      }) as CloudCallResult
+      const result = await smartCloudCall('get_batch_complete_data', { batchId,
+          dateRange }) as CloudCallResult
       
       if (result?.success) {
         return result.data
@@ -114,15 +109,9 @@ export class HealthDataManager {
    */
   static async getAbnormalRecords(batchId: string | null, page: number = 1, pageSize: number = 20) {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'get_abnormal_list',
-          batchId,
+      const result = await smartCloudCall('get_abnormal_list', { batchId,
           page,
-          pageSize
-        }
-      }) as CloudCallResult<any[]>
+          pageSize }) as CloudCallResult<any[]>
       
       if (result?.success) {
         return {

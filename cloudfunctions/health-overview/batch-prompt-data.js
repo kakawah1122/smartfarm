@@ -10,7 +10,7 @@ cloud.init({
 
 const db = cloud.database()
 const _ = db.command
-const { COLLECTIONS } = require('./shared-config/collections.js')
+const { COLLECTIONS } = require('./collections.js')
 
 /**
  * 获取批次提示数据

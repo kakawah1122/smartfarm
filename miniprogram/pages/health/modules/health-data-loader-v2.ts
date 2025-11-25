@@ -20,6 +20,7 @@ import { HealthCloudHelper, normalizeHealthData } from '../helpers/cloud-helper'
 import { logger } from '../../../utils/logger'
 import { formatTime } from '../../../utils/util'
 
+import { smartCloudCall } from '../../../utils/cloud-adapter'
 // 缓存配置
 const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
 const CACHE_PREFIX = 'health_cache_'
@@ -196,14 +197,8 @@ export class HealthDataLoader {
     
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const result = await safeCloudCall({
-          name: 'health-management',
-          data: {
-            action: 'getPreventionDashboard',
-            batchId,
-            today: formatTime(new Date(), 'date')
-          }
-        })
+        const result = await smartCloudCall('getPreventionDashboard', { batchId,
+            today: formatTime(new Date(), 'date') })
         
         if (!result?.success) {
           // 非权限错误时重试

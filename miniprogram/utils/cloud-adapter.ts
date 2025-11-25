@@ -6,9 +6,10 @@
 import { safeCloudCall } from './safe-cloud-call'
 
 // 开关：是否启用新架构
-const USE_NEW_ARCHITECTURE = true; // ✅ 已启用新架构（测试环境）
+// ⚠️ 紧急回滚：如果拆分后的云函数有问题，请将此值改为 false
+const USE_NEW_ARCHITECTURE = true; // true=使用新云函数, false=回滚到原health-management
 
-// 云函数action映射表
+// 云函数action映射表（完整版）
 const ACTION_FUNCTION_MAP: Record<string, string> = {
   'create_health_record': 'health-records',
   'list_health_records': 'health-records',

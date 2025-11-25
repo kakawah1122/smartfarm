@@ -564,6 +564,10 @@ exports.main = async (event, context) => {
       case 'recalculate_all_death_costs':
         return await recalculateAllDeathCosts(event, wxContext)
       
+      case 'sync_vaccine_costs_to_finance':
+        const sync_vaccine_costs_to_finance = require('./actions/sync_vaccine_costs_to_finance')
+        return await sync_vaccine_costs_to_finance.main(event, wxContext)
+      
       case 'calculate_health_rate':
         // 简单的健康率计算，直接返回
         return {

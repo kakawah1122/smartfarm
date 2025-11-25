@@ -11,6 +11,7 @@ import type {
 } from '../../../../../../../../../typings/core';
 import { callHealthFunction } from '../../../utils/health-cloud-router'
 
+import { smartCloudCall } from '../../../utils/cloud-adapter'
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
 
@@ -143,13 +144,7 @@ export async function getBatchCompleteData(params: {
   diagnosisLimit?: number
   preventionLimit?: number
 }) {
-  const result = await safeCloudCall({
-    name: 'health-management',
-    data: {
-      action: 'get_batch_complete_data',
-      ...params
-    }
-  })
+  const result = await smartCloudCall('get_batch_complete_data', { ...params })
 
   if (!result || !result.success) {
     throw new Error(result?.error || '获取批次数据失败')

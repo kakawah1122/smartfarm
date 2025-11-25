@@ -526,6 +526,8 @@
     padding: 24rpx 32rpx 40rpx;
     overflow-y: auto;
     box-sizing: border-box;
+    max-height: calc(75vh - 150rpx); /* 限制最大高度，真机兼容 */
+    /* 移除 height: 0 和 min-height: 0，让内容正常显示 */
   }
 }
 
@@ -696,6 +698,14 @@
     word-break: break-word;
     overflow-wrap: break-word;
   }
+}
+
+// 疫苗追踪提示
+.tracking-hint {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+  line-height: 1.5;
 }
 
 // 疫苗追踪操作

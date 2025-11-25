@@ -397,14 +397,6 @@
 /* === TDesign规范按钮样式 - 使用全局变量 === */
 /* 所有按钮样式已在app.scss中全局定义 */
 
-.primary-button {
-  /* 继承全局TDesign主要按钮样式 */
-}
-
-.secondary-button {
-  /* 继承全局TDesign默认按钮样式 */
-}
-
 /* 重复的旧样式已清理 */
 
 /* 按钮基础样式 - 彻底移除所有边框和轮廓线 */
@@ -539,4 +531,19 @@
 }
 
 /* 注意：组件WXSS不允许使用标签选择器，已移除 .form-actions button 相关样式 */
+
+/* 表单操作按钮样式 - 深蓝渐变背景 */
+/* 使用t-class自定义样式 */
+.custom-form-button {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4rpx 12rpx rgba(30, 64, 175, 0.3) !important;
+  border: none !important;
+}
+
+.custom-form-button:active {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+  box-shadow: 0 2rpx 8rpx rgba(30, 64, 175, 0.4) !important;
+}
 

@@ -4,6 +4,7 @@
  * 保持原有功能完整
  */
 
+import { HealthCloud } from '../../../utils/cloud-functions'
 import { safeCloudCall } from '../../../utils/safe-cloud-call'
 import CloudApi from '../../../utils/cloud-api'
 import { logger } from '../../../utils/logger'
@@ -38,16 +39,12 @@ export class HealthCloudHelper {
       abnormalLimit = 50
     } = options
     
-    const result = await safeCloudCall({
-      name: 'health-management',
-      data: {
-        action: 'get_dashboard_snapshot',
-        batchId: batchId,
-        includeDiagnosis,
-        includeAbnormalRecords,
-        diagnosisLimit,
-        abnormalLimit
-      }
+    const result = await HealthCloud.overview.getDashboardSnapshot({
+      batchId,
+      includeDiagnosis,
+      includeAbnormalRecords,
+      diagnosisLimit,
+      abnormalLimit
     }) as CloudFunctionResult
     
     if (!result?.success) {
@@ -61,13 +58,9 @@ export class HealthCloudHelper {
    * 获取预防管理仪表盘
    */
   static async getPreventionDashboard(batchId: string, today?: string) {
-    const result = await safeCloudCall({
-      name: 'health-management',
-      data: {
-        action: 'getPreventionDashboard',
-        batchId: batchId,
-        today: today
-      }
+    const result = await HealthCloud.prevention.getDashboard({
+      batchId,
+      today
     }) as CloudFunctionResult
     
     return result
@@ -77,13 +70,9 @@ export class HealthCloudHelper {
    * 获取批次完整数据
    */
   static async getBatchCompleteData(batchId: string, includes: string[] = []) {
-    const result = await safeCloudCall({
-      name: 'health-management',
-      data: {
-        action: 'get_batch_complete_data',
-        batchId: batchId,
-        includes: includes
-      }
+    const result = await HealthCloud.overview.getBatchCompleteData({
+      batchId,
+      includes
     }) as CloudFunctionResult
     
     return result
@@ -187,10 +176,7 @@ export class HealthCloudHelper {
     status?: string
     limit?: number
   }) {
-    const result = await safeCloudCall({
-      name: 'ai-diagnosis',
-      data: params
-    }) as CloudFunctionResult
+    const result = await HealthCloud.ai.create(params) as CloudFunctionResult
     
     return result
   }

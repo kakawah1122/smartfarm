@@ -19,6 +19,7 @@ import type {
 } from '../../../../../../../../../typings/core';
 import { logger } from '../../../utils/logger'
 
+import { smartCloudCall } from '../../../utils/cloud-adapter'
 /**
  * 批次信息接口
  */
@@ -380,13 +381,7 @@ export class HealthBatchManager {
     try {
       // 并行获取所有批次的健康数据
       const promises = batchIds.map(batchId => 
-        safeCloudCall({
-          name: 'health-management',
-          data: {
-            action: 'get_batch_health_summary',
-            batchId: batchId
-          }
-        })
+        smartCloudCall('get_batch_health_summary', { batchId: batchId })
       )
       
       const results = await Promise.all(promises)

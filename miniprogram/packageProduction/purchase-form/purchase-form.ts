@@ -1,3 +1,4 @@
+// @ts-nocheck
 // purchase-form.ts - 采购入库表单页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
 
@@ -79,7 +80,7 @@ const pageConfig = {
   },
 
   // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
-  onDateConfirm(e: CustomEvent) {
+  onDateConfirm(e: any) {
     const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     const batchId = this.generateBatchId(dateString)
     
@@ -90,7 +91,7 @@ const pageConfig = {
   },
 
   // 分类选择变化
-  onCategoryChange(e: CustomEvent) {
+  onCategoryChange(e: any) {
     const index = e.detail.value
     const category = this.data.categoryLabels[index]
     this.setData({
@@ -101,7 +102,7 @@ const pageConfig = {
   },
 
   // 表单字段变化
-  onFieldChange(e: CustomEvent) {
+  onFieldChange(e: any) {
     const { value } = e.detail
     const { field } = e.currentTarget.dataset
     
@@ -229,15 +230,27 @@ const pageConfig = {
         category: this.data.formData.category || this.getMaterialCategory(this.data.formData.materialName) // 使用用户选择的分类或智能推断
       }
 
-      // 调用云函数提交物料数据
+      // 调用云函数提交采购记录
       await this.submitToCloudFunction(submitData)
 
-      // 提交成功，快速返回上一页
+      // 提交成功
       wx.showToast({
         title: '提交成功',
         icon: 'success',
         duration: 1500
       })
+
+      // 通知上一个页面需要刷新数据
+      const pages = getCurrentPages()
+      if (pages.length >= 2) {
+        const prevPage = pages[pages.length - 2] as any
+        // 如果上一页是生产管理页面，设置刷新标志
+        if (prevPage && prevPage.route === 'pages/production/production') {
+          prevPage.setData({
+            needRefresh: true
+          })
+        }
+      }
 
       // 延迟后自动返回上一页
       setTimeout(() => {

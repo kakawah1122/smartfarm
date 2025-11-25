@@ -186,6 +186,7 @@
           block 
           bind:tap="onSubmit"
           loading="{{submitting}}"
+          t-class="custom-form-button"
         >
           {{submitting ? '提交中...' : '提交采购入库'}}
         </t-button>
@@ -194,6 +195,7 @@
           size="large" 
           block 
           bind:tap="onReset"
+          t-class="custom-form-button"
         >
           重置表单
         </t-button>

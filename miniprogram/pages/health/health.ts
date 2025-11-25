@@ -11,6 +11,7 @@ import { isVaccineTask, isMedicationTask, isNutritionTask, calculateCurrentAge }
 import { processImageUrls } from '../../utils/image-utils'
 import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisRecord } from '../../utils/diagnosis-data-utils'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
+import { HealthCloud } from '../../utils/cloud-functions'
 import { createDataUpdater } from './helpers/data-updater'
 import { HealthCloudHelper, normalizeHealthData } from './helpers/cloud-helper'
 import { withErrorHandler } from './helpers/error-handler'
@@ -23,8 +24,8 @@ import { createVaccineModule, VaccineModuleManager } from './modules/health-vacc
 import { createMonitoringModule, MonitoringModuleManager } from './modules/health-monitoring-module'
 import { createPreventionModule, PreventionModuleManager } from './modules/health-prevention-module'
 import { createSetDataWrapper, SetDataWrapper } from './helpers/setdata-wrapper'
-import { performanceAnalyzer } from '../../utils/performance-analyzer'
 
+import { smartCloudCall } from '../../utils/cloud-adapter'
 const ALL_BATCHES_CACHE_KEY = 'health_cache_all_batches_snapshot_v1'
 const CACHE_DURATION = 5 * 60 * 1000
 
@@ -476,12 +477,7 @@ Page<PageData, any>({
    */
   async fixTreatmentRecordsOpenId() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'fix_treatment_records_openid'
-        }
-      })
+      const result = await smartCloudCall('fix_treatment_records_openid')
       
       if (result && (result as BaseResponse).result?.success) {
         // 修复成功，静默处理
@@ -498,12 +494,7 @@ Page<PageData, any>({
    */
   async fixBatchDeathCount() {
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'fix_batch_death_count'
-        }
-      })
+      const result = await smartCloudCall('fix_batch_death_count')
       
       if (result && (result as BaseResponse).result?.success) {
         // 修复成功，静默处理
@@ -617,9 +608,6 @@ Page<PageData, any>({
    * 页面显示时刷新数据并启动实时监听（优化：增加EventChannel监听）
    */
   onShow() {
-    // ✅ 性能分析：开始监控
-    performanceAnalyzer.startAnalysis('health')
-    
     // 延迟启动监听器，避免快速切换页面时的竞态条件
     // 使用 wx.nextTick 确保页面完全渲染后再启动
     wx.nextTick(() => {
@@ -627,13 +615,6 @@ Page<PageData, any>({
       setTimeout(() => {
         // 启动实时数据监听（只在页面可见时监听，节省资源）
         this.startDataWatcher()
-        
-        // ✅ 性能分析：生成报告
-        const report = performanceAnalyzer.generateReport()
-        if (report.score < 70) {
-          console.warn('⚠️ 健康页面性能需要优化')
-          performanceAnalyzer.printReport(report)
-        }
       }, 100)
     })
     
@@ -1273,16 +1254,10 @@ Page<PageData, any>({
    */
   async loadSingleBatchDataOptimized() {
     try {
-      const result = await safeCloudCall({
-        name: 'health-management',
-        data: {
-          action: 'get_batch_complete_data',
-          batchId: this.data.currentBatchId,
+      const result = await smartCloudCall('get_batch_complete_data', { batchId: this.data.currentBatchId,
           includes: ['prevention', 'treatment', 'diagnosis', 'abnormal', 'pending_diagnosis'],
           diagnosisLimit: 10,
-          preventionLimit: 20
-        }
-      })
+          preventionLimit: 20 })
       
       if (!result || !result.success) {
         throw new Error('获取批次数据失败')
@@ -2039,22 +2014,12 @@ Page<PageData, any>({
       let preventionPromise: Promise<BaseResponse>
       
       if (isAllBatches) {
-        preventionPromise = safeCloudCall({
-          name: 'health-management',
-          data: {
-            action: 'getPreventionDashboard',
-            batchId: batchId
-          }
-        })
+        preventionPromise = HealthCloud.prevention.getDashboard({ batchId: batchId }) as Promise<BaseResponse>
       } else {
-        preventionPromise = safeCloudCall({
-          name: 'health-management',
-          data: {
-            action: 'get_batch_complete_data',
-            batchId: batchId,
-            includes: ['prevention']
-          }
-        })
+        preventionPromise = HealthCloud.overview.getBatchCompleteData({ 
+          batchId: batchId,
+          includes: ['prevention'] 
+        }) as Promise<BaseResponse>
       }
       
       // 获取饲养成本的参数
@@ -2085,9 +2050,11 @@ Page<PageData, any>({
       
       // 提取预防成本（确保是数字类型）
       let preventionCost = 0
+      
       if (isAllBatches) {
-        if (preventionResult?.success && preventionResult.data?.stats) {
-          const costValue = preventionResult.data.stats.preventionCost
+        // 全部批次模式：从 data.preventionCost 读取
+        if (preventionResult?.success && preventionResult.data) {
+          const costValue = preventionResult.data.preventionCost || preventionResult.data.stats?.preventionCost || 0
           preventionCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
         }
       } else {
@@ -2100,13 +2067,9 @@ Page<PageData, any>({
       // 获取治疗成本（确保是数字类型，处理字符串"0.00"）
       let treatmentCost = 0
       try {
-        const treatmentCostResult = await safeCloudCall({
-          name: 'health-cost',  // 使用拆分后的云函数
-          data: {
-            action: 'calculate_treatment_cost',
-            dateRange: this.data.dateRange,
-            batchId: batchId
-          }
+        const treatmentCostResult = await HealthCloud.cost.calculateTreatment({
+          dateRange: this.data.dateRange,
+          batchId: batchId
         })
         
         if (treatmentCostResult?.success) {
@@ -2214,21 +2177,29 @@ Page<PageData, any>({
     const task = e.currentTarget.dataset.task
     if (!task) return
     
-    // 根据任务类型跳转到不同的记录页面
-    let url = ''
-    const params = `taskId=${task.taskId}&batchId=${task.batchId}&dayAge=${task.dayAge}&taskName=${encodeURIComponent(task.taskName || '')}&fromTask=true`
-    
+    // 根据任务类型处理
     switch (task.taskType) {
       case 'vaccine':
-        url = `/packageHealth/vaccine-record/vaccine-record?${params}`
+        // 疫苗任务：跳转到疫苗记录页面
+        const vaccineParams = `taskId=${task.taskId}&batchId=${task.batchId}&dayAge=${task.dayAge}&taskName=${encodeURIComponent(task.taskName || '')}&fromTask=true`
+        wx.navigateTo({
+          url: `/packageHealth/vaccine-record/vaccine-record?${vaccineParams}`
+        })
         break
+        
       case 'medication':
-        // 暂时跳转到疫苗记录页面，后续可以添加独立的用药页面
-        url = `/packageHealth/vaccine-record/vaccine-record?${params}`
+        // 用药任务：打开用药表单（需要选择具体药品和数量）
+        this.openMedicationForm(task)
         break
+        
       case 'disinfection':
-        url = `/packageHealth/disinfection-record/disinfection-record?${params}`
+        // 消毒任务：跳转到消毒记录页面
+        const disinfectionParams = `taskId=${task.taskId}&batchId=${task.batchId}&dayAge=${task.dayAge}&taskName=${encodeURIComponent(task.taskName || '')}&fromTask=true`
+        wx.navigateTo({
+          url: `/packageHealth/disinfection-record/disinfection-record?${disinfectionParams}`
+        })
         break
+        
       default:
         wx.showToast({
           title: '未知任务类型',
@@ -2236,10 +2207,6 @@ Page<PageData, any>({
         })
         return
     }
-    
-    wx.navigateTo({
-      url
-    })
   },
 
   /**
@@ -3680,8 +3647,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
     // 如果是接种数量，需要验证不超过存栏数量
     if (field === 'vaccinationCount') {
       const vaccinationCount = parseInt(actualValue) || 0
+      // 先获取完整的表单数据，修改后整体设置
+      const updatedFormData = { ...this.data.vaccineFormData, [field]: vaccinationCount }
       this.setData({
-        [`vaccineFormData.${field}`]: vaccinationCount
+        vaccineFormData: updatedFormData
       })
 
       // 验证不超过存栏数量
@@ -3703,8 +3672,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         })
       }
     } else {
+      // 先获取完整的表单数据，修改后整体设置
+      const updatedFormData = { ...this.data.vaccineFormData, [field]: actualValue }
       this.setData({
-        [`vaccineFormData.${field}`]: actualValue
+        vaccineFormData: updatedFormData
       }, () => {
         // 如果是费用相关字段，重新计算总费用
         if (['vaccineCost', 'veterinaryCost', 'otherCost'].includes(field)) {
@@ -3934,17 +3905,24 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       
       if (result && result.success) {
         const materials = result.data.materials || []
+        
+        console.log('原始物料数据:', materials)
+        
         const availableMedicines = materials
           .filter((material: unknown) => (material.currentStock || 0) > 0)
-          .map((material: unknown) => ({
-            id: material._id,
-            name: material.name,
-            unit: material.unit || '件',
-            stock: material.currentStock || 0,
-            unitPrice: material.unitPrice || 0,
-            category: material.category,
-            description: material.description || ''
-          }))
+          .map((material: unknown) => {
+            const medicine = {
+              id: material._id,
+              name: material.name,
+              unit: material.unit || '件',
+              stock: material.currentStock || 0,
+              unitPrice: material.unitPrice || material.avgCost || material.price || 0,
+              category: material.category,
+              description: material.description || ''
+            }
+            console.log('处理后的药品数据:', medicine)
+            return medicine
+          })
         
         this.setData({
           availableMedicines: Array.isArray(availableMedicines) ? availableMedicines : []
@@ -4169,49 +4147,85 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         const quantity = Number(medicationRecord.quantity) || 0
         const totalCost = unitPrice * quantity
         
-        // 创建健康预防记录
-        await safeCloudCall({
-          name: 'health-prevention',  // 使用拆分后的云函数
-          data: {
-            action: 'complete_prevention_task',
-            taskId: selectedTask._id,
-            batchId: batchId,
-            preventionData: {
-              preventionType: 'medication',
-              preventionDate: medicationRecord.useDate,
-              medicationInfo: {
-                name: medicationRecord.materialName,
-                dosage: medicationRecord.dosage || '',
-                method: '口服/拌料/饮水',
-                duration: 1,
-                animalCount: medicationFormData.animalCount
-              },
-              costInfo: {
-                totalCost: totalCost,
-                unitPrice: unitPrice,
-                quantity: quantity,
-                unit: medicationRecord.unit,
-                shouldSyncToFinance: false,
-                source: 'use'
-              },
-              notes: medicationRecord.notes,
-              effectiveness: 'pending'
-            }
+        console.log('成本计算详情:', {
+          selectedMedicine: this.data.selectedMedicine,
+          unitPrice,
+          quantity,
+          totalCost
+        })
+        
+        // 创建健康预防记录 - 使用新架构
+        const preventionResult = await HealthCloud.prevention.completeTask({
+          taskId: selectedTask._id,
+          batchId: batchId,
+          preventionData: {
+            preventionType: 'medication',
+            preventionDate: medicationRecord.useDate,
+            medicationInfo: {
+              name: medicationRecord.materialName,
+              dosage: medicationRecord.dosage || '',
+              method: '口服/拌料/饮水',
+              duration: 1,
+              animalCount: medicationFormData.animalCount
+            },
+            costInfo: {
+              totalCost: totalCost,
+              unitPrice: unitPrice,
+              quantity: quantity,
+              unit: medicationRecord.unit,
+              shouldSyncToFinance: false,
+              source: 'use'
+            },
+            notes: medicationRecord.notes,
+            effectiveness: 'pending'
           }
         })
         
+        console.log('预防记录创建结果:', preventionResult)
+        console.log('预防记录创建结果类型:', typeof preventionResult)
+        console.log('预防记录创建结果详情:', JSON.stringify(preventionResult))
+        
+        if (!preventionResult) {
+          throw new Error('云函数调用失败：返回值为空，请检查云函数是否正确部署')
+        }
+        
+        if (!preventionResult.success) {
+          throw new Error(preventionResult?.message || preventionResult?.error || '创建预防记录失败')
+        }
+        
         await this.completeMedicationTask(selectedTask._id, batchId)
         
+        // 关闭loading
         wx.hideLoading()
+        
+        // 显示成功提示
         wx.showToast({
           title: '用药记录已创建',
           icon: 'success'
         })
 
+        // 关闭表单
         this.closeMedicationFormPopup()
-        // 📝 优化：统一使用 loadPreventionData 刷新任务列表
-        if (this.data.preventionSubTab === 'today') {
-          this.loadPreventionData()
+        
+        console.log('[刷新] 开始刷新所有数据...')
+        
+        // 刷新数据（使用原来的完整刷新逻辑）
+        try {
+          // 1. 刷新批次列表（确保新批次能被加载）
+          console.log('[刷新] 1. 刷新批次列表...')
+          await this.loadAvailableBatches()
+          
+          // 2. 刷新基础健康数据（包括健康率、死亡率等）
+          console.log('[刷新] 2. 刷新健康数据...')
+          await this.loadHealthData(true)  // silent模式，不显示loading
+          
+          // 3. 刷新当前标签的数据
+          console.log('[刷新] 3. 刷新标签数据:', this.data.activeTab)
+          await this.loadTabData(this.data.activeTab)
+          
+          console.log('[刷新] 所有数据刷新完成✅')
+        } catch (refreshError) {
+          console.error('[刷新] 数据刷新失败:', refreshError)
         }
 
       } else {

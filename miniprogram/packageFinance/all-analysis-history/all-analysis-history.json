@@ -3,6 +3,6 @@
   "enablePullDownRefresh": true,
   "usingComponents": {
     "navigation-bar": "../../components/navigation-bar/navigation-bar",
-    "analysis-history-detail-popup": "../../components/analysis-history-detail-popup/analysis-history-detail-popup"
+    "analysis-history-detail-popup": "../components/analysis-history-detail-popup/analysis-history-detail-popup"
   }
 }

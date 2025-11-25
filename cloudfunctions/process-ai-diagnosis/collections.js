@@ -139,7 +139,7 @@ const COLLECTION_MODULES = {
 // 使用指南
 const USAGE_GUIDE = `
 使用说明：
-1. 在云函数中引用：const { COLLECTIONS } = require('./collections.js')
+1. 在云函数中引用：const { COLLECTIONS } = require('../../shared-config/collections.js')
 2. 使用集合：db.collection(COLLECTIONS.WX_USERS)
 3. 禁止硬编码集合名称：db.collection('wx_users') // ❌ 错误
 4. 正确使用配置文件：db.collection(COLLECTIONS.WX_USERS) // ✅ 正确

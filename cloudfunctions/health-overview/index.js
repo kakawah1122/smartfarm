@@ -17,16 +17,18 @@ const $ = db.command.aggregate
 // 引入共享的集合配置
 const { COLLECTIONS } = require('./collections.js')
 
-// 引入扩展函数
+// 引入批次提示数据功能
+const { getBatchPromptData } = require('./batch-prompt-data.js')
+
+// 引入仪表盘快照函数
+const { getDashboardSnapshot } = require('./dashboard-snapshot.js')
+
+// 引入扩展函数（只引入实际存在的函数）
 const {
-  getHealthDashboardComplete,
   getHealthStatistics,
   getHealthStatisticsOptimized,
   getBatchCompleteData
 } = require('./extended-functions.js')
-
-// 引入批次提示数据功能
-const { getBatchPromptData } = require('./batch-prompt-data.js')
 
 /**
  * 获取健康概览数据
@@ -228,93 +230,7 @@ async function getAllBatchesHealthSummary(event, wxContext) {
   }
 }
 
-/**
- * 获取仪表盘快照
- * 快速获取关键指标
- */
-async function getDashboardSnapshot(event, wxContext) {
-  try {
-    const { batchId } = event
-    const openid = wxContext.OPENID
-    
-    // 构建查询条件
-    let batchCondition = {}
-    if (batchId && batchId !== 'all') {
-      batchCondition = { batchId }
-    } else {
-      batchCondition = { _openid: openid }
-    }
-    
-    // 获取今日日期范围
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    
-    // 并行查询今日数据
-    const [
-      todayAbnormal,
-      todayTreatment,
-      todayDeath,
-      pendingTasks
-    ] = await Promise.all([
-      // 今日新增异常
-      db.collection(COLLECTIONS.HEALTH_RECORDS)
-        .where({
-          ...batchCondition,
-          recordType: 'ai_diagnosis',
-          status: _.in(['abnormal', 'treating']),
-          createdAt: _.gte(today).and(_.lt(tomorrow))
-        })
-        .count(),
-      
-      // 今日新增治疗
-      db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
-        .where({
-          ...batchCondition,
-          createTime: _.gte(today).and(_.lt(tomorrow)),
-          isDeleted: false
-        })
-        .count(),
-      
-      // 今日新增死亡
-      db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
-        .where({
-          ...batchCondition,
-          recordDate: _.gte(today.toISOString()).and(_.lt(tomorrow.toISOString()))
-        })
-        .count(),
-      
-      // 待处理任务数
-      db.collection(COLLECTIONS.TASK_BATCH_SCHEDULES)
-        .where({
-          ...batchCondition,
-          completed: false,
-          plannedDate: _.lte(new Date())
-        })
-        .count()
-    ])
-    
-    return {
-      success: true,
-      data: {
-        today: {
-          abnormal: todayAbnormal.total,
-          treatment: todayTreatment.total,
-          death: todayDeath.total
-        },
-        pendingTasks: pendingTasks.total,
-        snapshotTime: new Date().toISOString()
-      }
-    }
-  } catch (error) {
-    console.error('[getDashboardSnapshot] 错误:', error)
-    return {
-      success: false,
-      error: error.message || '获取仪表盘快照失败'
-    }
-  }
-}
+// getDashboardSnapshot 已移至 dashboard-snapshot.js
 
 /**
  * 获取首页健康概览
@@ -397,7 +313,8 @@ exports.main = async (event, context) => {
         return await getAllBatchesHealthSummary(event, wxContext)
       
       case 'get_dashboard_snapshot':
-        return await getDashboardSnapshot(event, wxContext)
+        const { getDashboardSnapshot: getDashboardSnapshotFunc } = require('./dashboard-snapshot.js')
+        return await getDashboardSnapshotFunc(event, wxContext)
       
       case 'get_homepage_health_overview':
         return await getHomepageHealthOverview(event, wxContext)

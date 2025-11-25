@@ -27,22 +27,47 @@
 
 /* 空状态 */
 .empty-container {
-  padding: 120rpx 24rpx;
-  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 140rpx);
+  padding: 80rpx 48rpx;
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 100rpx);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* 记录列表 - 样式继承自公共样式 */
-.records-list {
-  // 样式继承自公共样式 .records-list
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 500rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 60rpx 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
 }
 
-/* 记录项 - 样式继承自公共样式 */
-.record-item {
-  // 样式继承自公共样式 .record-item
+.empty-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 16rpx;
 }
 
-.record-main {
-  // 样式继承自公共样式 .record-main
+.empty-desc {
+  font-size: 26rpx;
+  color: #999999;
+  line-height: 1.6;
+  margin-bottom: 48rpx;
+}
+
+.empty-btn {
+  width: 100% !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 16rpx !important;
+  font-size: 30rpx !important;
+  font-weight: 500 !important;
 }
 
 /* 加载更多 */

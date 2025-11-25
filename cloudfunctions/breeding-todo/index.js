@@ -161,13 +161,22 @@ async function createPreventionRecordFromTask(task, taskId, batchId, openid, not
       }
     }
     
-    // 添加成本信息（如果有）- 用药任务不同步到财务
+    // 添加成本信息（如果有）
+    // 注意：breeding-todo的自动创建只是占位记录，成本为0
+    // 真实的成本应该由用户通过表单提交时传递
     if (task.estimatedCost && task.estimatedCost > 0) {
       preventionData.costInfo = {
         totalCost: parseFloat(task.estimatedCost) || 0,
-        // 明确标记用药任务的成本不应同步到财务（因为成本已在采购时计入）
         shouldSyncToFinance: false,
-        source: 'use'  // 标记为领用类型，不是采购
+        source: 'use'
+      }
+    } else {
+      // 始终包含costInfo字段，但成本为0
+      preventionData.costInfo = {
+        totalCost: 0,
+        shouldSyncToFinance: false,
+        source: 'use',
+        note: '待用户补充成本信息'
       }
     }
     

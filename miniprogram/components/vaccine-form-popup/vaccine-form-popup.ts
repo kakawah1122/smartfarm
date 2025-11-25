@@ -13,19 +13,7 @@ Component({
     // 表单数据
     formData: {
       type: Object,
-      value: {
-        veterinarianName: '',
-        veterinarianContact: '',
-        vaccineName: '',
-        manufacturer: '',
-        batchNumber: '',
-        dosage: '',
-        vaccinationCount: 0,
-        vaccineCost: '',
-        veterinaryCost: '',
-        otherCost: '',
-        notes: ''
-      }
+      value: null  // 不设置默认值，避免重置表单
     },
     // 表单错误
     formErrors: {
@@ -65,18 +53,14 @@ Component({
   },
 
   observers: {
-    'formData.vaccineCost, formData.veterinaryCost, formData.otherCost': function(
-      vaccineCost: string,
-      veterinaryCost: string,
-      otherCost: string
-    ) {
+    'formData.vaccineCost, formData.veterinaryCost, formData.otherCost': function() {
       this.calculateTotalCost()
     }
   },
 
   methods: {
     // 输入处理
-    onInput(e: CustomEvent) {
+    onInput(e: WechatMiniprogram.CustomEvent) {
       const { field } = e.currentTarget.dataset
       const { value } = e.detail
       
@@ -87,7 +71,7 @@ Component({
     },
 
     // 数值输入处理
-    onNumberInput(e: CustomEvent) {
+    onNumberInput(e: WechatMiniprogram.CustomEvent) {
       const { field } = e.currentTarget.dataset
       const { value } = e.detail
       

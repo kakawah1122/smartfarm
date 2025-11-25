@@ -16,15 +16,17 @@
 
     <!-- 空状态 -->
     <view class="empty-container" wx:elif="{{records.length === 0}}">
-      <t-empty 
-        description="暂无诊断记录"
-      >
+      <view class="empty-content">
+        <text class="empty-title">暂无诊断记录</text>
+        <text class="empty-desc">您还没有进行过AI诊断，快去体验吧</text>
         <t-button 
           theme="primary" 
-          size="medium" 
-          bind:tap="goBack"
+          size="large"
+          block
+          bind:tap="goToDiagnosis"
+          t-class="empty-btn"
         >去诊断</t-button>
-      </t-empty>
+      </view>
     </view>
 
     <!-- 记录列表 -->

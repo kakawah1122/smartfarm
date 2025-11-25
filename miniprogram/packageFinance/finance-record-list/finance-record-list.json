@@ -2,6 +2,6 @@
   "navigationBarTitleText": "财务记录",
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "finance-record-detail": "/components/finance-record-detail-popup/finance-record-detail-popup"
+    "finance-record-detail": "../components/finance-record-detail-popup/finance-record-detail-popup"
   }
 }

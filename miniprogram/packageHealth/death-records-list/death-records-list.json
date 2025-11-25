@@ -1,8 +1,8 @@
 {
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "death-record-detail": "/components/death-record-detail-popup/death-record-detail-popup",
-    "death-record-virtual-list": "/components/death-record-virtual-list/death-record-virtual-list"
+    "death-record-detail": "../components/death-record-detail-popup/death-record-detail-popup",
+    "death-record-virtual-list": "../components/death-record-virtual-list/death-record-virtual-list"
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true

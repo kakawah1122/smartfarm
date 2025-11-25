@@ -1,7 +1,7 @@
 // miniprogram/packageHealth/medication-records-list/medication-records-list.ts
 import { createPageWithNavbar } from '../../utils/navigation'
-import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
+import { smartCloudCall } from '../../utils/cloud-adapter'
 
 interface MedicationRecord {
   _id: string
@@ -156,25 +156,24 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
     page.setData({ loading: true })
 
     try {
-      const response = await CloudApi.callFunction<{ records: MedicationRecord[] }>(
-        'health-management',
-        {
-          action: 'list_prevention_records',
-          page: 1,
-          pageSize: 100
-        },
-        {
-          loading: true,
-          loadingText: '加载用药记录...',
-          showError: false
-        }
-      )
+      wx.showLoading({
+        title: '加载用药记录...',
+        mask: true
+      })
+      
+      const response = await smartCloudCall('list_prevention_records', {
+        page: 1,
+        pageSize: 100
+      }) as any
+      
+      wx.hideLoading()
 
-      if (!response.success) {
-        throw new Error(response.error || '加载失败')
+      if (!response?.success) {
+        throw new Error(response?.error || '加载失败')
       }
 
-      const preventionRecords = response.data?.records || []
+      // health-prevention云函数返回的是data.list，不是data.records
+      const preventionRecords = response?.data?.list || response?.data?.records || []
       const medicationRecords = preventionRecords.filter(record => record.preventionType === 'medication')
       const enrichedRecords = await enrichRecordsWithBatchNumbers(medicationRecords)
       const { formattedRecords, totalCost } = await buildMedicationRecords(enrichedRecords)
@@ -189,6 +188,7 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
         loading: false
       })
     } catch (error) {
+      wx.hideLoading()
       wx.showToast({
         title: (error as Error).message || '加载失败',
         icon: 'none'
@@ -283,10 +283,13 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
       return
     }
 
-    const response = await CloudApi.callFunction(
-      'health-management',
-      {
-        action: 'update_prevention_effectiveness',
+    wx.showLoading({
+      title: '提交中...',
+      mask: true
+    })
+    
+    try {
+      const response = await smartCloudCall('update_prevention_effectiveness', {
         recordId: selectedRecord._id,
         effectiveness: option.value,
         effectivenessNote: evaluationFormData.note,
@@ -297,23 +300,26 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
           hour: '2-digit',
           minute: '2-digit'
         })
-      },
-      {
-        loading: true,
-        loadingText: '提交中...',
-        showError: false,
-        showSuccess: true,
-        successText: '评估提交成功'
+      }) as any
+      
+      wx.hideLoading()
+      
+      if (!response?.success) {
+        throw new Error(response?.error || '提交失败')
       }
-    )
-
-    if (response.success) {
+      
+      wx.showToast({
+        title: '评估提交成功',
+        icon: 'success'
+      })
+      
       page.closeEvaluationForm()
       page.closeDetailDialog()
       await page.loadMedicationRecords()
-    } else {
+    } catch (error) {
+      wx.hideLoading()
       wx.showToast({
-        title: response.error || '提交失败，请重试',
+        title: (error as Error).message || '提交失败',
         icon: 'none'
       })
     }
@@ -355,7 +361,8 @@ async function buildMedicationRecords(records: MedicationRecord[]): Promise<{
 
   const formattedRecords = await Promise.all(
     records.map(async record => {
-      const costRaw = record.costInfo?.totalCost
+      // 兼容多种数据结构：costInfo.totalCost 或 totalCost
+      const costRaw = record.costInfo?.totalCost || (record as any).totalCost
       const numericCost = typeof costRaw === 'number' ? costRaw : parseFloat(String(costRaw ?? 0)) || 0
       totalCost += numericCost
 

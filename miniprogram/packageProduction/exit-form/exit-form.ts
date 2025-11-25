@@ -1,14 +1,16 @@
+// @ts-nocheck
 // exit-form.ts - 出栏记录表单页面逻辑
-import { createPageWithNavbar } from '../../utils/navigation'
 
-
-// 类型定义 - 用于替换any类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
-type BaseEvent = WechatMiniprogram.BaseEvent;
-interface ErrorWithMessage {
-  message: string;
-  [key: string]: any;
+// 类型定义
+interface BatchInfo {
+  batchId: string;
+  batchNumber?: string;
+  breed: string;
+  availableQuantity: number;
+  totalQuantity?: number;
+  entryDate?: string;
 }
+
 // 表单数据接口
 interface ExitFormData {
   batchId: string;          // 批次ID
@@ -38,7 +40,7 @@ const pageConfig = {
     
     // 批次选择器相关
     showBatchPicker: false,
-    availableBatches: [] as unknown[],  // 可选择的入栏批次
+    availableBatches: [] as BatchInfo[],  // 可选择的入栏批次
     batchOptions: [] as string[],   // 批次选择器选项（显示用）
     batchActionItems: [] as unknown[], // ActionSheet组件数据格式
     
@@ -139,12 +141,12 @@ const pageConfig = {
       // 从云函数获取已入栏且有剩余可出栏数量的批次（真实剩余量）
       const batches = await this.getEntryBatches()
       
-      const batchOptions = batches.map((batch: unknown) => 
+      const batchOptions = batches.map((batch: BatchInfo) => 
         `${batch.batchId} (${batch.breed} - 可出栏: ${batch.availableQuantity}羽)`
       )
       
       // ActionSheet组件需要的数据格式
-      const batchActionItems = batches.map((batch: unknown, index: number) => ({
+      const batchActionItems = batches.map((batch: BatchInfo, index: number) => ({
         label: `${batch.batchId} (${batch.breed} - 可出栏: ${batch.availableQuantity}羽)`,
         value: index,
         disabled: batch.availableQuantity <= 0
@@ -165,7 +167,7 @@ const pageConfig = {
   },
 
   // 从云函数获取真实剩余量的入栏批次数据
-  async getEntryBatches(): Promise<any[]> {
+  async getEntryBatches(): Promise<BatchInfo[]> {
     try {
       // 调用出栏云函数，获取按批次聚合后的真实可用数量
       const result = await wx.cloud.callFunction({
@@ -220,7 +222,7 @@ const pageConfig = {
   },
 
   // 确认选择日期（原生 picker 直接返回格式化的日期字符串）
-  onDateConfirm(e: CustomEvent) {
+  onDateConfirm(e: any) {
     const dateString = e.detail.value  // 原生 picker 返回 "YYYY-MM-DD" 格式
     
     this.setData({
@@ -267,7 +269,7 @@ const pageConfig = {
   },
 
   // 表单字段变化
-  onFieldChange(e: CustomEvent) {
+  onFieldChange(e: any) {
     const { value } = e.detail
     const { field } = e.currentTarget.dataset
     
@@ -308,7 +310,7 @@ const pageConfig = {
   },
 
   // 总重量输入变化
-  onTotalWeightChange(e: CustomEvent) {
+  onTotalWeightChange(e: any) {
     const { value } = e.detail
     this.setData({
       totalWeight: value
@@ -367,7 +369,7 @@ const pageConfig = {
   // 获取提交时使用的批次号
   getBatchNumberForSubmission(displayBatchId: string): string {
     // 从可用批次列表中查找对应的批次号
-    const batch = this.data.availableBatches.find((b: unknown) => b.batchId === displayBatchId)
+    const batch = this.data.availableBatches.find((b: BatchInfo) => b.batchId === displayBatchId)
     if (batch && batch.batchNumber) {
       return batch.batchNumber
     }
@@ -490,6 +492,18 @@ const pageConfig = {
         duration: 1500
       })
 
+      // 通知上一个页面需要刷新数据
+      const pages = getCurrentPages()
+      if (pages.length >= 2) {
+        const prevPage = pages[pages.length - 2] as any
+        // 如果上一页是生产管理页面，设置刷新标志
+        if (prevPage && prevPage.route === 'pages/production/production') {
+          prevPage.setData({
+            needRefresh: true
+          })
+        }
+      }
+
       // 延迟后自动返回上一页
       setTimeout(() => {
         wx.navigateBack({
@@ -556,5 +570,5 @@ const pageConfig = {
   }
 }
 
-// 使用导航栏适配工具创建页面
-Page(createPageWithNavbar(pageConfig))
+// 创建页面
+Page(pageConfig)

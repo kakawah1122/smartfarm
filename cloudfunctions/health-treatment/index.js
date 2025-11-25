@@ -35,12 +35,15 @@ const create_treatment_from_diagnosis = require('./actions/create_treatment_from
 const create_treatment_from_abnormal = require('./actions/create_treatment_from_abnormal').main
 const create_treatment_from_vaccine = require('./actions/create_treatment_from_vaccine').main
 const fix_treatment_records_openid = require('./actions/fix_treatment_records_openid').main
+const get_treatment_statistics = require('./actions/get_treatment_statistics').main
 
 // 导入系统维护功能
 const {
   fixDiagnosisTreatmentStatus,
   fixTreatmentRecordsOpenId,
-  batchFixDataConsistency
+  batchFixDataConsistency,
+  recordTreatmentDeath,
+  listTreatmentRecords
 } = require('./system-maintenance.js')
 
 exports.main = async (event, context) => {
@@ -90,6 +93,12 @@ exports.main = async (event, context) => {
       case 'get_cured_records_list':
         const get_cured_records_list = require('./actions/get_cured_records_list')
         return await get_cured_records_list.main(event, wxContext)
+      case 'get_treatment_statistics':
+        return await get_treatment_statistics(event, wxContext)
+      case 'list_treatment_records':
+        return await listTreatmentRecords(event, wxContext)
+      case 'record_treatment_death':
+        return await recordTreatmentDeath(event, wxContext)
       
       // 系统维护功能
       case 'fix_diagnosis_treatment_status':

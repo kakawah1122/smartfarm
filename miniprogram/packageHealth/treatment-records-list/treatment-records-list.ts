@@ -1,4 +1,14 @@
 // miniprogram/packageHealth/treatment-records-list/treatment-records-list.ts
+import { safeCloudCall } from '../../utils/safe-cloud-call'
+
+/**
+ * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
+ * 自动路由 health-management 到新云函数
+ */
+async function callCloudFunction(config: { name: string; data: Record<string, unknown>; timeout?: number }) {
+  const result = await safeCloudCall(config)
+  return { result }
+}
 
 interface TreatmentRecord {
   _id: string
@@ -70,7 +80,7 @@ interface TreatmentListUpdatedData {
   treatmentId: string
 }
 
-import { markHomepageNeedSync } from '../../utils/global-sync'
+import { markHomepageNeedSync } from '../utils/global-sync'
 
 const initialData: TreatmentsPageData = {
   loading: true,
@@ -119,7 +129,7 @@ const pageConfig: WechatMiniprogram.Page.Options<TreatmentsPageData, TreatmentsP
     page.setData({ loading: true })
 
     try {
-      const result = await wx.cloud.callFunction({
+      const result = await callCloudFunction({
         name: 'health-management',
         data: {
           action: 'get_ongoing_treatments',
@@ -130,7 +140,7 @@ const pageConfig: WechatMiniprogram.Page.Options<TreatmentsPageData, TreatmentsP
       const cloudResult = result.result as TreatmentsResponse | undefined
 
       if (!cloudResult || !cloudResult.success) {
-        throw new Error(cloudResult?.error || result.errMsg || '加载失败')
+        throw new Error(cloudResult?.error || '加载失败')
       }
 
       const treatments = cloudResult.data?.treatments || []

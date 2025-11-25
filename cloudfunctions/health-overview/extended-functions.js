@@ -573,10 +573,11 @@ async function getBatchCompleteData(event, wxContext) {
                 medicationCount: 0
               }
               
-              // 统计疫苗和消毒数据
+              // 统计疫苗、消毒和用药数据
               records.forEach(record => {
-                if (record.preventionType === 'vaccination' && record.vaccineInfo) {
-                  const vaccineName = record.vaccineInfo.vaccineName || '未知疫苗'
+                // 疫苗统计（注意：preventionType是'vaccine'不是'vaccination'）
+                if (record.preventionType === 'vaccine' && record.vaccineInfo) {
+                  const vaccineName = record.vaccineInfo.vaccineName || record.vaccineInfo.name || '未知疫苗'
                   const targetAnimals = record.vaccineInfo.targetAnimals || 0
                   const doseNumber = record.vaccineInfo.doseNumber || 1
                   
@@ -593,9 +594,23 @@ async function getBatchCompleteData(event, wxContext) {
                   preventionStats.medicationCount++
                 }
                 
+                // 累加所有预防记录的成本（包括疫苗、消毒、用药）
                 if (record.costInfo?.totalCost) {
-                  preventionStats.totalCost += parseFloat(record.costInfo.totalCost) || 0
+                  const cost = parseFloat(record.costInfo.totalCost) || 0
+                  preventionStats.totalCost += cost
+                  console.log('[预防成本] 累加:', {
+                    type: record.preventionType,
+                    name: record.medicationInfo?.name || record.vaccineInfo?.name || record.disinfectantInfo?.name,
+                    cost: cost,
+                    totalCost: preventionStats.totalCost
+                  })
                 }
+              })
+              
+              console.log('[预防成本] 最终统计:', {
+                totalRecords: records.length,
+                medicationCount: preventionStats.medicationCount,
+                totalCost: preventionStats.totalCost
               })
               
               result.preventionStats = preventionStats

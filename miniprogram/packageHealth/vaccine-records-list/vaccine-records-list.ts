@@ -47,6 +47,7 @@ interface VaccineRecord {
   formattedTotalCost?: string
   formattedVaccineCost?: string
   formattedLaborCost?: string
+  formattedOtherCost?: string
   // 存栏和防疫用药
   currentStock?: number
   vaccinationRate?: string
@@ -104,17 +105,17 @@ Page({
 
     try {
       const result = await safeCloudCall({
-        name: 'health-management',
+        name: 'health-prevention',
         data: {
           action: 'list_prevention_records',
           preventionType: 'vaccine',
           page: 1,
           pageSize: 100  // 获取更多记录
         }
-      }) as CloudCallResult<{ records: VaccineRecord[] }>
+      }) as CloudCallResult<{ list: VaccineRecord[], total: number }>
 
       if (result && result.success) {
-        const preventionRecords = result.data?.records || []
+        const preventionRecords = result.data?.list || []
         
         // 过滤出疫苗记录
         const vaccineRecords = preventionRecords.filter((record: VaccineRecord) => 
@@ -282,7 +283,8 @@ Page({
             vaccinationRate,
             formattedTotalCost: cost.toFixed(2),
             formattedVaccineCost: (record.costInfo?.vaccineCost || 0).toFixed(2),
-            formattedLaborCost: (record.costInfo?.laborCost || 0).toFixed(2)
+            formattedLaborCost: (record.costInfo?.laborCost || 0).toFixed(2),
+            formattedOtherCost: (record.costInfo?.otherCost || 0).toFixed(2)
           }
         }))
         
@@ -469,7 +471,7 @@ Page({
 
       // 调用云函数创建治疗记录
       const result = await safeCloudCall({
-        name: 'health-management',
+        name: 'health-treatment',
         data: {
           action: 'create_treatment_from_vaccine',
           vaccineRecordId: vaccineRecord._id,
@@ -530,7 +532,7 @@ Page({
 
       // 调用云函数创建死亡记录
       const result = await safeCloudCall({
-        name: 'health-management',
+        name: 'health-death',
         data: {
           action: 'create_death_from_vaccine',
           vaccineRecordId: vaccineRecord._id,

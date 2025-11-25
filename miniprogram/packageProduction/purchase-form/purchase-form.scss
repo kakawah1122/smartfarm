@@ -301,3 +301,25 @@
 }
 
 /* 注意：小程序通常不需要响应式设计，已移除@media查询 */
+
+/* 表单操作按钮样式 - 深蓝渐变背景 */
+.form-actions {
+  padding: 32rpx 24rpx;
+  gap: 24rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 使用t-class自定义样式 */
+.custom-form-button {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4rpx 12rpx rgba(30, 64, 175, 0.3) !important;
+  border: none !important;
+}
+
+.custom-form-button:active {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+  box-shadow: 0 2rpx 8rpx rgba(30, 64, 175, 0.4) !important;
+}

@@ -1017,6 +1017,7 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       case 'ai_diagnosis':
+      case 'create_ai_diagnosis':  // 向后兼容
         return await performAIDiagnosis(event, openid)
       case 'get_diagnosis_history':
         return await getDiagnosisHistory(event, openid)

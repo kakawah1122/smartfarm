@@ -164,7 +164,7 @@
     </view>
     
     <!-- 内容区域 -->
-    <scroll-view class="popup-content" scroll-y>
+    <scroll-view class="popup-content" scroll-y enhanced show-scrollbar="{{false}}">
       <!-- 基本信息 -->
       <view class="detail-section">
         <view class="section-title">基本信息</view>
@@ -231,6 +231,10 @@
             <text class="cost-label">人工费用</text>
             <text class="cost-value">¥{{selectedRecord.formattedLaborCost}}</text>
           </view>
+          <view class="cost-item" wx:if="{{selectedRecord.formattedOtherCost !== '0.00'}}">
+            <text class="cost-label">其他费用</text>
+            <text class="cost-value">¥{{selectedRecord.formattedOtherCost}}</text>
+          </view>
         </view>
       </view>
 
@@ -260,6 +264,7 @@
       <!-- 疫苗追踪 -->
       <view class="detail-section">
         <view class="section-title">疫苗追踪</view>
+        <view class="tracking-hint">接种后如出现异常反应或死亡，可在此记录追踪</view>
         <view class="tracking-actions">
           <view class="tracking-button tracking-button-warning" bind:tap="onTrackAbnormal">
             <text class="button-text">异常用药</text>

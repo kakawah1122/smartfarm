@@ -1,20 +1,21 @@
 /**
- * health-management 云函数（极简版）
- * 所有功能已迁移到新架构
- * 此文件仅提供迁移提示
+ * health-management 云函数【已废弃】
  * 
- * 迁移完成情况：
- * ✅ 健康记录 (8个) → health-records
- * ✅ 治疗管理 (21个) → health-treatment  
- * ✅ 死亡记录 (12个) → health-death
- * ✅ 异常诊断 (8个) → health-abnormal
- * ✅ 预防管理 (10个) → health-prevention
- * ✅ 健康概览 (10个) → health-overview
- * ✅ AI诊断历史 → ai-diagnosis
- * ✅ 批次提示数据 → health-overview
- * ✅ 系统维护功能 → health-treatment
+ * ⚠️ 此云函数已废弃，所有功能已迁移到模块化云函数
+ * ⚠️ 前端已使用 smartCloudCall 直接调用新云函数
+ * ⚠️ 此文件仅为兼容性保留，不再维护
  * 
- * 总计：72/72 功能迁移完成 (100%)
+ * 已迁移的模块：
+ * - health-records: 健康记录管理
+ * - health-treatment: 治疗管理
+ * - health-death: 死亡记录管理
+ * - health-abnormal: 异常诊断管理
+ * - health-prevention: 预防保健管理
+ * - health-overview: 健康概览
+ * - health-cost: 成本计算
+ * - ai-diagnosis: AI诊断
+ * 
+ * 迁移日期：2024-11-24
  */
 
 const cloud = require('wx-server-sdk')
@@ -56,6 +57,8 @@ const MIGRATION_MAP = {
   'create_treatment_from_abnormal': 'health-treatment',
   'create_treatment_from_vaccine': 'health-treatment',
   'get_cured_records_list': 'health-treatment',
+  'get_treatment_statistics': 'health-treatment',
+  'record_treatment_death': 'health-treatment',
   'fix_diagnosis_treatment_status': 'health-treatment',
   'fix_treatment_records_openid': 'health-treatment',
   'batch_fix_data_consistency': 'health-treatment',
@@ -73,6 +76,8 @@ const MIGRATION_MAP = {
   'create_death_from_vaccine': 'health-death',
   'get_death_records_list': 'health-death',
   'fix_batch_death_count': 'health-death',
+  'recalculate_death_cost': 'health-death',
+  'recalculate_all_death_costs': 'health-death',
   
   // 异常诊断模块
   'create_abnormal_record': 'health-abnormal',
@@ -112,54 +117,50 @@ const MIGRATION_MAP = {
   'getHealthStatisticsOptimized': 'health-overview',
   'get_batch_complete_data': 'health-overview',
   'get_batch_prompt_data': 'health-overview',
+  'calculate_batch_cost': 'health-overview',
+  'calculateBatchCost': 'health-overview',
+  
+  // 成本计算模块
+  'calculate_cost_stats': 'health-cost',
+  'get_batch_cost_analysis': 'health-cost',
+  'get_prevention_cost': 'health-cost',
   
   // AI诊断模块
-  'get_diagnosis_history': 'ai-diagnosis'
+  'get_diagnosis_history': 'ai-diagnosis',
+  'create_ai_diagnosis': 'ai-diagnosis'
 }
 
-// 云函数主入口
+// 云函数主入口 - 自动转发到新的模块化云函数
 exports.main = async (event, context) => {
   const { action } = event
-  
-  console.log('[health-management] 收到请求:', action)
-  console.log('[health-management] ⚠️ 此云函数已废弃，所有功能已迁移到新架构')
-  
-  // 查找迁移目标
   const targetFunction = MIGRATION_MAP[action]
   
-  if (targetFunction) {
-    console.log(`[health-management] 功能 '${action}' 已迁移到 '${targetFunction}'`)
+  if (!targetFunction) {
+    console.error(`[health-management] 未找到 action "${action}" 的路由映射`)
     return {
       success: false,
-      error: `功能已迁移`,
-      message: `该功能已迁移到 ${targetFunction} 云函数，请更新您的调用代码`,
-      redirect: targetFunction,
-      action: action,
-      migration: {
-        from: 'health-management',
-        to: targetFunction,
-        action: action,
-        deprecated: true
-      }
+      error: `未知的操作类型: ${action}`,
+      message: '请检查 action 参数是否正确'
     }
   }
   
-  // 未知的 action
-  return {
-    success: false,
-    error: '功能不存在',
-    message: `未知的 action: ${action}，此云函数已废弃`,
-    deprecated: true,
-    migrationComplete: true,
-    totalMigrated: 72,
-    newArchitecture: {
-      'health-records': '健康记录管理',
-      'health-treatment': '治疗管理 + 系统维护',
-      'health-death': '死亡记录管理',
-      'health-abnormal': '异常诊断管理',
-      'health-prevention': '预防保健管理',
-      'health-overview': '健康概览 + 批次数据',
-      'ai-diagnosis': 'AI诊断功能'
+  // 自动转发到新云函数
+  console.log(`[health-management] 转发请求: ${action} → ${targetFunction}`)
+  
+  try {
+    const result = await cloud.callFunction({
+      name: targetFunction,
+      data: event  // 直接传递完整的 event（包含 action）
+    })
+    
+    // 返回新云函数的结果
+    return result.result
+  } catch (error) {
+    console.error(`[health-management] 转发失败:`, error)
+    return {
+      success: false,
+      error: error.message || '云函数调用失败',
+      message: `转发到 ${targetFunction} 失败`
     }
   }
 }

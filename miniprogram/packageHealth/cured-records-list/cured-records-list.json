@@ -2,6 +2,6 @@
   "navigationStyle": "custom",
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "cured-record-detail": "/components/cured-record-detail-popup/cured-record-detail-popup"
+    "cured-record-detail": "../components/cured-record-detail-popup/cured-record-detail-popup"
   }
 }

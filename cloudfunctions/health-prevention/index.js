@@ -161,7 +161,8 @@ async function getPreventionDashboard(event, wxContext) {
     const [
       totalCount,
       vaccineCount,
-      disinfectionCount
+      disinfectionCount,
+      allRecords
     ] = await Promise.all([
       // 总预防次数
       db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
@@ -182,8 +183,32 @@ async function getPreventionDashboard(event, wxContext) {
           ...conditions,
           preventionType: 'disinfection'
         })
-        .count()
+        .count(),
+      
+      // 获取所有记录用于计算成本
+      db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+        .where(conditions)
+        .field({
+          costInfo: true,
+          preventionType: true
+        })
+        .get()
     ])
+    
+    // 计算总预防成本
+    let preventionCost = 0
+    if (allRecords.data && allRecords.data.length > 0) {
+      allRecords.data.forEach(record => {
+        if (record.costInfo && record.costInfo.totalCost) {
+          preventionCost += parseFloat(record.costInfo.totalCost) || 0
+        }
+      })
+    }
+    
+    console.log('[预防看板] 成本统计:', {
+      totalRecords: allRecords.data?.length || 0,
+      preventionCost
+    })
     
     return {
       success: true,
@@ -191,6 +216,7 @@ async function getPreventionDashboard(event, wxContext) {
         totalCount: totalCount.total,
         vaccineCount: vaccineCount.total,
         disinfectionCount: disinfectionCount.total,
+        preventionCost: preventionCost,  // 添加预防成本
         lastUpdateTime: new Date().toISOString()
       }
     }

@@ -3,7 +3,7 @@
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
-import { VirtualRenderHelper, throttle } from '../../utils/virtual-render-helper'
+import { VirtualRenderHelper, throttle } from '../utils/virtual-render-helper'
 
 interface AllFinanceRecordsResponse {
   records: unknown[]

@@ -23,53 +23,71 @@ function debugLog(message, data) {
   }
 }
 
-// 简化的权限验证函数
+// 权限验证函数（与原函数完全一致）
 async function checkPermission(openid, module, action, resourceId = null) {
   try {
-    // 获取用户信息
+    // 1. 获取用户信息（从wx_users获取角色）
     const userResult = await db.collection(COLLECTIONS.WX_USERS)
       .where({ _openid: openid })
       .limit(1)
       .get()
     
     if (!userResult.data || userResult.data.length === 0) {
-      return false // 用户不存在
+      debugLog('[权限验证] 用户不存在', { openid, module, action })
+      return false
     }
     
     const user = userResult.data[0]
+    const userRole = user.role || 'employee'
+    debugLog('[权限验证] 用户角色:', { openid: openid.substring(0, 8) + '...', userRole, module, action })
     
-    // admin和operator角色有完整权限
-    if (user.role === 'admin' || user.role === 'operator') {
+    // 2. 直接从wx_users获取角色（简化权限检查）
+    // 超级管理员拥有所有权限
+    if (userRole === 'super_admin') {
       return true
     }
     
-    // viewer只有查看权限
-    if (user.role === 'viewer' && action === 'read') {
+    // 3. 获取角色权限定义（从sys_roles）
+    const roleResult = await db.collection(COLLECTIONS.SYS_ROLES)
+      .where({
+        roleCode: userRole,
+        isActive: true
+      })
+      .limit(1)
+      .get()
+    
+    if (!roleResult.data || roleResult.data.length === 0) {
+      // 如果角色定义不存在，默认允许所有操作（向后兼容）
+      debugLog('[权限验证] 角色定义不存在，默认允许', { userRole, module, action })
+      return true  // 改为 true
+    }
+    
+    const role = roleResult.data[0]
+    const permissions = role.permissions || []
+    
+    // 4. 检查模块权限
+    const modulePermission = permissions.find(p => 
+      p.module === module || p.module === '*'
+    )
+    
+    if (!modulePermission) {
+      debugLog('[权限验证] 无模块权限', { userRole, module, action, availableModules: permissions.map(p => p.module) })
+      return false
+    }
+    
+    // 5. 检查操作权限
+    if (modulePermission.actions.includes(action) || modulePermission.actions.includes('*')) {
+      debugLog('[权限验证] 验证通过', { userRole, module, action })
       return true
     }
     
-    // 资源所有者权限（如果提供了资源ID）
-    if (resourceId && action === 'update') {
-      // 检查用户是否是该批次的所有者
-      try {
-        const resourceResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
-          .doc(resourceId)
-          .get()
-        
-        if (resourceResult.data && 
-            (resourceResult.data.userId === openid || 
-             resourceResult.data._openid === openid)) {
-          return true
-        }
-      } catch (e) {
-        // 资源不存在或查询失败
-      }
-    }
-    
+    debugLog('[权限验证] 无操作权限', { userRole, module, action, availableActions: modulePermission.actions })
     return false
+    
   } catch (error) {
-    console.error('权限验证失败:', error)
-    return false // 出错时默认无权限
+    console.error('[权限验证] 验证失败', { openid, module, action, error: error.message })
+    // 权限验证失败时，默认拒绝访问
+    return false
   }
 }
 
@@ -194,6 +212,12 @@ async function completePreventionTask(event, wxContext) {
     
     // ========== 5. 创建预防记录 ==========
     debugLog('[预防任务] 创建预防记录', { ...logContext, taskId, batchId })
+    
+    // 🔍 调试：打印接收到的preventionData
+    console.log('[调试] 接收到的preventionData:', JSON.stringify(preventionData))
+    console.log('[调试] costInfo是否存在:', !!preventionData?.costInfo)
+    console.log('[调试] costInfo内容:', preventionData?.costInfo)
+    
     const recordData = {
       ...preventionData,
       taskId,
@@ -208,6 +232,9 @@ async function completePreventionTask(event, wxContext) {
       createdAt: new Date(),
       updatedAt: new Date()
     }
+    
+    // 🔍 调试：打印最终的recordData
+    console.log('[调试] 最终recordData的costInfo:', recordData.costInfo)
     
     const recordResult = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
       .add({

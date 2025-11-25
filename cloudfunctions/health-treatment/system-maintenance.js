@@ -11,7 +11,7 @@ cloud.init({
 
 const db = cloud.database()
 const _ = db.command
-const { COLLECTIONS } = require('./shared-config/collections.js')
+const { COLLECTIONS } = require('./collections.js')
 
 /**
  * 权限验证函数
@@ -264,8 +264,67 @@ async function batchFixDataConsistency(event, openid) {
   }
 }
 
+/**
+ * 记录治疗中的死亡
+ * TODO: 从health-management迁移完整逻辑
+ */
+async function recordTreatmentDeath(event, wxContext) {
+  console.log('[recordTreatmentDeath] 功能待迁移')
+  return {
+    success: false,
+    error: '该功能正在迁移中，请暂时使用health-management云函数'
+  }
+}
+
+/**
+ * 列出治疗记录
+ * TODO: 从health-management迁移完整逻辑
+ */
+async function listTreatmentRecords(event, wxContext) {
+  const { batchId, status, page = 1, pageSize = 20 } = event
+  
+  try {
+    const query = {}
+    if (batchId && batchId !== 'all') {
+      query.batchId = batchId
+    }
+    if (status) {
+      query.status = status
+    }
+    
+    const countResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where(query)
+      .count()
+    
+    const result = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+      .where(query)
+      .orderBy('createTime', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .get()
+    
+    return {
+      success: true,
+      data: {
+        list: result.data,
+        total: countResult.total,
+        page,
+        pageSize
+      }
+    }
+  } catch (error) {
+    console.error('[listTreatmentRecords] 查询失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
 module.exports = {
   fixDiagnosisTreatmentStatus,
   fixTreatmentRecordsOpenId,
-  batchFixDataConsistency
+  batchFixDataConsistency,
+  recordTreatmentDeath,
+  listTreatmentRecords
 }

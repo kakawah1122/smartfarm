@@ -1,8 +1,19 @@
 // death-record.ts - 死亡记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
-import { markHomepageNeedSync } from '../../utils/global-sync'
+import { markHomepageNeedSync } from '../utils/global-sync'
 import { logger } from '../../utils/logger'
+import { safeCloudCall } from '../../utils/safe-cloud-call'
 
+import { smartCloudCall } from '../../utils/cloud-adapter'
+
+/**
+ * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
+ * 自动路由 health-management 到新云函数
+ */
+async function callCloudFunction(config: { name: string; data: any; timeout?: number }) {
+  const result = await safeCloudCall(config)
+  return { result }
+}
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 表单数据
@@ -128,13 +139,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     try {
       wx.showLoading({ title: '加载诊断信息...' })
       
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'get_ai_diagnosis',
-          diagnosisId: diagnosisId
-        }
-      })
+      const result = await smartCloudCall('get_ai_diagnosis', { diagnosisId: diagnosisId })
       
       wx.hideLoading()
       
@@ -156,13 +161,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     try {
       wx.showLoading({ title: '加载治疗信息...' })
       
-      const result = await wx.cloud.callFunction({
-        name: 'health-management',
-        data: {
-          action: 'get_treatment_record',
-          treatmentId: treatmentId
-        }
-      })
+      const result = await smartCloudCall('get_treatment_record', { treatmentId: treatmentId })
       
       wx.hideLoading()
       
@@ -393,7 +392,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       // 如果是从治疗失败创建，调用completeTreatmentAsDied
       if (treatmentId) {
-        const result = await wx.cloud.callFunction({
+        const result = await callCloudFunction({
           name: 'health-management',
           data: {
             action: 'complete_treatment_as_died',
@@ -428,15 +427,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
       } else {
         // 直接创建死亡记录
-        const result = await wx.cloud.callFunction({
-          name: 'health-management',
-          data: {
-            action: 'createDeathRecord',
-            ...formData,
+        const result = await smartCloudCall('createDeathRecord', { ...formData,
             diagnosisId: diagnosisId || null,
-            financialLoss: financialLoss
-          }
-        })
+            financialLoss: financialLoss })
         
         wx.hideLoading()
         
