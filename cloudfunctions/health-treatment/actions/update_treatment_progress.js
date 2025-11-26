@@ -65,31 +65,34 @@ exports.main = async (event, wxContext) => {
       throw new Error(`数量超出范围，当前剩余治疗数：${remainingCount}`)
     }
     
+    // 计算新的数量
+    const newCuredCount = progressType === 'cured' ? curedCount + count : curedCount
+    const newDeathCount = progressType === 'died' ? deathCount + count : deathCount
+    const newRemainingCount = totalTreated - newCuredCount - newDeathCount
+    
     // 更新数据
     const updateData = {
       updatedAt: new Date()
     }
     
     if (progressType === 'cured') {
-      updateData['outcome.curedCount'] = curedCount + count
+      updateData['outcome.curedCount'] = newCuredCount
+      updateData.curedCount = newCuredCount  // ✅ 根级别字段（用于聚合统计）
     } else if (progressType === 'died') {
-      updateData['outcome.deathCount'] = deathCount + count
+      updateData['outcome.deathCount'] = newDeathCount
+      updateData.diedCount = newDeathCount  // ✅ 根级别字段（用于聚合统计）
     }
-    
-    // 计算新的剩余数量和状态
-    const newCuredCount = progressType === 'cured' ? curedCount + count : curedCount
-    const newDeathCount = progressType === 'died' ? deathCount + count : deathCount
-    const newRemainingCount = totalTreated - newCuredCount - newDeathCount
     
     // 自动判断治疗状态
     if (newRemainingCount === 0) {
+      let newStatus = 'completed'
       if (newDeathCount === 0) {
-        updateData['outcome.status'] = 'cured'  // 全部治愈
+        newStatus = 'cured'  // 全部治愈
       } else if (newCuredCount === 0) {
-        updateData['outcome.status'] = 'died'  // 全部死亡
-      } else {
-        updateData['outcome.status'] = 'completed'  // 部分治愈+部分死亡
+        newStatus = 'died'  // 全部死亡
       }
+      updateData['outcome.status'] = newStatus
+      updateData.status = newStatus  // ✅ 根级别字段（用于聚合统计）
     }
     
     // 更新治疗记录

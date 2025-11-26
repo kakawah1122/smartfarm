@@ -95,9 +95,14 @@ function cleanDiseaseNames(diagnosisResult) {
 exports.main = async (event, context) => {
   const { diagnosisId } = event || {}
   
+  console.log('====== process-ai-diagnosis 被调用 ======')
+  console.log('事件参数:', JSON.stringify(event))
+  console.log('诊断ID:', diagnosisId)
+  
   try {
     // ✨ 模式1：处理指定任务
     if (diagnosisId) {
+      console.log('开始处理指定任务:', diagnosisId)
       return await processTask(diagnosisId)
     }
     
@@ -235,21 +240,30 @@ function selectOptimalTaskType(task) {
  * 处理单个诊断任务
  */
 async function processTask(diagnosisId) {
+  console.log('====== processTask 开始 ======')
+  console.log('诊断ID:', diagnosisId)
+  
   try {
-    
     // 1. 从数据库获取任务
+    console.log('步骤1: 从数据库获取任务...')
     const taskResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({ _id: diagnosisId })
       .get()
+    
+    console.log('数据库查询结果:', JSON.stringify(taskResult.data?.length || 0), '条记录')
     
     if (!taskResult.data || taskResult.data.length === 0) {
       throw new Error(`诊断任务不存在: ${diagnosisId}`)
     }
     
     const task = taskResult.data[0]
+    console.log('任务状态:', task.status)
+    console.log('任务类型:', task.diagnosisType)
+    console.log('是否有图片:', task.images?.length || 0)
     
     // 2. 检查状态
     if (task.status !== 'processing') {
+      console.log('任务状态不是processing，跳过')
       return {
         success: false,
         error: `任务状态不正确: ${task.status}`
@@ -258,8 +272,10 @@ async function processTask(diagnosisId) {
     
     // 3. ✨ 智能选择任务类型（基于复杂度、图片、紧急度）
     const optimalTaskType = selectOptimalTaskType(task)
+    console.log('步骤3: 选择的任务类型:', optimalTaskType)
 
     // 调用AI多模型服务进行诊断
+    console.log('步骤4: 调用ai-multi-model云函数...')
     const aiResult = await cloud.callFunction({
       name: 'ai-multi-model',
       data: {
@@ -272,8 +288,12 @@ async function processTask(diagnosisId) {
       timeout: 60000  // ✅ 设置60秒超时（ai-multi-model需要调用通义千问API，15-25秒）
     })
 
+    console.log('ai-multi-model调用完成')
+    console.log('aiResult.result:', JSON.stringify(aiResult.result).substring(0, 500))
+
     if (!aiResult.result || !aiResult.result.success) {
       const errorMsg = aiResult.result?.error || aiResult.result?.fallback || 'AI诊断调用失败'
+      console.error('AI调用失败:', errorMsg)
       // ✅ 检查是否是图片相关错误
       if (errorMsg.includes('图片') || errorMsg.includes('过大') || errorMsg.includes('image')) {
         throw new Error(`图片诊断失败：${errorMsg}\n\n建议：\n1. 删除图片仅使用文字描述\n2. 或使用更小的图片（压缩后<1MB）`)
@@ -281,6 +301,7 @@ async function processTask(diagnosisId) {
       throw new Error(errorMsg)
     }
     
+    console.log('步骤5: 解析AI返回结果...')
     // 4. 解析AI返回的诊断结果
     const diagnosisContent = aiResult.result.data.content
     let diagnosisData = {}
@@ -316,6 +337,7 @@ async function processTask(diagnosisId) {
     }
     
     // 5. 更新数据库中的诊断任务为completed状态
+    console.log('步骤6: 更新数据库状态为completed...')
     const updateResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
       .where({ _id: diagnosisId })
       .update({
@@ -331,6 +353,9 @@ async function processTask(diagnosisId) {
           completedAt: new Date()
         }
       })
+
+    console.log('数据库更新结果:', JSON.stringify(updateResult))
+    console.log('====== processTask 完成 ======')
 
     return {
       success: true,

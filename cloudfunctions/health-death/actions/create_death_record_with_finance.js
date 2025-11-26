@@ -82,18 +82,119 @@ exports.main = async (event, wxContext) => {
       throw new Error(`批次不存在: ${batchId}`)
     }
     
-    // 计算死亡损失 = 入栏单价 × 死亡数量（不分摊饲养成本）
-    const unitCost = parseFloat(batch.unitPrice) || 0
+    // ========== 内联成本计算（避免嵌套云函数调用导致超时）==========
+    const entryQuantity = batch.quantity || 0
+    const currentQuantity = batch.currentQuantity || batch.currentCount || entryQuantity
+    const entryUnitCost = parseFloat(batch.unitPrice) || 0
     
-    if (unitCost === 0) {
+    if (entryUnitCost === 0) {
       throw new Error(`批次 ${batch.batchNumber} 缺少入栏单价，请先在入栏记录中补充单价`)
     }
     
-    const financeLoss = unitCost * deathCount
+    // 1. 饲养成本（饲料 + 物料）
+    let breedingCostTotal = 0
+    let totalFeedCount = 0
+    
+    try {
+      const feedResult = await db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
+        .where({
+          batchNumber: batch.batchNumber,
+          isDeleted: _.neq(true)
+        })
+        .limit(100)
+        .get()
+      
+      feedResult.data.forEach(record => {
+        breedingCostTotal += (Number(record.totalCost) || 0)
+        totalFeedCount += (Number(record.feedCount) || Number(record.quantity) || currentQuantity)
+      })
+    } catch (e) {
+      debugLog('[AI死因剖析] 获取饲养记录失败:', e.message)
+    }
+    
+    if (totalFeedCount === 0) totalFeedCount = currentQuantity || 1
+    const avgBreedingCost = breedingCostTotal / totalFeedCount
+    
+    // 2. 预防成本
+    let preventionCostTotal = 0
+    let totalPreventionCount = 0
+    
+    try {
+      const preventionResult = await db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
+        .where({
+          batchId: batchDocId,
+          isDeleted: false
+        })
+        .limit(100)
+        .get()
+      
+      preventionResult.data.forEach(record => {
+        if (record.costInfo) {
+          preventionCostTotal += (Number(record.costInfo.totalCost) || 0)
+          totalPreventionCount += (Number(record.targetCount) || Number(record.animalCount) || currentQuantity)
+        }
+      })
+    } catch (e) {
+      debugLog('[AI死因剖析] 获取预防记录失败:', e.message)
+    }
+    
+    if (totalPreventionCount === 0) totalPreventionCount = currentQuantity || 1
+    const avgPreventionCost = preventionCostTotal / totalPreventionCount
+    
+    // 3. 治疗成本
+    let treatmentCostTotal = 0
+    let totalAffectedCount = 0
+    
+    try {
+      const treatmentResult = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
+        .where({
+          batchId: batchDocId
+        })
+        .limit(100)
+        .get()
+      
+      treatmentResult.data.forEach(record => {
+        let cost = 0
+        if (record.costInfo && record.costInfo.totalCost) {
+          cost = Number(record.costInfo.totalCost) || 0
+        } else if (record.totalCost !== undefined) {
+          cost = Number(record.totalCost) || 0
+        } else if (record.amount) {
+          cost = Number(record.amount) || 0
+        }
+        
+        if (cost > 0) {
+          treatmentCostTotal += cost
+          totalAffectedCount += Number(record.affectedCount) || 0
+        }
+      })
+    } catch (e) {
+      debugLog('[AI死因剖析] 获取治疗记录失败:', e.message)
+    }
+    
+    if (totalAffectedCount === 0) totalAffectedCount = currentQuantity || 1
+    const avgTreatmentCost = treatmentCostTotal / totalAffectedCount
+    
+    // 计算单只综合成本
+    const totalUnitCost = entryUnitCost + avgBreedingCost + avgPreventionCost + avgTreatmentCost
+    const financeLoss = totalUnitCost * deathCount
+    
+    // 构建成本分解
+    const costBreakdown = {
+      entryUnitCost: entryUnitCost.toFixed(2),
+      breedingCost: avgBreedingCost.toFixed(2),
+      preventionCost: avgPreventionCost.toFixed(2),
+      treatmentCost: avgTreatmentCost.toFixed(2),
+      totalCost: totalUnitCost.toFixed(2)
+    }
     
     debugLog('[AI死因剖析] 成本计算:', {
       deathCount,
-      unitCost: unitCost.toFixed(2),
+      entryUnitCost: entryUnitCost.toFixed(2),
+      breedingCost: avgBreedingCost.toFixed(2),
+      preventionCost: avgPreventionCost.toFixed(2),
+      treatmentCost: avgTreatmentCost.toFixed(2),
+      totalUnitCost: totalUnitCost.toFixed(2),
       totalLoss: financeLoss.toFixed(2)
     })
     
@@ -166,13 +267,16 @@ exports.main = async (event, wxContext) => {
       photos: images || [],
       aiDiagnosisId: diagnosisId || null,
       diagnosisResult: diagnosisResult || null,
-      // ✅ 修正：使用标准的financialLoss结构（对象格式）
+      // ✅ 修正：使用标准的financialLoss结构，包含完整成本分解
       financialLoss: {
-        unitCost: parseFloat(unitCost.toFixed(2)),
-        totalLoss: parseFloat(financeLoss.toFixed(2)),
-        calculationMethod: 'entry_unit_price',
-        treatmentCost: 0
+        unitCost: parseFloat(totalUnitCost.toFixed(2)),  // 单只综合成本
+        totalLoss: parseFloat(financeLoss.toFixed(2)),  // 总损失 = 单只综合成本 × 死亡数
+        calculationMethod: 'comprehensive_cost',
+        // ✅ 完整成本分解
+        costBreakdown: costBreakdown
       },
+      // ✅ 同时在根级别存储 costBreakdown（兼容前端读取）
+      costBreakdown: costBreakdown,
       // ✅ 同步AI诊断的修正状态到死亡记录
       ...(aiDiagnosisCorrection ? {
         isCorrected: aiDiagnosisCorrection.isCorrected,

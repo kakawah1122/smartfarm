@@ -60,15 +60,17 @@ const abnormalRecordsPageConfig: WechatMiniprogram.Page.Options<
     page.setData({ loading: true })
 
     try {
-      wx.showLoading({ title: '加载异常记录...' })
-      
       const response = await HealthCloud.abnormal.list({ batchId: null })
       
-      wx.hideLoading()
+      console.log('异常记录列表响应:', response)
 
       if (response.success) {
+        // ✅ 修复：正确获取记录列表，兼容两种数据结构
+        const records = response.data?.list || response.data || []
+        console.log('记录数量:', records.length)
+        
         page.setData({
-          records: response.data || [],
+          records: records,
           loading: false
         })
       } else {
@@ -130,5 +132,5 @@ const abnormalRecordsPageConfig: WechatMiniprogram.Page.Options<
   }
 }
 
-Page(createPageWithNavbar(abnormalRecordsPageConfig))
+Page(createPageWithNavbar(abnormalRecordsPageConfig as any))
 

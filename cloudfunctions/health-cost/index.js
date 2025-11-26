@@ -500,21 +500,44 @@ async function recalculateAllDeathCosts(event, wxContext) {
       
       if (costResult.success) {
         // 批量更新该批次的所有死亡记录
+        const breakdown = costResult.data.breakdown
+        const totalUnitCost = parseFloat(breakdown.totalCost) || 0
+        
         for (const recordId of recordIds) {
           try {
-            await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+            // 获取当前记录
+            const currentRecord = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
               .doc(recordId)
+              .get()
+            
+            const recordData = currentRecord.data
+            const deathCount = recordData.deathCount || recordData.totalDeathCount || 1
+            const totalLoss = totalUnitCost * deathCount
+            
+            // ✅ 修复：使用 _ 命令进行字段级更新，避免覆盖整个对象
+            await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
+              .where({ _id: recordId })
               .update({
                 data: {
-                  costBreakdown: costResult.data.breakdown,
-                  totalCost: costResult.data.costs.total.unitCost,
-                  updateTime: db.serverDate()
+                  financialLoss: {
+                    unitCost: totalUnitCost,
+                    totalLoss: totalLoss,
+                    calculationMethod: 'comprehensive_cost',
+                    costBreakdown: {
+                      entryUnitCost: breakdown.entryUnitCost,
+                      breedingCost: breakdown.breedingCost,
+                      preventionCost: breakdown.preventionCost,
+                      treatmentCost: breakdown.treatmentCost
+                    }
+                  },
+                  updatedAt: db.serverDate()
                 }
               })
             successCount++
           } catch (err) {
+            console.error(`[recalculateAllDeathCosts] 更新记录 ${recordId} 失败:`, err)
             failCount++
-            errors.push(`记录${recordId}: ${err.message}`)
+            errors.push(`记录${recordId}: ${err.errCode || err.message}`)
           }
         }
       } else {

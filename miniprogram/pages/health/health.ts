@@ -1080,12 +1080,15 @@ Page<PageData, any>({
       // 使用数据更新器简化setData调用
       const updater = createDataUpdater()
       
+      // ✅ 使用 totalDiedAnimals（来自死亡记录表）作为死亡数，更准确
+      const actualDeadCount = healthData.totalDiedAnimals || healthData.deadCount || 0
+      
       updater
         .setHealthStats({
           totalChecks: healthData.totalAnimals,
           healthyCount: healthData.actualHealthyCount,
           sickCount: healthData.sickCount,
-          deadCount: healthData.deadCount,
+          deadCount: actualDeadCount,
           healthyRate: originalQuantity > 0 ? formatPercentage(healthData.healthyRate) : '-',
           mortalityRate: originalQuantity > 0 ? formatPercentage(healthData.mortalityRate) : '-',
           originalQuantity: originalQuantity
@@ -1111,7 +1114,7 @@ Page<PageData, any>({
           cureRate: parseFloat(healthData.cureRate),
           ongoingAnimalsCount: healthData.totalOngoing,
           recoveredCount: healthData.totalCured,
-          deadCount: healthData.deadCount || healthData.totalDied || 0
+          deadCount: healthData.totalDiedAnimals || 0  // ✅ 使用治疗记录中的死亡数
         })
         .set('treatmentStats.totalTreatments', healthData.totalTreated)
         .set('treatmentStats.totalCost', healthData.totalTreatmentCost)
@@ -1205,41 +1208,38 @@ Page<PageData, any>({
         batchId: this.data.currentBatchId || 'all'  // 使用当前批次ID
       })
       
-      // 差异对比：只在数据有显著变化时更新（避免不必要的重绘）
-      const currentHealthyRateStr = this.data.healthStats.healthyRate
-      const currentHealthyRate = currentHealthyRateStr === '-' ? 0 : parseFloat(currentHealthyRateStr)
-      const newHealthyRate = parseFloat(healthData.healthyRate)
-      
-      if (Math.abs(currentHealthyRate - newHealthyRate) < 0.01) {
-        // 健康率变化小于0.01%，跳过更新
-        return
-      }
-      
       // 获取原始入栏数（全部批次模式）
+      // ✅ 移除差异对比逻辑，确保治疗数据变化时也能更新卡片
       const originalQuantity = healthData.originalTotalQuantity || 0
       
+      // ✅ 使用 totalDiedAnimals（来自死亡记录表）作为死亡数
+      const actualDeadCount = healthData.totalDiedAnimals || healthData.deadCount || 0
+      
       // ✅ 性能优化：使用批量更新器合并多个setData
+      const updateData = {
+        // 健康统计
+        'healthStats.totalChecks': healthData.totalAnimals,
+        'healthStats.healthyCount': healthData.actualHealthyCount,
+        'healthStats.sickCount': healthData.sickCount,
+        'healthStats.deadCount': actualDeadCount,
+        'healthStats.originalQuantity': originalQuantity,
+        'healthStats.healthyRate': originalQuantity > 0 ? formatPercentage(healthData.healthyRate) : '-',
+        'healthStats.mortalityRate': originalQuantity > 0 ? formatPercentage(healthData.mortalityRate) : '-',
+        // ✅ 修复：同时更新诊疗管理卡片数据
+        'treatmentData.stats.pendingDiagnosis': healthData.pendingDiagnosis || 0,
+        'treatmentData.stats.ongoingTreatment': healthData.totalOngoing || 0,
+        'treatmentData.stats.recoveredCount': healthData.totalCured || 0,
+        'treatmentData.stats.deadCount': actualDeadCount,
+        'treatmentData.stats.totalTreatmentCost': healthData.totalTreatmentCost || 0,
+        'treatmentData.stats.cureRate': parseFloat((healthData.cureRate || '0').toString()),
+        'treatmentData.stats.ongoingAnimalsCount': healthData.totalOngoing || 0
+      }
+      
       if (this.setDataBatcher) {
-        this.setDataBatcher.addBatch({
-          'healthStats.totalChecks': healthData.totalAnimals,
-          'healthStats.healthyCount': healthData.actualHealthyCount,
-          'healthStats.sickCount': healthData.sickCount,
-          'healthStats.deadCount': healthData.deadCount,
-          'healthStats.originalQuantity': originalQuantity,
-          'healthStats.healthyRate': originalQuantity > 0 ? formatPercentage(healthData.healthyRate) : '-',
-          'healthStats.mortalityRate': originalQuantity > 0 ? formatPercentage(healthData.mortalityRate) : '-'
-        })
+        this.setDataBatcher.addBatch(updateData)
       } else {
         // 降级方案：如果批量更新器未初始化，使用原有方式
-        this.setData({
-          'healthStats.totalChecks': healthData.totalAnimals,
-          'healthStats.healthyCount': healthData.actualHealthyCount,
-          'healthStats.sickCount': healthData.sickCount,
-          'healthStats.deadCount': healthData.deadCount,
-          'healthStats.originalQuantity': originalQuantity,
-          'healthStats.healthyRate': originalQuantity > 0 ? formatPercentage(healthData.healthyRate) : '-',
-          'healthStats.mortalityRate': originalQuantity > 0 ? formatPercentage(healthData.mortalityRate) : '-'
-        })
+        this.setData(updateData)
       }
     } catch (error: unknown) {
       // 后台刷新失败时静默处理
@@ -1843,7 +1843,7 @@ Page<PageData, any>({
           pendingDiagnosis: aggregatedData.pendingDiagnosis || 0,
           ongoingTreatment: aggregatedData.totalOngoing || 0,
           recoveredCount: aggregatedData.totalCured || 0,
-          deadCount: aggregatedData.deadCount || 0,
+          deadCount: aggregatedData.totalDiedAnimals || 0,  // ✅ 使用治疗记录中的死亡数
           totalTreatmentCost: aggregatedData.totalTreatmentCost || 0,
           cureRate: parseFloat((aggregatedData.cureRate || '0').toString()),
           ongoingAnimalsCount: aggregatedData.totalOngoing || 0

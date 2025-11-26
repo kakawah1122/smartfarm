@@ -349,14 +349,17 @@ exports.main = async (event, context) => {
 
 // 创建成本记录
 async function createCostRecord(event, wxContext) {
+  // 兼容两种传参方式：直接传参或通过payload传参
+  const data = event.payload || event
   const { 
     costType, // feed, health, labor, facility, other
     amount, 
     description, 
     relatedRecordId, 
     invoiceNumber,
-    notes 
-  } = event
+    notes,
+    costDate
+  } = data
   const openid = wxContext.OPENID
 
   if (!await validateFinancePermission(openid, 'create')) {
@@ -379,6 +382,7 @@ async function createCostRecord(event, wxContext) {
     costType,
     amount: parseFloat(amount),
     description: description || '',
+    date: costDate || new Date().toISOString().split('T')[0], // 记录日期
     relatedRecordId: relatedRecordId || '', // 关联的业务记录ID
     invoiceNumber: invoiceNumber || '',
     notes: notes || '',
@@ -399,14 +403,17 @@ async function createCostRecord(event, wxContext) {
 
 // 创建收入记录
 async function createRevenueRecord(event, wxContext) {
+  // 兼容两种传参方式：直接传参或通过payload传参
+  const data = event.payload || event
   const { 
     revenueType, // sales, subsidy, other
     amount, 
     description, 
     relatedRecordId,
     invoiceNumber,
-    notes 
-  } = event
+    notes,
+    revenueDate
+  } = data
   const openid = wxContext.OPENID
 
   if (!await validateFinancePermission(openid, 'create')) {
@@ -425,6 +432,7 @@ async function createRevenueRecord(event, wxContext) {
     revenueType: revenueType || 'other',
     amount: parseFloat(amount),
     description: description || '',
+    date: revenueDate || new Date().toISOString().split('T')[0], // 记录日期
     relatedRecordId: relatedRecordId || '',
     invoiceNumber: invoiceNumber || '',
     notes: notes || '',

@@ -100,11 +100,7 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
     page.setData({ loading: true })
 
     try {
-      wx.showLoading({ title: '加载死亡记录...' })
-      
       const response = await HealthCloud.death.list({})
-      
-      wx.hideLoading()
 
       if (!response.success) {
         throw new Error(response.error || '加载失败')
@@ -120,24 +116,56 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
         totalDeath += deathCount
 
         let loss = 0
-        let treatmentCost = 0
+        let costPerAnimal = 0
+        let treatmentCostTotal = 0
+        let costBreakdownFromBatch = null
 
-        if (record.financialLoss && typeof record.financialLoss === 'object') {
-          const totalLossRaw = record.financialLoss.totalLoss
-          loss = typeof totalLossRaw === 'string' ? parseFloat(totalLossRaw) || 0 : totalLossRaw || 0
+        // ✅ 优先使用记录根级别的 costBreakdown（数据库已有的）
+        const recordCostBreakdown = (record as unknown as Record<string, unknown>).costBreakdown as Record<string, string> | null
+        
+        if (recordCostBreakdown && recordCostBreakdown.entryUnitCost) {
+          // 使用数据库中已存储的成本分解
+          const entryUnitCost = parseFloat(recordCostBreakdown.entryUnitCost || '0') || 0
+          const breedingCost = parseFloat(recordCostBreakdown.breedingCost || '0') || 0
+          const preventionCost = parseFloat(recordCostBreakdown.preventionCost || '0') || 0
+          const treatmentCost = parseFloat(recordCostBreakdown.treatmentCost || '0') || 0
+          
+          costPerAnimal = entryUnitCost + breedingCost + preventionCost + treatmentCost
+          loss = costPerAnimal * deathCount
+          treatmentCostTotal = treatmentCost * deathCount
+          
+          costBreakdownFromBatch = {
+            entryUnitCost: entryUnitCost.toFixed(2),
+            breedingCost: breedingCost.toFixed(2),
+            preventionCost: preventionCost.toFixed(2),
+            treatmentCost: treatmentCost.toFixed(2)
+          }
+        } else {
+          // 降级：使用 financialLoss 中的数据
+          const financialLossObj = record.financialLoss as { 
+            totalLoss?: number | string
+            unitCost?: number | string
+            treatmentCost?: number | string
+          } | null
+          
+          if (financialLossObj && typeof financialLossObj === 'object') {
+            const totalLossRaw = financialLossObj.totalLoss
+            loss = typeof totalLossRaw === 'string' ? parseFloat(totalLossRaw) || 0 : (totalLossRaw as number) || 0
+            costPerAnimal = deathCount > 0 ? loss / deathCount : 0
 
-          const treatmentCostRaw = record.financialLoss.treatmentCost
-          treatmentCost =
-            typeof treatmentCostRaw === 'string' ? parseFloat(treatmentCostRaw) || 0 : treatmentCostRaw || 0
-        } else if (typeof record.financeLoss === 'number') {
-          loss = record.financeLoss
-        } else if (typeof record.financeLoss === 'string') {
-          loss = parseFloat(record.financeLoss) || 0
+            const treatmentCostRaw = financialLossObj.treatmentCost
+            treatmentCostTotal =
+              typeof treatmentCostRaw === 'string' ? parseFloat(treatmentCostRaw) || 0 : (treatmentCostRaw as number) || 0
+          } else if (typeof record.financeLoss === 'number') {
+            loss = record.financeLoss
+            costPerAnimal = deathCount > 0 ? loss / deathCount : 0
+          } else if (typeof record.financeLoss === 'string') {
+            loss = parseFloat(record.financeLoss) || 0
+            costPerAnimal = deathCount > 0 ? loss / deathCount : 0
+          }
         }
 
         totalLoss += loss
-
-        const costPerAnimal = deathCount > 0 ? loss / deathCount : 0
 
         const displayDeathCause = record.isCorrected && record.correctedCause
           ? record.correctedCause
@@ -175,52 +203,17 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
           .filter((value, index, self) => self.indexOf(value) === index)
           .join('；')
 
-        // 处理成本分解数据（直接使用云函数计算好的数据）
-        let costBreakdown = null
-        const financialLossAny = record.financialLoss as unknown
-        if (financialLossAny?.costBreakdown) {
-          const breakdown = financialLossAny.costBreakdown
-          
-          // ✅ 优先使用云函数计算好的每只成本
-          if (breakdown.entryUnitCost && breakdown.breedingCost !== undefined) {
-            costBreakdown = {
-              entryUnitCost: breakdown.entryUnitCost,
-              breedingCost: breakdown.breedingCost,
-              preventionCost: breakdown.preventionCost || '0.00',
-              treatmentCost: breakdown.treatmentCost || '0.00'
-            }
-          } else {
-            // ⚠️ 向后兼容：旧数据需要前端计算
-            const unitCostNum = parseFloat(String(record.unitCost || 40))
-            const batchInitialQuantity = parseFloat(breakdown.entryCostTotal || breakdown.entryCost || 0) > 0 
-              ? Math.round(parseFloat(breakdown.entryCostTotal || breakdown.entryCost) / unitCostNum)
-              : deathCount
-            const currentCount = batchInitialQuantity - (record.totalDeathCount || 0) || deathCount
-
-            const entryUnitCost = parseFloat(breakdown.entryCostTotal || breakdown.entryCost || 0) / batchInitialQuantity
-            const breedingCost = parseFloat(breakdown.materialCostTotal || breakdown.materialCost || 0) / currentCount
-            const preventionCost = parseFloat(breakdown.preventionCostTotal || breakdown.preventionCost || 0) / currentCount
-            const treatmentCostPerAnimal = parseFloat(breakdown.treatmentCostTotal || breakdown.treatmentCost || 0) / currentCount
-
-            costBreakdown = {
-              entryUnitCost: formatNumber(entryUnitCost),
-              breedingCost: formatNumber(breedingCost),
-              preventionCost: formatNumber(preventionCost),
-              treatmentCost: formatNumber(treatmentCostPerAnimal)
-            }
-          }
-        }
-
+        // ✅ 优先使用实时计算的成本分解（costBreakdownFromBatch），这样不依赖数据库存储
         return {
           ...record,
           deathCount,
           formattedTotalLoss: formatNumber(loss),
           formattedCostPerAnimal: formatNumber(costPerAnimal),
-          formattedTreatmentCost: formatNumber(treatmentCost),
+          formattedTreatmentCost: formatNumber(treatmentCostTotal),
           displayDeathCause,
           displayFindings,
           correctedAt: record.correctedAt ? formatDateTime(record.correctedAt) : record.correctedAt,
-          costBreakdown: costBreakdown
+          costBreakdown: costBreakdownFromBatch  // 使用实时计算的成本分解
         }
       })
 
@@ -360,4 +353,4 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
   }
 }
 
-Page(createPageWithNavbar(pageConfig))
+Page(createPageWithNavbar(pageConfig as any))

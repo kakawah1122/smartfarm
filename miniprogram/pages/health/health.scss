@@ -3573,10 +3573,15 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
         color: #333;
         text-align: right;
         line-height: 44rpx;
+        border: none;
+        background: transparent;
         &::placeholder {
           color: #999;
           text-align: right;
           font-size: 28rpx !important;
+        }
+        &::after {
+          display: none !important;
         }
       }
       .form-textarea {

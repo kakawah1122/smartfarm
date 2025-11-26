@@ -438,12 +438,17 @@ page {
   align-items: flex-start;
   justify-content: space-between;
   padding: 24rpx 16rpx;
-  border-bottom: 1rpx solid #f3f4f6;
   transition: background-color 0.2s;
 }
 
-.approval-item:last-child {
-  border-bottom: none;
+/* 审批列表分隔线 */
+.approval-list .divider-line {
+  height: 2rpx;
+  width: 100%;
+  border: none;
+  border-top: 2rpx dashed #e5e7eb;
+  margin: 0;
+  padding: 0;
 }
 
 .approval-item:active {
@@ -911,6 +916,18 @@ page {
       }
     }
   }
+}
+
+/* 历史记录按钮包装器 */
+.history-button-wrapper {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* 禁用按钮的点击事件，让 wrapper 接管 */
+.history-button-wrapper .history-button {
+  pointer-events: none;
 }
 
 /* 历史记录按钮样式 */

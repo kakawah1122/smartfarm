@@ -26,11 +26,13 @@ function debugLog(message, data) {
 }
 
 /**
- * 计算批次成本（简化版）
+ * 计算批次成本（调用health-cost云函数获取完整成本分解）
  */
 async function calculateBatchCost(params, context) {
   try {
     const batchId = params.batchId
+    
+    // 直接获取批次入栏单价（避免嵌套云函数调用导致超时）
     const batch = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
       .doc(batchId).get()
     
@@ -41,7 +43,6 @@ async function calculateBatchCost(params, context) {
       }
     }
     
-    // 简化计算：使用入栏单价作为成本
     const unitPrice = parseFloat(batch.data.unitPrice) || 0
     
     return {
@@ -49,14 +50,15 @@ async function calculateBatchCost(params, context) {
       data: {
         avgTotalCost: unitPrice,
         breakdown: {
-          purchaseCost: unitPrice,
-          feedCost: 0,
-          medicineCost: 0,
-          otherCost: 0
+          entryUnitCost: unitPrice.toFixed(2),
+          breedingCost: '0.00',
+          preventionCost: '0.00',
+          treatmentCost: '0.00'
         }
       }
     }
   } catch (error) {
+    console.error('[calculateBatchCost] 错误:', error)
     return {
       success: false,
       error: error.message

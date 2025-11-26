@@ -161,21 +161,93 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
         mask: true
       })
       
-      const response = await HealthCloud.prevention.list({
-        page: 1,
-        pageSize: 100
-      }) as any
+      // ✅ 同时从两个数据源获取用药记录
+      const [preventionResponse, materialResponse] = await Promise.all([
+        // 1. 预防记录中的用药
+        HealthCloud.prevention.list({
+          page: 1,
+          pageSize: 100
+        }),
+        // 2. 物料领用中的药品（待办任务完成的用药）
+        wx.cloud.callFunction({
+          name: 'production-material',
+          data: {
+            action: 'list_records',
+            type: 'use',
+            category: '药品',
+            pageSize: 100
+          }
+        })
+      ]) as [any, any]
       
       wx.hideLoading()
 
-      if (!response?.success) {
-        throw new Error(response?.error || '加载失败')
+      // 处理预防记录中的用药
+      let medicationRecords: any[] = []
+      if (preventionResponse?.success) {
+        const preventionRecords = preventionResponse?.data?.list || preventionResponse?.data?.records || []
+        medicationRecords = preventionRecords.filter((record: any) => record.preventionType === 'medication')
       }
-
-      // health-prevention云函数返回的是data.list，不是data.records
-      const preventionRecords = response?.data?.list || response?.data?.records || []
-      const medicationRecords = preventionRecords.filter(record => record.preventionType === 'medication')
-      const enrichedRecords = await enrichRecordsWithBatchNumbers(medicationRecords)
+      
+      // 处理物料领用中的药品记录
+      let materialMedicationRecords: any[] = []
+      if (materialResponse?.result?.success) {
+        const resultData = materialResponse?.result?.data
+        // 兼容多种返回格式
+        const materialRecords = Array.isArray(resultData) 
+          ? resultData 
+          : (resultData?.list || resultData?.records || [])
+        
+        // 确保是数组后再过滤
+        if (Array.isArray(materialRecords)) {
+          // 转换物料记录格式为用药记录格式
+          materialMedicationRecords = materialRecords
+            .filter((record: any) => record.type === 'use')
+            .map((record: any) => {
+              // 计算成本：单价 × 数量
+              const unitPrice = record.unitPrice || record.price || 0
+              const quantity = record.quantity || 0
+              const totalCost = record.totalCost || (unitPrice * quantity)
+              
+              return {
+                _id: record._id,
+                batchId: record.batchId || '',
+                batchNumber: record.notes?.match(/批次：([^，]+)/)?.[1] || '',
+                preventionType: 'medication',
+                preventionDate: record.recordDate || record.createdAt?.split('T')[0] || '',
+                medicationInfo: {
+                  name: record.materialName || record.name || '药品',
+                  dosage: record.notes?.match(/剂量：([^，]+)/)?.[1] || '',
+                  method: record.targetLocation || '',
+                  quantity: quantity
+                },
+                costInfo: {
+                  totalCost: totalCost,
+                  unitPrice: unitPrice,
+                  quantity: quantity
+                },
+                effectiveness: '',
+                notes: record.notes || '',
+                operator: record.operator || '',
+                operatorName: record.operator || '',
+                createdAt: record.createdAt,
+                source: 'material'  // 标记来源
+              }
+            })
+        }
+      }
+      
+      // 合并两个数据源的记录
+      const allMedicationRecords = [...medicationRecords, ...materialMedicationRecords]
+      
+      // ✅ 按日期倒序排序（最新的在前）
+      allMedicationRecords.sort((a, b) => {
+        const dateA = new Date(a.preventionDate || a.createdAt || 0).getTime()
+        const dateB = new Date(b.preventionDate || b.createdAt || 0).getTime()
+        return dateB - dateA
+      })
+      
+      const enrichedRecords = await enrichRecordsWithBatchNumbers(allMedicationRecords)
       const { formattedRecords, totalCost } = await buildMedicationRecords(enrichedRecords)
 
       page.setData({
@@ -189,6 +261,7 @@ const medicationPageConfig: WechatMiniprogram.Page.Options<MedicationPageData, M
       })
     } catch (error) {
       wx.hideLoading()
+      logger.error('加载用药记录失败:', error)
       wx.showToast({
         title: (error as Error).message || '加载失败',
         icon: 'none'
@@ -393,16 +466,25 @@ function groupMedicationRecordsByBatch(records: MedicationListRecord[]): BatchGr
   })
 
   return Array.from(batchMap.entries())
-    .map(([batchNumber, groupRecords]) => ({
-      batchNumber,
-      batchId: groupRecords[0]?.batchId || batchNumber,
-      records: [...groupRecords].sort((a, b) => {
-        const dateA = new Date(a.preventionDate).getTime()
-        const dateB = new Date(b.preventionDate).getTime()
+    .map(([batchNumber, groupRecords]) => {
+      // 组内按日期倒序排列
+      const sortedRecords = [...groupRecords].sort((a, b) => {
+        const dateA = new Date(a.preventionDate || (a.createdAt as string) || 0).getTime()
+        const dateB = new Date(b.preventionDate || (b.createdAt as string) || 0).getTime()
         return dateB - dateA
       })
-    }))
-    .sort((a, b) => a.batchNumber.localeCompare(b.batchNumber))
+      return {
+        batchNumber,
+        batchId: sortedRecords[0]?.batchId || batchNumber,
+        records: sortedRecords
+      }
+    })
+    // ✅ 批次组按最新记录日期倒序排列（而不是按批次号字母排序）
+    .sort((a, b) => {
+      const dateA = new Date(a.records[0]?.preventionDate || (a.records[0]?.createdAt as string) || 0).getTime()
+      const dateB = new Date(b.records[0]?.preventionDate || (b.records[0]?.createdAt as string) || 0).getTime()
+      return dateB - dateA
+    })
 }
 
 async function enrichRecordsWithBatchNumbers(records: MedicationRecord[]): Promise<MedicationRecord[]> {
@@ -449,4 +531,4 @@ async function enrichRecordsWithBatchNumbers(records: MedicationRecord[]): Promi
   }
 }
 
-Page(createPageWithNavbar(medicationPageConfig))
+Page(createPageWithNavbar(medicationPageConfig as any))

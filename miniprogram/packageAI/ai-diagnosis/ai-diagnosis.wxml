@@ -512,8 +512,7 @@
             />
           </view>
           <view class="loading-text-wrapper">
-            <text class="loading-title">AI正在深度分析中</text>
-            <text class="loading-subtitle">⏱️ 预计需要 30-50 秒，请耐心等待...</text>
+            <text class="loading-title">AI正在深度分析中，预计耗时30~50秒</text>
           </view>
         </view>
         

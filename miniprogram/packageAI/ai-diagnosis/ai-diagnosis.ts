@@ -1147,16 +1147,26 @@ const pageConfig: AnyObject = {
 
   // 保存为记录
   async saveRecord() {
-    if (!this.data.diagnosisResult) return
+    console.log('====== saveRecord 被调用 ======')
+    console.log('diagnosisResult:', this.data.diagnosisResult ? '有值' : 'null')
+    console.log('isSaving:', this.data.isSaving)
+    
+    if (!this.data.diagnosisResult) {
+      console.log('diagnosisResult为空，退出')
+      wx.showToast({ title: '诊断结果为空', icon: 'none' })
+      return
+    }
     
     // ✅ 防止重复提交
     if (this.data.isSaving) {
+      console.log('正在保存中，退出')
       return
     }
 
     try {
       // ✅ 设置保存状态，禁止重复点击
       this.setData({ isSaving: true })
+      console.log('开始保存...')
       
       wx.showLoading({ title: '保存中...' })
       
@@ -1252,13 +1262,17 @@ const pageConfig: AnyObject = {
       
       
       // 创建异常记录
-      const rawResult = await HealthCloud.abnormal.create(recordData)
+      const result = await HealthCloud.abnormal.create(recordData)
       
       wx.hideLoading()
       
-      const result = normalizeCloudResult<{ abnormalRecordId?: string }>(rawResult)
-
+      // ✅ 修复：HealthCloud返回的是已解包的结果，不需要再用normalizeCloudResult
+      console.log('保存结果:', result)
+      
       if (result?.success) {
+        // ✅ 重置保存状态
+        this.setData({ isSaving: false })
+        
         wx.showToast({
           title: '异常记录已保存',
           icon: 'success',
@@ -1275,6 +1289,7 @@ const pageConfig: AnyObject = {
         throw new Error(result?.message || result?.error || '保存失败')
       }
     } catch (error: unknown) {
+      console.error('保存异常:', error)
       wx.hideLoading()
       // ✅ 保存失败时重置状态，允许重试
       this.setData({ isSaving: false })

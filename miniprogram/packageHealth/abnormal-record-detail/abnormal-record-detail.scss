@@ -710,6 +710,32 @@
   }
 }
 
+// 底部操作按钮
+.action-buttons {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24rpx;
+  padding-bottom: calc(24rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: white;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+  z-index: 100;
+
+  .buttons-row {
+    display: flex;
+    gap: 24rpx;
+  }
+}
+
+// 深蓝渐变按钮（参照健康管理页面的按钮样式）
+.action-btn-gradient {
+  background: linear-gradient(135deg, #0052d9 0%, #1a73e8 50%, #2196f3 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
 .safe-area-bottom {
   height: constant(safe-area-inset-bottom);
   height: env(safe-area-inset-bottom);

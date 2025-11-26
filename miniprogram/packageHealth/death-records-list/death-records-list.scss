@@ -25,7 +25,9 @@
 .list-container {
   flex: 1;
   padding: 16rpx 24rpx;
+  padding-bottom: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 // ============ 加载状态 ============
@@ -255,8 +257,8 @@
 }
 
 .safe-area {
-  height: constant(safe-area-inset-bottom);
-  height: env(safe-area-inset-bottom);
-  min-height: 0;
-    flex-shrink: 0;
+  height: calc(constant(safe-area-inset-bottom) + 40rpx);
+  height: calc(env(safe-area-inset-bottom) + 40rpx);
+  min-height: 40rpx;
+  flex-shrink: 0;
 }

@@ -1512,7 +1512,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         const { remainingCount, newStatus } = result.data || {}
         
         // ✅ 根据剩余数量显示不同的提示
-        let successMessage = result.result.message || '记录成功'
+        let successMessage = result.message || result.data?.message || '记录成功'
         if (remainingCount > 0) {
           successMessage += `，剩余${remainingCount}只继续治疗`
         } else if (newStatus === 'cured') {
@@ -1557,7 +1557,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
-        throw new Error(result.result?.error || '提交失败')
+        throw new Error(result.error || result.message || '提交失败')
       }
     } catch (error: unknown) {
       wx.hideLoading()

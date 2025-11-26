@@ -252,28 +252,31 @@
     <view class="action-buttons" wx:if="{{record.status === 'abnormal'}}">
       <view class="buttons-row">
         <t-button 
-          theme="light" 
-          size="large" 
-          bind:tap="correctDiagnosis" 
           block
+          theme="primary"
+          size="large"
+          bind:tap="correctDiagnosis" 
+          t-class="action-btn-gradient"
         >
           {{record.isCorrected ? '重新修正' : '修正结果'}}
         </t-button>
         <t-button 
           wx:if="{{isAutopsyRecord}}"
+          block
           theme="primary" 
           size="large" 
           bind:tap="confirmDeath"
-          block
+          t-class="action-btn-gradient"
         >
           确定归档
         </t-button>
         <t-button 
-          theme="light" 
-          size="large" 
+          block
+          theme="primary"
+          size="large"
           bind:tap="createTreatmentPlan"
           wx:if="{{!isAutopsyRecord}}"
-          block
+          t-class="action-btn-gradient"
         >
           制定治疗方案
         </t-button>

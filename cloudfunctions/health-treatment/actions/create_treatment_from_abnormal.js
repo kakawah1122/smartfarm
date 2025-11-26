@@ -78,8 +78,14 @@ exports.main = async (event, wxContext) => {
       },
       medications: medications || [],
       progress: [],
+      // ✅ 根级别字段（用于聚合统计查询）
+      status: 'ongoing',
+      affectedCount: finalAffectedCount || 1,
+      curedCount: 0,
+      diedCount: 0,
+      // outcome对象（用于详情显示，保持兼容）
       outcome: {
-        status: 'ongoing',  // ✅ 始终创建为正式记录
+        status: 'ongoing',
         curedCount: 0,
         improvedCount: 0,
         deathCount: 0,

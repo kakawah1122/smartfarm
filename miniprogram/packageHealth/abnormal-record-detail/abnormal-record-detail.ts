@@ -120,11 +120,7 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
     page.setData({ loading: true })
 
     try {
-      wx.showLoading({ title: '加载记录详情...' })
-      
       const response = await HealthCloud.abnormal.getDetail({ recordId })
-      
-      wx.hideLoading()
 
       if (!response.success || !response.data) {
         throw new Error(response.error || '加载失败')

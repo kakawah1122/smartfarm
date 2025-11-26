@@ -100,7 +100,12 @@ async function listPreventionRecords(event, wxContext) {
     }
     
     if (preventionType) {
-      conditions.preventionType = preventionType
+      // 兼容 'medicine' 和 'medication' 两种类型值
+      if (preventionType === 'medicine' || preventionType === 'medication') {
+        conditions.preventionType = _.in(['medicine', 'medication'])
+      } else {
+        conditions.preventionType = preventionType
+      }
     }
     
     // 计算跳过的记录数
@@ -186,11 +191,11 @@ async function getPreventionDashboard(event, wxContext) {
         })
         .count(),
       
-      // 用药次数
+      // 用药次数（兼容 'medicine' 和 'medication' 两种类型值）
       db.collection(COLLECTIONS.HEALTH_PREVENTION_RECORDS)
         .where({
           ...conditions,
-          preventionType: 'medicine'
+          preventionType: _.in(['medicine', 'medication'])
         })
         .count(),
       

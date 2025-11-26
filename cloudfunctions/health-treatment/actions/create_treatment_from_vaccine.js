@@ -34,10 +34,17 @@ exports.main = async (event, wxContext) => {
     const openid = wxContext.OPENID
     
     // 创建治疗记录
+    const finalAffectedCount = affectedCount || 1
     const treatmentData = {
       batchId,
       batchNumber: batchNumber || batchId,  // ✅ 保存批次编号用于显示
       vaccineRecordId,  // 关联疫苗记录
+      // ✅ 根级别字段（用于聚合统计）
+      status: 'ongoing',
+      affectedCount: finalAffectedCount,
+      curedCount: 0,
+      diedCount: 0,
+      // 其他字段
       animalIds: [],
       treatmentDate: new Date().toISOString().split('T')[0],
       treatmentType: 'medication',

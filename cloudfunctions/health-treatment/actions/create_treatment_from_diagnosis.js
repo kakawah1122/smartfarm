@@ -47,16 +47,21 @@ exports.main = async (event, wxContext) => {
     }
     
     // 创建治疗记录
+    const finalAffectedCount = affectedCount || diagnosisRecord.data.affectedCount || 0
     const treatmentData = {
       batchId,
       diagnosisId,
+      // ✅ 根级别字段（用于聚合统计）
+      status: 'ongoing',
+      affectedCount: finalAffectedCount,
+      curedCount: 0,
+      diedCount: 0,
+      // 其他字段
       treatmentStatus: 'ongoing',
       treatmentDate: new Date().toISOString().split('T')[0],
       diagnosis: diagnosis || diagnosisRecord.data.primaryDiagnosis?.disease || '待确定',
       diagnosisConfidence: diagnosisRecord.data.primaryDiagnosis?.confidence || 0,
-      initialCount: affectedCount || diagnosisRecord.data.affectedCount || 0,
-      curedCount: 0,
-      diedCount: 0,
+      initialCount: finalAffectedCount,
       totalCost: 0,
       medications: recommendations?.medication || [],
       treatmentPlan: {

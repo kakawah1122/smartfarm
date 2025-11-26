@@ -1028,14 +1028,11 @@
 // AI诊断进行中的动画提示
 .diagnosis-loading-hint {
   margin-top: 24rpx;
-  padding: 32rpx 24rpx;
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(37, 99, 235, 0.03) 100%);
-  border-radius: 16rpx;
-  border: 2rpx solid rgba(29, 78, 216, 0.15);
+  padding: 16rpx 24rpx;
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  animation: pulse 2s ease-in-out infinite;
+  justify-content: center;
+  gap: 16rpx;
 }
 
 .loading-animation {

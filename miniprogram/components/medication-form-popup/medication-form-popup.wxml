@@ -52,11 +52,13 @@
       </view>
       <view class="form-row">
         <text class="form-label required">鹅只数量</text>
-        <input class="form-input" 
-               type="number"
-               placeholder="{{stockQuantity > 0 ? '请输入鹅只数量（存栏' + stockQuantity + '只）' : '请输入鹅只数量'}}"
-               value="{{formData.animalCount > 0 ? formData.animalCount : ''}}"
-               bindinput="onAnimalCountInput" />
+        <view class="input-wrapper">
+          <input class="form-input" 
+                 type="number"
+                 placeholder="{{stockQuantity > 0 ? '存栏' + stockQuantity + '只' : '请输入数量'}}"
+                 value="{{formData.animalCount > 0 ? formData.animalCount : ''}}"
+                 bindinput="onAnimalCountInput" />
+        </view>
         <text wx:if="{{formErrors.animalCount}}" class="error-text">{{formErrors.animalCount}}</text>
       </view>
       <view class="form-row">

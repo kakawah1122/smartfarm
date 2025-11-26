@@ -34,6 +34,7 @@ exports.main = async (event, wxContext) => {
       .update({
         data: {
           isDraft: false,
+          status: 'ongoing',  // ✅ 根级别status（用于聚合统计）
           'outcome.status': 'ongoing',
           updatedAt: new Date()
         }

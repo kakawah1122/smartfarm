@@ -49,12 +49,20 @@
         }
       }
       
+      .input-wrapper {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+      }
+      
       .form-input, .form-textarea {
         flex: 1;
         font-size: 28rpx !important;
         color: #333;
         text-align: right;
         line-height: 44rpx;
+        border: none;
+        background: transparent;
         
         &::placeholder {
           color: #999;

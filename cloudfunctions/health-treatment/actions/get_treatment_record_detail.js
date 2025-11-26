@@ -38,10 +38,31 @@ exports.main = async (event, wxContext) => {
       throw new Error('治疗记录不存在')
     }
     
-    // 返回结果（保持与原函数完全一致的返回格式）
+    const treatment = result.data
+    
+    // ✅ 计算治疗进展数据
+    const affectedCount = treatment.affectedCount || 0
+    const curedCount = treatment.curedCount || 0
+    const diedCount = treatment.diedCount || 0
+    const remainingCount = Math.max(0, affectedCount - curedCount - diedCount)
+    
+    const progress = {
+      affectedCount,
+      curedCount,
+      diedCount,
+      remainingCount,
+      progressPercentage: affectedCount > 0 
+        ? Math.round(((curedCount + diedCount) / affectedCount) * 100) 
+        : 0
+    }
+    
+    // ✅ 返回结果（保持与前端期望的格式一致）
     return {
       success: true,
-      data: result.data,
+      data: {
+        treatment,
+        progress
+      },
       message: '获取成功'
     }
   } catch (error) {

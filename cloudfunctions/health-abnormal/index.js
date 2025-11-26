@@ -20,6 +20,9 @@ const { COLLECTIONS } = require('./collections.js')
  * 创建异常记录（兼容原有数据结构）
  */
 async function createAbnormalRecord(event, wxContext) {
+  console.log('====== createAbnormalRecord 被调用 ======')
+  console.log('事件参数:', JSON.stringify(event).substring(0, 500))
+  
   try {
     const {
       diagnosisId,
@@ -39,9 +42,13 @@ async function createAbnormalRecord(event, wxContext) {
       deathCount
     } = event
     const openid = wxContext.OPENID
+    console.log('openid:', openid)
+    console.log('batchId:', batchId)
+    console.log('diagnosisId:', diagnosisId)
     
     // 构建记录数据（兼容原有结构）
     const recordData = {
+      _openid: openid,  // ✅ 重要：云函数创建记录必须手动添加_openid
       batchId,
       batchNumber,
       diagnosisId,
@@ -69,10 +76,15 @@ async function createAbnormalRecord(event, wxContext) {
     }
     
     // 使用 HEALTH_RECORDS 集合（与原系统保持一致）
+    console.log('准备保存到集合:', COLLECTIONS.HEALTH_RECORDS)
+    console.log('recordData:', JSON.stringify(recordData).substring(0, 500))
+    
     const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .add({
         data: recordData
       })
+    
+    console.log('保存成功，recordId:', result._id)
     
     return {
       success: true,
@@ -83,6 +95,7 @@ async function createAbnormalRecord(event, wxContext) {
     }
   } catch (error) {
     console.error('[createAbnormalRecord] 错误:', error)
+    console.error('错误详情:', error.message, error.stack)
     return {
       success: false,
       error: error.message || '创建异常记录失败'
@@ -94,6 +107,8 @@ async function createAbnormalRecord(event, wxContext) {
  * 获取异常记录列表（兼容原有数据结构）
  */
 async function listAbnormalRecords(event, wxContext) {
+  console.log('====== listAbnormalRecords 被调用 ======')
+  
   try {
     const {
       batchId,
@@ -104,11 +119,14 @@ async function listAbnormalRecords(event, wxContext) {
       endDate
     } = event
     const openid = wxContext.OPENID
+    console.log('openid:', openid)
     
     // 构建查询条件（兼容原有结构）
+    // ✅ 只显示未流转的异常记录，已创建治疗记录的不再显示
     let conditions = {
+      _openid: openid,  // ✅ 只查询当前用户的记录
       recordType: 'ai_diagnosis',  // 筛选AI诊断记录
-      status: _.in(['abnormal', 'treating']),  // 显示异常和治疗中的记录
+      status: 'abnormal',  // ✅ 只显示待处理的异常记录，已流转(treating/resolved)的不显示
       isDeleted: _.neq(true)  // 未删除的记录
     }
     
@@ -132,10 +150,10 @@ async function listAbnormalRecords(event, wxContext) {
       .where(conditions)
       .count()
     
-    // 查询列表
+    // 查询列表（按创建时间降序，最新的排在最前面）
     const listResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .where(conditions)
-      .orderBy('checkDate', 'desc')
+      .orderBy('createdAt', 'desc')
       .skip(skip)
       .limit(pageSize)
       .get()
@@ -321,36 +339,88 @@ async function getAbnormalStats(event, wxContext) {
  * 纠正异常诊断
  */
 async function correctAbnormalDiagnosis(event, wxContext) {
+  console.log('====== correctAbnormalDiagnosis 被调用 ======')
+  console.log('事件参数:', JSON.stringify(event))
+  
   try {
-    const { recordId, correctDiagnosis, correctSuggestion } = event
+    // ✅ 兼容多种参数名称
+    const { 
+      recordId, 
+      correctDiagnosis,      // 旧参数名
+      correctedDiagnosis,    // 新参数名
+      correctSuggestion,
+      veterinarianDiagnosis,
+      aiAccuracyRating 
+    } = event
     const openid = wxContext.OPENID
     
-    if (!recordId || !correctDiagnosis) {
+    // 使用新参数名或旧参数名
+    const finalDiagnosis = correctedDiagnosis || correctDiagnosis
+    
+    if (!recordId || !finalDiagnosis) {
       return {
         success: false,
-        error: '缺少必要参数'
+        error: '缺少必要参数: recordId 或 correctedDiagnosis'
       }
     }
     
+    // ✅ 1. 先获取异常记录，找到关联的diagnosisId
+    const recordResult = await db.collection(COLLECTIONS.HEALTH_RECORDS)
+      .doc(recordId)
+      .get()
+    
+    const record = recordResult.data
+    const diagnosisId = record?.diagnosisId || record?.relatedDiagnosisId
+    
+    console.log('关联的diagnosisId:', diagnosisId)
+    
     // 更新诊断信息
     const updateData = {
-      correctDiagnosis,
+      isCorrected: true,  // ✅ 标记为已修正
+      correctedDiagnosis: finalDiagnosis,
+      veterinarianDiagnosis: veterinarianDiagnosis || '',
+      aiAccuracyRating: aiAccuracyRating || 0,
       correctSuggestion: correctSuggestion || '',
       correctedBy: openid,
       correctedAt: db.serverDate(),
-      updateTime: db.serverDate()
+      updatedAt: db.serverDate()
     }
     
+    // ✅ 2. 更新异常记录 (health_records)
     const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .doc(recordId)
       .update({
         data: updateData
       })
     
+    // ✅ 3. 同步更新AI诊断历史 (health_ai_diagnosis)
+    if (diagnosisId) {
+      try {
+        await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+          .doc(diagnosisId)
+          .update({
+            data: {
+              isCorrected: true,
+              correctedDiagnosis: finalDiagnosis,
+              veterinarianDiagnosis: veterinarianDiagnosis || '',
+              aiAccuracyRating: aiAccuracyRating || 0,
+              correctedBy: openid,
+              correctedAt: db.serverDate(),
+              updatedAt: db.serverDate()
+            }
+          })
+        console.log('AI诊断历史同步成功:', diagnosisId)
+      } catch (syncError) {
+        console.error('同步AI诊断历史失败:', syncError.message)
+        // 不影响主流程
+      }
+    }
+    
     return {
       success: true,
       data: {
         updated: result.stats.updated,
+        diagnosisId: diagnosisId,
         message: '诊断纠正成功'
       }
     }

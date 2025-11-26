@@ -231,25 +231,27 @@
           </view>
           
           <view class="approval-list" wx:if="{{approvalItems.length > 0}}">
-            <view 
-              wx:for="{{approvalItems}}" 
-              wx:key="id"
-              class="approval-item"
-              bind:tap="viewApprovalDetail"
-              data-item="{{item}}"
-            >
-              <view class="approval-left">
-                <view class="approval-content">
-                  <text class="approval-title" user-select>{{item.applicant}} - {{item.title}}</text>
-                  <text wx:if="{{item.description}}" class="approval-desc" user-select>{{item.description}}</text>
+            <block wx:for="{{approvalItems}}" wx:key="id">
+              <view 
+                class="approval-item"
+                bind:tap="viewApprovalDetail"
+                data-item="{{item}}"
+              >
+                <view class="approval-left">
+                  <view class="approval-content">
+                    <text class="approval-title" user-select>{{item.applicant}} - {{item.title}}</text>
+                    <text wx:if="{{item.description}}" class="approval-desc" user-select>{{item.description}}</text>
+                  </view>
+                </view>
+                <view class="approval-right">
+                  <view class="approval-amount">
+                    ¥{{item.amount}}
+                  </view>
                 </view>
               </view>
-              <view class="approval-right">
-                <view class="approval-amount">
-                  ¥{{item.amount}}
-                </view>
-              </view>
-            </view>
+              <!-- 分隔线（最后一项不显示） -->
+              <view wx:if="{{index < approvalItems.length - 1}}" class="divider-line"></view>
+            </block>
           </view>
           
           <view wx:else class="empty-state">
@@ -261,11 +263,13 @@
       <!-- 审批历史按钮 -->
       <view class="card">
         <view class="card-content">
-          <t-button theme="light" size="large" bind:tap="viewAllApprovalHistory" class="history-button approval-history-btn" block>
-            <view class="button-content">
-              <text class="button-text">审批历史记录</text>
-            </view>
-          </t-button>
+          <view class="history-button-wrapper" bindtap="viewAllApprovalHistory">
+            <t-button theme="light" size="large" class="history-button approval-history-btn" block>
+              <view class="button-content">
+                <text class="button-text">审批历史记录</text>
+              </view>
+            </t-button>
+          </view>
         </view>
       </view>
     </view>

@@ -278,11 +278,22 @@ async function getPendingReimbursements(db, _, event, wxContext) {
   const { page = 1, pageSize = 20 } = event
   const skip = (page - 1) * pageSize
   
+  console.log('[getPendingReimbursements] 开始查询，OPENID:', wxContext.OPENID)
+  
   // 权限检查
   const userInfo = await getUserInfo(db, wxContext.OPENID)
+  console.log('[getPendingReimbursements] 用户信息:', userInfo ? { role: userInfo.role, nickname: userInfo.nickname || userInfo.nickName } : 'null')
+  
+  if (!userInfo) {
+    throw new Error('用户信息获取失败')
+  }
+  
   if (!isAdmin(userInfo.role)) {
+    console.log('[getPendingReimbursements] 权限不足，用户角色:', userInfo.role)
     throw new Error('无权限查看待审批报销')
   }
+  
+  console.log('[getPendingReimbursements] 权限验证通过，开始查询待审批报销')
   
   // 查询待审批报销
   const result = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)
@@ -295,6 +306,8 @@ async function getPendingReimbursements(db, _, event, wxContext) {
     .skip(skip)
     .limit(pageSize)
     .get()
+  
+  console.log('[getPendingReimbursements] 查询结果数量:', result.data.length)
   
   // 获取总数
   const countResult = await db.collection(COLLECTIONS.FINANCE_COST_RECORDS)

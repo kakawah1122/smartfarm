@@ -76,6 +76,7 @@ exports.main = async (event, wxContext) => {
     const treatmentNumber = await generateTreatmentNumber()
 
     // 构建记录数据（保持原有字段完全一致）
+    const finalAffectedCount = affectedCount || 0
     const recordData = {
       treatmentNumber,  // ✅ 保留：治疗记录编号
       batchId,
@@ -87,7 +88,12 @@ exports.main = async (event, wxContext) => {
       medications: medications || [],
       treatmentPlan: treatmentPlan || '',
       veterinarian: veterinarian || '',
-      affectedCount: affectedCount || 0,
+      // ✅ 根级别字段（用于聚合统计）
+      status: 'ongoing',
+      affectedCount: finalAffectedCount,
+      curedCount: 0,
+      diedCount: 0,
+      // 其他字段
       treatmentCost: treatmentCost || 0,
       outcome: 'ongoing',
       notes: notes || '',

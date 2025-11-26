@@ -19,7 +19,13 @@
 
     <!-- 内容区 -->
     <block wx:else>
-      <scroll-view class="list-container" scroll-y>
+      <scroll-view 
+        class="list-container" 
+        scroll-y 
+        enhanced 
+        show-scrollbar="{{false}}"
+        bounces="{{true}}"
+      >
     
     <!-- 统计卡片 -->
     <view class="stats-section">
