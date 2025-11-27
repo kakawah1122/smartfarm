@@ -8,15 +8,49 @@ type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
 // 审批历史项类型
 interface ApprovalHistoryItem {
   _id: string
+  id?: string
+  recordId?: string
   createTime: Date | string
+  approvalTime?: Date | string
   status: string
   type: string
+  rejectionReason?: string
+  approvalRemark?: string
   metadata?: {
     amount?: number
+    typeName?: string
+    description?: string
+    reason?: string
+    operator?: string
+    approverInfo?: { name?: string }
     [key: string]: unknown
   }
   formattedDate?: string
   statusText?: string
+  // 格式化后的扩展字段
+  applicant?: string
+  title?: string
+  description?: string
+  amount?: string
+  rejectReason?: string
+  approvedBy?: string
+  rejectedBy?: string
+  submitTime?: string
+}
+
+// CloudApi响应类型
+interface ApprovalHistoryResponse {
+  success: boolean
+  data?: {
+    records: ApprovalHistoryItem[]
+    pagination: {
+      page: number
+      pageSize: number
+      total: number
+      totalPages: number
+    }
+  }
+  error?: string
 }
 
 Page({
@@ -90,7 +124,7 @@ Page({
     })
     
     try {
-      const result = await CloudApi.callFunction<unknown>(
+      const result = await CloudApi.callFunction(
         'finance-management',
         {
           action: 'get_approval_history',
@@ -101,10 +135,10 @@ Page({
         {
           showError: false
         }
-      )
+      ) as ApprovalHistoryResponse
       
       if (result.success && result.data?.records) {
-        const records = result.data.records.map((item: unknown) => this.formatApprovalItem(item))
+        const records = result.data.records.map((item: ApprovalHistoryItem) => this.formatApprovalItem(item))
         
         const newList = append ? [...this.data.approvalHistory, ...records] : records
         const hasMore = result.data.pagination.page < result.data.pagination.totalPages
@@ -141,7 +175,7 @@ Page({
   },
   
   // 格式化审批项
-  formatApprovalItem(record: unknown): unknown {
+  formatApprovalItem(record: ApprovalHistoryItem): ApprovalHistoryItem {
     // 获取申请人信息
     const applicant = record.metadata?.operator || '未知'
     
@@ -160,8 +194,10 @@ Page({
     }) : '未知时间'
     
     return {
+      _id: record._id,
       id: record._id || record.recordId,
       recordId: record.recordId,  // 关联的报销记录ID
+      createTime: record.createTime,
       type: 'expense',
       applicant: applicant,
       title: typeName,
