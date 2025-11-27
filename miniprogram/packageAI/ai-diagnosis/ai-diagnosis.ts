@@ -66,6 +66,28 @@ function normalizeCloudResult<T = AnyObject>(
 
 // 页面配置对象
 const pageConfig: AnyObject = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  _isPolling: false,
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._isPolling = false
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 诊断类型
     diagnosisType: 'live_diagnosis' as 'live_diagnosis' | 'autopsy_analysis',
@@ -161,6 +183,10 @@ const pageConfig: AnyObject = {
   onShow() {
     // 页面显示时重新验证表单
     this.validateForm()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   // 加载批次列表
@@ -854,6 +880,9 @@ const pageConfig: AnyObject = {
     const pollInterval = 1000  // 每1秒查询一次
 
     const poll = async () => {
+      // 检查是否已停止轮询（页面卸载时）
+      if (!this._isPolling) return
+      
       const retries = (this.data.pollRetries || 0) + 1
 
       try {
@@ -936,10 +965,11 @@ const pageConfig: AnyObject = {
           // 还在处理中，继续轮询
           this.setData({ pollRetries: retries })
           
-          if (retries < maxRetries) {
-            setTimeout(() => poll(), pollInterval)
+          if (retries < maxRetries && this._isPolling) {
+            this._safeSetTimeout(() => poll(), pollInterval)
           } else {
             // 超时
+            this._isPolling = false
             this.setData({
               diagnosisStatus: 'timeout',
               showPolling: false,
@@ -952,9 +982,9 @@ const pageConfig: AnyObject = {
         logger.error(`轮询失败: ${error.message}`)
         
         // 继续轮询，直到超时
-        if (retries < maxRetries) {
+        if (retries < maxRetries && this._isPolling) {
           this.setData({ pollRetries: retries })
-          setTimeout(() => poll(), pollInterval)
+          this._safeSetTimeout(() => poll(), pollInterval)
         } else {
           this.setData({ submitting: false }) // 超时后停止按钮加载
           wx.showToast({ title: '诊断超时，请重试', icon: 'error' })
@@ -963,6 +993,7 @@ const pageConfig: AnyObject = {
     }
 
     // 开始轮询
+    this._isPolling = true
     poll()
   },
 
@@ -1052,7 +1083,7 @@ const pageConfig: AnyObject = {
         })
         
         // 跳转到治疗记录页面
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           wx.navigateTo({
             url: `/packageHealth/treatment-record/treatment-record?treatmentId=${treatmentId}`
           })
@@ -1106,7 +1137,7 @@ const pageConfig: AnyObject = {
           duration: 1500
         })
 
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           const targetId = deathRecordId ? encodeURIComponent(deathRecordId) : ''
           wx.redirectTo({
             url: targetId
@@ -1279,7 +1310,7 @@ const pageConfig: AnyObject = {
         })
         
         // ✅ 保存成功后跳转到异常记录列表页面
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           wx.redirectTo({
             url: '/packageHealth/abnormal-records-list/abnormal-records-list'
           })
