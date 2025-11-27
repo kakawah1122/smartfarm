@@ -9,10 +9,22 @@ interface ErrorWithMessage {
   message: string;
   [key: string]: any;
 }
+
+// 用户类型定义
+interface UserItem {
+  _id: string
+  nickname?: string
+  avatarUrl?: string
+  phone?: string
+  role: string
+  isActive?: boolean
+  createTime?: Date | string
+  [key: string]: unknown
+}
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 用户列表数据
-    userList: [] as unknown[],
+    userList: [] as UserItem[],
     loading: true,
     loadingMore: false,
     hasMore: true,
@@ -39,7 +51,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 用户详情弹窗
     showUserDetail: false,
-    selectedUser: null as unknown,
+    selectedUser: null as UserItem | null,
     originalRole: '', // 原始角色，用于判断是否有变更
     roleChanged: false, // 角色是否变更
     
