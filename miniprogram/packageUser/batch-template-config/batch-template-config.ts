@@ -2,6 +2,26 @@
 // 批次模板配置页面
 
 Page({
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 批次列表
     batchList: [] as unknown[],
@@ -23,6 +43,10 @@ Page({
   onLoad() {
     this.setNavigationBarHeight()
     this.initializeData()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
   
   // 设置导航栏高度
@@ -329,7 +353,7 @@ Page({
         })
         
         // 延迟返回
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           wx.navigateBack()
         }, 1500)
       } else {

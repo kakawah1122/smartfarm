@@ -30,6 +30,26 @@ interface RoleInfo {
 }
 
 Page({
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 当前用户角色
     userRole: '',
@@ -59,6 +79,10 @@ Page({
 
   onLoad() {
     this.initPage()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   async initPage() {
@@ -193,7 +217,7 @@ Page({
     
     // 防抖搜索
     clearTimeout(this.searchTimer)
-    this.searchTimer = setTimeout(() => {
+    this.searchTimer = this._safeSetTimeout(() => {
       this.loadUsers(true)
     }, 500)
   },
