@@ -1,6 +1,14 @@
 // pages/login/login.ts
 
 import { logger } from '../../utils/logger'
+
+// 错误类型
+interface WxError {
+  errCode?: number
+  errMsg?: string
+  message?: string
+}
+
 interface UserInfo {
   _id: string;
   openid: string;
@@ -171,7 +179,7 @@ Page({
         
         // 更新页面数据
         this.setData({
-          userInfo: userInfo as unknown,
+          userInfo: userInfo,
           nickname: userInfo.nickname || '',
           phone: userInfo.phone || '',
           farmName: userInfo.farmName || ''
@@ -421,14 +429,15 @@ Page({
           icon: 'error'
         })
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const err = error as WxError
       wx.hideLoading()
       
       // 根据不同错误类型提供具体的错误信息
       let errorMessage = '登录失败，请重试'
       
-      if (error.errCode) {
-        switch (error.errCode) {
+      if (err.errCode) {
+        switch (err.errCode) {
           case -1:
             errorMessage = '云函数不存在，请检查云函数是否正确部署'
             break
@@ -439,10 +448,10 @@ Page({
             errorMessage = '云开发环境不存在或无权限'
             break
           default:
-            errorMessage = `云函数调用失败 (${error.errCode}): ${error.errMsg || '未知错误'}`
+            errorMessage = `云函数调用失败 (${err.errCode}): ${err.errMsg || '未知错误'}`
         }
-      } else if (error.errMsg) {
-        errorMessage = error.errMsg
+      } else if (err.errMsg) {
+        errorMessage = err.errMsg
       }
       
       wx.showModal({
@@ -479,12 +488,13 @@ Page({
         confirmText: '确定'
       })
       
-    } catch (error: unknown) {
+    } catch (error) {
+      const err = error as WxError
       wx.hideLoading()
       
       wx.showModal({
         title: '云环境测试失败',
-        content: `错误码：${error.errCode}\n错误信息：${error.errMsg}\n\n可能原因：\n1. 云函数未部署或部署失败\n2. 云开发环境ID配置错误\n3. 网络连接问题`,
+        content: `错误码：${err.errCode}\n错误信息：${err.errMsg}\n\n可能原因：\n1. 云函数未部署或部署失败\n2. 云开发环境ID配置错误\n3. 网络连接问题`,
         showCancel: false,
         confirmText: '确定'
       })
