@@ -88,6 +88,26 @@ interface MaterialItem {
 }
 
 Page({
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 任务数据
     todos: [] as Task[],
@@ -253,6 +273,10 @@ Page({
     } else if (this.data.currentBatchId) {
       this.loadTodos()
     }
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   /**
@@ -785,7 +809,7 @@ Page({
     }, () => {
       // 如果是费用相关字段，重新计算总费用
       if (['vaccineCost', 'veterinaryCost', 'otherCost'].includes(field)) {
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.calculateTotalCost()
         }, 100)
       }
@@ -1361,7 +1385,7 @@ Page({
       this.closeTaskDetailPopup()
     } else {
       // 弹窗显示时，检测文本换行并应用对齐样式
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this.checkTextAlignment()
       }, 100)
     }
@@ -1493,7 +1517,7 @@ Page({
           })
           
           // 重新加载数据确保状态同步
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             if (this.data.showAllBatches) {
               this.loadAllBatchesTodayTasks()
             } else {
@@ -1527,12 +1551,12 @@ Page({
         })
 
         // 延迟关闭弹窗，让用户看到状态变化
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.closeTaskDetailPopup()
         }, 1500)
 
         // 重新加载数据以确保UI同步（数据库中的状态已经更新）
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           if (this.data.showAllBatches) {
             this.loadAllBatchesTodayTasks()
           } else {
