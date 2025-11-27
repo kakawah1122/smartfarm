@@ -34,7 +34,6 @@ function initManager() {
 
 /**
  * 安全的云函数调用
- * ⚠️ 自动路由：调用 health-management 时自动转发到新的模块化云函数
  * @param config 调用配置
  * @returns Promise<unknown> 返回云函数的result字段内容
  */

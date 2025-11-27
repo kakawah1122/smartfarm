@@ -8,7 +8,6 @@ import type { InputEvent } from '../../../typings/core'
 
 /**
  * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
- * 自动路由 health-management 到新云函数
  */
 async function callCloudFunction(config: { name: string; data: any }) {
   const result = await safeCloudCall(config)
