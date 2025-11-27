@@ -1,6 +1,18 @@
 // knowledge.ts
 import { createPageWithNavbar } from '../../utils/navigation'
 
+// 文章类型定义
+interface Article {
+  _id: string
+  title?: string
+  category?: string
+  summary?: string
+  coverImage?: string
+  viewCount?: number
+  createTime?: Date | string
+  [key: string]: unknown
+}
+
 const pageConfig = {
   data: {
     showSearchBar: false,
@@ -17,10 +29,10 @@ const pageConfig = {
     ],
     
     // 热门文章
-    hotArticle: null as unknown,
+    hotArticle: null as Article | null,
     
     // 文章列表
-    articles: [] as unknown[],
+    articles: [] as Article[],
     
     filteredArticles: []
   },
@@ -47,7 +59,7 @@ const pageConfig = {
         const articles = result.result.data.list || []
         
         // 转换为前端需要的格式
-        const formattedArticles = articles.map((article: unknown) => ({
+        const formattedArticles = articles.map((article: Article) => ({
           id: article._id,
           title: article.title,
           description: article.description,
