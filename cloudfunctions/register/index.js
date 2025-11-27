@@ -125,8 +125,12 @@ exports.main = async (event, context) => {
         updateData.farmName = inviteInfo.department
         updateData.department = inviteInfo.department
       }
-      // 保持待审批状态
-      updateData.approvalStatus = 'pending'
+      // ✅ 使用有效邀请码注册的用户自动通过审批
+      updateData.approvalStatus = 'approved'
+      updateData.approvedBy = inviteInfo.inviterOpenId || inviteInfo.createdBy || 'system'
+      updateData.approvedTime = new Date()
+      updateData.approvalRemark = '通过邀请码自动审批'
+      updateData.isActive = true
     }
     
     // 更新用户信息
