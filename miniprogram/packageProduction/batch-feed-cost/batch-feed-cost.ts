@@ -1,5 +1,19 @@
 // batch-feed-cost.ts - 批次饲养成本统计页面
 import { createPageWithNavbar } from '../../utils/navigation'
+
+// 批次信息类型
+interface BatchItem {
+  _id: string
+  batchNumber?: string
+  breed?: string
+  [key: string]: unknown
+}
+
+// 页面参数类型
+interface PageOptions {
+  batchId?: string
+}
+
 interface BatchFeedCostData {
   // 批次信息
   batchInfo: {
@@ -41,7 +55,7 @@ const pageConfig = {
     // 批次选择
     selectedBatchId: '',
     selectedBatchNumber: '请选择批次',
-    availableBatches: [] as unknown[],
+    availableBatches: [] as BatchItem[],
     showBatchDropdown: false,
     
     // 成本数据
@@ -59,9 +73,9 @@ const pageConfig = {
     // 页面状态
     loading: false,
     hasData: false
-  } as unknown,
+  },
 
-  onLoad(options: unknown) {
+  onLoad(options: PageOptions) {
     // 从参数获取批次ID
     const batchId = options?.batchId || ''
     if (batchId) {
