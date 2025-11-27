@@ -1,15 +1,5 @@
-import { logger } from '../../../utils/logger'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 // health-watchers.ts - 健康数据实时监听模块
+import { logger } from '../../../utils/logger'
 
 type DatabaseRealtimeListener = {
   close?: () => void | Promise<void>

@@ -27,16 +27,6 @@ export function getSeverityColor(severity: string): string {
 }
 
 import { formatTime } from '../../../utils/util'
-import type { 
-  BaseResponse, 
-  Batch, 
-  HealthRecord,
-  InputEvent, 
-  TapEvent, 
-  CustomEvent,
-  ScrollEvent,
-  PickerEvent 
-} from '../../../../../../../../../typings/core';
 
 /**
  * 获取健康状态图标
