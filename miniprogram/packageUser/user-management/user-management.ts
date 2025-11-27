@@ -5,19 +5,32 @@ import { logger } from '../../utils/logger'
 
 // 类型定义 - 用于替换any类型
 type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
-type BaseEvent = WechatMiniprogram.BaseEvent;
-interface ErrorWithMessage {
-  message: string;
-  [key: string]: any;
+// 微信错误类型
+interface WxError {
+  message?: string
+  errMsg?: string
+  [key: string]: unknown
+}
+
+// 页面参数类型
+interface PageOptions {
+  from?: string
+  hasPermission?: string
+  userRole?: string
+  isSuper?: string
 }
 
 // 用户类型定义
 interface UserItem {
   _id: string
   nickname?: string
+  nickName?: string
   avatarUrl?: string
   phone?: string
   role: string
+  farmName?: string
+  department?: string
+  status?: string
   isActive?: boolean
   createTime?: Date | string
   [key: string]: unknown
@@ -80,7 +93,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     displayPermissions: [] as string[]
   },
 
-  onLoad(options: unknown) {
+  onLoad(options: PageOptions) {
     // 检查是否从员工管理中间页传递了权限信息
     if (options && options.from === 'employee-management' && options.hasPermission === 'true') {
       const userInfo = {
@@ -165,7 +178,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         const pagination = result.result.data.pagination
         
         // 标准化用户数据，确保字段一致性
-        const newUsers = rawUsers.map((user: unknown) => ({
+        const newUsers = rawUsers.map((user: UserItem) => ({
           ...user,
           nickname: user.nickname || user.nickName || '未设置昵称',
           farmName: user.farmName || user.department || '未设置农场',
@@ -184,7 +197,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       } else {
         throw new Error(result.result?.message || '加载失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const err = error as WxError
       this.setData({
         loading: false,
         loadingMore: false,
@@ -192,7 +206,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       })
       
       // 权限不足提示
-      if (error.message?.includes('权限不足') || error.errMsg?.includes('权限不足')) {
+      if (err.message?.includes('权限不足') || err.errMsg?.includes('权限不足')) {
         wx.showModal({
           title: '权限不足',
           content: '您没有用户管理权限，请联系超级管理员',
@@ -208,7 +222,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 显示用户详情弹窗
-  openUserDetail(user: unknown) {
+  openUserDetail(user: UserItem) {
     const currentRoleIndex = this.data.roleOptions.findIndex(
       (option: { label: string; value: string }) => option.value === user.role
     )
