@@ -1,3 +1,5 @@
+import { logger } from './logger'
+
 /**
  * 格式化时间为北京时间
  * @param date 日期对象或日期字符串
@@ -35,7 +37,7 @@ export const formatTime = (date: Date | string, format: 'datetime' | 'date' | 't
       return standardFormat
     }
   } catch (error) {
-    console.error('时间格式化错误:', error)
+    logger.error('时间格式化错误:', error)
     // 降级处理
     const year = dateObj.getFullYear()
     const month = dateObj.getMonth() + 1
@@ -72,7 +74,7 @@ export const getCurrentBeijingDate = (): string => {
     })
     return beijingDate.replace(/\//g, '-')
   } catch (error) {
-    console.error('获取北京时间日期失败:', error)
+    logger.error('获取北京时间日期失败:', error)
     // 降级处理
     return formatTime(now, 'date')
   }

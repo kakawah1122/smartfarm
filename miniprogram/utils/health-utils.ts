@@ -2,6 +2,7 @@
  * 健康管理工具函数
  * 提取健康页面中的公共逻辑，提升代码复用性和可维护性
  */
+import { logger } from './logger'
 
 /**
  * 判断是否为疫苗任务
@@ -217,7 +218,7 @@ export function formatDate(date: string | Date, format: string = 'YYYY-MM-DD'): 
       .replace('MM', month)
       .replace('DD', day)
   } catch (error) {
-    console.error('日期格式化错误:', error)
+    logger.error('日期格式化错误:', error)
     // 降级处理
     const year = d.getFullYear()
     const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -254,7 +255,7 @@ export function formatDateTime(date: string | Date): string {
 
     return beijingTimeStr.replace(/\//g, '-').replace(/\s+/, ' ')
   } catch (error) {
-    console.error('日期时间格式化错误:', error)
+    logger.error('日期时间格式化错误:', error)
     const year = d.getFullYear()
     const month = String(d.getMonth() + 1).padStart(2, '0')
     const day = String(d.getDate()).padStart(2, '0')
