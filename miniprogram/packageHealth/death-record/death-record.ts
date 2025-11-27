@@ -16,7 +16,31 @@ interface PageOptions {
   sourceType?: string
 }
 
-const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
+const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
+  _timerIds: number[]
+  _safeSetTimeout: (callback: () => void, delay: number) => number
+  _clearAllTimers: () => void
+} = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: {
     // 表单数据
     formData: {
@@ -134,6 +158,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
     
     this.validateForm()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   // 加载AI诊断信息
@@ -417,7 +445,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           })
           
           // 返回健康管理页面
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             wx.navigateBack({ delta: 2 })
           }, 1500)
         } else {
@@ -442,7 +470,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           })
           
           // 返回上一页
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             wx.navigateBack()
           }, 1500)
         } else {
