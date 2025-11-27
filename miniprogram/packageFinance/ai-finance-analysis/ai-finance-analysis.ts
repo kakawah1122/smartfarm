@@ -6,10 +6,22 @@ import { safeCloudCall } from '../../utils/safe-cloud-call'
 const COLLECTIONS = {
   FINANCE_ANALYSIS_HISTORY: 'finance_analysis_history'
 }
+
+// 类型定义
 interface CloudCallResult<T = any> {
   success: boolean
   data?: T
   error?: string
+}
+
+// AI分析结果类型
+interface AnalysisResult {
+  format?: string
+  rawText?: string
+  profitability?: { summary?: string; [key: string]: unknown }
+  costStructure?: { summary?: string; [key: string]: unknown }
+  suggestions?: { summary?: string; [key: string]: unknown }
+  [key: string]: unknown
 }
 
 Component({
@@ -47,7 +59,7 @@ Component({
     analyzing: false,
     
     // AI分析结果
-    analysisResult: null as unknown,
+    analysisResult: null as AnalysisResult | null,
     analysisError: null as string | null,
     
     // 用户自定义分析需求
@@ -76,7 +88,7 @@ Component({
   methods: {
     
     // 保存分析到历史
-    async saveToHistory(analysisResult: unknown, customQuery: string = '') {
+    async saveToHistory(analysisResult: AnalysisResult, customQuery: string = '') {
       try {
         const db = wx.cloud.database()
         const dateRange = this.properties.dateRange
