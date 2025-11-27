@@ -4,6 +4,11 @@
  * 只渲染可视区域内的元素，大幅减少DOM节点
  */
 
+// 列表项类型
+interface ListItem {
+  [key: string]: unknown
+}
+
 Component({
   properties: {
     // 列表数据
@@ -46,7 +51,7 @@ Component({
     // 可视区域结束索引
     endIndex: 0,
     // 渲染列表
-    visibleList: [] as unknown[],
+    visibleList: [] as ListItem[],
     // 占位高度
     topHeight: 0,
     bottomHeight: 0,
