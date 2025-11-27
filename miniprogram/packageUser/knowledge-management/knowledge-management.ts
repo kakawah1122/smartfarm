@@ -63,6 +63,26 @@ type KnowledgePageInstance = Partial<PageInstance<KnowledgePageData>> & {
 }
 
 const pageConfig: KnowledgePageInstance = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   // 获取 message 组件实例的辅助方法
   getMessage() {
     return this.selectComponent('#t-message')
@@ -156,6 +176,10 @@ const pageConfig: KnowledgePageInstance = {
     })
   },
 
+  onUnload() {
+    this._clearAllTimers()
+  },
+
   onShow() {
     // 每次显示时刷新列表
     this.loadArticles()
@@ -229,7 +253,7 @@ const pageConfig: KnowledgePageInstance = {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer)
     }
-    this.searchTimer = setTimeout(() => {
+    this.searchTimer = this._safeSetTimeout(() => {
       this.setData({ page: 1 })
       this.loadArticles(true)
       this.searchTimer = null
@@ -707,7 +731,7 @@ const pageConfig: KnowledgePageInstance = {
     })
     
     // 延迟一下再触发编辑，确保滑动状态已关闭
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.editArticle({ currentTarget: { dataset: { id } } })
     }, 100)
   },
@@ -721,7 +745,7 @@ const pageConfig: KnowledgePageInstance = {
     })
     
     // 延迟一下再触发删除，确保滑动状态已关闭
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.deleteArticle({ currentTarget: { dataset: { id } } })
     }, 100)
   },
