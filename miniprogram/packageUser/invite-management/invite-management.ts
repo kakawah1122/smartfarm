@@ -1,6 +1,16 @@
 // invite-management.ts - 邀请管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+// 微信小程序事件类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
+// 错误类型
+interface WxError {
+  errCode?: number
+  errMsg?: string
+  message?: string
+}
+
 // 邀请项类型定义
 interface InviteItem {
   _id: string
@@ -26,6 +36,15 @@ interface UserInfo {
   nickName?: string
   avatarUrl?: string
   role?: string
+  isSuper?: boolean
+}
+
+// 页面参数类型
+interface PageOptions {
+  from?: string
+  hasPermission?: string
+  userRole?: string
+  isSuper?: string
 }
 
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
@@ -51,11 +70,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   data: {
     // 用户信息
-    userInfo: null as unknown,
+    userInfo: null as UserInfo | null,
     fromEmployeeManagement: false,  // 标记是否从员工管理中间页进入
     
     // 邀请列表数据
-    inviteList: [] as unknown[],
+    inviteList: [] as InviteItem[],
     loading: true,
     loadingMore: false,
     hasMore: true,
@@ -79,7 +98,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 邀请详情弹窗
     showInviteDetail: false,
-    selectedInvite: null as unknown,
+    selectedInvite: null as InviteItem | null,
     
     // 创建邀请弹窗
     showCreateDialog: false,
@@ -114,10 +133,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     ]
   },
 
-  onLoad(options: unknown) {
+  onLoad(options: PageOptions) {
     // 检查是否从员工管理中间页传递了权限信息
     if (options && options.from === 'employee-management' && options.hasPermission === 'true') {
-      const userInfo = {
+      const userInfo: UserInfo = {
         role: options.userRole,
         isSuper: options.isSuper === 'true'
       }
@@ -400,12 +419,13 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
           }
         })
       }
-    } catch (error: unknown) {
+    } catch (error) {
       // 已移除调试日志
+      const err = error as WxError
       let errorMessage = '生成失败，请重试'
       
-      if (error.errCode) {
-        switch (error.errCode) {
+      if (err.errCode) {
+        switch (err.errCode) {
           case -1:
             errorMessage = '云函数不存在，请检查云函数是否正确部署'
             break
@@ -416,12 +436,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
             errorMessage = '云开发环境不存在或无权限'
             break
           default:
-            errorMessage = `云函数调用失败 (${error.errCode}): ${error.errMsg || '未知错误'}`
+            errorMessage = `云函数调用失败 (${err.errCode}): ${err.errMsg || '未知错误'}`
         }
-      } else if (error.errMsg) {
-        errorMessage = error.errMsg
-      } else if (error.message) {
-        errorMessage = error.message
+      } else if (err.errMsg) {
+        errorMessage = err.errMsg
+      } else if (err.message) {
+        errorMessage = err.message
       }
       
       wx.showModal({
@@ -642,10 +662,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 数据标准化函数
-  normalizeInviteData(invite: unknown) {
+  normalizeInviteData(invite: Partial<InviteItem>): InviteItem {
     // 确保所有必要字段都有默认值
-    const normalized = {
-      ...invite,
+    const normalized: InviteItem = {
       _id: invite._id || '',
       inviteCode: invite.inviteCode || '',
       inviteeName: invite.inviteeName || invite.name || '未知用户',
