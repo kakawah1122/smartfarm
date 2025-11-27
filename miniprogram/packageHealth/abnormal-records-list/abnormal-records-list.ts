@@ -2,6 +2,7 @@
 
 import { createPageWithNavbar } from '../../utils/navigation'
 import { HealthCloud } from '../../utils/cloud-functions'
+import { logger } from '../../utils/logger'
 import type { AbnormalRecord } from '../types/abnormal'
 
 interface AbnormalRecordsPageData {
@@ -62,12 +63,12 @@ const abnormalRecordsPageConfig: WechatMiniprogram.Page.Options<
     try {
       const response = await HealthCloud.abnormal.list({ batchId: null })
       
-      console.log('异常记录列表响应:', response)
+      logger.info('[异常记录] 列表响应:', response?.success ? '成功' : '失败')
 
       if (response.success) {
         // ✅ 修复：正确获取记录列表，兼容两种数据结构
         const records = response.data?.list || response.data || []
-        console.log('记录数量:', records.length)
+        logger.info('[异常记录] 记录数量:', records.length)
         
         page.setData({
           records: records,

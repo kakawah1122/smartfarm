@@ -1177,26 +1177,27 @@ const pageConfig: AnyObject = {
 
   // 保存为记录
   async saveRecord() {
-    console.log('====== saveRecord 被调用 ======')
-    console.log('diagnosisResult:', this.data.diagnosisResult ? '有值' : 'null')
-    console.log('isSaving:', this.data.isSaving)
+    logger.info('[saveRecord] 开始保存诊断记录', {
+      hasDiagnosisResult: !!this.data.diagnosisResult,
+      isSaving: this.data.isSaving
+    })
     
     if (!this.data.diagnosisResult) {
-      console.log('diagnosisResult为空，退出')
+      logger.warn('[saveRecord] diagnosisResult为空')
       wx.showToast({ title: '诊断结果为空', icon: 'none' })
       return
     }
     
     // ✅ 防止重复提交
     if (this.data.isSaving) {
-      console.log('正在保存中，退出')
+      logger.info('[saveRecord] 已在保存中，跳过')
       return
     }
 
     try {
       // ✅ 设置保存状态，禁止重复点击
       this.setData({ isSaving: true })
-      console.log('开始保存...')
+      logger.info('[saveRecord] 开始保存诊断结果')
       
       wx.showLoading({ title: '保存中...' })
       
@@ -1297,7 +1298,7 @@ const pageConfig: AnyObject = {
       wx.hideLoading()
       
       // ✅ 修复：HealthCloud返回的是已解包的结果，不需要再用normalizeCloudResult
-      console.log('保存结果:', result)
+      logger.info('[saveRecord] 保存结果:', result?.success ? '成功' : '失败')
       
       if (result?.success) {
         // ✅ 重置保存状态

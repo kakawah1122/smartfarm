@@ -150,7 +150,7 @@ Component({
         
         // 如果没有数据或数据为空，自动导入标准模板
         if (!checkResult.result?.data || checkResult.result.data.length === 0) {
-          console.log('[lifecycle-management] 用户没有模板，自动导入标准模板...')
+          // 自动导入标准模板
           await wx.cloud.callFunction({
             name: 'lifecycle-management',
             data: {
