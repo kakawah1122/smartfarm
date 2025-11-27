@@ -2,6 +2,26 @@
 import CloudApi from '../../utils/cloud-api'
 
 Page({
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 审批历史记录列表
     approvalHistory: [] as unknown[],
@@ -25,6 +45,10 @@ Page({
 
   onLoad() {
     this.loadApprovalHistory()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
   
   // 返回上一页
@@ -186,7 +210,7 @@ Page({
       showDetailPopup: false
     })
     // 延迟清空数据，避免动画时闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedApprovalItem: null
       })

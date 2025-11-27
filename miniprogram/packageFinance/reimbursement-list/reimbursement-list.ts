@@ -65,6 +65,26 @@ type PageData = {
   selectedRecord: unknown}
 
 const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     list: [],
     currentStatus: 'all', // all, pending, approved, rejected
@@ -81,6 +101,10 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
 
   onLoad(this: PageInstance<PageData>) {
     this.loadList()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   /**
@@ -197,7 +221,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
       showDetailDialog: false
     })
     // ⚠️ 重要：延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedRecord: null
       })
