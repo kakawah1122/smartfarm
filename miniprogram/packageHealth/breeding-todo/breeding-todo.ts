@@ -949,22 +949,14 @@ Page({
 
   /**
    * 处理疫苗异常反应
+   * 注：health-care页面已废弃，异常反应通过AI诊断或治疗记录处理
    */
-  handleVaccineAdverseReaction(preventionRecordId: string) {
+  handleVaccineAdverseReaction(_preventionRecordId: string) {
     wx.showModal({
       title: '注意',
-      content: '疫苗接种完成，是否需要记录异常反应？',
-      showCancel: true,
-      confirmText: '记录',
-      cancelText: '暂不记录',
-      success: (res) => {
-        if (res.confirm) {
-          // 跳转到异常反应记录页面
-          wx.navigateTo({
-            url: `/packageHealth/health-care/health-care?type=adverse_reaction&preventionRecordId=${preventionRecordId}`
-          })
-        }
-      }
+      content: '疫苗接种完成。如有异常反应，请通过AI诊断或治疗记录进行处理。',
+      showCancel: false,
+      confirmText: '知道了'
     })
   },
 
@@ -1701,10 +1693,9 @@ Page({
     const { selectedTask } = this.data
     if (!selectedTask) return
 
-    const taskId = selectedTask.id || selectedTask.taskId || selectedTask._id
-
+    // 跳转到疫苗记录列表查看详情
     wx.navigateTo({
-      url: `/packageHealth/health-care/health-care?type=vaccine_record&taskId=${taskId}`
+      url: `/packageHealth/vaccine-records-list/vaccine-records-list`
     })
     
     this.closeTaskDetailPopup()

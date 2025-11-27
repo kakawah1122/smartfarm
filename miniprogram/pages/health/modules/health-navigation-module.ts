@@ -67,20 +67,6 @@ export class HealthNavigationManager {
   }
   
   /**
-   * 跳转到健康警报页面
-   */
-  static navigateToHealthAlert(alertId: string) {
-    this.navigate(`/packageHealth/health-care/health-care?alertId=${alertId}`)
-  }
-  
-  /**
-   * 创建新的健康检查记录
-   */
-  static createHealthInspection(batchId: string) {
-    this.navigate(`/packageHealth/health-inspection/health-inspection?batchId=${batchId}`)
-  }
-  
-  /**
    * 创建新的预防记录
    */
   static createPreventionRecord(batchId: string) {
@@ -102,20 +88,6 @@ export class HealthNavigationManager {
       ? `/packageAI/ai-diagnosis/ai-diagnosis?batchId=${batchId}`
       : '/packageAI/ai-diagnosis/ai-diagnosis'
     this.navigate(url)
-  }
-  
-  /**
-   * 跳转到消毒记录页面
-   */
-  static navigateToDisinfectionRecord(batchId: string) {
-    this.navigate(`/packageHealth/disinfection-record/disinfection-record?batchId=${batchId}`)
-  }
-  
-  /**
-   * 跳转到保健记录页面
-   */
-  static navigateToHealthCare(batchId: string) {
-    this.navigate(`/packageHealth/health-care/health-care?batchId=${batchId}`)
   }
   
   /**
@@ -186,18 +158,6 @@ export class HealthNavigationManager {
         this.createPreventionRecord(batchId)
         return true
         
-      case 'add_disinfection':
-        this.navigateToDisinfectionRecord(batchId)
-        return true
-        
-      case 'add_health':
-        this.createHealthInspection(batchId)
-        return true
-        
-      case 'add_healthcare':
-        this.navigateToHealthCare(batchId)
-        return true
-        
       default:
         return false
     }
@@ -254,15 +214,6 @@ export class HealthNavigationManager {
       
       onMedicationCountClick: (events?: unknown) => {
         this.navigateToMedicationList(events)
-      },
-      
-      // 健康检查相关
-      createHealthRecord: (batchId: string) => {
-        this.createHealthInspection(batchId)
-      },
-      
-      viewHealthAlert: (alertId: string) => {
-        this.navigateToHealthAlert(alertId)
       },
       
       // 记录列表相关

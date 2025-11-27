@@ -28,9 +28,6 @@
       "name": "health",
       "pages": [
         "vaccine-record/vaccine-record",
-        "disinfection-record/disinfection-record",
-        "health-inspection/health-inspection",
-        "health-care/health-care",
         "treatment-record/treatment-record",
         "treatment-records-list/treatment-records-list",
         "cured-records-list/cured-records-list",

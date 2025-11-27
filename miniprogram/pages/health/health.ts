@@ -2214,14 +2214,6 @@ Page<PageData, any>({
         this.openMedicationForm(task)
         break
         
-      case 'disinfection':
-        // 消毒任务：跳转到消毒记录页面
-        const disinfectionParams = `taskId=${task.taskId}&batchId=${task.batchId}&dayAge=${task.dayAge}&taskName=${encodeURIComponent(task.taskName || '')}&fromTask=true`
-        wx.navigateTo({
-          url: `/packageHealth/disinfection-record/disinfection-record?${disinfectionParams}`
-        })
-        break
-        
       default:
         wx.showToast({
           title: '未知任务类型',
@@ -2798,23 +2790,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    */
   onPreventionAction(e: WechatMiniprogram.CustomEvent) {
     const { action } = e.currentTarget.dataset
-    // 已移除调试日志
     switch (action) {
       case 'add_vaccine':
         this.createPreventionRecord()
         break
-      case 'add_disinfection':
-        wx.navigateTo({
-          url: `/packageHealth/disinfection-record/disinfection-record?batchId=${this.data.currentBatchId}`
-        })
-        break
       case 'health_inspection':
         this.createHealthRecord()
-        break
-      case 'add_healthcare':
-        wx.navigateTo({
-          url: `/packageHealth/health-care/health-care?batchId=${this.data.currentBatchId}`
-        })
         break
     }
   },

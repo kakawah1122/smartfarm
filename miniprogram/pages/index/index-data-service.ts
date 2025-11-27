@@ -205,11 +205,11 @@ export class IndexDataService {
       },
       {
         id: 'health',
-        title: '健康检查',
+        title: '健康管理',
         icon: 'heart',
         color: '#EF4444',
         bgColor: '#FEE2E2',
-        url: '/packageHealth/health-inspection/health-inspection'
+        url: '/pages/health/health'
       },
       {
         id: 'vaccine',

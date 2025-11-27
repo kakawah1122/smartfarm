@@ -69,13 +69,6 @@ export class NavigationManager {
       params: ['id', 'batchId', 'mode']
     })
     
-    this.registerRoute('health-inspection', {
-      name: 'health-inspection',
-      path: '/packageHealth/health-inspection/health-inspection',
-      package: 'packageHealth',
-      params: ['batchId']
-    })
-    
     // AI分包
     this.registerRoute('ai-diagnosis', {
       name: 'ai-diagnosis',
