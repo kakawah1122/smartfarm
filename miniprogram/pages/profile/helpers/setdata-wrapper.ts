@@ -19,7 +19,13 @@ export interface SetDataWrapper {
   destroy: () => void  // 🔧 新增：兼容自动拦截模式的接口
 }
 
-export function createSetDataWrapper(context: unknown): SetDataWrapper {
+// 页面/组件实例接口
+interface PageInstance {
+  setData: (data: Record<string, unknown>, callback?: () => void) => void
+  [key: string]: unknown
+}
+
+export function createSetDataWrapper(context: PageInstance): SetDataWrapper {
   const BATCH_DELAY = 16 // ms, 约等于一帧（符合微信小程序建议）
   const MAX_BATCH_SIZE = 50 // 最大批量属性数（避免单次setData数据过大）
   

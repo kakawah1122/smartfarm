@@ -33,6 +33,13 @@ export interface DeathRecord {
     costPerAnimal?: number | string
     treatmentCost?: number | string
   }
+  costBreakdown?: {
+    entryUnitCost?: string
+    breedingCost?: string
+    preventionCost?: string
+    treatmentCost?: string
+    [key: string]: string | undefined
+  }
   financeLoss?: number | string
   unitCost?: number | string
   breedingCost?: number | string

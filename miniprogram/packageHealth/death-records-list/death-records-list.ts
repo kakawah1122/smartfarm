@@ -149,7 +149,7 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
         let costBreakdownFromBatch = null
 
         // ✅ 优先使用记录根级别的 costBreakdown（数据库已有的）
-        const recordCostBreakdown = (record as unknown as Record<string, unknown>).costBreakdown as Record<string, string> | null
+        const recordCostBreakdown = record.costBreakdown
         
         if (recordCostBreakdown && recordCostBreakdown.entryUnitCost) {
           // 使用数据库中已存储的成本分解
