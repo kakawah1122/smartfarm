@@ -1,4 +1,27 @@
 // 全部分析历史页面
+
+// 微信小程序事件类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
+// 分析结果类型
+interface AnalysisResult {
+  format?: string
+  rawText?: string
+  profitability?: { summary?: string }
+  costStructure?: { summary?: string }
+  salesPerformance?: { summary?: string }
+  suggestions?: { summary?: string }
+}
+
+// 分析历史项类型
+interface AnalysisHistoryItem {
+  _id: string
+  createTime: Date | string
+  analysisResult?: AnalysisResult
+  formattedDate?: string
+  summary?: string
+}
+
 Page({
   // ✅ 定时器管理
   _timerIds: [] as number[],
@@ -22,7 +45,7 @@ Page({
 
   data: {
     // 历史记录列表
-    analysisHistory: [] as unknown[],
+    analysisHistory: [] as AnalysisHistoryItem[],
     
     // 加载状态
     loading: false,
@@ -35,7 +58,7 @@ Page({
     
     // 弹窗
     showDetailPopup: false,
-    selectedAnalysisItem: null as unknown,
+    selectedAnalysisItem: null as AnalysisHistoryItem | null,
     
     // 空状态
     isEmpty: false
@@ -71,7 +94,7 @@ Page({
         .limit(this.data.pageSize)
         .get()
       
-      const records = (result.data || []).map((item: unknown) => ({
+      const records = (result.data || []).map((item: AnalysisHistoryItem) => ({
         ...item,
         formattedDate: this.formatDateTime(item.createTime),
         summary: this.extractSummary(item.analysisResult)
@@ -105,7 +128,7 @@ Page({
   },
   
   // 提取分析摘要
-  extractSummary(result: unknown): string {
+  extractSummary(result: AnalysisResult | undefined): string {
     if (!result) return '暂无摘要'
     
     if (result.format === 'text') {
