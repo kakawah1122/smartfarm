@@ -2348,7 +2348,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         newBatchId = selectedBatch._id
         newBatchNumber = selectedBatch.batchNumber
       } else {
-        console.warn('[批次选择] 无效的批次索引:', index)
+        logger.warn('[批次选择] 无效的批次索引:', index)
         wx.hideLoading()
         return
       }

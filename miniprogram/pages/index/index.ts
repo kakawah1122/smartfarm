@@ -743,7 +743,7 @@ Page({
     try {
       // 检查云开发是否初始化
       if (!wx.cloud) {
-        console.warn('云开发未初始化，使用默认价格数据')
+        logger.warn('云开发未初始化，使用默认价格数据')
         return this.setDefaultPriceData()
       }
       
@@ -763,7 +763,7 @@ Page({
           .limit(1)
           .get()
       } catch (dbError) {
-        console.warn('数据库查询失败，使用默认价格数据:', dbError)
+        logger.warn('数据库查询失败，使用默认价格数据:', dbError)
         return this.setDefaultPriceData()
       }
 
