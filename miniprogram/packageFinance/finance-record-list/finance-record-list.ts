@@ -66,7 +66,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     
     // 交易详情弹窗
     showDetailPopup: false,
-    selectedRecord: null as unknown,
+    selectedRecord: null,
     
     // 虚拟渲染相关（生产环境默认开启）
     virtualRenderEnabled: true, // 生产环境默认开启
