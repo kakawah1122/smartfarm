@@ -4,28 +4,50 @@
 # 排除测试文件
 test-*.js
 *test*.js
-查看诊断失败原因.js
 
-# 排除云函数目录
+# 排除云函数目录（单独上传）
 cloudfunctions/
 
-# 排除构建工具
+# 排除构建工具和依赖
 node_modules/
 
 # 排除版本控制
 .git/
 .gitignore
+.github/
+.husky/
 
-# 排除 IDE 配置
+# 排除 IDE 和工具配置
 .vscode/
 .idea/
+.windsurf/
+.cloudbase/
 
 # 排除临时文件
 *.log
 *.tmp
 .DS_Store
 
-# 排除文档和说明
-deploy-functions.md
+# 排除文档目录
+docs/
 README.md
+
+# 排除开发配置
+.eslintrc.json
+.prettierrc.json
+tsconfig.json
+package.json
+package-lock.json
+
+# 排除类型定义（编译后不需要）
+typings/
+
+# 排除共享配置（云函数各自有副本）
+shared-config/
+
+# 排除数据库索引配置
+database-indexes/
+
+# 排除项目配置（IDE自动处理）
+project.private.config.json
 
