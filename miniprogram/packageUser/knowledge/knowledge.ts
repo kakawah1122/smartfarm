@@ -2,6 +2,9 @@
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 
+// 微信小程序事件类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 // 文章类型定义
 interface Article {
   _id: string

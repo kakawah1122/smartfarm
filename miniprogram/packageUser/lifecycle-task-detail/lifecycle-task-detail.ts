@@ -1,6 +1,9 @@
 // 任务详情页面
 import { logger } from '../../utils/logger'
 
+// 微信小程序事件类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 // 任务数据类型
 interface TaskData {
   id?: string
