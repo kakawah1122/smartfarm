@@ -110,8 +110,8 @@ function parseFloatOrNull(value: number | string | undefined | null): number | n
 }
 
 function extractMinMax(item: ParsedBreedItem): { min: number | null; max: number | null } {
-  let min = parseFloatOrNull(item.min as unknown)
-  let max = parseFloatOrNull(item.max as unknown)
+  let min = parseFloatOrNull(item.min)
+  let max = parseFloatOrNull(item.max)
 
   if ((min === null || max === null) && item.range) {
     const parts = item.range
@@ -128,7 +128,7 @@ function extractMinMax(item: ParsedBreedItem): { min: number | null; max: number
   }
 
   if ((min === null || max === null) && item.price !== undefined) {
-    const priceVal = parseFloatOrNull(item.price as unknown)
+    const priceVal = parseFloatOrNull(item.price)
     if (priceVal !== null) {
       min = priceVal
       max = priceVal
@@ -346,7 +346,7 @@ Page({
     // 弹窗相关
     showDetailPopup: false,
     selectedDate: '',
-    selectedDateRecords: [] as unknown[]
+    selectedDateRecords: [] as HistoryItem['allRecords']
   },
 
   onLoad() {

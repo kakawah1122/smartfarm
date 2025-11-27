@@ -1,5 +1,33 @@
 // invite-management.ts - 邀请管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
+
+// 邀请项类型定义
+interface InviteItem {
+  _id: string
+  inviteCode: string
+  inviteeName: string
+  inviteePhone: string
+  department: string
+  position: string
+  role: string
+  status: 'pending' | 'used' | 'expired' | 'revoked'
+  createTime: Date | string
+  expiresAt: Date | string
+  remark: string
+  statusText?: string
+  remainingDays?: number
+  name?: string
+  phone?: string
+}
+
+// 用户信息类型
+interface UserInfo {
+  _id?: string
+  nickName?: string
+  avatarUrl?: string
+  role?: string
+}
+
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // ✅ 定时器管理
   _timerIds: [] as number[],
