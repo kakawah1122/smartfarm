@@ -1,5 +1,7 @@
 // health-utils.ts - 健康管理工具函数模块
 
+import { formatTime } from '../../../utils/util'
+
 /**
  * 获取预防类型显示文本
  */
@@ -25,8 +27,6 @@ export function getSeverityColor(severity: string): string {
   }
   return colorMap[severity] || '#d9d9d9'
 }
-
-import { formatTime } from '../../../utils/util'
 
 /**
  * 获取健康状态图标

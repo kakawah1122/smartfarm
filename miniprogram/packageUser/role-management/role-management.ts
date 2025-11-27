@@ -2,12 +2,10 @@
 import { 
   ROLES, 
   ROLE_INFO, 
-  ROLE_OPTIONS, 
   ROLE_PERMISSION_MATRIX,
   getRoleName, 
   getRoleColor,
-  getAvailableRolesForUser,
-  formatRoleDisplay 
+  getAvailableRolesForUser
 } from '../../utils/role-config.js'
 
 interface User {
