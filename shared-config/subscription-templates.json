@@ -2,25 +2,29 @@
   "updatedAt": "2025-11-27",
   "description": "订阅消息模板配置",
   "templates": {
-    "systemNotification": {
-      "name": "系统交互消息",
-      "description": "系统提醒类通知，例如审批进度、任务通知等",
-      "templateId": "9W5ouxxRtOYFejnlVZlgZUFrmbisQlWGeAVqA9_KsuQ"
+    "breedingInfo": {
+      "name": "养殖信息提醒",
+      "description": "养殖指标、温馨提示、养殖品相关通知",
+      "templateId": "9W5ouxxRtOYFejnlVZlgZUFrmbisQlWGeAVqA9_KsuQ",
+      "keywords": ["养殖指标", "温馨提示", "养殖品"]
     },
-    "productionReminder": {
-      "name": "生产进度提醒",
-      "description": "与生产计划、排行榜等相关的通知消息",
-      "templateId": "mG24Zyx7MyowDS34oVyOQKM3ssGBLIn-v84vKwa0xqs"
+    "planProgress": {
+      "name": "计划进度通知",
+      "description": "计划编号、工程名称、操作状态相关通知",
+      "templateId": "mG24Zyx7MyowDS34oVyOQKM3ssGBLIn-v84vKwa0xqs",
+      "keywords": ["计划编号", "工程名称", "操作状态"]
     },
-    "healthAlert": {
-      "name": "健康提醒",
-      "description": "疫苗接种、用药提醒、健康异常等通知",
-      "templateId": "tf4ZV7JBfB7VXeV-cqZI7Z1RyEQJM7Dd6zi6vhtNi9k"
+    "todoReminder": {
+      "name": "待办事项提醒",
+      "description": "待办内容、待办名称、待办事项相关通知",
+      "templateId": "tf4ZV7JBfB7VXeV-cqZI7Z1RyEQJM7Dd6zi6vhtNi9k",
+      "keywords": ["待办内容", "待办名称", "待办事项"]
     },
-    "taskReminder": {
-      "name": "任务提醒",
-      "description": "待办任务、到期提醒等通知",
-      "templateId": "pxhqtcWaKcLKj7keVNFhauTiYzWPwhrHY_ncTGQVgqw"
+    "approvalResult": {
+      "name": "审批结果通知",
+      "description": "审批结果、审批日期、审批人相关通知",
+      "templateId": "pxhqtcWaKcLKj7keVNFhauTiYzWPwhrHY_ncTGQVgqw",
+      "keywords": ["审批结果", "审批日期", "审批人"]
     }
   }
 }
