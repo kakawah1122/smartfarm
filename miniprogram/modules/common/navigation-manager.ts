@@ -7,6 +7,7 @@
  */
 
 /// <reference path="../../../typings/index.d.ts" />
+import { logger } from '../../utils/logger'
 
 /**
  * 导航选项接口
@@ -145,7 +146,7 @@ export class NavigationManager {
   static buildUrl(routeName: string, params?: Record<string, unknown>): string | null {
     const route = this.getRoute(routeName)
     if (!route) {
-      console.error(`路由 ${routeName} 未找到`)
+      logger.error(`路由 ${routeName} 未找到`)
       return null
     }
     
@@ -192,7 +193,7 @@ export class NavigationManager {
           resolve(true)
         },
         fail: (error) => {
-          console.error('导航失败:', error)
+          logger.error('导航失败:', error)
           options?.fail?.(error)
           reject(error)
         },
@@ -286,7 +287,7 @@ export class NavigationManager {
       wx.preloadSubpackage({
         package: packageName,
         success: () => {},
-        fail: (error: unknown) => console.error(`分包 ${packageName} 预加载失败:`, error)
+        fail: (error: unknown) => logger.error(`分包 ${packageName} 预加载失败:`, error)
       })
     }
   }

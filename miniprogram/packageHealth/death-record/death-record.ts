@@ -520,7 +520,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
         })
       },
       fail: (error) => {
-        console.error('图片选择失败:', error)
+        logger.error('图片选择失败:', error)
         wx.showToast({
           title: '图片选择失败',
           icon: 'none'

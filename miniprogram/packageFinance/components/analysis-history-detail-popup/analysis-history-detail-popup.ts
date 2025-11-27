@@ -3,6 +3,7 @@ import type {
   TapEvent,
   CustomEvent
 } from '../../../typings/core';
+import { logger } from '../../../utils/logger'
 
 // 分析历史详情弹窗组件
 Component({
@@ -92,7 +93,7 @@ Component({
         
         return `${year}/${month}/${day} ${hours}:${minutes}`
       } catch (error) {
-        console.error('日期格式化错误:', error, dateValue)
+        logger.error('日期格式化错误:', error, dateValue)
         return '未知时间'
       }
     },
