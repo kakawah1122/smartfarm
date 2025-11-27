@@ -100,6 +100,33 @@ const pageConfig: unknown = {
   options: {
     styleIsolation: 'shared'
   },
+  
+  // ✅ 性能优化：定时器管理
+  _timerIds: [] as number[],
+  
+  /**
+   * ✅ 安全设置定时器（自动跟踪ID）
+   */
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  /**
+   * ✅ 清理所有定时器
+   */
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: {
     activeTab: 'records',
     
@@ -248,7 +275,7 @@ const pageConfig: unknown = {
       logger.info(`概览数据加载完成，耗时：${Date.now() - startTime}ms`)
       
       // 延迟100ms后加载当前tab数据
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this.loadCurrentTabData()
       }, 100)
     })
@@ -271,6 +298,11 @@ const pageConfig: unknown = {
     if (this.data.isFirstLoad) {
       this.setData({ isFirstLoad: false })
     }
+  },
+  
+  // ✅ 页面卸载时清理定时器
+  onUnload() {
+    this._clearAllTimers()
   },
   
   // 🎯 优化：按需加载当前tab数据
@@ -1219,7 +1251,7 @@ const pageConfig: unknown = {
       showDetailPopup: false
     })
     // 延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedRecord: null
       })
@@ -1241,7 +1273,7 @@ const pageConfig: unknown = {
       showApprovalPopup: false
     })
     // 延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedApprovalItem: null
       })
@@ -1295,7 +1327,7 @@ const pageConfig: unknown = {
       rejectReason: ''
     })
     // 延迟清空审批项数据
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedApprovalItem: null
       })
@@ -1620,7 +1652,7 @@ const pageConfig: unknown = {
       showAnalysisDetailPopup: false
     })
     // 延迟清空数据，避免动画时闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedAnalysisItem: null
       })
