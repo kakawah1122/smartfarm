@@ -1,4 +1,25 @@
 {
-  "updatedAt": "",
-  "templates": []
+  "updatedAt": "2025-11-27",
+  "description": "订阅消息模板配置 - 请在微信公众平台获取模板ID后填入",
+  "templates": {
+    "systemNotification": {
+      "name": "系统交互消息",
+      "description": "系统提醒类通知，例如审批进度、任务通知等",
+      "templateId": "",
+      "keywords": ["事项名称", "处理时间", "处理结果", "备注"]
+    },
+    "productionReminder": {
+      "name": "生产进度提醒", 
+      "description": "与生产计划、排行榜等相关的通知消息",
+      "templateId": "",
+      "keywords": ["批次编号", "提醒内容", "提醒时间", "备注"]
+    }
+  },
+  "howToGet": [
+    "1. 登录 mp.weixin.qq.com",
+    "2. 功能 → 订阅消息 → 公共模板库",
+    "3. 搜索并选用合适的模板",
+    "4. 配置关键词后获取模板ID",
+    "5. 将模板ID填入上方对应的templateId字段"
+  ]
 }
