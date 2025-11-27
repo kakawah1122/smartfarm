@@ -4,15 +4,36 @@
  */
 import { logger } from './logger'
 
+// 任务类型定义
+interface HealthTask {
+  id?: string
+  type?: string
+  title?: string
+  description?: string
+  taskName?: string
+  batchId?: string
+  batchNumber?: string
+  dayAge?: number
+  priority?: string
+  targetDate?: string | Date
+  [key: string]: unknown
+}
+
+// 页面实例接口
+interface PageInstance {
+  setData: (data: Record<string, unknown>, callback?: () => void) => void
+  [key: string]: unknown
+}
+
 /**
  * 判断是否为疫苗任务
  */
-export function isVaccineTask(task: unknown): boolean {
+export function isVaccineTask(task: HealthTask | null | undefined): boolean {
   if (!task) return false
   
   // 🔥 优先排除明确的非疫苗任务类型
   const nonVaccineTypes = ['medication', 'medicine', 'nutrition', 'care', 'feeding', 'environment']
-  if (nonVaccineTypes.includes(task.type)) {
+  if (task.type && nonVaccineTypes.includes(task.type)) {
     return false
   }
   
@@ -38,7 +59,7 @@ export function isVaccineTask(task: unknown): boolean {
 /**
  * 判断是否为用药管理任务
  */
-export function isMedicationTask(task: unknown): boolean {
+export function isMedicationTask(task: HealthTask | null | undefined): boolean {
   if (!task) return false
   
   if (task.type === 'medication' || task.type === 'medicine') {
@@ -62,7 +83,7 @@ export function isMedicationTask(task: unknown): boolean {
 /**
  * 判断是否为营养管理任务
  */
-export function isNutritionTask(task: unknown): boolean {
+export function isNutritionTask(task: HealthTask | null | undefined): boolean {
   if (!task) return false
   
   if (task.type === 'nutrition') {
@@ -106,15 +127,15 @@ export function getTaskTypeName(type: string): string {
 /**
  * 按批次分组任务
  */
-export function groupTasksByBatch(tasks: unknown[] = []) {
+export function groupTasksByBatch(tasks: HealthTask[] = []) {
   const batchesMap: Record<string, {
     batchId: string
     batchNumber: string
     dayAge: number
-    tasks: unknown[]
+    tasks: HealthTask[]
   }> = {}
 
-  tasks.forEach((task: unknown) => {
+  tasks.forEach((task: HealthTask) => {
     if (!task) return
 
     const batchId = task.batchId || 'unknown'
@@ -144,9 +165,11 @@ export function groupTasksByBatch(tasks: unknown[] = []) {
 
   // 对每个批次的任务排序
   groups.forEach(group => {
-    group.tasks.sort((a: unknown, b: unknown) => {
+    group.tasks.sort((a: HealthTask, b: HealthTask) => {
       // 优先级排序
-      const priorityDiff = (a.priority || 0) - (b.priority || 0)
+      const priorityA = typeof a.priority === 'number' ? a.priority : 0
+      const priorityB = typeof b.priority === 'number' ? b.priority : 0
+      const priorityDiff = priorityA - priorityB
       if (priorityDiff !== 0) return priorityDiff
 
       // 目标日期排序
@@ -300,7 +323,7 @@ export function safeParseNumber(value: unknown, defaultValue: number = 0): numbe
 /**
  * 批量更新数据（优化setData调用）
  */
-export function batchSetData(page: unknown, updates: Record<string, unknown>) {
+export function batchSetData(page: PageInstance, updates: Record<string, unknown>) {
   const data: Record<string, unknown> = {}
   
   for (const [key, value] of Object.entries(updates)) {

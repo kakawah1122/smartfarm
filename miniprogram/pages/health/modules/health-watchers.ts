@@ -1,6 +1,13 @@
 // health-watchers.ts - 健康数据实时监听模块
 import { logger } from '../../../utils/logger'
 
+// 微信错误类型
+interface WxError {
+  message?: string
+  errMsg?: string
+  [key: string]: unknown
+}
+
 type DatabaseRealtimeListener = {
   close?: () => void | Promise<void>
 }
@@ -130,7 +137,8 @@ export function startDataWatcher(
             },
             onError: (err: unknown) => {
               // ✅ 区分不同类型的错误
-              const errorMsg = err?.message || err?.errMsg || String(err)
+              const wxErr = err as WxError
+              const errorMsg = wxErr?.message || wxErr?.errMsg || String(err)
               
               // 忽略已知的非致命状态机错误
               const knownErrors = [
@@ -158,8 +166,9 @@ export function startDataWatcher(
         
         // 只在成功创建后赋值
         setWatcherRef(watcherKey, watcher)
-      } catch (error: unknown) {
-        const errorMsg = error?.message || error?.errMsg || String(error)
+      } catch (error) {
+        const wxErr = error as WxError
+        const errorMsg = wxErr?.message || wxErr?.errMsg || String(error)
         
         // ✅ 静默处理已知的状态机错误
         const knownErrors = [
@@ -289,7 +298,8 @@ export function stopDataWatcher(watchers: WatcherManager | null | undefined) {
 
     // watcher已就绪，可以安全关闭
     const handleCloseError = (error: unknown) => {
-      const errorMsg = error?.message || error?.errMsg || String(error || '')
+      const wxErr = error as WxError
+      const errorMsg = wxErr?.message || wxErr?.errMsg || String(error || '')
 
       if (!isNonFatalError(errorMsg)) {
         logger.warn(`Error closing ${watcherName}:`, errorMsg)

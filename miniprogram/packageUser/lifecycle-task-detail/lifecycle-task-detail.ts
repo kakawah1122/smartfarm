@@ -128,7 +128,7 @@ Page({
       
       if (result.result?.success && result.result.data) {
         // 过滤掉当前任务
-        const relatedTasks = result.result.data.filter((task: unknown) => task.id !== currentTaskId)
+        const relatedTasks = result.result.data.filter((task: TaskData) => task.id !== currentTaskId)
         this.setData({ relatedTasks })
       }
     } catch (error) {
