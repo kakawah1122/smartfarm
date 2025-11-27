@@ -38,7 +38,31 @@ const setHealthPageRefreshFlag = () => {
   markHomepageNeedSync()
 }
 
-const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
+const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
+  _timerIds: number[]
+  _safeSetTimeout: (callback: () => void, delay: number) => number
+  _clearAllTimers: () => void
+} = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: {
     // 表单数据
     formData: {
@@ -297,6 +321,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       }
     } else {
     }
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   // 初始化表单
@@ -1093,7 +1121,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       })
       
       // 返回健康管理中心
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         wx.switchTab({
           url: '/pages/health/health',
           success: () => {
@@ -1212,7 +1240,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       })
       
       // 返回健康管理中心
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         wx.switchTab({
           url: '/pages/health/health',
           success: () => {
@@ -1270,7 +1298,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       delta: 1,
       complete: () => {
         // 500ms后清除标志
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           (this as unknown).__isNavigatingBack = false
         }, 500)
       },
@@ -1327,7 +1355,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
               })
               
               // 返回健康管理页面
-              setTimeout(() => {
+              this._safeSetTimeout(() => {
                 wx.navigateBack()
               }, 1500)
             } else {
@@ -1553,7 +1581,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
         
         // 重新加载治疗详情
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
@@ -1724,7 +1752,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.closeContinueTreatmentDialog()
         
         // 重新加载治疗详情
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else if (successCount > 0) {
@@ -1832,7 +1860,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.closeNoteDialog()
         
         // 重新加载治疗详情
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
@@ -2117,7 +2145,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
         
         // 重新加载治疗详情
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
@@ -2207,7 +2235,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.closeAdjustPlanDialog()
         
         // 重新加载治疗详情
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
@@ -2234,7 +2262,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       
       if (healthPage && typeof healthPage.loadHealthData === 'function') {
         // 延迟刷新，确保数据已保存
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           healthPage.loadHealthData()
         }, 500)
       } else {
