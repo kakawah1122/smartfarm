@@ -7,6 +7,7 @@
 import { createDataUpdater } from '../helpers/data-updater'
 import { normalizeDiagnosisRecords, type DiagnosisRecord } from '../../../utils/diagnosis-data-utils'
 import CloudApi from '../../../utils/cloud-api'
+import { logger } from '../../../utils/logger'
 
 /**
  * 按时间排序诊断记录
@@ -59,7 +60,7 @@ export class MonitoringModuleManager {
         })
       }
     } catch (error: unknown) {
-      console.error('加载监控数据失败:', error)
+      logger.error('加载监控数据失败:', error)
       wx.showToast({
         title: '加载监控数据失败',
         icon: 'none'

@@ -10,6 +10,7 @@
  * 
  * 符合微信小程序性能优化规范
  */
+import { logger } from '../../../utils/logger'
 
 export interface SetDataWrapper {
   setData: (data: Record<string, any>, callback?: () => void, urgent?: boolean) => void
@@ -66,7 +67,7 @@ export function createSetDataWrapper(context: unknown): SetDataWrapper {
         try {
           cb()
         } catch (error) {
-          console.error('[SetDataWrapper] 回调执行错误:', error)
+          logger.error('[SetDataWrapper] 回调执行错误:', error)
         }
       })
     })

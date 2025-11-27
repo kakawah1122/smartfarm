@@ -8,6 +8,7 @@ import { getCurrentBeijingDate } from '../../../utils/util'
 import { FormValidator, vaccineFormRules } from '../helpers/form-validator'
 import { withErrorHandler } from '../helpers/error-handler'
 import CloudApi from '../../../utils/cloud-api'
+import { logger } from '../../../utils/logger'
 
 // 疫苗接种模块管理器
 export class VaccineModuleManager {
@@ -342,7 +343,7 @@ export class VaccineModuleManager {
         }
       )
     } catch (error) {
-      console.error('完成任务失败:', error)
+      logger.error('完成任务失败:', error)
     }
   }
   

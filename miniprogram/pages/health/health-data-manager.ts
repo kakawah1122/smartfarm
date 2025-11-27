@@ -5,6 +5,7 @@
 
 /// <reference path="../../../typings/index.d.ts" />
 import { HealthCloud } from '../../utils/cloud-functions'
+import { logger } from '../../utils/logger'
 interface CloudCallResult<T = any> {
   success: boolean
   data?: T
@@ -33,7 +34,7 @@ export class HealthDataManager {
       
       throw new Error(result?.error || '获取仪表盘数据失败')
     } catch (error) {
-      console.error('获取仪表盘快照失败:', error)
+      logger.error('获取仪表盘快照失败:', error)
       throw error
     }
   }
@@ -53,7 +54,7 @@ export class HealthDataManager {
       
       throw new Error(result?.error || '获取预防数据失败')
     } catch (error) {
-      console.error('获取预防数据失败:', error)
+      logger.error('获取预防数据失败:', error)
       throw error
     }
   }
@@ -72,7 +73,7 @@ export class HealthDataManager {
       
       throw new Error(result?.error || '获取批次数据失败')
     } catch (error) {
-      console.error('获取批次完整数据失败:', error)
+      logger.error('获取批次完整数据失败:', error)
       throw error
     }
   }
@@ -93,7 +94,7 @@ export class HealthDataManager {
       
       return 0
     } catch (error) {
-      console.error('获取治疗成本失败:', error)
+      logger.error('获取治疗成本失败:', error)
       return 0
     }
   }
@@ -117,7 +118,7 @@ export class HealthDataManager {
       
       return { list: [], total: 0, hasMore: false }
     } catch (error) {
-      console.error('获取异常记录失败:', error)
+      logger.error('获取异常记录失败:', error)
       return { list: [], total: 0, hasMore: false }
     }
   }
@@ -143,7 +144,7 @@ export class HealthDataManager {
       
       return { list: [], total: 0, hasMore: false }
     } catch (error) {
-      console.error('获取诊断记录失败:', error)
+      logger.error('获取诊断记录失败:', error)
       return { list: [], total: 0, hasMore: false }
     }
   }
@@ -161,7 +162,7 @@ export class HealthDataManager {
         const batch = tasks.slice(i, i + batchSize)
         const batchResults = await Promise.all(batch.map(task => 
           task().catch(error => {
-            console.error('批量加载任务失败:', error)
+            logger.error('批量加载任务失败:', error)
             return null
           })
         ))
@@ -170,7 +171,7 @@ export class HealthDataManager {
       
       return results
     } catch (error) {
-      console.error('批量加载数据失败:', error)
+      logger.error('批量加载数据失败:', error)
       return []
     }
   }
@@ -187,7 +188,7 @@ export class HealthDataManager {
       }
       wx.setStorageSync(`health_${key}`, cacheData)
     } catch (error) {
-      console.error('缓存数据失败:', error)
+      logger.error('缓存数据失败:', error)
     }
   }
   
@@ -204,7 +205,7 @@ export class HealthDataManager {
         }
       }
     } catch (error) {
-      console.error('读取缓存失败:', error)
+      logger.error('读取缓存失败:', error)
     }
     return null
   }
@@ -226,7 +227,7 @@ export class HealthDataManager {
         })
       }
     } catch (error) {
-      console.error('清除缓存失败:', error)
+      logger.error('清除缓存失败:', error)
     }
   }
 }

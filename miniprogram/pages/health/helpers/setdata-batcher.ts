@@ -3,6 +3,7 @@
  * 用于合并短时间内的多次setData调用，提升性能
  * 符合项目开发规范，不改变业务逻辑和UI
  */
+import { logger } from '../../../utils/logger'
 
 interface BatchUpdate {
   [key: string]: unknown
@@ -71,7 +72,7 @@ export class SetDataBatcher {
         this.isProcessing = false
       })
     } catch (error) {
-      console.error('SetDataBatcher flush error:', error)
+      logger.error('SetDataBatcher flush error:', error)
       this.isProcessing = false
     }
   }

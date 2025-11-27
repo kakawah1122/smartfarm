@@ -6,6 +6,7 @@
 /// <reference path="../../../typings/index.d.ts" />
 import { safeCloudCall } from '../../utils/safe-cloud-call'
 import { HealthCloud } from '../../utils/cloud-functions'
+import { logger } from '../../utils/logger'
 
 interface CloudCallResult<T = any> {
   success: boolean
@@ -86,7 +87,7 @@ export class TreatmentDataService {
 
       return null
     } catch (error) {
-      console.error('获取治疗记录详情失败:', error)
+      logger.error('获取治疗记录详情失败:', error)
       return null
     }
   }
@@ -110,7 +111,7 @@ export class TreatmentDataService {
 
       return []
     } catch (error) {
-      console.error('获取进行中治疗记录失败:', error)
+      logger.error('获取进行中治疗记录失败:', error)
       return []
     }
   }
@@ -131,7 +132,7 @@ export class TreatmentDataService {
 
       throw new Error(result?.error || '创建失败')
     } catch (error) {
-      console.error('创建治疗记录失败:', error)
+      logger.error('创建治疗记录失败:', error)
       throw error
     }
   }
@@ -152,7 +153,7 @@ export class TreatmentDataService {
 
       throw new Error(result?.error || '更新失败')
     } catch (error) {
-      console.error('更新治疗记录失败:', error)
+      logger.error('更新治疗记录失败:', error)
       throw error
     }
   }
@@ -172,7 +173,7 @@ export class TreatmentDataService {
 
       throw new Error(result?.error || '添加进度失败')
     } catch (error) {
-      console.error('添加治疗进度失败:', error)
+      logger.error('添加治疗进度失败:', error)
       throw error
     }
   }
@@ -192,7 +193,7 @@ export class TreatmentDataService {
 
       throw new Error(result?.error || '添加笔记失败')
     } catch (error) {
-      console.error('添加治疗笔记失败:', error)
+      logger.error('添加治疗笔记失败:', error)
       throw error
     }
   }
@@ -212,7 +213,7 @@ export class TreatmentDataService {
 
       throw new Error(result?.error || '添加用药记录失败')
     } catch (error) {
-      console.error('添加用药记录失败:', error)
+      logger.error('添加用药记录失败:', error)
       throw error
     }
   }
@@ -233,7 +234,7 @@ export class TreatmentDataService {
 
       throw new Error(result?.error || '完成治疗失败')
     } catch (error) {
-      console.error('完成治疗失败:', error)
+      logger.error('完成治疗失败:', error)
       throw error
     }
   }
@@ -263,7 +264,7 @@ export class TreatmentDataService {
 
       return []
     } catch (error) {
-      console.error('获取可用药品列表失败:', error)
+      logger.error('获取可用药品列表失败:', error)
       return []
     }
   }

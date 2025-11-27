@@ -3,6 +3,7 @@
  * 自动批量合并短时间内的多次setData调用
  * 保持功能和UI完全不变，仅优化性能
  */
+import { logger } from '../../../utils/logger'
 
 interface BatchedUpdate {
   data: Record<string, any>
@@ -121,7 +122,7 @@ export class SetDataWrapper {
         try {
           cb()
         } catch (error) {
-          console.error('SetData callback error:', error)
+          logger.error('SetData callback error:', error)
         }
       })
     })
