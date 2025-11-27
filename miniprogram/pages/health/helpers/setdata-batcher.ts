@@ -9,14 +9,19 @@ interface BatchUpdate {
   [key: string]: unknown
 }
 
+// 页面/组件实例接口（支持setData方法）
+export interface PageInstance {
+  setData: (data: Record<string, unknown>, callback?: () => void) => void
+}
+
 export class SetDataBatcher {
-  private page: unknown
+  private page: PageInstance
   private updates: BatchUpdate = {}
   private timer: number | null = null
   private delay: number
   private isProcessing: boolean = false
 
-  constructor(page: unknown, delay: number = 16) { // 默认一帧时间
+  constructor(page: PageInstance, delay: number = 16) { // 默认一帧时间
     this.page = page
     this.delay = delay
   }
@@ -104,7 +109,7 @@ export class SetDataBatcher {
  * @param delay 延迟时间（ms）
  * @returns SetDataBatcher实例
  */
-export function createSetDataBatcher(page: unknown, delay?: number): SetDataBatcher {
+export function createSetDataBatcher(page: PageInstance, delay?: number): SetDataBatcher {
   return new SetDataBatcher(page, delay)
 }
 
@@ -163,7 +168,7 @@ export class DataDiffer {
    * @param newData 新数据
    * @param batcher 批量更新器（可选）
    */
-  static applyDiff(page: unknown, oldData: unknown, newData: unknown, batcher?: SetDataBatcher): void {
+  static applyDiff(page: PageInstance, oldData: unknown, newData: unknown, batcher?: SetDataBatcher): void {
     const updates = DataDiffer.diff(oldData, newData)
     
     if (Object.keys(updates).length === 0) {

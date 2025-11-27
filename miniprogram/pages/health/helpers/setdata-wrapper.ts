@@ -11,15 +11,21 @@ interface BatchedUpdate {
   timestamp: number
 }
 
+// 页面实例接口
+export interface PageInstance {
+  setData: (data: Record<string, unknown>, callback?: () => void) => void
+  [key: string]: unknown
+}
+
 export class SetDataWrapper {
-  private page: any
-  private originalSetData: Function
+  private page: PageInstance
+  private originalSetData: (data: Record<string, unknown>, callback?: () => void) => void
   private pendingUpdate: BatchedUpdate | null = null
   private updateTimer: number | null = null
   private readonly batchDelay: number = 16 // 一帧时间
   private readonly maxBatchSize: number = 50 // 最大批量大小
   
-  constructor(page: Record<string, unknown>) {
+  constructor(page: PageInstance) {
     this.page = page
     this.originalSetData = page.setData.bind(page)
     this.wrapSetData()
@@ -144,6 +150,6 @@ export class SetDataWrapper {
 /**
  * 创建setData包装器
  */
-export function createSetDataWrapper(page: Record<string, unknown>): SetDataWrapper {
+export function createSetDataWrapper(page: PageInstance): SetDataWrapper {
   return new SetDataWrapper(page)
 }
