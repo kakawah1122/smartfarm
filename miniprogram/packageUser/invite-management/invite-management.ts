@@ -2,6 +2,26 @@
 import { createPageWithNavbar } from '../../utils/navigation'
 
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 用户信息
     userInfo: null as unknown,
@@ -89,6 +109,10 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.loadInviteList()
   },
 
+  onUnload() {
+    this._clearAllTimers()
+  },
+
   // 检查用户权限
   async checkUserPermission() {
     try {
@@ -111,7 +135,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         // 已移除调试日志
         // 已移除调试日志
         // 延迟一下显示弹窗，确保页面完全加载
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           // 已移除调试日志
           wx.showModal({
             title: '权限提示',

@@ -54,6 +54,26 @@ interface VaccineRecord {
 }
 
 Page({
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     loading: true,
     records: [] as VaccineRecord[],
@@ -82,6 +102,10 @@ Page({
 
   onLoad() {
     this.loadVaccineRecords()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   onShow() {
@@ -495,7 +519,7 @@ Page({
         })
 
         // 延迟跳转到健康管理中心，让用户看到成功提示
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           wx.switchTab({
             url: '/pages/health/health',
             success: () => {
@@ -555,7 +579,7 @@ Page({
         })
 
         // 延迟跳转到健康管理中心
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           wx.switchTab({
             url: '/pages/health/health',
             success: () => {
