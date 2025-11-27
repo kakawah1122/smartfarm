@@ -57,12 +57,13 @@ const STATUS_CONFIG = {
 }
 
 type PageData = {
-  list: unknown[]
+  list: ExtendedReimbursementRecord[]
   currentStatus: 'all' | 'pending' | 'approved' | 'rejected'
   statusTabs: { label: string; value: 'all' | 'pending' | 'approved' | 'rejected' }[]
   loading: boolean
   showDetailDialog: boolean
-  selectedRecord: unknown}
+  selectedRecord: ExtendedReimbursementRecord | null
+}
 
 const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   // ✅ 定时器管理
@@ -96,7 +97,7 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     ],
     loading: false,
     showDetailDialog: false,
-    selectedRecord: null as unknown
+    selectedRecord: null
   },
 
   onLoad(this: PageInstance<PageData>) {
