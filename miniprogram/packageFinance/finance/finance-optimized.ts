@@ -3,6 +3,9 @@ import { createPageWithNavbar } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
 
+// 定义CustomEvent类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 // 分页配置
 const PAGE_SIZE = 20;
 

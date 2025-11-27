@@ -1,4 +1,8 @@
 // 全部分析历史页面
+
+// 定义CustomEvent类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 Page({
   // ✅ 定时器管理
   _timerIds: [] as number[],

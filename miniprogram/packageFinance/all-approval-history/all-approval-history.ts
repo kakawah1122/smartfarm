@@ -1,6 +1,9 @@
 // 全部审批历史页面
 import CloudApi from '../../utils/cloud-api'
 
+// 定义CustomEvent类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 Page({
   // ✅ 定时器管理
   _timerIds: [] as number[],

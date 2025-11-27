@@ -1,6 +1,9 @@
 // invite-management.ts - 邀请管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+// 定义CustomEvent类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // ✅ 定时器管理
   _timerIds: [] as number[],

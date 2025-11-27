@@ -2,6 +2,9 @@
 import { createPageWithNavbar, type PageInstance } from '../../utils/navigation'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
 
+// 定义CustomEvent类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 // 表单数据接口
 interface ManualRecordFormData {
   recordDate: string;        // 记录日期

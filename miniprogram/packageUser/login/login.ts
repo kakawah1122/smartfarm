@@ -2,6 +2,9 @@
 
 import { logger } from '../../utils/logger'
 
+// 定义CustomEvent类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 interface UserInfo {
   _id: string;
   openid: string;
