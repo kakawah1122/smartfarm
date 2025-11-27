@@ -1,5 +1,6 @@
 // user-management.ts - 用户管理页面
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 
 // 类型定义 - 用于替换any类型
@@ -115,7 +116,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         })
       }
     } catch (error) {
-      console.error('用户统计加载失败:', error)
+      logger.error('用户统计加载失败:', error)
       // 统计数据加载失败不阻塞页面显示
     }
   },

@@ -62,7 +62,7 @@ App<AppOption>({
   onLaunch() {
     // 初始化云开发
     if (!wx.cloud) {
-      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
+      logger.error('请使用 2.2.3 或以上的基础库以使用云能力')
     } else {
       try {
         wx.cloud.init({
@@ -71,7 +71,7 @@ App<AppOption>({
         });
         logger.info('云开发初始化成功')
       } catch (error) {
-        console.error('云开发初始化失败:', error)
+        logger.error('云开发初始化失败:', error)
         // 继续运行，不阻断应用启动
       }
     }
@@ -136,7 +136,7 @@ App<AppOption>({
     }
     
     // 其他未知错误，记录到控制台
-    console.error('App Error:', error)
+    logger.error('App Error:', error)
   },
 
   // 设置状态栏高度
