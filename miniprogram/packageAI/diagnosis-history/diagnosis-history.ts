@@ -40,6 +40,26 @@ const sortRecordsByLatest = (records: DiagnosisRecord[]): DiagnosisRecord[] =>
 
 // 页面配置对象
 const pageConfig = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: {
     // 诊断记录列表
     records: [] as DiagnosisRecord[],
@@ -95,6 +115,10 @@ const pageConfig = {
     this.loadMoreData()
   },
 
+  onUnload() {
+    this._clearAllTimers()
+  },
+
   // 返回上一页
   goBack() {
     // 防止重复触发
@@ -108,7 +132,7 @@ const pageConfig = {
       delta: 1,
       complete: () => {
         // 500ms后清除标志
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           (this as unknown).__isNavigatingBack = false
         }, 500)
       },
