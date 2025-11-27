@@ -58,6 +58,46 @@ type KnowledgeListResponse = {
   list: KnowledgeArticle[]
 }
 
+// App全局数据类型
+interface TaskStatusUpdate {
+  completed: boolean
+  timestamp?: number
+  synced?: boolean
+  source?: string
+}
+
+interface AppGlobalData {
+  isLoggedIn?: boolean
+  userInfo?: Record<string, unknown>
+  needSyncBreedingTodo?: boolean
+  taskStatusUpdates?: Record<string, TaskStatusUpdate>
+  priceData?: unknown
+  priceFetchedAt?: number
+  locationData?: unknown
+  locationFetchedAt?: number
+}
+
+interface AppInstance {
+  globalData: AppGlobalData
+}
+
+// 任务类型
+interface BreedingTask {
+  _id?: string
+  id?: string
+  taskId?: string
+  title?: string
+  type?: string
+  dayAge?: number
+  batchId?: string
+  batchNumber?: string
+  completed?: boolean
+  duration?: string
+  materials?: string
+  category?: string
+  time?: string
+}
+
 // 导入辅助函数
 const checkPageAuth = () => {
   const app = getApp()
@@ -189,7 +229,7 @@ Page({
     },
     
     // 任务相关
-    selectedTask: null as unknown,
+    selectedTask: null as BreedingTask | null,
     showTaskDetailPopup: false,
     
     // 疫苗表单数据
@@ -289,7 +329,7 @@ Page({
   // 检查并同步任务状态
   checkAndSyncTaskStatus() {
     try {
-      const globalData = getApp<unknown>().globalData || {}
+      const globalData = getApp<AppInstance>().globalData || {}
 
       if (isHomepageNeedSync()) {
         // 立即同步全局状态中的任务更新
@@ -662,14 +702,15 @@ Page({
       }
     }
     
+    const currentWeatherData = this.data.weather
     updateData.weather = {
-        temperature: currentWeather.temperature || (this.data.weather as unknown).temperature,
-        humidity: currentWeather.humidity || (this.data.weather as unknown).humidity,
-        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || (this.data.weather as unknown).condition),
-        emoji: hasError ? '❌' : (conditionInfo.emoji || (this.data.weather as unknown).emoji),
-        feelsLike: currentWeather.feelsLike || (this.data.weather as unknown).feelsLike,
-        windDirection: currentWeather.windDirection || (this.data.weather as unknown).windDirection,
-        windScale: currentWeather.windScale || (this.data.weather as unknown).windScale,
+        temperature: currentWeather.temperature || currentWeatherData.temperature,
+        humidity: currentWeather.humidity || currentWeatherData.humidity,
+        condition: hasError ? '天气数据获取失败' : (conditionInfo.text || currentWeatherData.condition),
+        emoji: hasError ? '❌' : (conditionInfo.emoji || currentWeatherData.emoji),
+        feelsLike: currentWeather.feelsLike || currentWeatherData.feelsLike,
+        windDirection: currentWeather.windDirection || currentWeatherData.windDirection,
+        windScale: currentWeather.windScale || currentWeatherData.windScale,
         updateTime: hasError ? '获取失败' : (this.formatUpdateTime(currentWeather.updateTime) || '刚刚更新'),
         loading: false,
         hasError: hasError
@@ -1107,9 +1148,9 @@ Page({
   // 更新全局任务状态
   updateGlobalTaskStatus(taskId: string, completed: boolean) {
     try {
-      getApp<unknown>().globalData = getApp<unknown>().globalData || {}
-      getApp<unknown>().globalData.taskStatusUpdates = getApp<unknown>().globalData.taskStatusUpdates || {}
-      getApp<unknown>().globalData.taskStatusUpdates[taskId] = {
+      getApp<AppInstance>().globalData = getApp<AppInstance>().globalData || {}
+      getApp<AppInstance>().globalData.taskStatusUpdates = getApp<AppInstance>().globalData.taskStatusUpdates || {}
+      getApp<AppInstance>().globalData.taskStatusUpdates[taskId] = {
         completed,
         timestamp: Date.now()
       }
@@ -1141,7 +1182,7 @@ Page({
     
     // 标记全局状态已同步
     try {
-      const globalData = getApp<unknown>().globalData || {}
+      const globalData = getApp<AppInstance>().globalData || {}
       if (globalData.taskStatusUpdates && globalData.taskStatusUpdates[taskId]) {
         globalData.taskStatusUpdates[taskId].synced = true
       }
@@ -1155,16 +1196,16 @@ Page({
     try {
       
       // 1. 保存到全局状态（供待办页面使用）
-      getApp<unknown>().globalData = getApp<unknown>().globalData || {}
-      getApp<unknown>().globalData.taskStatusUpdates = getApp<unknown>().globalData.taskStatusUpdates || {}
-      getApp<unknown>().globalData.taskStatusUpdates[taskId] = {
+      getApp<AppInstance>().globalData = getApp<AppInstance>().globalData || {}
+      getApp<AppInstance>().globalData.taskStatusUpdates = getApp<AppInstance>().globalData.taskStatusUpdates || {}
+      getApp<AppInstance>().globalData.taskStatusUpdates[taskId] = {
         completed,
         timestamp: Date.now(),
         source: 'homepage' // 标识更新来源
       }
       
       // 2. 设置待办页面同步标识
-      getApp<unknown>().globalData.needSyncBreedingTodo = true
+      getApp<AppInstance>().globalData.needSyncBreedingTodo = true
       
       // 3. 尝试直接调用待办页面的同步方法（如果存在）
       try {
@@ -1248,7 +1289,7 @@ Page({
     const vaccineFormData: VaccineFormData = {
       veterinarianName: '',
       veterinarianContact: '',
-      vaccineName: task?.title || '', // 使用任务标题作为疫苗名称初始值
+      vaccineName: (task?.title as string) || '', // 使用任务标题作为疫苗名称初始值
       manufacturer: '',
       batchNumber: '',
       dosage: '0.5ml/只',
@@ -1260,7 +1301,7 @@ Page({
       otherCost: '',
       totalCost: 0,
       totalCostFormatted: '¥0.00',
-      notes: task?.description || '' // 使用任务描述作为备注初始值
+      notes: (task?.description as string) || '' // 使用任务描述作为备注初始值
     }
 
     this.setData({
@@ -1514,7 +1555,7 @@ Page({
     }
 
     // 检查任务ID是否存在
-    const taskId = selectedTask.id || selectedTask.taskId || (selectedTask as unknown)._id
+    const taskId = selectedTask.id || selectedTask.taskId || selectedTask._id
     if (!taskId) {
       wx.showToast({
         title: '任务ID缺失，无法完成',
@@ -1638,10 +1679,11 @@ Page({
     }
   },
 
-  // 获取缓存的天气数据
+  // 获取缓存的批次ID
   getEffectiveBatchId(): string {
-    const batchCache: unknown = wx.getStorageSync('taskBatchCache')
-    return batchCache?._id || batchCache?.id || batchCache?.batchNumber || batchCache?.batchId || ''
+    const batchCache = wx.getStorageSync('taskBatchCache') as { _id?: string; id?: string; batchNumber?: string; batchId?: string } | null
+    if (!batchCache) return ''
+    return batchCache._id || batchCache.id || batchCache.batchNumber || batchCache.batchId || ''
   },
 
   getCachedWeatherData() {
@@ -1837,14 +1879,14 @@ Page({
         
         // 只显示有库存的药品
         const availableMedicines = materials
-          .filter((material: Record<string, unknown>) => (material.currentStock || 0) > 0)
+          .filter((material: Record<string, unknown>) => (Number(material.currentStock) || 0) > 0)
           .map((material: Record<string, unknown>) => ({
-            id: material._id,
-            name: material.name,
-            unit: material.unit || '件',
-            stock: material.currentStock || 0,
-            category: material.category,
-            description: material.description || ''
+            id: material._id as string,
+            name: material.name as string,
+            unit: (material.unit as string) || '件',
+            stock: Number(material.currentStock) || 0,
+            category: material.category as string,
+            description: (material.description as string) || ''
           }))
 
         // 首页加载到药品库存
@@ -1893,14 +1935,14 @@ Page({
         
         // 只显示有库存的营养品
         const availableNutrition = materials
-          .filter((material: Record<string, unknown>) => (material.currentStock || 0) > 0)
+          .filter((material: Record<string, unknown>) => (Number(material.currentStock) || 0) > 0)
           .map((material: Record<string, unknown>) => ({
-            id: material._id,
-            name: material.name,
-            unit: material.unit || '件',
-            stock: material.currentStock || 0,
-            category: material.category,
-            description: material.description || ''
+            id: material._id as string,
+            name: material.name as string,
+            unit: (material.unit as string) || '件',
+            stock: Number(material.currentStock) || 0,
+            category: material.category as string,
+            description: (material.description as string) || ''
           }))
 
         // 首页加载到营养品库存
