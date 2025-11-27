@@ -92,6 +92,32 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
 
   // 表单验证防抖定时器
   validateTimer: null as number | null,
+  
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    // 清理validateTimer
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+      this.validateTimer = null
+    }
+    // 清理其他定时器
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
 
   onLoad(options: PageOptions) {
     // ✅ 合并setData调用
@@ -120,6 +146,10 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
       return
     }
     await this.loadActiveBatches()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   // 初始化表单
@@ -475,7 +505,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
           this.handlePoorEffectiveness(result.data.recordId)
         } else {
           // 返回上一页
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             wx.navigateBack()
           }, 1500)
         }
@@ -519,7 +549,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
       wx.hideLoading()
       wx.showToast({ title: '已创建健康监控记录', icon: 'success' })
       
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         wx.navigateBack()
       }, 1500)
     } catch (error) {
