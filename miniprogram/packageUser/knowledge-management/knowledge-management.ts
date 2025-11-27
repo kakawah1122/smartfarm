@@ -1,10 +1,6 @@
 // knowledge-management.ts - 知识库文章管理页面
 import { createPageWithNavbar, PageInstance } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
-
-// 定义CustomEvent类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
-
 interface Article {
   _id?: string
   title: string
@@ -824,7 +820,3 @@ const pageConfig: KnowledgePageInstance = {
 }
 
 Page(createPageWithNavbar(pageConfig))
-
-
-
-

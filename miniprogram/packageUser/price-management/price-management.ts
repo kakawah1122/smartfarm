@@ -14,10 +14,6 @@
  * - 优化AI识别，一次可识别10天以上的历史价格
  * - 批量保存，自动去重，新增/更新混合处理
  */
-
-// 定义CustomEvent类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
-
 interface BaseBreed {
   key: string
   label: string
@@ -893,4 +889,3 @@ Page({
     }
   }
 })
-

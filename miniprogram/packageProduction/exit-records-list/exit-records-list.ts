@@ -1,9 +1,5 @@
 // pages/exit-records-list/exit-records-list.ts
 import { createPageWithNavbar } from '../../utils/navigation'
-
-// 定义CustomEvent类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
-
 const pageConfig = {
   // ✅ 定时器管理
   _timerIds: [] as number[],
@@ -161,8 +157,6 @@ const pageConfig = {
       })
     }
   },
-
-
   // 搜索功能
   onSearch(e: CustomEvent) {
     const keyword = e.detail.value

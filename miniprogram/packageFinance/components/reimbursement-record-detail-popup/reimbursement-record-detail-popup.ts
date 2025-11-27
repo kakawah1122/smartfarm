@@ -1,8 +1,4 @@
 // components/reimbursement-record-detail-popup/reimbursement-record-detail-popup.ts
-
-// 定义CustomEvent类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
-
 Component({
   options: {
     styleIsolation: 'apply-shared'
@@ -49,4 +45,3 @@ Component({
     }
   }
 })
-

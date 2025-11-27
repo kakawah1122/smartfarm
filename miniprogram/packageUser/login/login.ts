@@ -1,10 +1,6 @@
 // pages/login/login.ts
 
 import { logger } from '../../utils/logger'
-
-// 定义CustomEvent类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
-
 interface UserInfo {
   _id: string;
   openid: string;
@@ -494,8 +490,6 @@ Page({
       })
     }
   },
-
-
   // 输入框事件
   onNicknameInput(e: CustomEvent) {
     this.setData({

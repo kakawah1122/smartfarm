@@ -1,9 +1,5 @@
 // batch-feed-cost.ts - 批次饲养成本统计页面
 import { createPageWithNavbar } from '../../utils/navigation'
-
-// 定义CustomEvent类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
-
 interface BatchFeedCostData {
   // 批次信息
   batchInfo: {
@@ -269,4 +265,3 @@ const pageConfig = {
 
 // 使用导航栏适配工具创建页面
 Page(createPageWithNavbar(pageConfig))
-

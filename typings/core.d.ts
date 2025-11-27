@@ -209,6 +209,12 @@ export interface UserSettings {
 // ==================== 事件类型 ====================
 
 /**
+ * 微信小程序自定义事件类型别名
+ * 全局可用，无需在每个文件中重复定义
+ */
+declare type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
+/**
  * 小程序输入事件
  */
 export interface InputEvent {

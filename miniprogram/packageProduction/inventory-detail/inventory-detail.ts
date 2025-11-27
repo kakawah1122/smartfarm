@@ -1,9 +1,5 @@
 // inventory-detail.ts - 物料库存详情页面
 import { createPageWithNavbar } from '../../utils/navigation'
-
-// 定义CustomEvent类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
-
 // 物料详情接口
 interface MaterialDetail {
   materialId: string;
@@ -157,8 +153,6 @@ const pageConfig = {
     // 默认安全库存值，如果数据库中没有设置则使用此值
     return 5
   },
-
-
   // 搜索变化
   onSearchChange(e: CustomEvent) {
     const { value } = e.detail
@@ -244,8 +238,6 @@ const pageConfig = {
       })
     }
   },
-
-
 
   // 页面分享
   onShareAppMessage() {
