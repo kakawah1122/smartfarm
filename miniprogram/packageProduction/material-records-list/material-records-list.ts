@@ -3,6 +3,26 @@
 import { createPageWithNavbar } from '../../utils/navigation'
 
 const pageConfig = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 记录列表
     records: [],
@@ -30,6 +50,10 @@ const pageConfig = {
 
   onLoad() {
     this.loadRecords()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   onReady() {
@@ -248,7 +272,7 @@ const pageConfig = {
       showDetailPopup: false
     })
     // 延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedRecord: null
       })

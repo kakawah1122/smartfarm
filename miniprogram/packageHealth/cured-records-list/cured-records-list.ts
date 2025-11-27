@@ -54,7 +54,27 @@ const initialStats: RecordStats = {
   avgCostPerAnimal: 0
 }
 
-const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
+const pageConfig = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     records: [],
     loading: true,
@@ -65,6 +85,10 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
 
   onLoad() {
     void this.loadCuredRecords()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   onShow() {
@@ -226,7 +250,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
       showDetailPopup: false
     })
 
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       page.setData({
         selectedRecord: null
       })
