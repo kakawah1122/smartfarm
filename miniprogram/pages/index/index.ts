@@ -123,7 +123,7 @@ const clearHomepageNeedSync = () => {
   try {
     wx.removeStorageSync('homepageNeedSync')
   } catch (e) {
-    console.error('清除同步标记失败:', e)
+    logger.error('清除同步标记失败:', e)
   }
 }
 
@@ -139,7 +139,7 @@ const markHomepageNeedSync = () => {
   try {
     wx.setStorageSync('homepageNeedSync', true)
   } catch (e) {
-    console.error('设置同步标记失败:', e)
+    logger.error('设置同步标记失败:', e)
   }
 }
 

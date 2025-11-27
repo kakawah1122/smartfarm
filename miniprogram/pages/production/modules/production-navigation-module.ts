@@ -6,6 +6,7 @@
 /// <reference path="../../../../typings/index.d.ts" />
 
 import NavigationManager from '../../../modules/common/navigation-manager'
+import { logger } from '../../../utils/logger'
 
 /**
  * 生产管理导航管理器
@@ -101,7 +102,7 @@ export class ProductionNavigationManager {
   static navigateToMaterialRecordsList() {
     return NavigationManager.navigate('/packageProduction/material-records-list/material-records-list')
       .catch((error) => {
-        console.error('导航到物料记录列表失败:', error)
+        logger.error('导航到物料记录列表失败:', error)
         wx.showToast({
           title: '页面跳转失败',
           icon: 'none'
@@ -116,7 +117,7 @@ export class ProductionNavigationManager {
   static navigateToEntryRecordsList() {
     return NavigationManager.navigate('/packageProduction/entry-records-list/entry-records-list')
       .catch((error) => {
-        console.error('导航到入栏记录列表失败:', error)
+        logger.error('导航到入栏记录列表失败:', error)
         wx.showToast({
           title: '页面跳转失败',
           icon: 'none'
@@ -131,7 +132,7 @@ export class ProductionNavigationManager {
   static navigateToExitRecordsList() {
     return NavigationManager.navigate('/packageProduction/exit-records-list/exit-records-list')
       .catch((error) => {
-        console.error('导航到出栏记录列表失败:', error)
+        logger.error('导航到出栏记录列表失败:', error)
         wx.showToast({
           title: '页面跳转失败',
           icon: 'none'
