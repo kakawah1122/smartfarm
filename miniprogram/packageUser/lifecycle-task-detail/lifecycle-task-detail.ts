@@ -1,5 +1,25 @@
 // 任务详情页面
 Page({
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     taskData: {} as unknown,
     dayAge: 1,
@@ -30,7 +50,7 @@ Page({
           title: '任务数据错误',
           icon: 'none'
         })
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           wx.navigateBack()
         }, 1500)
       }
@@ -39,10 +59,14 @@ Page({
         title: '缺少任务数据',
         icon: 'none'
       })
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         wx.navigateBack()
       }, 1500)
     }
+  },
+  
+  onUnload() {
+    this._clearAllTimers()
   },
   
   // 获取优先级主题

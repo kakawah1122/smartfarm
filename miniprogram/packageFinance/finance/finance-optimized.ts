@@ -12,6 +12,26 @@ const DEBOUNCE_TIME = 300;
 // ... 类型定义保持不变 ...
 
 const pageConfig: unknown = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   options: {
     styleIsolation: 'shared'
   },
@@ -54,13 +74,17 @@ const pageConfig: unknown = {
       logger.info(`概览数据加载完成，耗时：${Date.now() - startTime}ms`);
       
       // 延迟加载当前Tab数据
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this.loadCurrentTabData();
       }, 100);
     });
     
     // 标记首次加载
     this.setData({ isFirstLoad: true });
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
   
   // 🎯 优化点2：onShow智能刷新
@@ -195,7 +219,7 @@ const pageConfig: unknown = {
     
     // 延迟加载对应Tab数据
     if (!this.data.tabLoadStatus[tab]) {
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this.loadCurrentTabData();
       }, 50);
     }

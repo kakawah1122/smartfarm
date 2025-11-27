@@ -59,6 +59,26 @@ type ManualRecordPageData = {
 type ManualRecordPageInstance = PageInstance<ManualRecordPageData>
 
 const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRecordPageData } = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 记账类型：expense（支出）或 income（收入）
     recordType: 'expense' as 'expense' | 'income',
@@ -95,6 +115,10 @@ const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRe
   onLoad(this: ManualRecordPageInstance) {
     // 初始化表单
     this.initializeForm()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   // 初始化表单
@@ -387,7 +411,7 @@ const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRe
             duration: 1500
           })
 
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             wx.navigateBack({
               delta: 1
             })
@@ -422,7 +446,7 @@ const pageConfig: Partial<PageInstance<ManualRecordPageData>> & { data: ManualRe
             duration: 1500
           })
 
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             wx.navigateBack({
               delta: 1
             })
