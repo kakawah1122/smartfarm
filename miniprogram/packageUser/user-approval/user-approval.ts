@@ -1,10 +1,20 @@
 // user-approval.ts - 用户审批页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+// 待审批用户类型
+interface ApprovalUser {
+  _id: string
+  nickname?: string
+  phone?: string
+  status?: string
+  createTime?: Date | string
+  [key: string]: unknown
+}
+
 const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   data: {
     // 用户列表数据
-    userList: [] as unknown[],
+    userList: [] as ApprovalUser[],
     loading: true,
     loadingMore: false,
     hasMore: true,
@@ -28,7 +38,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     
     // 用户详情弹窗
     showUserDetail: false,
-    selectedUser: null as unknown,
+    selectedUser: null as ApprovalUser | null,
     
     // 审批弹窗
     showApprovalDialog: false,
