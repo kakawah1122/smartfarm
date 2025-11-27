@@ -447,6 +447,7 @@ Page<PageData, any>({
   // Page 实例属性（不在 data 中）
   dataWatchers: null as ReturnType<typeof createWatcherManager> | null,
   loadDataDebounceTimer: null as unknown,  // 防抖定时器
+  _timerIds: [] as number[],  // ✅ 性能优化：跟踪所有定时器ID，便于统一清理
   isLoadingData: false,  // 数据加载标志，防止重复加载
   pendingAllBatchesPromise: null as Promise<unknown> | null,
   latestAllBatchesSnapshot: null as unknown,
@@ -468,6 +469,30 @@ Page<PageData, any>({
     this.latestAllBatchesFetchedAt = 0
     // 清除所有相关缓存
     CacheManager.clearAllHealthCache()
+  },
+  
+  /**
+   * ✅ 性能优化：安全设置定时器（自动跟踪ID）
+   */
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      // 执行回调后从数组中移除
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  /**
+   * ✅ 性能优化：清理所有定时器
+   */
+  _clearAllTimers() {
+    this._timerIds.forEach(id => clearTimeout(id))
+    this._timerIds = []
   },
   
   /**
@@ -609,7 +634,7 @@ Page<PageData, any>({
     // 使用 wx.nextTick 确保页面完全渲染后再启动
     wx.nextTick(() => {
       // 再延迟一点，确保页面稳定
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         // 启动实时数据监听（只在页面可见时监听，节省资源）
         this.startDataWatcher()
       }, 100)
@@ -676,6 +701,9 @@ Page<PageData, any>({
     // 立即停止监听器，不延迟
     this.stopDataWatcher()
     
+    // ✅ 性能优化：清理所有定时器
+    this._clearAllTimers()
+    
     // ✅ 性能优化：清理setData批量更新器
     if (this.setDataBatcher) {
       this.setDataBatcher.destroy()
@@ -697,9 +725,6 @@ Page<PageData, any>({
       this.abnormalListPaginator.reset()
       this.abnormalListPaginator = null
     }
-    
-    // 注释掉：restoreSetData已不再需要，直接停止监听器即可避免内存泄漏
-    // restoreSetData(this)
   },
   
   /**
@@ -1162,7 +1187,7 @@ Page<PageData, any>({
     // 使用 wx.nextTick 确保在下一个渲染周期执行，完全不阻塞当前交互
     wx.nextTick(() => {
       // 再延迟一点，确保页面完全渲染完成，用户可以立即交互
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this._performBackgroundRefresh()
       }, 50)
     })
@@ -1904,7 +1929,7 @@ Page<PageData, any>({
       showDiagnosisDetailPopup: false
     })
     // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedDiagnosisRecord: null
       })
@@ -2839,7 +2864,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       showDetailPopup: false
     })
     // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedRecord: null
       })
@@ -2856,7 +2881,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         showDetailPopup: false
       })
       // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this.setData({
           selectedRecord: null
         })
@@ -3389,7 +3414,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       showTaskDetailPopup: false
     })
     // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedTask: null
       })
@@ -3406,14 +3431,14 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         showTaskDetailPopup: false
       })
       // 延迟清空数据，避免关闭动画时数据闪烁（符合项目开发规范）
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this.setData({
           selectedTask: null
         })
       }, 300)
     } else {
       // 弹窗显示时，检测文本换行并应用对齐样式
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         this.checkTextAlignment()
       }, 100)
     }
@@ -3674,7 +3699,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       }, () => {
         // 如果是费用相关字段，重新计算总费用
         if (['vaccineCost', 'veterinaryCost', 'otherCost'].includes(field)) {
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             this.calculateTotalCost()
           }, 100)
         }
@@ -4242,7 +4267,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         })
         
         // 刷新任务列表，确保任务流转到已完成
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.loadPreventionData()  // 刷新当前任务
           this.loadHistoryTasks()     // 刷新已完成任务
         }, 500)
@@ -4553,7 +4578,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       showAdverseReactionPopup: false
     })
     // ⚠️ 重要：延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         adverseReactionData: {
           count: 0,
