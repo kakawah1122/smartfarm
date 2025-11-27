@@ -255,7 +255,8 @@ Page({
               data: {} // 直接尝试创建用户
             })
             
-            if (result.result && result.result.success) {
+            // ✅ 只有第一个管理员才能直接登录，其他新用户必须使用邀请码
+            if (result.result && result.result.success && result.result.isFirstAdmin) {
               const app = getApp()
               app.globalData.openid = result.result.openid
               app.globalData.isLoggedIn = true
@@ -264,28 +265,23 @@ Page({
               wx.setStorageSync('openid', result.result.openid)
               wx.setStorageSync('userInfo', result.result.user)
               
-              // 如果是第一个管理员，显示特殊欢迎信息
-              if (result.result.isFirstAdmin) {
-                wx.showModal({
-                  title: '🎉 超级管理员',
-                  content: result.result.message + '\n\n您现在拥有系统的所有管理权限！',
-                  showCancel: false,
-                  confirmText: '开始使用',
-                  success: () => {
-                    wx.reLaunch({
-                      url: '/pages/index/index'
-                    })
-                  }
-                })
-              } else {
-                wx.reLaunch({
-                  url: '/pages/index/index'
-                })
-              }
+              // 第一个管理员，显示特殊欢迎信息
+              wx.showModal({
+                title: '🎉 超级管理员',
+                content: result.result.message + '\n\n您现在拥有系统的所有管理权限！',
+                showCancel: false,
+                confirmText: '开始使用',
+                success: () => {
+                  wx.reLaunch({
+                    url: '/pages/index/index'
+                  })
+                }
+              })
               return
             }
+            // 非第一个用户，即使创建成功也需要邀请码注册流程
           } catch (createError) {
-            // 不是第一个用户，需要邀请码注册
+            // 创建失败，继续走邀请码注册流程
           }
           
           // 不是第一个用户，需要邀请码注册
@@ -500,27 +496,28 @@ Page({
       })
     }
   },
+
   // 输入框事件
-  onNicknameInput(e: CustomEvent) {
+  onNicknameInput(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       nickname: e.detail.value
     })
   },
 
-  onPhoneInput(e: CustomEvent) {
+  onPhoneInput(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       phone: e.detail.value
     })
   },
 
-  onFarmNameInput(e: CustomEvent) {
+  onFarmNameInput(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       farmName: e.detail.value
     })
   },
 
   // 选择头像
-  async onChooseAvatar(e: CustomEvent) {
+  async onChooseAvatar(e: WechatMiniprogram.CustomEvent) {
     const { avatarUrl } = e.detail
     this.setData({
       selectedAvatarUrl: avatarUrl
@@ -533,7 +530,7 @@ Page({
   },
 
   // 获取微信昵称
-  onNicknameChange(e: CustomEvent) {
+  onNicknameChange(e: WechatMiniprogram.CustomEvent) {
     const nickname = e.detail.value
     this.setData({
       nickname: nickname
@@ -730,21 +727,21 @@ Page({
   },
 
   // 邀请码输入
-  onInviteCodeInput(e: CustomEvent) {
+  onInviteCodeInput(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       inviteCode: e.detail.value.toUpperCase()
     })
   },
 
   // 姓名输入
-  onInviteNicknameInput(e: CustomEvent) {
+  onInviteNicknameInput(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       inviteNickname: e.detail.value
     })
   },
 
   // 手机号输入
-  onInvitePhoneInput(e: CustomEvent) {
+  onInvitePhoneInput(e: WechatMiniprogram.CustomEvent) {
     this.setData({
       invitePhone: e.detail.value
     })
