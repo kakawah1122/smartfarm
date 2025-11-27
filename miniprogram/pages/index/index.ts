@@ -120,6 +120,31 @@ interface BaseResponse<T> {
 Page({
   // 优化器实例
   setDataWrapper: null as SetDataWrapper | null,
+  // ✅ 性能优化：定时器管理
+  _timerIds: [] as number[],
+  
+  /**
+   * ✅ 性能优化：安全设置定时器（自动跟踪ID）
+   */
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+
+  /**
+   * ✅ 性能优化：清理所有定时器
+   */
+  _clearAllTimers() {
+    this._timerIds.forEach(id => clearTimeout(id))
+    this._timerIds = []
+  },
   
   data: {
     // 状态栏信息
@@ -552,7 +577,7 @@ Page({
                   title: '正在重新获取天气...',
                   icon: 'loading'
                 })
-                setTimeout(() => {
+                this._safeSetTimeout(() => {
                   this.getWeatherData(true)
                 }, 1000)
               }
@@ -1146,7 +1171,7 @@ Page({
         const pages = getCurrentPages()
         const breedingTodoPage = pages.find((page: Record<string, unknown>) => page.route === 'packageHealth/breeding-todo/breeding-todo')
         if (breedingTodoPage && typeof breedingTodoPage.syncTaskStatusFromHomepage === 'function') {
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             breedingTodoPage.syncTaskStatusFromHomepage(taskId, completed)
           }, 100) // 延迟100ms确保状态保存完成
         }
@@ -1284,7 +1309,7 @@ Page({
     }, () => {
       // 如果是费用相关字段，重新计算总费用
       if (['vaccineCost', 'veterinaryCost', 'otherCost'].includes(field)) {
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           this.calculateTotalCost()
         }, 100)
       }
@@ -1662,8 +1687,8 @@ Page({
         }
         
         // 在后台静默刷新，不显示loading和toast
-        // 使用setTimeout延迟执行，避免阻塞UI
-        setTimeout(() => {
+        // 使用_safeSetTimeout延迟执行，避免阻塞UI
+        this._safeSetTimeout(() => {
           this.getWeatherData(true).then(() => {
             // 静默更新成功，不显示任何提示
           }).catch((error: Error | unknown) => {
@@ -1700,7 +1725,7 @@ Page({
         icon: 'error'
       })
     }).finally(() => {
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         wx.stopPullDownRefresh()
       }, 1000)
     })
@@ -2622,9 +2647,12 @@ Page({
   
   /**
    * 页面卸载时清理资源
-   * ✅ 性能优化：清理setData包装器
+   * ✅ 性能优化：清理setData包装器和定时器
    */
   onUnload() {
+    // ✅ 清理所有定时器
+    this._clearAllTimers()
+    
     if (this.setDataWrapper) {
       this.setDataWrapper.destroy()
       this.setDataWrapper = null

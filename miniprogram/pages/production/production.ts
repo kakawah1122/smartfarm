@@ -46,6 +46,8 @@ type ProductionPageData = WechatMiniprogram.Page.DataOption & {
 const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: ProductionPageData } = {
   // 优化器实例
   setDataWrapper: null as SetDataWrapper | null,
+  // ✅ 性能优化：定时器管理
+  _timerIds: [] as number[],
   
   data: {
     activeTab: 'entry',
@@ -142,6 +144,29 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
     }
   },
 
+  /**
+   * ✅ 性能优化：安全设置定时器（自动跟踪ID）
+   */
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+
+  /**
+   * ✅ 性能优化：清理所有定时器
+   */
+  _clearAllTimers() {
+    this._timerIds.forEach(id => clearTimeout(id))
+    this._timerIds = []
+  },
+
   onLoad() {
     // 🎯 性能优化：分步加载
     const startTime = Date.now()
@@ -168,7 +193,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       logger.info(`概览数据加载完成，耗时：${Date.now() - startTime}ms`)
       
       // 延迟100ms后加载必要数据（入栏和出栏都需要在首页显示）
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         // 加载入栏数据（当前tab）
         this.loadEntryData()
         // 加载出栏数据（首页需要显示最近出栏记录）
@@ -539,7 +564,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
     // 下拉刷新时清除缓存
     ProductionDataLoader.clearCache()
     this.refreshData()
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       wx.stopPullDownRefresh()
     }, 1500)
   },
@@ -1235,7 +1260,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       showEntryDetailPopup: false
     })
     // 延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedEntryRecord: null
       })
@@ -1249,7 +1274,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       showExitDetailPopup: false
     })
     // 延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedExitRecord: null
       })
@@ -1278,7 +1303,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       showMaterialDetailPopup: false
     })
     // 延迟清空数据，避免弹窗关闭动画时数据闪烁
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       this.setData({
         selectedMaterialRecord: null
       })
@@ -1287,9 +1312,12 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   
   /**
    * 页面卸载时清理资源
-   * ✅ 性能优化：清理setData包装器
+   * ✅ 性能优化：清理setData包装器和定时器
    */
   onUnload() {
+    // ✅ 清理所有定时器
+    this._clearAllTimers()
+    
     if (this.setDataWrapper) {
       this.setDataWrapper.destroy()
       this.setDataWrapper = null
