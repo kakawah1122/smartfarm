@@ -1,5 +1,23 @@
 // 全部审批历史页面
 import CloudApi from '../../utils/cloud-api'
+
+// 微信小程序事件类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
+// 审批历史项类型
+interface ApprovalHistoryItem {
+  _id: string
+  createTime: Date | string
+  status: string
+  type: string
+  metadata?: {
+    amount?: number
+    [key: string]: unknown
+  }
+  formattedDate?: string
+  statusText?: string
+}
+
 Page({
   // ✅ 定时器管理
   _timerIds: [] as number[],
@@ -23,7 +41,7 @@ Page({
 
   data: {
     // 审批历史记录列表
-    approvalHistory: [] as unknown[],
+    approvalHistory: [] as ApprovalHistoryItem[],
     
     // 加载状态
     loading: false,
@@ -36,7 +54,7 @@ Page({
     
     // 弹窗
     showDetailPopup: false,
-    selectedApprovalItem: null as unknown,
+    selectedApprovalItem: null as ApprovalHistoryItem | null,
     
     // 空状态
     isEmpty: false
