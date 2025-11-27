@@ -70,7 +70,31 @@ const initialData: DeathListPageData = {
 
 const formatNumber = (value: number): string => value.toFixed(2)
 
-const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPageCustom> = {
+const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPageCustom> & {
+  _timerIds: number[]
+  _safeSetTimeout: (callback: () => void, delay: number) => number
+  _clearAllTimers: () => void
+} = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: initialData,
 
   onLoad(options?: Record<string, any>) {
@@ -87,6 +111,10 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
 
   onShow() {
     void this.loadDeathRecords()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   onPullDownRefresh() {
@@ -275,7 +303,7 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
     const page = this as DeathListPageInstance
     page.setData({ showDetailPopup: false })
 
-    setTimeout(() => {
+    this._safeSetTimeout(() => {
       page.setData({ selectedRecord: null })
     }, 300)
   },

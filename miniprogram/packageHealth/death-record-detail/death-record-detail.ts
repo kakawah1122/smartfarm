@@ -127,7 +127,31 @@ const initialPageData: PageData = {
   ratingHints: ['很不准确', '不太准确', '基本准确', '比较准确', '非常准确']
 }
 
-const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
+const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> & {
+  _timerIds: number[]
+  _safeSetTimeout: (callback: () => void, delay: number) => number
+  _clearAllTimers: () => void
+} = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: initialPageData,
 
   onLoad(options: LoadOptions) {
@@ -138,8 +162,12 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageCustom> = {
       void page.loadRecordDetail(options.id)
     } else {
       wx.showToast({ title: '记录ID缺失', icon: 'none' })
-      setTimeout(() => wx.navigateBack(), 1500)
+      this._safeSetTimeout(() => wx.navigateBack(), 1500)
     }
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   async loadRecordDetail(recordId: string) {
