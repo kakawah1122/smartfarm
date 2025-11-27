@@ -14,6 +14,26 @@ interface MaterialUseFormData {
 }
 
 const pageConfig = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+
   data: {
     // 表单数据
     formData: {
@@ -46,6 +66,10 @@ const pageConfig = {
     this.initializeForm()
     // 加载可选择的物料
     this.loadAvailableMaterials()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   // 初始化表单
@@ -294,7 +318,7 @@ const pageConfig = {
       }
 
       // 延迟后自动返回上一页
-      setTimeout(() => {
+      this._safeSetTimeout(() => {
         wx.navigateBack({
           delta: 1
         })
