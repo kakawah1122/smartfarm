@@ -128,69 +128,157 @@
             class="tasks-container"
             wx:if="{{expandedGroups[item.dayAge]}}"
           >
-          <block
+          <view
             wx:for="{{item.tasks}}"
             wx:for-item="task"
             wx:for-index="taskIndex"
             wx:key="id"
+            class="task-item"
+            bindtap="editTask"
+            data-day-age="{{item.dayAge}}"
+            data-task-id="{{task.id}}"
           >
-            <t-swipe-cell
-              data-day-age="{{item.dayAge}}"
-              data-task-id="{{task.id}}"
-            >
-              <view class="task-item">
-                <view class="task-header">
-                  <text class="task-title">{{task.title}}</text>
-                  <view class="task-meta">
-                    <t-tag theme="primary" size="small">{{task.category}}</t-tag>
-                    <t-tag
-                      wx:if="{{task.priority}}"
-                      theme="{{utils.getPriorityTheme(task.priority)}}"
-                      size="small"
-                    >
-                      {{utils.getPriorityText(task.priority)}}优先级
-                    </t-tag>
-                  </view>
-                </view>
-                
-                <view class="task-content">
-                  <text class="task-description">{{task.description}}</text>
-                  <view wx:if="{{task.dosage}}" class="task-detail">
-                    <text class="detail-label">用量：</text>
-                    <text class="detail-value">{{task.dosage}}</text>
-                  </view>
-                  <view wx:if="{{task.duration}}" class="task-detail">
-                    <text class="detail-label">持续天数：</text>
-                    <text class="detail-value">{{task.duration}}天</text>
-                  </view>
-                </view>
-              </view>
-              <view slot="right" class="swipe-right-wrapper">
-                <view 
-                  class="swipe-btn-edit"
-                  bind:tap="editTask"
-                  data-day-age="{{item.dayAge}}"
-                  data-task-id="{{task.id}}"
+            <view class="task-header">
+              <text class="task-title">{{task.title}}</text>
+              <view class="task-meta">
+                <t-tag theme="primary" size="small">{{task.category}}</t-tag>
+                <t-tag
+                  wx:if="{{task.priority}}"
+                  theme="{{utils.getPriorityTheme(task.priority)}}"
+                  size="small"
                 >
-                  编辑
-                </view>
-                <view 
-                  class="swipe-btn-delete"
-                  bind:tap="deleteTask"
-                  data-day-age="{{item.dayAge}}"
-                  data-task-id="{{task.id}}"
-                  data-task-title="{{task.title}}"
-                >
-                  删除
-                </view>
+                  {{utils.getPriorityText(task.priority)}}优先级
+                </t-tag>
               </view>
-            </t-swipe-cell>
+            </view>
+            
+            <view class="task-content">
+              <text class="task-description">{{task.description}}</text>
+              <view wx:if="{{task.dosage}}" class="task-detail">
+                <text class="detail-label">用量：</text>
+                <text class="detail-value">{{task.dosage}}</text>
+              </view>
+              <view wx:if="{{task.duration}}" class="task-detail">
+                <text class="detail-label">持续天数：</text>
+                <text class="detail-value">{{task.duration}}天</text>
+              </view>
+            </view>
+            
+            <!-- 操作按钮 -->
+            <view class="task-actions">
+              <view class="action-btn delete-btn" catchtap="deleteTask" data-day-age="{{item.dayAge}}" data-task-id="{{task.id}}" data-task-title="{{task.title}}">
+                删除
+              </view>
+            </view>
+            
             <!-- 虚线分隔 -->
-            <view wx:if="{{taskIndex < item.tasks.length - 1}}" class="task-divider"></view>
-          </block>
+            <view wx:if="{{taskIndex < item.tasks.length - 1}}" class="task-divider-inner"></view>
+          </view>
           </view>
         </view>
       </view>
     </view>
   </view>
 </view>
+
+<!-- 任务编辑弹窗 -->
+<bottom-popup
+  visible="{{showEditPopup}}"
+  title="{{editMode === 'add' ? '添加任务' : '编辑任务'}}"
+  show-close="{{true}}"
+  show-actions="{{true}}"
+  confirm-text="保存"
+  cancel-text="取消"
+  bind:close="closeEditPopup"
+  bind:confirm="saveTask"
+  bind:cancel="closeEditPopup"
+>
+  <view class="edit-form-content">
+    <!-- 日龄信息 -->
+    <view class="form-header">
+      <text class="form-header-label">任务日龄</text>
+      <text class="form-header-value">第{{editingTask.dayAge}}日龄</text>
+    </view>
+    
+    <!-- 任务标题 -->
+    <view class="form-item">
+      <view class="form-label required">任务标题</view>
+      <input 
+        class="form-input"
+        value="{{editingTask.title}}"
+        placeholder="请输入任务标题"
+        bindinput="onEditTitleInput"
+      />
+    </view>
+    
+    <!-- 任务类型 -->
+    <view class="form-item">
+      <view class="form-label required">任务类型</view>
+      <picker
+        mode="selector"
+        range="{{taskTypes}}"
+        range-key="label"
+        value="{{editTaskTypeIndex}}"
+        bindchange="onEditTypeChange"
+      >
+        <view class="picker-value">
+          <text>{{taskTypes[editTaskTypeIndex].label}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+    
+    <!-- 优先级 -->
+    <view class="form-item">
+      <view class="form-label">优先级</view>
+      <picker
+        mode="selector"
+        range="{{priorities}}"
+        range-key="label"
+        value="{{editPriorityIndex}}"
+        bindchange="onEditPriorityChange"
+      >
+        <view class="picker-value">
+          <text>{{priorities[editPriorityIndex].label}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+    
+    <!-- 任务描述 -->
+    <view class="form-item">
+      <view class="form-label required">任务描述</view>
+      <textarea
+        class="form-textarea"
+        value="{{editingTask.description}}"
+        placeholder="请输入任务描述"
+        bindinput="onEditDescriptionInput"
+        maxlength="500"
+        auto-height
+      />
+    </view>
+    
+    <!-- 用量 -->
+    <view class="form-item">
+      <view class="form-label">用量</view>
+      <input 
+        class="form-input"
+        value="{{editingTask.dosage}}"
+        placeholder="请输入用量（可选）"
+        bindinput="onEditDosageInput"
+      />
+    </view>
+    
+    <!-- 持续天数 -->
+    <view class="form-item">
+      <view class="form-label">持续天数</view>
+      <input 
+        class="form-input"
+        type="number"
+        value="{{editingTask.duration}}"
+        placeholder="默认1天"
+        bindinput="onEditDurationInput"
+      />
+    </view>
+  </view>
+</bottom-popup>

@@ -560,14 +560,6 @@
     bind:submit="submitNutritionForm"
   />
 
-  <!-- 遮罩层 -->
-  <view 
-    class="dropdown-mask {{showBatchDropdown ? 'show' : ''}}" 
-    wx:if="{{showBatchDropdown}}"
-    bind:tap="closeBatchDropdown"
-    catchtouchmove="preventTouchMove"
-  ></view>
-
   </view>  <!-- content-wrapper end -->
 
   <!-- 批次下拉列表（使用fixed定位） -->

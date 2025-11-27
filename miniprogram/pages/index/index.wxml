@@ -56,7 +56,7 @@
         </view>
       </view>
       <view wx:else class="knowledge-empty" bind:tap="navigateToKnowledge">
-        <text class="empty-hint">点击查看养殖知识库</text>
+        <text class="empty-hint">暂无文章</text>
       </view>
     </view>
 

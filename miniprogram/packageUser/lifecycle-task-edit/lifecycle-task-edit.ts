@@ -1,5 +1,6 @@
 // @ts-nocheck
 // lifecycle-task-edit.ts - 养殖周期任务编辑页面
+// 数据源：云数据库 task_templates 集合
 
 Component({
   data: {
@@ -12,10 +13,10 @@ Component({
     // 任务ID（编辑时使用）
     taskId: '',
     
-    // 表单数据
+    // 表单数据 - 默认值与任务类型选项保持一致
     formData: {
       title: '',
-      type: 'inspection',
+      type: 'inspection',  // 对应 '健康管理'
       category: '健康管理',
       priority: 'medium',
       description: '',
@@ -27,19 +28,21 @@ Component({
       notes: ''
     },
     
-    // 任务类型选项
+    // 任务类型选项 - 与 breeding-schedule.ts 保持一致
     taskTypes: [
-      { label: '健康检查', value: 'inspection' },
-      { label: '疫苗接种', value: 'vaccine' },
+      { label: '健康管理', value: 'inspection' },
+      { label: '疫苗管理', value: 'vaccine' },
       { label: '用药管理', value: 'medication' },
-      { label: '营养补充', value: 'nutrition' },
+      { label: '营养管理', value: 'nutrition' },
       { label: '饲养管理', value: 'feeding' },
-      { label: '特殊护理', value: 'care' }
+      { label: '保健管理', value: 'care' },
+      { label: '环境管理', value: 'environment' },
+      { label: '观察记录', value: 'observation' }
     ],
     taskTypeIndex: 0, // 当前选中的任务类型索引
     
-    // 任务分类选项
-    categories: ['健康管理', '疫苗接种', '用药管理', '营养管理', '饲养管理', '特殊护理'],
+    // 任务分类选项 - 与任务类型对应
+    categories: ['健康管理', '疫苗管理', '用药管理', '营养管理', '饲养管理', '保健管理', '环境管理', '观察记录'],
     categoryIndex: 0,
     
     // 优先级选项
@@ -52,17 +55,40 @@ Component({
     
     // 导航栏高度
     statusBarHeight: 0,
-    navbarHeight: 44
+    navbarHeight: 44,
+    
+    // 模板任务列表
+    templateTasks: [] as Array<{
+      id: string
+      type: string
+      title: string
+      description: string
+      category: string
+      priority: string
+      dosage?: string
+      duration?: number
+      dayInSeries?: number
+    }>,
+    selectedTemplateIndex: -1  // 当前选中的模板任务索引
   },
 
   lifetimes: {
     attached() {
       this.setNavigationBarHeight()
-      this.initPage()
     }
   },
 
   methods: {
+    // 页面加载时接收参数（Component 构造器的页面使用 onLoad）
+    onLoad(options: { mode?: string; dayAge?: string; taskId?: string }) {
+      const mode = options.mode || 'add'
+      const dayAge = parseInt(options.dayAge || '1') || 1
+      const taskId = options.taskId || ''
+      
+      this.setData({ mode, dayAge, taskId })
+      this.loadTasksFromCloud(dayAge, taskId, mode)
+    },
+    
     // 设置导航栏高度
     setNavigationBarHeight() {
       // 使用新的API替代废弃的getSystemInfoSync
@@ -83,26 +109,119 @@ Component({
     goBack() {
       wx.navigateBack()
     },
-
-    // 初始化页面
-    initPage() {
-      const pages = getCurrentPages()
-      const currentPage = pages[pages.length - 1]
-      const options = currentPage.options || {}
-      
-      const mode = options.mode || 'add'
-      const dayAge = parseInt(options.dayAge as string) || 1
-      const taskId = options.taskId || ''
+    
+    // 从云数据库加载任务
+    async loadTasksFromCloud(dayAge: number, taskId: string, mode: string) {
+      try {
+        wx.showLoading({ title: '加载中...' })
+        
+        // 从云函数获取任务模板
+        const result = await wx.cloud.callFunction({
+          name: 'lifecycle-management',
+          data: {
+            action: 'get_schedule_template',
+            templateName: '默认模板'
+          }
+        }) as { result?: { success?: boolean; data?: unknown[] } }
+        
+        wx.hideLoading()
+        
+        let allTasks: unknown[] = []
+        if (result.result?.success && result.result.data) {
+          allTasks = result.result.data
+        }
+        
+        // 筛选该日龄的任务
+        const templateTasks = allTasks.filter((t: { dayAge?: number }) => t.dayAge === dayAge)
+        
+        if (mode === 'edit' && taskId) {
+          // 编辑模式：查找对应任务
+          const taskIndex = templateTasks.findIndex((t: { id: string }) => t.id === taskId)
+          if (taskIndex >= 0) {
+            const template = templateTasks[taskIndex] as any
+            this.fillFormWithTask(template, templateTasks, taskIndex)
+          } else {
+            // 未找到时使用第一个任务
+            if (templateTasks.length > 0) {
+              this.fillFormWithTask(templateTasks[0] as any, templateTasks, 0)
+            } else {
+              this.setData({ templateTasks, selectedTemplateIndex: -1 })
+            }
+          }
+        } else if (mode === 'add' && templateTasks.length > 0) {
+          // 添加模式：自动填充第一个任务
+          const template = templateTasks[0] as any
+          this.fillFormWithTask(template, templateTasks, 0)
+        } else {
+          this.setData({ templateTasks, selectedTemplateIndex: -1 })
+        }
+      } catch (error) {
+        wx.hideLoading()
+        console.error('加载任务失败:', error)
+        wx.showToast({ title: '加载失败', icon: 'none' })
+      }
+    },
+    
+    // 用任务数据填充表单
+    fillFormWithTask(template: any, templateTasks: unknown[], taskIndex: number) {
+      const taskTypeIndex = this.data.taskTypes.findIndex((t: { value: string }) => t.value === template.type)
+      const categoryIndex = this.data.categories.indexOf(template.category)
+      const priorityIndex = this.data.priorities.findIndex((p: { value: string }) => p.value === template.priority)
       
       this.setData({
-        mode,
-        dayAge,
-        taskId
+        templateTasks,
+        selectedTemplateIndex: taskIndex,
+        formData: {
+          title: template.title || '',
+          type: template.type || 'inspection',
+          category: template.category || '健康管理',
+          priority: template.priority || 'medium',
+          description: template.description || '',
+          dosage: template.dosage || '',
+          duration: template.duration || 1,
+          dayInSeries: template.dayInSeries || 1,
+          estimatedTime: template.estimatedTime || 0,
+          materials: template.materials || '',
+          notes: template.notes || ''
+        },
+        taskTypeIndex: taskTypeIndex >= 0 ? taskTypeIndex : 0,
+        categoryIndex: categoryIndex >= 0 ? categoryIndex : 0,
+        priorityIndex: priorityIndex >= 0 ? priorityIndex : 1
       })
-      
-      if (mode === 'edit' && taskId) {
-        this.loadTaskData(taskId as string)
+    },
+    
+    // 选择任务卡片
+    onTaskSelect(e: { currentTarget: { dataset: { index: number } } }) {
+      const index = e.currentTarget.dataset.index
+      if (index < 0 || index >= this.data.templateTasks.length) {
+        return
       }
+      
+      const template = this.data.templateTasks[index]
+      const taskTypeIndex = this.data.taskTypes.findIndex((t: { value: string }) => t.value === template.type)
+      const categoryIndex = this.data.categories.indexOf(template.category)
+      const priorityIndex = this.data.priorities.findIndex((p: { value: string }) => p.value === template.priority)
+      
+      // 选中任务并填充表单
+      this.setData({
+        selectedTemplateIndex: index,
+        formData: {
+          title: template.title || '',
+          type: template.type || 'inspection',
+          category: template.category || '健康管理',
+          priority: template.priority || 'medium',
+          description: template.description || '',
+          dosage: template.dosage || '',
+          duration: template.duration || 1,
+          dayInSeries: template.dayInSeries || 1,
+          estimatedTime: template.estimatedTime || 0,
+          materials: template.materials || '',
+          notes: template.notes || ''
+        },
+        taskTypeIndex: taskTypeIndex >= 0 ? taskTypeIndex : 0,
+        categoryIndex: categoryIndex >= 0 ? categoryIndex : 0,
+        priorityIndex: priorityIndex >= 0 ? priorityIndex : 1
+      })
     },
 
     // 加载任务数据
@@ -197,25 +316,17 @@ Component({
     onTypeChange(e: CustomEvent) {
       const index = parseInt(e.detail.value)
       const type = this.data.taskTypes[index].value
+      const label = this.data.taskTypes[index].label
       
-      // 根据类型自动设置分类
-      const typeToCategory: unknown = {
-        'inspection': '健康管理',
-        'vaccine': '疫苗接种',
-        'medication': '用药管理',
-        'nutrition': '营养管理',
-        'feeding': '饲养管理',
-        'care': '特殊护理'
-      }
-      
-      const category = typeToCategory[type] || '健康管理'
+      // 类型和分类保持一致（label 即为分类名称）
+      const category = label
       const categoryIndex = this.data.categories.indexOf(category)
       
       this.setData({
         'formData.type': type,
         'formData.category': category,
-        taskTypeIndex: index, // 更新任务类型索引
-        categoryIndex
+        taskTypeIndex: index,
+        categoryIndex: categoryIndex >= 0 ? categoryIndex : 0
       })
     },
 
@@ -316,7 +427,7 @@ Component({
       }
       
       try {
-        wx.showLoading({ title: '保存中...' })
+        wx.showLoading({ title: '保存中...', mask: true })
         
         const { mode, dayAge, taskId, formData } = this.data
         
@@ -330,7 +441,9 @@ Component({
             taskId,
             taskData: formData
           }
-        })
+        }) as { result?: { success?: boolean; error?: string } }
+        
+        wx.hideLoading()
         
         if (result.result?.success) {
           wx.showToast({
@@ -344,21 +457,14 @@ Component({
         } else {
           throw new Error(result.result?.error || '保存失败')
         }
-        
-        wx.hideLoading()
       } catch (error) {
         wx.hideLoading()
-        console.error('保存任务失败:', error)
+        console.error('[lifecycle-task-edit] 保存任务失败:', error)
         
-        // 模拟成功（用于演示）
         wx.showToast({
-          title: '保存成功',
-          icon: 'success'
+          title: '保存失败，请重试',
+          icon: 'none'
         })
-        
-        setTimeout(() => {
-          wx.navigateBack()
-        }, 1500)
       }
     }
   }

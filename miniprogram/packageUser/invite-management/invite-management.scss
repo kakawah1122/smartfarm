@@ -153,13 +153,17 @@ $spacing-xl: 40rpx;
   .create-invite-btn {
     width: 100%;
     height: 88rpx !important;
-    border-radius: 24rpx !important;
+    border-radius: 16rpx !important;
     font-size: 32rpx !important;
     font-weight: 600 !important;
+    background: linear-gradient(135deg, #0052d9, #2563eb) !important;
+    border: none !important;
+    color: #ffffff !important;
     box-shadow: 0 6rpx 20rpx rgba(0, 82, 217, 0.3) !important;
     
     &:active {
       transform: scale(0.98);
+      opacity: 0.9;
     }
   }
 }

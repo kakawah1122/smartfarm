@@ -450,13 +450,20 @@ border-radius: var(--td-button-border-radius) ;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) ;
 }
 
-/* 主要按钮 - 现代蓝色渐变 */
+/* 主要按钮 - 现代蓝色渐变（全局强制样式） */
+.t-button--primary {
+  background: linear-gradient(135deg, #0052d9, #0084ff) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
+}
+
 .app .t-button--primary,
 .page .t-button--primary {
-background: var(--td-button-primary-bg-color) ;
-  border: none ;
-  color: var(--td-button-primary-color);
-  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) ;
+  background: linear-gradient(135deg, #0052d9, #0084ff) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
 }
 
 .t-button--primary:active {
@@ -496,13 +503,34 @@ background: linear-gradient(135deg, var(--td-error-color), #dc2626) ;
   box-shadow: 0 4rpx 16rpx rgba(213, 73, 65, 0.2) ;
 }
 
-/* 轻量按钮样式 */
+/* 轻量按钮样式（全局强制样式） */
+.t-button--light {
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+  border: 1rpx solid #e5e7eb !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) !important;
+}
+
 .app .t-button--light,
 .page .t-button--light {
-background: var(--td-brand-color-light) ;
-  color: var(--td-brand-color);
-  border: 2rpx solid var(--td-brand-color) ;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) ;
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+  border: 1rpx solid #e5e7eb !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) !important;
+}
+
+/* 默认按钮样式（全局强制样式） */
+.t-button--default {
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+  border: 1rpx solid #e5e7eb !important;
+}
+
+.app .t-button--default,
+.page .t-button--default {
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+  border: 1rpx solid #e5e7eb !important;
 }
 
 .t-button--light:active {

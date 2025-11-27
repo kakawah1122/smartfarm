@@ -322,42 +322,6 @@ $shadow-brand-md: 0 6rpx 16rpx rgba(0, 82, 217, 0.3);
     pointer-events: auto;
   }
 }
-/* 健康概览卡片 */
-.health-overview {
-  padding: 24rpx;
-  background: white;
-  margin-bottom: 16rpx;
-}
-.overview-grid {
-  display: flex;
-  gap: 16rpx;
-}
-.overview-card {
-  flex: 1;
-  padding: 24rpx 16rpx;
-  border-radius: 12rpx;
-  text-align: center;
-  color: white;
-  &.primary {
-    background: linear-gradient(135deg, #0052d9 0%, #266fe8 100%);
-  }
-  &.warning {
-    background: linear-gradient(135deg, #ed7b2f 0%, #f2975a 100%);
-  }
-  &.success {
-    background: linear-gradient(135deg, #00a870 0%, #00c991 100%);
-  }
-}
-.overview-value {
-  font-size: 40rpx;
-  font-weight: 600;
-  line-height: 1.2;
-  margin-bottom: 8rpx;
-}
-.overview-label {
-  font-size: 24rpx;
-  opacity: 0.9;
-}
 /* 活跃预警 */
 .active-alerts {
   margin: 0 24rpx 16rpx;

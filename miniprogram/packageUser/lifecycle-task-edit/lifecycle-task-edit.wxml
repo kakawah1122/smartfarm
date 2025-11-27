@@ -158,7 +158,7 @@
       <t-button
         theme="primary"
         size="large"
-        bind:tap="saveTask"
+        bindtap="saveTask"
         block
       >
         保存任务

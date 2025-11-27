@@ -528,37 +528,7 @@ page {
   margin-bottom: 24rpx;
 }
 
-.actions-grid {
-  display: flex;
-  gap: 12rpx;
-  padding: 0 16rpx;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.actions-grid .action-button {
-  flex: 1;
-  min-width: 0;
-  height: 88rpx;
-}
-
-.actions-grid .action-button.t-button--large,
-.actions-grid .action-button.t-button {
-  font-size: 30rpx;
-  font-weight: 500;
-}
-
-.actions-grid .action-button .t-button__text {
-  font-size: 30rpx;
-  font-weight: 500;
-}
-
-/* TDesign 组件自定义样式 - 使用更具体的选择器避免!important */
-.page-container .t-button--primary {
-  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-  border: none;
-  border-radius: 20rpx;
-}
+/* TDesign 组件自定义样式 - 仅对本页面手动记账按钮生效 */
 
 .page-container .t-tag {
   border-radius: 16rpx;
@@ -983,6 +953,27 @@ page {
   .button-text {
     color: #0052d9 !important;
   }
+}
+
+// 手动记账按钮 - 蓝色实心按钮
+.manual-record-btn {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6) !important;
+  border: none !important;
+  border-radius: 16rpx !important;
+  height: 88rpx !important;
+  font-size: 32rpx !important;
+  font-weight: 500 !important;
+  
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+// 手动记账按钮包装器
+.manual-record-wrapper {
+  width: 100%;
+  padding: 0 16rpx;
+  box-sizing: border-box;
 }
 
 .empty-state {

@@ -37,39 +37,60 @@ Component({
   },
 
   methods: {
-    // 格式化日期时间
+    // 格式化日期时间（兼容iOS，24小时制）
     formatDateTime(dateValue: unknown): string {
       if (!dateValue) return '未知时间'
       
+      // 检查是否是空对象
+      if (typeof dateValue === 'object' && dateValue !== null && Object.keys(dateValue).length === 0) {
+        return '未知时间'
+      }
+      
       try {
-        let date: Date
+        let date: Date | null = null
         
         // 处理不同的日期格式
         if (typeof dateValue === 'string') {
+          // iOS兼容：将 'YYYY-MM-DD HH:mm:ss' 转换为 'YYYY/MM/DD HH:mm:ss'
+          const iosCompatible = dateValue.replace(/-/g, '/')
+          date = new Date(iosCompatible)
+        } else if (typeof dateValue === 'number') {
+          // 时间戳
           date = new Date(dateValue)
-        } else if (dateValue.$date) {
-          // 处理 MongoDB 日期格式
-          date = new Date(dateValue.$date)
         } else if (dateValue instanceof Date) {
           date = dateValue
-        } else {
-          // 尝试转换为毫秒时间戳
-          date = new Date(dateValue)
+        } else if (typeof dateValue === 'object' && dateValue !== null) {
+          // 处理各种对象格式
+          const obj = dateValue as Record<string, unknown>
+          
+          if (obj.$date) {
+            // MongoDB 日期格式 { $date: timestamp }
+            date = new Date(obj.$date as number)
+          } else if (obj._seconds !== undefined) {
+            // Firestore 时间戳格式
+            date = new Date((obj._seconds as number) * 1000)
+          } else if (obj.seconds !== undefined) {
+            // 另一种时间戳格式
+            date = new Date((obj.seconds as number) * 1000)
+          } else if (obj.time !== undefined) {
+            // { time: timestamp } 格式
+            date = new Date(obj.time as number)
+          }
         }
         
         // 检查日期是否有效
-        if (isNaN(date.getTime())) {
+        if (!date || isNaN(date.getTime())) {
           return '未知时间'
         }
         
-        // 格式化为中文日期时间
-        return date.toLocaleString('zh-CN', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
+        // 手动格式化为24小时制（iOS兼容）
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+        
+        return `${year}/${month}/${day} ${hours}:${minutes}`
       } catch (error) {
         console.error('日期格式化错误:', error, dateValue)
         return '未知时间'
@@ -82,8 +103,8 @@ Component({
       
       const processed = {
         ...record,
-        // 格式化日期时间，兼容多种字段名
-        formattedDate: this.formatDateTime(record.createTime || record.analyzedAt || record._createTime),
+        // 格式化日期时间，兼容多种字段名（优先使用时间戳或字符串格式）
+        formattedDate: this.formatDateTime(record.createTime || record.createTimeStr || record.analyzedAt || record._createTime),
         // 分析类型
         analysisType: record.customQuery ? '自定义分析' : '全面分析',
         // 时间范围

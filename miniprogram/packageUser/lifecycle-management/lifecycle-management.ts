@@ -1,7 +1,6 @@
 // @ts-nocheck
 // lifecycle-management.ts - 任务管理页面
-
-import { getTasksByDayAge, getAllTasks } from '../utils/breeding-schedule-data'
+// 数据源：云数据库 task_templates 集合
 
 // 定义全局变量存储定时器
 let scrollTimer: number | null = null
@@ -10,6 +9,7 @@ Component({
   data: {
     // 日龄任务列表
     taskGroups: [] as unknown[],
+    groupedTasks: [] as unknown[], // WXML 使用的任务分组数据
     
     // 展开的日龄组
     expandedGroups: {} as unknown,
@@ -32,7 +32,43 @@ Component({
     
     // 导航栏高度
     statusBarHeight: 0,
-    navbarHeight: 44
+    navbarHeight: 44,
+    
+    // 编辑弹窗相关
+    showEditPopup: false,
+    editMode: 'edit' as 'add' | 'edit',
+    editingTask: {
+      id: '',
+      dayAge: 1,
+      title: '',
+      type: 'inspection',
+      category: '健康管理',
+      priority: 'medium',
+      description: '',
+      dosage: '',
+      duration: 1
+    },
+    editTaskTypeIndex: 0,
+    editPriorityIndex: 1,
+    
+    // 任务类型选项
+    taskTypes: [
+      { label: '健康管理', value: 'inspection' },
+      { label: '疫苗管理', value: 'vaccine' },
+      { label: '用药管理', value: 'medication' },
+      { label: '营养管理', value: 'nutrition' },
+      { label: '饲养管理', value: 'feeding' },
+      { label: '保健管理', value: 'care' },
+      { label: '环境管理', value: 'environment' },
+      { label: '观察记录', value: 'observation' }
+    ],
+    
+    // 优先级选项
+    priorities: [
+      { label: '高优先级', value: 'high' },
+      { label: '中优先级', value: 'medium' },
+      { label: '低优先级', value: 'low' }
+    ]
   },
 
   lifetimes: {
@@ -83,8 +119,11 @@ Component({
       try {
         wx.showLoading({ title: '加载中...' })
         
-        // 使用本地养殖计划数据
-        this.loadDefaultDataFromBreedingSchedule()
+        // 首先确保用户有默认模板副本
+        await this.ensureUserTemplate()
+        
+        // 加载任务数据
+        await this.loadDefaultDataFromBreedingSchedule()
         
         wx.hideLoading()
       } catch (error) {
@@ -96,31 +135,91 @@ Component({
         })
       }
     },
-
-    // 从breeding-schedule加载数据
-    loadDefaultDataFromBreedingSchedule() {
-      const taskGroups = getTasksByDayAge()
-      const allTasks = getAllTasks()
-      
-      // 根据筛选条件过滤任务
-      let filteredGroups = taskGroups
-      
-      // 按分类筛选
-      if (this.data.filterCategory !== '全部') {
-        filteredGroups = taskGroups.map(group => ({
-          ...group,
-          tasks: group.tasks.filter((task: unknown) => task.category === this.data.filterCategory)
-        })).filter(group => group.tasks.length > 0)
+    
+    // 确保用户有默认模板副本
+    async ensureUserTemplate() {
+      try {
+        // 检查用户是否有"默认模板"
+        const checkResult = await wx.cloud.callFunction({
+          name: 'lifecycle-management',
+          data: {
+            action: 'get_schedule_template',
+            templateName: '默认模板'
+          }
+        }) as { result?: { success?: boolean; data?: unknown[] } }
+        
+        // 如果没有数据或数据为空，自动导入标准模板
+        if (!checkResult.result?.data || checkResult.result.data.length === 0) {
+          console.log('[lifecycle-management] 用户没有模板，自动导入标准模板...')
+          await wx.cloud.callFunction({
+            name: 'lifecycle-management',
+            data: {
+              action: 'import_standard_template'
+            }
+          })
+        }
+      } catch (error) {
+        console.error('检查/导入模板失败:', error)
       }
-      
-      // 默认折叠所有日龄
-      const expandedGroups: unknown = {}
-      
-      this.setData({
-        taskGroups: filteredGroups,
-        totalTasks: allTasks.length,
-        expandedGroups
-      })
+    },
+
+    // 从云数据库加载任务模板数据
+    async loadDefaultDataFromBreedingSchedule() {
+      try {
+        // 从云函数获取任务模板
+        const result = await wx.cloud.callFunction({
+          name: 'lifecycle-management',
+          data: {
+            action: 'get_schedule_template',
+            templateName: this.data.currentTemplate || '默认模板'
+          }
+        }) as { result?: { success?: boolean; data?: unknown[] } }
+        
+        let allTasks: unknown[] = []
+        
+        if (result.result?.success && result.result.data) {
+          allTasks = result.result.data
+        }
+        
+        
+        // 按日龄分组
+        const taskGroups = this.groupTasksByDayAge(allTasks)
+        
+        // 根据筛选条件过滤任务
+        let filteredGroups = taskGroups
+        
+        // 按分类筛选
+        if (this.data.filterCategory !== '全部') {
+          filteredGroups = taskGroups.map((group: { dayAge: number; tasks: unknown[] }) => ({
+            ...group,
+            tasks: group.tasks.filter((task: { category?: string }) => task.category === this.data.filterCategory)
+          })).filter((group: { tasks: unknown[] }) => group.tasks.length > 0)
+        }
+        
+        // 转换为 groupedTasks 格式（WXML 使用的变量）
+        const groupedTasks = filteredGroups.map((group: { dayAge: number; tasks: unknown[] }) => ({
+          dayAge: group.dayAge,
+          taskCount: group.tasks.length,
+          tasks: group.tasks
+        }))
+        
+        // 默认折叠所有日龄
+        const expandedGroups: unknown = {}
+        
+        this.setData({
+          taskGroups: filteredGroups,
+          groupedTasks: groupedTasks,
+          totalTasks: allTasks.length,
+          expandedGroups
+        })
+        
+      } catch (error) {
+        console.error('加载任务模板失败:', error)
+        wx.showToast({
+          title: '加载失败',
+          icon: 'none'
+        })
+      }
     },
 
 
@@ -156,17 +255,165 @@ Component({
     // 添加任务
     addTask(e: CustomEvent) {
       const dayAge = e.currentTarget.dataset.dayAge
-      wx.navigateTo({
-        url: `/packageUser/lifecycle-task-edit/lifecycle-task-edit?dayAge=${dayAge}&mode=add`
+      
+      // 重置表单数据
+      this.setData({
+        showEditPopup: true,
+        editMode: 'add',
+        editingTask: {
+          id: '',
+          dayAge: dayAge,
+          title: '',
+          type: 'inspection',
+          category: '健康管理',
+          priority: 'medium',
+          description: '',
+          dosage: '',
+          duration: 1
+        },
+        editTaskTypeIndex: 0,
+        editPriorityIndex: 1
       })
     },
 
     // 编辑任务
     editTask(e: CustomEvent) {
       const { dayAge, taskId } = e.currentTarget.dataset
-      wx.navigateTo({
-        url: `/packageUser/lifecycle-task-edit/lifecycle-task-edit?dayAge=${dayAge}&taskId=${taskId}&mode=edit`
+      
+      if (!taskId) {
+        return
+      }
+      
+      // 从任务列表中找到对应任务
+      let task: any = null
+      for (const group of this.data.groupedTasks as any[]) {
+        if (group.dayAge === dayAge) {
+          task = group.tasks.find((t: any) => t.id === taskId)
+          break
+        }
+      }
+      
+      if (!task) {
+        wx.showToast({ title: '任务不存在', icon: 'none' })
+        return
+      }
+      
+      // 计算类型和优先级索引
+      const taskTypeIndex = this.data.taskTypes.findIndex(t => t.value === task.type)
+      const priorityIndex = this.data.priorities.findIndex(p => p.value === task.priority)
+      
+      // 填充表单并打开弹窗
+      this.setData({
+        showEditPopup: true,
+        editMode: 'edit',
+        editingTask: {
+          id: task.id,
+          dayAge: dayAge,
+          title: task.title || '',
+          type: task.type || 'inspection',
+          category: task.category || '健康管理',
+          priority: task.priority || 'medium',
+          description: task.description || '',
+          dosage: task.dosage || '',
+          duration: task.duration || 1
+        },
+        editTaskTypeIndex: taskTypeIndex >= 0 ? taskTypeIndex : 0,
+        editPriorityIndex: priorityIndex >= 0 ? priorityIndex : 1
       })
+    },
+    
+    // 关闭编辑弹窗
+    closeEditPopup() {
+      this.setData({ showEditPopup: false })
+    },
+    
+    // 表单输入事件
+    onEditTitleInput(e: any) {
+      this.setData({ 'editingTask.title': e.detail.value })
+    },
+    
+    onEditDescriptionInput(e: any) {
+      this.setData({ 'editingTask.description': e.detail.value })
+    },
+    
+    onEditDosageInput(e: any) {
+      this.setData({ 'editingTask.dosage': e.detail.value })
+    },
+    
+    onEditDurationInput(e: any) {
+      this.setData({ 'editingTask.duration': parseInt(e.detail.value) || 1 })
+    },
+    
+    onEditTypeChange(e: any) {
+      const index = parseInt(e.detail.value)
+      const type = this.data.taskTypes[index]
+      this.setData({
+        editTaskTypeIndex: index,
+        'editingTask.type': type.value,
+        'editingTask.category': type.label
+      })
+    },
+    
+    onEditPriorityChange(e: any) {
+      const index = parseInt(e.detail.value)
+      const priority = this.data.priorities[index]
+      this.setData({
+        editPriorityIndex: index,
+        'editingTask.priority': priority.value
+      })
+    },
+    
+    // 保存任务
+    async saveTask() {
+      const { editingTask, editMode } = this.data
+      
+      // 验证表单
+      if (!editingTask.title.trim()) {
+        wx.showToast({ title: '请输入任务标题', icon: 'none' })
+        return
+      }
+      if (!editingTask.description.trim()) {
+        wx.showToast({ title: '请输入任务描述', icon: 'none' })
+        return
+      }
+      
+      try {
+        wx.showLoading({ title: '保存中...', mask: true })
+        
+        const action = editMode === 'add' ? 'add_task' : 'update_task'
+        const result = await wx.cloud.callFunction({
+          name: 'lifecycle-management',
+          data: {
+            action,
+            dayAge: editingTask.dayAge,
+            taskId: editingTask.id,
+            taskData: {
+              title: editingTask.title,
+              type: editingTask.type,
+              category: editingTask.category,
+              priority: editingTask.priority,
+              description: editingTask.description,
+              dosage: editingTask.dosage,
+              duration: editingTask.duration
+            }
+          }
+        }) as any
+        
+        wx.hideLoading()
+        
+        if (result.result?.success) {
+          wx.showToast({ title: '保存成功', icon: 'success' })
+          this.setData({ showEditPopup: false })
+          // 重新加载数据
+          this.loadDefaultDataFromBreedingSchedule()
+        } else {
+          throw new Error(result.result?.error || '保存失败')
+        }
+      } catch (error) {
+        wx.hideLoading()
+        console.error('保存任务失败:', error)
+        wx.showToast({ title: '保存失败', icon: 'none' })
+      }
     },
 
     // 删除任务
@@ -640,7 +887,7 @@ Component({
         const selectedTemplate = this.data.selectedTemplate
         
         if (!selectedTemplate) {
-          wx.hideLoading()
+          this.setData({ showSkeleton: false })
           return
         }
         
@@ -648,8 +895,8 @@ Component({
         
         // 根据模板类型加载任务
         if (selectedTemplate.isDefault) {
-          // 默认模板：使用本地的养殖计划数据
-          this.loadDefaultDataFromBreedingSchedule()
+          // 默认模板：从云数据库加载
+          await this.loadDefaultDataFromBreedingSchedule()
           allTasks = this.data.taskGroups.reduce((acc: unknown[], group: unknown) => {
             return acc.concat(group.tasks)
           }, [])

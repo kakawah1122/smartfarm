@@ -1450,20 +1450,6 @@ const pageConfig: unknown = {
     })
   },
 
-  // 导出报表
-  exportReport() {
-    wx.showLoading({
-      title: '导出中...'
-    })
-    
-    setTimeout(() => {
-      wx.hideLoading()
-      wx.showToast({
-        title: '报表已导出',
-        icon: 'success'
-      })
-    }, 1500)
-  },
 
   // 加载AI分析所需的模块数据（在页面级加载，避免组件内重复调用云函数）
   async loadModuleDataForAI() {

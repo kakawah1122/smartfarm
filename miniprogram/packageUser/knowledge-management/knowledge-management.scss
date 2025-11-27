@@ -144,6 +144,7 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
   padding-right: 120rpx; /* 为标签预留空间，避免重叠 */
@@ -246,6 +247,11 @@
 
 .create-button {
   width: 100%;
+  background: linear-gradient(135deg, #0052d9, #0084ff) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 16rpx;
+  font-weight: 600;
 }
 
 /* 表单弹窗 */
@@ -429,6 +435,18 @@
   flex: 1 !important;
   width: 0 !important;
   min-width: 0 !important;
+}
+
+.form-actions .t-button--primary {
+  background: linear-gradient(135deg, #0052d9, #0084ff) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.form-actions .t-button--default {
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+  border: 1rpx solid #e5e7eb !important;
 }
 
 

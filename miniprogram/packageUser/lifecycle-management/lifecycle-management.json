@@ -2,6 +2,6 @@
   "navigationStyle": "custom",
   "usingComponents": {
     "navigation-bar": "../../components/navigation-bar/navigation-bar",
-    "t-swipe-cell": "tdesign-miniprogram/swipe-cell/swipe-cell"
+    "bottom-popup": "../../components/bottom-popup/bottom-popup"
   }
 }

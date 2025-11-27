@@ -1,4 +1,28 @@
-import { logger } from '../../utils/logger'
+// 类型定义
+interface SeriesItem {
+  date: string
+  value: number | string
+}
+
+interface PriceRangeItem {
+  date: string
+  min: number | string
+  max: number | string
+  avg?: number
+}
+
+interface ColorScheme {
+  line?: string
+  area?: string
+}
+
+interface BoundingRect {
+  left: number
+  top: number
+  width: number
+  height?: number
+}
+
 Component({
   properties: {
     series: {
@@ -79,7 +103,7 @@ Component({
         .fields({ node: true, size: true })
         .exec((res) => {
           if (!res || !res[0]) {
-            logger.warn('Canvas query failed, retrying...')
+            console.warn('[price-trend-chart] Canvas query failed, retrying...')
             setTimeout(() => {
               this.prepareCanvas(force)
             }, 100)
@@ -88,7 +112,7 @@ Component({
 
           const result = res[0]
           if (!result.node) {
-            logger.warn('Canvas node not found')
+            console.warn('[price-trend-chart] Canvas node not found')
             return
           }
 
@@ -138,9 +162,9 @@ Component({
 
     // 原有的折线图绘制逻辑
     renderLineChart() {
-      const series = (this.properties.series || []).map((item: unknown) => ({
+      const series = (this.properties.series || []).map((item: SeriesItem) => ({
         date: item.date,
-        value: typeof item.value === 'number' ? item.value : parseFloat(item.value)
+        value: typeof item.value === 'number' ? item.value : parseFloat(String(item.value))
       }))
 
       const hasData = series.length > 0
@@ -149,7 +173,8 @@ Component({
         axisLabels: hasData ? series.map((item) => item.date) : []
       })
 
-      const ctx = this.ctx as WechatMiniprogram.RenderingContext
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ctx = this.ctx as any
       const dpr = this.dpr || 1
       const width = this.canvasWidth || 0
       const height = this.properties.height || 200
@@ -205,8 +230,9 @@ Component({
         ctx.stroke()
       }
 
-      const areaColor = (this.properties.colorScheme as unknown)?.area || 'rgba(0, 82, 217, 0.12)'
-      const lineColor = (this.properties.colorScheme as unknown)?.line || '#0052d9'
+      const colorScheme = this.properties.colorScheme as ColorScheme
+      const areaColor = colorScheme?.area || 'rgba(0, 82, 217, 0.12)'
+      const lineColor = colorScheme?.line || '#0052d9'
 
       // 绘制面积
       ctx.beginPath()
@@ -257,10 +283,10 @@ Component({
 
     // 双线图绘制逻辑（最高价和最低价）
     renderDualLineChart() {
-      const ranges = (this.properties.priceRanges || []).map((item: unknown) => ({
+      const ranges = (this.properties.priceRanges || []).map((item: PriceRangeItem) => ({
         date: item.date,
-        min: typeof item.min === 'number' ? item.min : parseFloat(item.min),
-        max: typeof item.max === 'number' ? item.max : parseFloat(item.max)
+        min: typeof item.min === 'number' ? item.min : parseFloat(String(item.min)),
+        max: typeof item.max === 'number' ? item.max : parseFloat(String(item.max))
       }))
 
       const hasData = ranges.length > 0
@@ -269,7 +295,8 @@ Component({
         axisLabels: hasData ? ranges.map((item) => item.date) : []
       })
 
-      const ctx = this.ctx as WechatMiniprogram.RenderingContext
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ctx = this.ctx as any
       const dpr = this.dpr || 1
       const width = this.canvasWidth || 0
       const height = this.properties.height || 200
@@ -470,20 +497,16 @@ Component({
       const query = this.createSelectorQuery()
       
       query.select('#trendCanvas')
-        .boundingClientRect((rect: unknown) => {
+        .boundingClientRect((rect: BoundingRect | null) => {
           if (!rect) return
 
-          // 计算触摸点相对于 canvas 的位置
+          // 计算触摸点相对于 canvas 的 X 位置
           const touchX = touch.clientX - rect.left
-          const touchY = touch.clientY - rect.top
 
           // 使用与绘图相同的布局参数
           const width = rect.width
-          const height = this.properties.height || 200
           const paddingLeft = 50
           const paddingRight = 20
-          const paddingTop = 20
-          const paddingBottom = 35
           const chartWidth = Math.max(1, width - paddingLeft - paddingRight)
 
           // 计算每个数据点的 X 坐标
@@ -499,7 +522,7 @@ Component({
           let minDistance = Infinity
           const touchThreshold = 40 // 触摸有效范围（像素），增大范围更容易触发
 
-          ranges.forEach((item: unknown, index: number) => {
+          ranges.forEach((_item: { date: string; min: number; max: number }, index: number) => {
             const x = resolveX(index)
             const distance = Math.abs(touchX - x)
             
@@ -511,7 +534,7 @@ Component({
 
           // 如果找到了最近的点，显示提示框
           if (nearestIndex !== -1) {
-            const dataPoint = ranges[nearestIndex] as unknown
+            const dataPoint = ranges[nearestIndex]
 
             this.setData({
               tooltip: {

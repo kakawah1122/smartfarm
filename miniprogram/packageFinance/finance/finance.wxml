@@ -280,13 +280,8 @@
         <view class="card-header">
           <text class="card-title">快捷操作</text>
         </view>
-        <view class="actions-grid">
-          <t-button theme="primary" size="large" bind:tap="addManualRecord" class="action-button primary-button">
-              手动记账
-            </t-button>
-          <t-button theme="light" size="large" bind:tap="exportReport" class="action-button light-button">
-              导出报表
-            </t-button>
+        <view class="manual-record-wrapper">
+          <t-button theme="primary" size="large" class="manual-record-btn" block bind:tap="addManualRecord">手动记账</t-button>
         </view>
       </view>
     </view>

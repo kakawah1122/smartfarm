@@ -83,6 +83,13 @@
     .quick-actions {
       .quick-analyze-btn {
         margin-bottom: 16rpx;
+        background: linear-gradient(135deg, #0052d9, #2563eb) !important;
+        border: none !important;
+        color: #ffffff !important;
+        border-radius: 16rpx !important;
+        height: 88rpx !important;
+        font-size: 32rpx !important;
+        font-weight: 500 !important;
       }
       
       .analysis-note {

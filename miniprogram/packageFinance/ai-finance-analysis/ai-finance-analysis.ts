@@ -81,13 +81,18 @@ Component({
         const db = wx.cloud.database()
         const dateRange = this.properties.dateRange
         
+        // 使用时间戳而不是db.serverDate()，确保客户端保存后能正确读取
+        const now = new Date()
+        const createTimeValue = now.getTime() // 毫秒时间戳
+        
         await db.collection(COLLECTIONS.FINANCE_ANALYSIS_HISTORY).add({
           data: {
             analysisResult,
             customQuery,
             dateRange,
             dateRangeText: this.getDateRangeText(dateRange),
-            createTime: db.serverDate(),
+            createTime: createTimeValue,
+            createTimeStr: now.toISOString(), // 备用字符串格式
             financeData: {
               // 保存基本财务数据用于快速预览
               income: this.properties.financeData?.income?.total || 0,
@@ -107,12 +112,13 @@ Component({
     
     // 获取日期范围文本
     getDateRangeText(dateRange: unknown): string {
-      if (!dateRange || !dateRange.start || !dateRange.end) {
+      const range = dateRange as { start?: string | number; end?: string | number } | null
+      if (!range || !range.start || !range.end) {
         return '全部时间'
       }
       
-      const start = new Date(dateRange.start).toLocaleDateString('zh-CN')
-      const end = new Date(dateRange.end).toLocaleDateString('zh-CN')
+      const start = new Date(range.start).toLocaleDateString('zh-CN')
+      const end = new Date(range.end).toLocaleDateString('zh-CN')
       return `${start} - ${end}`
     },
     
@@ -186,7 +192,7 @@ Component({
         
         return {
           recentDeaths: deathRecords.data || [],
-          totalDeaths: (deathRecords.data || []).reduce((sum: number, r: unknown) => sum + (r.deathCount || 0), 0)
+          totalDeaths: (deathRecords.data || []).reduce((sum: number, r: unknown) => sum + ((r as { deathCount?: number }).deathCount || 0), 0)
         }
       } catch (error) {
         logger.warn('获取健康数据失败:', error)
@@ -198,7 +204,7 @@ Component({
     collectGoosePriceData() {
       try {
         // 1. 尝试从全局状态获取（首页可能已加载）
-        const app = getApp() as unknown
+        const app = getApp() as { globalData?: { goosePrice?: unknown } }
         if (app.globalData && app.globalData.goosePrice) {
           return Promise.resolve(app.globalData.goosePrice)
         }
@@ -291,102 +297,88 @@ Component({
         }
       } catch (error: unknown) {
         logger.error('AI财务分析失败:', error)
+        const errorMsg = (error as Error)?.message || '分析失败，请稍后重试'
         this.setData({
-          analysisError: error.message || '分析失败，请稍后重试',
+          analysisError: errorMsg,
           analyzing: false,
           loading: false
         })
         
         // 触发分析失败事件
-        this.triggerEvent('analysisError', { error: error.message })
+        this.triggerEvent('analysisError', { error: errorMsg })
       }
     },
 
     // 构建系统提示词
     getSystemPrompt(): string {
-      return `你是一位资深的农业养殖财务分析专家，专门从事狮头鹅养殖企业的财务分析和生产管理咨询工作。你具备以下专业知识：
-1. 狮头鹅养殖的生物学特性、生长周期、饲养标准（120日龄标准出栏）
-2. 养殖成本结构（饲料、鹅苗、医疗、人工、设备等）及季节性成本波动
-3. 疾病防控与健康管理的最佳实践，熟悉不同季节的常见疾病
-4. 生产管理优化（批次管理、存栏周转、出栏时机），精通季节性生产规划
-5. 季节变化对养殖的影响及应对措施（温度、湿度、极端天气的历史影响）
-6. 采购策略与成本控制，了解季节性价格波动规律
-7. 财务分析与成本效益评估，擅长结合季节因素进行综合分析
+      return `你是一位资深的狮头鹅养殖财务分析专家，拥有15年以上养殖场财务管理经验。
 
-⭐【季节性专业知识】你必须深刻理解狮头鹅养殖的季节性特点：
-- **春季（3-5月）**：气温适宜，入栏黄金期，成活率高，饲料转化率最佳
-- **夏季（6-8月）**：高温高湿，应激大，需增加降温成本，鹅价偏低，谨慎入栏
-- **秋季（9-11月）**：育肥黄金期，食欲旺盛，鹅价上涨，是最佳出栏季节
-- **冬季（12-2月）**：保温成本高，但鹅价最高（春节旺季），高价出栏期
-- **季节性成本差异**：夏季降温+冬季保温可增加15-20%成本
-- **季节性价格波动**：冬季鹅价比夏季高20-30%
-- **最优养殖周期安排**：春季入栏→夏季育肥→秋季出栏，或秋季入栏→冬季育肥→春节前出栏
+【你的专业背景】
+- 精通狮头鹅120日龄标准养殖周期的成本核算
+- 熟悉广东地区狮头鹅市场价格规律（春节前后高价期、夏季低谷期）
+- 掌握批次养殖的资金周转和现金流管理
+- 了解养殖场常见疾病（小鹅瘟、禽流感、球虫病等）对成本的影响
 
-【重要限制】
-**你只能回答与狮头鹅养殖和财务管理相关的问题。**
-- 如果用户提出与养殖、财务无关的问题，请礼貌地回复："抱歉，我只能提供狮头鹅养殖和财务分析相关的建议。"
-- 不要回答任何与养殖业、农业财务管理无关的话题
-- 不要进行闲聊或回答非业务相关的问题
+【季节性专业知识】
+- **冬季（12-2月）**：鹅价最高（春节旺季12.5-15元/斤），保温成本增加15%，是最佳出栏期
+- **春季（3-5月）**：气温适宜，成活率高达95%+，是最佳入栏期
+- **夏季（6-8月）**：高温应激大，鹅价低谷（9-10元/斤），降温成本增加20%
+- **秋季（9-11月）**：育肥黄金期，鹅价回升，食欲旺盛
 
-【分析要求】
-1. 结合狮头鹅养殖的专业知识，提供有针对性的财务分析
-2. 将财务数据与生产数据（存栏量、死亡率、疾病情况）关联分析
-3. 识别影响盈利的关键因素（如疾病损失、饲料效率、出栏时机等）
-4. 提供可操作的生产管理建议，反推养殖生产优化方案
-5. ⭐**重点考虑季节性因素**：必须根据当前季节给出针对性的成本、价格、入栏、出栏、批次安排建议
-6. 充分考虑季节特点、疾病风险、市场价格波动等外部因素
-7. 使用专业的财务术语，同时确保建议通俗易懂、可执行、有明确的时间节点和数据支撑
+【核心任务】
+基于养殖场的实际财务数据，提供：
+1. 精准的财务诊断（不是泛泛而谈）
+2. 可立即执行的具体措施（包含数字和时间节点）
+3. 针对当前批次的出栏时机建议
+4. 基于成本结构的采购优化方案
 
 【输出格式要求】
-请使用JSON格式输出分析结果，包含以下字段：
+⭐⭐⭐ 所有字段值必须是纯文本字符串，禁止返回数组或嵌套对象 ⭐⭐⭐
+
+请使用以下JSON格式输出，每个字段的值都是一段完整的中文描述：
 {
   "profitability": {
-    "summary": "盈利能力总体评价（结合狮头鹅养殖特点）",
-    "profitMargin": "利润率分析（与行业标准对比）",
-    "efficiency": "经营效率分析（存栏周转率、饲料转化率等）"
+    "summary": "直接给出盈利状况判断和具体数据，例如：当前处于亏损状态，主要原因是...",
+    "profitMargin": "给出具体利润率数值和行业对比，例如：当前净利润率为-5%，低于行业平均10%...",
+    "efficiency": "给出具体效率指标，例如：饲料转化率2.8:1，略高于标准2.5:1..."
   },
   "costStructure": {
-    "summary": "成本结构总体评价（狮头鹅养殖成本特点）",
-    "breakdown": "各成本项占比分析（饲料、鹅苗、医疗、其他）",
-    "optimization": "成本优化潜力分析（结合生产数据）"
+    "summary": "直接分析成本占比，例如：鹅苗成本占67%，为最大支出项...",
+    "breakdown": "用文字描述各项成本占比，例如：鹅苗成本5万元(67%)、饲料1万元(13%)、医疗1.2万元(16%)、其他0.3万元(4%)",
+    "optimization": "给出具体可节省金额，例如：通过批量采购鹅苗可节省约8%成本，约4000元..."
   },
   "cashFlow": {
-    "summary": "现金流总体评价（考虑出栏周期）",
-    "incomeFlow": "收入流分析（出栏收入、批次收入）",
-    "expenseFlow": "支出流分析（日常支出、周期性支出）",
-    "stability": "现金流稳定性分析（季节性波动）"
+    "summary": "分析现金流状况，例如：当前现金流为负，主要因为批次尚未出栏...",
+    "incomeFlow": "分析收入来源，例如：预计出栏后可获得收入约X万元...",
+    "expenseFlow": "分析日常支出，例如：日均饲料支出约X元，月均固定成本X元...",
+    "stability": "分析现金流稳定性，例如：建议保持X万元流动资金应对突发情况..."
   },
   "trend": {
-    "summary": "趋势总体评价（结合历史数据）",
-    "incomeTrend": "收入趋势分析（出栏量、价格变化）",
-    "expenseTrend": "支出趋势分析（成本变化原因）",
-    "profitTrend": "利润趋势分析（盈利能力变化）"
+    "summary": "分析整体趋势，例如：成本呈上升趋势，主要受饲料涨价影响...",
+    "incomeTrend": "分析收入趋势，例如：随着鹅价季节性上涨，预计收入将增长X%...",
+    "expenseTrend": "分析支出趋势，例如：冬季保温成本将增加约X元/天...",
+    "profitTrend": "分析利润趋势，例如：若在春节前出栏，预计可实现利润X万元..."
   },
   "risk": {
-    "summary": "风险总体评价（财务+生产风险）",
-    "financialRisk": "财务风险分析（现金流、成本控制）",
-    "operationalRisk": "经营风险分析（疾病、季节、市场）",
-    "recommendations": "风险控制建议（具体措施）"
+    "summary": "总体风险评估，例如：当前风险等级中等，主要风险是...",
+    "financialRisk": "财务风险分析，例如：现金流紧张，建议预留X万元应急资金...",
+    "operationalRisk": "经营风险分析，例如：冬季需防范禽流感，死亡率可能上升X%...",
+    "recommendations": "风险控制措施，例如：1.加强疫苗接种；2.储备3周饲料；3.购买养殖保险..."
   },
   "suggestions": {
-    "summary": "优化建议总结（基于财务+生产数据+季节因素）",
-    "immediate": ["立即执行的建议（具体、可操作，结合当前季节）"],
-    "shortTerm": ["短期优化建议（1-3个月，考虑季节变化）"],
-    "longTerm": ["长期战略建议（3-12个月，全年季节规划）"],
-    "productionAdvice": ["反推的生产管理建议（基于财务数据和季节性管理）"]
+    "summary": "总结核心建议，例如：当前重点是控制医疗成本和抓住春节高价出栏...",
+    "immediate": ["本周内：完成禽流感疫苗补种，预防冬季疫病", "立即：与饲料供应商谈判，争取月结优惠价", "3天内：检查鹅舍保温设施，维修破损处"],
+    "shortTerm": ["12月中旬：根据鹅价走势确定第一批出栏时间", "元旦前：联系收购商锁定春节档期订单", "1月：评估是否追加投苗计划"],
+    "longTerm": ["春季3月：安排新批次入栏，利用最佳入栏期", "建立3个月饲料价格走势跟踪，择时批量采购", "优化批次安排：春入秋出+秋入春出双周期"],
+    "productionAdvice": ["调整饲料配方：当前日龄建议使用育肥料，提高增重速度", "优化密度：当前存栏X只/平方，建议调整至X只/平方", "出栏建议：按当前体重和鹅价，建议在X月X日前完成出栏"]
   }
 }
 
-⭐⭐⭐ 注意：由于seasonalStrategy字段在UI中显示不佳，已移除。季节性建议请整合到immediate/shortTerm/longTerm中。
-
-【重要提示】
-- 建议必须结合狮头鹅养殖的实际生产情况
-- 充分考虑当前季节特点对养殖的影响（如秋季温差大易感冒、夏季高温应激等）
-- 结合疾病防控数据，分析医疗成本与疾病损失的平衡
-- 考虑批次管理、存栏周转对现金流的影响
-- 提供具体的生产操作建议（如调整饲料配方、优化出栏时机、改进疾病防控等）
-
-如果无法输出JSON格式，请使用清晰的文本格式，包含以上所有分析维度。`
+【重要限制】
+- 只回答狮头鹅养殖和财务相关问题
+- 所有建议必须包含具体数字、时间节点、可操作步骤
+- 禁止空泛的通用性建议，必须结合实际数据
+- 每条建议都要说明预期效果或节省金额`
     },
 
     // 获取当前季节信息和未来关键时间节点
@@ -520,7 +512,36 @@ ${month === 12 ? '✓ 入栏谨慎：保温成本高10-15%，4个月后（4月�
     
     // 构建财务分析用户提示词
     buildFinanceAnalysisPrompt(financeData: unknown, customQuery: string = '', moduleData?: unknown): string {
-      const { income, expense, profit, costBreakdown, dateRange } = financeData
+      // 定义财务数据类型
+      type FinanceDataType = {
+        income?: { total?: number; growth?: number }
+        expense?: { total?: number; growth?: number }
+        profit?: { total?: number; growth?: number }
+        costBreakdown?: { feedCost?: number; goslingCost?: number; medicalCost?: number; otherCost?: number }
+        dateRange?: { start?: string | number; end?: string | number }
+      }
+      // 定义模块数据类型
+      type ModuleDataType = {
+        production?: {
+          entry?: { total?: string | number; stockQuantity?: string | number }
+          exit?: { total?: string | number; batches?: string | number; avgWeight?: string | number; totalRevenue?: string | number }
+        }
+        health?: {
+          totalDeaths?: number
+          recentDeaths?: Array<{ deathReason?: string }>
+        }
+        goosePrice?: {
+          adult?: number
+          gosling?: number
+          egg?: number
+          trend?: string
+          adultTrend?: number
+        }
+      }
+      
+      const fd = financeData as FinanceDataType
+      const md = moduleData as ModuleDataType | undefined
+      const { income, expense, profit, costBreakdown, dateRange } = fd
       
       // 获取当前日期和季节信息
       const now = new Date()
@@ -555,15 +576,15 @@ ${month === 12 ? '✓ 入栏谨慎：保温成本高10-15%，4个月后（4月�
 
       // 构建生产数据部分（精简版）
       let productionInfo = ''
-      if (moduleData?.production) {
-        const prod = moduleData.production
+      if (md?.production) {
+        const prod = md.production
         
         // 适配production-dashboard返回的数据结构
         const entryTotal = parseInt((prod.entry?.total || '0').toString().replace(/,/g, '')) || 0
         const stockQuantity = parseInt((prod.entry?.stockQuantity || '0').toString().replace(/,/g, '')) || 0
         const exitTotal = parseInt((prod.exit?.total || '0').toString().replace(/,/g, '')) || 0
-        const exitBatches = parseInt(prod.exit?.batches || '0') || 0
-        const exitAvgWeight = parseFloat(prod.exit?.avgWeight || '0') || 0
+        const exitBatches = parseInt(String(prod.exit?.batches || '0')) || 0
+        const exitAvgWeight = parseFloat(String(prod.exit?.avgWeight || '0')) || 0
         const exitRevenue = parseInt((prod.exit?.totalRevenue || '0').toString().replace(/,/g, '')) || 0
         
         // 计算关键指标
@@ -572,7 +593,7 @@ ${month === 12 ? '✓ 入栏谨慎：保温成本高10-15%，4个月后（4月�
         const avgRevenuePerGoose = exitTotal > 0 ? (exitRevenue / exitTotal).toFixed(2) : 0
         
         // 基于当前鹅价计算预期收入
-        const currentPrice = moduleData?.goosePrice?.adult || 12.5
+        const currentPrice = md?.goosePrice?.adult || 12.5
         const expectedRevenue = stockQuantity * exitAvgWeight * currentPrice
         
         productionInfo = `
@@ -586,23 +607,23 @@ ${month === 12 ? '✓ 入栏谨慎：保温成本高10-15%，4个月后（4月�
       
       // 构建健康数据部分
       let healthInfo = ''
-      if (moduleData?.health) {
-        const health = moduleData.health
+      if (md?.health) {
+        const health = md.health
         const totalDeaths = health.totalDeaths || 0
         const recentDeaths = health.recentDeaths?.length || 0
         healthInfo = `
 【健康与死亡数据】
 累计死亡：${totalDeaths}只
 最近死亡记录：${recentDeaths}条
-主要死因：${health.recentDeaths?.slice(0, 3).map((d: unknown) => d.deathReason).join('、') || '暂无'}
+主要死因：${health.recentDeaths?.slice(0, 3).map((d) => d.deathReason).join('、') || '暂无'}
 `
       }
       
       
       // 构建鹅价数据部分
       let priceInfo = ''
-      if (moduleData?.goosePrice) {
-        const price = moduleData.goosePrice
+      if (md?.goosePrice) {
+        const price = md.goosePrice
         priceInfo = `
 【今日鹅价】（重要：用于出栏时机和预期收入计算）
 成鹅价格：¥${price.adult}/斤
@@ -650,10 +671,10 @@ ${productionInfo}${healthInfo}${priceInfo}
 利润增长率：${profit?.growth || 0}%
 
 【分析要求】基于当前时间点（${seasonInfo.season}${seasonInfo.month}月${seasonInfo.day}日）和实际数据：
-- 存栏${moduleData?.production ? parseInt((moduleData.production.entry?.stockQuantity || '0').toString().replace(/,/g, '')) : 'X'}只
-- 出栏${moduleData?.production ? parseInt((moduleData.production.exit?.total || '0').toString().replace(/,/g, '')) : 'X'}只，平均${moduleData?.production?.exit?.avgWeight || 'X'}斤
-- 当前鹅价${moduleData?.goosePrice?.adult || 12.5}元/斤
-- 死亡${moduleData?.health?.totalDeaths || 'X'}只，医疗费用占比${totalCost > 0 ? ((medicalCost / totalCost) * 100).toFixed(1) : '?'}%
+- 存栏${md?.production ? parseInt((md.production.entry?.stockQuantity || '0').toString().replace(/,/g, '')) : 'X'}只
+- 出栏${md?.production ? parseInt((md.production.exit?.total || '0').toString().replace(/,/g, '')) : 'X'}只，平均${md?.production?.exit?.avgWeight || 'X'}斤
+- 当前鹅价${md?.goosePrice?.adult || 12.5}元/斤
+- 死亡${md?.health?.totalDeaths || 'X'}只，医疗费用占比${totalCost > 0 ? ((medicalCost / totalCost) * 100).toFixed(1) : '?'}%
 - 当前季节特点：${seasonInfo.seasonDescription}
 
 必须遵守的时间线原则：
@@ -822,7 +843,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
                 }
               } else if (typeof value === 'object' && value !== null) {
                 // 如果值还是对象，递归处理
-                val = deepConvertToString(value, 1)
+                val = String(deepConvertToString(value, 1))
               } else {
                 val = String(value || '')
               }
@@ -925,7 +946,7 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
     },
 
     // 输入框内容变化
-    onQueryInput(e: CustomEvent) {
+    onQueryInput(e: WechatMiniprogram.CustomEvent<{ value: string }>) {
       this.setData({
         customQuery: e.detail.value || ''
       })
@@ -962,6 +983,8 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
         // 保存到历史记录
         await this.saveToHistory(analysisResult, customQuery)
         
+        // 先隐藏loading再显示toast
+        wx.hideLoading()
         wx.showToast({
           title: '归档成功',
           icon: 'success'
@@ -980,17 +1003,16 @@ ${customQuery ? `\n【用户自定义分析需求】\n用户希望重点关注�
         
       } catch (error) {
         logger.error('归档失败:', error)
+        wx.hideLoading()
         wx.showToast({
           title: '归档失败',
           icon: 'none'
         })
-      } finally {
-        wx.hideLoading()
       }
     },
     
     // 修正输入变化
-    onRefinementInput(e: CustomEvent) {
+    onRefinementInput(e: WechatMiniprogram.CustomEvent<{ value: string }>) {
       this.setData({
         refinementQuery: e.detail.value || ''
       })

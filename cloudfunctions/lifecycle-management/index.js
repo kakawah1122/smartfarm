@@ -168,11 +168,11 @@ async function addTask(event, wxContext) {
       createdBy: openid
     }
 
-    // 获取或创建用户的自定义模板
+    // 获取或创建用户的默认模板
     const templateResult = await db.collection(COLLECTIONS.TASK_TEMPLATES)
       .where({
         _openid: openid,
-        templateName: '自定义模板',
+        templateName: '默认模板',
         isDeleted: _.neq(true)
       })
       .get()
@@ -192,14 +192,17 @@ async function addTask(event, wxContext) {
           }
         })
     } else {
-      // 创建新模板
+      // 创建新模板（先导入标准模板）
+      const standardTasks = convertBreedingScheduleToTasks()
+      standardTasks.push(newTask)
+      
       await db.collection(COLLECTIONS.TASK_TEMPLATES).add({
         data: {
           _openid: openid,
-          templateName: '自定义模板',
-          description: '用户自定义养殖周期模板',
-          tasks: [newTask],
-          isDefault: false,
+          templateName: '默认模板',
+          description: '用户的默认养殖周期模板',
+          tasks: standardTasks,
+          isDefault: true,
           isDeleted: false,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -223,24 +226,45 @@ async function addTask(event, wxContext) {
 
 // 更新任务
 async function updateTask(event, wxContext) {
-  const { taskId, taskData } = event
+  const { taskId, taskData, dayAge } = event
   const openid = wxContext.OPENID
 
   try {
-    // 查找包含该任务的模板
-    const templateResult = await db.collection(COLLECTIONS.TASK_TEMPLATES)
+    // 查找用户的默认模板
+    let templateResult = await db.collection(COLLECTIONS.TASK_TEMPLATES)
       .where({
         _openid: openid,
-        'tasks.id': taskId,
+        templateName: '默认模板',
         isDeleted: _.neq(true)
       })
       .get()
 
+    // 如果用户没有默认模板，先创建一个
     if (!templateResult.data || templateResult.data.length === 0) {
-      return {
-        success: false,
-        error: '任务不存在'
-      }
+      console.log('用户没有默认模板，先创建...')
+      const standardTasks = convertBreedingScheduleToTasks()
+      
+      await db.collection(COLLECTIONS.TASK_TEMPLATES).add({
+        data: {
+          _openid: openid,
+          templateName: '默认模板',
+          description: '用户的默认养殖周期模板',
+          tasks: standardTasks,
+          isDefault: true,
+          isDeleted: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      })
+      
+      // 重新查询
+      templateResult = await db.collection(COLLECTIONS.TASK_TEMPLATES)
+        .where({
+          _openid: openid,
+          templateName: '默认模板',
+          isDeleted: _.neq(true)
+        })
+        .get()
     }
 
     const template = templateResult.data[0]
@@ -248,18 +272,32 @@ async function updateTask(event, wxContext) {
     const taskIndex = tasks.findIndex(t => t.id === taskId)
 
     if (taskIndex === -1) {
-      return {
-        success: false,
-        error: '任务不存在'
+      // 如果任务不存在，可能是标准模板中的任务ID，尝试在标准模板中查找
+      const standardTask = findTaskInBreedingSchedule(taskId)
+      if (standardTask) {
+        // 将更新后的任务添加到用户模板中
+        const updatedTask = {
+          ...standardTask,
+          ...taskData,
+          dayAge: dayAge || standardTask.dayAge,
+          updatedAt: new Date(),
+          updatedBy: openid
+        }
+        tasks.push(updatedTask)
+      } else {
+        return {
+          success: false,
+          error: '任务不存在'
+        }
       }
-    }
-
-    // 更新任务
-    tasks[taskIndex] = {
-      ...tasks[taskIndex],
-      ...taskData,
-      updatedAt: new Date(),
-      updatedBy: openid
+    } else {
+      // 更新已存在的任务
+      tasks[taskIndex] = {
+        ...tasks[taskIndex],
+        ...taskData,
+        updatedAt: new Date(),
+        updatedBy: openid
+      }
     }
 
     // 更新模板
@@ -422,11 +460,11 @@ async function importStandardTemplate(event, wxContext) {
     // 将标准养殖计划转换为任务列表
     const tasks = convertBreedingScheduleToTasks()
 
-    // 创建或更新用户的标准模板副本
+    // 创建或更新用户的"默认模板"
     const existingResult = await db.collection(COLLECTIONS.TASK_TEMPLATES)
       .where({
         _openid: openid,
-        templateName: '标准模板副本',
+        templateName: '默认模板',
         isDeleted: _.neq(true)
       })
       .get()
@@ -446,10 +484,10 @@ async function importStandardTemplate(event, wxContext) {
       await db.collection(COLLECTIONS.TASK_TEMPLATES).add({
         data: {
           _openid: openid,
-          templateName: '标准模板副本',
-          description: '从标准养殖计划导入的模板',
+          templateName: '默认模板',
+          description: '用户的默认养殖周期模板',
           tasks: tasks,
-          isDefault: false,
+          isDefault: true,
           isDeleted: false,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -560,7 +598,10 @@ async function getAllTemplates(event, wxContext) {
       }
     }
 
-    // 添加默认模板选项
+    // 过滤掉数据库中名为"默认模板"的记录（避免重复）
+    const userTemplates = templates.filter(t => t.templateName !== '默认模板')
+    
+    // 添加默认模板选项（只添加一个）
     const allTemplates = [
       {
         templateName: '默认模板',
@@ -568,7 +609,7 @@ async function getAllTemplates(event, wxContext) {
         isDefault: true,
         taskCount: Object.keys(BREEDING_SCHEDULE).reduce((sum, day) => sum + BREEDING_SCHEDULE[day].length, 0)
       },
-      ...templates.map(t => ({
+      ...userTemplates.map(t => ({
         ...t,
         taskCount: t.tasks ? t.tasks.length : 0
       }))

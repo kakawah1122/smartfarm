@@ -49,13 +49,7 @@ Page({
       
       const records = (result.data || []).map((item: unknown) => ({
         ...item,
-        formattedDate: new Date(item.createTime).toLocaleString('zh-CN', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
+        formattedDate: this.formatDateTime(item.createTime),
         summary: this.extractSummary(item.analysisResult)
       }))
       
@@ -112,6 +106,60 @@ Page({
     return summaries.length > 0 
       ? summaries.join('；').substring(0, 80) + '...'
       : '分析完成'
+  },
+  
+  // 格式化日期时间（兼容iOS，24小时制）
+  formatDateTime(dateValue: unknown): string {
+    if (!dateValue) return '未知时间'
+    
+    // 检查是否是空对象
+    if (typeof dateValue === 'object' && dateValue !== null && Object.keys(dateValue).length === 0) {
+      return '未知时间'
+    }
+    
+    try {
+      let date: Date | null = null
+      
+      // 处理不同的日期格式
+      if (typeof dateValue === 'string') {
+        // iOS兼容：将 'YYYY-MM-DD HH:mm:ss' 转换为 'YYYY/MM/DD HH:mm:ss'
+        const iosCompatible = dateValue.replace(/-/g, '/')
+        date = new Date(iosCompatible)
+      } else if (typeof dateValue === 'number') {
+        date = new Date(dateValue)
+      } else if (dateValue instanceof Date) {
+        date = dateValue
+      } else if (typeof dateValue === 'object' && dateValue !== null) {
+        const obj = dateValue as Record<string, unknown>
+        
+        if (obj.$date) {
+          date = new Date(obj.$date as number)
+        } else if (obj._seconds !== undefined) {
+          date = new Date((obj._seconds as number) * 1000)
+        } else if (obj.seconds !== undefined) {
+          date = new Date((obj.seconds as number) * 1000)
+        } else if (obj.time !== undefined) {
+          date = new Date(obj.time as number)
+        }
+      }
+      
+      // 检查日期是否有效
+      if (!date || isNaN(date.getTime())) {
+        return '未知时间'
+      }
+      
+      // 手动格式化为24小时制（iOS兼容）
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      
+      return `${year}/${month}/${day} ${hours}:${minutes}`
+    } catch (error) {
+      console.error('日期格式化错误:', error)
+      return '未知时间'
+    }
   },
   
   // 点击历史记录项
