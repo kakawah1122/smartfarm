@@ -1,25 +1,26 @@
 {
   "updatedAt": "2025-11-27",
-  "description": "订阅消息模板配置 - 请在微信公众平台获取模板ID后填入",
+  "description": "订阅消息模板配置",
   "templates": {
     "systemNotification": {
       "name": "系统交互消息",
       "description": "系统提醒类通知，例如审批进度、任务通知等",
-      "templateId": "",
-      "keywords": ["事项名称", "处理时间", "处理结果", "备注"]
+      "templateId": "9W5ouxxRtOYFejnlVZlgZUFrmbisQlWGeAVqA9_KsuQ"
     },
     "productionReminder": {
-      "name": "生产进度提醒", 
+      "name": "生产进度提醒",
       "description": "与生产计划、排行榜等相关的通知消息",
-      "templateId": "",
-      "keywords": ["批次编号", "提醒内容", "提醒时间", "备注"]
+      "templateId": "mG24Zyx7MyowDS34oVyOQKM3ssGBLIn-v84vKwa0xqs"
+    },
+    "healthAlert": {
+      "name": "健康提醒",
+      "description": "疫苗接种、用药提醒、健康异常等通知",
+      "templateId": "tf4ZV7JBfB7VXeV-cqZI7Z1RyEQJM7Dd6zi6vhtNi9k"
+    },
+    "taskReminder": {
+      "name": "任务提醒",
+      "description": "待办任务、到期提醒等通知",
+      "templateId": "pxhqtcWaKcLKj7keVNFhauTiYzWPwhrHY_ncTGQVgqw"
     }
-  },
-  "howToGet": [
-    "1. 登录 mp.weixin.qq.com",
-    "2. 功能 → 订阅消息 → 公共模板库",
-    "3. 搜索并选用合适的模板",
-    "4. 配置关键词后获取模板ID",
-    "5. 将模板ID填入上方对应的templateId字段"
-  ]
+  }
 }
