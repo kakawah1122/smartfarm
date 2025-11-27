@@ -262,8 +262,8 @@ Page({
     
     // 用药管理表单数据
     showMedicationFormPopup: false,
-    availableMedicines: [] as unknown[], // 可用的药品库存
-    selectedMedicine: null as unknown,
+    availableMedicines: [] as MaterialItem[], // 可用的药品库存
+    selectedMedicine: null as MaterialItem | null,
     medicationFormData: {
       medicineId: '',
       medicineName: '',
@@ -278,8 +278,8 @@ Page({
 
     // 营养管理表单数据
     showNutritionFormPopup: false,
-    availableNutrition: [] as unknown[], // 可用的营养品库存
-    selectedNutrition: null as unknown,
+    availableNutrition: [] as MaterialItem[], // 可用的营养品库存
+    selectedNutrition: null as MaterialItem | null,
     nutritionFormData: {
       nutritionId: '',
       nutritionName: '',
