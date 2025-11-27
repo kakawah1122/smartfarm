@@ -1,4 +1,5 @@
 // 全部分析历史页面
+import { logger } from '../../utils/logger'
 
 // 微信小程序事件类型
 type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
@@ -110,7 +111,7 @@ Page({
       })
       
     } catch (error) {
-      console.error('加载分析历史失败:', error)
+      logger.error('加载分析历史失败:', error)
       wx.showToast({
         title: '加载失败',
         icon: 'none'
@@ -204,7 +205,7 @@ Page({
       
       return `${year}/${month}/${day} ${hours}:${minutes}`
     } catch (error) {
-      console.error('日期格式化错误:', error)
+      logger.error('日期格式化错误:', error)
       return '未知时间'
     }
   },

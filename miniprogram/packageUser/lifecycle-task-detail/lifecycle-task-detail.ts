@@ -1,4 +1,5 @@
 // 任务详情页面
+import { logger } from '../../utils/logger'
 
 // 任务数据类型
 interface TaskData {
@@ -63,7 +64,7 @@ Page({
         this.loadRelatedTasks(dayAge, task.id)
         
       } catch (error) {
-        console.error('解析任务数据失败:', error)
+        logger.error('解析任务数据失败:', error)
         wx.showToast({
           title: '任务数据错误',
           icon: 'none'
@@ -128,7 +129,7 @@ Page({
         this.setData({ relatedTasks })
       }
     } catch (error) {
-      console.error('加载相关任务失败:', error)
+      logger.error('加载相关任务失败:', error)
     }
   },
   

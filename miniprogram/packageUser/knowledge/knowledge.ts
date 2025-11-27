@@ -1,5 +1,6 @@
 // knowledge.ts
 import { createPageWithNavbar } from '../../utils/navigation'
+import { logger } from '../../utils/logger'
 
 // 文章类型定义
 interface Article {
@@ -197,7 +198,7 @@ const pageConfig = {
         url: `/packageUser/knowledge/article-detail/article-detail?article=${payload}`
       })
     } catch (error) {
-      console.error('文章跳转失败:', error)
+      logger.error('文章跳转失败:', error)
       wx.showToast({ title: '文章打开失败', icon: 'none' })
     }
   },

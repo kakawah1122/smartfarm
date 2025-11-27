@@ -1,5 +1,6 @@
 // 全部审批历史页面
 import CloudApi from '../../utils/cloud-api'
+import { logger } from '../../utils/logger'
 
 // 微信小程序事件类型
 type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
@@ -122,7 +123,7 @@ Page({
       }
       
     } catch (error) {
-      console.error('加载审批历史失败:', error)
+      logger.error('加载审批历史失败:', error)
       wx.showToast({
         title: '加载失败',
         icon: 'none'
