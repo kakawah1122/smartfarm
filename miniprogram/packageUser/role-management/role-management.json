@@ -2,6 +2,5 @@
   "navigationBarTitleText": "角色管理",
   "navigationStyle": "custom",
   "usingComponents": {
-    "t-popup": "tdesign-miniprogram/popup/popup"
   }
 }

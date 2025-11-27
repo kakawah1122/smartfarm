@@ -3,8 +3,7 @@
   "navigationStyle": "custom",
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
-    "lazy-load": "/components/lazy-load/lazy-load",
-    "t-input": "tdesign-miniprogram/input/input"
+    "lazy-load": "/components/lazy-load/lazy-load"
   },
   "componentPlaceholder": {
     "t-input": "view",
