@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - 类型错误较多，暂时禁用检查以保持功能稳定
 import type { 
   BaseResponse
 } from '../../../typings/core';
@@ -13,6 +13,32 @@ import { createSetDataWrapper, SetDataWrapper } from '../health/helpers/setdata-
 import { setupNavigationHandlers } from './modules/production-navigation-module'
 import { ProductionDataLoader } from './modules/production-data-loader'
 import { ProductionAIManager } from './modules/production-ai-module'
+
+// AI盘点结果类型
+interface AICountResult {
+  totalCount: number
+  confidence: number
+  imageUrl?: string
+  detectionMethod?: string
+  featureBreakdown?: Record<string, unknown>
+  individualAnalysis?: unknown[]
+  regions?: unknown[]
+  abnormalDetection?: unknown
+  suggestions?: string[]
+  reasoning?: string
+  sceneAnalysis?: {
+    description?: string
+    recommendations?: string[]
+  }
+  sceneFeatures?: unknown
+  message?: string
+}
+
+// 错误类型
+interface WxError {
+  errMsg?: string
+  message?: string
+}
 
 type ProductionPageData = WechatMiniprogram.Page.DataOption & {
   aiCount: {
@@ -279,7 +305,8 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       this.setData(defaultStats)
       
       // 如果是云函数不存在的错误，给出友好提示
-      if (error.errMsg && error.errMsg.includes('function not found')) {
+      const wxError = error as WxError
+      if (wxError.errMsg && wxError.errMsg.includes('function not found')) {
         wx.showModal({
           title: '系统提示',
           content: '生产管理云函数尚未部署，请先部署云函数后再使用。当前显示为空数据。',
