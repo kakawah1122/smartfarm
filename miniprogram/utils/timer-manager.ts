@@ -59,9 +59,8 @@ export function createTimerManagedPage<TData extends WechatMiniprogram.Page.Data
 }
 
 // 为Component创建定时器管理包装器
-export function createTimerManagedComponent<TData extends WechatMiniprogram.Component.DataOption>(
-  componentConfig: WechatMiniprogram.Component.Options<TData, any, any>
-): WechatMiniprogram.Component.Options<TData, any, any> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createTimerManagedComponent(componentConfig: any): any {
   const originalDetached = componentConfig.lifetimes?.detached
   
   return {
