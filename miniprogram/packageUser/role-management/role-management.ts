@@ -6,7 +6,11 @@ import {
   getRoleName, 
   getRoleColor,
   getAvailableRolesForUser
+// @ts-ignore - js模块无类型定义
 } from '../../utils/role-config.js'
+
+// 微信小程序事件类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
 
 interface User {
   _id: string
@@ -72,7 +76,7 @@ Page({
     showRoleDialog: false,
     selectedUser: {} as User,
     selectedRole: '',
-    availableRoles: [] as unknown[]
+    availableRoles: [] as RoleInfo[]
   },
 
   onLoad() {
@@ -124,7 +128,7 @@ Page({
 
   // 初始化角色列表
   initRoleList() {
-    const roleList = Object.values(ROLE_INFO).map(role => ({
+    const roleList = Object.values(ROLE_INFO as Record<string, RoleInfo>).map(role => ({
       ...role,
       userCount: 0
     }))
@@ -209,7 +213,7 @@ Page({
   },
 
   // 搜索用户
-  onSearchChange(event: unknown) {
+  onSearchChange(event: CustomEvent<{value: string}>) {
     const searchKeyword = event.detail.value
     this.setData({ searchKeyword })
     
@@ -231,7 +235,7 @@ Page({
   },
 
   // 选择用户
-  onUserSelect(event: unknown) {
+  onUserSelect(event: CustomEvent) {
     if (!this.canManageUsers()) {
       wx.showToast({
         title: '无权限管理用户',
@@ -252,7 +256,7 @@ Page({
   },
 
   // 选择角色
-  onRoleSelect(event: unknown) {
+  onRoleSelect(event: CustomEvent) {
     const role = event.currentTarget.dataset.role
     this.setData({ selectedRole: role })
   },
@@ -350,5 +354,5 @@ Page({
   },
 
   // 私有属性
-  searchTimer: null as unknown
+  searchTimer: null as number | null
 })
