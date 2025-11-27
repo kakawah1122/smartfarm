@@ -1,4 +1,22 @@
 // 任务详情页面
+
+// 任务数据类型
+interface TaskData {
+  id?: string
+  title?: string
+  description?: string
+  priority?: string
+  status?: string
+  dayAge?: number
+  [key: string]: unknown
+}
+
+// 页面参数类型
+interface PageOptions {
+  task?: string
+  dayAge?: string
+}
+
 Page({
   // ✅ 定时器管理
   _timerIds: [] as number[],
@@ -21,14 +39,14 @@ Page({
   },
 
   data: {
-    taskData: {} as unknown,
+    taskData: {} as TaskData,
     dayAge: 1,
     priorityTheme: 'default',
     priorityText: '中',
-    relatedTasks: [] as unknown[]
+    relatedTasks: [] as TaskData[]
   },
   
-  onLoad(options: unknown) {
+  onLoad(options: PageOptions) {
     if (options.task) {
       try {
         const task = JSON.parse(decodeURIComponent(options.task))
