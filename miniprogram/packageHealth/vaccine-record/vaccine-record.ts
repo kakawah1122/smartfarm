@@ -33,7 +33,39 @@ interface PageData {
   batchesCacheTime: number
 }
 
-const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
+const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> & {
+  validateTimer: number | null
+  _timerIds: number[]
+  _safeSetTimeout: (callback: () => void, delay: number) => number
+  _clearAllTimers: () => void
+} = {
+  // 验证防抖定时器
+  validateTimer: null as number | null,
+  
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    if (this.validateTimer) {
+      clearTimeout(this.validateTimer)
+      this.validateTimer = null
+    }
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: {
     // 表单数据
     formData: {
@@ -81,9 +113,6 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
     sourceId: ''
   },
 
-  // 表单验证防抖定时器
-  validateTimer: null as number | null,
-
   onLoad(options: PageOptions) {
     // ✅ 合并setData调用
     const updateData: Record<string, any> = {
@@ -119,6 +148,10 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
       return
     }
     await this.loadActiveBatches()
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   // 初始化表单
@@ -395,7 +428,7 @@ const pageConfig: WechatMiniprogram.Page.Options<PageData, PageOptions> = {
           this.handleAdverseReaction(result.data.recordId)
         } else {
           // 返回上一页
-          setTimeout(() => {
+          this._safeSetTimeout(() => {
             wx.navigateBack()
           }, 1500)
         }

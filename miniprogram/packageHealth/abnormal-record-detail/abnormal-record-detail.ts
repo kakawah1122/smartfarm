@@ -100,7 +100,31 @@ const deriveDiagnosisType = (record: AbnormalRecord): AbnormalRecord['diagnosisT
   return 'live_diagnosis'
 }
 
-const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDetailPageCustom> = {
+const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDetailPageCustom> & {
+  _timerIds: number[]
+  _safeSetTimeout: (callback: () => void, delay: number) => number
+  _clearAllTimers: () => void
+} = {
+  // ✅ 定时器管理
+  _timerIds: [] as number[],
+  
+  _safeSetTimeout(callback: () => void, delay: number): number {
+    const timerId = setTimeout(() => {
+      const index = this._timerIds.indexOf(timerId as unknown as number)
+      if (index > -1) {
+        this._timerIds.splice(index, 1)
+      }
+      callback()
+    }, delay) as unknown as number
+    this._timerIds.push(timerId)
+    return timerId
+  },
+  
+  _clearAllTimers() {
+    this._timerIds.forEach((id: number) => clearTimeout(id))
+    this._timerIds = []
+  },
+  
   data: initialData,
 
   onLoad(options: Record<string, string>) {
@@ -111,8 +135,12 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
       void page.loadRecordDetail(options.id)
     } else {
       wx.showToast({ title: '记录ID缺失', icon: 'none' })
-      setTimeout(() => wx.navigateBack(), 1500)
+      this._safeSetTimeout(() => wx.navigateBack(), 1500)
     }
+  },
+
+  onUnload() {
+    this._clearAllTimers()
   },
 
   async loadRecordDetail(recordId: string) {
@@ -149,7 +177,7 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
         title: (error as Error).message || '加载失败',
         icon: 'none'
       })
-      setTimeout(() => wx.navigateBack(), 1500)
+      this._safeSetTimeout(() => wx.navigateBack(), 1500)
     }
   },
 
@@ -260,11 +288,11 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
       page.setData({ showCorrectionDialog: false })
 
       if (page.data.isAutopsyRecord) {
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           void page.confirmDeath({ returnBehavior: 'back' })
         }, 800)
       } else {
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           void page.loadRecordDetail(page.data.recordId)
         }, 1000)
       }
@@ -373,7 +401,7 @@ const pageConfig: WechatMiniprogram.Page.Options<AbnormalDetailData, AbnormalDet
           duration: 1500
         })
 
-        setTimeout(() => {
+        this._safeSetTimeout(() => {
           if (returnBehavior === 'back') {
             const pages = getCurrentPages()
             if (pages.length > 1) {
