@@ -5,6 +5,7 @@
  */
 
 /// <reference path="../../../../typings/index.d.ts" />
+import { logger } from '../../../utils/logger'
 
 /**
  * 防抖配置接口
@@ -310,7 +311,7 @@ export class HealthEventManager {
             try {
               handler(data)
             } catch (error) {
-              console.error(`事件处理器错误 [${event}]:`, error)
+              logger.error(`事件处理器错误 [${event}]:`, error)
             }
           })
         }

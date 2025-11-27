@@ -6,6 +6,7 @@
 /// <reference path="../../../typings/index.d.ts" />
 
 import { HealthCloud } from '../../utils/cloud-functions'
+import { logger } from '../../utils/logger'
 
 export interface VaccineFormData {
   vaccinationDate: string
@@ -92,7 +93,7 @@ export class HealthFormHandler {
       
       throw new Error(cloudResult?.error || '提交失败')
     } catch (error) {
-      console.error('提交疫苗表单失败:', error)
+      logger.error('提交疫苗表单失败:', error)
       throw error
     }
   }
@@ -139,7 +140,7 @@ export class HealthFormHandler {
       
       throw new Error(cloudResult?.error || '提交失败')
     } catch (error) {
-      console.error('提交消毒表单失败:', error)
+      logger.error('提交消毒表单失败:', error)
       throw error
     }
   }
