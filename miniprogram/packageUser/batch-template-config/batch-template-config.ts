@@ -1,5 +1,43 @@
-// @ts-nocheck
 // 批次模板配置页面
+
+// 类型定义
+type CustomEvent = WechatMiniprogram.CustomEvent;
+
+interface Task {
+  _id?: string;
+  dayAge?: number;
+  title?: string;
+  [key: string]: unknown;
+}
+
+interface Template {
+  _id?: string;
+  id?: string;
+  name?: string;
+  templateName?: string;
+  isDefault?: boolean;
+  tasks?: Task[];
+}
+
+interface Batch {
+  _id?: string;
+  id?: string;
+  batchId?: string;
+  batchName?: string;
+  batchNumber?: string;
+  entryDate?: string | Date;
+  quantity?: number;
+  currentQuantity?: number;
+  templateId?: string;
+  templateName?: string;
+  templateIndex?: number;
+  currentDayAge?: number;
+  todayTasks?: Task[];
+}
+
+interface TemplateTasks {
+  [key: string]: Task[];
+}
 
 Page({
   // ✅ 定时器管理
@@ -52,8 +90,8 @@ Page({
   // 设置导航栏高度
   setNavigationBarHeight() {
     try {
-      const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : {}
-      const statusBarHeight = windowInfo.statusBarHeight || 44
+      const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : { statusBarHeight: 44 }
+      const statusBarHeight = (windowInfo as { statusBarHeight?: number }).statusBarHeight || 44
       const navBarHeight = 44  // 导航栏固定高度
       
       this.setData({
@@ -90,12 +128,12 @@ Page({
       })
       
       let templates = []
-      let templateTasks: unknown = {}
+      let templateTasks: TemplateTasks = {}
       
       if (result.result?.success && result.result.data?.length > 0) {
         templates = result.result.data
         // 构建模板任务映射
-        templates.forEach((template: unknown) => {
+        templates.forEach((template: Template) => {
           // 默认模板使用'default'作为ID，其他使用_id
           const templateId = template.isDefault ? 'default' : template._id
           // 确保任务是数组格式
@@ -113,7 +151,7 @@ Page({
       }
       
       // 保存模板列表
-      const templateList = templates.map((t: unknown) => ({
+      const templateList = templates.map((t: Template) => ({
         id: t.isDefault ? 'default' : t._id,
         name: t.templateName || t.name || '未命名模板'
       }))
@@ -158,14 +196,14 @@ Page({
       if (result.result?.success && result.result.data) {
         // 云函数返回的是按日龄分组的对象，需要转换为任务数组
         const tasksByDayAge = result.result.data
-        const tasks: unknown[] = []
+        const tasks: Task[] = []
         
         // 将按日龄分组的任务转换为平面数组
         Object.keys(tasksByDayAge).forEach(dayAge => {
           const dayTasks = tasksByDayAge[dayAge] || []
-          dayTasks.forEach((task: unknown) => {
+          dayTasks.forEach((task: Task) => {
             tasks.push({
-              ...task,
+              ...(task as Task),
               dayAge: parseInt(dayAge)
             })
           })
@@ -192,7 +230,7 @@ Page({
         .get()
       
       // 计算每个批次的当前日龄和今日任务
-      const batchList = batches.map((batch: unknown) => {
+      const batchList = batches.map((batch: Batch) => {
         const currentDayAge = this.calculateDayAge(batch.entryDate)
         
         // 如果批次没有模板，默认使用'default'（默认模板）
@@ -200,7 +238,7 @@ Page({
         let templateName = batch.templateName || ''
         
         // 查找对应的模板
-        const template = this.data.templates.find((t: unknown) => t.id === templateId)
+        const template = this.data.templates.find((t: Template) => t.id === templateId)
         if (template) {
           templateName = template.name
         } else if (this.data.templates.length > 0) {
@@ -210,7 +248,7 @@ Page({
           templateName = firstTemplate.name
         }
         
-        const templateIndex = Math.max(0, this.data.templates.findIndex((t: unknown) => t.id === templateId))
+        const templateIndex = Math.max(0, this.data.templates.findIndex((t: Template) => t.id === templateId))
         const todayTasks = this.getTasksForDayAge(templateId, currentDayAge)
         
         // 格式化日期
@@ -282,7 +320,7 @@ Page({
     }
     
     // 筛选出当前日龄的任务
-    const tasks = allTasks.filter((task: unknown) => task.dayAge === dayAge)
+    const tasks = allTasks.filter((task: Task) => task.dayAge === dayAge)
     
     // 限制返回的任务数量，避免渲染过多
     return tasks.slice(0, 5)
@@ -329,7 +367,7 @@ Page({
       wx.showLoading({ title: '保存中...' })
       
       // 收集配置信息
-      const updates = this.data.batchList.map((batch: unknown) => ({
+      const updates = this.data.batchList.map((batch: Batch) => ({
         batchId: batch.id,
         templateId: batch.templateId,
         templateName: batch.templateName
