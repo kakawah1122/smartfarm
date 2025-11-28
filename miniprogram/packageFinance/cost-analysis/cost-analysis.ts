@@ -46,7 +46,12 @@ type PageData = {
   suggestions: unknown[]
 }
 
-const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
+// 页面实例类型（包含自定义方法）
+type CostAnalysisPageInstance = PageInstance<PageData> & {
+  loadCostAnalysisData: () => Promise<void>
+}
+
+const pageConfig = {
   data: {
     loading: false,
     dateRange: 'month', // week|month|quarter|year
@@ -79,12 +84,12 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
     suggestions: []
   },
 
-  onLoad(this: PageInstance<PageData>) {
+  onLoad(this: CostAnalysisPageInstance) {
     this.loadCostAnalysisData()
   },
 
   // 加载成本分析数据
-  async loadCostAnalysisData(this: PageInstance<PageData>) {
+  async loadCostAnalysisData(this: CostAnalysisPageInstance) {
     this.setData({ loading: true })
     
     try {
@@ -123,8 +128,8 @@ const pageConfig: Partial<PageInstance<PageData>> & { data: PageData } = {
   },
 
   // 日期范围切换
-  onDateRangeChange(this: PageInstance<PageData>, e: WechatMiniprogram.PickerChange) {
-    const { value } = e.detail
+  onDateRangeChange(this: CostAnalysisPageInstance, e: WechatMiniprogram.PickerChange) {
+    const value = e.detail.value as 'week' | 'month' | 'quarter' | 'year'
     this.setData({ dateRange: value })
     this.loadCostAnalysisData()
   },
