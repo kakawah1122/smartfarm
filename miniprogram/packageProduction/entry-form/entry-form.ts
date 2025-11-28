@@ -1,14 +1,6 @@
-// @ts-nocheck
 // entry-form.ts - 入栏记录表单页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
 
-// 类型定义 - 用于替换any类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEventDetail<T>;
-type BaseEvent = WechatMiniprogram.BaseEvent;
-interface ErrorWithMessage {
-  message: string;
-  [key: string]: any;
-}
 // 表单数据接口
 interface EntryFormData {
   batchId: string;          // 批次ID

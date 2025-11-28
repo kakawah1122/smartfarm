@@ -1,4 +1,3 @@
-// @ts-nocheck
 // exit-form.ts - 出栏记录表单页面逻辑
 
 // 类型定义
@@ -9,6 +8,25 @@ interface BatchInfo {
   availableQuantity: number;
   totalQuantity?: number;
   entryDate?: string;
+}
+
+// 页面参数接口
+interface PageOptions {
+  fromAI?: string;
+  aiCount?: string;
+  confidence?: string;
+  imageUrl?: string;
+  abnormalCount?: string;
+  suggestions?: string;
+}
+
+// 批次数据接口（来自云函数）
+interface BatchData {
+  batchNumber: string;
+  breed?: string;
+  entryDate?: string;
+  totalQuantity?: number;
+  availableQuantity?: number;
 }
 
 // 表单数据接口
@@ -89,7 +107,7 @@ const pageConfig = {
     selectedBatchAvailable: 0
   },
 
-  onLoad(options: unknown) {
+  onLoad(options: PageOptions) {
     // 初始化表单
     this.initializeForm()
     
@@ -103,13 +121,13 @@ const pageConfig = {
   },
 
   // 处理来自AI盘点的参数
-  handleAIParams(options: unknown) {
+  handleAIParams(options: PageOptions) {
     try {
       const aiData = {
-        count: parseInt(options.aiCount) || 0,
-        confidence: parseInt(options.confidence) || 0,
+        count: parseInt(options.aiCount || '0') || 0,
+        confidence: parseInt(options.confidence || '0') || 0,
         imageUrl: options.imageUrl || '',
-        abnormalCount: parseInt(options.abnormalCount) || 0,
+        abnormalCount: parseInt(options.abnormalCount || '0') || 0,
         suggestions: options.suggestions ? JSON.parse(decodeURIComponent(options.suggestions)) : []
       }
       
@@ -205,7 +223,7 @@ const pageConfig = {
         const availableBatches = result.result.data || []
         
         // 转换为页面使用的数据结构
-        const batches = availableBatches.map((item: unknown) => ({
+        const batches = availableBatches.map((item: BatchData) => ({
           batchId: item.batchNumber,
           batchNumber: item.batchNumber,
           breed: item.breed || '未知品种',

@@ -1,10 +1,5 @@
-// @ts-nocheck
 // feed-usage-form.ts - 饲料投喂记录表单页面
 import { createPageWithNavbar } from '../../utils/navigation'
-
-// TypeScript 类型说明：
-// createPageWithNavbar 返回的对象会被 Page() 转换为页面实例
-// 运行时会自动注入 setData 等方法，这里的类型错误可以忽略
 
 // 表单数据接口
 interface FeedUsageFormData {
@@ -18,7 +13,24 @@ interface FeedUsageFormData {
   notes: string           // 备注
 }
 
-const pageConfig: unknown = {
+// 批次信息接口
+interface BatchInfo {
+  _id?: string;
+  batchNumber: string;
+  breed?: string;
+  currentStock?: number;
+  currentCount?: number;
+}
+
+// 饲料物料接口
+interface FeedMaterial {
+  _id: string;
+  name: string;
+  currentStock?: number;
+  unit?: string;
+}
+
+const pageConfig = {
   // ✅ 定时器管理
   _timerIds: [] as number[],
   
@@ -139,7 +151,7 @@ const pageConfig: unknown = {
         const batches = result.result.data || []
         
         // 生成批次选项
-        const batchOptions = batches.map((batch: unknown) => {
+        const batchOptions = batches.map((batch: BatchInfo) => {
           const info = batch.breed || `存栏${batch.currentStock || batch.currentCount || 0}只`
           return `${batch.batchNumber} (${info})`
         })
@@ -233,7 +245,7 @@ const pageConfig: unknown = {
   async updateStockInfo() {
     // 如果已经有批次，重新获取批次信息以更新存栏数
     if (this.data.formData.batchId) {
-      const batch = this.data.availableBatches.find((b: unknown) => b._id === this.data.formData.batchId)
+      const batch = this.data.availableBatches.find((b: BatchInfo) => b._id === this.data.formData.batchId)
       if (batch) {
         const currentStock = batch.currentStock || batch.currentQuantity || 0
         this.setData({
@@ -254,7 +266,7 @@ const pageConfig: unknown = {
       return
     }
     
-    const feedOptions = this.data.availableFeeds.map((feed: unknown) => 
+    const feedOptions = this.data.availableFeeds.map((feed: FeedMaterial) => 
       `${feed.name} (库存: ${feed.currentStock}${feed.unit})`
     )
     

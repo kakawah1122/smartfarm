@@ -1,6 +1,39 @@
-// @ts-nocheck
 // pages/material-records-list/material-records-list.ts
 import { createPageWithNavbar } from '../../utils/navigation'
+
+// 物料信息接口
+interface MaterialInfo {
+  name?: string;
+  category?: string;
+  unit?: string;
+}
+
+// 物料记录接口
+interface MaterialRecord {
+  _id?: string;
+  recordNumber?: string;
+  material?: MaterialInfo;
+  type?: string;
+  supplier?: string;
+  targetLocation?: string;
+  quantity?: number;
+  operator?: string;
+  status?: string;
+  notes?: string | Record<string, unknown>;
+  recordDate?: string;
+  createTime?: string;
+}
+
+// 查询参数接口
+interface QueryData {
+  action: string;
+  page: number;
+  pageSize: number;
+  type?: string;
+}
+
+// 自定义事件类型
+type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
 
 const pageConfig = {
   // ✅ 定时器管理
@@ -79,7 +112,7 @@ const pageConfig = {
       const page = isLoadMore ? this.data.currentPage + 1 : 1
       
       // 构建查询参数
-      const queryData: unknown = {
+      const queryData: QueryData = {
         action: 'list_records',
         page: page,
         pageSize: this.data.pageSize
@@ -104,7 +137,7 @@ const pageConfig = {
         const currentUser = app.globalData?.userInfo?.nickname || app.globalData?.userInfo?.nickName || '系统用户'
         
         // 转换数据格式
-        const formattedRecords = records.map((record: unknown) => ({
+        const formattedRecords = records.map((record: MaterialRecord) => ({
           id: record._id || record.recordNumber,
           recordNumber: record.recordNumber || record._id,
           name: record.material?.name || '未知物料',

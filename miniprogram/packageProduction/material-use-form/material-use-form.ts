@@ -1,4 +1,3 @@
-// @ts-nocheck
 // material-use-form.ts - 物料领用表单页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
@@ -11,6 +10,15 @@ interface MaterialUseFormData {
   purpose: string;          // 领用用途
   quantity: string;         // 领用数量
   remarks: string;          // 备注
+}
+
+// 库存物料接口
+interface InventoryMaterial {
+  _id?: string;
+  materialId?: string;
+  materialName: string;
+  totalQuantity: number;
+  unit?: string;
 }
 
 const pageConfig = {
@@ -99,14 +107,14 @@ const pageConfig = {
       // 调用云函数获取真实库存物料数据
       const materials = await this.getRealInventoryMaterials()
       
-      const materialOptions = materials.map((material: unknown) => 
+      const materialOptions = materials.map((material: InventoryMaterial) => 
         `${material.materialName} (库存: ${material.totalQuantity}${material.unit || ''})`
       )
       
       this.setData({
         availableMaterials: materials,
         materialOptions: materialOptions,
-        materialActionItems: materials.map((material: unknown, index: number) => ({
+        materialActionItems: materials.map((material: InventoryMaterial, index: number) => ({
           label: `${material.materialName} (库存: ${material.totalQuantity}${material.unit || ''})`,
           value: index,
           disabled: material.totalQuantity <= 0
@@ -338,7 +346,7 @@ const pageConfig = {
   },
 
   // 提交到云函数 - 使用正确的领用出库流程
-  async submitToCloudFunction(data: unknown): Promise<void> {
+  async submitToCloudFunction(data: MaterialUseFormData): Promise<void> {
     try {
       // 根据物料名称找到对应的物料ID
       const selectedMaterial = this.data.availableMaterials.find(material => 

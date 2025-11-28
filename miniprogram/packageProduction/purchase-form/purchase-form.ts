@@ -1,4 +1,3 @@
-// @ts-nocheck
 // purchase-form.ts - 采购入库表单页面逻辑
 import { createPageWithNavbar } from '../../utils/navigation'
 
@@ -297,7 +296,7 @@ const pageConfig = {
   },
 
   // 提交到云函数 - 使用新的采购入库接口
-  async submitToCloudFunction(data: unknown): Promise<void> {
+  async submitToCloudFunction(data: PurchaseFormData): Promise<void> {
     
     try {
       // 使用新的采购入库接口，自动处理物料匹配和创建
