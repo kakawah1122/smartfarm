@@ -8,6 +8,53 @@ cloud.init({
 
 const db = cloud.database()
 
+// 角色权限配置（与 user-management 保持一致）
+const ROLE_PERMISSIONS = {
+  'super_admin': {
+    name: '超级管理员',
+    permissions: ['*'],
+    description: '系统全局管理权限'
+  },
+  'manager': {
+    name: '经理',
+    permissions: [
+      'production.*', 'health.*', 'finance.*', 'ai_diagnosis.*',
+      'user.read', 'user.invite', 'user.update_role', 'user.approve'
+    ],
+    description: '业务运营管理权限'
+  },
+  'employee': {
+    name: '员工',
+    permissions: [
+      'production.create', 'production.read', 'production.update_own',
+      'health.create', 'health.read', 'health.update_own',
+      'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate',
+      'user.read_own'
+    ],
+    description: '日常操作执行权限'
+  },
+  'veterinarian': {
+    name: '兽医',
+    permissions: [
+      'health.*', 'ai_diagnosis.*',
+      'production.read', 'user.read_own'
+    ],
+    description: '健康诊疗专业权限'
+  }
+}
+
+// 根据角色获取权限列表
+function getPermissionsByRole(role) {
+  const roleConfig = ROLE_PERMISSIONS[role]
+  return roleConfig ? roleConfig.permissions : ['basic']
+}
+
+// 根据角色获取职位名称
+function getPositionByRole(role) {
+  const roleConfig = ROLE_PERMISSIONS[role]
+  return roleConfig ? roleConfig.name : '员工'
+}
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
@@ -116,25 +163,31 @@ exports.main = async (event, context) => {
     // 如果有邀请信息，更新相关字段
     if (inviteInfo) {
       updateData.inviteCode = inviteCode
-      updateData.position = inviteInfo.position || ''
       
       // ✅ 修复：优先使用 defaultRole，兼容 role 字段
       // 邀请码创建时角色存储在 defaultRole 字段
-      const inviteRole = inviteInfo.defaultRole || inviteInfo.role
-      if (inviteRole) {
-        updateData.role = inviteRole
-      }
+      const inviteRole = inviteInfo.defaultRole || inviteInfo.role || 'employee'
+      
+      // ✅ 设置角色
+      updateData.role = inviteRole
+      
+      // ✅ 设置对应的权限列表
+      updateData.permissions = getPermissionsByRole(inviteRole)
+      
+      // ✅ 设置职位名称（优先使用邀请信息中的职位，否则根据角色自动生成）
+      updateData.position = inviteInfo.position || getPositionByRole(inviteRole)
       
       // 如果邀请信息中有部门/养殖场信息，使用邀请信息
       if (inviteInfo.department) {
         updateData.farmName = inviteInfo.department
         updateData.department = inviteInfo.department
       }
+      
       // ✅ 使用有效邀请码注册的用户自动通过审批
       updateData.approvalStatus = 'approved'
       updateData.approvedBy = inviteInfo.inviterOpenId || inviteInfo.createdBy || 'system'
       updateData.approvedTime = new Date()
-      updateData.approvalRemark = '通过邀请码自动审批'
+      updateData.approvalRemark = `通过邀请码自动审批，角色: ${getPositionByRole(inviteRole)}`
       updateData.isActive = true
     }
     
@@ -153,11 +206,20 @@ exports.main = async (event, context) => {
         user: {
           _id: updatedUser.data._id,
           openid: OPENID,
-          nickname: updatedUser.data.nickname,
+          nickname: updatedUser.data.nickname || updatedUser.data.nickName,
+          nickName: updatedUser.data.nickName || updatedUser.data.nickname,
           avatarUrl: updatedUser.data.avatarUrl,
           phone: updatedUser.data.phone,
           gender: updatedUser.data.gender,
           farmName: updatedUser.data.farmName,
+          department: updatedUser.data.department,
+          // ✅ 返回角色和权限信息
+          role: updatedUser.data.role,
+          permissions: updatedUser.data.permissions,
+          position: updatedUser.data.position,
+          // 审批状态
+          approvalStatus: updatedUser.data.approvalStatus,
+          // 时间信息
           createTime: updatedUser.data.createTime,
           updateTime: updatedUser.data.updateTime,
           lastLoginTime: updatedUser.data.lastLoginTime,
