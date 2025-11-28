@@ -323,3 +323,16 @@
   background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
   box-shadow: 0 2rpx 8rpx rgba(30, 64, 175, 0.4) !important;
 }
+
+/* 重置按钮 - 白色背景深蓝边框 */
+.reset-button {
+  background: #ffffff !important;
+  color: #0052d9 !important;
+  font-weight: 500 !important;
+  border: 2rpx solid #0052d9 !important;
+  box-shadow: none !important;
+}
+
+.reset-button:active {
+  background: rgba(0, 82, 217, 0.05) !important;
+}

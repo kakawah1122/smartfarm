@@ -211,7 +211,7 @@
           size="large" 
           block 
           bind:tap="onReset"
-          t-class="custom-form-button"
+          t-class="reset-button"
         >
           重置表单
         </t-button>
