@@ -1,16 +1,17 @@
 // 统一的数据库集合名称配置
 // 所有云函数必须引用此文件，禁止硬编码集合名称
 // 基于标准化命名规范：模块前缀_功能描述
-// 共39个标准化集合，涵盖10大业务模块
+// 共40个标准化集合，涵盖10大业务模块
 
 const COLLECTIONS = {
-  // ========== 标准化集合定义（39个） ==========
+  // ========== 标准化集合定义（40个） ==========
   
   // 用户管理模块 (User Management)
   WX_USERS: 'wx_users',
   WX_USER_INVITES: 'wx_user_invites',
   USER_NOTIFICATIONS: 'user_notifications',
   USER_NOTIFICATION_SETTINGS: 'user_notification_settings',
+  USER_ROLES: 'user_roles',  // 用户角色定义
 
   // 生产管理模块 (Production Management)
   PROD_BATCH_ENTRIES: 'prod_batch_entries',
@@ -73,7 +74,8 @@ const COLLECTION_MODULES = {
     COLLECTIONS.WX_USERS,
     COLLECTIONS.WX_USER_INVITES,
     COLLECTIONS.USER_NOTIFICATIONS,
-    COLLECTIONS.USER_NOTIFICATION_SETTINGS
+    COLLECTIONS.USER_NOTIFICATION_SETTINGS,
+    COLLECTIONS.USER_ROLES
   ],
   
   PRODUCTION_MANAGEMENT: [

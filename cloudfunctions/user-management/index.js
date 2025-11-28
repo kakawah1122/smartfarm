@@ -9,7 +9,7 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
-// 内置角色配置（避免跨云函数依赖）
+// 角色代码常量（用于代码中引用）
 const ROLES = {
   SUPER_ADMIN: 'super_admin',
   MANAGER: 'manager',
@@ -17,89 +17,107 @@ const ROLES = {
   VETERINARIAN: 'veterinarian'
 }
 
-const ROLE_INFO = {
-  [ROLES.SUPER_ADMIN]: {
-    code: 'super_admin',
-    name: '超级管理员',
-    description: '系统全局管理权限，可管理所有功能和用户',
-    level: 1
-  },
-  [ROLES.MANAGER]: {
-    code: 'manager',
-    name: '经理',
-    description: '业务运营管理权限，负责整体运营和决策',
-    level: 2
-  },
-  [ROLES.EMPLOYEE]: {
-    code: 'employee',
-    name: '员工',
-    description: '日常操作执行权限，包括AI诊断功能',
-    level: 3
-  },
-  [ROLES.VETERINARIAN]: {
-    code: 'veterinarian', 
-    name: '兽医',
-    description: '健康诊疗专业权限，负责动物健康和AI诊断验证',
-    level: 3
+// 角色缓存（从数据库加载）
+let rolesCache = null
+let rolesCacheTime = 0
+const CACHE_TTL = 5 * 60 * 1000 // 5分钟缓存
+
+// 从数据库加载角色配置
+async function loadRolesFromDB() {
+  const now = Date.now()
+  if (rolesCache && (now - rolesCacheTime) < CACHE_TTL) {
+    return rolesCache
+  }
+  
+  try {
+    const result = await db.collection(COLLECTIONS.USER_ROLES)
+      .where({ isActive: true })
+      .get()
+    
+    if (result.data && result.data.length > 0) {
+      rolesCache = {}
+      result.data.forEach(role => {
+        rolesCache[role.code || role._id] = {
+          code: role.code || role._id,
+          name: role.name,
+          description: role.description,
+          level: role.level,
+          permissions: role.permissions || []
+        }
+      })
+      rolesCacheTime = now
+      return rolesCache
+    }
+  } catch (err) {
+    console.error('从数据库加载角色失败，使用默认配置:', err.message)
+  }
+  
+  // 回退到默认配置
+  return getDefaultRoles()
+}
+
+// 默认角色配置（作为回退）
+function getDefaultRoles() {
+  return {
+    [ROLES.SUPER_ADMIN]: {
+      code: 'super_admin',
+      name: '超级管理员',
+      description: '系统全局管理权限，可管理所有功能和用户',
+      level: 1,
+      permissions: ['*']
+    },
+    [ROLES.MANAGER]: {
+      code: 'manager',
+      name: '经理',
+      description: '业务运营管理权限，负责整体运营和决策',
+      level: 2,
+      permissions: ['production.*', 'health.*', 'finance.*', 'ai_diagnosis.*', 'user.read', 'user.invite', 'user.update_role', 'user.approve']
+    },
+    [ROLES.EMPLOYEE]: {
+      code: 'employee',
+      name: '员工',
+      description: '日常操作执行权限，包括AI诊断功能',
+      level: 3,
+      permissions: ['production.create', 'production.read', 'production.update_own', 'health.create', 'health.read', 'health.update_own', 'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate', 'user.read_own']
+    },
+    [ROLES.VETERINARIAN]: {
+      code: 'veterinarian', 
+      name: '兽医',
+      description: '健康诊疗专业权限，负责动物健康和AI诊断验证',
+      level: 3,
+      permissions: ['health.*', 'ai_diagnosis.*', 'production.read', 'user.read_own']
+    }
   }
 }
 
-function validateRole(roleCode) {
-  return Object.values(ROLES).includes(roleCode)
-}
-
-function hasPermission(userRole, permission) {
-  // 简化的权限检查
-  if (userRole === ROLES.SUPER_ADMIN) return true
-  // 其他权限逻辑可以根据需要扩展
-  return false
-}
-
-// 角色权限定义 - 更新为新的4个角色
-const ROLE_PERMISSIONS = {
-  [ROLES.SUPER_ADMIN]: {
-    name: '超级管理员',
-    permissions: ['*'], // 所有权限
-    description: '系统全局管理权限，可管理所有功能和用户'
-  },
-  [ROLES.MANAGER]: {
-    name: '经理',
-    permissions: [
-      'production.*', 'health.*', 'finance.*', 'ai_diagnosis.*',
-      'user.read', 'user.invite', 'user.update_role', 'user.approve'
-    ],
-    description: '业务运营管理权限，负责整体运营和决策'
-  },
-  [ROLES.EMPLOYEE]: {
-    name: '员工',
-    permissions: [
-      'production.create', 'production.read', 'production.update_own',
-      'health.create', 'health.read', 'health.update_own',
-      'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate',
-      'user.read_own'
-    ],
-    description: '日常操作执行权限，包括AI诊断功能'
-  },
-  [ROLES.VETERINARIAN]: {
-    name: '兽医',
-    permissions: [
-      'health.*', 'ai_diagnosis.*',
-      'production.read', 'user.read_own'
-    ],
-    description: '健康诊疗专业权限，负责动物健康和AI诊断验证'
-  }
+// 验证角色是否有效
+async function validateRole(roleCode) {
+  const roles = await loadRolesFromDB()
+  return !!roles[roleCode]
 }
 
 // 检查权限
-function checkPermission(userRole, requiredPermission) {
-  const rolePerms = ROLE_PERMISSIONS[userRole]
-  if (!rolePerms) return false
+async function hasPermission(userRole, permission) {
+  const roles = await loadRolesFromDB()
+  const roleInfo = roles[userRole]
+  if (!roleInfo) return false
+  if (roleInfo.permissions.includes('*')) return true
+  return roleInfo.permissions.includes(permission)
+}
+
+// 检查权限（异步版本，从数据库读取）
+async function checkPermission(userRole, requiredPermission) {
+  const roles = await loadRolesFromDB()
+  const roleInfo = roles[userRole]
+  if (!roleInfo) return false
+  
+  const permissions = roleInfo.permissions || []
   
   // 超级管理员拥有所有权限
-  if (rolePerms.permissions.includes('*')) return true
+  if (permissions.includes('*')) return true
   
   // 检查具体权限
-  return rolePerms.permissions.some(perm => {
+  return permissions.some(perm => {
     if (perm === requiredPermission) return true
     // 支持通配符权限，如 'production.*'
     if (perm.endsWith('.*')) {
@@ -782,11 +800,32 @@ async function checkUserPermission(event, wxContext) {
   }
 }
 
-// 获取角色权限信息
+// 获取角色权限信息（从数据库读取）
 async function getRolePermissions(event, wxContext) {
-  return {
-    success: true,
-    data: ROLE_PERMISSIONS
+  try {
+    const roles = await loadRolesFromDB()
+    
+    // 转换为前端需要的格式
+    const rolePermissions = {}
+    Object.keys(roles).forEach(code => {
+      const role = roles[code]
+      rolePermissions[code] = {
+        name: role.name,
+        permissions: role.permissions,
+        description: role.description
+      }
+    })
+    
+    return {
+      success: true,
+      data: rolePermissions
+    }
+  } catch (err) {
+    console.error('获取角色权限失败:', err.message)
+    return {
+      success: false,
+      error: err.message
+    }
   }
 }
 
@@ -1053,7 +1092,7 @@ async function deactivateUser(event, wxContext) {
   }
 }
 
-// 获取用户角色信息
+// 获取用户角色信息（从数据库读取）
 async function getUserRoles(event, wxContext) {
   const { openid } = event
   const requestOpenid = openid || wxContext.OPENID
@@ -1075,8 +1114,11 @@ async function getUserRoles(event, wxContext) {
     const user = userResult.data[0]
     const userRole = user.role || 'employee'
     
+    // 从数据库加载角色配置
+    const rolesConfig = await loadRolesFromDB()
+    
     // 验证角色是否有效
-    if (!validateRole(userRole)) {
+    if (!rolesConfig[userRole]) {
       return {
         success: false,
         message: '用户角色无效',
@@ -1084,16 +1126,16 @@ async function getUserRoles(event, wxContext) {
       }
     }
     
-    // 获取角色信息
-    const roleInfo = ROLE_INFO[userRole]
+    // 获取角色信息（从数据库）
+    const roleInfo = rolesConfig[userRole]
     
-    // 构造角色数据（模拟user_roles集合的数据结构）
+    // 构造角色数据
     const roles = [{
       roleCode: userRole,
       roleName: roleInfo.name,
       level: roleInfo.level,
       isActive: user.isActive !== false,
-      permissions: ROLE_PERMISSIONS[userRole].permissions,
+      permissions: roleInfo.permissions,
       assignTime: user.createTime || new Date(),
       expiryTime: null // 角色不过期
     }]
