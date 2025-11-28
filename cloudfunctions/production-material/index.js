@@ -426,7 +426,6 @@ async function listMaterialRecords(event, wxContext) {
     // 2. 查询饲料投喂记录
     let feedRecords = { data: [] }
     if (includeFeedRecords) {
-      // TODO: 已修复 - feed_usage_records 已添加到标准集合列表
       let feedQuery = db.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS)
       const feedWhere = {}
       
@@ -1719,7 +1718,6 @@ async function recordFeedUsage(event, wxContext) {
         updateTime: now
       }
       
-      // TODO: 已修复 - feed_usage_records 已添加到标准集合列表
       const result = await transaction.collection(COLLECTIONS.PROD_FEED_USAGE_RECORDS).add({
         data: feedRecord
       })
