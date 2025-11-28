@@ -1204,7 +1204,7 @@ async function getDiagnosisHistory(event, openid) {
     
     if (batchIds.length > 0) {
       try {
-        const batchResult = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+        const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
           .where({
             _id: _.in(batchIds)
           })
@@ -1462,7 +1462,7 @@ async function getDiagnosisResult(event, openid) {
     let batchNumber = record.data.batchNumber || '未知批次'
     if (record.data.batchId && !record.data.batchNumber) {
       try {
-        const batchResult = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+        const batchResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
           .doc(record.data.batchId)
           .field({ batchNumber: true })
           .get()

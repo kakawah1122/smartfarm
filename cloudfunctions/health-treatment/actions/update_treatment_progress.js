@@ -309,25 +309,17 @@ exports.main = async (event, wxContext) => {
       
       // ✅ 更新批次的死亡数（容错处理）
       try {
-        // 尝试查询批次文档
-        const batchDoc = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
-          .doc(treatment.batchId)
-          .get()
+        // 尝试通过 _id 查询批次文档
+        let batchDoc = null
+        let batchDocId = null
         
-        if (batchDoc.data) {
-          // 批次文档存在，直接更新
-          await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
-            .doc(treatment.batchId)
-            .update({
-              data: {
-                deadCount: _.inc(count),
-                updatedAt: new Date()
-              }
-            })
-        }
-      } catch (err) {
-        // 文档不存在或查询失败（可能 batchId 是 batchNumber）
         try {
+          batchDoc = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+            .doc(treatment.batchId)
+            .get()
+          batchDocId = treatment.batchId
+        } catch (idErr) {
+          // _id 查询失败，尝试通过 batchNumber 查询
           const entryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
             .where({
               batchNumber: treatment.batchId,
@@ -337,12 +329,25 @@ exports.main = async (event, wxContext) => {
             .get()
           
           if (entryResult.data && entryResult.data.length > 0) {
-            // 找到批次，更新（暂时注释，实际项目中需要更新）
-            // const entry = entryResult.data[0]
+            batchDoc = { data: entryResult.data[0] }
+            batchDocId = entryResult.data[0]._id
           }
-        } catch (err2) {
-          // 忽略错误
         }
+        
+        if (batchDoc && batchDoc.data && batchDocId) {
+          // 批次文档存在，更新死亡数
+          await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+            .doc(batchDocId)
+            .update({
+              data: {
+                deadCount: _.inc(count),
+                updatedAt: new Date()
+              }
+            })
+        }
+      } catch (err) {
+        // 忽略错误，不影响主流程
+        console.warn('更新批次死亡数失败:', err.message)
       }
     }
     
@@ -380,13 +385,34 @@ exports.main = async (event, wxContext) => {
       // 3️⃣ 更新批次的病态数
       // 治愈的动物从sick/treatment状态恢复为健康状态
       try {
-        const batchDoc = await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
-          .doc(treatment.batchId)
-          .get()
+        // 尝试通过 _id 查询批次文档
+        let batchDoc = null
+        let batchDocId = null
         
-        if (batchDoc.data) {
-          await db.collection(COLLECTIONS.PRODUCTION_BATCHES)
+        try {
+          batchDoc = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
             .doc(treatment.batchId)
+            .get()
+          batchDocId = treatment.batchId
+        } catch (idErr) {
+          // _id 查询失败，尝试通过 batchNumber 查询
+          const entryResult = await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+            .where({
+              batchNumber: treatment.batchId,
+              ...dbManager.buildNotDeletedCondition(true)
+            })
+            .limit(1)
+            .get()
+          
+          if (entryResult.data && entryResult.data.length > 0) {
+            batchDoc = { data: entryResult.data[0] }
+            batchDocId = entryResult.data[0]._id
+          }
+        }
+        
+        if (batchDoc && batchDoc.data && batchDocId) {
+          await db.collection(COLLECTIONS.PROD_BATCH_ENTRIES)
+            .doc(batchDocId)
             .update({
               data: {
                 sickCount: _.inc(-count),
@@ -396,6 +422,7 @@ exports.main = async (event, wxContext) => {
         }
       } catch (error) {
         // 忽略错误
+        console.warn('更新批次病态数失败:', error.message)
       }
     }
     
