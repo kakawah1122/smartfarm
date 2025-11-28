@@ -13,7 +13,18 @@ export interface NavbarSizes {
 /**
  * 扩展Page的类型定义，添加setData等方法
  */
-export type PageInstance<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption> = WechatMiniprogram.Page.Instance<D, any>
+export type PageInstance<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption> = WechatMiniprogram.Page.Instance<D, Record<string, unknown>>
+
+/**
+ * 页面配置类型（包含可选的生命周期方法）
+ */
+interface PageConfigWithLifecycle {
+  data?: Record<string, unknown>
+  onLoad?: (options?: Record<string, string | undefined>) => void
+  goBack?: () => void
+  setData?: (data: Record<string, unknown>, callback?: () => void) => void
+  [key: string]: unknown
+}
 
 /**
  * 获取系统状态栏高度并转换为rpx
@@ -76,51 +87,54 @@ export function getSystemNavBarSizes(): NavbarSizes {
 export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption>(
   pageConfig: Partial<PageInstance<D>> & { data: D }
 ): Partial<PageInstance<D & { statusBarHeight: number; navBarHeight: number; totalNavHeight: number }>> {
-  const originalOnLoad = (pageConfig as unknown).onLoad || function() {};
+  const config = pageConfig as PageConfigWithLifecycle
+  const originalOnLoad = config.onLoad || function() {}
   
   // 扩展data，添加导航栏高度
-  pageConfig.data = {
-    ...pageConfig.data,
+  config.data = {
+    ...config.data,
     statusBarHeight: 88,
     navBarHeight: 88,
     totalNavHeight: 176,
-  } as unknown;
+  }
   
   // 替换onLoad方法
-  (pageConfig as unknown).onLoad = function(this: unknown, options: unknown) {
+  config.onLoad = function(this: PageConfigWithLifecycle, options?: Record<string, string | undefined>) {
     // 检查登录状态
     if (!checkPageAuth()) {
       return // 如果未登录，停止页面加载
     }
     
     // 设置状态栏高度
-    const sizes = getSystemNavBarSizes();
-    this.setData({
-      statusBarHeight: sizes.statusBarHeight,
-      navBarHeight: sizes.navBarHeight,
-      totalNavHeight: sizes.totalNavHeight
-    });
+    const sizes = getSystemNavBarSizes()
+    if (this.setData) {
+      this.setData({
+        statusBarHeight: sizes.statusBarHeight,
+        navBarHeight: sizes.navBarHeight,
+        totalNavHeight: sizes.totalNavHeight
+      })
+    }
     
     // 调用原始onLoad
     if (originalOnLoad) {
-      originalOnLoad.call(this, options);
+      originalOnLoad.call(this, options)
     }
-  };
+  }
   
   // 添加goBack方法
-  if (!(pageConfig as unknown).goBack) {
-    (pageConfig as unknown).goBack = function(this: unknown) {
+  if (!config.goBack) {
+    config.goBack = function() {
       if (getCurrentPages().length > 1) {
-        wx.navigateBack();
+        wx.navigateBack()
       } else {
         wx.switchTab({
           url: '/pages/index/index'
-        });
+        })
       }
-    };
+    }
   }
   
-  return pageConfig as unknown;
+  return config as Partial<PageInstance<D & { statusBarHeight: number; navBarHeight: number; totalNavHeight: number }>>
 }
 
 /**
