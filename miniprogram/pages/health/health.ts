@@ -1296,6 +1296,11 @@ Page<PageData, any>({
       // 处理健康统计
       const healthStats = data.healthStats || {}
       
+      // ✅ 调试日志：检查云函数返回的数据
+      console.log('[loadSingleBatchDataOptimized] healthStats:', JSON.stringify(healthStats))
+      console.log('[loadSingleBatchDataOptimized] originalQuantity from healthStats:', healthStats.originalQuantity)
+      console.log('[loadSingleBatchDataOptimized] totalChecks from healthStats:', healthStats.totalChecks)
+      
       // 处理预防统计
       const preventionStats = data.preventionStats || {
         totalPreventions: 0,
@@ -1343,22 +1348,63 @@ Page<PageData, any>({
       const pendingDiagnosisCount = data.pendingDiagnosisCount || 0
       
       // 获取原始入栏数（单批次模式）
-      // 单批次模式下，originalQuantity 可能来自批次数据或 healthStats
-      const originalQuantity = (healthStats as unknown).originalQuantity || 
-                                (data.batchInfo?.quantity) || 
-                                healthStats.totalChecks || 0
+      // ✅ 修复：优先使用云函数计算好的值，多级容错
+      let originalQuantity = Number(healthStats.originalQuantity) || 0
+      
+      // 容错1：如果云函数没有返回 originalQuantity，尝试从 batchInfo 获取
+      if (originalQuantity === 0 && data.batchInfo?.quantity) {
+        originalQuantity = Number(data.batchInfo.quantity) || 0
+      }
+      
+      // 容错2：如果还是没有，使用 totalChecks（当前存栏）
+      if (originalQuantity === 0 && healthStats.totalChecks) {
+        originalQuantity = Number(healthStats.totalChecks) || 0
+      }
+      
+      // 容错3：如果还是没有，使用 totalAnimals
+      if (originalQuantity === 0 && healthStats.totalAnimals) {
+        originalQuantity = Number(healthStats.totalAnimals) || 0
+      }
+      
+      console.log('[loadSingleBatchDataOptimized] 最终 originalQuantity:', originalQuantity)
       
       // 使用数据更新器简化setData调用
       const updater = createDataUpdater()
       
+      // ✅ 修复：直接使用云函数计算好的健康率和死亡率（如果有值）
+      let healthyRateDisplay = '-'
+      let mortalityRateDisplay = '-'
+      
+      // 优先使用云函数返回的已计算值
+      if (healthStats.healthyRate && healthStats.healthyRate !== '0.00') {
+        healthyRateDisplay = formatPercentage(healthStats.healthyRate)
+      } else if (originalQuantity > 0) {
+        // 本地计算健康率
+        const totalChecks = Number(healthStats.totalChecks) || Number(healthStats.totalAnimals) || 0
+        const abnormalCount = Number(healthStats.abnormalCount) || 0
+        const healthyCount = totalChecks - abnormalCount
+        healthyRateDisplay = totalChecks > 0 ? formatPercentage((healthyCount / totalChecks) * 100) : '-'
+      }
+      
+      if (healthStats.mortalityRate && healthStats.mortalityRate !== '0.00') {
+        mortalityRateDisplay = formatPercentage(healthStats.mortalityRate)
+      } else if (originalQuantity > 0) {
+        // 本地计算死亡率
+        const deadCount = Number(healthStats.deadCount) || 0
+        mortalityRateDisplay = formatPercentage((deadCount / originalQuantity) * 100)
+      }
+      
+      console.log('[loadSingleBatchDataOptimized] healthyRateDisplay:', healthyRateDisplay)
+      console.log('[loadSingleBatchDataOptimized] mortalityRateDisplay:', mortalityRateDisplay)
+      
       updater
         .setHealthStats({
-          totalChecks: healthStats.totalChecks || 0,
-          healthyCount: healthStats.healthyCount || 0,
-          sickCount: healthStats.sickCount || 0,
-          deadCount: healthStats.deadCount || 0,
-          healthyRate: originalQuantity > 0 ? formatPercentage(healthStats.healthyRate || 0) : '-',
-          mortalityRate: originalQuantity > 0 ? formatPercentage(healthStats.mortalityRate || 0) : '-',
+          totalChecks: Number(healthStats.totalChecks) || Number(healthStats.totalAnimals) || 0,
+          healthyCount: Number(healthStats.healthyCount) || 0,
+          sickCount: Number(healthStats.sickCount) || 0,
+          deadCount: Number(healthStats.deadCount) || 0,
+          healthyRate: healthyRateDisplay,
+          mortalityRate: mortalityRateDisplay,
           originalQuantity: originalQuantity
         })
         .set('healthStats.abnormalCount', abnormalCount)
