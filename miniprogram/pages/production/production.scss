@@ -139,25 +139,30 @@
 /* 所有按钮样式已在app.scss中全局定义，此处仅保留特殊定制 */
 
 .primary-button {
-  /* 蓝色按钮样式 - 提高文字可读性 */
-  background: transparent !important;
-  border: 2rpx solid #0052d9 !important;
-  color: #0052d9 !important;
+  /* 深蓝渐变按钮样式 - 统一风格 */
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
-  box-shadow: none !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
   
   &:active {
     transform: scale(0.98);
-    background: rgba(0, 82, 217, 0.1) !important;
+    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
   }
 }
 
 .ai-button {
-  /* AI按钮特殊样式 - 继承light主题 */
-  border-width: 2rpx !important;
+  /* 深蓝渐变按钮样式 - 统一风格 */
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
   
   &:active {
     transform: scale(0.98);
+    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
   }
 }
 
@@ -172,15 +177,16 @@
 }
 
 .purple-button {
-  /* 紫色按钮样式 - 提高文字可读性 */
-  background: transparent !important;
-  border: 2rpx solid #5a1a7a !important;
-  color: #5a1a7a !important;
+  /* 深蓝渐变按钮样式 - 统一风格 */
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
   
   &:active {
     transform: scale(0.98);
-    background: rgba(90, 26, 122, 0.1) !important;
+    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
   }
 }
 
@@ -212,15 +218,16 @@
 }
 
 .success-button {
-  /* 藏绿色按钮样式 - 提高文字可读性 */
-  background: transparent !important;
-  border: 2rpx solid #2d5016 !important;
-  color: #2d5016 !important;
+  /* 深蓝渐变按钮样式 - 统一风格 */
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
   
   &:active {
     transform: scale(0.98);
-    background: rgba(45, 80, 22, 0.1) !important;
+    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
   }
 }
 
