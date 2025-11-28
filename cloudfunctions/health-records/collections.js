@@ -1,10 +1,10 @@
 // 统一的数据库集合名称配置
 // 所有云函数必须引用此文件，禁止硬编码集合名称
 // 基于标准化命名规范：模块前缀_功能描述
-// 共38个标准化集合，涵盖9大业务模块
+// 共39个标准化集合，涵盖10大业务模块
 
 const COLLECTIONS = {
-  // ========== 标准化集合定义（38个） ==========
+  // ========== 标准化集合定义（39个） ==========
   
   // 用户管理模块 (User Management)
   WX_USERS: 'wx_users',
@@ -61,7 +61,10 @@ const COLLECTIONS = {
 
   // 文件管理模块 (File Management)
   FILE_DYNAMIC_RECORDS: 'file_dynamic_records',
-  FILE_STATIC_RECORDS: 'file_static_records'
+  FILE_STATIC_RECORDS: 'file_static_records',
+
+  // 价格管理模块 (Price Management)
+  GOOSE_PRICES: 'goose_prices'  // 鹅价格记录
 }
 
 // 按模块分组的集合配置
@@ -130,6 +133,10 @@ const COLLECTION_MODULES = {
   FILE_MANAGEMENT: [
     COLLECTIONS.FILE_DYNAMIC_RECORDS,
     COLLECTIONS.FILE_STATIC_RECORDS
+  ],
+  
+  PRICE_MANAGEMENT: [
+    COLLECTIONS.GOOSE_PRICES
   ]
 }
 
@@ -151,6 +158,7 @@ const USAGE_GUIDE = `
 - 知识库模块：knowledge_ 前缀
 - AI模块：ai_ 前缀
 - 文件模块：file_ 前缀
+- 价格模块：goose_ 前缀（注：历史命名）
 `
 
 module.exports = {
