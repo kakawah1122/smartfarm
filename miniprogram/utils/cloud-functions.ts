@@ -102,9 +102,6 @@ export const HealthCloud = {
     
     /** 获取批次预防对比 */
     getBatchComparison: (data: any) => callCloudFunction('health-prevention', 'get_batch_prevention_comparison', data),
-    
-    /** 检查健康预警 */
-    checkAlerts: (data: any) => callCloudFunction('health-prevention', 'check_health_alerts', data),
   },
 
   /**

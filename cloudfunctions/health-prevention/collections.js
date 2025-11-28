@@ -1,10 +1,10 @@
 // 统一的数据库集合名称配置
 // 所有云函数必须引用此文件，禁止硬编码集合名称
 // 基于标准化命名规范：模块前缀_功能描述
-// 共40个标准化集合，涵盖9大业务模块
+// 共38个标准化集合，涵盖9大业务模块
 
 const COLLECTIONS = {
-  // ========== 标准化集合定义（40个） ==========
+  // ========== 标准化集合定义（38个） ==========
   
   // 用户管理模块 (User Management)
   WX_USERS: 'wx_users',
@@ -26,8 +26,6 @@ const COLLECTIONS = {
   HEALTH_TREATMENT_RECORDS: 'health_treatment_records',
   HEALTH_AI_DIAGNOSIS: 'health_ai_diagnosis',
   HEALTH_DEATH_RECORDS: 'health_death_records',
-  HEALTH_ALERTS: 'health_alerts',
-  HEALTH_VACCINE_PLANS: 'health_vaccine_plans',
 
   // 财务管理模块 (Finance Management)
   FINANCE_COST_RECORDS: 'finance_cost_records',
@@ -89,9 +87,7 @@ const COLLECTION_MODULES = {
     COLLECTIONS.HEALTH_PREVENTION_RECORDS,
     COLLECTIONS.HEALTH_TREATMENT_RECORDS,
     COLLECTIONS.HEALTH_AI_DIAGNOSIS,
-    COLLECTIONS.HEALTH_DEATH_RECORDS,
-    COLLECTIONS.HEALTH_ALERTS,
-    COLLECTIONS.HEALTH_VACCINE_PLANS
+    COLLECTIONS.HEALTH_DEATH_RECORDS
   ],
   
   FINANCE_MANAGEMENT: [
