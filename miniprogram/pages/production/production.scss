@@ -135,36 +135,8 @@
   }
 }
 
-/* === TDesign规范按钮样式 - 使用全局变量 === */
-/* 所有按钮样式已在app.scss中全局定义，此处仅保留特殊定制 */
-
-.primary-button {
-  /* 深蓝渐变按钮样式 - 统一风格 */
-  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
-  border: none !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
-  
-  &:active {
-    transform: scale(0.98);
-    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
-  }
-}
-
-.ai-button {
-  /* 深蓝渐变按钮样式 - 统一风格 */
-  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
-  border: none !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
-  
-  &:active {
-    transform: scale(0.98);
-    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
-  }
-}
+/* === TDesign规范按钮样式 === */
+/* 按钮统一使用theme="primary"，继承全局深蓝渐变样式 */
 
 .warning-button {
   /* 警告按钮特殊样式 - 继承danger主题 */
@@ -173,20 +145,6 @@
   &:active {
     transform: scale(0.98);
     box-shadow: 0 2rpx 8rpx rgba(237, 123, 47, 0.3) !important;
-  }
-}
-
-.purple-button {
-  /* 深蓝渐变按钮样式 - 统一风格 */
-  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
-  border: none !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
-  
-  &:active {
-    transform: scale(0.98);
-    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
   }
 }
 
@@ -217,19 +175,6 @@
   border: 1rpx solid rgba(24, 144, 255, 0.3) !important;
 }
 
-.success-button {
-  /* 深蓝渐变按钮样式 - 统一风格 */
-  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
-  border: none !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.2) !important;
-  
-  &:active {
-    transform: scale(0.98);
-    background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
-  }
-}
 
 .list-section {
   margin: 24rpx 0;

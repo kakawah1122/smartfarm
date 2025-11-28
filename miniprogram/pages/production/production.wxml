@@ -144,7 +144,7 @@
               </t-button>
             </t-col>
             <t-col span="12">
-              <t-button theme="primary" size="medium" variant="light" block bind:tap="startAICount" class="action-button ai-button">
+              <t-button theme="primary" size="medium" block bind:tap="startAICount" class="action-button">
                 AI智能盘点
               </t-button>
             </t-col>
@@ -407,17 +407,17 @@
         <view class="quick-action">
           <t-row gutter="16">
             <t-col span="8">
-              <t-button theme="light" size="medium" block bind:tap="purchaseMaterial" class="action-button success-button">
+              <t-button theme="primary" size="medium" block bind:tap="purchaseMaterial" class="action-button">
                 采购入库
               </t-button>
             </t-col>
             <t-col span="8">
-              <t-button theme="light" size="medium" block bind:tap="useMaterial" class="action-button purple-button">
+              <t-button theme="primary" size="medium" block bind:tap="useMaterial" class="action-button">
                 物料领用
               </t-button>
             </t-col>
             <t-col span="8">
-              <t-button theme="light" size="medium" block bind:tap="recordFeedUsage" class="action-button primary-button">
+              <t-button theme="primary" size="medium" block bind:tap="recordFeedUsage" class="action-button">
                 饲料投喂
               </t-button>
             </t-col>
