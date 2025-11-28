@@ -282,16 +282,22 @@ async function getHealthStatisticsOptimized(event, wxContext) {
         }
       },
       // 第二步：关联健康记录
+      // ✅ 修复：同时支持通过 _id 或 batchNumber 匹配
       {
         $lookup: {
           from: 'health_records',
-          let: { batch_id: '$_id' },
+          let: { batch_id: '$_id', batch_number: '$batchNumber' },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ['$batchId', '$$batch_id'] },
+                    {
+                      $or: [
+                        { $eq: ['$batchId', '$$batch_id'] },
+                        { $eq: ['$batchId', '$$batch_number'] }
+                      ]
+                    },
                     { $eq: ['$recordType', 'ai_diagnosis'] },
                     { $in: ['$status', ['abnormal', 'treating']] },
                     { $ne: ['$isDeleted', true] }
@@ -307,16 +313,22 @@ async function getHealthStatisticsOptimized(event, wxContext) {
         }
       },
       // 第三步：关联治疗记录
+      // ✅ 修复：同时支持通过 _id 或 batchNumber 匹配（治疗记录的 batchId 可能存储的是批次号）
       {
         $lookup: {
           from: 'health_treatment_records',
-          let: { batch_id: '$_id' },
+          let: { batch_id: '$_id', batch_number: '$batchNumber' },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ['$batchId', '$$batch_id'] },
+                    {
+                      $or: [
+                        { $eq: ['$batchId', '$$batch_id'] },
+                        { $eq: ['$batchId', '$$batch_number'] }
+                      ]
+                    },
                     { $ne: ['$isDeleted', true] }
                   ]
                 }

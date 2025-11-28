@@ -86,12 +86,16 @@ async function getDashboardSnapshotForBatches(batchIds, includeDiagnosis, diagno
 
   if (batchIds.length > 0) {
     try {
+      // 获取批次号列表
+      const batchNumbers = batches.map(b => b.batchNumber).filter(Boolean)
+      
       // 使用聚合管道直接计算治疗统计
+      // ✅ 修复：同时使用 batchId 和 batchNumber 匹配
       const $ = db.command.aggregate
       const treatmentStats = await db.collection(COLLECTIONS.HEALTH_TREATMENT_RECORDS)
         .aggregate()
         .match({
-          batchId: _.in(batchIds),
+          batchId: _.in([...batchIds, ...batchNumbers]),
           isDeleted: _.neq(true)
         })
         .group({
