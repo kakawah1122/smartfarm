@@ -244,18 +244,19 @@ Page({
         }
 
         if (!checkResult.result?.exists) {
-          // 用户不存在，检查是否是第一个用户
+          // 用户不存在
           wx.hideLoading()
           this.setData({ isLoading: false })
           
-          // 检查数据库中是否还没有任何用户（第一个用户）
+          // ✅ 修复：不再直接调用 login 创建用户
+          // 而是通过 login 云函数检查是否是第一个用户
           try {
             const result = await wx.cloud.callFunction({
               name: 'login',
-              data: {} // 直接尝试创建用户
+              data: {} // 云函数会自动判断是否是第一个用户
             })
             
-            // ✅ 只有第一个管理员才能直接登录，其他新用户必须使用邀请码
+            // 只有第一个管理员才能直接登录
             if (result.result && result.result.success && result.result.isFirstAdmin) {
               const app = getApp()
               app.globalData.openid = result.result.openid
@@ -279,7 +280,9 @@ Page({
               })
               return
             }
-            // 非第一个用户，即使创建成功也需要邀请码注册流程
+            
+            // ✅ 云函数返回 needRegister 时，提示用户使用邀请码注册
+            // 非第一个用户不会被创建，需要邀请码注册
           } catch (createError) {
             // 创建失败，继续走邀请码注册流程
           }

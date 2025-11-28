@@ -117,9 +117,14 @@ exports.main = async (event, context) => {
     if (inviteInfo) {
       updateData.inviteCode = inviteCode
       updateData.position = inviteInfo.position || ''
-      if (inviteInfo.role) {
-        updateData.role = inviteInfo.role
+      
+      // ✅ 修复：优先使用 defaultRole，兼容 role 字段
+      // 邀请码创建时角色存储在 defaultRole 字段
+      const inviteRole = inviteInfo.defaultRole || inviteInfo.role
+      if (inviteRole) {
+        updateData.role = inviteRole
       }
+      
       // 如果邀请信息中有部门/养殖场信息，使用邀请信息
       if (inviteInfo.department) {
         updateData.farmName = inviteInfo.department

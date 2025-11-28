@@ -158,8 +158,21 @@ exports.main = async (event, context) => {
       }
       
       if (userQuery.data.length === 0) {
-        // 用户不存在，创建新用户记录
+        // 用户不存在
         
+        // ✅ 关键修复：只有第一个用户（超级管理员）才自动创建
+        // 其他用户必须通过邀请码注册后才能登录
+        if (!isFirstUser) {
+          return {
+            success: false,
+            exists: false,
+            openid: OPENID,
+            needRegister: true,
+            message: '用户未注册，请使用邀请码进行注册'
+          }
+        }
+        
+        // 第一个用户（超级管理员）自动创建
         try {
           const createResult = await db.collection(COLLECTIONS.WX_USERS).add({
             data: userInfo
