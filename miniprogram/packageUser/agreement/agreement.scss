@@ -4,8 +4,14 @@
   background-color: #fff;
 }
 
+/* 导航栏占位空间 - 状态栏 + 导航栏高度 */
+.navbar-placeholder {
+  height: calc(env(safe-area-inset-top) + 88px);
+  width: 100%;
+}
+
 .agreement-content {
-  height: calc(100vh - 88px);
+  height: calc(100vh - env(safe-area-inset-top) - 88px);
   padding: 24rpx 32rpx;
   box-sizing: border-box;
   background-color: #fff;

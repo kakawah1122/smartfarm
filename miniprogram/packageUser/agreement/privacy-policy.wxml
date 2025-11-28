@@ -2,6 +2,9 @@
 <view class="agreement-page">
   <navigation-bar title="隐私政策" show-back="{{true}}" />
   
+  <!-- 占位空间，避免内容被导航栏遮挡 -->
+  <view class="navbar-placeholder"></view>
+  
   <scroll-view class="agreement-content" scroll-y>
     <view class="agreement-title">隐私政策</view>
     <view class="update-date">更新日期：2025年1月</view>
