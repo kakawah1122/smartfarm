@@ -1,10 +1,10 @@
 // 统一的数据库集合名称配置
 // 所有云函数必须引用此文件，禁止硬编码集合名称
 // 基于标准化命名规范：模块前缀_功能描述
-// 共33个标准化集合，涵盖9大业务模块
+// 共32个标准化集合，涵盖9大业务模块
 
 const COLLECTIONS = {
-  // ========== 标准化集合定义（33个） ==========
+  // ========== 标准化集合定义（32个） ==========
   
   // 用户管理模块 (User Management)
   WX_USERS: 'wx_users',
@@ -37,7 +37,6 @@ const COLLECTIONS = {
   // 任务管理模块 (Task Management)
   TASK_BATCH_SCHEDULES: 'task_batch_schedules',
   TASK_COMPLETIONS: 'task_completions',
-  TASK_RECORDS: 'task_records',
   TASK_TEMPLATES: 'task_templates',
 
   // 系统管理模块 (System Management)
@@ -98,7 +97,6 @@ const COLLECTION_MODULES = {
   TASK_MANAGEMENT: [
     COLLECTIONS.TASK_BATCH_SCHEDULES,
     COLLECTIONS.TASK_COMPLETIONS,
-    COLLECTIONS.TASK_RECORDS,
     COLLECTIONS.TASK_TEMPLATES
   ],
   

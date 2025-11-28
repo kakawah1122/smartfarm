@@ -773,20 +773,6 @@ async function clearCompletedTasks(event, wxContext) {
   }
 }
 
-// 创建任务记录
-async function createTaskRecord(record) {
-  try {
-    const result = await db.collection(COLLECTIONS.TASK_RECORDS).add({
-      data: record
-    })
-
-    return result
-  } catch (error) {
-    // 已移除调试日志
-    throw error
-  }
-}
-
 // 主函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
