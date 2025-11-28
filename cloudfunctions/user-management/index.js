@@ -222,6 +222,8 @@ exports.main = async (event, context) => {
         return await getUserStats(event, wxContext)
       case 'update_user_role':
         return await updateUserRole(event, wxContext)
+      case 'delete_user':
+        return await deleteUser(event, wxContext)
       case 'deactivate_user':
         return await deactivateUser(event, wxContext)
       
@@ -982,6 +984,51 @@ async function revokeInvite(event, wxContext) {
   } catch (error) {
     // 已移除调试日志
     throw error
+  }
+}
+
+// 删除用户
+async function deleteUser(event, wxContext) {
+  const { targetUserId } = event
+  const openid = wxContext.OPENID
+  
+  if (!await validateAdminPermission(openid)) {
+    throw new Error('无权限删除用户')
+  }
+  
+  if (!targetUserId) {
+    throw new Error('缺少用户ID')
+  }
+  
+  // 检查目标用户是否存在
+  const targetUser = await db.collection(COLLECTIONS.WX_USERS).doc(targetUserId).get()
+  if (!targetUser.data) {
+    throw new Error('用户不存在')
+  }
+  
+  // 不能删除自己
+  if (targetUser.data._openid === openid) {
+    throw new Error('不能删除自己的账户')
+  }
+  
+  // 不能删除超级管理员
+  if (targetUser.data.role === 'super_admin') {
+    throw new Error('不能删除超级管理员')
+  }
+  
+  // 删除用户记录
+  await db.collection(COLLECTIONS.WX_USERS).doc(targetUserId).remove()
+  
+  // 记录操作日志
+  await logOperation({
+    action: 'delete_user',
+    targetUserId,
+    description: `删除用户: ${targetUser.data.nickName || targetUser.data.nickname || '未知用户'}`
+  }, wxContext)
+  
+  return {
+    success: true,
+    message: '用户已删除'
   }
 }
 

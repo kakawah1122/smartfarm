@@ -125,7 +125,7 @@
   show-close="{{true}}"
   show-actions="{{true}}"
   confirm-text="保存"
-  cancel-text="取消"
+  show-cancel="{{false}}"
   bind:close="closeUserDetail"
   bind:confirm="confirmRoleUpdate"
   bind:visiblechange="onUserDetailPopupChange"
@@ -174,7 +174,6 @@
             >
               <view class="picker-value">
                 <text class="info-value picker-text">{{roleOptions[selectedRoleIndex[0] || 0].label}}</text>
-                <t-icon name="chevron-down" size="16" color="#c8c9cc" />
               </view>
             </picker>
           </view>
@@ -195,15 +194,15 @@
       </view>
     </view>
 
-    <!-- 操作按钮区域 -->
+    <!-- 删除用户按钮 -->
     <view class="action-buttons-section">
       <t-button
-        theme="{{selectedUser.status === 'active' ? 'danger' : 'success'}}"
+        theme="danger"
         size="large"
-        bind:tap="toggleUserStatus"
+        bind:tap="deleteUser"
         class="action-button"
       >
-        {{selectedUser.status === 'active' ? '禁用用户' : '启用用户'}}
+        删除用户
       </t-button>
     </view>
   </view>

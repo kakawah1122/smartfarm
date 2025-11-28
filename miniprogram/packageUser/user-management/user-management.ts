@@ -255,6 +255,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 确认角色更新
   async confirmRoleUpdate() {
     if (!this.data.roleChanged) {
+      this.setData({ showUserDetail: false })
       return
     }
 
@@ -268,7 +269,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         name: 'user-management',
         data: {
           action: 'update_user_role',
-          userId: this.data.selectedUser._id,
+          targetUserId: this.data.selectedUser._id,
           newRole: newRole,
           reason: `管理员修改角色为${newRoleName}`
         }
@@ -307,53 +308,51 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     }
   },
 
-  // 切换用户状态
-  async toggleUserStatus() {
+  // 删除用户
+  async deleteUser() {
     const user = this.data.selectedUser
-    const isActive = user.isActive !== false
-    const actionText = isActive ? '禁用' : '启用'
 
     wx.showModal({
-      title: `${actionText}账户`,
-      content: `确定要${actionText}用户"${user.nickName || user.nickname}"的账户吗？`,
+      title: '删除用户',
+      content: `确定要删除用户“${user.nickName || user.nickname}”吗？此操作不可撤销。`,
+      confirmColor: '#d54941',
       success: async (res) => {
         if (res.confirm) {
           try {
-            wx.showLoading({ title: `${actionText}中...` })
+            wx.showLoading({ title: '删除中...' })
 
             const result = await wx.cloud.callFunction({
               name: 'user-management',
               data: {
-                action: 'toggle_user_status',
-                userId: user._id,
-                isActive: !isActive,
-                reason: `管理员${actionText}账户`
+                action: 'delete_user',
+                targetUserId: user._id
               }
             })
 
             if (result.result && result.result.success) {
               wx.showToast({
-                title: `${actionText}成功`,
+                title: '删除成功',
                 icon: 'success'
               })
               
-              // 更新本地数据
-              const updatedUser = {
-                ...this.data.selectedUser,
-                isActive: !isActive
-              }
-              
+              // 关闭弹窗
               this.setData({
-                selectedUser: updatedUser
+                showUserDetail: false,
+                selectedUser: null
               })
               
               // 刷新列表
               this.loadUserList()
               this.loadUserStats()
+            } else {
+              wx.showToast({
+                title: result.result?.message || '删除失败',
+                icon: 'none'
+              })
             }
           } catch (error) {
             wx.showToast({
-              title: `${actionText}失败`,
+              title: '删除失败',
               icon: 'none'
             })
           } finally {
