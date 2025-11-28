@@ -20,8 +20,6 @@ const { COLLECTIONS } = require('./collections.js')
  * 创建异常记录（兼容原有数据结构）
  */
 async function createAbnormalRecord(event, wxContext) {
-  console.log('====== createAbnormalRecord 被调用 ======')
-  console.log('事件参数:', JSON.stringify(event).substring(0, 500))
   
   try {
     const {
@@ -42,9 +40,6 @@ async function createAbnormalRecord(event, wxContext) {
       deathCount
     } = event
     const openid = wxContext.OPENID
-    console.log('openid:', openid)
-    console.log('batchId:', batchId)
-    console.log('diagnosisId:', diagnosisId)
     
     // 构建记录数据（兼容原有结构）
     const recordData = {
@@ -76,15 +71,11 @@ async function createAbnormalRecord(event, wxContext) {
     }
     
     // 使用 HEALTH_RECORDS 集合（与原系统保持一致）
-    console.log('准备保存到集合:', COLLECTIONS.HEALTH_RECORDS)
-    console.log('recordData:', JSON.stringify(recordData).substring(0, 500))
     
     const result = await db.collection(COLLECTIONS.HEALTH_RECORDS)
       .add({
         data: recordData
       })
-    
-    console.log('保存成功，recordId:', result._id)
     
     return {
       success: true,
@@ -95,7 +86,6 @@ async function createAbnormalRecord(event, wxContext) {
     }
   } catch (error) {
     console.error('[createAbnormalRecord] 错误:', error)
-    console.error('错误详情:', error.message, error.stack)
     return {
       success: false,
       error: error.message || '创建异常记录失败'
@@ -107,7 +97,6 @@ async function createAbnormalRecord(event, wxContext) {
  * 获取异常记录列表（兼容原有数据结构）
  */
 async function listAbnormalRecords(event, wxContext) {
-  console.log('====== listAbnormalRecords 被调用 ======')
   
   try {
     const {
@@ -119,7 +108,6 @@ async function listAbnormalRecords(event, wxContext) {
       endDate
     } = event
     const openid = wxContext.OPENID
-    console.log('openid:', openid)
     
     // 构建查询条件（兼容原有结构）
     // ✅ 只显示未流转的异常记录，已创建治疗记录的不再显示
@@ -339,8 +327,6 @@ async function getAbnormalStats(event, wxContext) {
  * 纠正异常诊断
  */
 async function correctAbnormalDiagnosis(event, wxContext) {
-  console.log('====== correctAbnormalDiagnosis 被调用 ======')
-  console.log('事件参数:', JSON.stringify(event))
   
   try {
     // ✅ 兼容多种参数名称
@@ -371,8 +357,6 @@ async function correctAbnormalDiagnosis(event, wxContext) {
     
     const record = recordResult.data
     const diagnosisId = record?.diagnosisId || record?.relatedDiagnosisId
-    
-    console.log('关联的diagnosisId:', diagnosisId)
     
     // 更新诊断信息
     const updateData = {
@@ -409,7 +393,6 @@ async function correctAbnormalDiagnosis(event, wxContext) {
               updatedAt: db.serverDate()
             }
           })
-        console.log('AI诊断历史同步成功:', diagnosisId)
       } catch (syncError) {
         console.error('同步AI诊断历史失败:', syncError.message)
         // 不影响主流程

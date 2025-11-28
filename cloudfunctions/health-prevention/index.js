@@ -219,11 +219,6 @@ async function getPreventionDashboard(event, wxContext) {
       })
     }
     
-    console.log('[预防看板] 成本统计:', {
-      totalRecords: allRecords.data?.length || 0,
-      preventionCost
-    })
-    
     return {
       success: true,
       data: {
