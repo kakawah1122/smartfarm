@@ -320,6 +320,18 @@
             bind:focus="onInputFocus"
           />
         </view>
+        
+        <view class="form-group">
+          <text class="form-label">养殖场名称</text>
+          <input 
+            class="form-input" 
+            placeholder="请输入养殖场名称" 
+            value="{{inviteFarmName}}" 
+            bind:input="onInviteFarmNameInput" 
+            maxlength="30"
+            bind:focus="onInputFocus"
+          />
+        </view>
       </view>
       
       <view class="invite-dialog-footer">

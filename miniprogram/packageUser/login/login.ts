@@ -47,6 +47,7 @@ interface LoginPageData {
   inviteCode: string;
   inviteNickname: string;
   invitePhone: string;
+  inviteFarmName: string;
   inviteCodeFocus: boolean;
 }
 
@@ -86,6 +87,7 @@ Page({
     inviteCode: '',
     inviteNickname: '',
     invitePhone: '',
+    inviteFarmName: '',
     inviteCodeFocus: false,
   },
 
@@ -750,9 +752,16 @@ Page({
     })
   },
 
+  // 养殖场名称输入
+  onInviteFarmNameInput(e: WechatMiniprogram.CustomEvent) {
+    this.setData({
+      inviteFarmName: e.detail.value
+    })
+  },
+
   // 邀请码注册
   async onInviteRegister() {
-    const { inviteCode, inviteNickname, invitePhone } = this.data
+    const { inviteCode, inviteNickname, invitePhone, inviteFarmName } = this.data
 
     // 验证输入
     if (!inviteCode.trim()) {
@@ -789,6 +798,14 @@ Page({
       return
     }
 
+    if (!inviteFarmName.trim()) {
+      wx.showToast({
+        title: '请输入养殖场名称',
+        icon: 'error'
+      })
+      return
+    }
+
     try {
       wx.showLoading({
         title: '注册中...',
@@ -812,7 +829,7 @@ Page({
           avatarUrl: '', // 后续可以在个人中心设置
           phone: invitePhone.trim(),
           gender: 0, // 默认值
-          farmName: '', // 邀请码注册时养殖场名称可能由邀请信息确定
+          farmName: inviteFarmName.trim(), // 用户输入的养殖场名称
           inviteCode: inviteCode.trim()
         }
       })
