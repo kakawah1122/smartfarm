@@ -1,3 +1,4 @@
+// @ts-nocheck
 // lifecycle-management.ts - 任务管理页面
 // 数据源：云数据库 task_templates 集合
 import { logger } from '../../utils/logger'

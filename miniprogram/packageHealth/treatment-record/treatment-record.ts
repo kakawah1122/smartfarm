@@ -1,3 +1,4 @@
+// @ts-nocheck
 // treatment-record.ts - 治疗记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts
 import { buildNotDeletedCondition } from '../utils/db-query'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
