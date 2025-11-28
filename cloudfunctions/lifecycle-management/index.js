@@ -241,7 +241,6 @@ async function updateTask(event, wxContext) {
 
     // 如果用户没有默认模板，先创建一个
     if (!templateResult.data || templateResult.data.length === 0) {
-      console.log('用户没有默认模板，先创建...')
       const standardTasks = convertBreedingScheduleToTasks()
       
       await db.collection(COLLECTIONS.TASK_TEMPLATES).add({
