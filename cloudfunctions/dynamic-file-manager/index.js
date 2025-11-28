@@ -23,8 +23,7 @@ const DB_CONFIG = {
   // 集合名称规范 - 使用统一的COLLECTIONS配置
   collections: {
     dynamicFiles: COLLECTIONS.FILE_DYNAMIC_RECORDS,
-    storageStats: COLLECTIONS.SYS_STORAGE_STATISTICS,
-    cleanupLogs: COLLECTIONS.SYS_CLEANUP_LOGS
+    storageStats: COLLECTIONS.SYS_STORAGE_STATISTICS
   },
   
   // 查询优化配置
@@ -551,19 +550,6 @@ async function cleanupExpiredFiles(event, wxContext) {
           });
         }
       }
-      
-      // 记录清理日志
-      await db.collection(DB_CONFIG.collections.cleanupLogs).add({
-        data: {
-          cleanupTime: new Date(),
-          category: category || 'all',
-          totalFound: expiredFiles.data.length,
-          totalCleaned: cleanedCount,
-          totalSizeFreed: totalSize,
-          results: results.slice(0, 50), // 只记录前50条详情
-          executedBy: wxContext.OPENID
-        }
-      });
     }
     
     return {

@@ -1,16 +1,15 @@
 // 统一的数据库集合名称配置
 // 所有云函数必须引用此文件，禁止硬编码集合名称
 // 基于标准化命名规范：模块前缀_功能描述
-// 共40个标准化集合，涵盖10大业务模块
+// 共33个标准化集合，涵盖9大业务模块
 
 const COLLECTIONS = {
-  // ========== 标准化集合定义（40个） ==========
+  // ========== 标准化集合定义（33个） ==========
   
   // 用户管理模块 (User Management)
   WX_USERS: 'wx_users',
   WX_USER_INVITES: 'wx_user_invites',
   USER_NOTIFICATIONS: 'user_notifications',
-  USER_NOTIFICATION_SETTINGS: 'user_notification_settings',
   USER_ROLES: 'user_roles',  // 用户角色定义
 
   // 生产管理模块 (Production Management)
@@ -46,12 +45,7 @@ const COLLECTIONS = {
   SYS_AI_CACHE: 'sys_ai_cache',
   SYS_AI_USAGE: 'sys_ai_usage',
   SYS_APPROVAL_LOGS: 'sys_approval_logs',
-  SYS_CLEANUP_LOGS: 'sys_cleanup_logs',
-  SYS_CONFIGURATIONS: 'sys_configurations',
   SYS_OVERVIEW_STATS: 'sys_overview_stats',
-  SYS_NOTIFICATIONS: 'sys_notifications',
-  SYS_PERMISSIONS: 'sys_permissions',
-  // SYS_ROLES: 'sys_roles',  // 已废弃，统一使用 USER_ROLES
   SYS_STORAGE_STATISTICS: 'sys_storage_statistics',
   
   // 知识库模块 (Knowledge Management)
@@ -62,7 +56,6 @@ const COLLECTIONS = {
 
   // 文件管理模块 (File Management)
   FILE_DYNAMIC_RECORDS: 'file_dynamic_records',
-  FILE_STATIC_RECORDS: 'file_static_records',
 
   // 价格管理模块 (Price Management)
   GOOSE_PRICES: 'goose_prices'  // 鹅价格记录
@@ -74,7 +67,6 @@ const COLLECTION_MODULES = {
     COLLECTIONS.WX_USERS,
     COLLECTIONS.WX_USER_INVITES,
     COLLECTIONS.USER_NOTIFICATIONS,
-    COLLECTIONS.USER_NOTIFICATION_SETTINGS,
     COLLECTIONS.USER_ROLES
   ],
   
@@ -115,12 +107,7 @@ const COLLECTION_MODULES = {
     COLLECTIONS.SYS_AI_CACHE,
     COLLECTIONS.SYS_AI_USAGE,
     COLLECTIONS.SYS_APPROVAL_LOGS,
-    COLLECTIONS.SYS_CLEANUP_LOGS,
-    COLLECTIONS.SYS_CONFIGURATIONS,
     COLLECTIONS.SYS_OVERVIEW_STATS,
-    COLLECTIONS.SYS_NOTIFICATIONS,
-    COLLECTIONS.SYS_PERMISSIONS,
-    // COLLECTIONS.SYS_ROLES,  // 已废弃，统一使用 USER_ROLES
     COLLECTIONS.SYS_STORAGE_STATISTICS
   ],
   
@@ -133,8 +120,7 @@ const COLLECTION_MODULES = {
   ],
   
   FILE_MANAGEMENT: [
-    COLLECTIONS.FILE_DYNAMIC_RECORDS,
-    COLLECTIONS.FILE_STATIC_RECORDS
+    COLLECTIONS.FILE_DYNAMIC_RECORDS
   ],
   
   PRICE_MANAGEMENT: [
