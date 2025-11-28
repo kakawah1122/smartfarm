@@ -794,24 +794,30 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
-      case 'completeVaccineTask':
+      // ========== 下划线命名（新标准） ==========
+      case 'complete_vaccine_task':
+      case 'completeVaccineTask':  // 兼容旧命名
         return await completeVaccineTask(event, wxContext)
       
-      case 'getTodos':
+      case 'get_todos':
+      case 'getTodos':  // 兼容旧命名
         return await getTodos(event, wxContext)
       
-      case 'getTodayTasks':
+      case 'get_today_tasks':
+      case 'getTodayTasks':  // 兼容旧命名
         return await getTodos(event, wxContext)
       
-      case 'getWeeklyTodos':
+      case 'get_weekly_todos':
+      case 'getWeeklyTodos':  // 兼容旧命名
         return await getWeeklyTodos(event, wxContext)
       
-      case 'clearCompletedTasks':
+      case 'clear_completed_tasks':
+      case 'clearCompletedTasks':  // 兼容旧命名
         return await clearCompletedTasks(event, wxContext)
       
-      case 'completeTask':
+      case 'complete_task':
+      case 'completeTask':  // 兼容旧命名
         const { taskId, batchId, notes } = event
-        // 已移除调试日志
         if (!taskId) {
           throw new Error('taskId 参数缺失')
         }
@@ -820,15 +826,14 @@ exports.main = async (event, context) => {
         }
         
         const result = await completeTask(taskId, wxContext.OPENID, batchId, notes || '')
-        // 已移除调试日志
-        // 如果任务已经完成，直接返回结果
         if (result.already_completed) {
           return result
         }
         
         return { success: true, message: '任务完成成功', data: result }
       
-      case 'fixBatchTasks':
+      case 'fix_batch_tasks':
+      case 'fixBatchTasks':  // 兼容旧命名
         const { batchId: fixBatchId } = event
         const taskCount = await createMissingTasks(fixBatchId, wxContext.OPENID)
         return { 
@@ -837,10 +842,24 @@ exports.main = async (event, context) => {
           data: { taskCount }
         }
       
-      case 'cleanOrphanTasks':
+      case 'clean_orphan_tasks':
+      case 'cleanOrphanTasks':  // 兼容旧命名
         return await cleanOrphanTasks(wxContext.OPENID)
       
-      case 'cleanAllOrphanTasks':
+      case 'clean_all_orphan_tasks':
+      case 'cleanAllOrphanTasks':  // 兼容旧命名
+        return await cleanAllOrphanTasksForce()
+      
+      case 'get_upcoming_todos':
+      case 'getUpcomingTodos':  // 兼容旧命名
+        return await getUpcomingTodos(event, wxContext)
+      
+      case 'get_completed_todos':
+      case 'getCompletedTodos':  // 兼容旧命名
+        return await getCompletedTodos(event, wxContext)
+      
+      case 'clean_all_orphan_tasks_force':
+      case 'cleanAllOrphanTasksForce':  // 兼容旧命名
         return await cleanAllOrphanTasksForce()
       
       default:
@@ -1112,58 +1131,4 @@ async function getCompletedTodos(event, wxContext) {
   }
 }
 
-/**
- * 云函数主入口
- */
-exports.main = async (event, context) => {
-  const wxContext = cloud.getWXContext()
-  const { action } = event
-
-  try {
-    switch (action) {
-      case 'getTodos':
-        return await getTodos(event, wxContext)
-      
-      case 'getUpcomingTodos':
-        return await getUpcomingTodos(event, wxContext)
-      
-      case 'getCompletedTodos':
-        return await getCompletedTodos(event, wxContext)
-      
-      case 'completeTask':
-        const { taskId, batchId, notes } = event
-        if (!taskId) {
-          throw new Error('taskId 参数缺失')
-        }
-        if (!batchId) {
-          throw new Error('batchId 参数缺失')
-        }
-        
-        const result = await completeTask(taskId, wxContext.OPENID, batchId, notes || '')
-        if (result.already_completed) {
-          return result
-        }
-        
-        return { 
-          success: true, 
-          message: '任务完成成功', 
-          data: result 
-        }
-      
-      case 'cleanOrphanTasks':
-        return await cleanOrphanTasks(wxContext.OPENID)
-      
-      case 'cleanAllOrphanTasksForce':
-        return await cleanAllOrphanTasksForce()
-      
-      default:
-        throw new Error(`未知操作: ${action}`)
-    }
-  } catch (error) {
-    console.error(`breeding-todo云函数错误 [action: ${action}]:`, error)
-    return {
-      success: false,
-      error: error.message
-    }
-  }
-}
+// 注意：主入口函数在上方，此处仅保留辅助函数

@@ -1558,7 +1558,7 @@ Page<PageData, any>({
     safeCloudCall({
       name: 'breeding-todo',
       data: {
-        action: 'cleanOrphanTasks'
+        action: 'clean_orphan_tasks'
       }
     }).then((result: unknown) => {
       const response = result as BaseResponse
@@ -2848,7 +2848,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       const result = await safeCloudCall({
         name: 'breeding-todo',
         data: {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: taskId,
           batchId: batchId,
           notes: ''
@@ -3542,7 +3542,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       const result = await safeCloudCall({
         name: 'breeding-todo',
         data: {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: taskId,
           batchId: batchId,
           completedAt: new Date().toISOString(),

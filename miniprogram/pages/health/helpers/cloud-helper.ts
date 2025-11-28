@@ -123,7 +123,7 @@ export class HealthCloudHelper {
     const result = await CloudApi.callFunction(
       'breeding-todo',
       {
-        action: 'getTodos',
+        action: 'get_todos',
         batchId: batchId,
         dayAge: dayAge
       },
@@ -140,7 +140,7 @@ export class HealthCloudHelper {
     const result = await CloudApi.callFunction(
       'breeding-todo',
       {
-        action: 'getWeeklyTodos',
+        action: 'get_weekly_todos',
         batchId: batchId,
         startDayAge: startDayAge,
         endDayAge: endDayAge

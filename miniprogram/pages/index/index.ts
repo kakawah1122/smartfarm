@@ -2380,7 +2380,7 @@ Page({
       const result = await CloudApi.callFunction<CompleteTaskResponse>(
         'breeding-todo',
         {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: taskId,
           batchId: batchId,
           completedAt: new Date().toISOString(),
@@ -2548,7 +2548,7 @@ Page({
       const result = await CloudApi.callFunction<CompleteTaskResponse>(
         'breeding-todo', 
         {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: task.id || task.taskId || task._id,
           batchId: task.batchId || task.batchNumber || '',
           notes: '营养品领用完成'

@@ -116,7 +116,7 @@ class CloudApi {
     return this.callFunction(
       'breeding-todo',
       {
-        action: 'completeVaccineTask',
+        action: 'complete_vaccine_task',
         ...data
       },
       {
@@ -136,7 +136,7 @@ class CloudApi {
     return this.callFunction(
       'breeding-todo',
       {
-        action: 'getTodos',
+        action: 'get_todos',
         batchId,
         dayAge
       },
@@ -154,7 +154,7 @@ class CloudApi {
     return this.callFunction(
       'breeding-todo',
       {
-        action: 'getWeeklyTodos',
+        action: 'get_weekly_todos',
         batchId,
         currentDayAge
       },
@@ -173,7 +173,7 @@ class CloudApi {
     return this.callFunction(
       'breeding-todo',
       {
-        action: 'completeTask',
+        action: 'complete_task',
         taskId,
         batchId,
         notes
@@ -195,7 +195,7 @@ class CloudApi {
     return this.callFunction(
       'breeding-todo',
       {
-        action: 'fixBatchTasks',
+        action: 'fix_batch_tasks',
         batchId
       },
       {

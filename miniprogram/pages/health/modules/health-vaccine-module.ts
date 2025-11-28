@@ -337,7 +337,7 @@ export class VaccineModuleManager {
       await CloudApi.callFunction(
         'breeding-todo',
         {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: taskId,
           batchId: this.pageInstance.data.currentBatchId
         }

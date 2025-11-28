@@ -190,7 +190,7 @@ export class PreventionModuleManager {
           const result = await safeCloudCall({
             name: 'breeding-todo',
             data: {
-              action: 'getTodos',
+              action: 'get_todos',
               batchId: batch._id || this.pageInstance.data.currentBatchId,
               dayAge: dayAge
             }
@@ -282,7 +282,7 @@ export class PreventionModuleManager {
           const result = await safeCloudCall({
             name: 'breeding-todo',
             data: {
-              action: 'getUpcomingTodos',
+              action: 'get_upcoming_todos',
               batchId: batch._id,
               startDayAge: startDayAge,
               endDayAge: endDayAge
@@ -358,7 +358,7 @@ export class PreventionModuleManager {
       const result = await CloudApi.callFunction(
         'breeding-todo',
         {
-          action: 'getCompletedTodos',
+          action: 'get_completed_todos',
           batchId: this.pageInstance.data.currentBatchId,
           limit: 50
         }
@@ -464,7 +464,7 @@ export class PreventionModuleManager {
       const result = await CloudApi.callFunction(
         'breeding-todo',
         {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: task.taskId || task.id,
           batchId: task.batchId || this.pageInstance.data.currentBatchId
         }

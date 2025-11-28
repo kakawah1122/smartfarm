@@ -368,3 +368,50 @@ export const {
  * 默认导出
  */
 export default HealthCloud
+
+/**
+ * 养殖任务云函数封装
+ * 统一使用下划线命名（符合项目规则）
+ */
+export const BreedingCloud = {
+  /**
+   * 待办任务模块
+   */
+  todo: {
+    /** 获取今日待办任务 */
+    getTodos: (data: any) => callCloudFunction('breeding-todo', 'get_todos', data),
+    
+    /** 获取今日任务（别名） */
+    getTodayTasks: (data: any) => callCloudFunction('breeding-todo', 'get_todos', data),
+    
+    /** 获取一周任务 */
+    getWeeklyTodos: (data: any) => callCloudFunction('breeding-todo', 'get_weekly_todos', data),
+    
+    /** 获取即将到来的任务 */
+    getUpcomingTodos: (data: any) => callCloudFunction('breeding-todo', 'get_upcoming_todos', data),
+    
+    /** 获取已完成任务 */
+    getCompletedTodos: (data: any) => callCloudFunction('breeding-todo', 'get_completed_todos', data),
+    
+    /** 完成任务 */
+    completeTask: (data: any) => callCloudFunction('breeding-todo', 'complete_task', data),
+    
+    /** 完成疫苗任务 */
+    completeVaccineTask: (data: any) => callCloudFunction('breeding-todo', 'complete_vaccine_task', data),
+    
+    /** 清除已完成任务 */
+    clearCompletedTasks: (data: any) => callCloudFunction('breeding-todo', 'clear_completed_tasks', data),
+    
+    /** 修复批次任务 */
+    fixBatchTasks: (data: any) => callCloudFunction('breeding-todo', 'fix_batch_tasks', data),
+    
+    /** 清理孤儿任务 */
+    cleanOrphanTasks: (data: any) => callCloudFunction('breeding-todo', 'clean_orphan_tasks', data),
+    
+    /** 强制清理所有孤儿任务 */
+    cleanAllOrphanTasks: (data: any) => callCloudFunction('breeding-todo', 'clean_all_orphan_tasks', data),
+    
+    /** 强制清理所有孤儿任务（完整版） */
+    cleanAllOrphanTasksForce: (data: any) => callCloudFunction('breeding-todo', 'clean_all_orphan_tasks_force', data),
+  }
+}

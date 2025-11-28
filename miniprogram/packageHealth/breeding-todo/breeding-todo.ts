@@ -1487,7 +1487,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'breeding-todo',
         data: {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: taskId,
           batchId: batchId,
           dayAge: selectedTask.dayAge,
@@ -1650,7 +1650,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'breeding-todo',
         data: {
-          action: 'getTodos',
+          action: 'get_todos',
           batchId: batchId,
           dayAge: this.data.selectedTask?.dayAge || 1
         }
@@ -2061,7 +2061,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'breeding-todo',
         data: {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: taskId,
           batchId: batchId,
           completedAt: new Date().toISOString(),
@@ -2399,7 +2399,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'breeding-todo',
         data: {
-          action: 'completeTask',
+          action: 'complete_task',
           taskId: taskId,
           batchId: batchId,
           completedAt: new Date().toISOString(),
