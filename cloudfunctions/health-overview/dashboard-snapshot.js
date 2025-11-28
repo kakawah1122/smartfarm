@@ -170,13 +170,18 @@ async function getDashboardSnapshotForBatches(batchIds, includeDiagnosis, diagno
 
   // ✅ 修复：只统计死亡记录中的死亡数（避免与治疗记录重复）
   // 死亡数来源：health_death_records（包括标准死亡记录和死因诊断归档）
+  // ✅ 修复：同时使用 batchId 和 batchNumber 匹配（死亡记录的 batchId 可能存储的是批次号）
   if (batchIds.length > 0) {
     try {
+      // 获取批次号列表
+      const batchNumbers = batches.map(b => b.batchNumber).filter(Boolean)
+      
       const $ = db.command.aggregate
       const deathStats = await db.collection(COLLECTIONS.HEALTH_DEATH_RECORDS)
         .aggregate()
         .match({
-          batchId: _.in(batchIds),
+          // 同时匹配 _id 和 batchNumber
+          batchId: _.in([...batchIds, ...batchNumbers]),
           isDeleted: _.neq(true)
         })
         .group({

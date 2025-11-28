@@ -341,14 +341,52 @@ async function getHealthStatisticsOptimized(event, wxContext) {
           as: 'treatmentStats'
         }
       },
-      // 第四步：投影最终结果
+      // 第四步：关联死亡记录表（获取真实的死亡数）
+      // ✅ 修复：同时支持通过 _id 或 batchNumber 匹配（死亡记录的 batchId 可能存储的是批次号）
+      {
+        $lookup: {
+          from: 'health_death_records',
+          let: { batch_id: '$_id', batch_number: '$batchNumber' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $or: [
+                        { $eq: ['$batchId', '$$batch_id'] },
+                        { $eq: ['$batchId', '$$batch_number'] }
+                      ]
+                    },
+                    { $ne: ['$isDeleted', true] }
+                  ]
+                }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                totalDeadCount: { $sum: '$deathCount' }
+              }
+            }
+          ],
+          as: 'deathStats'
+        }
+      },
+      // 第五步：投影最终结果
       {
         $project: {
           batchNumber: 1,
           entryDate: 1,
           quantity: 1,
           currentCount: 1,
-          deadCount: 1,
+          // ✅ 优先使用死亡记录表的聚合数据，否则使用批次记录的 deadCount
+          deadCount: {
+            $ifNull: [
+              { $arrayElemAt: ['$deathStats.totalDeadCount', 0] },
+              '$deadCount'
+            ]
+          },
           abnormalCount: {
             $ifNull: [
               { $arrayElemAt: ['$abnormalStats.abnormalCount', 0] },
