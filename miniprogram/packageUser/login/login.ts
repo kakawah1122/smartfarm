@@ -49,6 +49,8 @@ interface LoginPageData {
   invitePhone: string;
   inviteFarmName: string;
   inviteCodeFocus: boolean;
+  // 协议同意
+  agreedToTerms: boolean;
 }
 
 Page({
@@ -89,6 +91,8 @@ Page({
     invitePhone: '',
     inviteFarmName: '',
     inviteCodeFocus: false,
+    // 协议同意（默认未勾选）
+    agreedToTerms: false,
   },
 
   onLoad() {
@@ -200,9 +204,46 @@ Page({
     }
   },
 
+  // ✅ 切换协议勾选状态
+  toggleAgreement() {
+    this.setData({
+      agreedToTerms: !this.data.agreedToTerms
+    })
+  },
+
+  // ✅ 查看用户服务协议
+  viewUserAgreement() {
+    wx.navigateTo({
+      url: '/packageUser/agreement/user-agreement'
+    })
+  },
+
+  // ✅ 查看隐私政策
+  viewPrivacyPolicy() {
+    wx.navigateTo({
+      url: '/packageUser/agreement/privacy-policy'
+    })
+  },
+
+  // ✅ 检查是否同意协议
+  checkAgreement(): boolean {
+    if (!this.data.agreedToTerms) {
+      wx.showToast({
+        title: '请先阅读并同意协议',
+        icon: 'none',
+        duration: 2000
+      })
+      return false
+    }
+    return true
+  },
+
   // 微信登录
   async onWeChatLogin() {
     if (this.data.isLoading) return
+
+    // ✅ 检查是否同意协议
+    if (!this.checkAgreement()) return
 
     this.setData({ isLoading: true })
 
@@ -706,11 +747,15 @@ Page({
 
   // 显示邀请码注册弹窗
   showInviteRegister() {
+    // ✅ 检查是否同意协议
+    if (!this.checkAgreement()) return
+
     this.setData({
       showInviteDialog: true,
       inviteCode: '',
       inviteNickname: '',
       invitePhone: '',
+      inviteFarmName: '',
       inviteCodeFocus: true
     })
   },

@@ -1,0 +1,95 @@
+<!-- 隐私政策 -->
+<view class="agreement-page">
+  <navigation-bar title="隐私政策" show-back="{{true}}" />
+  
+  <scroll-view class="agreement-content" scroll-y>
+    <view class="agreement-title">隐私政策</view>
+    <view class="update-date">更新日期：2025年1月</view>
+    
+    <view class="section">
+      <view class="section-title">一、信息收集</view>
+      <view class="section-content">
+        为了向您提供服务，我们可能会收集以下信息：
+        1. 个人身份信息：姓名、手机号码
+        2. 设备信息：设备型号、操作系统版本
+        3. 位置信息：用于天气查询等功能（需用户授权）
+        4. 业务数据：您在平台上录入的养殖相关数据
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">二、信息使用</view>
+      <view class="section-content">
+        我们收集的信息将用于：
+        1. 提供、维护和改进我们的服务
+        2. 向您发送服务通知和业务提醒
+        3. 进行数据分析以优化用户体验
+        4. 遵守法律法规的要求
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">三、信息存储</view>
+      <view class="section-content">
+        1. 您的数据存储在微信云开发平台
+        2. 我们采用业界标准的安全措施保护您的数据
+        3. 数据保留期限遵循法律法规要求
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">四、信息共享</view>
+      <view class="section-content">
+        我们不会将您的个人信息出售给第三方。以下情况除外：
+        1. 获得您的明确同意
+        2. 根据法律法规的要求
+        3. 为保护我们的合法权益
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">五、信息安全</view>
+      <view class="section-content">
+        我们采取以下措施保护您的信息安全：
+        1. 数据加密传输和存储
+        2. 访问权限控制
+        3. 安全审计和监控
+        4. 定期安全评估
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">六、用户权利</view>
+      <view class="section-content">
+        您享有以下权利：
+        1. 访问和获取您的个人信息
+        2. 更正或删除您的个人信息
+        3. 撤回您的授权同意
+        4. 注销您的账户
+        
+        如需行使上述权利，请通过平台内的设置功能或联系我们。
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">七、未成年人保护</view>
+      <view class="section-content">
+        本平台不向未满14周岁的未成年人提供服务。如果我们发现收集了未成年人的信息，将及时删除。
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">八、政策更新</view>
+      <view class="section-content">
+        我们可能会适时更新本隐私政策。更新后的政策将在平台上公布，建议您定期查阅。
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">九、联系我们</view>
+      <view class="section-content">
+        如您对本隐私政策有任何疑问或建议，请通过平台内的帮助与反馈功能联系我们。
+      </view>
+    </view>
+  </scroll-view>
+</view>

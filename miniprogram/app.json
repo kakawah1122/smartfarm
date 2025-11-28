@@ -47,6 +47,8 @@
       "name": "user",
       "pages": [
         "login/login",
+        "agreement/user-agreement",
+        "agreement/privacy-policy",
         "user-management/user-management",
         "employee-permission/employee-permission",
         "invite-management/invite-management",

@@ -98,11 +98,45 @@
   transform: scale(0.98) !important;
 }
 
-.agreement-tips {
-  text-align: center;
+/* 协议勾选区域 */
+.agreement-section {
+  padding: 20rpx 0;
+}
+
+.agreement-checkbox {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.checkbox-icon {
+  width: 36rpx;
+  height: 36rpx;
+  border: 2rpx solid #ddd;
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+  transition: all 0.2s ease;
+  
+  text {
+    font-size: 24rpx;
+    color: #fff;
+  }
+  
+  &.checked {
+    background-color: var(--td-brand-color, #0052d9);
+    border-color: var(--td-brand-color, #0052d9);
+  }
+}
+
+.agreement-text {
   font-size: 24rpx;
-  color: #999;
-  line-height: 1.5;
+  color: #666;
+  line-height: 1.6;
 }
 
 .agreement-link {

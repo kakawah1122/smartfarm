@@ -1,0 +1,79 @@
+<!-- 用户服务协议 -->
+<view class="agreement-page">
+  <navigation-bar title="用户服务协议" show-back="{{true}}" />
+  
+  <scroll-view class="agreement-content" scroll-y>
+    <view class="agreement-title">用户服务协议</view>
+    <view class="update-date">更新日期：2025年1月</view>
+    
+    <view class="section">
+      <view class="section-title">一、服务条款的确认和接纳</view>
+      <view class="section-content">
+        欢迎使用鹅数通智慧养殖管理平台（以下简称"本平台"）。在使用本平台服务之前，请您仔细阅读本协议的全部内容。如果您对本协议的任何条款表示异议，请勿注册或使用本平台服务。
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">二、服务内容</view>
+      <view class="section-content">
+        本平台为用户提供智慧养殖场管理服务，包括但不限于：
+        1. 生产管理：批次管理、入栏出栏记录、饲料管理等
+        2. 健康管理：疫苗接种、疾病诊断、死亡记录等
+        3. 财务管理：成本核算、收入统计、报表生成等
+        4. AI智能诊断：基于人工智能的疾病诊断辅助服务
+        5. 数据统计与分析服务
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">三、用户注册与账户</view>
+      <view class="section-content">
+        1. 用户需通过邀请码注册方可使用本平台服务
+        2. 用户应提供真实、准确的个人信息
+        3. 用户应妥善保管账户信息，因账户被盗用导致的损失由用户自行承担
+        4. 用户不得将账户转让或借用给他人
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">四、用户行为规范</view>
+      <view class="section-content">
+        用户在使用本平台服务时，应遵守以下规范：
+        1. 遵守国家法律法规
+        2. 不得利用本平台从事违法违规活动
+        3. 不得干扰本平台的正常运行
+        4. 尊重其他用户的合法权益
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">五、知识产权</view>
+      <view class="section-content">
+        本平台的所有内容，包括但不限于文字、图片、软件、音频、视频等，均受知识产权法律保护。未经授权，用户不得复制、修改、传播本平台的任何内容。
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">六、免责声明</view>
+      <view class="section-content">
+        1. AI诊断结果仅供参考，不能替代专业兽医的诊断和建议
+        2. 本平台不对因网络故障、系统维护等原因导致的服务中断承担责任
+        3. 用户自行承担因使用本平台服务产生的风险
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">七、协议修改</view>
+      <view class="section-content">
+        本平台保留随时修改本协议的权利。协议修改后，将在平台上公布，用户继续使用本平台服务即视为接受修改后的协议。
+      </view>
+    </view>
+    
+    <view class="section">
+      <view class="section-title">八、联系我们</view>
+      <view class="section-content">
+        如您对本协议有任何疑问，请通过平台内的帮助与反馈功能联系我们。
+      </view>
+    </view>
+  </scroll-view>
+</view>
