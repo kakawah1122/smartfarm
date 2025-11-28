@@ -432,19 +432,27 @@ $spacing-xl: 40rpx;
   flex-shrink: 0 !important;
 }
 
-/* 操作按钮区域 */
-.action-buttons-section {
-  padding: $spacing-m 0 !important;
+/* 底部操作按钮行 */
+.action-buttons-row {
   display: flex !important;
-  flex-direction: column !important;
-  gap: $spacing-s !important;
+  gap: 24rpx !important;
+  padding: $spacing-m 0 !important;
 }
 
-.action-button {
-  width: 100% !important;
+.action-btn {
+  flex: 1 !important;
   height: 88rpx !important;
   border-radius: 12rpx !important;
-  font-size: 32rpx !important;
+  font-size: 30rpx !important;
+}
+
+.delete-btn {
+  flex: 0 0 auto !important;
+  width: 200rpx !important;
+}
+
+.save-btn {
+  flex: 1 !important;
 }
 
 

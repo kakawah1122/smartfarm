@@ -123,11 +123,8 @@
   visible="{{showUserDetail}}"
   title="用户详情"
   show-close="{{true}}"
-  show-actions="{{true}}"
-  confirm-text="保存"
-  show-cancel="{{false}}"
+  show-actions="{{false}}"
   bind:close="closeUserDetail"
-  bind:confirm="confirmRoleUpdate"
   bind:visiblechange="onUserDetailPopupChange"
 >
   <view wx:if="{{selectedUser}}" class="user-detail-content">
@@ -194,15 +191,24 @@
       </view>
     </view>
 
-    <!-- 删除用户按钮 -->
-    <view class="action-buttons-section">
+    <!-- 底部操作按钮 -->
+    <view class="action-buttons-row">
       <t-button
         theme="danger"
+        variant="outline"
         size="large"
         bind:tap="deleteUser"
-        class="action-button"
+        class="action-btn delete-btn"
       >
         删除用户
+      </t-button>
+      <t-button
+        theme="primary"
+        size="large"
+        bind:tap="confirmRoleUpdate"
+        class="action-btn save-btn"
+      >
+        保存
       </t-button>
     </view>
   </view>
