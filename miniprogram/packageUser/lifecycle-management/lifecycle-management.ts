@@ -1,6 +1,44 @@
-// @ts-nocheck
 // lifecycle-management.ts - 任务管理页面
 // 数据源：云数据库 task_templates 集合
+import { logger } from '../../utils/logger'
+
+// 自定义事件类型
+type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
+
+// 任务接口
+interface Task {
+  _id?: string;
+  title?: string;
+  dayAge?: number;
+  isSequenceTask?: boolean;
+  [key: string]: unknown;
+}
+
+// 任务分组接口
+interface TaskGroup {
+  dayAge: number;
+  tasks: Task[];
+  [key: string]: unknown;
+}
+
+// 模板接口
+interface Template {
+  _id?: string;
+  templateName?: string;
+  name?: string;
+  description?: string;
+  taskCount?: number;
+  isDefault?: boolean;
+  createTime?: string;
+  updateTime?: string;
+  tasks?: Task[];
+}
+
+// 应用全局数据接口
+interface AppGlobalData {
+  statusBarHeight?: number;
+  [key: string]: unknown;
+}
 
 // 定义全局变量存储定时器
 let scrollTimer: number | null = null
@@ -8,11 +46,11 @@ let scrollTimer: number | null = null
 Component({
   data: {
     // 日龄任务列表
-    taskGroups: [] as unknown[],
-    groupedTasks: [] as unknown[], // WXML 使用的任务分组数据
+    taskGroups: [] as TaskGroup[],
+    groupedTasks: [] as TaskGroup[], // WXML 使用的任务分组数据
     
     // 展开的日龄组
-    expandedGroups: {} as unknown,
+    expandedGroups: {} as Record<string, boolean>,
     
     // 筛选条件
     filterCategory: '全部',
@@ -128,7 +166,7 @@ Component({
         wx.hideLoading()
       } catch (error) {
         wx.hideLoading()
-        console.error('加载任务计划失败:', error)
+        logger.error('加载任务计划失败:', error)
         wx.showToast({
           title: '加载失败',
           icon: 'none'
@@ -159,7 +197,7 @@ Component({
           })
         }
       } catch (error) {
-        console.error('检查/导入模板失败:', error)
+        logger.error('检查/导入模板失败:', error)
       }
     },
 
@@ -214,7 +252,7 @@ Component({
         })
         
       } catch (error) {
-        console.error('加载任务模板失败:', error)
+        logger.error('加载任务模板失败:', error)
         wx.showToast({
           title: '加载失败',
           icon: 'none'
@@ -411,7 +449,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('保存任务失败:', error)
+        logger.error('保存任务失败:', error)
         wx.showToast({ title: '保存失败', icon: 'none' })
       }
     },
@@ -543,7 +581,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('导入文件失败:', error)
+        logger.error('导入文件失败:', error)
         wx.showToast({
           title: '导入失败',
           icon: 'none'
@@ -672,7 +710,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('保存模板失败:', error)
+        logger.error('保存模板失败:', error)
         wx.showToast({
           title: '保存失败',
           icon: 'none'
@@ -722,7 +760,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('导入模板失败:', error)
+        logger.error('导入模板失败:', error)
         wx.showToast({
           title: '导入失败',
           icon: 'none'
@@ -750,7 +788,7 @@ Component({
         this.setData({ showSkeleton: false })
       } catch (error: unknown) {
         this.setData({ showSkeleton: false })
-        console.error('加载模板失败:', error)
+        logger.error('加载模板失败:', error)
         
         // 如果是集合不存在的错误，尝试初始化
         if (error.message && error.message.includes('collection not exists')) {
@@ -784,7 +822,7 @@ Component({
             duration: 1500
           })
         } else {
-          console.error('集合初始化失败:', result.result?.error)
+          logger.error('集合初始化失败:', result.result?.error)
           wx.showToast({
             title: '初始化失败',
             icon: 'none'
@@ -792,7 +830,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('调用初始化云函数失败:', error)
+        logger.error('调用初始化云函数失败:', error)
         
         // 如果云函数不存在，提示用户手动创建
         wx.showModal({
@@ -855,11 +893,11 @@ Component({
             templateList: defaultTemplates
           })
           
-          console.error('获取模板列表失败:', result.result?.error)
+          logger.error('获取模板列表失败:', result.result?.error)
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('加载模板失败:', error)
+        logger.error('加载模板失败:', error)
         
         // 出错时显示默认模板
         const defaultTemplates = [
@@ -954,7 +992,7 @@ Component({
         })
       } catch (error) {
         this.setData({ showSkeleton: false })
-        console.error('加载任务失败:', error)
+        logger.error('加载任务失败:', error)
         wx.showToast({
           title: '加载任务失败',
           icon: 'none'
@@ -1036,7 +1074,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('创建模板失败:', error)
+        logger.error('创建模板失败:', error)
         wx.showToast({
           title: '创建失败',
           icon: 'none'
