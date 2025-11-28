@@ -1112,6 +1112,16 @@ Page<PageData, any>({
       // ✅ 使用 totalDiedAnimals（来自死亡记录表）作为死亡数，更准确
       const actualDeadCount = healthData.totalDiedAnimals || healthData.deadCount || 0
       
+      // ✅ 统一计算存活率（与死亡率数据源一致，避免不同步）
+      let survivalRate: string | number = '-'
+      let survivalTrend = 'stable'
+      if (originalQuantity > 0) {
+        const survivalCount = originalQuantity - actualDeadCount
+        survivalRate = ((survivalCount / originalQuantity) * 100).toFixed(1)
+        const mortalityPercent = (actualDeadCount / originalQuantity) * 100
+        survivalTrend = mortalityPercent < 1 ? 'improving' : mortalityPercent < 3 ? 'stable' : 'declining'
+      }
+      
       updater
         .setHealthStats({
           totalChecks: healthData.totalAnimals,
@@ -1170,6 +1180,13 @@ Page<PageData, any>({
       } else {
         updater.set('monitoringData.abnormalList', healthData.abnormalRecords || [])
       }
+      
+      // ✅ 统一更新存活率，避免与 loadAnalysisData 数据不同步
+      updater.set('analysisData.survivalAnalysis', {
+        rate: survivalRate,
+        trend: survivalTrend,
+        byStage: []
+      })
       
       this.setData(updater.build())
     } catch (error: unknown) {
@@ -1377,12 +1394,24 @@ Page<PageData, any>({
         healthyRateDisplay = totalChecks > 0 ? formatPercentage((healthyCount / totalChecks) * 100) : '-'
       }
       
+      // 获取死亡数用于计算
+      const deadCount = Number(healthStats.deadCount) || 0
+      
       if (healthStats.mortalityRate && healthStats.mortalityRate !== '0.00') {
         mortalityRateDisplay = formatPercentage(healthStats.mortalityRate)
       } else if (originalQuantity > 0) {
         // 本地计算死亡率
-        const deadCount = Number(healthStats.deadCount) || 0
         mortalityRateDisplay = formatPercentage((deadCount / originalQuantity) * 100)
+      }
+      
+      // ✅ 统一计算存活率（与死亡率数据源一致，避免不同步）
+      let survivalRate: string | number = '-'
+      let survivalTrend = 'stable'
+      if (originalQuantity > 0) {
+        const survivalCount = originalQuantity - deadCount
+        survivalRate = ((survivalCount / originalQuantity) * 100).toFixed(1)
+        const mortalityPercent = (deadCount / originalQuantity) * 100
+        survivalTrend = mortalityPercent < 1 ? 'improving' : mortalityPercent < 3 ? 'stable' : 'declining'
       }
       
       updater
@@ -1427,6 +1456,12 @@ Page<PageData, any>({
         .set('treatmentStats.recoveryRate', (treatmentStats.cureRate || 0) + '%')
         .set('monitoringData.realTimeStatus.abnormalCount', abnormalCount)
         .set('monitoringData.abnormalList', sortDiagnosisByRecency(normalizeDiagnosisRecords(abnormalRecords)))
+        // ✅ 统一更新存活率，避免与 loadAnalysisData 数据不同步
+        .set('analysisData.survivalAnalysis', {
+          rate: survivalRate,
+          trend: survivalTrend,
+          byStage: []
+        })
       
       this.setData(updater.build())
       
@@ -1693,43 +1728,10 @@ Page<PageData, any>({
   },
 
   /**
-   * 加载分析数据
+   * 加载分析数据（只负责成本数据，存活率已在 loadSingleBatchDataOptimized/loadAllBatchesData 中更新）
    */
   async loadAnalysisData() {
     try {
-      // 确保有健康统计数据
-      if (!this.data.healthStats || this.data.healthStats.totalChecks === 0) {
-        await this.loadHealthData()
-      }
-      
-      // 检查是否有有效的入栏数据
-      const totalAnimals = this.data.healthStats?.totalChecks || 0
-      const hasData = totalAnimals > 0
-      
-      // 存活率计算逻辑
-      let survivalRate: string | number = '-'
-      let trend = 'stable'
-      
-      if (hasData) {
-        let originalQuantity = this.data.healthStats.originalQuantity || 0
-        const deadCount = this.data.healthStats.deadCount || 0
-        
-        // 容错：如果 originalQuantity 为 0，尝试从totalChecks + deadCount估算
-        if (originalQuantity === 0) {
-          if (totalAnimals > 0 || deadCount > 0) {
-            originalQuantity = totalAnimals + deadCount
-          }
-        }
-        
-        if (originalQuantity > 0) {
-          const survivalCount = originalQuantity - deadCount
-          survivalRate = ((survivalCount / originalQuantity) * 100).toFixed(1)
-          
-          const mortalityRate = (deadCount / originalQuantity) * 100
-          trend = mortalityRate < 1 ? 'improving' : mortalityRate < 3 ? 'stable' : 'declining'
-        }
-      }
-      
       // 获取成本数据
       const batchId = this.data.currentBatchId || 'all'
       const isAllBatches = batchId === 'all'
@@ -1824,13 +1826,8 @@ Page<PageData, any>({
       // 计算总成本（已确保都是数字类型）
       const totalCost = parseFloat((preventionCost + treatmentCost + feedingCost).toFixed(2))
       
-      // 更新分析数据
+      // 只更新成本数据（存活率已在 loadSingleBatchDataOptimized/loadAllBatchesData 中更新）
       this.setData({
-        'analysisData.survivalAnalysis': {
-          rate: survivalRate,
-          trend: trend,
-          byStage: []
-        },
         'analysisData.costAnalysis': {
           preventionCost: Number(preventionCost.toFixed(2)),
           treatmentCost: Number(treatmentCost.toFixed(2)),
@@ -1842,11 +1839,6 @@ Page<PageData, any>({
       logger.error('加载分析数据失败:', error)
       // 错误时设置默认值，避免显示错误数据
       this.setData({
-        'analysisData.survivalAnalysis': {
-          rate: '-',
-          trend: 'stable',
-          byStage: []
-        },
         'analysisData.costAnalysis': {
           preventionCost: 0,
           treatmentCost: 0,
