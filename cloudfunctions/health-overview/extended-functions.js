@@ -263,11 +263,7 @@ async function getHealthStatisticsOptimized(event, wxContext) {
   try {
     const { batchId } = event
     
-    console.log('[getHealthStatisticsOptimized] 接收到的 event:', JSON.stringify(event))
-    console.log('[getHealthStatisticsOptimized] batchId:', batchId)
-    
     if (!batchId) {
-      console.log('[getHealthStatisticsOptimized] batchId 为空，返回错误')
       return {
         success: false,
         error: '批次ID不能为空'
@@ -373,24 +369,18 @@ async function getHealthStatisticsOptimized(event, wxContext) {
       .aggregate(pipeline)
       .end()
     
-    console.log('[getHealthStatisticsOptimized] 聚合查询结果:', JSON.stringify(result.list))
-    
     if (!result.list || result.list.length === 0) {
-      console.log('[getHealthStatisticsOptimized] 未找到批次数据，batchId:', batchId)
       return {
         success: false,
         error: '批次不存在'
       }
     }
     
-    // ✅ 修复：查找匹配请求 batchId 的批次（聚合可能返回多个结果）
+    // 查找匹配请求 batchId 的批次（聚合可能返回多个结果）
     let data = result.list.find(item => item._id === batchId || item.batchNumber === batchId)
     if (!data) {
-      // 如果没有精确匹配，使用第一个结果
       data = result.list[0]
     }
-    
-    console.log('[getHealthStatisticsOptimized] 使用的批次数据:', JSON.stringify(data))
     
     const totalAnimals = data.currentCount || 0
     const abnormalAnimals = data.abnormalCount || 0
@@ -560,13 +550,10 @@ async function getBatchCompleteData(event, wxContext) {
     promises.push(
       (async () => {
         try {
-          // 使用优化版本，提升性能
-          console.log('[getBatchCompleteData] 调用 getHealthStatisticsOptimized, batchId:', batchId)
           const statsResult = await getHealthStatisticsOptimized({ batchId }, wxContext)
-          console.log('[getBatchCompleteData] getHealthStatisticsOptimized 返回:', JSON.stringify(statsResult))
           result.healthStats = statsResult.data || {}
         } catch (error) {
-          console.error('[getBatchCompleteData] 获取健康统计失败:', error)
+          console.error('获取健康统计失败:', error)
           result.healthStats = null
         }
       })()
