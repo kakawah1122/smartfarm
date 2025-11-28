@@ -1274,9 +1274,9 @@ Page<PageData, any>({
         // 全部批次模式：快速刷新关键数据
         await this._backgroundRefreshAllBatches()
       } else {
-        // ✅ 简化：单批次模式只刷新健康概览数据
-        // 诊疗管理卡片和预防统计不受批次筛选影响，由 loadGlobalTreatmentAndPreventionStats() 统一管理
-        await this.loadHealthOverview()
+        // ✅ 单批次模式：调用 loadSingleBatchDataOptimized 确保数据正确更新
+        // 不使用旧版 loadHealthOverview()，避免数据冲突
+        await this.loadSingleBatchDataOptimized()
       }
       
       // 隐藏加载提示
@@ -1497,7 +1497,9 @@ Page<PageData, any>({
   },
   
   /**
-   * 加载健康概览数据（旧版，保留用于兼容性）
+   * 加载健康概览数据（旧版，仅加载辅助数据）
+   * ✅ 重构：不再更新 healthStats.*，这些数据由 loadSingleBatchDataOptimized/loadAllBatchesData 统一管理
+   * 避免多个方法同时更新同一数据导致覆盖
    */
   async loadHealthOverview() {
     try {
@@ -1507,23 +1509,17 @@ Page<PageData, any>({
       )
 
       if (result.success && result.data) {
-        const { healthStats, recentPrevention, activeAlerts, treatmentStats } = result.data
+        const { recentPrevention, activeAlerts } = result.data
         
-        // 优化：使用数据路径形式更新对象属性，符合微信小程序最佳实践
-        // 避免使用展开运算符替换整个对象，减少不必要的渲染
+        // ✅ 只更新辅助数据（预警、最近预防记录），不更新 healthStats
+        // healthStats 由 loadSingleBatchDataOptimized/loadAllBatchesData 统一管理
         this.setData({
-          'healthStats.healthyRate': (healthStats.totalChecks > 0) ? formatPercentage(healthStats.healthyRate) : '-',
-          'healthStats.mortalityRate': (healthStats.totalChecks > 0) ? formatPercentage(healthStats.mortalityRate) : '-',
-          'healthStats.abnormalCount': healthStats.abnormalCount || 0,
-          'healthStats.treatingCount': healthStats.treatingCount || 0,
-          'healthStats.originalQuantity': healthStats.originalQuantity || 0,  // 确保原始入栏数也被更新
           recentPreventionRecords: recentPrevention || [],
-          activeHealthAlerts: activeAlerts || [],
-          'treatmentStats.recoveryRate': treatmentStats.recoveryRate + '%'
+          activeHealthAlerts: activeAlerts || []
         })
       }
     } catch (error: unknown) {
-      // 已移除调试日志
+      // 静默处理错误
     }
   },
 
@@ -2422,7 +2418,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   
   /**
    * 批次切换时全面刷新数据
-   * 确保所有卡片和tab的数据都正确更新
+   * ✅ 简化：loadHealthData 已经会根据 activeTab 加载对应数据，无需重复调用
    */
   async refreshAllDataForBatchChange() {
     try {
@@ -2433,37 +2429,13 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       this.invalidateAllBatchesCache()
       CacheManager.clearAllHealthCache()
       
-      // 3. 加载基础健康数据 - 禁用防抖，确保数据立即加载完成
-      await this.loadHealthData(true, false)  // silent模式，无防抖
+      // 3. 加载健康数据 - loadHealthData 内部会根据 activeTab 加载对应 Tab 数据
+      // 禁用防抖，确保数据立即加载完成
+      await this.loadHealthData(true, false)
       
-      // 4. 移除setTimeout延迟，直接加载标签数据
-      // 根据当前激活的tab加载对应数据
-      switch (this.data.activeTab) {
-        case 'overview':
-          await this.loadHealthOverview()
-          break
-        case 'prevention':
-          // 加载监控数据
-          await this.loadMonitoringData()
-          
-          // 根据子标签加载对应的任务数据
-          const subTab = this.data.preventionSubTab
-          
-          if (subTab === 'today') {
-            await this.loadPreventionData()
-          } else if (subTab === 'upcoming') {
-            await this.loadUpcomingTasks()
-          } else if (subTab === 'history') {
-            await this.loadHistoryTasks()
-          }
-          break
-        case 'treatment':
-          // 强制刷新治疗数据，不使用缓存
-          await this.loadTreatmentData({ forceRefresh: true })
-          break
-        case 'analysis':
-          await this.loadAnalysisData()
-          break
+      // 4. 如果在 overview Tab，额外加载辅助数据（预警等）
+      if (this.data.activeTab === 'overview') {
+        await this.loadHealthOverview()
       }
       
       // 5. 数据加载完成后，重新启动监听器
