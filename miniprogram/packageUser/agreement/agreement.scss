@@ -52,16 +52,13 @@
   text-align: justify;
 }
 
+.section-list {
+  margin-top: 8rpx;
+}
+
 .list-item {
-  display: flex;
-  margin-top: 4rpx;
-  
-  .item-num {
-    flex-shrink: 0;
-    margin-right: 8rpx;
-  }
-  
-  .item-text {
-    flex: 1;
-  }
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.8;
+  padding-left: 8rpx;
 }
