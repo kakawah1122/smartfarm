@@ -47,13 +47,33 @@ async function loadRolesFromDB() {
   return getDefaultRoles()
 }
 
-// 默认角色配置（作为回退）
+// 默认角色配置（作为回退，与数据库 user_roles 保持一致）
 function getDefaultRoles() {
   return {
-    'super_admin': { code: 'super_admin', name: '超级管理员', permissions: ['*'], level: 1 },
-    'manager': { code: 'manager', name: '经理', permissions: ['production.*', 'health.*', 'finance.*', 'ai_diagnosis.*', 'user.read', 'user.invite', 'user.update_role', 'user.approve'], level: 2 },
-    'employee': { code: 'employee', name: '员工', permissions: ['production.create', 'production.read', 'production.update_own', 'health.create', 'health.read', 'health.update_own', 'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate', 'user.read_own'], level: 3 },
-    'veterinarian': { code: 'veterinarian', name: '兽医', permissions: ['health.*', 'ai_diagnosis.*', 'production.read', 'user.read_own'], level: 3 }
+    'super_admin': { 
+      code: 'super_admin', 
+      name: '超级管理员', 
+      permissions: ['*'], 
+      level: 1 
+    },
+    'manager': { 
+      code: 'manager', 
+      name: '经理', 
+      permissions: ['production.*', 'health.*', 'finance.*', 'ai_diagnosis.*', 'user.read', 'user.create', 'user.update', 'user.delete', 'user.invite', 'user.approve', 'user.update_role', 'profile.*'], 
+      level: 2 
+    },
+    'employee': { 
+      code: 'employee', 
+      name: '员工', 
+      permissions: ['production.*', 'health.*', 'ai_diagnosis.*', 'profile.read', 'profile.update'], 
+      level: 3 
+    },
+    'veterinarian': { 
+      code: 'veterinarian', 
+      name: '兽医', 
+      permissions: ['health.read', 'health.diagnose', 'ai_diagnosis.read', 'ai_diagnosis.create', 'ai_diagnosis.validate', 'profile.read', 'profile.update'], 
+      level: 4 
+    }
   }
 }
 

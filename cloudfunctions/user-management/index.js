@@ -56,7 +56,7 @@ async function loadRolesFromDB() {
   return getDefaultRoles()
 }
 
-// 默认角色配置（作为回退）
+// 默认角色配置（作为回退，与数据库 user_roles 保持一致）
 function getDefaultRoles() {
   return {
     [ROLES.SUPER_ADMIN]: {
@@ -69,23 +69,23 @@ function getDefaultRoles() {
     [ROLES.MANAGER]: {
       code: 'manager',
       name: '经理',
-      description: '业务运营管理权限，负责整体运营和决策',
+      description: '可管理除超管和系统设置外的所有功能',
       level: 2,
-      permissions: ['production.*', 'health.*', 'finance.*', 'ai_diagnosis.*', 'user.read', 'user.invite', 'user.update_role', 'user.approve']
+      permissions: ['production.*', 'health.*', 'finance.*', 'ai_diagnosis.*', 'user.read', 'user.create', 'user.update', 'user.delete', 'user.invite', 'user.approve', 'user.update_role', 'profile.*']
     },
     [ROLES.EMPLOYEE]: {
       code: 'employee',
       name: '员工',
-      description: '日常操作执行权限，包括AI诊断功能',
+      description: '日常操作执行权限，可管理生产和健康模块',
       level: 3,
-      permissions: ['production.create', 'production.read', 'production.update_own', 'health.create', 'health.read', 'health.update_own', 'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate', 'user.read_own']
+      permissions: ['production.*', 'health.*', 'ai_diagnosis.*', 'profile.read', 'profile.update']
     },
     [ROLES.VETERINARIAN]: {
       code: 'veterinarian', 
       name: '兽医',
-      description: '健康诊疗专业权限，负责动物健康和AI诊断验证',
-      level: 3,
-      permissions: ['health.*', 'ai_diagnosis.*', 'production.read', 'user.read_own']
+      description: '健康诊疗专业权限，负责健康查看和AI诊断',
+      level: 4,
+      permissions: ['health.read', 'health.diagnose', 'ai_diagnosis.read', 'ai_diagnosis.create', 'ai_diagnosis.validate', 'profile.read', 'profile.update']
     }
   }
 }
