@@ -845,9 +845,7 @@ Page<PageData, any>({
   async loadTabData(tab: string) {
     // 如果healthStats.originalQuantity未设置，先加载健康数据
     if (tab === 'analysis' && !this.data.healthStats.originalQuantity) {
-      await this.loadHealthData(true)  // 静默加载健康数据
-      // 等待setData完成
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await this.loadHealthData(true, false)  // 静默加载，禁用防抖确保数据立即加载
     }
     
     switch (tab) {
@@ -2437,8 +2435,8 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       this.invalidateAllBatchesCache()
       CacheManager.clearAllHealthCache()
       
-      // 3. 加载基础健康数据 - 这会设置healthStats.originalQuantity
-      await this.loadHealthData(true)  // silent模式
+      // 3. 加载基础健康数据 - 禁用防抖，确保数据立即加载完成
+      await this.loadHealthData(true, false)  // silent模式，无防抖
       
       // 4. 移除setTimeout延迟，直接加载标签数据
       // 根据当前激活的tab加载对应数据
@@ -3544,7 +3542,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           await this.loadAvailableBatches()
           
           // 2. 刷新基础健康数据（包括健康率、死亡率等）
-          await this.loadHealthData(true)  // silent模式，不显示loading
+          await this.loadHealthData(true, false)  // silent模式，禁用防抖确保数据立即加载
           
           // 3. 刷新当前标签的数据
           await this.loadTabData(this.data.activeTab)
