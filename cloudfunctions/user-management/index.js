@@ -90,6 +90,9 @@ function getDefaultRoles() {
   }
 }
 
+// 同步版本的角色权限（用于需要同步访问的场景，如日志记录）
+const ROLE_PERMISSIONS = getDefaultRoles()
+
 // 验证角色是否有效
 async function validateRole(roleCode) {
   const roles = await loadRolesFromDB()

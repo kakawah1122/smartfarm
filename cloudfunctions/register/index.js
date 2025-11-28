@@ -8,50 +8,66 @@ cloud.init({
 
 const db = cloud.database()
 
-// 角色权限配置（与 user-management 保持一致）
-const ROLE_PERMISSIONS = {
-  'super_admin': {
-    name: '超级管理员',
-    permissions: ['*'],
-    description: '系统全局管理权限'
-  },
-  'manager': {
-    name: '经理',
-    permissions: [
-      'production.*', 'health.*', 'finance.*', 'ai_diagnosis.*',
-      'user.read', 'user.invite', 'user.update_role', 'user.approve'
-    ],
-    description: '业务运营管理权限'
-  },
-  'employee': {
-    name: '员工',
-    permissions: [
-      'production.create', 'production.read', 'production.update_own',
-      'health.create', 'health.read', 'health.update_own',
-      'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate',
-      'user.read_own'
-    ],
-    description: '日常操作执行权限'
-  },
-  'veterinarian': {
-    name: '兽医',
-    permissions: [
-      'health.*', 'ai_diagnosis.*',
-      'production.read', 'user.read_own'
-    ],
-    description: '健康诊疗专业权限'
+// 角色缓存（从数据库加载）
+let rolesCache = null
+let rolesCacheTime = 0
+const CACHE_TTL = 5 * 60 * 1000 // 5分钟缓存
+
+// 从数据库加载角色配置
+async function loadRolesFromDB() {
+  const now = Date.now()
+  if (rolesCache && (now - rolesCacheTime) < CACHE_TTL) {
+    return rolesCache
+  }
+  
+  try {
+    const result = await db.collection(COLLECTIONS.USER_ROLES)
+      .where({ isActive: true })
+      .get()
+    
+    if (result.data && result.data.length > 0) {
+      rolesCache = {}
+      result.data.forEach(role => {
+        rolesCache[role.code || role._id] = {
+          code: role.code || role._id,
+          name: role.name,
+          description: role.description,
+          level: role.level,
+          permissions: role.permissions || []
+        }
+      })
+      rolesCacheTime = now
+      return rolesCache
+    }
+  } catch (err) {
+    console.error('从数据库加载角色失败，使用默认配置:', err.message)
+  }
+  
+  // 回退到默认配置
+  return getDefaultRoles()
+}
+
+// 默认角色配置（作为回退）
+function getDefaultRoles() {
+  return {
+    'super_admin': { code: 'super_admin', name: '超级管理员', permissions: ['*'], level: 1 },
+    'manager': { code: 'manager', name: '经理', permissions: ['production.*', 'health.*', 'finance.*', 'ai_diagnosis.*', 'user.read', 'user.invite', 'user.update_role', 'user.approve'], level: 2 },
+    'employee': { code: 'employee', name: '员工', permissions: ['production.create', 'production.read', 'production.update_own', 'health.create', 'health.read', 'health.update_own', 'ai_diagnosis.create', 'ai_diagnosis.read', 'ai_diagnosis.validate', 'user.read_own'], level: 3 },
+    'veterinarian': { code: 'veterinarian', name: '兽医', permissions: ['health.*', 'ai_diagnosis.*', 'production.read', 'user.read_own'], level: 3 }
   }
 }
 
-// 根据角色获取权限列表
-function getPermissionsByRole(role) {
-  const roleConfig = ROLE_PERMISSIONS[role]
+// 根据角色获取权限列表（异步版本）
+async function getPermissionsByRole(role) {
+  const roles = await loadRolesFromDB()
+  const roleConfig = roles[role]
   return roleConfig ? roleConfig.permissions : ['basic']
 }
 
-// 根据角色获取职位名称
-function getPositionByRole(role) {
-  const roleConfig = ROLE_PERMISSIONS[role]
+// 根据角色获取职位名称（异步版本）
+async function getPositionByRole(role) {
+  const roles = await loadRolesFromDB()
+  const roleConfig = roles[role]
   return roleConfig ? roleConfig.name : '员工'
 }
 
@@ -171,11 +187,15 @@ exports.main = async (event, context) => {
       // ✅ 设置角色
       updateData.role = inviteRole
       
+      // ✅ 从数据库获取权限列表和职位名称
+      const rolePermissions = await getPermissionsByRole(inviteRole)
+      const rolePosition = await getPositionByRole(inviteRole)
+      
       // ✅ 设置对应的权限列表
-      updateData.permissions = getPermissionsByRole(inviteRole)
+      updateData.permissions = rolePermissions
       
       // ✅ 设置职位名称（优先使用邀请信息中的职位，否则根据角色自动生成）
-      updateData.position = inviteInfo.position || getPositionByRole(inviteRole)
+      updateData.position = inviteInfo.position || rolePosition
       
       // 如果邀请信息中有部门/养殖场信息，使用邀请信息
       if (inviteInfo.department) {
@@ -187,7 +207,7 @@ exports.main = async (event, context) => {
       updateData.approvalStatus = 'approved'
       updateData.approvedBy = inviteInfo.inviterOpenId || inviteInfo.createdBy || 'system'
       updateData.approvedTime = new Date()
-      updateData.approvalRemark = `通过邀请码自动审批，角色: ${getPositionByRole(inviteRole)}`
+      updateData.approvalRemark = `通过邀请码自动审批，角色: ${rolePosition}`
       updateData.isActive = true
     }
     
