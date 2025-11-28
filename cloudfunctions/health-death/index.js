@@ -15,13 +15,10 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
-// 导入业务逻辑处理函数
+// 导入业务逻辑处理函数（统一使用下划线命名）
 const create_death_record = require('./actions/create_death_record').main
-const createDeathRecord = require('./actions/createDeathRecord').main
 const list_death_records = require('./actions/list_death_records').main
-const listDeathRecords = require('./actions/listDeathRecords').main
 const get_death_stats = require('./actions/get_death_stats').main
-const getDeathStats = require('./actions/getDeathStats').main
 const get_death_record_detail = require('./actions/get_death_record_detail').main
 const create_death_record_with_finance = require('./actions/create_death_record_with_finance').main
 const correct_death_diagnosis = require('./actions/correct_death_diagnosis').main
@@ -39,16 +36,10 @@ exports.main = async (event, context) => {
     switch (action) {
       case 'create_death_record':
         return await create_death_record(event, wxContext)
-      case 'createDeathRecord':
-        return await createDeathRecord(event, wxContext)
       case 'list_death_records':
         return await list_death_records(event, wxContext)
-      case 'listDeathRecords':
-        return await listDeathRecords(event, wxContext)
       case 'get_death_stats':
         return await get_death_stats(event, wxContext)
-      case 'getDeathStats':
-        return await getDeathStats(event, wxContext)
       case 'get_death_record_detail':
         return await get_death_record_detail(event, wxContext)
       case 'create_death_record_with_finance':

@@ -1033,7 +1033,7 @@ Page<PageData, any>({
         safeCloudCall({
           name: 'health-prevention',
           data: {
-            action: 'getPreventionDashboard',
+            action: 'get_prevention_dashboard',
             batchId: 'all',
             today: formatTime(new Date(), 'date')
           }
@@ -3118,7 +3118,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         const res = await safeCloudCall({
           name: 'health-prevention',  // 使用拆分后的云函数
           data: {
-            action: 'completePreventionTask',
+            action: 'complete_prevention_task',
             taskId: selectedTask._id,
             batchId: batchId,
             preventionData

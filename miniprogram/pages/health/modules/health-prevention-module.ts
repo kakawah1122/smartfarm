@@ -114,7 +114,7 @@ export class PreventionModuleManager {
       const result = await CloudApi.callFunction(
         'health-prevention',
         {
-          action: 'getPreventionDashboard',
+          action: 'get_prevention_dashboard',
           batchId: batchId
         },
         { showError: false }

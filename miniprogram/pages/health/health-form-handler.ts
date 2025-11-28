@@ -57,7 +57,7 @@ export class HealthFormHandler {
       
       // 准备提交数据
       const submitData = {
-        action: 'completePreventionTask',
+        action: 'complete_prevention_task',
         taskId: `vaccine_${Date.now()}`,
         batchId: formData.batchId,
         preventionData: {
@@ -114,7 +114,7 @@ export class HealthFormHandler {
       
       // 准备提交数据
       const submitData = {
-        action: 'completePreventionTask',
+        action: 'complete_prevention_task',
         taskId: `disinfection_${Date.now()}`,
         batchId: formData.batchId,
         preventionData: {
