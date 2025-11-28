@@ -609,7 +609,8 @@ Page<PageData, any>({
       // 并行加载批次列表和健康数据
       await Promise.all([
         this.loadAvailableBatches(),
-        this.loadHealthData(true) // 静默加载，避免重复loading
+        this.loadHealthData(true), // 静默加载，避免重复loading
+        this.loadGlobalTreatmentAndPreventionStats() // ✅ 加载全局诊疗和预防统计（不受批次筛选影响）
       ])
       
       // 加载当前标签的数据
@@ -1198,6 +1199,53 @@ Page<PageData, any>({
   },
   
   /**
+   * ✅ 加载全局诊疗管理和预防统计数据（不受批次筛选影响）
+   * 诊疗管理卡片（待处理、治疗中、治愈数、死亡数）和预防统计（防疫用药、疫苗追踪）
+   * 始终显示全部批次的汇总数据
+   */
+  async loadGlobalTreatmentAndPreventionStats() {
+    try {
+      // 始终使用全部批次模式获取数据
+      const healthData = await this._fetchAllBatchesHealthData({ batchId: 'all' })
+      
+      if (!healthData) return
+      
+      // 获取预防统计
+      const preventionResult = await HealthCloud.prevention.getDashboard({ batchId: 'all' })
+      const preventionStats = preventionResult?.success ? preventionResult.data : {
+        vaccineCount: 0,
+        medicationCount: 0,
+        vaccineCoverage: 0,
+        totalCost: 0
+      }
+      
+      // 计算接种率
+      const vaccinationRate = healthData.totalAnimals > 0
+        ? ((preventionStats.vaccineCoverage / healthData.totalAnimals) * 100).toFixed(1)
+        : 0
+      
+      // 更新诊疗管理卡片和预防统计（全局数据，不受批次筛选影响）
+      this.setData({
+        // 诊疗管理卡片
+        'treatmentData.stats.pendingDiagnosis': healthData.pendingDiagnosis || 0,
+        'treatmentData.stats.ongoingTreatment': healthData.totalOngoing || 0,
+        'treatmentData.stats.recoveredCount': healthData.totalCured || 0,
+        'treatmentData.stats.deadCount': healthData.totalDiedAnimals || healthData.deadCount || 0,
+        'treatmentData.stats.totalTreatmentCost': healthData.totalTreatmentCost || 0,
+        'treatmentData.stats.cureRate': parseFloat((healthData.cureRate || '0').toString()),
+        'treatmentData.stats.ongoingAnimalsCount': healthData.totalOngoing || 0,
+        // 预防统计
+        'preventionData.stats.vaccineCount': preventionStats.vaccineCount || 0,
+        'preventionData.stats.medicationCount': preventionStats.medicationCount || 0,
+        'preventionData.stats.vaccineCoverage': preventionStats.vaccineCoverage || 0,
+        'preventionData.stats.vaccinationRate': vaccinationRate
+      })
+    } catch (error) {
+      console.error('[loadGlobalTreatmentAndPreventionStats] 加载全局数据失败:', error)
+    }
+  },
+  
+  /**
    * 完全后台刷新数据（不使用加载锁，不阻塞任何操作）
    */
   backgroundRefreshData() {
@@ -1226,12 +1274,9 @@ Page<PageData, any>({
         // 全部批次模式：快速刷新关键数据
         await this._backgroundRefreshAllBatches()
       } else {
-        // 单个批次模式：并行加载
-        await Promise.all([
-          this.loadHealthOverview(),
-          this.loadPreventionData(),
-          this.loadTreatmentData()
-        ])
+        // ✅ 简化：单批次模式只刷新健康概览数据
+        // 诊疗管理卡片和预防统计不受批次筛选影响，由 loadGlobalTreatmentAndPreventionStats() 统一管理
+        await this.loadHealthOverview()
       }
       
       // 隐藏加载提示
@@ -1426,37 +1471,14 @@ Page<PageData, any>({
         })
         .set('healthStats.abnormalCount', abnormalCount)
         .set('healthStats.treatingCount', treatmentStats.ongoingCount || 0)
-        .setPreventionStats({
-          totalPreventions: preventionStats.totalPreventions || 0,
-          vaccineCount: preventionStats.vaccineCount || 0,
-          vaccineCoverage: preventionStats.vaccineCoverage || 0,
-          totalCost: preventionStats.totalCost || 0
-        })
-        .set('preventionStats.disinfectionCount', preventionStats.disinfectionCount || 0)
-        .set('recentPreventionRecords', preventionRecords.slice(0, 10))
-        .set('preventionData.stats.vaccinationRate', vaccinationRate.toFixed(1))
-        .set('preventionData.stats.preventionCost', preventionStats.totalCost)
-        .set('preventionData.stats.vaccineCount', preventionStats.vaccineCount || 0)
-        .set('preventionData.stats.vaccineCoverage', preventionStats.vaccineCoverage || 0)
-        .set('preventionData.stats.medicationCount', preventionStats.medicationCount || 0)
-        .set('preventionData.recentRecords', preventionRecords.slice(0, 10))
-        .setTreatmentStats({
-          pendingDiagnosis: pendingDiagnosisCount,
-          ongoingTreatment: treatmentStats.ongoingCount || 0,
-          totalTreatmentCost: parseFloat((treatmentStats.totalCost || 0).toString()),
-          cureRate: parseFloat((treatmentStats.cureRate || '0').toString()),
-          ongoingAnimalsCount: treatmentStats.ongoingAnimalsCount || 0,
-          deadCount: healthStats.deadCount || 0,  // ✅ 修复：同步更新死亡数到treatmentData
-          recoveredCount: treatmentStats.totalCuredAnimals || 0
-        })
+        // ✅ 简化：诊疗管理卡片和预防统计不受批次筛选影响，由 loadGlobalTreatmentAndPreventionStats() 统一加载
+        // 这里只更新诊断历史和异常列表（与当前批次相关的数据）
         .set('treatmentData.diagnosisHistory', diagnosisHistory)
-        .set('treatmentStats.totalTreatments', treatmentStats.totalTreated || 0)
-        .set('treatmentStats.totalCost', parseFloat((treatmentStats.totalCost || 0).toString()))
-        .set('treatmentStats.ongoingCount', treatmentStats.ongoingCount || 0)
-        .set('treatmentStats.recoveryRate', (treatmentStats.cureRate || 0) + '%')
         .set('monitoringData.realTimeStatus.abnormalCount', abnormalCount)
         .set('monitoringData.abnormalList', sortDiagnosisByRecency(normalizeDiagnosisRecords(abnormalRecords)))
-        // ✅ 统一更新存活率，避免与 loadAnalysisData 数据不同步
+        .set('recentPreventionRecords', preventionRecords.slice(0, 10))
+        .set('preventionData.recentRecords', preventionRecords.slice(0, 10))
+        // ✅ 统一更新存活率（与当前批次相关）
         .set('analysisData.survivalAnalysis', {
           rate: survivalRate,
           trend: survivalTrend,
@@ -1570,6 +1592,7 @@ Page<PageData, any>({
   
   /**
    * 加载治疗数据
+   * ✅ 简化：诊疗管理卡片始终显示全部批次数据，不受批次筛选影响
    */
   async loadTreatmentData(options: {
     aggregated?: {
@@ -1593,28 +1616,15 @@ Page<PageData, any>({
     this.isLoadingTreatmentData = true
     
     try {
-      // 统一数据源：全部批次和单批次都使用_fetchAllBatchesHealthData
-      const batchId = this.data.currentBatchId
+      // ✅ 简化：始终使用全部批次数据，不受当前批次筛选影响
       const aggregatedData = aggregatedStats || await this._fetchAllBatchesHealthData({ 
-        batchId: batchId,
+        batchId: 'all',  // 始终使用全部批次
         forceRefresh: forceRefresh
       })
 
+      // ✅ 简化：诊疗管理卡片数据由 loadGlobalTreatmentAndPreventionStats() 统一管理
+      // 这里只更新诊断历史和异常列表
       this.setData({
-        'treatmentData.stats': {
-          pendingDiagnosis: aggregatedData.pendingDiagnosis || 0,
-          ongoingTreatment: aggregatedData.totalOngoing || 0,
-          recoveredCount: aggregatedData.totalCured || 0,
-          deadCount: aggregatedData.totalDiedAnimals || 0,  // ✅ 使用治疗记录中的死亡数
-          totalTreatmentCost: aggregatedData.totalTreatmentCost || 0,
-          cureRate: parseFloat((aggregatedData.cureRate || '0').toString()),
-          ongoingAnimalsCount: aggregatedData.totalOngoing || 0
-        },
-        'treatmentStats.totalTreatments': aggregatedData.totalTreated || 0,
-        'treatmentStats.totalCost': aggregatedData.totalTreatmentCost || 0,
-        'treatmentStats.recoveredCount': aggregatedData.totalCured || 0,
-        'treatmentStats.ongoingCount': aggregatedData.totalOngoingRecords || 0,
-        'treatmentStats.recoveryRate': (aggregatedData.cureRate || 0) + '%',
         'treatmentData.diagnosisHistory': sortDiagnosisByRecency(normalizeDiagnosisRecords(aggregatedData.latestDiagnosisRecords || [])),
         'monitoringData.realTimeStatus.abnormalCount': aggregatedData.abnormalRecordCount || 0,
         'monitoringData.abnormalList': sortDiagnosisByRecency(normalizeDiagnosisRecords(aggregatedData.abnormalRecords || []))
@@ -2386,16 +2396,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         return
       }
       
-      // 一次性设置：批次信息 + 清空旧数据 + 关闭下拉框
+      // 一次性设置：批次信息 + 关闭下拉框
+      // ✅ 简化：不再清空诊疗管理卡片数据，因为它们不受批次筛选影响
       this.setData({
         currentBatchId: newBatchId,
         currentBatchNumber: newBatchNumber,
-        showBatchDropdown: false,
-        // 清空治疗卡片数据，避免显示旧数据
-        'treatmentData.stats.pendingDiagnosis': 0,
-        'treatmentData.stats.ongoingTreatment': 0,
-        'treatmentData.stats.recoveredCount': 0,
-        'treatmentData.stats.deadCount': 0
+        showBatchDropdown: false
       })
       
       // 保存选择
