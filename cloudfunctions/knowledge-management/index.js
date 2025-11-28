@@ -22,18 +22,9 @@ async function validateAdminPermission(openid) {
   }
 }
 
-// 获取文章列表
+// 获取文章列表（所有用户可访问）
 async function listArticles(event, wxContext) {
-  const openid = wxContext.OPENID
-  
-  if (!await validateAdminPermission(openid)) {
-    return {
-      success: false,
-      error: '权限不足',
-      message: '仅管理员可访问'
-    }
-  }
-
+  // ✅ 修复：文章列表对所有用户开放，无需权限检查
   try {
     const { category, page = 1, pageSize = 20, keyword } = event
     
@@ -85,8 +76,9 @@ async function listArticles(event, wxContext) {
   }
 }
 
-// 获取单篇文章
+// 获取单篇文章（所有用户可访问）
 async function getArticle(event, wxContext) {
+  // ✅ 文章详情对所有用户开放
   try {
     const { id } = event
     
