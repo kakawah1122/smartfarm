@@ -921,10 +921,16 @@ Page<PageData, any>({
     }
 
     try {
-      // 如果是全部批次模式，加载汇总数据
-      // 统一使用 loadAllBatchesData，无论全部批次还是单批次
-      // 这样可以确保数据计算逻辑完全一致
-      await this.loadAllBatchesData()
+      // ✅ 修复：根据当前批次ID选择不同的加载方法
+      const currentBatchId = this.data.currentBatchId || 'all'
+      
+      if (currentBatchId === 'all') {
+        // 全部批次模式：加载汇总数据
+        await this.loadAllBatchesData()
+      } else {
+        // 单批次模式：加载该批次的详细数据
+        await this.loadSingleBatchDataOptimized()
+      }
       
       // 如果当前选中的是其他tab，也加载对应数据
       const { activeTab } = this.data
@@ -1376,12 +1382,13 @@ Page<PageData, any>({
           ongoingTreatment: treatmentStats.ongoingCount || 0,
           totalTreatmentCost: parseFloat((treatmentStats.totalCost || 0).toString()),
           cureRate: parseFloat((treatmentStats.cureRate || '0').toString()),
-          ongoingAnimalsCount: treatmentStats.ongoingAnimalsCount || 0
+          ongoingAnimalsCount: treatmentStats.ongoingAnimalsCount || 0,
+          deadCount: healthStats.deadCount || 0,  // ✅ 修复：同步更新死亡数到treatmentData
+          recoveredCount: treatmentStats.totalCuredAnimals || 0
         })
         .set('treatmentData.diagnosisHistory', diagnosisHistory)
         .set('treatmentStats.totalTreatments', treatmentStats.totalTreated || 0)
         .set('treatmentStats.totalCost', parseFloat((treatmentStats.totalCost || 0).toString()))
-        .set('treatmentStats.recoveredCount', treatmentStats.totalCuredAnimals || 0)
         .set('treatmentStats.ongoingCount', treatmentStats.ongoingCount || 0)
         .set('treatmentStats.recoveryRate', (treatmentStats.cureRate || 0) + '%')
         .set('monitoringData.realTimeStatus.abnormalCount', abnormalCount)
