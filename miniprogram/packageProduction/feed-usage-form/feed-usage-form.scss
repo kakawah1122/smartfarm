@@ -217,39 +217,37 @@
   box-sizing: border-box;
 }
 
-// 按钮组
-.button-group {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+/* 表单操作按钮 - 垂直排列 */
+.form-actions {
+  padding: 32rpx 24rpx;
   display: flex;
-  padding: 20rpx 24rpx;
-  background-color: var(--td-bg-color-container, #fff);
-  border-top: 1rpx solid var(--td-border-level-1-color, #f0f0f0);
-  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.05);
-  z-index: 100;
-  
-  .t-button {
-    flex: 1;
-    
-    &:first-child {
-      margin-right: 12rpx;
-    }
-  }
+  flex-direction: column;
+  gap: 24rpx;
 }
 
-/* 表单操作按钮样式 - 深蓝渐变背景 */
-/* 使用t-class自定义样式 */
-.custom-form-button {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+/* 提交按钮 - 深蓝渐变 */
+.submit-button {
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%) !important;
   color: #ffffff !important;
   font-weight: 500 !important;
-  box-shadow: 0 4rpx 12rpx rgba(30, 64, 175, 0.3) !important;
+  box-shadow: 0 4rpx 12rpx rgba(0, 82, 217, 0.3) !important;
   border: none !important;
 }
 
-.custom-form-button:active {
-  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
-  box-shadow: 0 2rpx 8rpx rgba(30, 64, 175, 0.4) !important;
+.submit-button:active {
+  background: linear-gradient(135deg, #1976d2 0%, #3d82e8 100%) !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.4) !important;
+}
+
+/* 重置按钮 - 白色背景深蓝边框 */
+.reset-button {
+  background: #ffffff !important;
+  color: #0052d9 !important;
+  font-weight: 500 !important;
+  border: 2rpx solid #0052d9 !important;
+  box-shadow: none !important;
+}
+
+.reset-button:active {
+  background: rgba(0, 82, 217, 0.05) !important;
 }

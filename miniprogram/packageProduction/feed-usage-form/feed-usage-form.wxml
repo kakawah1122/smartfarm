@@ -129,25 +129,27 @@
     </view>
     
     <!-- 操作按钮 -->
-    <view class="button-group">
-      <t-button
-        theme="default"
-        size="large"
-        bindtap="onReset"
-        disabled="{{submitting}}"
-        t-class="custom-form-button"
-      >
-        重置
-      </t-button>
+    <view class="form-actions">
       <t-button
         theme="primary"
         size="large"
+        block
         bindtap="onSubmit"
         loading="{{submitting}}"
         disabled="{{submitting}}"
-        t-class="custom-form-button"
+        t-class="submit-button"
       >
         {{submitting ? '提交中...' : '提交记录'}}
+      </t-button>
+      <t-button
+        theme="default"
+        size="large"
+        block
+        bindtap="onReset"
+        disabled="{{submitting}}"
+        t-class="reset-button"
+      >
+        重置表单
       </t-button>
     </view>
   </view>
