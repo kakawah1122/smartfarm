@@ -18,9 +18,8 @@ const COLLECTIONS = {
   PROD_MATERIALS: 'prod_materials',
   PROD_MATERIAL_RECORDS: 'prod_material_records',
   PROD_INVENTORY_LOGS: 'prod_inventory_logs',
-  PRODUCTION_BATCHES: 'production_batches',
-  FEED_USAGE_RECORDS: 'feed_usage_records',  // 投喂记录
-  PROD_FEED_USAGE_RECORDS: 'feed_usage_records',  // 投喂记录（别名，保持prod_前缀一致性）
+  PRODUCTION_BATCHES: 'production_batches',  // 注：历史原因未使用 prod_ 前缀，保持兼容
+  FEED_USAGE_RECORDS: 'feed_usage_records',  // 投喂记录（注：历史原因未使用 prod_ 前缀）
 
   // 健康管理模块 (Health Management)
   HEALTH_RECORDS: 'health_records',
