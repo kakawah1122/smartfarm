@@ -545,32 +545,12 @@ async function getBatchCompleteHealthData(event, wxContext) {
 
 /**
  * 内部函数：获取仪表盘快照数据
+ * ✅ 修复：调用实际的 getDashboardSnapshot 函数而不是返回空数据
  */
 async function getDashboardSnapshotInternal(event, wxContext) {
-  // 这个函数调用现有的getDashboardSnapshot
-  // 由于getDashboardSnapshot已经在主文件中实现，这里直接返回调用结果
-  return {
-    success: true,
-    data: {
-      batches: [],
-      totalBatches: 0,
-      pendingDiagnosis: 0,
-      totalOngoingRecords: 0,
-      totalOngoing: 0,
-      totalCured: 0,
-      deadCount: 0,
-      totalDiedAnimals: 0,
-      totalTreatmentCost: 0,
-      cureRate: '0',
-      totalAnimals: 0,
-      actualHealthyCount: 0,
-      healthyRate: '100',
-      mortalityRate: '0',
-      abnormalCount: 0,
-      abnormalRecords: [],
-      latestDiagnosisRecords: []
-    }
-  }
+  // 引入实际的 getDashboardSnapshot 函数
+  const { getDashboardSnapshot } = require('./dashboard-snapshot.js')
+  return await getDashboardSnapshot(event, wxContext)
 }
 
 /**
@@ -608,6 +588,29 @@ async function getBatchCompleteData(event, wxContext) {
         }
       })()
     )
+    
+    // 1.5 待诊断数量（如果需要）
+    if (!includes.length || includes.includes('pending_diagnosis')) {
+      promises.push(
+        (async () => {
+          try {
+            // 直接查询数据库获取待诊断数量（避免云函数嵌套调用）
+            const pendingResult = await db.collection(COLLECTIONS.HEALTH_AI_DIAGNOSIS)
+              .where({
+                _openid: openid,
+                batchId: batchId,
+                isDeleted: false,
+                hasTreatment: false
+              })
+              .count()
+            result.pendingDiagnosisCount = pendingResult.total || 0
+          } catch (error) {
+            console.error('获取待诊断数量失败:', error)
+            result.pendingDiagnosisCount = 0
+          }
+        })()
+      )
+    }
     
     // 2. 预防数据（如果需要）
     if (!includes.length || includes.includes('prevention')) {
@@ -663,19 +666,7 @@ async function getBatchCompleteData(event, wxContext) {
                 if (record.costInfo?.totalCost) {
                   const cost = parseFloat(record.costInfo.totalCost) || 0
                   preventionStats.totalCost += cost
-                  console.log('[预防成本] 累加:', {
-                    type: record.preventionType,
-                    name: record.medicationInfo?.name || record.vaccineInfo?.name || record.disinfectantInfo?.name,
-                    cost: cost,
-                    totalCost: preventionStats.totalCost
-                  })
                 }
-              })
-              
-              console.log('[预防成本] 最终统计:', {
-                totalRecords: records.length,
-                medicationCount: preventionStats.medicationCount,
-                totalCost: preventionStats.totalCost
               })
               
               result.preventionStats = preventionStats
