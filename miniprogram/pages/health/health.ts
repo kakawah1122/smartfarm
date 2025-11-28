@@ -1282,10 +1282,17 @@ Page<PageData, any>({
    */
   async loadSingleBatchDataOptimized() {
     try {
-      const result = await HealthCloud.overview.getBatchCompleteData({ batchId: this.data.currentBatchId,
+      // ✅ 调试：打印请求参数
+      const requestBatchId = this.data.currentBatchId
+      console.log('[loadSingleBatchDataOptimized] 请求的 batchId:', requestBatchId)
+      
+      const result = await HealthCloud.overview.getBatchCompleteData({ batchId: requestBatchId,
           includes: ['prevention', 'treatment', 'diagnosis', 'abnormal', 'pending_diagnosis'],
           diagnosisLimit: 10,
           preventionLimit: 20 })
+      
+      // ✅ 调试：打印完整返回结果
+      console.log('[loadSingleBatchDataOptimized] 云函数返回的完整结果:', JSON.stringify(result))
       
       if (!result || !result.success) {
         throw new Error('获取批次数据失败')

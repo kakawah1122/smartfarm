@@ -263,7 +263,11 @@ async function getHealthStatisticsOptimized(event, wxContext) {
   try {
     const { batchId } = event
     
+    console.log('[getHealthStatisticsOptimized] 接收到的 event:', JSON.stringify(event))
+    console.log('[getHealthStatisticsOptimized] batchId:', batchId)
+    
     if (!batchId) {
+      console.log('[getHealthStatisticsOptimized] batchId 为空，返回错误')
       return {
         success: false,
         error: '批次ID不能为空'
@@ -369,7 +373,10 @@ async function getHealthStatisticsOptimized(event, wxContext) {
       .aggregate(pipeline)
       .end()
     
+    console.log('[getHealthStatisticsOptimized] 聚合查询结果:', JSON.stringify(result.list))
+    
     if (!result.list || result.list.length === 0) {
+      console.log('[getHealthStatisticsOptimized] 未找到批次数据，batchId:', batchId)
       return {
         success: false,
         error: '批次不存在'
@@ -543,10 +550,12 @@ async function getBatchCompleteData(event, wxContext) {
       (async () => {
         try {
           // 使用优化版本，提升性能
+          console.log('[getBatchCompleteData] 调用 getHealthStatisticsOptimized, batchId:', batchId)
           const statsResult = await getHealthStatisticsOptimized({ batchId }, wxContext)
+          console.log('[getBatchCompleteData] getHealthStatisticsOptimized 返回:', JSON.stringify(statsResult))
           result.healthStats = statsResult.data || {}
         } catch (error) {
-          console.error('获取健康统计失败:', error)
+          console.error('[getBatchCompleteData] 获取健康统计失败:', error)
           result.healthStats = null
         }
       })()
