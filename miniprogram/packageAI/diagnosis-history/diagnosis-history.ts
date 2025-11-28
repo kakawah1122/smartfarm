@@ -434,7 +434,7 @@ const pageConfig = {
         return '时间格式错误'
       }
     } catch (e) {
-      console.error('Date parsing error:', e, dateString)
+      logger.error('Date parsing error:', e, dateString)
       return '时间解析失败'
     }
     

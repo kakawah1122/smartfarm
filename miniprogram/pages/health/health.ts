@@ -507,7 +507,7 @@ Page<PageData, any>({
         // 修复成功，静默处理
       }
     } catch (error) {
-      console.error('修复治疗记录失败:', error)
+      logger.error('修复治疗记录失败:', error)
       // 静默处理，不影响页面加载
     }
   },
@@ -524,7 +524,7 @@ Page<PageData, any>({
         // 修复成功，静默处理
       }
     } catch (error) {
-      console.error('修复批次死亡数据失败:', error)
+      logger.error('修复批次死亡数据失败:', error)
       // 静默处理，不影响页面加载
     }
   },
@@ -617,7 +617,7 @@ Page<PageData, any>({
       await this.loadTabData(this.data.activeTab)
       
     } catch (error: unknown) {
-      console.error('[onLoad] 页面加载失败:', error)
+      logger.error('[onLoad] 页面加载失败:', error)
       wx.showToast({
         title: '页面加载失败',
         icon: 'error'
@@ -1241,7 +1241,7 @@ Page<PageData, any>({
         'preventionData.stats.vaccinationRate': vaccinationRate
       })
     } catch (error) {
-      console.error('[loadGlobalTreatmentAndPreventionStats] 加载全局数据失败:', error)
+      logger.error('[loadGlobalTreatmentAndPreventionStats] 加载全局数据失败:', error)
     }
   },
   
@@ -1627,7 +1627,7 @@ Page<PageData, any>({
       })
 
     } catch (error: unknown) {
-      console.error('[治疗数据] 加载失败:', error)
+      logger.error('[治疗数据] 加载失败:', error)
       wx.showToast({
         title: '治疗数据加载失败',
         icon: 'error'
@@ -2350,7 +2350,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       await this.refreshAllDataForBatchChange()
       
     } catch (error) {
-      console.error('切换批次失败:', error)
+      logger.error('切换批次失败:', error)
       wx.showToast({
         title: '切换失败',
         icon: 'error'
@@ -2406,7 +2406,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       // 全面刷新数据
       await this.refreshAllDataForBatchChange()
     } catch (error) {
-      console.error('[批次选择] 切换失败:', error)
+      logger.error('[批次选择] 切换失败:', error)
       wx.showToast({
         title: '切换失败',
         icon: 'error'
@@ -2444,7 +2444,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       })
       
     } catch (error) {
-      console.error('刷新批次数据失败:', error)
+      logger.error('刷新批次数据失败:', error)
       // 即使出错也要重新启动监听器
       wx.nextTick(() => {
         this.startDataWatcher()
@@ -3518,7 +3518,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           await this.loadTabData(this.data.activeTab)
           
         } catch (refreshError) {
-          console.error('[刷新] 数据刷新失败:', refreshError)
+          logger.error('[刷新] 数据刷新失败:', refreshError)
         }
 
       } else {

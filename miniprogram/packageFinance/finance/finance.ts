@@ -1599,7 +1599,7 @@ const pageConfig: unknown = {
         analysisHistory: historyList
       })
     } catch (error) {
-      console.error('加载分析历史失败:', error)
+      logger.error('加载分析历史失败:', error)
     }
   },
   

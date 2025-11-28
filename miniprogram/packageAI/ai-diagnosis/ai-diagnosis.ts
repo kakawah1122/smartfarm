@@ -263,7 +263,7 @@ const pageConfig: AnyObject = {
       }
     } catch (error: unknown) {
       wx.hideLoading()
-      console.error('[AI诊断] 加载批次列表失败', error)
+      logger.error('[AI诊断] 加载批次列表失败', error)
       
       wx.showModal({
         title: '加载失败',
@@ -338,7 +338,7 @@ const pageConfig: AnyObject = {
         this.validateForm()
       })
     } else {
-      console.error('[AI诊断] 未找到批次数据', { index, availableBatches: this.data.availableBatches })
+      logger.error('[AI诊断] 未找到批次数据', { index, availableBatches: this.data.availableBatches })
     }
   },
 
@@ -1320,7 +1320,7 @@ const pageConfig: AnyObject = {
         throw new Error(result?.message || result?.error || '保存失败')
       }
     } catch (error: unknown) {
-      console.error('保存异常:', error)
+      logger.error('保存异常:', error)
       wx.hideLoading()
       // ✅ 保存失败时重置状态，允许重试
       this.setData({ isSaving: false })

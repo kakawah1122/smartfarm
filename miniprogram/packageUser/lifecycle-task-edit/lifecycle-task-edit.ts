@@ -2,6 +2,7 @@
 // lifecycle-task-edit.ts - 养殖周期任务编辑页面
 // 数据源：云数据库 task_templates 集合
 
+import { logger } from '../../utils/logger'
 Component({
   // ✅ 定时器管理
   _timerIds: [] as number[],
@@ -180,7 +181,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('加载任务失败:', error)
+        logger.error('加载任务失败:', error)
         wx.showToast({ title: '加载失败', icon: 'none' })
       }
     },
@@ -292,7 +293,7 @@ Component({
         wx.hideLoading()
       } catch (error) {
         wx.hideLoading()
-        console.error('加载任务数据失败:', error)
+        logger.error('加载任务数据失败:', error)
         
         // 使用默认数据
         this.loadDefaultTaskData()
@@ -482,7 +483,7 @@ Component({
         }
       } catch (error) {
         wx.hideLoading()
-        console.error('[lifecycle-task-edit] 保存任务失败:', error)
+        logger.error('[lifecycle-task-edit] 保存任务失败:', error)
         
         wx.showToast({
           title: '保存失败，请重试',

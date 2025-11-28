@@ -1,5 +1,6 @@
 // breeding-todo/breeding-todo.ts - 待办任务页面（优化版）
 // @ts-nocheck - 暂时禁用类型检查，后续重构时修复
+import { logger } from '../../utils/logger'
 import CloudApi from '../../utils/cloud-api'
 import { formatTime } from '../../utils/util'
 import { TYPE_NAMES, isMedicationTask, isNutritionTask } from '../../utils/breeding-schedule'
@@ -738,7 +739,7 @@ Page({
           }
         }
       } catch (error) {
-        console.error('获取批次存栏数失败:', error)
+        logger.error('获取批次存栏数失败:', error)
       }
     }
 
