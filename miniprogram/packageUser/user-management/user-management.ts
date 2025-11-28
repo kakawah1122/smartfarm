@@ -275,6 +275,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         }
       })
 
+      wx.hideLoading()
+      
       if (result.result && result.result.success) {
         wx.showToast({
           title: '角色更新成功',
@@ -299,12 +301,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
         this.loadUserStats()
       }
     } catch (error) {
+      wx.hideLoading()
       wx.showToast({
         title: '更新失败',
         icon: 'none'
       })
-    } finally {
-      wx.hideLoading()
     }
   },
 
@@ -329,6 +330,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
               }
             })
 
+            wx.hideLoading()
+            
             if (result.result && result.result.success) {
               wx.showToast({
                 title: '删除成功',
@@ -351,12 +354,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
               })
             }
           } catch (error) {
+            wx.hideLoading()
             wx.showToast({
               title: '删除失败',
               icon: 'none'
             })
-          } finally {
-            wx.hideLoading()
           }
         }
       }
