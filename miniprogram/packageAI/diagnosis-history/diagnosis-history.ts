@@ -1,10 +1,10 @@
-// @ts-nocheck
 // diagnosis-history.ts - 诊断历史页面
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, PageConfigWithLifecycle, NavbarData } from '../../utils/navigation'
 import { logger } from '../../utils/logger'
 import { processImageUrls } from '../../utils/image-utils'
 import { normalizeDiagnosisRecords } from '../../utils/diagnosis-data-utils'
 
+// 诊断记录接口
 interface DiagnosisRecord {
   _id: string
   symptoms: string
@@ -20,6 +20,35 @@ interface DiagnosisRecord {
   dayAge: number
   temperature: number
   images?: string[]
+}
+
+// 页面数据接口
+interface PageData extends NavbarData {
+  records: DiagnosisRecord[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+    hasMore: boolean
+  }
+  activeStatus: string
+  statusOptions: { value: string; label: string }[]
+  loading: boolean
+  refreshing: boolean
+  loadingMore: boolean
+  selectedRecord: DiagnosisRecord | null
+  showDetailDialog: boolean
+  hasLoaded: boolean
+}
+
+// 页面实例类型
+type PageInstance = PageConfigWithLifecycle<PageData> & {
+  loadDiagnosisHistory: () => Promise<void>
+  refreshData: () => Promise<void>
+  loadMoreData: () => Promise<void>
+  updateDiagnosisStatus: (recordId: string, newStatus: string) => Promise<void>
+  deleteRecord: (recordId: string) => Promise<void>
 }
 
 const getRecordTimestamp = (record: DiagnosisRecord): number => {
@@ -95,23 +124,23 @@ const pageConfig = {
     hasLoaded: false
   },
 
-  onLoad(this: unknown) {
+  onLoad(this: PageInstance) {
     // ✅ 诊断历史始终显示所有批次的记录，不受批次筛选影响
     this.loadDiagnosisHistory()
   },
 
-  onShow(this: unknown) {
+  onShow(this: PageInstance) {
     // ✅ 修复：只在页面已经完成首次加载的情况下刷新数据，避免覆盖首次加载
     if (this.data.hasLoaded) {
       this.refreshData()
     }
   },
 
-  onPullDownRefresh(this: unknown) {
+  onPullDownRefresh(this: PageInstance) {
     this.refreshData()
   },
 
-  onReachBottom(this: unknown) {
+  onReachBottom(this: PageInstance) {
     this.loadMoreData()
   },
 
@@ -122,18 +151,18 @@ const pageConfig = {
   // 返回上一页
   goBack() {
     // 防止重复触发
-    if ((this as unknown).__isNavigatingBack) {
+    if ((this as PageInstance).__isNavigatingBack) {
       return
     }
     
-    (this as unknown).__isNavigatingBack = true
+    (this as PageInstance).__isNavigatingBack = true
     
     wx.navigateBack({
       delta: 1,
       complete: () => {
         // 500ms后清除标志
         this._safeSetTimeout(() => {
-          (this as unknown).__isNavigatingBack = false
+          (this as PageInstance).__isNavigatingBack = false
         }, 500)
       },
       fail: () => {
@@ -153,7 +182,7 @@ const pageConfig = {
   },
 
   // 刷新数据
-  async refreshData(this: unknown) {
+  async refreshData(this: PageInstance) {
     this.setData({
       refreshing: true,
       'pagination.page': 1,
@@ -168,7 +197,7 @@ const pageConfig = {
   },
 
   // 加载更多数据
-  async loadMoreData(this: unknown) {
+  async loadMoreData(this: PageInstance) {
     if (!this.data.pagination.hasMore || this.data.loadingMore) {
       return
     }
@@ -271,7 +300,7 @@ const pageConfig = {
   },
 
   // 关闭详情对话框
-  onCloseDetail(this: unknown) {
+  onCloseDetail(this: PageInstance) {
     this.setData({
       showDetailDialog: false,
       selectedRecord: null
@@ -292,7 +321,7 @@ const pageConfig = {
   },
 
   // 从详情弹窗创建治疗方案
-  onCreateTreatmentFromDetail(this: unknown) {
+  onCreateTreatmentFromDetail(this: PageInstance) {
     const record = this.data.selectedRecord
     if (!record) return
 

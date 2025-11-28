@@ -16,13 +16,33 @@ export interface NavbarSizes {
 export type PageInstance<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption> = WechatMiniprogram.Page.Instance<D, Record<string, unknown>>
 
 /**
- * 页面配置类型（包含可选的生命周期方法）
+ * 导航栏数据类型
  */
-interface PageConfigWithLifecycle {
-  data?: Record<string, unknown>
+export interface NavbarData {
+  statusBarHeight: number;
+  navBarHeight: number;
+  totalNavHeight: number;
+}
+
+/**
+ * 页面配置类型（包含可选的生命周期方法和自定义属性）
+ */
+export interface PageConfigWithLifecycle<T = Record<string, unknown>> {
+  data?: T & Partial<NavbarData>
   onLoad?: (options?: Record<string, string | undefined>) => void
+  onShow?: () => void
+  onHide?: () => void
+  onUnload?: () => void
+  onPullDownRefresh?: () => void
+  onReachBottom?: () => void
   goBack?: () => void
-  setData?: (data: Record<string, unknown>, callback?: () => void) => void
+  setData?: (data: Partial<T & NavbarData>, callback?: () => void) => void
+  // 定时器管理
+  _timerIds?: number[]
+  _safeSetTimeout?: (callback: () => void, delay: number) => number
+  _clearAllTimers?: () => void
+  // 导航标记
+  __isNavigatingBack?: boolean
   [key: string]: unknown
 }
 
@@ -84,10 +104,10 @@ export function getSystemNavBarSizes(): NavbarSizes {
  * 创建带有自适应导航栏的页面
  * 会自动计算状态栏高度并设置
  */
-export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption = WechatMiniprogram.Page.DataOption>(
-  pageConfig: Partial<PageInstance<D>> & { data: D }
-): Partial<PageInstance<D & { statusBarHeight: number; navBarHeight: number; totalNavHeight: number }>> {
-  const config = pageConfig as PageConfigWithLifecycle
+export function createPageWithNavbar<T extends Record<string, unknown> = Record<string, unknown>>(
+  pageConfig: PageConfigWithLifecycle<T>
+): PageConfigWithLifecycle<T & NavbarData> {
+  const config = pageConfig as PageConfigWithLifecycle<T>
   const originalOnLoad = config.onLoad || function() {}
   
   // 扩展data，添加导航栏高度
@@ -134,7 +154,7 @@ export function createPageWithNavbar<D extends WechatMiniprogram.Page.DataOption
     }
   }
   
-  return config as Partial<PageInstance<D & { statusBarHeight: number; navBarHeight: number; totalNavHeight: number }>>
+  return config as PageConfigWithLifecycle<T & NavbarData>
 }
 
 /**
