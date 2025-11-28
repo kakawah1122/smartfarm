@@ -282,7 +282,6 @@
       
       <view class="invite-dialog-body">
         <view class="form-tip">
-          <text class="tip-icon">💡</text>
           <text class="tip-text">请输入管理员提供的邀请码</text>
         </view>
         
@@ -324,7 +323,6 @@
       </view>
       
       <view class="invite-dialog-footer">
-        <button class="invite-btn-cancel" bind:tap="closeInviteDialog">取消</button>
         <button class="invite-btn-confirm" bind:tap="onInviteRegister">确定注册</button>
       </view>
     </view>

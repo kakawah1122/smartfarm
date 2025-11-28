@@ -173,20 +173,17 @@
 .form-tip {
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-bottom: 32rpx;
-  padding: 16rpx;
-  background-color: #f8f9fa;
+  padding: 20rpx 16rpx;
+  background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   border-radius: 8rpx;
-}
-
-.tip-icon {
-  margin-right: 12rpx;
-  font-size: 32rpx;
 }
 
 .tip-text {
   font-size: 28rpx;
-  color: #666;
+  color: #ffffff;
+  font-weight: 500;
 }
 
 .form-group {
@@ -204,10 +201,11 @@
 .form-input {
   width: 100%;
   height: 80rpx;
-  padding: 16rpx 20rpx;
+  padding: 0 20rpx;
   border: 2rpx solid #e0e0e0;
   border-radius: 8rpx;
   font-size: 28rpx;
+  line-height: 76rpx;  /* 高度80rpx - 边框4rpx = 76rpx */
   color: #333;
   background-color: #fff;
   box-sizing: border-box;
@@ -224,36 +222,19 @@
 }
 
 .invite-dialog-footer {
-  display: flex;
   padding: 24rpx 32rpx 32rpx;
-  gap: 16rpx;
 }
 
-.invite-btn-cancel,
 .invite-btn-confirm {
-  flex: 1;
-  height: 72rpx;
-  border-radius: 8rpx;
-  font-size: 28rpx;
+  width: 100%;
+  height: 80rpx;
+  border-radius: 12rpx;
+  font-size: 32rpx;
+  font-weight: 500;
   border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.invite-btn-cancel {
-  background-color: #f5f5f5;
-  color: #666;
-}
-
-.invite-btn-cancel:active {
-  background-color: #e0e0e0;
-}
-
-.invite-btn-confirm {
   background: linear-gradient(135deg, #0052d9 0%, #4582e8 100%);
   color: white;
-  box-shadow: 0 2rpx 8rpx rgba(0, 82, 217, 0.2);
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.25);
 }
 
 .invite-btn-confirm:active {

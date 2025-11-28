@@ -272,10 +272,13 @@ async function getHealthStatisticsOptimized(event, wxContext) {
     
     // 使用聚合管道一次性获取所有统计数据
     const pipeline = [
-      // 第一步：匹配批次
+      // 第一步：匹配批次（支持通过 _id 或 batchNumber 匹配）
       {
         $match: {
-          _id: batchId
+          $or: [
+            { _id: batchId },
+            { batchNumber: batchId }
+          ]
         }
       },
       // 第二步：关联健康记录
@@ -378,10 +381,14 @@ async function getHealthStatisticsOptimized(event, wxContext) {
     const abnormalAnimals = data.abnormalCount || 0
     const healthyAnimals = totalAnimals - abnormalAnimals
     
+    // ✅ 原始入栏数量（用于计算存活率等）
+    const originalQuantity = Number(data.quantity) || 0
+    
     return {
       success: true,
       data: {
         totalAnimals,
+        totalChecks: totalAnimals,  // ✅ 兼容前端字段名
         healthyCount: healthyAnimals,
         abnormalCount: abnormalAnimals,
         treatmentCount: data.treatmentStats.treating || 0,
@@ -390,9 +397,10 @@ async function getHealthStatisticsOptimized(event, wxContext) {
         healthyRate: totalAnimals > 0 
           ? ((healthyAnimals / totalAnimals) * 100).toFixed(2)
           : '0.00',
-        mortalityRate: data.quantity > 0
-          ? ((data.deadCount / data.quantity) * 100).toFixed(2)
+        mortalityRate: originalQuantity > 0
+          ? ((data.deadCount / originalQuantity) * 100).toFixed(2)
           : '0.00',
+        originalQuantity: originalQuantity,  // ✅ 添加原始入栏数
         batchNumber: data.batchNumber,
         entryDate: data.entryDate
       }
