@@ -41,9 +41,8 @@ function getStatusBarHeightPx(): number {
       }
     }
 
-    // 兼容旧版本基础库
-    const systemInfo = wx.getSystemInfoSync()
-    return systemInfo.statusBarHeight || 44
+    // 返回默认值（新版基础库应该不会走到这里）
+    return 44
   } catch (error) {
     return 44
   }

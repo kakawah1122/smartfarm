@@ -366,10 +366,10 @@ const pageConfig: WechatMiniprogram.Page.Options<DeathListPageData, DeathListPag
   calculateVirtualListHeight() {
     const page = this as DeathListPageInstance
     
-    // 获取系统信息
-    const systemInfo = wx.getSystemInfoSync()
-    const windowHeight = systemInfo.windowHeight
-    const navbarHeight = systemInfo.statusBarHeight ? systemInfo.statusBarHeight + 44 : 88
+    // 获取窗口信息（使用新API替代废弃的getSystemInfoSync）
+    const windowInfo = wx.getWindowInfo()
+    const windowHeight = windowInfo.windowHeight
+    const navbarHeight = windowInfo.statusBarHeight ? windowInfo.statusBarHeight + 44 : 88
     
     // 减去统计卡片高度（约200rpx）和安全区域
     const statsHeight = 100 // px

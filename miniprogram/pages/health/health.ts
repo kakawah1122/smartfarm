@@ -2253,10 +2253,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       query.exec((res) => {
         if (res && res[0] && res[1]) {
           const rect = res[0]
-          const systemInfo = wx.getSystemInfoSync()
+          const windowInfo = wx.getWindowInfo()
           
           const dropdownTop = rect.top + rect.height + 8
-          const dropdownRight = systemInfo.windowWidth - rect.right
+          const dropdownRight = windowInfo.windowWidth - rect.right
           
           this.setData({
             dropdownTop: dropdownTop,

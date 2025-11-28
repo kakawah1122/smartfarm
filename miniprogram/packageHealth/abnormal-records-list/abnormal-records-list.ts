@@ -119,10 +119,10 @@ const abnormalRecordsPageConfig: WechatMiniprogram.Page.Options<
   calculateVirtualListHeight() {
     const page = this as AbnormalRecordsPageInstance
     
-    // 获取系统信息
-    const systemInfo = wx.getSystemInfoSync()
-    const windowHeight = systemInfo.windowHeight
-    const navbarHeight = systemInfo.statusBarHeight ? systemInfo.statusBarHeight + 44 : 88 // 状态栏 + 导航栏
+    // 获取窗口信息（使用新API替代废弃的getSystemInfoSync）
+    const windowInfo = wx.getWindowInfo()
+    const windowHeight = windowInfo.windowHeight
+    const navbarHeight = windowInfo.statusBarHeight ? windowInfo.statusBarHeight + 44 : 88 // 状态栏 + 导航栏
     
     // 计算可用高度（px转rpx，1px = 2rpx）
     const availableHeight = (windowHeight - navbarHeight) * 2
