@@ -1,13 +1,8 @@
-// @ts-nocheck
 // treatment-record.ts - 治疗记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
-// 类型定义 - 用于替换any类型
-type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>;
-type BaseEvent = WechatMiniprogram.BaseEvent;
-interface ErrorWithMessage {
-  message: string;
-  [key: string]: any;
-}
+
+// 类型定义
+type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
 
 import { markHomepageNeedSync } from '../utils/global-sync'
 import { logger } from '../../utils/logger'
