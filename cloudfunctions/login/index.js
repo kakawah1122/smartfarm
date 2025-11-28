@@ -83,22 +83,8 @@ exports.main = async (event, context) => {
       isFirstUser = true
     }
     
-    // 为第一个用户设置完整的管理员权限
-    const adminPermissions = [
-      'all',
-      'basic',
-      'production.view',
-      'production.manage', 
-      'health.view',
-      'health.manage',
-      'finance.view',
-      'finance.manage',
-      'finance.approve',
-      'employee.view',
-      'employee.manage',
-      'employee.invite',
-      'system.admin'
-    ]
+    // 为第一个用户设置超级管理员权限（与数据库 user_roles 一致）
+    const adminPermissions = ['*']
 
     const userInfo = {
       _openid: OPENID,
@@ -235,8 +221,8 @@ exports.main = async (event, context) => {
         department: user.department || user.farmName || '', // 兼容字段
         gender: user.gender || 0,
         // 角色和权限信息
-        role: user.role || 'user',
-        permissions: user.permissions || ['basic'],
+        role: user.role || 'employee',
+        permissions: user.permissions || [],
         position: user.position || '',
         managedBy: user.managedBy || null,
         organizationId: user.organizationId || null,

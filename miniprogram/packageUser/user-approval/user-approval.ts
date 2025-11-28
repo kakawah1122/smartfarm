@@ -43,7 +43,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     // 审批弹窗
     showApprovalDialog: false,
     approvalData: {
-      assignedRole: 'user',
+      assignedRole: 'employee',
       approvalRemark: ''
     },
     selectedApprovalRoleIndex: [0], // Picker组件需要数组索引
@@ -57,16 +57,16 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     showBatchDialog: false,
     batchAction: 'approve' as 'approve' | 'reject',
     batchData: {
-      assignedRole: 'user',
+      assignedRole: 'employee',
       remark: ''
     },
     selectedBatchRoleIndex: [0], // 批量操作Picker组件需要数组索引
     
-    // 选项数据
+    // 选项数据 - 使用新的4角色体系
     roleOptions: [
-      { label: '普通用户', value: 'user' },
-      { label: '操作员', value: 'operator' },
-      { label: '管理员', value: 'admin' }
+      { label: '员工', value: 'employee' },
+      { label: '兽医', value: 'veterinarian' },
+      { label: '经理', value: 'manager' }
     ],
     
     // 统一弹窗状态
@@ -487,7 +487,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       batchAction: 'approve',
       showBatchDialog: true,
       batchData: {
-        assignedRole: 'user',
+        assignedRole: 'employee',
         remark: ''
       }
     })
@@ -498,7 +498,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       batchAction: 'reject',
       showBatchDialog: true,
       batchData: {
-        assignedRole: 'user',
+        assignedRole: 'employee',
         remark: ''
       }
     })
@@ -522,7 +522,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
     this.setData({
       showApprovalDialog: true,
       approvalData: {
-        assignedRole: 'user',
+        assignedRole: 'employee',
         approvalRemark: ''
       }
     })
@@ -557,7 +557,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   // 表单事件
   onAssignedRoleChange(e: CustomEvent) {
     const selectedIndex = e.detail.value
-    const selectedRole = this.data.roleOptions[selectedIndex[0]]?.value || 'user'
+    const selectedRole = this.data.roleOptions[selectedIndex[0]]?.value || 'employee'
     this.setData({
       selectedApprovalRoleIndex: selectedIndex,
       'approvalData.assignedRole': selectedRole
@@ -578,7 +578,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
 
   onBatchRoleChange(e: CustomEvent) {
     const selectedIndex = e.detail.value
-    const selectedRole = this.data.roleOptions[selectedIndex[0]]?.value || 'user'
+    const selectedRole = this.data.roleOptions[selectedIndex[0]]?.value || 'employee'
     this.setData({
       selectedBatchRoleIndex: selectedIndex,
       'batchData.assignedRole': selectedRole
