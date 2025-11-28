@@ -1,6 +1,9 @@
 // user-approval.ts - 用户审批页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
+// 微信小程序事件类型
+type CustomEvent<T = any> = WechatMiniprogram.CustomEvent<T>
+
 // 待审批用户类型
 interface ApprovalUser {
   _id: string
@@ -396,9 +399,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
       const result = await wx.cloud.callFunction({
         name: 'user-approval',
         data: {
-          action: 'batch_approve',
+          action: batchAction === 'approve' ? 'batch_approve' : 'batch_reject',
           userIds: selectedUsers,
-          action: batchAction,
           assignedRole: batchAction === 'approve' ? batchData.assignedRole : null,
           remark: batchData.remark.trim()
         }
@@ -458,8 +460,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   onCheckboxChange(e: CustomEvent) {
-    e.stopPropagation() // 阻止冒泡到 cell 点击事件
-    
+    // 注意：阻止冒泡应在 wxml 中使用 catchtap 而非 bindtap
     const userId = e.currentTarget.dataset.userId
     const selectedUsers = [...this.data.selectedUsers]
     const index = selectedUsers.indexOf(userId)
@@ -644,9 +645,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> = {
   },
 
   // 数据标准化函数
-  normalizeUserData(user: unknown) {
+  normalizeUserData(user: Record<string, any>) {
     // 确保所有必要字段都有默认值
-    const normalized = {
+    const normalized: Record<string, any> = {
       ...user,
       _id: user._id || '',
       nickname: user.nickname || '未设置昵称',
