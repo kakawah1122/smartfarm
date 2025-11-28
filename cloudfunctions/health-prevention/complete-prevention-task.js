@@ -47,10 +47,10 @@ async function checkPermission(openid, module, action, resourceId = null) {
       return true
     }
     
-    // 3. 获取角色权限定义（从sys_roles）
-    const roleResult = await db.collection(COLLECTIONS.SYS_ROLES)
+    // 3. 获取角色权限定义（从user_roles）
+    const roleResult = await db.collection(COLLECTIONS.USER_ROLES)
       .where({
-        roleCode: userRole,
+        code: userRole,
         isActive: true
       })
       .limit(1)

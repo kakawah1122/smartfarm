@@ -19,7 +19,7 @@ const COLLECTIONS = {
   PROD_MATERIALS: 'prod_materials',
   PROD_MATERIAL_RECORDS: 'prod_material_records',
   PROD_INVENTORY_LOGS: 'prod_inventory_logs',
-  FEED_USAGE_RECORDS: 'feed_usage_records',  // 投喂记录（注：历史原因未使用 prod_ 前缀）
+  PROD_FEED_USAGE_RECORDS: 'feed_usage_records',  // 投喂记录（统一使用 PROD_ 前缀）
 
   // 健康管理模块 (Health Management)
   HEALTH_RECORDS: 'health_records',
@@ -51,7 +51,7 @@ const COLLECTIONS = {
   SYS_OVERVIEW_STATS: 'sys_overview_stats',
   SYS_NOTIFICATIONS: 'sys_notifications',
   SYS_PERMISSIONS: 'sys_permissions',
-  SYS_ROLES: 'sys_roles',
+  // SYS_ROLES: 'sys_roles',  // 已废弃，统一使用 USER_ROLES
   SYS_STORAGE_STATISTICS: 'sys_storage_statistics',
   
   // 知识库模块 (Knowledge Management)
@@ -84,7 +84,7 @@ const COLLECTION_MODULES = {
     COLLECTIONS.PROD_MATERIALS,
     COLLECTIONS.PROD_MATERIAL_RECORDS,
     COLLECTIONS.PROD_INVENTORY_LOGS,
-    COLLECTIONS.FEED_USAGE_RECORDS  // 投喂记录
+    COLLECTIONS.PROD_FEED_USAGE_RECORDS  // 投喂记录
   ],
   
   HEALTH_MANAGEMENT: [
@@ -120,7 +120,7 @@ const COLLECTION_MODULES = {
     COLLECTIONS.SYS_OVERVIEW_STATS,
     COLLECTIONS.SYS_NOTIFICATIONS,
     COLLECTIONS.SYS_PERMISSIONS,
-    COLLECTIONS.SYS_ROLES,
+    // COLLECTIONS.SYS_ROLES,  // 已废弃，统一使用 USER_ROLES
     COLLECTIONS.SYS_STORAGE_STATISTICS
   ],
   
