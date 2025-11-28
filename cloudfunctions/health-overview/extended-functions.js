@@ -383,13 +383,24 @@ async function getHealthStatisticsOptimized(event, wxContext) {
       }
     }
     
-    const data = result.list[0]
+    // ✅ 修复：查找匹配请求 batchId 的批次（聚合可能返回多个结果）
+    let data = result.list.find(item => item._id === batchId || item.batchNumber === batchId)
+    if (!data) {
+      // 如果没有精确匹配，使用第一个结果
+      data = result.list[0]
+    }
+    
+    console.log('[getHealthStatisticsOptimized] 使用的批次数据:', JSON.stringify(data))
+    
     const totalAnimals = data.currentCount || 0
     const abnormalAnimals = data.abnormalCount || 0
     const healthyAnimals = totalAnimals - abnormalAnimals
     
     // ✅ 原始入栏数量（用于计算存活率等）
     const originalQuantity = Number(data.quantity) || 0
+    
+    // ✅ 修复：安全地读取 treatmentStats，避免 undefined 错误
+    const treatmentStats = data.treatmentStats || { treating: 0, recovered: 0 }
     
     return {
       success: true,
@@ -398,14 +409,14 @@ async function getHealthStatisticsOptimized(event, wxContext) {
         totalChecks: totalAnimals,  // ✅ 兼容前端字段名
         healthyCount: healthyAnimals,
         abnormalCount: abnormalAnimals,
-        treatmentCount: data.treatmentStats.treating || 0,
-        recoveredCount: data.treatmentStats.recovered || 0,
+        treatmentCount: treatmentStats.treating || 0,
+        recoveredCount: treatmentStats.recovered || 0,
         deadCount: data.deadCount || 0,
         healthyRate: totalAnimals > 0 
           ? ((healthyAnimals / totalAnimals) * 100).toFixed(2)
           : '0.00',
         mortalityRate: originalQuantity > 0
-          ? ((data.deadCount / originalQuantity) * 100).toFixed(2)
+          ? (((data.deadCount || 0) / originalQuantity) * 100).toFixed(2)
           : '0.00',
         originalQuantity: originalQuantity,  // ✅ 添加原始入栏数
         batchNumber: data.batchNumber,
