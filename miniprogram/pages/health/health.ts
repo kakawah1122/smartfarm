@@ -3208,7 +3208,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 打开用药表单
    */
-  async openMedicationForm(task: unknown) {
+  async openMedicationForm(task: TaskItem) {
     // 先加载可用的药品库存
     await this.loadAvailableMedicines()
     
@@ -3221,11 +3221,11 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           name: 'production-entry',
           data: { action: 'getActiveBatches' },
           useCache: true  // 自动缓存10分钟
-        })
+        }) as BaseResponse<{ batches?: Array<{ _id: string; currentStock?: number; currentQuantity?: number; currentCount?: number }> }>
         
-        if ((batchResult as unknown).result?.success) {
-          const activeBatches = (batchResult as unknown).result.data || []
-          const currentBatch = activeBatches.find((b: unknown) => b._id === batchId)
+        if (batchResult?.success) {
+          const activeBatches = batchResult.data?.batches || []
+          const currentBatch = activeBatches.find((b) => b._id === batchId)
           if (currentBatch) {
             currentBatchStockQuantity = currentBatch.currentStock || 
                                        currentBatch.currentQuantity || 
