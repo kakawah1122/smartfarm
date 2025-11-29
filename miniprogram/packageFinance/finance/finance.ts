@@ -81,6 +81,12 @@ type FinanceApprovalRecord = {
 // 添加CustomEvent类型定义
 type CustomEvent = WechatMiniprogram.CustomEvent
 
+// 错误类型
+interface ErrorWithMessage {
+  message?: string
+  errMsg?: string
+}
+
 type FinancialSummaryResponse = {
   growth?: {
     revenueGrowth?: string
