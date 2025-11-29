@@ -597,7 +597,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
   loadBatchNumberForDisplay: async function(batchId: string) {
     try {
       // 先从已加载的批次列表中查找
-      const batch = this.data.activeBatches.find((b: unknown) => b._id === batchId)
+      const batch = this.data.activeBatches.find((b: { _id: string }) => b._id === batchId)
       if (batch && batch.batchNumber) {
         this.setData({
           'formData.batchNumber': batch.batchNumber
@@ -705,7 +705,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
   },
 
   // 数字输入处理
-  onNumberInput(e: CustomEvent) {
+  onNumberInput(e: CustomEvent<{ value: string }>) {
     const { field } = e.currentTarget.dataset
     const value = parseFloat(e.detail.value) || 0
     
@@ -759,7 +759,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       return
     }
     
-    const itemList = this.data.activeBatches.map((batch: unknown) => batch.displayName)
+    const itemList = this.data.activeBatches.map((batch: { displayName?: string }) => batch.displayName || '')
     
     wx.showActionSheet({
       itemList,
@@ -817,7 +817,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
   },
 
   // 原生picker选择药品/营养品
-  onMaterialPickerChange(e: CustomEvent) {
+  onMaterialPickerChange(e: CustomEvent<{ value: string }>) {
     const index = parseInt(e.detail.value)
     const material = this.data.filteredMaterials[index]
     
@@ -831,7 +831,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
   },
   
   // 领取数量输入
-  onMedicationQuantityInput(e: CustomEvent) {
+  onMedicationQuantityInput(e: CustomEvent<{ value: string }>) {
     const quantity = parseFloat(e.detail.value) || 0
     const currentStock = this.data.selectedMaterial?.currentStock || 0
     
