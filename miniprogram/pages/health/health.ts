@@ -965,7 +965,7 @@ Page<PageData, any>({
     this.isLoadingData = true  // 设置加载标志
     
     // 优化：使用批量更新器
-    const updates: unknown = {}
+    const updates: Record<string, unknown> = {}
     
     // 如果是静默刷新，不设置loading状态，避免阻塞UI
     if (!silent) {
@@ -1558,10 +1558,15 @@ Page<PageData, any>({
    */
   async loadHealthOverview() {
     try {
-      const result = await CloudApi.getHealthOverview(
-        this.data.currentBatchId,
-        this.data.dateRange
-      )
+      // TODO: CloudApi.getHealthOverview 已废弃，使用 HealthCloud.overview 替代
+      const result = await safeCloudCall({
+        name: 'health-overview',
+        data: {
+          action: 'get_health_overview',
+          batchId: this.data.currentBatchId,
+          dateRange: this.data.dateRange
+        }
+      }) as BaseResponse<{ recentPrevention?: unknown[]; activeAlerts?: unknown[] }>
 
       if (result.success && result.data) {
         const { recentPrevention, activeAlerts } = result.data
