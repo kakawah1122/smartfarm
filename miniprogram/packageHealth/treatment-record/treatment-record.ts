@@ -37,12 +37,18 @@ interface CloudResult {
 // 物料类型
 interface MaterialItem {
   _id: string
+  id?: string
   materialId?: string
   displayName?: string
   name?: string
   category?: string
+  categoryLabel?: string
   stock?: number
+  currentStock?: number
   unit?: string
+  code?: string
+  materialCode?: string
+  specification?: string
 }
 
 // 验证结果类型
@@ -855,19 +861,19 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
   /**
    * 初始用药 - 药品选择变化
    */
-  onInitialMedicationChange: function(e: CustomEvent) {
+  onInitialMedicationChange: function(e: CustomEvent<{ value: number }>) {
     const index = e.detail.value
     const { filteredMaterials, initialMedications } = this.data
     
     
     if (index >= 0 && index < filteredMaterials.length) {
-      const material = filteredMaterials[index]
+      const material = filteredMaterials[index] as MaterialItem
       
-      const materialId = material._id || material.id
+      const materialId = material._id || material.materialId
       
       // 检查是否已经添加过该药品
       const existingIndex = initialMedications.findIndex(
-        (med: unknown) => med.materialId === materialId
+        (med: { materialId: string }) => med.materialId === materialId
       )
       
       if (existingIndex >= 0) {
@@ -982,7 +988,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     
     if (currentMedication.hasOwnProperty('index')) {
       // 编辑模式
-      const index = (currentMedication as unknown).index
+      const index = (currentMedication as { index: number }).index
       medications[index] = { ...currentMedication }
       delete medications[index].index
     } else {
@@ -1018,7 +1024,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
         }
         break
       case 'diagnosis':
-        if (!value || value.trim().length === 0) {
+        if (!value || (typeof value === 'string' && value.trim().length === 0)) {
           errors[field] = '请输入诊断结果'
         } else {
           delete errors[field]
@@ -1178,7 +1184,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
         })
       }, 1500)
     } else {
-      throw new Error(result.result?.message || '提交失败')
+      throw new Error((result as CloudResult).message || '提交失败')
     }
   },
 
@@ -1335,18 +1341,19 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
   // 返回上一页
   goBack() {
     // 防止重复触发
-    if ((this as unknown).__isNavigatingBack) {
+    const self = this as unknown as { __isNavigatingBack?: boolean }
+    if (self.__isNavigatingBack) {
       return
     }
     
-    (this as unknown).__isNavigatingBack = true
+    self.__isNavigatingBack = true
     
     wx.navigateBack({
       delta: 1,
       complete: () => {
         // 500ms后清除标志
         this._safeSetTimeout(() => {
-          (this as unknown).__isNavigatingBack = false
+          self.__isNavigatingBack = false
         }, 500)
       },
       fail: () => {
