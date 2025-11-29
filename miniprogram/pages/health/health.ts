@@ -614,7 +614,7 @@ Page<PageData, any>({
   /**
    * 初始化页面（优化：合并setData）
    */
-  async initializePage(options: unknown) {
+  async initializePage(options: { batchId?: string; tab?: string }) {
     const batchId = options.batchId
     const tab = options.tab
     
