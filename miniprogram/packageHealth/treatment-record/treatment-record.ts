@@ -1135,8 +1135,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       }
     } catch (error: unknown) {
       // 提交失败，已显示错误提示
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '保存失败，请重试',
+        title: err.message || '保存失败，请重试',
         icon: 'none'
       })
     } finally {
@@ -1410,8 +1411,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       })
     } catch (error: unknown) {
       wx.hideLoading()
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '标记治愈失败',
+        title: err.message || '标记治愈失败',
         icon: 'none'
       })
     }
@@ -1473,8 +1475,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     } catch (error: unknown) {
       wx.hideLoading()
       // 加载失败，已显示错误提示
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '加载失败',
+        title: err.message || '加载失败',
         icon: 'none'
       })
     }
@@ -1634,8 +1637,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     } catch (error: unknown) {
       wx.hideLoading()
       // 提交失败，已显示错误提示
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '提交失败',
+        title: err.message || '提交失败',
         icon: 'none'
       })
     }
@@ -1828,8 +1832,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     } catch (error: unknown) {
       wx.hideLoading()
       // 提交失败，已显示错误提示
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '提交失败',
+        title: err.message || '提交失败',
         icon: 'none'
       })
     }
