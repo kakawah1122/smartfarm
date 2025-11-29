@@ -1,17 +1,8 @@
 // ai-diagnosis.ts - AI智能诊断页面
 import { createPageWithNavbar, PageConfigWithLifecycle } from '../../utils/navigation'
-import { safeCloudCall } from '../../utils/safe-cloud-call'
 import { HealthCloud } from '../../utils/cloud-functions'
 import { logger } from '../../utils/logger'
 import type { InputEvent } from '../../../typings/core'
-
-/**
- * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
- */
-async function callCloudFunction(config: { name: string; data: any }) {
-  const result = await safeCloudCall(config)
-  return { result }
-}
 
 type AnyObject = Record<string, unknown>
 type SymptomOption = { id: string; name: string; checked: boolean }
@@ -883,7 +874,7 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
     } catch (error) {
       const err = error as ErrorWithMessage
       logger.error('====== 诊断提交失败 ======')
-      logger.error('错误类型:', err.errCode)
+      logger.error('错误类型:', (err as AnyObject).errCode)
       logger.error('错误信息:', err.errMsg || err.message)
       logger.error('完整错误:', error)
       

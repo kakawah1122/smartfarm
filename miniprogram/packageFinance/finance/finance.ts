@@ -1,8 +1,10 @@
 // finance.ts
-// @ts-nocheck
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, PageConfigWithLifecycle } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
+
+// 通用对象类型
+type AnyObject = Record<string, unknown>
 
 type FinanceOverviewResponse = {
   income?: { total?: number; growth?: string }
@@ -75,6 +77,12 @@ type FinanceApprovalRecord = {
     type?: string
     typeName?: string
     reason?: string
+    status?: 'pending' | 'approved' | 'rejected'
+    approvedAt?: string
+    rejectedAt?: string
+    rejectReason?: string
+    approvedBy?: string
+    rejectedBy?: string
   }
 }
 
@@ -85,6 +93,55 @@ type CustomEvent = WechatMiniprogram.CustomEvent
 interface ErrorWithMessage {
   message?: string
   errMsg?: string
+}
+
+// 审批项类型
+interface ApprovalItem {
+  id: string
+  _id?: string
+  recordId?: string
+  type?: string
+  amount?: number
+  description?: string
+  applicant?: string
+  status?: string
+  formattedDate?: string
+  rejectReason?: string
+  reimbursement?: {
+    type?: string
+    typeName?: string
+    reason?: string
+    status?: string
+  }
+}
+
+// 健康死亡记录类型
+interface HealthDeathRecord {
+  deathCount?: number
+  deathDate?: string
+}
+
+// 分析结果类型
+interface AnalysisResult {
+  format?: string
+  rawText?: string
+  profitability?: { summary?: string }
+  costStructure?: { summary?: string }
+  suggestions?: { summary?: string }
+}
+
+// 分析历史项类型
+interface AnalysisHistoryItem {
+  _id?: string
+  createTime?: string | Date
+  analysisResult?: AnalysisResult
+  formattedDate?: string
+  summary?: string
+}
+
+// 云函数返回结果类型
+interface ReimbursementListResult {
+  records?: FinanceApprovalRecord[]
 }
 
 type FinancialSummaryResponse = {
@@ -98,9 +155,6 @@ type FinancialSummaryResponse = {
     }
   }
 }
-
-// 分页配置
-const PAGE_SIZE = 20;
 
 const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
   options: {
@@ -1156,10 +1210,11 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
           approvalItems: []
         })
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const err = error as ErrorWithMessage
       logger.error('加载审批事项失败:', error)
       // 权限不足时不显示错误
-      if (!error.message?.includes('无权限')) {
+      if (!err.message?.includes('无权限')) {
         this.setData({
           approvalItems: []
         })
@@ -1407,10 +1462,11 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
       } else {
         throw new Error(result.error || '拒绝失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
       wx.hideLoading()
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '拒绝失败',
+        title: err.message || '拒绝失败',
         icon: 'none',
         duration: 2000
       })
@@ -1455,10 +1511,11 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
             } else {
               throw new Error(result.error || '审批失败')
             }
-          } catch (error: unknown) {
+          } catch (error) {
             wx.hideLoading()
+            const err = error as ErrorWithMessage
             wx.showToast({
-              title: error.message || '审批失败',
+              title: err.message || '审批失败',
               icon: 'none'
             })
           }
@@ -1471,7 +1528,7 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
   async rejectApproval(e: CustomEvent) {
     const { id } = e.currentTarget.dataset
     // 设置当前选中的审批项
-    const item = this.data.approvalItems.find((item: unknown) => item.id === id)
+    const item = this.data.approvalItems.find((item: ApprovalItem) => item.id === id)
     if (item) {
       this.setData({
         selectedApprovalItem: item,
@@ -1518,10 +1575,10 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
           .orderBy('deathDate', 'desc')
           .limit(3)
           .get()
-          .then((res: unknown) => {
+          .then((res: { data: HealthDeathRecord[] }) => {
             return {
               recentDeaths: res.data || [],
-              totalDeaths: (res.data || []).reduce((sum: number, r: unknown) => sum + (r.deathCount || 0), 0)
+              totalDeaths: (res.data || []).reduce((sum: number, r: HealthDeathRecord) => sum + (r.deathCount || 0), 0)
             }
           })
           .catch((err: unknown) => {
@@ -1533,9 +1590,10 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
       // 鹅价数据：尝试从全局状态获取
       let goosePriceData = null
       try {
-        const app = getApp<unknown>()
-        if (app.globalData && app.globalData.goosePrice) {
-          goosePriceData = app.globalData.goosePrice
+        const app = getApp() as AnyObject
+        const globalData = app.globalData as AnyObject | undefined
+        if (globalData && globalData.goosePrice) {
+          goosePriceData = globalData.goosePrice
         }
       } catch (e) {
         logger.warn('获取鹅价数据失败:', e)
@@ -1589,9 +1647,9 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
         .limit(5)  // 只显示最近5条
         .get()
       
-      const historyList = (result.data || []).map((item: unknown) => ({
+      const historyList = (result.data || []).map((item: AnalysisHistoryItem) => ({
         ...item,
-        formattedDate: new Date(item.createTime).toLocaleString('zh-CN', {
+        formattedDate: new Date(item.createTime || '').toLocaleString('zh-CN', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
@@ -1610,7 +1668,7 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
   },
   
   // 提取分析摘要
-  extractSummary(result: unknown): string {
+  extractSummary(result: AnalysisResult | undefined): string {
     if (!result) return '暂无摘要'
     
     if (result.format === 'text') {
@@ -1618,7 +1676,7 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
     }
     
     // JSON格式，提取关键信息
-    const summaries = []
+    const summaries: string[] = []
     
     if (result.profitability?.summary) {
       summaries.push(result.profitability.summary)
@@ -1688,14 +1746,15 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
         }
       )
 
-      if (result.success && result.data?.records) {
-        const approvalHistory = result.data.records
-          .filter((record: unknown) => 
+      const data = result.data as ReimbursementListResult | undefined
+      if (result.success && data?.records) {
+        const approvalHistory = data.records
+          .filter((record: FinanceApprovalRecord) => 
             record.reimbursement?.status === 'approved' || 
             record.reimbursement?.status === 'rejected'
           )
           .slice(0, 5) // 只取前5条
-          .map((record: unknown) => {
+          .map((record: FinanceApprovalRecord) => {
             // 获取申请人信息
             const applicant = record.operatorName || record.operator || '未知'
             
@@ -1705,8 +1764,9 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
                            '报销申请'
             
             // 格式化日期
-            const date = record.reimbursement?.approvedAt || record.reimbursement?.rejectedAt || record.createTime
-            const formattedDate = date ? new Date(date).toLocaleString('zh-CN', {
+            const reimbursement = record.reimbursement as AnyObject | undefined
+            const date = reimbursement?.approvedAt || reimbursement?.rejectedAt || record.createTime
+            const formattedDate = date ? new Date(date as string).toLocaleString('zh-CN', {
               year: 'numeric',
               month: '2-digit',
               day: '2-digit',
@@ -1719,13 +1779,13 @@ const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
               type: 'expense',
               applicant: applicant,
               title: typeName,
-              description: record.reimbursement?.reason || record.description || '',
+              description: reimbursement?.reason as string || record.description || '',
               amount: this.formatAmount(record.amount),
-              status: record.reimbursement?.status || 'pending',
+              status: reimbursement?.status as string || 'pending',
               formattedDate: formattedDate,
-              rejectReason: record.reimbursement?.rejectReason || '',
-              approvedBy: record.reimbursement?.approvedBy || '',
-              rejectedBy: record.reimbursement?.rejectedBy || ''
+              rejectReason: reimbursement?.rejectReason as string || '',
+              approvedBy: reimbursement?.approvedBy as string || '',
+              rejectedBy: reimbursement?.rejectedBy as string || ''
             }
           })
 
