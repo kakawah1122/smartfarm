@@ -1837,16 +1837,17 @@ Page<PageData, any>({
       
       // 提取预防成本（确保是数字类型）
       let preventionCost = 0
+      const prevResult = preventionResult as BaseResponse<{ preventionCost?: number; stats?: { preventionCost?: number }; preventionStats?: { totalCost?: number } }>
       
       if (isAllBatches) {
         // 全部批次模式：从 data.preventionCost 读取
-        if (preventionResult?.success && preventionResult.data) {
-          const costValue = preventionResult.data.preventionCost || preventionResult.data.stats?.preventionCost || 0
+        if (prevResult?.success && prevResult.data) {
+          const costValue = prevResult.data.preventionCost || prevResult.data.stats?.preventionCost || 0
           preventionCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
         }
       } else {
-        if (preventionResult?.success && preventionResult.data?.preventionStats) {
-          const costValue = preventionResult.data.preventionStats.totalCost
+        if (prevResult?.success && prevResult.data?.preventionStats) {
+          const costValue = prevResult.data.preventionStats.totalCost
           preventionCost = typeof costValue === 'string' ? parseFloat(costValue) || 0 : Number(costValue) || 0
         }
       }
