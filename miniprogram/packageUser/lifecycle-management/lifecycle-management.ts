@@ -1,10 +1,9 @@
 // lifecycle-management.ts - 任务管理页面
-// @ts-nocheck - TODO: 类型定义已提取到 lifecycle-types.ts，待集成后移除
 // 数据源：云数据库 task_templates 集合
 import { logger } from '../../utils/logger'
 
-// 通用对象类型
-type AnyObject = Record<string, unknown>
+// 通用对象类型 - 保留以备后续使用
+// type AnyObject = Record<string, unknown>
 
 // 自定义事件类型
 type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
@@ -489,7 +488,7 @@ Component({
 
 
     // 选择分类筛选
-    onCategoryChange(e: CustomEvent) {
+    onCategoryChange(e: CustomEvent<{ value: number }>) {
       this.setData({
         filterCategory: this.data.categories[e.detail.value]
       })
@@ -503,7 +502,7 @@ Component({
     },
 
     // 切换模板
-    onTemplateChange(e: CustomEvent) {
+    onTemplateChange(e: CustomEvent<{ value: number }>) {
       const template = this.data.templates[e.detail.value]
       this.setData({
         currentTemplate: template
@@ -631,12 +630,12 @@ Component({
     },
     
     // 计算日龄范围
-    calculateDayRanges(tasks: unknown[]) {
+    calculateDayRanges(tasks: Task[]) {
       if (!tasks || tasks.length === 0) {
         return { min: 1, max: 1 }
       }
       
-      const dayAges = tasks.map(t => t.dayAge)
+      const dayAges = tasks.map(t => t.dayAge || 0)
       return {
         min: Math.min(...dayAges),
         max: Math.max(...dayAges)
@@ -644,15 +643,16 @@ Component({
     },
     
     // 显示任务预览
-    showTaskPreview(parsedData: unknown) {
+    showTaskPreview(parsedData: { tasks: Task[]; templateName?: string }) {
       // 按日龄分组任务
-      const tasksByDay: unknown = {}
+      const tasksByDay: Record<number, Task[]> = {}
       
-      parsedData.tasks.forEach((task: unknown) => {
-        if (!tasksByDay[task.dayAge]) {
-          tasksByDay[task.dayAge] = []
+      parsedData.tasks.forEach((task: Task) => {
+        const dayAge = task.dayAge || 0
+        if (!tasksByDay[dayAge]) {
+          tasksByDay[dayAge] = []
         }
-        tasksByDay[task.dayAge].push(task)
+        tasksByDay[dayAge].push(task)
       })
       
       // 构建预览文本（显示前5个日龄的任务）
@@ -665,7 +665,7 @@ Component({
       
       sortedDays.forEach(day => {
         previewText += `【第${day}天】\n`
-        tasksByDay[day].forEach((task: unknown) => {
+        tasksByDay[day].forEach((task: Task) => {
           const sequenceTag = task.isSequenceTask ? '📍' : ''
           previewText += `  ${sequenceTag}${task.title}\n`
         })
@@ -691,7 +691,7 @@ Component({
     },
 
     // 保存导入的任务
-    async saveImportedTasks(parsedData: unknown) {
+    async saveImportedTasks(parsedData: { tasks: Task[]; templateName?: string }) {
       try {
         wx.showLoading({ title: '保存中...', mask: true })
         
@@ -801,7 +801,8 @@ Component({
         logger.error('加载模板失败:', error)
         
         // 如果是集合不存在的错误，尝试初始化
-        if (error.message && error.message.includes('collection not exists')) {
+        const err = error as ErrorWithMessage
+        if (err.message && err.message.includes('collection not exists')) {
           await this.initializeTaskTemplatesCollection()
           
           // 初始化后重新加载
@@ -869,7 +870,7 @@ Component({
         
         if (result.result?.success && result.result?.data) {
           // 转换数据格式
-          const templates = result.result.data.map((template: unknown) => ({
+          const templates = result.result.data.map((template: Template) => ({
             id: template._id || template.templateName || 'default',
             name: template.templateName || template.name || '未命名模板',
             description: template.description || '暂无描述',
@@ -945,7 +946,7 @@ Component({
         if (selectedTemplate.isDefault) {
           // 默认模板：从云数据库加载
           await this.loadDefaultDataFromBreedingSchedule()
-          allTasks = this.data.taskGroups.reduce((acc: unknown[], group: unknown) => {
+          allTasks = this.data.taskGroups.reduce((acc: Task[], group: TaskGroup) => {
             return acc.concat(group.tasks)
           }, [])
         } else {
@@ -978,21 +979,21 @@ Component({
               taskGroups
             })
             
-            allTasks = taskGroups.reduce((acc: unknown[], group: unknown) => {
+            allTasks = taskGroups.reduce((acc: Task[], group: TaskGroup) => {
               return acc.concat(group.tasks)
             }, [])
           }
         }
         
         // 设置为分组后的任务
-        const groupedTasks = this.data.taskGroups.map((group: unknown) => ({
+        const groupedTasks = this.data.taskGroups.map((group: TaskGroup) => ({
           dayAge: group.dayAge,
           taskCount: group.tasks.length,
           tasks: group.tasks
         }))
         
         // 默认折叠所有日龄
-        const expandedGroups: unknown = {}
+        const expandedGroups: Record<string, boolean> = {}
         
         this.setData({
           groupedTasks,
