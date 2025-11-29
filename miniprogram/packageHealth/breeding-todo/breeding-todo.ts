@@ -854,7 +854,7 @@ Page({
   /**
    * 路径选择处理
    */
-  onVaccineRouteChange(e: CustomEvent) {
+  onVaccineRouteChange(e: CustomEvent<{ value: string }>) {
     const { value } = e.detail
     this.setData({
       'vaccineFormData.routeIndex': parseInt(value)
