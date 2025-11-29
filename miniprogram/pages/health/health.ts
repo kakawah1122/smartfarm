@@ -1,5 +1,4 @@
-// @ts-nocheck
-
+// @ts-nocheck - TODO: 需要分阶段重构，类型错误100+
 // health.ts - 健康管理页面
 import CloudApi from '../../utils/cloud-api'
 import { formatTime, getCurrentBeijingDate } from '../../utils/util'
