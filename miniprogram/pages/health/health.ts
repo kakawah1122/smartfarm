@@ -3584,13 +3584,14 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
 
       } else {
-        throw new Error(result?.message || '提交失败')
+        throw new Error((result as BaseResponse)?.message || '提交失败')
       }
 
     } catch (error: unknown) {
       wx.hideLoading()
+      const err = error as { message?: string }
       wx.showToast({
-        title: error.message || '提交失败，请重试',
+        title: err.message || '提交失败，请重试',
         icon: 'error'
       })
     }
