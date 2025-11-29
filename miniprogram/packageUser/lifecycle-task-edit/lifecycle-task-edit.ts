@@ -118,9 +118,9 @@ Component({
     setNavigationBarHeight() {
       // 使用新的API替代废弃的getSystemInfoSync
       try {
-        const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : {}
+        const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : { statusBarHeight: 44 }
         this.setData({
-          statusBarHeight: windowInfo.statusBarHeight || 44
+          statusBarHeight: (windowInfo as { statusBarHeight?: number }).statusBarHeight || 44
         })
       } catch (error) {
         // 如果新API不可用，设置默认值
