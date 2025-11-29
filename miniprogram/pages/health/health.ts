@@ -3272,13 +3272,14 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
       
-      if (result && result.success) {
-        const materials = result.data.materials || []
+      const res = result as BaseResponse<{ materials: MaterialItem[] }>
+      if (res && res.success) {
+        const materials = res.data?.materials || []
         
         
         const availableMedicines = materials
-          .filter((material: unknown) => (material.currentStock || 0) > 0)
-          .map((material: unknown) => {
+          .filter((material: MaterialItem) => (material.currentStock || 0) > 0)
+          .map((material: MaterialItem) => {
             const medicine = {
               id: material._id,
               name: material.name,
@@ -3680,11 +3681,12 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         }
       })
 
-      if (result && result.success) {
-        const materials = result.data?.materials || []
+      const res = result as BaseResponse<{ materials: MaterialItem[] }>
+      if (res && res.success) {
+        const materials = res.data?.materials || []
         const availableNutrition = materials
-          .filter((material: unknown) => (material.currentStock || 0) > 0)
-          .map((material: unknown) => ({
+          .filter((material: MaterialItem) => (material.currentStock || 0) > 0)
+          .map((material: MaterialItem) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
