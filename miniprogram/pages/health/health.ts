@@ -3116,7 +3116,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 提交疫苗表单
    */
-  async submitVaccineForm(e?: unknown) {
+  async submitVaccineForm(e?: { detail?: { formData?: unknown } }) {
     // 适配组件事件：如果是从组件传递的事件，使用事件中的formData
     const formDataFromEvent = e?.detail?.formData
     const vaccineFormData = formDataFromEvent || this.data.vaccineFormData
