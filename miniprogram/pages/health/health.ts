@@ -1110,7 +1110,7 @@ Page<PageData, any>({
       ])
 
       // 处理预防统计数据
-      const preventionResponse = preventionResult as unknown
+      const preventionResponse = preventionResult as BaseResponse<{ totalCount?: number; vaccineCount?: number; medicationCount?: number; disinfectionCount?: number; preventionCost?: number }>
       let preventionStats = {
         totalPreventions: 0,
         vaccineCount: 0,
@@ -1136,11 +1136,12 @@ Page<PageData, any>({
       }
       
       // 备用：如果Dashboard没有返回medicationCount，从单独查询获取
-      if (preventionStats.medicationCount === 0 && medicationResult?.success && medicationResult.data) {
-        preventionStats.medicationCount = medicationResult.data.total || 0
+      const medResult = medicationResult as BaseResponse<{ total?: number }>
+      if (preventionStats.medicationCount === 0 && medResult?.success && medResult.data) {
+        preventionStats.medicationCount = medResult.data.total || 0
       }
 
-      const batchesWithPrevention = healthData.batches.map((batch: unknown) => ({
+      const batchesWithPrevention = healthData.batches.map((batch: Record<string, unknown>) => ({
         ...batch,
         preventionStats: {
           totalPreventions: 0,
