@@ -131,7 +131,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     },
     
     // AI建议的用药信息（仅用于显示，不参与提交）
-    aiMedicationSuggestions: [] as unknown[],
+    aiMedicationSuggestions: [] as Array<Record<string, unknown>>,
     
     // 用药记录
     medications: [] as Medication[],
@@ -152,11 +152,11 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     ],
     
     // 活跃批次
-    activeBatches: [] as unknown[],
+    activeBatches: [] as Array<Record<string, unknown>>,
     
     // 库存药品和营养品
-    availableMaterials: [] as unknown[],
-    filteredMaterials: [] as unknown[], // 根据治疗类型过滤后的物料
+    availableMaterials: [] as MaterialItem[],
+    filteredMaterials: [] as MaterialItem[], // 根据治疗类型过滤后的物料
     
     // ⚡ 数据加载状态标记（性能优化）
     dataLoadStatus: {
@@ -166,12 +166,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     
     // 原生选择器（已废弃，保留兼容性）
     selectedMaterialIndex: -1,
-    selectedMaterial: null as unknown,
+    selectedMaterial: null as MaterialItem | null,
     medicationQuantity: '',
     medicationDosage: '',
     
     // ✅ 首次创建治疗记录时的用药列表（支持多选联合用药）
-    initialMedications: [] as unknown[],
+    initialMedications: [] as Array<Record<string, unknown>>,
     currentMedicationForm: {
       materialIndex: -1,
       materialId: '',
@@ -250,7 +250,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     },
     
     // ✅ 已选择的药品列表（支持联合用药）
-    selectedMedications: [] as unknown[],
+    selectedMedications: [] as Array<{ materialId?: string; [key: string]: unknown }>,
     
     // ✅ 调整治疗方案对话框
     showAdjustPlanFormDialog: false,
@@ -1989,7 +1989,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
    * 追加用药 - 药品选择变化（✅ 与首次用药逻辑保持一致）
    */
   onAddMedicationMaterialChange: function(e: CustomEvent) {
-    const index = e.detail.value
+    const index = Number(e.detail.value) || 0
     const { filteredMaterials, selectedMedications } = this.data
     
     
@@ -2000,7 +2000,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       
       // ✅ 检查是否已经添加过该药品
       const existingIndex = selectedMedications.findIndex(
-        (med: unknown) => med.materialId === materialId
+        (med: { materialId?: string }) => med.materialId === materialId
       )
       
       if (existingIndex >= 0) {
@@ -2037,7 +2037,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     
     // 检查是否已经添加过该药品
     const existingIndex = selectedMedications.findIndex(
-      (med: unknown) => med.materialId === addMedicationForm.materialId
+      (med: { materialId?: string }) => med.materialId === addMedicationForm.materialId
     )
     
     if (existingIndex >= 0) {
