@@ -3892,7 +3892,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           action: 'create_record',
           recordData: recordData
         }
-      })
+      }) as BaseResponse
 
       if (result && result.success) {
         await this.completeNutritionTask(selectedTask._id, batchId)
@@ -3915,8 +3915,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
 
     } catch (error: unknown) {
       wx.hideLoading()
+      const err = error as { message?: string }
       wx.showToast({
-        title: error.message || '提交失败，请重试',
+        title: err.message || '提交失败，请重试',
         icon: 'error'
       })
     }
