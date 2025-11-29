@@ -3837,7 +3837,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 提交营养表单（适配组件事件）
    */
-  async submitNutritionForm(e?: unknown) {
+  async submitNutritionForm(e?: { detail?: { formData?: unknown } }) {
     // 适配组件事件：如果是从组件传递的事件，使用事件中的formData
     const formDataFromEvent = e?.detail?.formData
     const nutritionFormData = formDataFromEvent || this.data.nutritionFormData
