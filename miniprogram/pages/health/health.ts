@@ -1924,7 +1924,9 @@ Page<PageData, any>({
   viewHealthAlert(e: WechatMiniprogram.CustomEvent) {
     const { alertId } = e.currentTarget.dataset
     if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
-    HealthNavigationManager.navigateToHealthAlert(alertId)
+    // TODO: navigateToHealthAlert 方法未定义，需要添加到 HealthNavigationManager
+    // HealthNavigationManager.navigateToHealthAlert(alertId)
+    wx.navigateTo({ url: `/packageHealth/health-alert/health-alert?alertId=${alertId}` })
   },
 
   /**
@@ -1932,7 +1934,9 @@ Page<PageData, any>({
    */
   createHealthRecord() {
     if (typeof this.checkDoubleClick === 'function' && this.checkDoubleClick()) return
-    HealthNavigationManager.createHealthInspection(this.data.currentBatchId)
+    // TODO: createHealthInspection 方法未定义，需要添加到 HealthNavigationManager
+    // HealthNavigationManager.createHealthInspection(this.data.currentBatchId)
+    wx.navigateTo({ url: `/packageHealth/health-inspection/health-inspection?batchId=${this.data.currentBatchId}` })
   },
 
   /**
