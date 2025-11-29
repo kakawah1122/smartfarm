@@ -1,4 +1,3 @@
-// @ts-nocheck
 // miniprogram/packageHealth/vaccine-records-list/vaccine-records-list.ts
 import { buildNotDeletedCondition } from '../utils/db-query'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
@@ -6,7 +5,7 @@ import { safeCloudCall } from '../../utils/safe-cloud-call'
 // 定义CustomEvent类型
 type CustomEvent = WechatMiniprogram.CustomEvent
 
-interface CloudCallResult<T = any> {
+interface CloudCallResult<T = unknown> {
   success: boolean
   data?: T
   error?: string
@@ -42,7 +41,7 @@ interface VaccineRecord {
   operator?: string
   operatorName?: string
   relatedTaskId?: string
-  createdAt?: any
+  createdAt?: Date | string
   // 格式化字段
   formattedTotalCost?: string
   formattedVaccineCost?: string
@@ -53,7 +52,36 @@ interface VaccineRecord {
   vaccinationRate?: string
 }
 
-Page({
+// 页面数据类型
+interface PageData {
+  loading: boolean
+  records: VaccineRecord[]
+  recordsByBatch: Array<{
+    batchNumber: string
+    batchId: string
+    records: VaccineRecord[]
+  }>
+  stats: {
+    totalCount: number
+    totalCost: number
+    totalCoverage: number
+  }
+  showDetailDialog: boolean
+  selectedRecord: VaccineRecord | null
+  showCountInputDialog: boolean
+  countInputType: 'abnormal' | 'death'
+  countInputValue: string
+}
+
+// 页面自定义方法类型
+interface PageCustom {
+  _timerIds: number[]
+  _safeSetTimeout: (callback: () => void, delay: number) => number
+  _clearAllTimers: () => void
+  [key: string]: unknown
+}
+
+Page<PageData, PageCustom>({
   // ✅ 定时器管理
   _timerIds: [] as number[],
   
@@ -352,9 +380,10 @@ Page({
       } else {
         throw new Error(result?.error || '加载失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const errMsg = (error as Error)?.message || '加载失败'
       wx.showToast({
-        title: error.message || '加载失败',
+        title: errMsg,
         icon: 'none'
       })
       this.setData({ loading: false })
@@ -525,7 +554,7 @@ Page({
             success: () => {
               // 通知健康页面切换到"治疗管理"标签
               const pages = getCurrentPages()
-              const healthPage = pages.find((page: unknown) => page.route === 'pages/health/health')
+              const healthPage = pages.find((page) => (page as { route?: string }).route === 'pages/health/health')
               if (healthPage) {
                 healthPage.setData({
                   activeCategory: 'treatment'
@@ -537,11 +566,11 @@ Page({
       } else {
         throw new Error(result?.error || result?.message || '创建失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
       wx.hideLoading()
       wx.showModal({
         title: '创建失败',
-        content: error.message || '创建治疗记录失败，请重试',
+        content: (error as Error)?.message || '创建治疗记录失败，请重试',
         showCancel: false
       })
     }
@@ -585,7 +614,7 @@ Page({
             success: () => {
               // 通知健康页面切换到"治疗管理"标签（查看死亡统计）
               const pages = getCurrentPages()
-              const healthPage = pages.find((page: unknown) => page.route === 'pages/health/health')
+              const healthPage = pages.find((page) => (page as { route?: string }).route === 'pages/health/health')
               if (healthPage) {
                 healthPage.setData({
                   activeCategory: 'treatment'
@@ -597,11 +626,11 @@ Page({
       } else {
         throw new Error(result?.error || result?.message || '创建失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
       wx.hideLoading()
       wx.showModal({
         title: '创建失败',
-        content: error.message || '创建死亡记录失败，请重试',
+        content: (error as Error)?.message || '创建死亡记录失败，请重试',
         showCancel: false
       })
     }
