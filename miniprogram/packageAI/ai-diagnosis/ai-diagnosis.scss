@@ -531,7 +531,7 @@
   border: none;
   border-bottom: 2rpx solid #e0e0e0;
   font-size: 30rpx;
-  color: var(--td-text-color-primary);
+  color: #333333; /* 固定颜色 */
   height: auto;
   line-height: 1.5;
   box-sizing: border-box;
@@ -540,7 +540,7 @@
   transition: all 0.3s ease;
   
   &:focus {
-    border-bottom-color: var(--td-brand-color);
+    border-bottom-color: #0052d9;
     outline: none;
   }
 }
@@ -548,7 +548,7 @@
 .form-unit {
   width: 60rpx;
   font-size: 28rpx;
-  color: var(--td-text-color-secondary);
+  color: #666666; /* 固定颜色 */
   text-align: center;
   flex-shrink: 0;
   line-height: 1.2;
@@ -566,11 +566,11 @@
 
 .picker-value {
   padding: 16rpx 20rpx;
-  background: var(--td-bg-color-container);
+  background: #f5f5f5; /* 固定背景色 */
   border-radius: 8rpx;
   border: none;
   font-size: 30rpx;
-  color: var(--td-text-color-primary);
+  color: #333333; /* 固定颜色 */
   transition: all 0.3s ease;
   box-sizing: border-box;
   display: flex;
@@ -579,13 +579,13 @@
   line-height: 1.5;
   
   &.placeholder {
-    color: var(--td-text-color-placeholder);
+    color: #999999; /* 固定占位符颜色 */
   }
   
   // 点击效果
   &:active {
     background: white;
-    box-shadow: 0 0 0 2rpx var(--td-brand-color);
+    box-shadow: 0 0 0 2rpx #0052d9;
   }
 }
 
@@ -594,7 +594,7 @@
   flex: 1;
   margin: 0 12rpx;
   padding: 16rpx 20rpx;
-  background: var(--td-bg-color-container);
+  background: #f5f5f5; /* 固定背景色 */
   border-radius: 8rpx;
   display: flex;
   align-items: center;
@@ -605,7 +605,7 @@
 .value-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: var(--td-brand-color);
+  color: #0052d9; /* 固定品牌色 */
 }
 
 // 症状标签（内联样式）
@@ -615,7 +615,7 @@
   gap: 6rpx;
   margin-bottom: 12rpx;
   padding: 10rpx;
-  background: var(--td-bg-color-container);
+  background: #f5f5f5; /* 固定背景色 */
   border-radius: 12rpx;
 }
 
@@ -625,16 +625,16 @@
   gap: 4rpx;
   padding: 6rpx 12rpx;
   background: white;
-  border: 2rpx solid var(--td-border-level-2-color);
+  border: 2rpx solid #e0e0e0; /* 固定边框色 */
   border-radius: 24rpx;
   font-size: 28rpx;
-  color: var(--td-text-color-primary);
+  color: #333333; /* 固定文字色 */
   transition: all 0.2s ease;
   cursor: pointer;
   
   .tag-icon {
     font-size: 24rpx;
-    color: var(--td-brand-color);
+    color: #0052d9; /* 固定品牌色 */
     font-weight: bold;
   }
   
@@ -644,11 +644,11 @@
   
   &:active {
     transform: scale(0.95);
-    background: var(--td-bg-color-container);
-    border-color: var(--td-brand-color);
+    background: #f5f5f5;
+    border-color: #0052d9;
     
     .tag-icon {
-      color: var(--td-brand-color);
+      color: #0052d9;
     }
   }
 }
@@ -658,17 +658,17 @@
   width: 100%;
   min-height: 200rpx;
   padding: 20rpx;
-  background: var(--td-bg-color-container);
+  background: #f5f5f5; /* 固定背景色 */
   border-radius: 12rpx;
   border: 2rpx solid transparent;
   font-size: 30rpx;
-  color: var(--td-text-color-primary);
+  color: #333333; /* 固定文字色 */
   line-height: 1.6;
   box-sizing: border-box;
   transition: all 0.3s ease;
   
   &:focus {
-    border-color: var(--td-brand-color);
+    border-color: #0052d9;
     background: white;
     outline: none;
   }
@@ -678,7 +678,7 @@
 .char-count {
   text-align: right;
   font-size: 24rpx;
-  color: var(--td-text-color-placeholder);
+  color: #999999; /* 固定颜色 */
   margin-top: 8rpx;
 }
 
@@ -823,14 +823,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--td-bg-color-container);
-  border: 2rpx dashed var(--td-border-level-2-color);
+  background: #f5f5f5; /* 固定背景色 */
+  border: 2rpx dashed #e0e0e0; /* 固定边框色 */
   border-radius: 12rpx;
   transition: all 0.3s ease;
   
   &:active {
     transform: scale(0.95);
-    background: var(--td-bg-color-container-hover);
+    background: #eeeeee; /* 固定悬停背景色 */
   }
   
   // ✨ 首次上传强调样式
@@ -843,7 +843,7 @@
 .upload-text {
   display: block;
   font-size: 26rpx;
-  color: var(--td-text-color-secondary);
+  color: #666666; /* 固定颜色 */
   margin-top: 8rpx;
   text-align: center;
   width: 100%;
@@ -1160,14 +1160,14 @@
 // 异常标签选中状态
 .symptom-tag-inline.tag-checked {
   background: rgba(0, 82, 217, 0.1);
-  border-color: var(--td-brand-color);
+  border-color: #0052d9; /* 固定品牌色 */
   
   .tag-icon {
-    color: var(--td-brand-color);
+    color: #0052d9; /* 固定品牌色 */
   }
   
   .tag-name {
-    color: var(--td-brand-color);
+    color: #0052d9; /* 固定品牌色 */
     font-weight: 600;
   }
 }
@@ -1182,20 +1182,20 @@
 
 /* 加载状态样式 */
 .t-loading {
-  --td-loading-color: var(--td-brand-color);
+  --td-loading-color: #0052d9;
 }
 
 /* 标签选中状态优化 */
 .t-tag--theme-primary {
   --td-tag-primary-color: white;
-  --td-tag-primary-bg-color: var(--td-brand-color);
-  --td-tag-primary-border-color: var(--td-brand-color);
+  --td-tag-primary-bg-color: #0052d9;
+  --td-tag-primary-border-color: #0052d9;
 }
 
 .t-tag--theme-light {
-  --td-tag-light-color: var(--td-text-color-secondary);
-  --td-tag-light-bg-color: var(--td-bg-color-container);
-  --td-tag-light-border-color: var(--td-border-level-2-color);
+  --td-tag-light-color: #666666;
+  --td-tag-light-bg-color: #f5f5f5;
+  --td-tag-light-border-color: #e0e0e0;
 }
 
 /* 动画效果 */
