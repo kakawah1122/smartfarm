@@ -2082,10 +2082,10 @@ Page({
       }
 
     } catch (error: unknown) {
-      // 已移除调试日志
+      const err = error as ErrorWithMessage
       wx.hideLoading()
       wx.showToast({
-        title: error.message || '提交失败，请重试',
+        title: err.message || '提交失败，请重试',
         icon: 'error'
       })
     }
@@ -2420,10 +2420,10 @@ Page({
       }
 
     } catch (error: unknown) {
-      // 已移除调试日志
+      const err = error as ErrorWithMessage
       wx.hideLoading()
       wx.showToast({
-        title: error.message || '提交失败，请重试',
+        title: err.message || '提交失败，请重试',
         icon: 'error'
       })
     }
