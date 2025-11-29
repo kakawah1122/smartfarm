@@ -3978,7 +3978,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 提交异常反应记录（适配组件事件）
    */
-  async submitAdverseReactionRecord(e?: unknown) {
+  async submitAdverseReactionRecord(e?: { detail?: { reactionData?: unknown } }) {
     // 适配组件事件：如果是从组件传递的事件，使用事件中的reactionData
     const reactionDataFromEvent = e?.detail?.reactionData
     const reactionData = reactionDataFromEvent || this.data.adverseReactionData
@@ -4034,7 +4034,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           action: 'create_abnormal_record',  // 使用新的action名称
           recordData: recordData
         }
-      })
+      }) as BaseResponse
 
       if (result && result.success) {
         wx.hideLoading()
@@ -4053,8 +4053,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
       }
     } catch (error: unknown) {
       wx.hideLoading()
+      const err = error as { message?: string }
       wx.showToast({
-        title: error.message || '提交失败，请重试',
+        title: err.message || '提交失败，请重试',
         icon: 'error'
       })
     }
