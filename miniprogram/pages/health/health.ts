@@ -2305,7 +2305,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         const batches = Array.isArray(result.data) ? result.data : (result.data.batches || [])
         
         // 使用云函数返回的dayAge
-        const batchesWithDayAge = batches.map((batch: unknown) => {
+        const batchesWithDayAge = batches.map((batch: Record<string, unknown>) => {
           return {
             ...batch,
             dayAge: batch.dayAge
@@ -2869,7 +2869,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 完成普通任务
    */
-  async completeNormalTask(task: unknown) {
+  async completeNormalTask(task: TaskItem) {
     try {
       // 🔧 修复：使用兼容的字段获取方式，优先使用_id（数据库文档ID）
       const taskId = task._id || task.taskId || task.id
