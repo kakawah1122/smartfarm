@@ -3509,7 +3509,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
             recordDate: medicationRecord.useDate
           }
         }
-      })
+      }) as BaseResponse
 
       if (result && result.success) {
         // 计算成本：数量 × 单价
