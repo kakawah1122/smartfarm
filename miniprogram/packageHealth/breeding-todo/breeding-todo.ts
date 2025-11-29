@@ -1,5 +1,4 @@
 // breeding-todo/breeding-todo.ts - 待办任务页面（优化版）
-// @ts-nocheck - TODO: 需要分阶段重构，类型错误60+（已有模块化拆分）
 import { logger } from '../../utils/logger'
 import CloudApi from '../../utils/cloud-api'
 import { formatTime } from '../../utils/util'
@@ -19,6 +18,8 @@ interface Task {
   batchNumber?: string
   completed: boolean
   completedDate?: string
+  completedAt?: string | null
+  completedBy?: string | null
   isVaccineTask: boolean
   isMedicationTask: boolean
   isNutritionTask: boolean
@@ -29,6 +30,9 @@ interface Task {
   dosage?: string
   notes?: string
   materials?: string[]
+  currentStock?: number
+  currentQuantity?: number
+  currentCount?: number
 }
 
 interface VaccineFormData {
@@ -86,6 +90,35 @@ interface MaterialItem {
   currentStock: number
   category?: string
   description?: string
+}
+
+// 错误类型
+interface ErrorWithMessage {
+  message?: string
+  errMsg?: string
+}
+
+// 已完成记录类型
+interface CompletedRecord {
+  _id: string
+  id?: string
+  taskId?: string
+  title: string
+  completed: boolean
+  completedAt?: string
+  completedBy?: string
+  completedDate?: string
+}
+
+// 自定义事件类型
+type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>
+
+// 按批次分组的任务
+interface TasksByBatch {
+  batchId: string
+  batchNumber: string
+  dayAge: number
+  tasks: Task[]
 }
 
 Page({
@@ -571,33 +604,34 @@ Page({
   /**
    * 判断是否为疫苗任务
    */
-  isVaccineTask(task: unknown): boolean {
+  isVaccineTask(task: Task | Record<string, unknown>): boolean {
+    const t = task as Task
     // 首先排除用药管理任务
-    if (task.type === 'medication' || task.type === 'medicine') {
+    if (t.type === 'medication' || t.type === 'medicine') {
       return false
     }
     
     // 直接根据类型判断
-    if (task.type === 'vaccine') {
+    if (t.type === 'vaccine') {
       return true
     }
     
     // 通过类型名称判断
-    const typeName = this.getTypeName(task.type || '')
+    const typeName = this.getTypeName(t.type || '')
     return typeName === '疫苗管理'
   },
 
   /**
    * 判断是否为用药管理任务
    */
-  isMedicationTask(task: unknown): boolean {
+  isMedicationTask(task: Task | Record<string, unknown>): boolean {
     return isMedicationTask(task)
   },
 
   /**
    * 判断是否为营养管理任务
    */
-  isNutritionTask(task: unknown): boolean {
+  isNutritionTask(task: Task | Record<string, unknown>): boolean {
     return isNutritionTask(task)
   },
 
@@ -695,7 +729,7 @@ Page({
     // 如果todos中没找到，在todayTasksByBatch中查找
     if (!foundTask && this.data.todayTasksByBatch.length > 0) {
       for (const batch of this.data.todayTasksByBatch) {
-        foundTask = batch.tasks.find((t: unknown) => t._id === taskId || t.id === taskId || t.taskId === taskId)
+        foundTask = batch.tasks.find((t: Task) => t._id === taskId || t.id === taskId || t.taskId === taskId)
         if (foundTask) {
           break
         }
@@ -1115,7 +1149,7 @@ Page({
           .filter(dayAge => dayAge > this.data.currentDayAge) // 只显示未来的任务
           .map(dayAge => ({
             dayAge: dayAge,
-            tasks: result.data[dayAge.toString()].map((task: unknown) => ({
+            tasks: result.data[dayAge.toString()].map((task: Task) => ({
               ...task,
               isVaccineTask: this.isVaccineTask(task),
               batchNumber: this.data.currentBatchId
@@ -1166,7 +1200,7 @@ Page({
       }
 
       // 分批加载，避免一次性加载过多
-      const loadBatchTasks = async (batch: unknown): Promise<any[]> => {
+      const loadBatchTasks = async (batch: BatchInfo): Promise<any[]> => {
         try {
           const currentDayAge = this.calculateCurrentAge(batch.entryDate)
           const result = await CloudApi.getWeeklyTodos(batch._id, currentDayAge + 1)
@@ -1177,7 +1211,7 @@ Page({
               .filter(dayAge => dayAge > currentDayAge)
               .map(dayAge => ({
                 dayAge: dayAge,
-                tasks: result.data[dayAge.toString()].map((task: unknown) => ({
+                tasks: result.data[dayAge.toString()].map((task: Task) => ({
                   ...task,
                   batchNumber: batch.batchNumber || batch._id,
                   isVaccineTask: this.isVaccineTask(task)
@@ -1280,8 +1314,8 @@ Page({
             const result = await CloudApi.getTodos(batch._id, dayAge)
             
             if (result.success && result.data) {
-              const completedTasks = result.data.filter((task: unknown) => task.completed === true)
-              const formattedTasks = completedTasks.map((task: unknown) => ({
+              const completedTasks = result.data.filter((task: Task) => task.completed === true)
+              const formattedTasks = completedTasks.map((task: Task) => ({
                 id: task._id,
                 title: task.title,
                 completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
@@ -1320,8 +1354,8 @@ Page({
         const result = await CloudApi.getTodos(this.data.currentBatchId, dayAge)
         
         if (result.success && result.data) {
-          const completedTasks = result.data.filter((task: unknown) => task.completed === true)
-          const formattedTasks = completedTasks.map((task: unknown) => ({
+          const completedTasks = result.data.filter((task: Task) => task.completed === true)
+          const formattedTasks = completedTasks.map((task: Task) => ({
             id: task._id,
             title: task.title,
             completedDate: task.completedAt ? formatTime(new Date(task.completedAt)) : '',
@@ -1588,7 +1622,7 @@ Page({
     let taskFound = false
     
     // 🔥 强化ID匹配逻辑 - 尝试所有可能的ID字段
-    const matchTask = (task: unknown) => {
+    const matchTask = (task: Task) => {
       const possibleIds = [task._id, task.id, task.taskId].filter(Boolean)
       const targetIds = [taskId].filter(Boolean)
       
@@ -1608,7 +1642,7 @@ Page({
     // 🔥 重点：更新批次任务分组（这里才是真正的数据源）
     const updatedTodayTasksByBatch = this.data.todayTasksByBatch.map(batchGroup => ({
       ...batchGroup,
-      tasks: batchGroup.tasks.map((task: unknown) => {
+      tasks: batchGroup.tasks.map((task: Task) => {
         if (matchTask(task)) {
           taskFound = true
           // 批次任务列表中找到并更新任务
@@ -1659,7 +1693,7 @@ Page({
       
       if (result.result && result.result.success) {
         const tasks = result.result.data || []
-        const targetTask = tasks.find((task: unknown) => 
+        const targetTask = tasks.find((task: Task) => 
           task._id === taskId || task.taskId === taskId || task.id === taskId
         )
         
