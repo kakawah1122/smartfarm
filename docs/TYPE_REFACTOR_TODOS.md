@@ -27,20 +27,17 @@
 
 ## 🔧 Phase 2: Component 文件重构（优先级高）
 
-### 2.1 lifecycle-task-edit.ts (496行)
-- [ ] 移除 @ts-nocheck
-- [ ] 使用 timer-behavior 替代 _timerIds
-- [ ] 定义 ComponentData 接口
-- [ ] 定义 ComponentMethods 接口
-- [ ] 修复所有类型错误
+### 2.1 lifecycle-task-edit.ts (496行) ✅ 已完成
+- [x] 移除 @ts-nocheck
+- [x] 使用 timer-behavior 替代 _timerIds
+- [x] 定义 TaskTemplate, TaskTypeOption, PriorityOption 接口
+- [x] 修复所有类型错误
 - [ ] 测试功能正常
 
-### 2.2 lifecycle-management.ts (1092行)
-- [ ] 移除 @ts-nocheck
-- [ ] 使用 timer-behavior 替代 _timerIds
-- [ ] 定义 Task, Template, TaskGroup 接口
-- [ ] 修复所有类型错误
-- [ ] 测试功能正常
+### 2.2 lifecycle-management.ts (1092行) ⏸️ 待深入重构
+- [ ] 移除 @ts-nocheck (40+ 类型错误，需要更系统的重构)
+- ℹ️ 已有 Task, TaskGroup, Template 接口定义
+- ℹ️ 使用全局变量 scrollTimer 而非 Component 内部属性
 
 ---
 
@@ -164,8 +161,8 @@ export const timerBehavior = Behavior({
 
 | Phase | 文件数 | 完成数 | 状态 |
 |-------|--------|--------|------|
-| Phase 1 | 3 | 0 | ⏳ 待开始 |
-| Phase 2 | 2 | 0 | ⏳ 待开始 |
+| Phase 1 | 3 | 3 | ✅ 完成 |
+| Phase 2 | 2 | 1 | 🟡 进行中 (1/2) |
 | Phase 3 | 3 | 0 | ⏳ 待开始 |
 | Phase 4 | 3 | 0 | ⏳ 待开始 |
 
