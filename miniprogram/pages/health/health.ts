@@ -1,5 +1,59 @@
-// @ts-nocheck - TODO: 需要分阶段重构，类型错误100+
 // health.ts - 健康管理页面
+
+// 类型定义
+type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
+type InputEvent = CustomEvent<{ value: string }>;
+
+// 基础响应类型
+interface BaseResponse<T = unknown> {
+  success: boolean
+  data?: T
+  message?: string
+  error?: string
+}
+
+// 错误类型
+interface ErrorWithMessage {
+  message?: string
+  errMsg?: string
+}
+
+// 批次类型
+interface BatchItem {
+  _id: string
+  batchId?: string
+  batchNumber?: string
+  displayName?: string
+  dayAge?: number
+  tab?: string
+  activeTab?: string
+  currentBatchId?: string
+}
+
+// 物料类型
+interface MaterialItem {
+  _id: string
+  materialId?: string
+  name?: string
+  unit?: string
+  currentStock?: number
+  unitPrice?: number
+  avgCost?: number
+  price?: number
+  category?: string
+  description?: string
+}
+
+// 任务类型
+interface TaskItem {
+  _id?: string
+  id?: string
+  taskId?: string
+  batchId?: string
+  title?: string
+  dayAge?: number
+}
+
 import CloudApi from '../../utils/cloud-api'
 import { formatTime, getCurrentBeijingDate } from '../../utils/util'
 import { logger } from '../../utils/logger'
