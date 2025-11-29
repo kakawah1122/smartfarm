@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - TODO: 需要分阶段重构，类型错误70+
 // treatment-record.ts - 治疗记录页面
 import { createPageWithNavbar } from '../../utils/navigation'
 
