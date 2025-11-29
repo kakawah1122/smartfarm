@@ -1,5 +1,5 @@
 // breeding-todo/breeding-todo.ts - 待办任务页面（优化版）
-// @ts-nocheck - TODO: 需要分阶段重构，类型错误60+
+// @ts-nocheck - TODO: 需要分阶段重构，类型错误60+（已有模块化拆分）
 import { logger } from '../../utils/logger'
 import CloudApi from '../../utils/cloud-api'
 import { formatTime } from '../../utils/util'
