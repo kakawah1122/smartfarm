@@ -1616,9 +1616,9 @@ Page<PageData, any>({
         action: 'clean_orphan_tasks'
       }
     }).then((result: unknown) => {
-      const response = result as BaseResponse
+      const response = result as BaseResponse<{ deletedCount?: number }>
       // 后台清理孤儿任务，不显示日志
-      if (response.success && response.data && response.data.deletedCount > 0) {
+      if (response.success && response.data && (response.data.deletedCount || 0) > 0) {
         // 静默清理完成
       }
     }).catch((error: unknown) => {
@@ -2326,10 +2326,10 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           })
         } else if (this.data.currentBatchId) {
           // 查找当前批次
-          const currentBatch = batchesWithDayAge.find((b: unknown) => b._id === this.data.currentBatchId)
+          const currentBatch = batchesWithDayAge.find((b: Record<string, unknown>) => b._id === this.data.currentBatchId)
           if (currentBatch) {
             this.setData({
-              currentBatchNumber: currentBatch.batchNumber
+              currentBatchNumber: currentBatch.batchNumber as string
             })
           }
         }
@@ -2824,7 +2824,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
 
       const updates: Record<string, boolean> = {}
       
-      res.forEach((rect: unknown, index: number) => {
+      res.forEach((rect: { height?: number } | null, index: number) => {
         if (!rect) return
 
         const id = ids[index]
@@ -2833,7 +2833,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
         // 通过对比高度判断是否换行
         // 单行高度约为 42rpx (28rpx * 1.5行高)，换行后高度会明显增大
         const singleLineHeight = 42 // rpx
-        const isMultiline = rect.height > singleLineHeight
+        const isMultiline = (rect.height || 0) > singleLineHeight
 
         updates[`taskFieldMultiline.${field}`] = isMultiline
       })
