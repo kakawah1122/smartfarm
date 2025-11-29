@@ -1,10 +1,19 @@
-// @ts-nocheck
 // lifecycle-management.ts - 任务管理页面
+// @ts-nocheck - TODO: 部分类型已修复，剩余30+错误待处理
 // 数据源：云数据库 task_templates 集合
 import { logger } from '../../utils/logger'
 
+// 通用对象类型
+type AnyObject = Record<string, unknown>
+
 // 自定义事件类型
 type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
+
+// 错误类型
+interface ErrorWithMessage {
+  message?: string
+  errMsg?: string
+}
 
 // 任务接口
 interface Task {
@@ -35,10 +44,9 @@ interface Template {
   tasks?: Task[];
 }
 
-// 应用全局数据接口
-interface AppGlobalData {
+// 窗口信息类型
+interface WindowInfo {
   statusBarHeight?: number;
-  [key: string]: unknown;
 }
 
 // 定义全局变量存储定时器
@@ -130,9 +138,9 @@ Component({
     setNavigationBarHeight() {
       // 使用新的API替代废弃的getSystemInfoSync
       try {
-        const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : {}
+        const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : {} as WindowInfo
         this.setData({
-          statusBarHeight: windowInfo.statusBarHeight || 44
+          statusBarHeight: (windowInfo as WindowInfo).statusBarHeight || 44
         })
       } catch (error) {
         // 如果新API不可用，设置默认值
@@ -263,21 +271,22 @@ Component({
 
 
     // 按日龄分组任务
-    groupTasksByDayAge(tasks: unknown[]) {
-      const groups: unknown = {}
+    groupTasksByDayAge(tasks: Task[]) {
+      const groups: Record<number, TaskGroup> = {}
       
-      tasks.forEach(task => {
-        if (!groups[task.dayAge]) {
-          groups[task.dayAge] = {
-            dayAge: task.dayAge,
+      tasks.forEach((task: Task) => {
+        const dayAge = task.dayAge || 0
+        if (!groups[dayAge]) {
+          groups[dayAge] = {
+            dayAge: dayAge,
             tasks: []
           }
         }
-        groups[task.dayAge].tasks.push(task)
+        groups[dayAge].tasks.push(task)
       })
       
       // 转换为数组并排序
-      return Object.values(groups).sort((a: unknown, b: unknown) => a.dayAge - b.dayAge)
+      return Object.values(groups).sort((a: TaskGroup, b: TaskGroup) => a.dayAge - b.dayAge)
     },
 
     // 切换日龄展开状态
@@ -591,11 +600,11 @@ Component({
     },
 
     // 显示解析结果
-    showParseResult(parsedData: unknown) {
+    showParseResult(parsedData: { tasks?: Task[] }) {
       // 统计任务分解情况
       const totalTasks = parsedData.tasks?.length || 0
-      const expandedCount = parsedData.tasks?.filter((t: unknown) => t.isSequenceTask).length || 0
-      const dayRanges = this.calculateDayRanges(parsedData.tasks)
+      const expandedCount = parsedData.tasks?.filter((t: Task) => t.isSequenceTask).length || 0
+      const dayRanges = this.calculateDayRanges(parsedData.tasks || [])
       
       let contentText = `成功识别 ${totalTasks} 个任务\n`
       contentText += `涵盖日龄：第${dayRanges.min}天 - 第${dayRanges.max}天\n`
