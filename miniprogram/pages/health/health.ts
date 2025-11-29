@@ -1810,7 +1810,7 @@ Page<PageData, any>({
       }
       
       // 获取饲养成本的参数
-      const feedCostParams: unknown = {
+      const feedCostParams: Record<string, unknown> = {
         action: 'get_cost_stats',
         dateRange: this.data.dateRange
       }
