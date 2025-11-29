@@ -1,4 +1,4 @@
-// @ts-nocheck - TODO: 部分类型已修复，剩余20+错误待处理
+// production.ts - 生产管理页面
 import type { 
   BaseResponse
 } from '../../../typings/core';
@@ -23,12 +23,16 @@ interface AICountResult {
   featureBreakdown?: Record<string, unknown>
   individualAnalysis?: unknown[]
   regions?: unknown[]
-  abnormalDetection?: unknown
+  abnormalDetection?: {
+    suspiciousAnimals?: number
+    healthConcerns?: string[]
+  }
   suggestions?: string[]
   reasoning?: string
   sceneAnalysis?: {
     description?: string
     recommendations?: string[]
+    occlusion_level?: string
   }
   sceneFeatures?: unknown
   message?: string
@@ -848,7 +852,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       )
       
       if (result.success && result.data) {
-        const recognitionData = result.data as AICountResult
+        const recognitionData = result.data as unknown as AICountResult
         
         // 处理识别结果（多特征融合）
         const processedResult = {
@@ -936,17 +940,17 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       }
       
     } catch (error: unknown) {
-      
+      const err = error as WxError
       this.setData({
         'aiCount.loading': false,
-        'aiCount.error': error.message || '分析失败',
+        'aiCount.error': err.message || '分析失败',
         'aiCount.result': null
       })
       
       // 显示详细错误信息
       wx.showModal({
         title: '识别异常',
-        content: `错误: ${error.message}\n\n建议: 请检查网络连接，确保图片清晰`,
+        content: `错误: ${err.message || '未知错误'}\n\n建议: 请检查网络连接，确保图片清晰`,
         showCancel: true,
         confirmText: '重试',
         cancelText: '取消',
@@ -960,7 +964,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
   
   // 修正识别结果（用于AI学习）
-  async correctRecognitionResult(recognitionResult: unknown, imageFileID: string) {
+  async correctRecognitionResult(recognitionResult: AICountResult & { sceneFeatures?: unknown }, imageFileID: string) {
     wx.showModal({
       title: '标记正确数量',
       editable: true,
@@ -984,9 +988,9 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
               {
                 action: 'save_case',
                 imageFileID: imageFileID,
-                aiCount: recognitionResult.totalCount,
+                aiCount: recognitionResult.totalCount || 0,
                 correctCount: correctCount,
-                sceneFeatures: recognitionResult.sceneFeatures || {
+                sceneFeatures: (recognitionResult.sceneFeatures as Record<string, unknown>) || {
                   lighting: 'unknown',
                   crowding: 'unknown',
                   occlusion_level: 'unknown',
@@ -1014,12 +1018,12 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
               }
               
               // 更新累加记录中最后一条数据
-              const rounds = this.data.aiCount.rounds
+              const rounds = this.data.aiCount.rounds as AICountResult[]
               if (rounds.length > 0) {
                 rounds[rounds.length - 1] = updatedResult
                 
                 // 重新计算累加总数
-                const cumulativeTotal = rounds.reduce((sum: number, r: unknown) => sum + r.totalCount, 0)
+                const cumulativeTotal = rounds.reduce((sum: number, r: AICountResult) => sum + (r.totalCount || 0), 0)
                 
                 this.setData({
                   'aiCount.rounds': rounds,
@@ -1030,8 +1034,9 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
               throw new Error(result.error || '保存失败')
             }
           } catch (error: unknown) {
+            const err = error as WxError
             wx.showToast({
-              title: '保存失败：' + error.message,
+              title: '保存失败：' + (err.message || '未知错误'),
               icon: 'none'
             })
           }
@@ -1053,10 +1058,10 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         fileID: result.fileID
       }
     } catch (error: unknown) {
-      // 已移除调试日志
+      const err = error as WxError
       return {
         success: false,
-        error: error.errMsg || '上传失败'
+        error: err.errMsg || '上传失败'
       }
     }
   },
@@ -1090,7 +1095,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
 
   // 导航到出栏表单并预填数据
-  navigateToExitForm(aiResult: unknown) {
+  navigateToExitForm(aiResult: AICountResult) {
     // 构造传递给出栏表单的参数
     const params = {
       fromAI: true,
@@ -1192,14 +1197,14 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
   
   // 添加识别结果到累加记录
-  addRecognitionToRounds(result: unknown) {
+  addRecognitionToRounds(result: AICountResult) {
     const { rounds, currentRound, cumulativeTotal } = this.data.aiCount
     
     // 创建新的轮次记录
     const newRound = {
       roundId: currentRound + 1,
-      count: result.totalCount,
-      confidence: result.confidence,
+      count: result.totalCount || 0,
+      confidence: result.confidence || 0,
       timestamp: new Date().toLocaleString('zh-CN', { 
         year: 'numeric',
         month: '2-digit',
@@ -1209,11 +1214,11 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         second: '2-digit',
         hour12: false
       }),
-      imageUrl: result.imageUrl
+      imageUrl: result.imageUrl || ''
     }
     
     const updatedRounds = [...rounds, newRound]
-    const newTotal = cumulativeTotal + result.totalCount
+    const newTotal = cumulativeTotal + (result.totalCount || 0)
     
     this.setData({
       'aiCount.result': result,
@@ -1228,9 +1233,9 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   // 继续识别
 
   // 计算平均置信度
-  calculateAvgConfidence(rounds: unknown[]) {
+  calculateAvgConfidence(rounds: Array<{ confidence?: number }>) {
     if (!rounds || rounds.length === 0) return 0
-    const sum = rounds.reduce((acc, r) => acc + (r.confidence || 0), 0)
+    const sum = rounds.reduce((acc: number, r) => acc + (r.confidence || 0), 0)
     return Math.round(sum / rounds.length)
   },
 
