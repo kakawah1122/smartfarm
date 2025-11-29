@@ -1,5 +1,5 @@
-// @ts-nocheck - TODO: 需要分阶段重构，类型错误70+
 // treatment-record.ts - 治疗记录页面
+// @ts-nocheck - TODO: 需要分阶段重构，类型错误70+（已有模块化拆分）
 import { createPageWithNavbar } from '../../utils/navigation'
 
 // 类型定义
