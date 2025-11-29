@@ -1,5 +1,5 @@
 // finance.ts
-// @ts-nocheck - 暂时禁用类型检查，后续重构时修复
+// @ts-nocheck
 import { createPageWithNavbar } from '../../utils/navigation'
 import CloudApi from '../../utils/cloud-api'
 import { logger } from '../../utils/logger'
@@ -96,7 +96,7 @@ type FinancialSummaryResponse = {
 // 分页配置
 const PAGE_SIZE = 20;
 
-const pageConfig: unknown = {
+const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
   options: {
     styleIsolation: 'shared'
   },
@@ -638,7 +638,7 @@ const pageConfig: unknown = {
       
       filtered = filtered.filter(record => {
         // 使用时间戳进行筛选
-        const recordTimestamp = (record as unknown).timestamp || this.parseDate(record.date).getTime()
+        const recordTimestamp = (record as { timestamp?: number; date: string }).timestamp || this.parseDate(record.date).getTime()
         return recordTimestamp >= startTimestamp
       })
     }
@@ -699,10 +699,10 @@ const pageConfig: unknown = {
       } else {
         throw new Error(result.error || '加载失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
       wx.hideLoading()
       wx.showToast({
-        title: error.message || '加载数据失败',
+        title: (error as Error)?.message || '加载数据失败',
         icon: 'none'
     })
     }
