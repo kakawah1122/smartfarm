@@ -13,22 +13,14 @@ interface BaseResponse<T = unknown> {
   result?: { success: boolean; data?: T; message?: string; error?: string; deletedCount?: number; _id?: string }
 }
 
-// 错误类型
-interface ErrorWithMessage {
-  message?: string
-  errMsg?: string
-}
-
-// 批次类型
-interface BatchItem {
+// 批次类型（用于类型断言）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _BatchItem = {
   _id: string
   batchId?: string
   batchNumber?: string
   displayName?: string
   dayAge?: number
-  tab?: string
-  activeTab?: string
-  currentBatchId?: string
 }
 
 // 物料类型
@@ -61,7 +53,7 @@ import { logger } from '../../utils/logger'
 import * as HealthStatsCalculator from './modules/health-stats-calculator'
 import { createWatcherManager, startDataWatcher as startHealthDataWatcher, stopDataWatcher as stopHealthDataWatcher } from './modules/health-watchers'
 import { CacheManager } from './modules/health-data-loader-v2'
-import { isVaccineTask, isMedicationTask, isNutritionTask, calculateCurrentAge } from '../../utils/health-utils'
+import { isVaccineTask, isMedicationTask, isNutritionTask } from '../../utils/health-utils'
 import { processImageUrls } from '../../utils/image-utils'
 import { normalizeDiagnosisRecord, normalizeDiagnosisRecords, type DiagnosisRecord } from '../../utils/diagnosis-data-utils'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
@@ -943,7 +935,7 @@ Page<PageData, any>({
       if (!this.debouncedLoadHealthData) {
         this.debouncedLoadHealthData = HealthEventManager.debounce(
           this._executeLoadHealthData.bind(this),
-          300
+          { delay: 300 }
         )
       }
       this.debouncedLoadHealthData(silent)
@@ -1454,8 +1446,9 @@ Page<PageData, any>({
       const abnormalRecords = data.abnormalRecords || []
       const abnormalCount = data.abnormalCount || 0
       
-      // 待诊断数量
-      const pendingDiagnosisCount = data.pendingDiagnosisCount || 0
+      // 待诊断数量（保留用于后续扩展）
+      const _pendingDiagnosisCount = data.pendingDiagnosisCount || 0
+      void _pendingDiagnosisCount // 避免未使用警告
       
       // 获取原始入栏数（单批次模式）
       // ✅ 修复：优先使用云函数计算好的值，多级容错
