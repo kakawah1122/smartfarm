@@ -2964,7 +2964,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
    * 通用关闭表单方法
    */
   closeFormPopup(formType: 'vaccine' | 'medication' | 'nutrition') {
-    const updateData: unknown = {}
+    const updateData: Record<string, unknown> = {}
     
     switch (formType) {
       case 'vaccine':
