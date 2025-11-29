@@ -2724,7 +2724,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           action: 'get_user_by_openid',
           openid: completedBy
         }
-      })
+      }) as BaseResponse<{ nickName?: string }>
       
       if (result?.success && result?.data?.nickName) {
         const userName = result.data.nickName
