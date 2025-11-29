@@ -1,5 +1,5 @@
 // lifecycle-management.ts - 任务管理页面
-// @ts-nocheck - TODO: 部分类型已修复，剩余30+错误待处理
+// @ts-nocheck - TODO: 类型定义已提取到 lifecycle-types.ts，待集成后移除
 // 数据源：云数据库 task_templates 集合
 import { logger } from '../../utils/logger'
 
