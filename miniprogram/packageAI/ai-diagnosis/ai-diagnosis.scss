@@ -7,7 +7,8 @@
 
 .page-content {
   padding: 24rpx;
-  padding-top: calc(var(--status-bar-height, 44rpx) + var(--navbar-height, 88rpx) + 40rpx); /* 状态栏 + 导航栏 + 安全间距（增加到40rpx） */
+  /* 修复真机兼容性: 避免 calc + CSS变量组合问题 */
+  padding-top: 172rpx; /* 44 + 88 + 40 = 172rpx */
   padding-bottom: 120rpx;
 }
 
@@ -490,7 +491,7 @@
 }
 
 .form-label {
-  width: 160rpx;
+  min-width: 160rpx;
   flex-shrink: 0;
   display: flex;
   flex-direction: row;
@@ -498,14 +499,14 @@
   flex-wrap: nowrap;
   white-space: nowrap;
   font-size: 30rpx;
-  color: var(--td-text-color-primary);
+  color: #333333; /* 固定颜色而非CSS变量，提高真机兼容性 */
   font-weight: 500;
   line-height: 1.5;
 }
 
 .label-text {
   font-size: 30rpx;
-  color: var(--td-text-color-primary);
+  color: #333333; /* 固定颜色，提高真机兼容性 */
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
