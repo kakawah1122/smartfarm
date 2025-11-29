@@ -1872,9 +1872,10 @@ Page<PageData, any>({
       
       // 提取饲养成本（确保是数字类型）
       let feedingCost = 0
-      if (feedCostResult?.success) {
+      const feedResult = feedCostResult as BaseResponse<{ feedCost?: number; feedingCost?: number; totalFeedCost?: number; materialCost?: number }>
+      if (feedResult?.success) {
         // 优先从feedCost字段获取，确保转换为数字
-        const feedData = feedCostResult.data
+        const feedData = feedResult.data
         // 处理可能的字符串数字
         const feedCostValue = feedData?.feedCost || feedData?.feedingCost || feedData?.totalFeedCost || feedData?.materialCost || 0
         feedingCost = typeof feedCostValue === 'string' ? parseFloat(feedCostValue) || 0 : Number(feedCostValue) || 0
