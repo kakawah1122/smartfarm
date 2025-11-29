@@ -3954,9 +3954,9 @@ ${record.taskId ? '\n来源：待办任务' : ''}
   /**
    * 异常反应输入处理（适配组件事件）
    */
-  onAdverseReactionInput(e: InputEvent) {
+  onAdverseReactionInput(e: CustomEvent<{ field?: string; value?: string }>) {
     const { field, value } = e.detail || e.currentTarget?.dataset || {}
-    const actualValue = value || e.detail?.value || ''
+    const actualValue = value || ''
     
     if (!field) return
     
