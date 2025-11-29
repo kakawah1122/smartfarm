@@ -3611,7 +3611,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
           completedAt: new Date().toISOString(),
           completedBy: wx.getStorageSync('userInfo')?.nickName || '用户'
         }
-      })
+      }) as BaseResponse
       
       if (result?.success) {
         wx.showToast({
