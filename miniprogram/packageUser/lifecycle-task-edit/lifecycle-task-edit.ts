@@ -1,29 +1,45 @@
-// @ts-nocheck
 // lifecycle-task-edit.ts - 养殖周期任务编辑页面
 // 数据源：云数据库 task_templates 集合
 
 import { logger } from '../../utils/logger'
+import { timerBehavior } from '../../behaviors/timer-behavior'
+
+// 事件类型定义
+interface InputEvent {
+  detail: { value: string }
+}
+
+// 任务模板类型
+interface TaskTemplate {
+  id: string
+  type: string
+  title: string
+  description: string
+  category: string
+  priority: string
+  dosage?: string
+  duration?: number
+  dayInSeries?: number
+  estimatedTime?: number
+  materials?: string
+  notes?: string
+  dayAge?: number
+}
+
+// 任务类型选项
+interface TaskTypeOption {
+  label: string
+  value: string
+}
+
+// 优先级选项
+interface PriorityOption {
+  label: string
+  value: string
+}
 
 Component({
-  // ✅ 定时器管理
-  _timerIds: [] as number[],
-  
-  _safeSetTimeout(callback: () => void, delay: number): number {
-    const timerId = setTimeout(() => {
-      const index = this._timerIds.indexOf(timerId as unknown as number)
-      if (index > -1) {
-        this._timerIds.splice(index, 1)
-      }
-      callback()
-    }, delay) as unknown as number
-    this._timerIds.push(timerId)
-    return timerId
-  },
-  
-  _clearAllTimers() {
-    this._timerIds.forEach((id: number) => clearTimeout(id))
-    this._timerIds = []
-  },
+  behaviors: [timerBehavior],
 
   data: {
     // 编辑模式：add/edit
@@ -80,27 +96,15 @@ Component({
     navbarHeight: 44,
     
     // 模板任务列表
-    templateTasks: [] as Array<{
-      id: string
-      type: string
-      title: string
-      description: string
-      category: string
-      priority: string
-      dosage?: string
-      duration?: number
-      dayInSeries?: number
-    }>,
+    templateTasks: [] as TaskTemplate[],
     selectedTemplateIndex: -1  // 当前选中的模板任务索引
   },
 
   lifetimes: {
     attached() {
       this.setNavigationBarHeight()
-    },
-    detached() {
-      this._clearAllTimers()
     }
+    // detached 由 timerBehavior 自动处理定时器清理
   },
 
   methods: {
@@ -222,10 +226,10 @@ Component({
         return
       }
       
-      const template = this.data.templateTasks[index]
-      const taskTypeIndex = this.data.taskTypes.findIndex((t: { value: string }) => t.value === template.type)
+      const template = this.data.templateTasks[index] as TaskTemplate
+      const taskTypeIndex = this.data.taskTypes.findIndex((t: TaskTypeOption) => t.value === template.type)
       const categoryIndex = this.data.categories.indexOf(template.category)
-      const priorityIndex = this.data.priorities.findIndex((p: { value: string }) => p.value === template.priority)
+      const priorityIndex = this.data.priorities.findIndex((p: PriorityOption) => p.value === template.priority)
       
       // 选中任务并填充表单
       this.setData({
@@ -267,9 +271,9 @@ Component({
           
           // 设置各种索引
           const taskType = task.type || 'inspection'
-          const taskTypeIndex = this.data.taskTypes.findIndex((t: unknown) => t.value === taskType)
+          const taskTypeIndex = this.data.taskTypes.findIndex((t: TaskTypeOption) => t.value === taskType)
           const categoryIndex = this.data.categories.indexOf(task.category)
-          const priorityIndex = this.data.priorities.findIndex((p: unknown) => p.value === task.priority)
+          const priorityIndex = this.data.priorities.findIndex((p: PriorityOption) => p.value === task.priority)
           
           this.setData({
             formData: {
@@ -318,9 +322,9 @@ Component({
         notes: ''
       }
       
-      const taskTypeIndex = this.data.taskTypes.findIndex((t: unknown) => t.value === defaultTask.type)
+      const taskTypeIndex = this.data.taskTypes.findIndex((t: TaskTypeOption) => t.value === defaultTask.type)
       const categoryIndex = this.data.categories.indexOf(defaultTask.category)
-      const priorityIndex = this.data.priorities.findIndex((p: unknown) => p.value === defaultTask.priority)
+      const priorityIndex = this.data.priorities.findIndex((p: PriorityOption) => p.value === defaultTask.priority)
       
       this.setData({
         formData: defaultTask,
@@ -331,14 +335,14 @@ Component({
     },
 
     // 输入任务标题
-    onTitleInput(e: CustomEvent) {
+    onTitleInput(e: InputEvent) {
       this.setData({
         'formData.title': e.detail.value
       })
     },
 
     // 选择任务类型
-    onTypeChange(e: CustomEvent) {
+    onTypeChange(e: InputEvent) {
       const index = parseInt(e.detail.value)
       const type = this.data.taskTypes[index].value
       const label = this.data.taskTypes[index].label
@@ -356,7 +360,7 @@ Component({
     },
 
     // 选择分类
-    onCategoryChange(e: CustomEvent) {
+    onCategoryChange(e: InputEvent) {
       const index = parseInt(e.detail.value)
       this.setData({
         'formData.category': this.data.categories[index],
@@ -365,7 +369,7 @@ Component({
     },
 
     // 选择优先级
-    onPriorityChange(e: CustomEvent) {
+    onPriorityChange(e: InputEvent) {
       const index = parseInt(e.detail.value)
       this.setData({
         'formData.priority': this.data.priorities[index].value,
@@ -374,49 +378,49 @@ Component({
     },
 
     // 输入描述
-    onDescriptionInput(e: CustomEvent) {
+    onDescriptionInput(e: InputEvent) {
       this.setData({
         'formData.description': e.detail.value
       })
     },
 
     // 输入用量
-    onDosageInput(e: CustomEvent) {
+    onDosageInput(e: InputEvent) {
       this.setData({
         'formData.dosage': e.detail.value
       })
     },
 
     // 输入持续天数
-    onDurationInput(e: CustomEvent) {
+    onDurationInput(e: InputEvent) {
       this.setData({
         'formData.duration': parseInt(e.detail.value) || 1
       })
     },
 
     // 输入系列中的第几天
-    onDayInSeriesInput(e: CustomEvent) {
+    onDayInSeriesInput(e: InputEvent) {
       this.setData({
         'formData.dayInSeries': parseInt(e.detail.value) || 1
       })
     },
 
     // 输入预计时间
-    onEstimatedTimeInput(e: CustomEvent) {
+    onEstimatedTimeInput(e: InputEvent) {
       this.setData({
         'formData.estimatedTime': parseInt(e.detail.value) || 0
       })
     },
 
     // 输入所需材料
-    onMaterialsInput(e: CustomEvent) {
+    onMaterialsInput(e: InputEvent) {
       this.setData({
         'formData.materials': e.detail.value
       })
     },
 
     // 输入备注
-    onNotesInput(e: CustomEvent) {
+    onNotesInput(e: InputEvent) {
       this.setData({
         'formData.notes': e.detail.value
       })
