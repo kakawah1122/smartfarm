@@ -3182,7 +3182,7 @@ ${record.taskId ? '\n来源：待办任务' : ''}
             batchId: batchId,
             preventionData
           }
-        })
+        }) as BaseResponse
         
         if (res && res.success) {
           this.closeVaccineFormPopup()
