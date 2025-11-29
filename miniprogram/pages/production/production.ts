@@ -1,4 +1,4 @@
-// @ts-nocheck - 类型错误较多，暂时禁用检查以保持功能稳定
+// @ts-nocheck - TODO: 部分类型已修复，剩余20+错误待处理
 import type { 
   BaseResponse
 } from '../../../typings/core';
@@ -657,7 +657,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
   },
   
   // 添加到累积记录
-  addToRounds(result: unknown) {
+  addToRounds(result: AICountResult) {
     const rounds = this.data.aiCount.rounds || []
     const newRound = {
       roundId: rounds.length + 1,
@@ -743,9 +743,10 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
         icon: 'success',
         duration: 1000
       })
-    } catch (error: unknown) {
+    } catch (error) {
+      const err = error as WxError
       // 用户取消不显示错误
-      if (error.errMsg && error.errMsg.includes('cancel')) {
+      if (err.errMsg && err.errMsg.includes('cancel')) {
         return
       }
       
@@ -829,7 +830,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       }
       
       // 调用AI图像识别云函数（传递云存储文件ID）
-      const result = await CloudApi.callFunction<BaseResponse>(
+      const result = await CloudApi.callFunction<BaseResponse<AICountResult>>(
         'ai-multi-model',
         {
           action: 'image_recognition',
@@ -847,7 +848,7 @@ const pageConfig: Partial<PageInstance<ProductionPageData>> & { data: Production
       )
       
       if (result.success && result.data) {
-        const recognitionData = result.data
+        const recognitionData = result.data as AICountResult
         
         // 处理识别结果（多特征融合）
         const processedResult = {
