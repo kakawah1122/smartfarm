@@ -439,11 +439,12 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       
       wx.hideLoading()
       
-      if (result.result && result.result.success) {
-        const aiResult = result.result.data
+      const diagResult = result.result as CloudResult
+      if (diagResult && diagResult.success) {
+        const aiResult = diagResult.data as Record<string, unknown>
         
         // ✅ 合并所有setData调用，提升性能
-        const updateData: unknown = {
+        const updateData: Record<string, unknown> = {
           'formData.diagnosis': aiResult.primaryDiagnosis || '',
           'formData.diagnosisConfidence': aiResult.confidence || 0,
           'formData.affectedCount': aiResult.affectedCount || 0,
@@ -457,7 +458,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
         
         // ✅ 预填充AI建议的治疗措施
         if (aiResult.treatmentRecommendation) {
-          const recommendation = aiResult.treatmentRecommendation
+          const recommendation = aiResult.treatmentRecommendation as { immediate?: string[]; medication?: unknown[] }
           
           // 预填充立即措施
           if (recommendation.immediate && recommendation.immediate.length > 0) {
@@ -474,7 +475,8 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
         // ✅ 一次性更新所有数据
         this.setData(updateData)
         
-        if (aiResult.treatmentRecommendation?.medication?.length > 0) {
+        const treatmentRec = aiResult.treatmentRecommendation as { medication?: unknown[] } | undefined
+        if (treatmentRec?.medication?.length && treatmentRec.medication.length > 0) {
             wx.showToast({
               title: '已加载AI用药建议',
               icon: 'success',
@@ -642,24 +644,24 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       ])
       
       
-      const materials: unknown[] = []
+      const materials: MaterialItem[] = []
       
-      if (medicineResult.result && medicineResult.result.success) {
-        const medicines = medicineResult.result.data.materials || []
-        materials.push(...medicines.map((m: unknown) => ({
+      const medResult = medicineResult.result as CloudResult
+      if (medResult && medResult.success) {
+        const medicines = (medResult.data as { materials: MaterialItem[] })?.materials || []
+        materials.push(...medicines.map((m: MaterialItem) => ({
           ...m,
           categoryLabel: '药品'
         })))
-      } else {
       }
       
-      if (nutritionResult.result && nutritionResult.result.success) {
-        const nutrition = nutritionResult.result.data.materials || []
-        materials.push(...nutrition.map((m: unknown) => ({
+      const nutResult = nutritionResult.result as CloudResult
+      if (nutResult && nutResult.success) {
+        const nutrition = (nutResult.data as { materials: MaterialItem[] })?.materials || []
+        materials.push(...nutrition.map((m: MaterialItem) => ({
           ...m,
           categoryLabel: '营养品'
         })))
-      } else {
       }
       
       
