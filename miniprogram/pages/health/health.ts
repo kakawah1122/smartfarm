@@ -1,6 +1,4 @@
 // health.ts - 健康管理页面
-// @ts-nocheck - TODO: 需要继续重构，剩余约70个类型错误
-// 已添加基础类型定义，需要逐步应用到具体函数
 
 // 类型定义
 type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
@@ -512,8 +510,8 @@ Page<PageData, any>({
   setDataBatcher: null as SetDataBatcher | null,
   navigationManager: null as HealthNavigationManager | null,
   eventManager: null as HealthEventManager | null,
-  diagnosisHistoryPaginator: null as ListPaginator | null,
-  abnormalListPaginator: null as ListPaginator | null,
+  diagnosisHistoryPaginator: null as ListPaginator<unknown> | null,
+  abnormalListPaginator: null as ListPaginator<unknown> | null,
   debouncedLoadHealthData: null as unknown,
   vaccineModule: null as VaccineModuleManager | null,
   monitoringModule: null as MonitoringModuleManager | null,
