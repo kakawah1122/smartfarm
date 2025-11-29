@@ -1013,7 +1013,8 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
           }
         }
       } catch (error: unknown) {
-        logger.error(`轮询失败: ${error.message}`)
+        const err = error as ErrorWithMessage
+        logger.error(`轮询失败: ${err.message || err.errMsg || '未知错误'}`)
         
         // 继续轮询，直到超时
         if (retries < maxRetries && this._isPolling) {
