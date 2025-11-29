@@ -65,7 +65,7 @@ function normalizeCloudResult<T = AnyObject>(
 }
 
 // 页面配置对象
-const pageConfig: PageConfigWithLifecycle & { [key: string]: unknown } = {
+const pageConfig: PageConfigWithLifecycle & AnyObject = {
   // ✅ 定时器管理
   _timerIds: [] as number[],
   _isPolling: false,
