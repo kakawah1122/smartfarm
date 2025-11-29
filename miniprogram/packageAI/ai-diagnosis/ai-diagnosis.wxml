@@ -223,7 +223,7 @@
               wx:for="{{diagnosisTypeOptions}}"
               wx:key="value"
             >
-              <radio value="{{item.value}}" checked="{{diagnosisType === item.value}}" />
+              <radio value="{{item.value}}" checked="{{diagnosisType === item.value}}" color="#07c160" />
               <text class="option-label">{{item.label}}</text>
             </label>
           </radio-group>

@@ -490,6 +490,38 @@
   line-height: 1.6;
 }
 
+/* 修复 radio 单选按钮在真机上的显示问题 */
+.diagnosis-type-option radio {
+  /* 未选中状态 - 空心圆 */
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 微信小程序 radio 样式覆盖 */
+radio .wx-radio-input {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 2rpx solid #cccccc;
+  background: transparent;
+}
+
+/* 选中状态 - 绿色勾选 */
+radio .wx-radio-input.wx-radio-input-checked {
+  border-color: #07c160;
+  background: #07c160;
+}
+
+radio .wx-radio-input.wx-radio-input-checked::before {
+  content: '✓';
+  color: white;
+  font-size: 24rpx;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .form-label {
   min-width: 160rpx;
   flex-shrink: 0;
