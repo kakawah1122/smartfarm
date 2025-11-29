@@ -98,28 +98,8 @@ interface ErrorWithMessage {
   errMsg?: string
 }
 
-// 已完成记录类型
-interface CompletedRecord {
-  _id: string
-  id?: string
-  taskId?: string
-  title: string
-  completed: boolean
-  completedAt?: string
-  completedBy?: string
-  completedDate?: string
-}
-
 // 自定义事件类型
 type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>
-
-// 按批次分组的任务
-interface TasksByBatch {
-  batchId: string
-  batchNumber: string
-  dayAge: number
-  tasks: Task[]
-}
 
 Page({
   // ✅ 定时器管理
@@ -1177,9 +1157,10 @@ Page({
       const cachedData = DataCache.get(cacheKey)
       
       if (cachedData) {
+        const tasks = cachedData as unknown[]
         this.setData({ 
-          upcomingTasks: cachedData,
-          displayedUpcomingTasks: PaginationHelper.paginate(cachedData, this.data.upcomingPagination)
+          upcomingTasks: tasks,
+          displayedUpcomingTasks: PaginationHelper.paginate(tasks, this.data.upcomingPagination)
         })
         return
       }
@@ -1236,7 +1217,7 @@ Page({
       const mergedTasks: {[key: number]: unknown[]} = {}
       
       upcomingTasksResults.forEach((batchTasks: unknown[]) => {
-        batchTasks.forEach((dayGroup: unknown) => {
+        batchTasks.forEach((dayGroup: { dayAge: number; tasks: unknown[] }) => {
           const dayAge = dayGroup.dayAge
           if (!mergedTasks[dayAge]) {
             mergedTasks[dayAge] = []
@@ -1307,7 +1288,7 @@ Page({
         })
         
         const activeBatches = batchResult.result?.data || []
-        let allCompletedTasks: unknown[] = []
+        let allCompletedTasks: Array<{ id: string; title: string; completedDate: string; completedBy: string; batchNumber: string; dayAge: number; completed: boolean }> = []
         
         for (const batch of activeBatches) {
           try {
@@ -1416,7 +1397,7 @@ Page({
   /**
    * 任务详情弹窗可见性变化 - 与首页保持一致
    */
-  onTaskDetailPopupChange(event: unknown) {
+  onTaskDetailPopupChange(event: CustomEvent<{ visible: boolean }>) {
     if (!event.detail.visible) {
       this.closeTaskDetailPopup()
     } else {
@@ -1456,7 +1437,7 @@ Page({
 
       const updates: Record<string, boolean> = {}
       
-      res.forEach((rect: unknown, index: number) => {
+      res.forEach((rect: { height: number } | null, index: number) => {
         if (!rect) return
 
         const id = ids[index]
@@ -1843,7 +1824,7 @@ Page({
   /**
    * 选择药品
    */
-  onMedicineSelect(e: CustomEvent) {
+  onMedicineSelect(e: CustomEvent<{ value: number }>) {
     const index = e.detail.value
     const selectedMedicine = this.data.availableMedicines[index]
     
@@ -1892,7 +1873,7 @@ Page({
   /**
    * 用药数量输入处理
    */
-  onMedicationQuantityInput(e: CustomEvent) {
+  onMedicationQuantityInput(e: CustomEvent<{ value: string }>) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
@@ -2122,7 +2103,7 @@ Page({
   /**
    * 打开营养管理表单
    */
-  async openNutritionForm(task: Task) {
+  async openNutritionForm(_task: Task) {
     // 已移除调试日志
     // 先加载可用的营养品库存
     await this.loadAvailableNutrition()
@@ -2202,7 +2183,7 @@ Page({
   /**
    * 选择营养品
    */
-  onNutritionSelect(e: CustomEvent) {
+  onNutritionSelect(e: CustomEvent<{ value: number }>) {
     const index = e.detail.value
     const selectedNutrition = this.data.availableNutrition[index]
     
@@ -2251,7 +2232,7 @@ Page({
   /**
    * 营养数量输入处理
    */
-  onNutritionQuantityInput(e: CustomEvent) {
+  onNutritionQuantityInput(e: CustomEvent<{ value: string }>) {
     const { value } = e.detail
     const quantity = parseInt(value) || 0
     
