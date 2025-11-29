@@ -664,7 +664,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       
       
       // 药物治疗：显示药品 + 营养品
-      const filteredMaterials = materials.filter((m: unknown) => 
+      const filteredMaterials = materials.filter((m: MaterialItem) => 
         m.category === '药品' || m.category === '营养品'
       )
       
@@ -771,7 +771,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     const { type } = e.currentTarget.dataset
     
     // 药物治疗：显示药品 + 营养品
-    const filteredMaterials = this.data.availableMaterials.filter((m: unknown) => 
+    const filteredMaterials = this.data.availableMaterials.filter((m: MaterialItem) => 
       m.category === '药品' || m.category === '营养品'
     )
     
@@ -1659,7 +1659,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     
     // 药物治疗：显示药品 + 营养品
     const { availableMaterials } = this.data
-    const filteredMaterials = availableMaterials.filter((m: unknown) => 
+    const filteredMaterials = availableMaterials.filter((m: MaterialItem) => 
       m.category === '药品' || m.category === '营养品'
     )
     
@@ -1918,8 +1918,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     } catch (error: unknown) {
       wx.hideLoading()
       // 保存失败，已显示错误提示
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '保存失败',
+        title: err.message || '保存失败',
         icon: 'none'
       })
     }
@@ -1939,7 +1940,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     
     // 药物治疗：显示药品 + 营养品
     const { availableMaterials } = this.data
-    const filteredMaterials = availableMaterials.filter((m: unknown) => 
+    const filteredMaterials = availableMaterials.filter((m: MaterialItem) => 
       m.category === '药品' || m.category === '营养品'
     )
     
@@ -2203,8 +2204,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     } catch (error: unknown) {
       wx.hideLoading()
       // 追加用药失败，已显示错误提示
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '追加失败',
+        title: err.message || '追加失败',
         icon: 'none'
       })
     }
@@ -2293,8 +2295,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     } catch (error: unknown) {
       wx.hideLoading()
       // 调整方案失败，已显示错误提示
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '保存失败',
+        title: err.message || '保存失败',
         icon: 'none'
       })
     }
