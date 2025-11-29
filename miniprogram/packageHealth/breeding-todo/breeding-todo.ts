@@ -764,7 +764,7 @@ Page({
         
         if (batchResult.result?.success) {
           const activeBatches = batchResult.result.data || []
-          const currentBatch = activeBatches.find((b: unknown) => b._id === batchId)
+          const currentBatch = activeBatches.find((b: BatchInfo) => b._id === batchId)
           if (currentBatch) {
             currentBatchStockQuantity = currentBatch.currentStock || 
                                        currentBatch.currentQuantity || 
@@ -1062,8 +1062,9 @@ Page({
         throw new Error(result.result?.message || '迁移失败')
       }
     } catch (error: unknown) {
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: '修复失败: ' + error.message,
+        title: '修复失败: ' + (err.message || '未知错误'),
         icon: 'error'
       })
     } finally {
@@ -1604,9 +1605,11 @@ Page({
       }
 
     } catch (error: unknown) {
+      const err = error as ErrorWithMessage
+      const isAlreadyCompleted = err.message === '任务已经完成'
       wx.showToast({
-        title: error.message === '任务已经完成' ? '该任务已完成' : '完成失败，请重试',
-        icon: error.message === '任务已经完成' ? 'success' : 'error',
+        title: isAlreadyCompleted ? '该任务已完成' : '完成失败，请重试',
+        icon: isAlreadyCompleted ? 'success' : 'error',
         duration: 2000
       })
     } finally {
@@ -1807,8 +1810,8 @@ Page({
         const materials = result.result.data.materials || []
         // 只显示有库存的药品
         const availableMedicines = materials
-          .filter((material: unknown) => (material.currentStock || 0) > 0)
-          .map((material: unknown) => ({
+          .filter((material: MaterialItem) => (material.currentStock || 0) > 0)
+          .map((material: MaterialItem) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
@@ -2164,8 +2167,8 @@ Page({
         // 已移除调试日志
         // 只显示有库存的营养品
         const availableNutrition = materials
-          .filter((material: unknown) => (material.currentStock || 0) > 0)
-          .map((material: unknown) => ({
+          .filter((material: MaterialItem) => (material.currentStock || 0) > 0)
+          .map((material: MaterialItem) => ({
             id: material._id,
             name: material.name,
             unit: material.unit || '件',
