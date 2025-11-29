@@ -1,9 +1,55 @@
 // treatment-record.ts - 治疗记录页面
-// @ts-nocheck - TODO: 需要分阶段重构，类型错误70+（已有模块化拆分）
 import { createPageWithNavbar } from '../../utils/navigation'
 
 // 类型定义
 type CustomEvent<T = Record<string, unknown>> = WechatMiniprogram.CustomEvent<T>;
+
+// 错误类型
+interface ErrorWithMessage {
+  message?: string
+  errMsg?: string
+}
+
+// 页面参数类型
+interface PageOptions {
+  sourceType?: string
+  sourceId?: string
+  diagnosisId?: string
+  batchId?: string
+  batchNumber?: string
+  treatmentId?: string
+  id?: string
+  abnormalRecordId?: string
+  diagnosis?: string
+  mode?: string
+  affectedCount?: string
+}
+
+// 云函数结果类型
+interface CloudResult {
+  success: boolean
+  data?: unknown
+  message?: string
+  treatmentPlanSource?: string
+  aiMedicationSuggestions?: unknown[]
+}
+
+// 物料类型
+interface MaterialItem {
+  _id: string
+  materialId?: string
+  displayName?: string
+  name?: string
+  category?: string
+  stock?: number
+  unit?: string
+}
+
+// 验证结果类型
+interface ValidationResult {
+  type: string
+  message: string
+}
 
 import { markHomepageNeedSync } from '../utils/global-sync'
 import { logger } from '../../utils/logger'
@@ -214,7 +260,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     }
   },
 
-  async onLoad(options: unknown) {
+  async onLoad(options: PageOptions) {
     const { sourceType, sourceId, diagnosisId, batchId, batchNumber: _batchNumber, treatmentId, id, abnormalRecordId, diagnosis, mode, affectedCount } = options || {}
     
     // ✅ 判断是否为查看模式
@@ -370,8 +416,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       }
     } catch (error: unknown) {
       wx.hideLoading()
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '加载失败',
+        title: err.message || '加载失败',
         icon: 'none'
       })
     }
@@ -440,8 +487,9 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     } catch (error: unknown) {
       wx.hideLoading()
       logger.error('❌ 加载诊断信息失败:', error)
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '加载诊断信息失败',
+        title: err.message || '加载诊断信息失败',
         icon: 'none',
         duration: 2000
       })
