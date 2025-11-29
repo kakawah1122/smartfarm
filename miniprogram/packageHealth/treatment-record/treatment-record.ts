@@ -51,12 +51,6 @@ interface MaterialItem {
   specification?: string
 }
 
-// 验证结果类型
-interface ValidationResult {
-  type: string
-  message: string
-}
-
 import { markHomepageNeedSync } from '../utils/global-sync'
 import { logger } from '../../utils/logger'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
@@ -65,8 +59,8 @@ import { HealthCloud } from '../../utils/cloud-functions'
 /**
  * 云函数调用封装 - 兼容 wx.cloud.callFunction 返回格式
  */
-async function callCloudFunction(config: { name: string; data: any; timeout?: number }) {
-  const result = await safeCloudCall(config)
+async function callCloudFunction(config: { name: string; data: any; timeout?: number }): Promise<{ result: CloudResult }> {
+  const result = await safeCloudCall(config) as CloudResult
   return { result }  // 返回兼容格式
 }
 interface Medication {
@@ -1413,7 +1407,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
                 wx.navigateBack()
               }, 1500)
             } else {
-              throw new Error(result.result?.message || '操作失败')
+              throw new Error((result as CloudResult).message || '操作失败')
             }
           }
         }
@@ -1479,7 +1473,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
           this.loadBatchNumberForDisplay(treatment.batchId)
         }
       } else {
-        throw new Error(result.result?.error || '加载失败')
+        throw new Error((result as CloudResult).message || '加载失败')
       }
     } catch (error: unknown) {
       wx.hideLoading()
@@ -1746,7 +1740,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
       wx.showLoading({ title: '提交中...' })
       
       // 依次处理每项内容
-      const results: unknown[] = []
+      const results: Array<{ type: string; success: boolean; message?: string }> = []
       
       // 1. 提交治疗笔记
       if (hasNote) {
@@ -1922,7 +1916,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
-        throw new Error(result.result?.error || '保存失败')
+        throw new Error((result as CloudResult).message || '保存失败')
       }
     } catch (error: unknown) {
       wx.hideLoading()
@@ -2299,7 +2293,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
           this.loadTreatmentDetail(treatmentId)
         }, 1000)
       } else {
-        throw new Error(result.result?.error || '保存失败')
+        throw new Error((result as CloudResult).message || '保存失败')
       }
     } catch (error: unknown) {
       wx.hideLoading()
@@ -2319,7 +2313,7 @@ const pageConfig: WechatMiniprogram.Page.Options<any, any> & {
     try {
       // 通过页面栈获取健康页面实例
       const pages = getCurrentPages()
-      const healthPage = pages.find((page: unknown) => page.route === 'pages/health/health')
+      const healthPage = pages.find((page: { route?: string }) => page.route === 'pages/health/health')
       
       if (healthPage && typeof healthPage.loadHealthData === 'function') {
         // 延迟刷新，确保数据已保存
