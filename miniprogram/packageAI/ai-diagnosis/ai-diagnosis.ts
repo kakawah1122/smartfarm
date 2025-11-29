@@ -1,6 +1,5 @@
-// @ts-nocheck
 // ai-diagnosis.ts - AI智能诊断页面
-import { createPageWithNavbar } from '../../utils/navigation'
+import { createPageWithNavbar, PageConfigWithLifecycle } from '../../utils/navigation'
 import { safeCloudCall } from '../../utils/safe-cloud-call'
 import { HealthCloud } from '../../utils/cloud-functions'
 import { logger } from '../../utils/logger'
@@ -17,6 +16,49 @@ async function callCloudFunction(config: { name: string; data: any }) {
 type AnyObject = Record<string, unknown>
 type SymptomOption = { id: string; name: string; checked: boolean }
 type AutopsyAbnormality = { id: string; name: string; checked: boolean }
+
+// 诊断数据接口
+interface DiagnosisData {
+  action: string
+  diagnosisType: string
+  selectedBatchId: string
+  batchId: string
+  dayAge: number
+  images: string[]
+  healthRecordId: string | null
+  symptoms?: string[]
+  symptomsText?: string
+  affectedCount?: number
+  deathCount?: number
+  autopsyFindings?: {
+    abnormalities: string[]
+    description: string
+  }
+  batchPromptData?: unknown
+}
+
+// 诊断结果接口
+interface DiagnosisResult {
+  _id?: string
+  primaryDiagnosis?: string
+  primaryCause?: string
+  treatmentRecommendation?: string
+  recommendations?: string[]
+  confidence?: number
+  analysisResult?: unknown
+  format?: string
+  rawText?: string
+  profitability?: unknown
+  costStructure?: unknown
+  suggestions?: unknown
+}
+
+// 错误类型
+interface ErrorWithMessage {
+  message?: string
+  errMsg?: string
+  errCode?: number
+}
 
 type CloudResponseSuccess<T> = {
   success: true
@@ -728,7 +770,7 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
 
     try {
       // 准备诊断数据
-      const diagnosisData: unknown = {
+      const diagnosisData: DiagnosisData = {
         action: 'ai_diagnosis',
         diagnosisType: diagnosisType,
         selectedBatchId: this.data.selectedBatchId,
@@ -838,24 +880,25 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
         logger.error('错误信息:', errorMsg)
         throw new Error(errorMsg)
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const err = error as ErrorWithMessage
       logger.error('====== 诊断提交失败 ======')
-      logger.error('错误类型:', error.errCode)
-      logger.error('错误信息:', error.errMsg || error.message)
+      logger.error('错误类型:', err.errCode)
+      logger.error('错误信息:', err.errMsg || err.message)
       logger.error('完整错误:', error)
       
       // 提交失败时才停止加载
       this.setData({ submitting: false })
       
       // ✅ 特别处理超时错误
-      if (error.errMsg && error.errMsg.includes('TIMEOUT')) {
+      if (err.errMsg && err.errMsg.includes('TIMEOUT')) {
         wx.showModal({
           title: '诊断提交超时',
           content: '网络连接超时，请检查网络后重试。如果问题持续，可能是服务器繁忙。',
           showCancel: false,
           confirmText: '我知道了'
         })
-      } else if (error.errMsg && error.errMsg.includes('ESOCKETTIMEDOUT')) {
+      } else if (err.errMsg && err.errMsg.includes('ESOCKETTIMEDOUT')) {
         wx.showModal({
           title: '连接超时',
           content: '服务器响应超时，请稍后重试。提示：诊断任务可能仍在后台处理。',
@@ -864,7 +907,7 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
         })
       } else {
         wx.showToast({ 
-          title: error.message || error.errMsg || '诊断失败，请重试', 
+          title: err.message || err.errMsg || '诊断失败，请重试', 
           icon: 'none',
           duration: 3000
         })
@@ -1040,7 +1083,7 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
   },
 
   // 开始治疗
-  async startTreatment(diagnosis: unknown) {
+  async startTreatment(diagnosis: DiagnosisResult) {
     try {
       wx.showLoading({ title: '创建治疗记录...' })
       
@@ -1066,7 +1109,9 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
       const rawResult = await HealthCloud.treatment.createFromDiagnosis({ diagnosisId: diagnosisId,
           batchId: this.data.selectedBatchId,
           affectedCount: affectedCount,
-          diagnosis: diagnosis.primaryDiagnosis?.disease || '待确定',
+          diagnosis: typeof diagnosis.primaryDiagnosis === 'string' 
+            ? diagnosis.primaryDiagnosis 
+            : (diagnosis.primaryDiagnosis as AnyObject)?.disease || '待确定',
           recommendations: diagnosis.treatmentRecommendation || diagnosis.recommendations
          })
       
@@ -1091,12 +1136,13 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
       } else {
         throw new Error(result?.error || result?.message || '创建治疗记录失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
       wx.hideLoading()
       logger.error('创建治疗记录失败:', error)
       
       // 显示详细错误信息
-      const errorMsg = error.message || error.errMsg || '创建治疗记录失败'
+      const err = error as ErrorWithMessage
+      const errorMsg = err.message || err.errMsg || '创建治疗记录失败'
       wx.showModal({
         title: '创建治疗记录失败',
         content: errorMsg,
@@ -1107,10 +1153,16 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
   },
 
   // 创建死亡记录并关联财务（死因剖析专用）
-  async createDeathRecordWithFinance(diagnosis: unknown) {
+  async createDeathRecordWithFinance(diagnosis: DiagnosisResult) {
     try {
       const deathCount = parseInt(this.data.deathCount) || 0
-      const deathCause = diagnosis.primaryCause?.disease || diagnosis.primaryDiagnosis?.disease || '待确定'
+      const deathCause = typeof diagnosis.primaryCause === 'string'
+        ? diagnosis.primaryCause
+        : (diagnosis.primaryCause as AnyObject)?.disease 
+          || (typeof diagnosis.primaryDiagnosis === 'string' 
+            ? diagnosis.primaryDiagnosis 
+            : (diagnosis.primaryDiagnosis as AnyObject)?.disease) 
+          || '待确定'
       
       wx.showLoading({ title: '创建死亡记录...' })
       
@@ -1148,22 +1200,26 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
       } else {
         throw new Error(result?.message || result?.error || '创建死亡记录失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
       wx.hideLoading()
+      const err = error as ErrorWithMessage
       wx.showToast({
-        title: error.message || '创建失败',
+        title: err.message || '创建失败',
         icon: 'none'
       })
     }
   },
 
   // 记录死亡（病鹅诊断用）
-  async recordDeath(diagnosis: unknown) {
+  async recordDeath(diagnosis: DiagnosisResult) {
     const affectedCount = parseInt(this.data.affectedCount) || 0
+    const diseaseName = typeof diagnosis.primaryDiagnosis === 'string' 
+      ? diagnosis.primaryDiagnosis 
+      : (diagnosis.primaryDiagnosis as AnyObject)?.disease || '疾病'
     
     wx.showModal({
       title: '确认记录死亡',
-      content: `确认${affectedCount}只动物因${diagnosis.primaryDiagnosis?.disease || '疾病'}死亡？`,
+      content: `确认${affectedCount}只动物因${diseaseName}死亡？`,
       success: (res) => {
         if (res.confirm) {
           // 跳转到死亡记录页面，携带诊断信息
@@ -1319,13 +1375,14 @@ const pageConfig: PageConfigWithLifecycle & AnyObject = {
       } else {
         throw new Error(result?.message || result?.error || '保存失败')
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const err = error as ErrorWithMessage
       logger.error('保存异常:', error)
       wx.hideLoading()
       // ✅ 保存失败时重置状态，允许重试
       this.setData({ isSaving: false })
       wx.showToast({
-        title: error.message || '保存失败',
+        title: err.message || '保存失败',
         icon: 'none'
       })
     }
